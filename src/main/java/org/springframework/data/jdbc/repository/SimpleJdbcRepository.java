@@ -16,11 +16,17 @@
 package org.springframework.data.jdbc.repository;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -29,23 +35,25 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  */
 public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRepository<T, ID> {
 
-	private final EntityInformation entityInformation;
+	private final JdbcPersistentEntity<T> entity;
 	private final NamedParameterJdbcOperations template;
 
-	public SimpleJdbcRepository(EntityInformation entityInformation, DataSource dataSource) {
-		this.entityInformation = entityInformation;
+	private final String findOneSql;
+	private final String insertSql;
+
+	public SimpleJdbcRepository(JdbcPersistentEntity<T> entity, DataSource dataSource) {
+
+		this.entity = entity;
 		this.template = new NamedParameterJdbcTemplate(dataSource);
+
+		findOneSql = createFindOneSelectSql();
+		insertSql = createInsertSql();
 	}
 
 	@Override
 	public <S extends T> S save(S entity) {
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put("id", entityInformation.getId(entity));
-		parameters.put("name", "blah blah");
 
-		template.update(
-				"insert into dummyentity (id, name) values (:id, :name)",
-				parameters);
+		template.update(insertSql, getPropertyMap(entity));
 
 		return entity;
 	}
@@ -57,7 +65,12 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 	@Override
 	public T findOne(ID id) {
-		return null;
+
+		return template.queryForObject(
+				findOneSql,
+				new MapSqlParameterSource("id", id),
+				new EntityRowMapper<T>(entity)
+		);
 	}
 
 	@Override
@@ -98,5 +111,46 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	@Override
 	public void deleteAll() {
 
+	}
+
+	private String createFindOneSelectSql() {
+
+		String tableName = entity.getType().getSimpleName();
+		String idColumn = entity.getIdProperty().getName();
+
+		return String.format("select * from %s where %s = :id", tableName, idColumn);
+	}
+
+	private String createInsertSql() {
+
+		List<String> propertyNames = new ArrayList<>();
+		entity.doWithProperties((PropertyHandler) persistentProperty -> propertyNames.add(persistentProperty.getName()));
+
+		String insertTemplate = "insert into %s (%s) values (%s)";
+
+		String tableName = entity.getType().getSimpleName();
+
+		String tableColumns = propertyNames.stream().collect(Collectors.joining(", "));
+		String parameterNames = propertyNames.stream().collect(Collectors.joining(", :", ":", ""));
+
+		return String.format(insertTemplate, tableName, tableColumns, parameterNames);
+	}
+
+	private <S extends T> Map<String, Object> getPropertyMap(final S entity) {
+
+		Map<String, Object> parameters = new HashMap<>();
+
+		this.entity.doWithProperties(new PropertyHandler() {
+			@Override
+			public void doWithPersistentProperty(PersistentProperty persistentProperty) {
+				try {
+					parameters.put(persistentProperty.getName(), persistentProperty.getGetter().invoke(entity));
+				} catch (Exception e) {
+					throw new RuntimeException(String.format("Couldn't get value of property %s", persistentProperty.getName()));
+				}
+			}
+		});
+
+		return parameters;
 	}
 }
