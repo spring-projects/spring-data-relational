@@ -48,19 +48,18 @@ public class JdbcRepositoryIntegrationTests {
 
 	private final NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(db);
 
+	private final DummyEntityRepository repository = createRepository(db);
+
+	private DummyEntity entity = createDummyEntity();
+
 	@After
-	public void afeter() {
+	public void after() {
 		db.shutdown();
 	}
 
 
 	@Test
 	public void canSaveAnEntity() throws SQLException {
-		DummyEntityRepository repository = createRepository();
-
-		DummyEntity entity = new DummyEntity();
-		entity.setId(23L);
-		entity.setName("Entity Name");
 
 		entity = repository.save(entity);
 
@@ -74,9 +73,31 @@ public class JdbcRepositoryIntegrationTests {
 				count);
 	}
 
-	private DummyEntityRepository createRepository() throws SQLException {
-		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(db);
-		return jdbcRepositoryFactory.getRepository(DummyEntityRepository.class);
+	@Test
+	public void canSaveAndLoadAnEntity() throws SQLException {
+
+		entity = repository.save(entity);
+
+		DummyEntity reloadedEntity = repository.findOne(entity.getId());
+
+		assertEquals(
+				entity.getId(),
+				reloadedEntity.getId());
+		assertEquals(
+				entity.getName(),
+				reloadedEntity.getName());
+	}
+
+	private static DummyEntityRepository createRepository(EmbeddedDatabase db) {
+		return new JdbcRepositoryFactory(db).getRepository(DummyEntityRepository.class);
+	}
+
+
+	private static DummyEntity createDummyEntity() {
+		DummyEntity entity = new DummyEntity();
+		entity.setId(23L);
+		entity.setName("Entity Name");
+		return entity;
 	}
 
 	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
