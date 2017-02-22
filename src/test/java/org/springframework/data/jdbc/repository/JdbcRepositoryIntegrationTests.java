@@ -15,10 +15,13 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 import java.sql.SQLException;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -50,7 +53,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	private final DummyEntityRepository repository = createRepository(db);
 
-	private DummyEntity entity = createDummyEntity();
+	private DummyEntity entity = createDummyEntity(23L);
 
 	@After
 	public void after() {
@@ -59,7 +62,7 @@ public class JdbcRepositoryIntegrationTests {
 
 
 	@Test
-	public void canSaveAnEntity() throws SQLException {
+	public void canSaveAnEntity() {
 
 		entity = repository.save(entity);
 
@@ -74,7 +77,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test
-	public void canSaveAndLoadAnEntity() throws SQLException {
+	public void canSaveAndLoadAnEntity() {
 
 		entity = repository.save(entity);
 
@@ -88,14 +91,120 @@ public class JdbcRepositoryIntegrationTests {
 				reloadedEntity.getName());
 	}
 
+	@Test
+	public void saveMany() {
+
+		DummyEntity other = createDummyEntity(24L);
+
+		repository.save(asList(entity, other));
+
+		assertThat(repository.findAll()).extracting(DummyEntity::getId).containsExactlyInAnyOrder(23L, 24L);
+	}
+
+	@Test
+	public void existsReturnsTrueIffEntityExists() {
+
+		entity = repository.save(entity);
+
+		assertTrue(repository.exists(entity.getId()));
+		assertFalse(repository.exists(entity.getId() + 1));
+	}
+
+	@Test
+	public void findAllFindsAllEntities() {
+
+		DummyEntity other = createDummyEntity(24L);
+
+		other = repository.save(other);
+		entity = repository.save(entity);
+
+		Iterable<DummyEntity> all = repository.findAll();
+
+		assertThat(all).extracting("id").containsExactlyInAnyOrder(entity.getId(), other.getId());
+	}
+
+	@Test
+	public void findAllFindsAllSpecifiedEntities() {
+
+		repository.save(createDummyEntity(24L));
+		DummyEntity other = repository.save(createDummyEntity(25L));
+		entity = repository.save(entity);
+
+		Iterable<DummyEntity> all = repository.findAll(asList(entity.getId(), other.getId()));
+
+		assertThat(all).extracting("id").containsExactlyInAnyOrder(entity.getId(), other.getId());
+	}
+
+	@Test
+	public void count() {
+
+		repository.save(createDummyEntity(24L));
+		repository.save(createDummyEntity(25L));
+		repository.save(entity);
+
+		assertThat(repository.count()).isEqualTo(3L);
+	}
+
+	@Test
+	public void deleteById() {
+
+		repository.save(createDummyEntity(24L));
+		repository.save(createDummyEntity(25L));
+		repository.save(entity);
+
+		repository.delete(24L);
+
+		assertThat(repository.findAll()).extracting(DummyEntity::getId).containsExactlyInAnyOrder(23L, 25L);
+	}
+
+	@Test
+	public void deleteByEntity() {
+
+		repository.save(createDummyEntity(24L));
+		repository.save(createDummyEntity(25L));
+		repository.save(entity);
+
+		repository.delete(entity);
+
+		assertThat(repository.findAll()).extracting(DummyEntity::getId).containsExactlyInAnyOrder(24L, 25L);
+	}
+
+
+	@Test
+	public void deleteByList() {
+
+		repository.save(entity);
+		repository.save(createDummyEntity(24L));
+		DummyEntity other = repository.save(createDummyEntity(25L));
+
+		repository.delete(asList(entity, other));
+
+		assertThat(repository.findAll()).extracting(DummyEntity::getId).containsExactlyInAnyOrder(24L);
+	}
+
+	@Test
+	public void deleteAll() {
+
+		repository.save(entity);
+		repository.save(createDummyEntity(24L));
+		repository.save(createDummyEntity(25L));
+
+		repository.deleteAll();
+
+		assertThat(repository.findAll()).isEmpty();
+	}
+
+
+
 	private static DummyEntityRepository createRepository(EmbeddedDatabase db) {
 		return new JdbcRepositoryFactory(db).getRepository(DummyEntityRepository.class);
 	}
 
 
-	private static DummyEntity createDummyEntity() {
+	private static DummyEntity createDummyEntity(long id) {
+
 		DummyEntity entity = new DummyEntity();
-		entity.setId(23L);
+		entity.setId(id);
 		entity.setName("Entity Name");
 		return entity;
 	}
@@ -104,8 +213,9 @@ public class JdbcRepositoryIntegrationTests {
 
 	}
 
+	// needs to be public in order for the Hamcrest property matcher to work.
 	@Data
-	private static class DummyEntity {
+	public static class DummyEntity {
 
 		@Id
 		Long id;

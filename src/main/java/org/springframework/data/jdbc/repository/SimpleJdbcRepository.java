@@ -16,14 +16,13 @@
 package org.springframework.data.jdbc.repository;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.sql.DataSource;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
-import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -37,117 +36,116 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 	private final JdbcPersistentEntity<T> entity;
 	private final NamedParameterJdbcOperations template;
+	private final SqlGenerator sql;
 
-	private final String findOneSql;
-	private final String insertSql;
+	private final EntityRowMapper<T> entityRowMapper;
 
 	public SimpleJdbcRepository(JdbcPersistentEntity<T> entity, DataSource dataSource) {
 
 		this.entity = entity;
 		this.template = new NamedParameterJdbcTemplate(dataSource);
 
-		findOneSql = createFindOneSelectSql();
-		insertSql = createInsertSql();
+		entityRowMapper = new EntityRowMapper<T>(entity);
+		sql = new SqlGenerator(entity);
 	}
 
 	@Override
 	public <S extends T> S save(S entity) {
 
-		template.update(insertSql, getPropertyMap(entity));
+		template.update(sql.getInsert(), getPropertyMap(entity));
 
 		return entity;
 	}
 
 	@Override
 	public <S extends T> Iterable<S> save(Iterable<S> entities) {
-		return null;
+
+		Map<String, ?>[] batchValues = StreamSupport
+				.stream(entities.spliterator(), false)
+				.map(i -> getPropertyMap(i))
+				.toArray(size -> new Map[size]);
+
+		template.batchUpdate(sql.getInsert(), batchValues);
+
+		return entities;
 	}
 
 	@Override
 	public T findOne(ID id) {
 
 		return template.queryForObject(
-				findOneSql,
+				sql.getFindOne(),
 				new MapSqlParameterSource("id", id),
-				new EntityRowMapper<T>(entity)
+				entityRowMapper
 		);
 	}
 
 	@Override
 	public boolean exists(ID id) {
-		return false;
+
+		return template.queryForObject(
+				sql.getExists(),
+				new MapSqlParameterSource("id", id),
+				Boolean.class
+		);
 	}
 
 	@Override
 	public Iterable<T> findAll() {
-		return null;
+		return template.query(sql.getFindAll(), entityRowMapper);
 	}
 
 	@Override
 	public Iterable<T> findAll(Iterable<ID> ids) {
-		return null;
+		return template.query(sql.getFindAllInList(), new MapSqlParameterSource("ids", ids), entityRowMapper);
 	}
 
 	@Override
 	public long count() {
-		return 0;
+		return template.getJdbcOperations().queryForObject(sql.getCount(), Long.class);
 	}
 
 	@Override
 	public void delete(ID id) {
-
+		template.update(sql.getDeleteById(), new MapSqlParameterSource("id", id));
 	}
 
 	@Override
-	public void delete(T entity) {
+	public void delete(T instance) {
 
+		template.update(
+				sql.getDeleteById(),
+				new MapSqlParameterSource("id",
+						entity.getIdValue(instance)));
 	}
 
 	@Override
 	public void delete(Iterable<? extends T> entities) {
 
+		template.update(
+				sql.getDeleteByList(),
+				new MapSqlParameterSource("ids",
+						StreamSupport
+								.stream(entities.spliterator(), false)
+								.map(entity::getIdValue)
+								.collect(Collectors.toList())
+				)
+		);
 	}
 
 	@Override
 	public void deleteAll() {
-
+		template.getJdbcOperations().update(sql.getDeleteAll());
 	}
 
-	private String createFindOneSelectSql() {
-
-		String tableName = entity.getType().getSimpleName();
-		String idColumn = entity.getIdProperty().getName();
-
-		return String.format("select * from %s where %s = :id", tableName, idColumn);
-	}
-
-	private String createInsertSql() {
-
-		List<String> propertyNames = new ArrayList<>();
-		entity.doWithProperties((PropertyHandler) persistentProperty -> propertyNames.add(persistentProperty.getName()));
-
-		String insertTemplate = "insert into %s (%s) values (%s)";
-
-		String tableName = entity.getType().getSimpleName();
-
-		String tableColumns = propertyNames.stream().collect(Collectors.joining(", "));
-		String parameterNames = propertyNames.stream().collect(Collectors.joining(", :", ":", ""));
-
-		return String.format(insertTemplate, tableName, tableColumns, parameterNames);
-	}
-
-	private <S extends T> Map<String, Object> getPropertyMap(final S entity) {
+	private <S extends T> Map<String, Object> getPropertyMap(final S instance) {
 
 		Map<String, Object> parameters = new HashMap<>();
 
-		this.entity.doWithProperties(new PropertyHandler() {
+		this.entity.doWithProperties(new PropertyHandler<JdbcPersistentProperty>() {
 			@Override
-			public void doWithPersistentProperty(PersistentProperty persistentProperty) {
-				try {
-					parameters.put(persistentProperty.getName(), persistentProperty.getGetter().invoke(entity));
-				} catch (Exception e) {
-					throw new RuntimeException(String.format("Couldn't get value of property %s", persistentProperty.getName()));
-				}
+			public void doWithPersistentProperty(JdbcPersistentProperty persistentProperty) {
+				parameters.put(persistentProperty.getColumnName(), entity.getPropertyAccessor(instance).getProperty(persistentProperty));
 			}
 		});
 
