@@ -23,6 +23,8 @@ import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 
 /**
+ * meta data about a property to be used by repository implementations.
+ *
  * @author Jens Schauder
  */
 public class JdbcPersistentProperty extends AnnotationBasedPersistentProperty<JdbcPersistentProperty> {
@@ -42,5 +44,9 @@ public class JdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jd
 	@Override
 	protected Association<JdbcPersistentProperty> createAssociation() {
 		return null;
+	}
+
+	public String getColumnName() {
+		return getName();
 	}
 }
