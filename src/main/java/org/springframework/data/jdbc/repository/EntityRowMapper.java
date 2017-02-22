@@ -15,49 +15,62 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
+import org.springframework.data.convert.EntityInstantiator;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.model.MappingException;
+import org.springframework.data.mapping.model.ParameterValueProvider;
 
 /**
+ * maps a ResultSet to an entity of type {@code T}
+ *
  * @author Jens Schauder
  */
 class EntityRowMapper<T> implements org.springframework.jdbc.core.RowMapper<T> {
 
-	private final PersistentEntity<T, ?> entity;
+	private final JdbcPersistentEntity<T> entity;
 
-	EntityRowMapper(PersistentEntity<T, ?> entity) {
+	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
+
+	EntityRowMapper(JdbcPersistentEntity<T> entity) {
 		this.entity = entity;
 	}
 
 	@Override
 	public T mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-		try {
+		T t = createInstance(rs);
 
-			T t = createInstance();
+		entity.doWithProperties((PropertyHandler) property -> {
+			setProperty(rs, t, property);
+		});
 
-			entity.doWithProperties((PropertyHandler) property -> {
-				setProperty(rs, t, property);
-			});
-
-			return t;
-		} catch (Exception e) {
-			throw new RuntimeException(String.format("Could not instantiate %s", entity.getType()));
-		}
+		return t;
 	}
 
-	private T createInstance() throws InstantiationException, IllegalAccessException, InvocationTargetException {
-		return (T) entity.getPersistenceConstructor().getConstructor().newInstance();
+	private T createInstance(ResultSet rs) {
+		return instantiator.createInstance(entity, new ParameterValueProvider<JdbcPersistentProperty>() {
+			@Override
+			public <T> T getParameterValue(PreferredConstructor.Parameter<T, JdbcPersistentProperty> parameter) {
+				try {
+					return (T) rs.getObject(parameter.getName());
+				} catch (SQLException e) {
+					throw new MappingException(String.format("Couldn't read column %s from ResultSet.", parameter.getName()));
+				}
+			}
+		});
 	}
 
 	private void setProperty(ResultSet rs, T t, PersistentProperty property) {
 
 		try {
-			property.getSetter().invoke(t, rs.getObject(property.getName()));
+			entity.getPropertyAccessor(t).setProperty(property, rs.getObject(property.getName()));
 		} catch (Exception e) {
 			throw new RuntimeException(String.format("Couldn't set property %s.", property.getName()), e);
 		}
