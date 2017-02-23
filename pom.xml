@@ -6,7 +6,7 @@
 
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-jdbc</artifactId>
-    <version>1.0.0.BUILD-SNAPSHOT</version>
+    <version>1.0.0.DATAJDBC-97-SNAPSHOT</version>
 
     <name>Spring Data JDBC</name>
     <description>Spring Data module for JDBC repositories.</description>
@@ -69,6 +69,11 @@
 
         <dependency>
             <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
             <exclusions>
                 <exclusion>
@@ -84,9 +89,12 @@
             <version>2.2.8</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.6.2</version>
+            <scope>test</scope>
         </dependency>
 
 
