@@ -39,13 +39,12 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 	@Override
 	public <T, ID extends Serializable> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
-		JdbcPersistentEntity<T> persistentEntity = (JdbcPersistentEntity<T>) context.getPersistentEntity(aClass);
-		return new JdbcPersistentEntityInformation<T, ID>(persistentEntity);
+		return new JdbcPersistentEntityInformation<T, ID>((JdbcPersistentEntity<T>) context.getPersistentEntity(aClass));
 	}
 
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
-		return new SimpleJdbcRepository(getEntityInformation(repositoryInformation.getDomainType()), dataSource);
+		return new SimpleJdbcRepository(context.getPersistentEntity(repositoryInformation.getDomainType()), dataSource);
 	}
 
 	@Override

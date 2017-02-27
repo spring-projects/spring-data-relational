@@ -15,9 +15,10 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
-import java.sql.SQLException;
 import org.junit.After;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
@@ -43,30 +44,29 @@ public class JdbcRepositoryIntegrationTests {
 			.setType(EmbeddedDatabaseType.HSQL)
 			.setScriptEncoding("UTF-8")
 			.ignoreFailedDrops(true)
-			.addScript("org.springframework.data.jdbc.repository/createTable.sql")
+			.addScript("org.springframework.data.jdbc.repository/jdbc-repository-integration-tests.sql")
 			.build();
 
 	private final NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(db);
 
+	private final DummyEntityRepository repository = createRepository(db);
+
+	private DummyEntity entity = createDummyEntity();
+
 	@After
-	public void afeter() {
+	public void after() {
 		db.shutdown();
 	}
 
 
 	@Test
-	public void canSaveAnEntity() throws SQLException {
-		DummyEntityRepository repository = createRepository();
-
-		DummyEntity entity = new DummyEntity();
-		entity.setId(23L);
-		entity.setName("Entity Name");
+	public void canSaveAnEntity() {
 
 		entity = repository.save(entity);
 
 		int count = template.queryForObject(
-				"SELECT count(*) FROM dummyentity WHERE id = :id",
-				new MapSqlParameterSource("id", entity.getId()),
+				"SELECT count(*) FROM dummyentity WHERE idProp = :id",
+				new MapSqlParameterSource("id", entity.getIdProp()),
 				Integer.class);
 
 		assertEquals(
@@ -74,9 +74,167 @@ public class JdbcRepositoryIntegrationTests {
 				count);
 	}
 
-	private DummyEntityRepository createRepository() throws SQLException {
-		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(db);
-		return jdbcRepositoryFactory.getRepository(DummyEntityRepository.class);
+	@Test
+	public void canSaveAndLoadAnEntity() {
+
+		entity = repository.save(entity);
+
+		DummyEntity reloadedEntity = repository.findOne(entity.getIdProp());
+
+		assertEquals(
+				entity.getIdProp(),
+				reloadedEntity.getIdProp());
+		assertEquals(
+				entity.getName(),
+				reloadedEntity.getName());
+	}
+
+	@Test
+	public void saveMany() {
+
+		DummyEntity other = createDummyEntity();
+
+		repository.save(asList(entity, other));
+
+		assertThat(repository.findAll()).extracting(DummyEntity::getIdProp).containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+	}
+
+	@Test
+	public void existsReturnsTrueIffEntityExists() {
+
+		entity = repository.save(entity);
+
+		assertTrue(repository.exists(entity.getIdProp()));
+		assertFalse(repository.exists(entity.getIdProp() + 1));
+	}
+
+	@Test
+	public void findAllFindsAllEntities() {
+
+		DummyEntity other = createDummyEntity();
+
+		other = repository.save(other);
+		entity = repository.save(entity);
+
+		Iterable<DummyEntity> all = repository.findAll();
+
+		assertThat(all).extracting("idProp").containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+	}
+
+	@Test
+	public void findAllFindsAllSpecifiedEntities() {
+
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+		entity = repository.save(entity);
+
+		Iterable<DummyEntity> all = repository.findAll(asList(entity.getIdProp(), three.getIdProp()));
+
+		assertThat(all).extracting("idProp").containsExactlyInAnyOrder(entity.getIdProp(), three.getIdProp());
+	}
+
+	@Test
+	public void count() {
+
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
+		repository.save(entity);
+
+		assertThat(repository.count()).isEqualTo(3L);
+	}
+
+	@Test
+	public void deleteById() {
+
+		entity = repository.save(entity);
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+
+		repository.delete(two.getIdProp());
+
+		assertThat(repository.findAll())
+				.extracting(DummyEntity::getIdProp)
+				.containsExactlyInAnyOrder(entity.getIdProp(), three.getIdProp());
+	}
+
+	@Test
+	public void deleteByEntity() {
+
+		entity = repository.save(entity);
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+
+		repository.delete(entity);
+
+		assertThat(repository.findAll()).extracting(DummyEntity::getIdProp).containsExactlyInAnyOrder(two.getIdProp(), three.getIdProp());
+	}
+
+
+	@Test
+	public void deleteByList() {
+
+		repository.save(entity);
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+
+		repository.delete(asList(entity, three));
+
+		assertThat(repository.findAll()).extracting(DummyEntity::getIdProp).containsExactlyInAnyOrder(two.getIdProp());
+	}
+
+	@Test
+	public void deleteAll() {
+
+		repository.save(entity);
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
+
+		repository.deleteAll();
+
+		assertThat(repository.findAll()).isEmpty();
+	}
+
+
+	@Test
+	public void update() {
+
+		entity = repository.save(entity);
+
+		entity.setName("something else");
+
+		entity = repository.save(entity);
+
+		DummyEntity reloaded = repository.findOne(entity.getIdProp());
+
+		assertThat(reloaded.getName()).isEqualTo(entity.getName());
+	}
+
+	@Test
+	public void updateMany() {
+
+		entity = repository.save(entity);
+		DummyEntity other = repository.save(createDummyEntity());
+
+		entity.setName("something else");
+		other.setName("others Name");
+
+		repository.save(asList(entity, other));
+
+		assertThat(repository.findAll())
+				.extracting(DummyEntity::getName)
+				.containsExactlyInAnyOrder(entity.getName(), other.getName());
+	}
+
+	private static DummyEntityRepository createRepository(EmbeddedDatabase db) {
+		return new JdbcRepositoryFactory(db).getRepository(DummyEntityRepository.class);
+	}
+
+
+	private static DummyEntity createDummyEntity() {
+
+		DummyEntity entity = new DummyEntity();
+		entity.setName("Entity Name");
+		return entity;
 	}
 
 	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
@@ -84,10 +242,10 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Data
-	private static class DummyEntity {
+	static class DummyEntity {
 
 		@Id
-		Long id;
+		private Long idProp;
 		String name;
 	}
 }
