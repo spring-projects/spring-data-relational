@@ -23,6 +23,7 @@ import java.util.stream.StreamSupport;
 import javax.sql.DataSource;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -37,6 +38,7 @@ import org.springframework.jdbc.support.KeyHolder;
 public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRepository<T, ID> {
 
 	private final JdbcPersistentEntity<T> entity;
+	private final JdbcPersistentEntityInformation<T,ID> entityInformation;
 	private final NamedParameterJdbcOperations template;
 	private final SqlGenerator sql;
 
@@ -45,6 +47,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	public SimpleJdbcRepository(JdbcPersistentEntity<T> entity, DataSource dataSource) {
 
 		this.entity = entity;
+		this.entityInformation = new JdbcPersistentEntityInformation<T, ID>(entity);
 		this.template = new NamedParameterJdbcTemplate(dataSource);
 
 		entityRowMapper = new EntityRowMapper<T>(entity);
@@ -54,14 +57,19 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	@Override
 	public <S extends T> S save(S instance) {
 
-		KeyHolder holder = new GeneratedKeyHolder();
+		if (entityInformation.isNew(instance)) {
 
-		template.update(
-				sql.getInsert(),
-				new MapSqlParameterSource(getPropertyMap(instance)),
-				holder);
+			KeyHolder holder = new GeneratedKeyHolder();
 
-		entity.setId(instance, holder.getKey());
+			template.update(
+					sql.getInsert(),
+					new MapSqlParameterSource(getPropertyMap(instance)),
+					holder);
+
+			entity.setId(instance, holder.getKey());
+		} else {
+			template.update(sql.getUpdate(), getPropertyMap(instance));
+		}
 
 		return instance;
 	}
