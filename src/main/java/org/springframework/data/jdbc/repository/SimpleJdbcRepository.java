@@ -28,6 +28,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 
 /**
  * @author Jens Schauder
@@ -50,22 +52,24 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	}
 
 	@Override
-	public <S extends T> S save(S entity) {
+	public <S extends T> S save(S instance) {
 
-		template.update(sql.getInsert(), getPropertyMap(entity));
+		KeyHolder holder = new GeneratedKeyHolder();
 
-		return entity;
+		template.update(
+				sql.getInsert(),
+				new MapSqlParameterSource(getPropertyMap(instance)),
+				holder);
+
+		entity.setId(instance, holder.getKey());
+
+		return instance;
 	}
 
 	@Override
 	public <S extends T> Iterable<S> save(Iterable<S> entities) {
 
-		Map<String, ?>[] batchValues = StreamSupport
-				.stream(entities.spliterator(), false)
-				.map(i -> getPropertyMap(i))
-				.toArray(size -> new Map[size]);
-
-		template.batchUpdate(sql.getInsert(), batchValues);
+		entities.forEach(this::save);
 
 		return entities;
 	}
