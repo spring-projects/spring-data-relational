@@ -19,9 +19,7 @@ import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
-import java.sql.SQLException;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -92,6 +90,26 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test
+	public void canSaveAndLoadAnEntityWithDatabaseBasedIdGeneration() {
+
+		entity = createDummyEntity(null);
+
+		entity = repository.save(entity);
+
+		assertThat(entity).isNotNull();
+
+		DummyEntity reloadedEntity = repository.findOne(entity.getId());
+
+		assertEquals(
+				entity.getId(),
+				reloadedEntity.getId());
+		assertEquals(
+				entity.getName(),
+				reloadedEntity.getName());
+	}
+
+
+	@Test
 	public void saveMany() {
 
 		DummyEntity other = createDummyEntity(24L);
@@ -99,6 +117,21 @@ public class JdbcRepositoryIntegrationTests {
 		repository.save(asList(entity, other));
 
 		assertThat(repository.findAll()).extracting(DummyEntity::getId).containsExactlyInAnyOrder(23L, 24L);
+	}
+
+	@Test
+	public void saveManyWithIdGeneration() {
+
+		DummyEntity one = createDummyEntity(null);
+		DummyEntity two = createDummyEntity(null);
+
+		Iterable<DummyEntity> entities = repository.save(asList(one, two));
+
+		assertThat(entities).allMatch(e -> e.getId() != null);
+
+		assertThat(repository.findAll())
+				.extracting(DummyEntity::getId)
+				.containsExactlyInAnyOrder(new Long[]{one.getId(), two.getId()});
 	}
 
 	@Test
@@ -195,13 +228,12 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 
-
 	private static DummyEntityRepository createRepository(EmbeddedDatabase db) {
 		return new JdbcRepositoryFactory(db).getRepository(DummyEntityRepository.class);
 	}
 
 
-	private static DummyEntity createDummyEntity(long id) {
+	private static DummyEntity createDummyEntity(Long id) {
 
 		DummyEntity entity = new DummyEntity();
 		entity.setId(id);
