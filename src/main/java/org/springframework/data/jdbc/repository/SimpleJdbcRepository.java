@@ -18,85 +18,141 @@ package org.springframework.data.jdbc.repository;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.sql.DataSource;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 
 /**
  * @author Jens Schauder
  */
 public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRepository<T, ID> {
 
-	private final EntityInformation entityInformation;
+	private final JdbcPersistentEntity<T> entity;
 	private final NamedParameterJdbcOperations template;
+	private final SqlGenerator sql;
 
-	public SimpleJdbcRepository(EntityInformation entityInformation, DataSource dataSource) {
-		this.entityInformation = entityInformation;
+	private final EntityRowMapper<T> entityRowMapper;
+
+	public SimpleJdbcRepository(JdbcPersistentEntity<T> entity, DataSource dataSource) {
+
+		this.entity = entity;
 		this.template = new NamedParameterJdbcTemplate(dataSource);
+
+		entityRowMapper = new EntityRowMapper<T>(entity);
+		sql = new SqlGenerator(entity);
 	}
 
 	@Override
-	public <S extends T> S save(S entity) {
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put("id", entityInformation.getId(entity));
-		parameters.put("name", "blah blah");
+	public <S extends T> S save(S instance) {
+
+		KeyHolder holder = new GeneratedKeyHolder();
 
 		template.update(
-				"insert into dummyentity (id, name) values (:id, :name)",
-				parameters);
+				sql.getInsert(),
+				new MapSqlParameterSource(getPropertyMap(instance)),
+				holder);
 
-		return entity;
+		entity.setId(instance, holder.getKey());
+
+		return instance;
 	}
 
 	@Override
 	public <S extends T> Iterable<S> save(Iterable<S> entities) {
-		return null;
+
+		entities.forEach(this::save);
+
+		return entities;
 	}
 
 	@Override
 	public T findOne(ID id) {
-		return null;
+
+		return template.queryForObject(
+				sql.getFindOne(),
+				new MapSqlParameterSource("id", id),
+				entityRowMapper
+		);
 	}
 
 	@Override
 	public boolean exists(ID id) {
-		return false;
+
+		return template.queryForObject(
+				sql.getExists(),
+				new MapSqlParameterSource("id", id),
+				Boolean.class
+		);
 	}
 
 	@Override
 	public Iterable<T> findAll() {
-		return null;
+		return template.query(sql.getFindAll(), entityRowMapper);
 	}
 
 	@Override
 	public Iterable<T> findAll(Iterable<ID> ids) {
-		return null;
+		return template.query(sql.getFindAllInList(), new MapSqlParameterSource("ids", ids), entityRowMapper);
 	}
 
 	@Override
 	public long count() {
-		return 0;
+		return template.getJdbcOperations().queryForObject(sql.getCount(), Long.class);
 	}
 
 	@Override
 	public void delete(ID id) {
-
+		template.update(sql.getDeleteById(), new MapSqlParameterSource("id", id));
 	}
 
 	@Override
-	public void delete(T entity) {
+	public void delete(T instance) {
 
+		template.update(
+				sql.getDeleteById(),
+				new MapSqlParameterSource("id",
+						entity.getIdValue(instance)));
 	}
 
 	@Override
 	public void delete(Iterable<? extends T> entities) {
 
+		template.update(
+				sql.getDeleteByList(),
+				new MapSqlParameterSource("ids",
+						StreamSupport
+								.stream(entities.spliterator(), false)
+								.map(entity::getIdValue)
+								.collect(Collectors.toList())
+				)
+		);
 	}
 
 	@Override
 	public void deleteAll() {
+		template.getJdbcOperations().update(sql.getDeleteAll());
+	}
 
+	private <S extends T> Map<String, Object> getPropertyMap(final S instance) {
+
+		Map<String, Object> parameters = new HashMap<>();
+
+		this.entity.doWithProperties(new PropertyHandler<JdbcPersistentProperty>() {
+			@Override
+			public void doWithPersistentProperty(JdbcPersistentProperty persistentProperty) {
+				parameters.put(persistentProperty.getColumnName(), entity.getPropertyAccessor(instance).getProperty(persistentProperty));
+			}
+		});
+
+		return parameters;
 	}
 }

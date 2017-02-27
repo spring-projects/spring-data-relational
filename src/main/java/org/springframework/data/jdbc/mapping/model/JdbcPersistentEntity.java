@@ -19,11 +19,39 @@ import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.util.TypeInformation;
 
 /**
+ * meta data a repository might need for implementing persistence operations for instances of type {@code T}
  * @author Jens Schauder
  */
 public class JdbcPersistentEntity<T> extends BasicPersistentEntity<T, JdbcPersistentProperty> {
 
+	private String tableName;
+	private String idColumn;
+
 	public JdbcPersistentEntity(TypeInformation<T> information) {
 		super(information);
+	}
+
+	public String getTableName() {
+
+		if (tableName == null)
+			tableName = getType().getSimpleName();
+
+		return tableName;
+	}
+
+	public String getIdColumn() {
+
+		if (idColumn == null)
+			idColumn = getIdProperty().getName();
+
+		return idColumn;
+	}
+
+	public Object getIdValue(T instance) {
+		return getPropertyAccessor(instance).getProperty(getIdProperty());
+	}
+
+	public void setId(T instance, Object value) {
+		getPropertyAccessor(instance).setProperty(getIdProperty(),value);
 	}
 }
