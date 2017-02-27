@@ -50,4 +50,8 @@ public class JdbcPersistentEntity<T> extends BasicPersistentEntity<T, JdbcPersis
 	public Object getIdValue(T instance) {
 		return getPropertyAccessor(instance).getProperty(getIdProperty());
 	}
+
+	public void setId(T instance, Object value) {
+		getPropertyAccessor(instance).setProperty(getIdProperty(),value);
+	}
 }
