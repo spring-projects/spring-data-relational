@@ -26,13 +26,14 @@ import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  * maps a ResultSet to an entity of type {@code T}
  *
  * @author Jens Schauder
  */
-class EntityRowMapper<T> implements org.springframework.jdbc.core.RowMapper<T> {
+class EntityRowMapper<T> implements RowMapper<T> {
 
 	private final JdbcPersistentEntity<T> entity;
 

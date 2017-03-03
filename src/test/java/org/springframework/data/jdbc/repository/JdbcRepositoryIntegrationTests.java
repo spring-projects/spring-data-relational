@@ -18,9 +18,11 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 import org.junit.After;
 import org.junit.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
@@ -58,8 +60,7 @@ public class JdbcRepositoryIntegrationTests {
 		db.shutdown();
 	}
 
-
-	@Test
+	@Test // DATAJDBC-95
 	public void canSaveAnEntity() {
 
 		entity = repository.save(entity);
@@ -74,7 +75,7 @@ public class JdbcRepositoryIntegrationTests {
 				count);
 	}
 
-	@Test
+	@Test // DATAJDBC-95
 	public void canSaveAndLoadAnEntity() {
 
 		entity = repository.save(entity);
@@ -89,17 +90,22 @@ public class JdbcRepositoryIntegrationTests {
 				reloadedEntity.getName());
 	}
 
-	@Test
+	@Test // DATAJDBC-97
 	public void saveMany() {
 
 		DummyEntity other = createDummyEntity();
 
 		repository.save(asList(entity, other));
 
-		assertThat(repository.findAll()).extracting(DummyEntity::getIdProp).containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+		assertThat(repository.findAll())
+				.extracting(DummyEntity::getIdProp)
+				.containsExactlyInAnyOrder(
+						entity.getIdProp(),
+						other.getIdProp()
+				);
 	}
 
-	@Test
+	@Test // DATAJDBC-97
 	public void existsReturnsTrueIffEntityExists() {
 
 		entity = repository.save(entity);
@@ -108,7 +114,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertFalse(repository.exists(entity.getIdProp() + 1));
 	}
 
-	@Test
+	@Test // DATAJDBC-97
 	public void findAllFindsAllEntities() {
 
 		DummyEntity other = createDummyEntity();
@@ -118,10 +124,11 @@ public class JdbcRepositoryIntegrationTests {
 
 		Iterable<DummyEntity> all = repository.findAll();
 
-		assertThat(all).extracting("idProp").containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+		assertThat(all).extracting("idProp")
+				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
 	}
 
-	@Test
+	@Test // DATAJDBC-97
 	public void findAllFindsAllSpecifiedEntities() {
 
 		DummyEntity two = repository.save(createDummyEntity());
@@ -130,10 +137,11 @@ public class JdbcRepositoryIntegrationTests {
 
 		Iterable<DummyEntity> all = repository.findAll(asList(entity.getIdProp(), three.getIdProp()));
 
-		assertThat(all).extracting("idProp").containsExactlyInAnyOrder(entity.getIdProp(), three.getIdProp());
+		assertThat(all).extracting("idProp")
+				.containsExactlyInAnyOrder(entity.getIdProp(), three.getIdProp());
 	}
 
-	@Test
+	@Test // DATAJDBC-97
 	public void count() {
 
 		repository.save(createDummyEntity());
@@ -143,7 +151,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.count()).isEqualTo(3L);
 	}
 
-	@Test
+	@Test  // DATAJDBC-97
 	public void deleteById() {
 
 		entity = repository.save(entity);
@@ -157,7 +165,7 @@ public class JdbcRepositoryIntegrationTests {
 				.containsExactlyInAnyOrder(entity.getIdProp(), three.getIdProp());
 	}
 
-	@Test
+	@Test // DATAJDBC-97
 	public void deleteByEntity() {
 
 		entity = repository.save(entity);
@@ -166,11 +174,16 @@ public class JdbcRepositoryIntegrationTests {
 
 		repository.delete(entity);
 
-		assertThat(repository.findAll()).extracting(DummyEntity::getIdProp).containsExactlyInAnyOrder(two.getIdProp(), three.getIdProp());
+		assertThat(repository.findAll())
+				.extracting(DummyEntity::getIdProp)
+				.containsExactlyInAnyOrder(
+						two.getIdProp(),
+						three.getIdProp()
+				);
 	}
 
 
-	@Test
+	@Test // DATAJDBC-97
 	public void deleteByList() {
 
 		repository.save(entity);
@@ -182,7 +195,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.findAll()).extracting(DummyEntity::getIdProp).containsExactlyInAnyOrder(two.getIdProp());
 	}
 
-	@Test
+	@Test  // DATAJDBC-97
 	public void deleteAll() {
 
 		repository.save(entity);
@@ -195,7 +208,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 
-	@Test
+	@Test // DATAJDBC-98
 	public void update() {
 
 		entity = repository.save(entity);
@@ -209,7 +222,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(reloaded.getName()).isEqualTo(entity.getName());
 	}
 
-	@Test
+	@Test // DATAJDBC-98
 	public void updateMany() {
 
 		entity = repository.save(entity);
@@ -226,7 +239,9 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	private static DummyEntityRepository createRepository(EmbeddedDatabase db) {
-		return new JdbcRepositoryFactory(db).getRepository(DummyEntityRepository.class);
+
+		return new JdbcRepositoryFactory(mock(ApplicationEventPublisher.class), new NamedParameterJdbcTemplate(db))
+				.getRepository(DummyEntityRepository.class);
 	}
 
 

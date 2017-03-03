@@ -17,9 +17,11 @@ package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 
 import org.junit.After;
 import org.junit.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
@@ -56,7 +58,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		db.shutdown();
 	}
 
-	@Test
+	@Test // DATAJDBC-98
 	public void idWithoutSetterGetsSet() {
 
 		entity = repository.save(entity);
@@ -73,7 +75,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 				reloadedEntity.getName());
 	}
 
-	@Test
+	@Test // DATAJDBC-98
 	public void primitiveIdGetsSet() {
 
 		entity = repository.save(entity);
@@ -92,7 +94,11 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 
 	private static ReadOnlyIdEntityRepository createRepository(EmbeddedDatabase db) {
-		return new JdbcRepositoryFactory(db).getRepository(ReadOnlyIdEntityRepository.class);
+
+		return new JdbcRepositoryFactory(
+				mock(ApplicationEventPublisher.class),
+				new NamedParameterJdbcTemplate(db)
+		).getRepository(ReadOnlyIdEntityRepository.class);
 	}
 
 
