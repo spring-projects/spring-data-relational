@@ -20,7 +20,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.sql.DataSource;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.data.jdbc.mapping.event.AfterDeleteEvent;
+import org.springframework.data.jdbc.mapping.event.AfterInsertEvent;
+import org.springframework.data.jdbc.mapping.event.AfterUpdateEvent;
+import org.springframework.data.jdbc.mapping.event.BeforeDeleteEvent;
+import org.springframework.data.jdbc.mapping.event.BeforeInsertEvent;
+import org.springframework.data.jdbc.mapping.event.BeforeUpdateEvent;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
@@ -28,47 +36,46 @@ import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.util.Assert;
 
 /**
  * @author Jens Schauder
  */
-public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRepository<T, ID> {
+public class SimpleJdbcRepository<T, ID extends Serializable>
+		implements CrudRepository<T, ID>, ApplicationEventPublisherAware {
 
 	private final JdbcPersistentEntity<T> entity;
-	private final JdbcPersistentEntityInformation<T,ID> entityInformation;
-	private final NamedParameterJdbcOperations template;
+	private final JdbcPersistentEntityInformation<T, ID> entityInformation;
+	private final NamedParameterJdbcOperations operations;
 	private final SqlGenerator sql;
 
 	private final EntityRowMapper<T> entityRowMapper;
+	private final ApplicationEventPublisher publisher;
 
-	public SimpleJdbcRepository(JdbcPersistentEntity<T> entity, DataSource dataSource) {
+	public SimpleJdbcRepository(JdbcPersistentEntity<T> persistentEntity, NamedParameterJdbcOperations jdbcOperations, ApplicationEventPublisher publisher) {
 
-		this.entity = entity;
-		this.entityInformation = new JdbcPersistentEntityInformation<T, ID>(entity);
-		this.template = new NamedParameterJdbcTemplate(dataSource);
+		Assert.notNull(persistentEntity, "PersistentEntity must not be null.");
+		Assert.notNull(jdbcOperations, "JdbcOperations must not be null.");
+		Assert.notNull(publisher, "Publisher must not be null.");
 
-		entityRowMapper = new EntityRowMapper<T>(entity);
-		sql = new SqlGenerator(entity);
+		this.entity = persistentEntity;
+		this.entityInformation = new JdbcPersistentEntityInformation<T, ID>(persistentEntity);
+		this.operations = jdbcOperations;
+		this.publisher = publisher;
+
+		entityRowMapper = new EntityRowMapper<T>(persistentEntity);
+		sql = new SqlGenerator(persistentEntity);
 	}
 
 	@Override
 	public <S extends T> S save(S instance) {
 
 		if (entityInformation.isNew(instance)) {
-
-			KeyHolder holder = new GeneratedKeyHolder();
-
-			template.update(
-					sql.getInsert(),
-					new MapSqlParameterSource(getPropertyMap(instance)),
-					holder);
-
-			entity.setId(instance, holder.getKey());
+			doInsert(instance);
 		} else {
-			template.update(sql.getUpdate(), getPropertyMap(instance));
+			doUpdate(instance);
 		}
 
 		return instance;
@@ -85,7 +92,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	@Override
 	public T findOne(ID id) {
 
-		return template.queryForObject(
+		return operations.queryForObject(
 				sql.getFindOne(),
 				new MapSqlParameterSource("id", id),
 				entityRowMapper
@@ -95,7 +102,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	@Override
 	public boolean exists(ID id) {
 
-		return template.queryForObject(
+		return operations.queryForObject(
 				sql.getExists(),
 				new MapSqlParameterSource("id", id),
 				Boolean.class
@@ -104,37 +111,34 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 	@Override
 	public Iterable<T> findAll() {
-		return template.query(sql.getFindAll(), entityRowMapper);
+		return operations.query(sql.getFindAll(), entityRowMapper);
 	}
 
 	@Override
 	public Iterable<T> findAll(Iterable<ID> ids) {
-		return template.query(sql.getFindAllInList(), new MapSqlParameterSource("ids", ids), entityRowMapper);
+		return operations.query(sql.getFindAllInList(), new MapSqlParameterSource("ids", ids), entityRowMapper);
 	}
 
 	@Override
 	public long count() {
-		return template.getJdbcOperations().queryForObject(sql.getCount(), Long.class);
+		return operations.getJdbcOperations().queryForObject(sql.getCount(), Long.class);
 	}
 
 	@Override
 	public void delete(ID id) {
-		template.update(sql.getDeleteById(), new MapSqlParameterSource("id", id));
+		doDelete(id, null);
 	}
 
 	@Override
 	public void delete(T instance) {
 
-		template.update(
-				sql.getDeleteById(),
-				new MapSqlParameterSource("id",
-						entity.getIdValue(instance)));
+		doDelete((ID) entity.getIdValue(instance), instance);
 	}
 
 	@Override
 	public void delete(Iterable<? extends T> entities) {
 
-		template.update(
+		operations.update(
 				sql.getDeleteByList(),
 				new MapSqlParameterSource("ids",
 						StreamSupport
@@ -147,7 +151,12 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 	@Override
 	public void deleteAll() {
-		template.getJdbcOperations().update(sql.getDeleteAll());
+		operations.getJdbcOperations().update(sql.getDeleteAll());
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+
 	}
 
 	private <S extends T> Map<String, Object> getPropertyMap(final S instance) {
@@ -162,5 +171,35 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 		});
 
 		return parameters;
+	}
+
+	private <S extends T> void doInsert(S instance) {
+		publisher.publishEvent(new BeforeInsertEvent(instance, entity::getIdValue));
+
+		KeyHolder holder = new GeneratedKeyHolder();
+
+		operations.update(
+				sql.getInsert(),
+				new MapSqlParameterSource(getPropertyMap(instance)),
+				holder);
+
+		entity.setId(instance, holder.getKey());
+
+		publisher.publishEvent(new AfterInsertEvent(instance, entity::getIdValue));
+	}
+
+	private void doDelete(ID id, Object instance) {
+
+		publisher.publishEvent(new BeforeDeleteEvent(instance, o -> id));
+		operations.update(sql.getDeleteById(), new MapSqlParameterSource("id", id));
+		publisher.publishEvent(new AfterDeleteEvent(instance, o -> id));
+	}
+
+	private <S extends T> void doUpdate(S instance) {
+		publisher.publishEvent(new BeforeUpdateEvent(instance, entity::getIdValue));
+
+		operations.update(sql.getUpdate(), getPropertyMap(instance));
+
+		publisher.publishEvent(new AfterUpdateEvent(instance, entity::getIdValue));
 	}
 }

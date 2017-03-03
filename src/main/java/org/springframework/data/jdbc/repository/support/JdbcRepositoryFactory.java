@@ -16,7 +16,8 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
-import javax.sql.DataSource;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.mapping.context.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
@@ -24,27 +25,38 @@ import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * @author Jens Schauder
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
-	private final DataSource dataSource;
 	private final JdbcMappingContext context = new JdbcMappingContext();
+	private final ApplicationEventPublisher publisher;
+	private final NamedParameterJdbcOperations jdbcOperations;
 
-	public JdbcRepositoryFactory(DataSource dataSource) {
-		this.dataSource = dataSource;
+	public JdbcRepositoryFactory(
+			ApplicationEventPublisher publisher,
+			NamedParameterJdbcOperations jdbcOperations
+	) {
+
+		this.publisher = publisher;
+		this.jdbcOperations = jdbcOperations;
 	}
 
 	@Override
 	public <T, ID extends Serializable> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
-		return new JdbcPersistentEntityInformation<T, ID>((JdbcPersistentEntity<T>) context.getPersistentEntity(aClass));
+		return new JdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) context.getPersistentEntity(aClass));
 	}
 
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
-		return new SimpleJdbcRepository(context.getPersistentEntity(repositoryInformation.getDomainType()), dataSource);
+
+		return new SimpleJdbcRepository(
+				context.getPersistentEntity(repositoryInformation.getDomainType()),
+				jdbcOperations,
+				publisher);
 	}
 
 	@Override
