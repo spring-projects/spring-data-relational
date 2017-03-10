@@ -13,33 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.mapping.model;
+package org.springframework.data.jdbc.mapping.event;
 
-import org.springframework.data.mapping.model.BasicPersistentEntity;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.data.jdbc.mapping.event.Identifier.Unset;
 
 /**
- * meta data a repository might need for implementing persistence operations for instances of type {@code T}
+ * Gets published before an entity gets inserted into the database. When the id-property of the entity must get set
+ * manually, an event listener for this event may do so.
+ *
+ * The {@link Identifier} is {@link org.springframework.data.jdbc.mapping.event.Identifier.Unset#UNSET}
  *
  * @author Jens Schauder
  * @since 2.0
  */
-public class JdbcPersistentEntity<T> extends BasicPersistentEntity<T, JdbcPersistentProperty> {
+public class BeforeInsert extends BeforeSave {
 
-	private final String tableName;
-
-	public JdbcPersistentEntity(TypeInformation<T> information) {
-
-		super(information);
-
-		tableName = getType().getSimpleName();
-	}
-
-	public String getTableName() {
-		return tableName;
-	}
-
-	public String getIdColumn() {
-		return getIdProperty().getName();
+	/**
+	 * @param instance the entity about to get inserted.
+	 */
+	public BeforeInsert(Object instance) {
+		super(Unset.UNSET, instance);
 	}
 }

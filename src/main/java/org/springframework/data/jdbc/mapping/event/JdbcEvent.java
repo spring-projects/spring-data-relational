@@ -15,48 +15,43 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.function.Function;
+import java.util.Optional;
 
 import org.springframework.context.ApplicationEvent;
 
+import lombok.Getter;
+
 /**
- * is the common superclass for all events published by JDBC repositories.
- *
- * It is recommendet not to use the {@link #getSource()} since it may contain the entity if it was available, when the
- * event was published, or in case of delete events only the Id.
- *
- * Use the dedicated methods {@link #getId()} or {@link #getInstance()} instead. Note that the later might be
- * {@literal NULL} in the cases mentioned above.
+ * The common superclass for all events published by JDBC repositories.
+ * {@link #getSource} contains the {@link Identifier} of the entity triggering the event.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
+@Getter
 public class JdbcEvent extends ApplicationEvent {
 
-	private final Object id;
-	private final Object instance;
-
-	<T> JdbcEvent(T instance, Function<T, Object> idProvider) {
-
-		super(instance == null ? idProvider.apply(instance) : instance);
-		this.instance = instance;
-		this.id = idProvider.apply(instance);
-	}
-
 	/**
-	 * the entity for which this event was publish. Might be {@literal NULL} in cases of delete events where only the id
+	 * The optional entity for which this event was published. Might be empty in cases of delete events where only the identifier
 	 * was provided to the delete method.
 	 *
-	 * @return instance of the entity triggering this event.
+	 * @return The entity triggering this event or empty.
 	 */
-	public Object getInstance() {
-		return instance;
+	private final Optional<Object> optionalEntity;
+
+	public JdbcEvent(Identifier id, Optional<Object> optionalEntity) {
+		super(id);
+		this.optionalEntity = optionalEntity;
 	}
 
 	/**
-	 * the id of the entity, triggering this event. Guaranteed not to be {@literal NULL}.
+	 * The identifier of the entity, triggering this event. Also available via
+	 * {@link #getSource()}.
+	 *
 	 * @return
 	 */
-	public Object getId() {
-		return id;
+	public Identifier getId() {
+		return (Identifier) getSource();
 	}
+
 }

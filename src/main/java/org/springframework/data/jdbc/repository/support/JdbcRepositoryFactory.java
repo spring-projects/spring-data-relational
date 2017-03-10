@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import lombok.RequiredArgsConstructor;
+
 import java.io.Serializable;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,34 +31,26 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * @author Jens Schauder
+ * @since 2.0
  */
+@RequiredArgsConstructor
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 	private final JdbcMappingContext context = new JdbcMappingContext();
-	private final ApplicationEventPublisher publisher;
 	private final NamedParameterJdbcOperations jdbcOperations;
+	private final ApplicationEventPublisher publisher;
 
-	public JdbcRepositoryFactory(
-			ApplicationEventPublisher publisher,
-			NamedParameterJdbcOperations jdbcOperations
-	) {
-
-		this.publisher = publisher;
-		this.jdbcOperations = jdbcOperations;
-	}
-
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T, ID extends Serializable> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
-		return new JdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) context.getPersistentEntity(aClass));
+		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) context.getPersistentEntity(aClass));
 	}
 
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		return new SimpleJdbcRepository(
-				context.getPersistentEntity(repositoryInformation.getDomainType()),
-				jdbcOperations,
-				publisher);
+		JdbcPersistentEntity<?> persistentEntity = context.getPersistentEntity(repositoryInformation.getDomainType());
+		return new SimpleJdbcRepository<>(persistentEntity, jdbcOperations, publisher);
 	}
 
 	@Override

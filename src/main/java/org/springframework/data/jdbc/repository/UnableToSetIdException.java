@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.mapping.event;
+package org.springframework.data.jdbc.repository;
 
-import java.util.function.Function;
+import org.springframework.dao.NonTransientDataAccessException;
 
 /**
- * gets published after instantiation and setting of all the properties of an entity. This allows to do some
- * postprocessing of entities.
+ * Signals failure to set the id property of an entity.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class AfterCreationEvent extends JdbcEvent{
+public class UnableToSetIdException extends NonTransientDataAccessException {
 
-	/**
-	 * @param instance the newly instantiated entity.
-	 * @param idProvider a function providing the id, for the instance.
-	 * @param <T> type of the entity and the argument of the {@code idProvider}
-	 */
-	public <T> AfterCreationEvent(T instance, Function<T, Object> idProvider) {
-		super(instance, idProvider);
+	public UnableToSetIdException(String message, Throwable cause) {
+		super(message, cause);
 	}
 }

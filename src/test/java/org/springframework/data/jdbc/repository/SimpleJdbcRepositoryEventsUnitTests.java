@@ -1,27 +1,33 @@
 package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.util.Assert.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.event.AfterDeleteEvent;
-import org.springframework.data.jdbc.mapping.event.AfterInsertEvent;
-import org.springframework.data.jdbc.mapping.event.AfterUpdateEvent;
-import org.springframework.data.jdbc.mapping.event.BeforeDeleteEvent;
-import org.springframework.data.jdbc.mapping.event.BeforeInsertEvent;
-import org.springframework.data.jdbc.mapping.event.BeforeUpdateEvent;
+import org.springframework.data.jdbc.mapping.event.AfterDelete;
+import org.springframework.data.jdbc.mapping.event.AfterInsert;
+import org.springframework.data.jdbc.mapping.event.AfterUpdate;
+import org.springframework.data.jdbc.mapping.event.BeforeDelete;
+import org.springframework.data.jdbc.mapping.event.BeforeInsert;
+import org.springframework.data.jdbc.mapping.event.BeforeUpdate;
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 import org.springframework.data.jdbc.mapping.event.JdbcEvent;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.support.KeyHolder;
 
 import lombok.Data;
 
@@ -36,8 +42,23 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Before
 	public void before() {
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(publisher, mock(NamedParameterJdbcOperations.class));
+		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(operations, publisher);
 		repository = factory.getRepository(DummyEntityRepository.class);
+	}
+
+	private NamedParameterJdbcOperations createIdGeneratingOperations() {
+		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
+		when(operations.update(anyString(), any(SqlParameterSource.class), any(KeyHolder.class))).thenAnswer(new Answer<Integer>() {
+			@Override
+			public Integer answer(InvocationOnMock invocation) throws Throwable {
+				HashMap<String, Object> keys = new HashMap<>();
+				keys.put("id", 4711L);
+				invocation.getArgumentAt(2, KeyHolder.class).getKeyList().add(keys);
+				return 1;
+			}
+		});
+		return operations;
 	}
 
 	@Test // DATAJDBC-99
@@ -47,22 +68,24 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		repository.save(entity);
 
-		isInstanceOf(BeforeUpdateEvent.class, publisher.events.get(0));
-		isInstanceOf(AfterUpdateEvent.class, publisher.events.get(1));
+		isInstanceOf(BeforeUpdate.class, publisher.events.get(0));
+		isInstanceOf(AfterUpdate.class, publisher.events.get(1));
 	}
 
 	@Test // DATAJDBC-99
 	public void publishesEventsOnSaveMany() {
+
+
 
 		DummyEntity entity1 = new DummyEntity(null);
 		DummyEntity entity2 = new DummyEntity(23L);
 
 		repository.save(asList(entity1, entity2));
 
-		isInstanceOf(BeforeInsertEvent.class, publisher.events.get(0));
-		isInstanceOf(AfterInsertEvent.class, publisher.events.get(1));
-		isInstanceOf(BeforeUpdateEvent.class, publisher.events.get(2));
-		isInstanceOf(AfterUpdateEvent.class, publisher.events.get(3));
+		isInstanceOf(BeforeInsert.class, publisher.events.get(0));
+		isInstanceOf(AfterInsert.class, publisher.events.get(1));
+		isInstanceOf(BeforeUpdate.class, publisher.events.get(2));
+		isInstanceOf(AfterUpdate.class, publisher.events.get(3));
 	}
 
 
@@ -73,26 +96,24 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		repository.delete(entity);
 
-		isInstanceOf(BeforeDeleteEvent.class, publisher.events.get(0));
-		isInstanceOf(AfterDeleteEvent.class, publisher.events.get(1));
+		isInstanceOf(BeforeDelete.class, publisher.events.get(0));
+		isInstanceOf(AfterDelete.class, publisher.events.get(1));
 
-		assertEquals(entity, publisher.events.get(0).getInstance());
-		assertEquals(entity, publisher.events.get(1).getInstance());
+		assertEquals(entity, publisher.events.get(0).getOptionalEntity().get());
+		assertEquals(entity, publisher.events.get(1).getOptionalEntity().get());
 
-		assertEquals(23L, publisher.events.get(0).getId());
-		assertEquals(23L, publisher.events.get(1).getId());
+		assertEquals(new Specified(23L), publisher.events.get(0).getId());
+		assertEquals(new Specified(23L), publisher.events.get(1).getId());
 	}
-
 
 	@Test // DATAJDBC-99
 	public void publishesEventsOnDeleteById() {
 
 		repository.delete(23L);
 
-		isInstanceOf(BeforeDeleteEvent.class, publisher.events.get(0));
-		isInstanceOf(AfterDeleteEvent.class, publisher.events.get(1));
+		isInstanceOf(BeforeDelete.class, publisher.events.get(0));
+		isInstanceOf(AfterDelete.class, publisher.events.get(1));
 	}
-
 
 	@Data
 	private static class DummyEntity {

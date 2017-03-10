@@ -13,33 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.mapping.model;
-
-import org.springframework.data.mapping.model.BasicPersistentEntity;
-import org.springframework.data.util.TypeInformation;
+package org.springframework.data.jdbc.mapping.event;
 
 /**
- * meta data a repository might need for implementing persistence operations for instances of type {@code T}
+ * Interface for {@link JdbcEvent}s which are guaranteed to have an entity. Allows direct access to that entity, without going through an {@link java.util.Optional}
  *
  * @author Jens Schauder
  * @since 2.0
  */
-public class JdbcPersistentEntity<T> extends BasicPersistentEntity<T, JdbcPersistentProperty> {
+public interface WithEntity {
 
-	private final String tableName;
-
-	public JdbcPersistentEntity(TypeInformation<T> information) {
-
-		super(information);
-
-		tableName = getType().getSimpleName();
-	}
-
-	public String getTableName() {
-		return tableName;
-	}
-
-	public String getIdColumn() {
-		return getIdProperty().getName();
+	default Object getEntity() {
+		return ((JdbcEvent) this).getOptionalEntity()
+				.orElseThrow(() -> new IllegalStateException("Entity must not be NULL"));
 	}
 }

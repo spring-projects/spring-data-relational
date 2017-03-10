@@ -15,38 +15,13 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-import org.springframework.data.mapping.Association;
-import org.springframework.data.mapping.PersistentEntity;
-import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.mapping.PersistentProperty;
 
 /**
- * meta data about a property to be used by repository implementations.
- *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class JdbcPersistentProperty extends AnnotationBasedPersistentProperty<JdbcPersistentProperty> {
+public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersistentProperty> {
 
-	/**
-	 * Creates a new {@link AnnotationBasedPersistentProperty}.
-	 *
-	 * @param field must not be {@literal null}.
-	 * @param propertyDescriptor can be {@literal null}.
-	 * @param owner must not be {@literal null}.
-	 * @param simpleTypeHolder
-	 */
-	public JdbcPersistentProperty(Field field, PropertyDescriptor propertyDescriptor, PersistentEntity<?, JdbcPersistentProperty> owner, SimpleTypeHolder simpleTypeHolder) {
-		super(field, propertyDescriptor, owner, simpleTypeHolder);
-	}
-
-	@Override
-	protected Association<JdbcPersistentProperty> createAssociation() {
-		return null;
-	}
-
-	public String getColumnName() {
-		return getName();
-	}
+	String getColumnName();
 }

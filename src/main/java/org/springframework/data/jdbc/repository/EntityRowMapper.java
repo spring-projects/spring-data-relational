@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
 import org.springframework.data.convert.EntityInstantiator;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
@@ -32,6 +33,7 @@ import org.springframework.jdbc.core.RowMapper;
  * maps a ResultSet to an entity of type {@code T}
  *
  * @author Jens Schauder
+ * @since 2.0
  */
 class EntityRowMapper<T> implements RowMapper<T> {
 
@@ -48,7 +50,7 @@ class EntityRowMapper<T> implements RowMapper<T> {
 
 		T t = createInstance(rs);
 
-		entity.doWithProperties((PropertyHandler) property -> {
+		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
 			setProperty(rs, t, property);
 		});
 
@@ -57,12 +59,15 @@ class EntityRowMapper<T> implements RowMapper<T> {
 
 	private T createInstance(ResultSet rs) {
 		return instantiator.createInstance(entity, new ParameterValueProvider<JdbcPersistentProperty>() {
+			@SuppressWarnings("unchecked")
 			@Override
 			public <T> T getParameterValue(PreferredConstructor.Parameter<T, JdbcPersistentProperty> parameter) {
 				try {
 					return (T) rs.getObject(parameter.getName());
 				} catch (SQLException e) {
-					throw new MappingException(String.format("Couldn't read column %s from ResultSet.", parameter.getName()));
+					throw new MappingException( //
+							String.format("Couldn't read column %s from ResultSet.", parameter.getName()) //
+					);
 				}
 			}
 		});
