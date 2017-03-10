@@ -13,33 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.mapping.model;
+package org.springframework.data.jdbc.mapping.event;
 
-import org.springframework.data.mapping.model.BasicPersistentEntity;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * meta data a repository might need for implementing persistence operations for instances of type {@code T}
+ * Gets published after an entity was updated in the database.
  *
  * @author Jens Schauder
  * @since 2.0
  */
-public class JdbcPersistentEntity<T> extends BasicPersistentEntity<T, JdbcPersistentProperty> {
+public class AfterUpdate extends AfterSave {
 
-	private final String tableName;
-
-	public JdbcPersistentEntity(TypeInformation<T> information) {
-
-		super(information);
-
-		tableName = getType().getSimpleName();
-	}
-
-	public String getTableName() {
-		return tableName;
-	}
-
-	public String getIdColumn() {
-		return getIdProperty().getName();
+	/**
+	 * @param id of the entity
+	 * @param instance the updated entity.
+	 */
+	public AfterUpdate(Specified id, Object instance) {
+		super(id, instance);
 	}
 }

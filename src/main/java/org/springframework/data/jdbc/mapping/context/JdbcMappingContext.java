@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.mapping.context;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+
+import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.context.AbstractMappingContext;
@@ -25,9 +27,9 @@ import org.springframework.data.util.TypeInformation;
 
 /**
  * @author Jens Schauder
+ * @since 2.0
  */
 public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> {
-
 
 	@Override
 	protected <T> JdbcPersistentEntity createPersistentEntity(TypeInformation<T> typeInformation) {
@@ -35,7 +37,12 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	}
 
 	@Override
-	protected JdbcPersistentProperty createPersistentProperty(Field field, PropertyDescriptor descriptor, JdbcPersistentEntity owner, SimpleTypeHolder simpleTypeHolder) {
-		return new JdbcPersistentProperty(field, descriptor, owner, simpleTypeHolder);
+	protected JdbcPersistentProperty createPersistentProperty( //
+			Field field, //
+			PropertyDescriptor descriptor, //
+			JdbcPersistentEntity owner, //
+			SimpleTypeHolder simpleTypeHolder //
+	) {
+		return new BasicJdbcPersistentProperty(field, descriptor, owner, simpleTypeHolder);
 	}
 }

@@ -15,23 +15,23 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.function.Function;
+import java.util.Optional;
+
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * gets published before an entity gets inserted into the database.
- *
- * When the id-property of the entity must get set manually, an event listener for this event may do so.
+ * Gets published when an entity is about to get deleted.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class BeforeInsertEvent extends BeforeSaveEvent {
+public class BeforeDelete extends JdbcEventWithId {
 
 	/**
-	 * @param instance the entity about to get inserted.
-	 * @param idProvider a function providing the id, for the instance.
-	 * @param <T> type of the entity and the argument of the {@code idProvider}
+	 * @param id the id of the entity
+	 * @param entity the entity about to get deleted. Might be empty.
 	 */
-	public <T> BeforeInsertEvent(T instance, Function<T, Object> idProvider) {
-		super(instance, idProvider);
+	public <T> BeforeDelete(Specified id, Optional<Object> entity) {
+		super(id, entity);
 	}
 }

@@ -15,21 +15,21 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.function.Function;
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * gets published before an entity gets updated in the database.
+ * Gets published before an entity gets updated in the database.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class BeforeUpdateEvent extends BeforeSaveEvent {
+public class BeforeUpdate extends BeforeSave implements WithId {
 
 	/**
-	 * @param instance the entity about to get saved.
-	 * @param idProvider a function providing the id, for the instance.
-	 * @param <T> type of the entity and the argument of the {@code idProvider}
+	 * @param id of the entity about to get updated
+	 * @param instance the entity about to get updated.
 	 */
-	public <T> BeforeUpdateEvent(T instance, Function<T, Object> idProvider) {
-		super(instance, idProvider);
+	public BeforeUpdate(Specified id, Object instance) {
+		super(id, instance);
 	}
 }

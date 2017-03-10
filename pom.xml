@@ -128,61 +128,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.12</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-instrument</artifactId>
-                        <version>${spring}</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.hsqldb</groupId>
-                        <artifactId>hsqldb</artifactId>
-                        <version>${hsqldb1}</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <id>default-test</id>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/*</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unit-tests</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <phase>test</phase>
-                        <configuration>
-                            <includes>
-                                <include>**/*UnitTests.java</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>integration-tests</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                        <phase>test</phase>
-                        <configuration>
-                            <includes>
-                                <include>**/*IntegrationTests.java</include>
-                                <include>**/*Tests.java</include>
-                            </includes>
-                            <excludes>
-                                <exclude>**/*UnitTests.java</exclude>
-\                            </excludes>
-                            <argLine>
-                                -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco}/org.jacoco.agent-${jacoco}-runtime.jar=destfile=${jacoco.destfile}
-                            </argLine>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

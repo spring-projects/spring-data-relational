@@ -17,13 +17,26 @@ package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
 
-import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.repository.core.support.PersistentEntityInformation;
 
 /**
  * @author Jens Schauder
  * @since 2.0
  */
-public interface JdbcPersistentEntityInformation<T, ID extends Serializable> extends EntityInformation<T, ID> {
+public class BasicJdbcPersistentEntityInformation<T, ID extends Serializable> extends PersistentEntityInformation<T, ID>
+		implements JdbcPersistentEntityInformation<T, ID> {
 
-	void setId(T instance, Object value);
+	private final JdbcPersistentEntity<T> persistentEntity;
+
+	public BasicJdbcPersistentEntityInformation(JdbcPersistentEntity<T> persistentEntity) {
+		super(persistentEntity);
+
+		this.persistentEntity = persistentEntity;
+	}
+
+	@Override
+	public void setId(T instance, Object value) {
+		persistentEntity.getPropertyAccessor(instance).setProperty(persistentEntity.getIdProperty(), value);
+	}
 }

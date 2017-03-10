@@ -15,44 +15,37 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.jdbc.mapping.event.AfterCreationEvent;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.event.AfterCreation;
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
+import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
 import org.springframework.jdbc.core.RowMapper;
 
+import lombok.RequiredArgsConstructor;
+
 /**
- * a RowMapper that publishes events after a delegate, did the actual work of mapping a {@link ResultSet} to an entity.
+ * a RowMapper that publishes events after a delegate, did the actual work of mapping a {@link ResultSet} to an entityInformation.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class EventPublishingEntityRowMapper<T> implements RowMapper<T> {
+@RequiredArgsConstructor
+public class EventPublishingEntityRowMapper<T, ID extends Serializable> implements RowMapper<T> {
 
 	private final RowMapper<T> delegate;
-	private final JdbcPersistentEntity<T> entity;
+	private final JdbcPersistentEntityInformation<T, ID> entityInformation;
 	private final ApplicationEventPublisher publisher;
-
-	/**
-	 *
-	 * @param delegate does the actuall mapping.
-	 * @param entity provides functionality to create ids from entities
-	 * @param publisher used for event publishing after the mapping.
-	 */
-	EventPublishingEntityRowMapper(RowMapper<T> delegate,JdbcPersistentEntity<T> entity, ApplicationEventPublisher publisher) {
-
-		this.delegate = delegate;
-		this.entity = entity;
-		this.publisher = publisher;
-	}
 
 	@Override
 	public T mapRow(ResultSet resultSet, int i) throws SQLException {
 
 		T instance = delegate.mapRow(resultSet, i);
 
-		publisher.publishEvent(new AfterCreationEvent(instance, entity::getIdValue));
+		publisher.publishEvent(new AfterCreation(new Specified(entityInformation.getId(instance)), instance));
 
 		return instance;
 	}

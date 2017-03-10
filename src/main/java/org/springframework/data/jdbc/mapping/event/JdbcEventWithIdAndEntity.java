@@ -15,22 +15,22 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.function.Function;
+import lombok.Getter;
+
+import java.util.Optional;
+
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * get published after deletion of an entity. The source might contain the Id or the actual entity, depending on the
- * {@code delete(...)} method used.
+ * A {@link JdbcEvent} which is guaranteed to have an identifier and an entity.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class AfterDeleteEvent extends JdbcEvent{
+@Getter
+public class JdbcEventWithIdAndEntity extends JdbcEvent implements WithId, WithEntity {
 
-	/**
-	 * @param instance the deleted entity.
-	 * @param idProvider a function providing the id, for the instance.
-	 * @param <T> type of the entity and the argument of the {@code idProvider}
-	 */
-	public <T> AfterDeleteEvent(T instance, Function<T, Object> idProvider) {
-		super(instance, idProvider);
+	public JdbcEventWithIdAndEntity(Specified id, Object entity) {
+		super(id, Optional.of(entity));
 	}
 }

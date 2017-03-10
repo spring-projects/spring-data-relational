@@ -24,6 +24,7 @@ import org.springframework.data.mapping.PropertyHandler;
 
 /**
  * @author Jens Schauder
+ * @since 2.0
  */
 class SqlGenerator {
 

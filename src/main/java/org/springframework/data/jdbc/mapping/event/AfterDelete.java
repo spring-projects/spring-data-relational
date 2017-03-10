@@ -15,23 +15,25 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.function.Function;
+import java.util.Optional;
 
-import org.springframework.context.ApplicationEvent;
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * subclasses of this get published before an entity gets saved to the database.
+ * Gets published after deletion of an entity. It will have a {@link Specified} identifier.
+ *
+ * If the entity is empty or not depends on the delete method used.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class BeforeSaveEvent extends JdbcEvent {
+public class AfterDelete extends JdbcEventWithId{
 
 	/**
-	 * @param instance the entity about to get saved.
-	 * @param idProvider a function providing the id, for the instance.
-	 * @param <T> type of the entity and the argument of the {@code idProvider}
+	 * @param id of the entity.
+	 * @param instance the deleted entity if it is available.
 	 */
-	<T> BeforeSaveEvent(T instance, Function<T, Object> idProvider) {
-		super(instance, idProvider);
+	public AfterDelete(Specified id, Optional<Object> instance) {
+		super(id, instance);
 	}
 }

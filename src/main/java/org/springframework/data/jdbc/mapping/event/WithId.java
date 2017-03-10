@@ -15,21 +15,19 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.function.Function;
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * gets published after an entity was updated in the database.
+ * Interface for {@link JdbcEvent}s which are guaranteed to have a {@link Specified} identifier.
+ *
+ * Offers direct access to the {@link Specified} identifier.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class AfterUpdateEvent extends AfterSaveEvent {
+public interface WithId {
 
-	/**
-	 * @param instance the updated entity.
-	 * @param idProvider a function providing the id, for the instance.
-	 * @param <T> type of the entity and the argument of the {@code idProvider}
-	 */
-	public <T> AfterUpdateEvent(T instance, Function<T, Object> idProvider) {
-		super(instance, idProvider);
+	default Specified getSpecifiedId(){
+		return (Specified) ((JdbcEvent)this).getId();
 	}
 }

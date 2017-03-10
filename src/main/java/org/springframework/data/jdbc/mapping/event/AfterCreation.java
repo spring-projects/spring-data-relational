@@ -15,21 +15,21 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.function.Function;
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * gets published after an entity got inserted into the database.
+ * Gets published after instantiation and setting of all the properties of an entity. This allows to do some postprocessing of entities.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class AfterInsertEvent extends AfterSaveEvent {
+public class AfterCreation extends JdbcEventWithIdAndEntity {
 
 	/**
-	 * @param instance the newly inserted entity.
-	 * @param idProvider a function providing the id, for the instance.
-	 * @param <T> type of the entity and the argument of the {@code idProvider}
+	 * @param id of the entity
+	 * @param entity the newly instantiated entity.
 	 */
-	public <T> AfterInsertEvent(T instance, Function<T, Object> idProvider) {
-		super(instance, idProvider);
+	public AfterCreation(Specified id, Object entity) {
+		super(id, entity);
 	}
 }
