@@ -28,11 +28,11 @@ import java.util.Optional;
  */
 public interface Identifier {
 
-	Optional<Object> getOptionalValue();
-
 	static Identifier fromNullable(Object value) {
 		return (value != null) ? new Specified(value) : Unset.UNSET;
 	}
+
+	Optional<Object> getOptionalValue();
 
 	/**
 	 * An unset identifier. Always returns {@link Optional#empty()} as value.
@@ -47,15 +47,13 @@ public interface Identifier {
 	}
 
 	/**
-	 * An {@link Identifier} guaranteed to have a non empty value.
-	 *
-	 * Since it is guaranteed to exist the value can get access directly.
+	 * An {@link Identifier} guaranteed to have a non empty value. Since it is guaranteed to exist the value can get
+	 * access directly.
 	 */
 	@Data
 	class Specified implements Identifier {
 
-		@NonNull
-		private final Object value;
+		@NonNull private final Object value;
 
 		@Override
 		public Optional<Object> getOptionalValue() {

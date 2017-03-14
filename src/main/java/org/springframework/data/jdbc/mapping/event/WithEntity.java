@@ -16,7 +16,8 @@
 package org.springframework.data.jdbc.mapping.event;
 
 /**
- * Interface for {@link JdbcEvent}s which are guaranteed to have an entity. Allows direct access to that entity, without going through an {@link java.util.Optional}
+ * Interface for {@link JdbcEvent}s which are guaranteed to have an entity. Allows direct access to that entity, without
+ * going through an {@link java.util.Optional}
  *
  * @author Jens Schauder
  * @since 2.0

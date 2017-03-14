@@ -20,14 +20,13 @@ import java.util.Optional;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * Gets published after deletion of an entity. It will have a {@link Specified} identifier.
- *
- * If the entity is empty or not depends on the delete method used.
+ * Gets published after deletion of an entity. It will have a {@link Specified} identifier. If the entity is empty or
+ * not depends on the delete method used.
  *
  * @author Jens Schauder
  * @since 2.0
  */
-public class AfterDelete extends JdbcEventWithId{
+public class AfterDelete extends JdbcEventWithId {
 
 	/**
 	 * @param id of the entity.

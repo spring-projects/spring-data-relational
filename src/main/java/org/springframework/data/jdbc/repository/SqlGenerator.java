@@ -17,12 +17,15 @@ package org.springframework.data.jdbc.repository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
 
 /**
+ * Generates SQL statements to be used by {@Link SimpleJdbcRepository}
+ *
  * @author Jens Schauder
  * @since 2.0
  */
@@ -36,29 +39,45 @@ class SqlGenerator {
 	private final String countSql;
 
 	private final String insertSql;
+
+	private final String updateSql;
+
 	private final String deleteByIdSql;
 	private final String deleteAllSql;
 	private final String deleteByListSql;
-	private final String updateSql;
+
+	private final JdbcPersistentEntity<?> entity;
 	private final List<String> propertyNames = new ArrayList<>();
+	private final List<String> nonIdPropertyNames = new ArrayList<>();
 
-	<T> SqlGenerator(JdbcPersistentEntity<T> entity) {
+	SqlGenerator(JdbcPersistentEntity<?> entity) {
+		this.entity = entity;
 
-		entity.doWithProperties((PropertyHandler) persistentProperty -> propertyNames.add(persistentProperty.getName()));
+		initPropertyNames();
 
-		findOneSql = createFindOneSelectSql(entity);
-		findAllSql = createFindAllSql(entity);
-		findAllInListSql = createFindAllInListSql(entity);
+		findOneSql = createFindOneSelectSql();
+		findAllSql = createFindAllSql();
+		findAllInListSql = createFindAllInListSql();
 
-		existsSql = createExistsSql(entity);
-		countSql = createCountSql(entity);
+		existsSql = createExistsSql();
+		countSql = createCountSql();
 
-		insertSql = createInsertSql(entity);
-		updateSql = createUpdateSql(entity);
+		insertSql = createInsertSql();
 
-		deleteByIdSql = createDeleteSql(entity);
-		deleteAllSql = createDeleteAllSql(entity);
-		deleteByListSql = createDeleteByListSql(entity);
+		updateSql = createUpdateSql();
+
+		deleteByIdSql = createDeleteSql();
+		deleteAllSql = createDeleteAllSql();
+		deleteByListSql = createDeleteByListSql();
+	}
+
+	private <T> void initPropertyNames() {
+		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
+			propertyNames.add(p.getName());
+			if (!entity.isIdProperty(p)) {
+				nonIdPropertyNames.add(p.getName());
+			}
+		});
 	}
 
 	String getFindAllInList() {
@@ -100,55 +119,56 @@ class SqlGenerator {
 	String getDeleteByList() {
 		return deleteByListSql;
 	}
-	private String createFindOneSelectSql(JdbcPersistentEntity<?> entity) {
+
+	private String createFindOneSelectSql() {
 		return String.format("select * from %s where %s = :id", entity.getTableName(), entity.getIdColumn());
 	}
 
-	private String createFindAllSql(JdbcPersistentEntity<?> entity) {
+	private String createFindAllSql() {
 		return String.format("select * from %s", entity.getTableName());
 	}
 
-	private String createFindAllInListSql(JdbcPersistentEntity<?> entity) {
-		return String.format(String.format("select * from %s where %s in (:ids)", entity.getTableName(), entity.getIdColumn()), entity.getTableName());
+	private String createFindAllInListSql() {
+		return String.format("select * from %s where %s in (:ids)", entity.getTableName(), entity.getIdColumn());
 	}
 
-	private String createExistsSql(JdbcPersistentEntity<?> entity) {
+	private String createExistsSql() {
 		return String.format("select count(*) from %s where %s = :id", entity.getTableName(), entity.getIdColumn());
 	}
 
-	private <T> String createCountSql(JdbcPersistentEntity<T> entity) {
+	private <T> String createCountSql() {
 		return String.format("select count(*) from %s", entity.getTableName());
 	}
 
-	private String createInsertSql(JdbcPersistentEntity<?> entity) {
+	private String createInsertSql() {
 
 		String insertTemplate = "insert into %s (%s) values (%s)";
 
-		String tableColumns = propertyNames.stream().collect(Collectors.joining(", "));
-		String parameterNames = propertyNames.stream().collect(Collectors.joining(", :", ":", ""));
+		String tableColumns = nonIdPropertyNames.stream().collect(Collectors.joining(", "));
+		String parameterNames = nonIdPropertyNames.stream().collect(Collectors.joining(", :", ":", ""));
 
 		return String.format(insertTemplate, entity.getTableName(), tableColumns, parameterNames);
 	}
 
-	private <T> String createUpdateSql(JdbcPersistentEntity<T> entity) {
+	private <T> String createUpdateSql() {
 
 		String updateTemplate = "update %s set %s where %s = :%s";
 
-		String setClause = propertyNames.stream().map(n -> String.format("%s = :%s", n, n)).collect(Collectors.joining(", "));
+		String setClause = propertyNames.stream().map(n -> String.format("%s = :%s", n, n))
+				.collect(Collectors.joining(", "));
 
 		return String.format(updateTemplate, entity.getTableName(), setClause, entity.getIdColumn(), entity.getIdColumn());
 	}
 
-	private String createDeleteSql(JdbcPersistentEntity entity) {
+	private String createDeleteSql() {
 		return String.format("delete from %s where %s = :id", entity.getTableName(), entity.getIdColumn());
 	}
 
-	private String createDeleteAllSql(JdbcPersistentEntity entity) {
+	private String createDeleteAllSql() {
 		return String.format("delete from %s", entity.getTableName());
 	}
 
-	private String createDeleteByListSql(JdbcPersistentEntity entity) {
+	private String createDeleteByListSql() {
 		return String.format("delete from %s where %s in (:ids)", entity.getTableName(), entity.getIdColumn());
 	}
-
 }

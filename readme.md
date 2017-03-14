@@ -9,6 +9,35 @@ The primary goal of the [Spring Data](http://projects.spring.io/spring-data) pro
 
 ## Quick Start ##
 
+## Execute Tests ##
+
+### Fast running tests
+
+Fast running tests can executed with a simple 
+
+    mvn test
+
+This will execute unit tests and integration tests using an in-memory database.
+
+### Running tests with a real database
+
+To run the integration tests against a specific database you nned to have the database running on your local machine and then execute.
+
+    mvn test -Dspring.profiles.active=<databasetype>
+
+This will also execute the unit tests.
+
+Currently the following *databasetypes* are available:
+
+* hsql (default, does not need to be running)
+* mysql
+
+### Run tests with all databases
+
+    mvn test -Pall-dbs
+
+This will execute the unit tests, and all the integration tests with all the databases we currently support for testing. The databases must be running.
+
 ## Contributing to Spring Data JDBC ##
 
 Here are some ways for you to get involved in the community:

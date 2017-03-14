@@ -19,16 +19,17 @@ import org.springframework.jdbc.core.RowMapper;
  */
 public class EventPublishingEntityRowMapperTest {
 
-	RowMapper rowMapperDelegate = mock(RowMapper.class);
+	RowMapper<DummyEntity> rowMapperDelegate = mock(RowMapper.class);
 	JdbcPersistentEntityInformation<DummyEntity, Long> entityInformation = mock(JdbcPersistentEntityInformation.class);
 	ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
 
 	@Test // DATAJDBC-99
 	public void eventGetsPublishedAfterInstantiation() throws SQLException {
 
+		when(rowMapperDelegate.mapRow(any(ResultSet.class), anyInt())).thenReturn(new DummyEntity(1L));
 		when(entityInformation.getId(any())).thenReturn(1L);
 
-		EventPublishingEntityRowMapper<DummyEntity, Long> rowMapper = new EventPublishingEntityRowMapper<>( //
+		EventPublishingEntityRowMapper rowMapper = new EventPublishingEntityRowMapper<>( //
 				rowMapperDelegate, //
 				entityInformation, //
 				publisher);
@@ -41,7 +42,6 @@ public class EventPublishingEntityRowMapperTest {
 
 	@Data
 	static class DummyEntity {
-
 		@Id private final Long Id;
 	}
 }

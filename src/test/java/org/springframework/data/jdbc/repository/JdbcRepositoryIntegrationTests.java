@@ -24,24 +24,26 @@ import lombok.Data;
 
 import javax.sql.DataSource;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.JdbcRepositoryIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.rules.SpringClassRule;
+import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,26 +52,40 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfiguration.class)
 @Transactional
 public class JdbcRepositoryIntegrationTests {
 
-	@Autowired NamedParameterJdbcTemplate template;
+	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
+	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 
 	private DummyEntity entity = createDummyEntity();
+
+	private static DummyEntityRepository createRepository(EmbeddedDatabase db) {
+
+		return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class))
+				.getRepository(DummyEntityRepository.class);
+	}
+
+	private static DummyEntity createDummyEntity() {
+
+		DummyEntity entity = new DummyEntity();
+		entity.setName("Entity Name");
+		return entity;
+	}
 
 	@Test // DATAJDBC-95
 	public void savesAnEntity() {
 
 		entity = repository.save(entity);
 
-		int count = template.queryForObject( //
-				"SELECT count(*) FROM dummyentity WHERE idProp = :id", //
-				new MapSqlParameterSource("id", entity.getIdProp()), //
-				Integer.class //
+		int count = JdbcTestUtils.countRowsInTableWhere( //
+				(JdbcTemplate) template.getJdbcOperations(), //
+				"dummyentity", //
+				"idProp = " + entity.getIdProp() //
 		);
 
 		assertEquals(1, count);
@@ -95,9 +111,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(repository.findAll()) //
 				.extracting(DummyEntity::getIdProp) //
-				.containsExactlyInAnyOrder( //
-						entity.getIdProp(), other.getIdProp() //
-		);
+				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
 	}
 
 	@Test // DATAJDBC-97
@@ -125,9 +139,9 @@ public class JdbcRepositoryIntegrationTests {
 	@Test // DATAJDBC-97
 	public void findAllFindsAllSpecifiedEntities() {
 
+		entity = repository.save(entity);
 		DummyEntity two = repository.save(createDummyEntity());
 		DummyEntity three = repository.save(createDummyEntity());
-		entity = repository.save(entity);
 
 		Iterable<DummyEntity> all = repository.findAll(asList(entity.getIdProp(), three.getIdProp()));
 
@@ -155,9 +169,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(repository.findAll()) //
 				.extracting(DummyEntity::getIdProp) //
-				.containsExactlyInAnyOrder( //
-						entity.getIdProp(), three.getIdProp() //
-		);
+				.containsExactlyInAnyOrder(entity.getIdProp(), three.getIdProp());
 	}
 
 	@Test // DATAJDBC-97
@@ -171,9 +183,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(repository.findAll()) //
 				.extracting(DummyEntity::getIdProp) //
-				.containsExactlyInAnyOrder( //
-						two.getIdProp(), three.getIdProp() //
-		);
+				.containsExactlyInAnyOrder(two.getIdProp(), three.getIdProp());
 	}
 
 	@Test // DATAJDBC-97
@@ -185,7 +195,9 @@ public class JdbcRepositoryIntegrationTests {
 
 		repository.delete(asList(entity, three));
 
-		assertThat(repository.findAll()).extracting(DummyEntity::getIdProp).containsExactlyInAnyOrder(two.getIdProp());
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getIdProp) //
+				.containsExactlyInAnyOrder(two.getIdProp());
 	}
 
 	@Test // DATAJDBC-97
@@ -225,52 +237,31 @@ public class JdbcRepositoryIntegrationTests {
 
 		repository.save(asList(entity, other));
 
-		assertThat(repository.findAll()).extracting(DummyEntity::getName).containsExactlyInAnyOrder(entity.getName(),
-				other.getName());
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getName) //
+				.containsExactlyInAnyOrder(entity.getName(), other.getName());
 	}
 
-	private static DummyEntityRepository createRepository(EmbeddedDatabase db) {
-
-		return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class))
-				.getRepository(DummyEntityRepository.class);
-	}
-
-	private static DummyEntity createDummyEntity() {
-
-		DummyEntity entity = new DummyEntity();
-		entity.setName("Entity Name");
-		return entity;
-	}
-
-	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
-
-	}
+	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
 	@Data
 	static class DummyEntity {
 
-		@Id private Long idProp;
 		String name;
+		@Id private Long idProp;
 	}
 
 	@Configuration
+	@ComponentScan("org.springframework.data.jdbc.testing")
 	static class TestConfiguration {
 
 		@Bean
-		EmbeddedDatabase dataSource() {
-
-			System.out.println(" creating datasource");
-			return new EmbeddedDatabaseBuilder() //
-					.generateUniqueName(true) //
-					.setType(EmbeddedDatabaseType.HSQL) //
-					.setScriptEncoding("UTF-8") //
-					.ignoreFailedDrops(true) //
-					.addScript("org.springframework.data.jdbc.repository/jdbc-repository-integration-tests.sql") //
-					.build();
+		Class<?> testClass() {
+			return JdbcRepositoryIntegrationTests.class;
 		}
 
 		@Bean
-		NamedParameterJdbcTemplate template(EmbeddedDatabase db) {
+		NamedParameterJdbcTemplate template(DataSource db) {
 			return new NamedParameterJdbcTemplate(db);
 		}
 
@@ -285,6 +276,5 @@ public class JdbcRepositoryIntegrationTests {
 		PlatformTransactionManager transactionManager(DataSource db) {
 			return new DataSourceTransactionManager(db);
 		}
-
 	}
 }

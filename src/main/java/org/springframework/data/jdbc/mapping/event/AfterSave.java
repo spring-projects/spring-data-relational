@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.Optional;
-
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**

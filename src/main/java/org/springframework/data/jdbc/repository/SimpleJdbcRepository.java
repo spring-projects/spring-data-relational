@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
 import org.springframework.data.jdbc.mapping.event.AfterInsert;
@@ -59,12 +62,15 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	private final JdbcPersistentEntityInformation<T, ID> entityInformation;
 	private final NamedParameterJdbcOperations operations;
 	private final SqlGenerator sql;
-
 	private final EntityRowMapper<T> entityRowMapper;
 	private final ApplicationEventPublisher publisher;
+	private final ConversionService conversions = new DefaultConversionService();
 
-	public SimpleJdbcRepository(JdbcPersistentEntity<T> persistentEntity, NamedParameterJdbcOperations jdbcOperations,
-			ApplicationEventPublisher publisher) {
+	public SimpleJdbcRepository( //
+			JdbcPersistentEntity<T> persistentEntity, //
+			NamedParameterJdbcOperations jdbcOperations, //
+			ApplicationEventPublisher publisher //
+	) {
 
 		Assert.notNull(persistentEntity, "PersistentEntity must not be null.");
 		Assert.notNull(jdbcOperations, "JdbcOperations must not be null.");
@@ -75,8 +81,8 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 		this.operations = jdbcOperations;
 		this.publisher = publisher;
 
-		entityRowMapper = new EntityRowMapper<>(persistentEntity);
-		sql = new SqlGenerator(persistentEntity);
+		this.entityRowMapper = new EntityRowMapper<>(persistentEntity);
+		this.sql = new SqlGenerator(persistentEntity);
 	}
 
 	@Override
@@ -95,9 +101,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	public <S extends T> Iterable<S> save(Iterable<S> entities) {
 
 		List<S> savedEntities = new ArrayList<>();
-
 		entities.forEach(e -> savedEntities.add(save(e)));
-
 		return savedEntities;
 	}
 
@@ -141,8 +145,12 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	@Override
 	public void delete(Iterable<? extends T> entities) {
 
-		operations.update(sql.getDeleteByList(), new MapSqlParameterSource("ids", StreamSupport
-				.stream(entities.spliterator(), false).map(entityInformation::getId).collect(Collectors.toList())));
+		List<ID> idList = StreamSupport.stream(entities.spliterator(), false) //
+				.map(entityInformation::getId) //
+				.collect(Collectors.toList());
+
+		MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource("ids", idList);
+		operations.update(sql.getDeleteByList(), sqlParameterSource);
 	}
 
 	@Override
@@ -154,11 +162,11 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 		Map<String, Object> parameters = new HashMap<>();
 
-		this.persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) //
-		property -> parameters.put( //
-				property.getColumnName(), //
-				persistentEntity.getPropertyAccessor(instance).getProperty(property)) //
-		);
+		this.persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
+
+			Object value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
+			parameters.put(property.getColumnName(), value);
+		});
 
 		return parameters;
 	}
@@ -195,14 +203,36 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	}
 
 	private <S extends T> void setIdFromJdbc(S instance, KeyHolder holder) {
+
 		try {
-			Number idValueFromJdbc = holder.getKey();
+
+			Object idValueFromJdbc = getIdFromHolder(holder);
 			if (idValueFromJdbc != null) {
-				entityInformation.setId(instance, idValueFromJdbc);
+
+				Class<?> targetType = persistentEntity.getIdProperty().getType();
+				Object converted = convert(idValueFromJdbc, targetType);
+				entityInformation.setId(instance, converted);
 			}
+
 		} catch (NonTransientDataAccessException e) {
 			throw new UnableToSetIdException("Unable to set id of " + instance, e);
 		}
+	}
+
+	private Object getIdFromHolder(KeyHolder holder) {
+
+		try {
+			// mysql just returns one value with a special name
+			return holder.getKey();
+		} catch (InvalidDataAccessApiUsageException e) {
+			// postgress returns a value for each column
+			return holder.getKeys().get(persistentEntity.getIdColumn());
+		}
+
+	}
+
+	private <V> V convert(Object idValueFromJdbc, Class<V> targetType) {
+		return conversions.convert(idValueFromJdbc, targetType);
 	}
 
 	private void doDelete(Specified specifiedId, Optional<Object> optionalEntity) {

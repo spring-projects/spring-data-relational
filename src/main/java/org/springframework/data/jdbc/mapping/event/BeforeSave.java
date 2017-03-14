@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import java.util.Optional;
-
 /**
  * Subclasses of this get published before an entity gets saved to the database.
  *
