@@ -1,9 +1,11 @@
 package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.util.Assert.*;
+
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,7 +13,6 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
@@ -29,8 +30,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
-import lombok.Data;
-
 /**
  * @author Jens Schauder
  */
@@ -42,22 +41,27 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	@Before
 	public void before() {
+
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(operations, publisher);
 		repository = factory.getRepository(DummyEntityRepository.class);
 	}
 
 	private NamedParameterJdbcOperations createIdGeneratingOperations() {
+
+		Answer<Integer> setIdInKeyHolder = invocation -> {
+
+			HashMap<String, Object> keys = new HashMap<>();
+			keys.put("id", 4711L);
+			KeyHolder keyHolder = invocation.getArgumentAt(2, KeyHolder.class);
+			keyHolder.getKeyList().add(keys);
+
+			return 1;
+		};
+
 		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
-		when(operations.update(anyString(), any(SqlParameterSource.class), any(KeyHolder.class))).thenAnswer(new Answer<Integer>() {
-			@Override
-			public Integer answer(InvocationOnMock invocation) throws Throwable {
-				HashMap<String, Object> keys = new HashMap<>();
-				keys.put("id", 4711L);
-				invocation.getArgumentAt(2, KeyHolder.class).getKeyList().add(keys);
-				return 1;
-			}
-		});
+		when(operations.update(anyString(), any(SqlParameterSource.class), any(KeyHolder.class)))
+				.thenAnswer(setIdInKeyHolder);
 		return operations;
 	}
 
@@ -75,8 +79,6 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Test // DATAJDBC-99
 	public void publishesEventsOnSaveMany() {
 
-
-
 		DummyEntity entity1 = new DummyEntity(null);
 		DummyEntity entity2 = new DummyEntity(23L);
 
@@ -87,7 +89,6 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		isInstanceOf(BeforeUpdate.class, publisher.events.get(2));
 		isInstanceOf(AfterUpdate.class, publisher.events.get(3));
 	}
-
 
 	@Test // DATAJDBC-99
 	public void publishesEventsOnDelete() {
@@ -115,14 +116,11 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		isInstanceOf(AfterDelete.class, publisher.events.get(1));
 	}
 
+	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+
 	@Data
 	private static class DummyEntity {
-
 		@Id private final Long id;
-	}
-
-	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
-
 	}
 
 	static class FakePublisher implements ApplicationEventPublisher {

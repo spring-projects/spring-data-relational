@@ -21,44 +21,45 @@ import static org.mockito.Mockito.*;
 
 import lombok.Data;
 
+import javax.sql.DataSource;
+
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.JdbcRepositoryIdGenerationIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.rules.SpringClassRule;
+import org.springframework.test.context.junit4.rules.SpringMethodRule;
 
 /**
  * Testing special cases for id generation with {@link SimpleJdbcRepository}.
  *
  * @author Jens Schauder
  */
-@RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfiguration.class)
 public class JdbcRepositoryIdGenerationIntegrationTests {
 
+	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
+
 	@Autowired NamedParameterJdbcTemplate template;
-
 	@Autowired ReadOnlyIdEntityRepository readOnlyIdrepository;
-
 	@Autowired PrimitiveIdEntityRepository primitiveIdRepository;
 
 	@Test // DATAJDBC-98
 	public void idWithoutSetterGetsSet() {
 
-		ReadOnlyIdEntity entity1 = new ReadOnlyIdEntity(null);
-		entity1.setName("Entity Name");
-		ReadOnlyIdEntity entity = entity1;
+		ReadOnlyIdEntity entity = new ReadOnlyIdEntity(null);
+		entity.setName("Entity Name");
 		entity = readOnlyIdrepository.save(entity);
 
 		assertThat(entity.getId()).isNotNull();
@@ -77,6 +78,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		entity = primitiveIdRepository.save(entity);
 
 		assertThat(entity.getId()).isNotNull();
+		assertThat(entity.getId()).isNotEqualTo(0L);
 
 		PrimitiveIdEntity reloadedEntity = primitiveIdRepository.findOne(entity.getId());
 
@@ -84,19 +86,15 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		assertEquals(entity.getName(), reloadedEntity.getName());
 	}
 
-	private interface ReadOnlyIdEntityRepository extends CrudRepository<ReadOnlyIdEntity, Long> {
+	private interface ReadOnlyIdEntityRepository extends CrudRepository<ReadOnlyIdEntity, Long> {}
 
-	}
+	private interface PrimitiveIdEntityRepository extends CrudRepository<PrimitiveIdEntity, Long> {}
 
 	@Data
 	static class ReadOnlyIdEntity {
 
 		@Id private final Long id;
 		String name;
-	}
-
-	private interface PrimitiveIdEntityRepository extends CrudRepository<PrimitiveIdEntity, Long> {
-
 	}
 
 	@Data
@@ -107,28 +105,21 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	}
 
 	@Configuration
+	@ComponentScan("org.springframework.data.jdbc.testing")
 	static class TestConfiguration {
 
 		@Bean
-		EmbeddedDatabase dataSource() {
-
-			System.out.println(" creating datasource");
-			return new EmbeddedDatabaseBuilder() //
-					.generateUniqueName(true) //
-					.setType(EmbeddedDatabaseType.HSQL) //
-					.setScriptEncoding("UTF-8") //
-					.ignoreFailedDrops(true) //
-					.addScript("org.springframework.data.jdbc.repository/jdbc-repository-id-generation-integration-tests.sql")
-					.build();
+		Class<?> testClass() {
+			return JdbcRepositoryIdGenerationIntegrationTests.class;
 		}
 
 		@Bean
-		NamedParameterJdbcTemplate template(EmbeddedDatabase db) {
+		NamedParameterJdbcTemplate template(DataSource db) {
 			return new NamedParameterJdbcTemplate(db);
 		}
 
 		@Bean
-		ReadOnlyIdEntityRepository readOnlyIdRepository(EmbeddedDatabase db) {
+		ReadOnlyIdEntityRepository readOnlyIdRepository(DataSource db) {
 
 			return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class))
 					.getRepository(ReadOnlyIdEntityRepository.class);

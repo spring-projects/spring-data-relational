@@ -19,7 +19,7 @@ import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.util.TypeInformation;
 
 /**
- * meta data a repository might need for implementing persistence operations for instances of type {@code T}
+ * Meta data a repository might need for implementing persistence operations for instances of type {@code T}
  *
  * @author Jens Schauder
  * @since 2.0

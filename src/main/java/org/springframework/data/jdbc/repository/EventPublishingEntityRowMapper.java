@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import lombok.RequiredArgsConstructor;
+
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,10 +27,9 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
 import org.springframework.jdbc.core.RowMapper;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * a RowMapper that publishes events after a delegate, did the actual work of mapping a {@link ResultSet} to an entityInformation.
+ * A {@link RowMapper} that publishes events after a delegate, did the actual work of mapping a {@link ResultSet} to an
+ * entityInformation.
  *
  * @author Jens Schauder
  * @since 2.0

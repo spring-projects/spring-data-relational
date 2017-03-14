@@ -18,7 +18,8 @@ package org.springframework.data.jdbc.mapping.event;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * Gets published after instantiation and setting of all the properties of an entity. This allows to do some postprocessing of entities.
+ * Gets published after instantiation and setting of all the properties of an entity. This allows to do some
+ * postprocessing of entities.
  *
  * @author Jens Schauder
  * @since 2.0

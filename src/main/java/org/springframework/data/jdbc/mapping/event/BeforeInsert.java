@@ -19,9 +19,8 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Unset;
 
 /**
  * Gets published before an entity gets inserted into the database. When the id-property of the entity must get set
- * manually, an event listener for this event may do so.
- *
- * The {@link Identifier} is {@link org.springframework.data.jdbc.mapping.event.Identifier.Unset#UNSET}
+ * manually, an event listener for this event may do so. <br>
+ * The {@link Identifier} is {@link Unset#UNSET}
  *
  * @author Jens Schauder
  * @since 2.0

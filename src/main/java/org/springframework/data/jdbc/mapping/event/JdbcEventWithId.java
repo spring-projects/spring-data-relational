@@ -25,7 +25,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * @author Jens Schauder
  * @since 2.0
  */
-public class JdbcEventWithId extends JdbcEvent implements WithId{
+public class JdbcEventWithId extends JdbcEvent implements WithId {
 
 	public JdbcEventWithId(Specified id, Optional<Object> entity) {
 		super(id, entity);
