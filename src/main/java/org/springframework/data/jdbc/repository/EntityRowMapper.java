@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -25,7 +26,7 @@ import org.springframework.data.convert.EntityInstantiator;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PreferredConstructor;
+import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.mapping.model.ParameterValueProvider;
@@ -61,21 +62,7 @@ class EntityRowMapper<T> implements RowMapper<T> {
 
 	private T createInstance(ResultSet rs) {
 
-		return instantiator.createInstance(entity, new ParameterValueProvider<JdbcPersistentProperty>() {
-
-			@Override
-			public <T> T getParameterValue(PreferredConstructor.Parameter<T, JdbcPersistentProperty> parameter) {
-
-				try {
-					return conversions.convert(rs.getObject(parameter.getName()), parameter.getType().getType());
-				} catch (SQLException e) {
-
-					throw new MappingException( //
-							String.format("Couldn't read column %s from ResultSet.", parameter.getName()) //
-					);
-				}
-			}
-		});
+		return instantiator.createInstance(entity, new ResultSetParameterValueProvider(rs));
 	}
 
 	private void setProperty(ResultSet rs, T t, PersistentProperty property) {
@@ -83,9 +70,33 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		try {
 
 			Object converted = conversions.convert(rs.getObject(property.getName()), property.getType());
-			entity.getPropertyAccessor(t).setProperty(property, converted);
+			entity.getPropertyAccessor(t).setProperty(property, Optional.of(converted));
 		} catch (Exception e) {
 			throw new RuntimeException(String.format("Couldn't set property %s.", property.getName()), e);
+		}
+	}
+
+	private class ResultSetParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
+
+		private final ResultSet rs;
+
+		ResultSetParameterValueProvider(ResultSet rs) {
+			this.rs = rs;
+		}
+
+		@Override
+		public <S> Optional<S> getParameterValue(Parameter<S, JdbcPersistentProperty> parameter) {
+
+			return parameter.getName().map(name -> {
+				try {
+					return conversions.convert(rs.getObject(name), parameter.getType().getType());
+				} catch (SQLException e) {
+
+					throw new MappingException( //
+							String.format("Couldn't read column %s from ResultSet.", name) //
+					);
+				}
+			});
 		}
 	}
 }

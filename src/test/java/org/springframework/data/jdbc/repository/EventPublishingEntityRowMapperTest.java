@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 import org.junit.Test;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,7 +28,7 @@ public class EventPublishingEntityRowMapperTest {
 	public void eventGetsPublishedAfterInstantiation() throws SQLException {
 
 		when(rowMapperDelegate.mapRow(any(ResultSet.class), anyInt())).thenReturn(new DummyEntity(1L));
-		when(entityInformation.getId(any())).thenReturn(1L);
+		when(entityInformation.getId(any())).thenReturn(Optional.of(1L));
 
 		EventPublishingEntityRowMapper rowMapper = new EventPublishingEntityRowMapper<>( //
 				rowMapperDelegate, //

@@ -53,7 +53,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 			HashMap<String, Object> keys = new HashMap<>();
 			keys.put("id", 4711L);
-			KeyHolder keyHolder = invocation.getArgumentAt(2, KeyHolder.class);
+			KeyHolder keyHolder = invocation.getArgument(2);
 			keyHolder.getKeyList().add(keys);
 
 			return 1;

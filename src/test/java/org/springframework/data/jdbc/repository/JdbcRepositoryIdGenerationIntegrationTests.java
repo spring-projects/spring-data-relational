@@ -21,6 +21,8 @@ import static org.mockito.Mockito.*;
 
 import lombok.Data;
 
+import java.util.Optional;
+
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
@@ -64,10 +66,11 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		assertThat(entity.getId()).isNotNull();
 
-		ReadOnlyIdEntity reloadedEntity = readOnlyIdrepository.findOne(entity.getId());
+		Optional<ReadOnlyIdEntity> reloadedEntity = readOnlyIdrepository.findOne(entity.getId());
 
-		assertEquals(entity.getId(), reloadedEntity.getId());
-		assertEquals(entity.getName(), reloadedEntity.getName());
+		assertTrue(reloadedEntity.isPresent());
+		assertEquals(entity.getId(), reloadedEntity.get().getId());
+		assertEquals(entity.getName(), reloadedEntity.get().getName());
 	}
 
 	@Test // DATAJDBC-98
@@ -80,10 +83,11 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		assertThat(entity.getId()).isNotNull();
 		assertThat(entity.getId()).isNotEqualTo(0L);
 
-		PrimitiveIdEntity reloadedEntity = primitiveIdRepository.findOne(entity.getId());
+		Optional<PrimitiveIdEntity> reloadedEntity = primitiveIdRepository.findOne(entity.getId());
 
-		assertEquals(entity.getId(), reloadedEntity.getId());
-		assertEquals(entity.getName(), reloadedEntity.getName());
+		assertTrue(reloadedEntity.isPresent());
+		assertEquals(entity.getId(), reloadedEntity.get().getId());
+		assertEquals(entity.getName(), reloadedEntity.get().getName());
 	}
 
 	private interface ReadOnlyIdEntityRepository extends CrudRepository<ReadOnlyIdEntity, Long> {}
