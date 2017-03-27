@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.repository.core.support.PersistentEntityInformation;
@@ -36,7 +37,7 @@ public class BasicJdbcPersistentEntityInformation<T, ID extends Serializable> ex
 	}
 
 	@Override
-	public void setId(T instance, Object value) {
-		persistentEntity.getPropertyAccessor(instance).setProperty(persistentEntity.getIdProperty(), value);
+	public void setId(T instance, Optional<Object> value) {
+		persistentEntity.getPropertyAccessor(instance).setProperty(persistentEntity.getRequiredIdProperty(), value);
 	}
 }

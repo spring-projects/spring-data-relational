@@ -40,6 +40,6 @@ public class JdbcPersistentEntity<T> extends BasicPersistentEntity<T, JdbcPersis
 	}
 
 	public String getIdColumn() {
-		return getIdProperty().getName();
+		return getRequiredIdProperty().getName();
 	}
 }

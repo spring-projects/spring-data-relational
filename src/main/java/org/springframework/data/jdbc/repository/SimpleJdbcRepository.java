@@ -106,9 +106,10 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	}
 
 	@Override
-	public T findOne(ID id) {
+	public Optional<T> findOne(ID id) {
 
-		return operations.queryForObject(sql.getFindOne(), new MapSqlParameterSource("id", id), entityRowMapper);
+		return Optional
+				.ofNullable(operations.queryForObject(sql.getFindOne(), new MapSqlParameterSource("id", id), entityRowMapper));
 	}
 
 	@Override
@@ -139,14 +140,15 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 	@Override
 	public void delete(T instance) {
-		doDelete(new Specified(entityInformation.getId(instance)), Optional.of(instance));
+		doDelete(new Specified(entityInformation.getId(instance).orElse(null)), Optional.of(instance));
 	}
 
 	@Override
 	public void delete(Iterable<? extends T> entities) {
 
 		List<ID> idList = StreamSupport.stream(entities.spliterator(), false) //
-				.map(entityInformation::getId) //
+				.map(e -> entityInformation.getId(e)
+						.orElseThrow(() -> new IllegalArgumentException(String.format("Can't obtain id for %s", e)))) //
 				.collect(Collectors.toList());
 
 		MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource("ids", idList);
@@ -164,8 +166,8 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 		this.persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
 
-			Object value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
-			parameters.put(property.getColumnName(), value);
+			Optional<Object> value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
+			parameters.put(property.getColumnName(), value.orElse(null));
 		});
 
 		return parameters;
@@ -178,7 +180,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 		KeyHolder holder = new GeneratedKeyHolder();
 
 		Map<String, Object> propertyMap = getPropertyMap(instance);
-		propertyMap.put(persistentEntity.getIdColumn(), getIdValueOrNull(instance));
+		propertyMap.put(persistentEntity.getRequiredIdProperty().getColumnName(), getIdValueOrNull(instance));
 
 		operations.update(sql.getInsert(), new MapSqlParameterSource(propertyMap), holder);
 		setIdFromJdbc(instance, holder);
@@ -192,14 +194,17 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 	private <S extends T> ID getIdValueOrNull(S instance) {
 
-		ID idValue = entityInformation.getId(instance);
-		return isIdPropertySimpleTypeAndValueZero(idValue) ? null : idValue;
+		Optional<ID> idValue = entityInformation.getId(instance);
+		return isIdPropertySimpleTypeAndValueZero(idValue) ? null : idValue.get();
 	}
 
-	private boolean isIdPropertySimpleTypeAndValueZero(ID idValue) {
+	private boolean isIdPropertySimpleTypeAndValueZero(Optional<ID> idValue) {
 
-		return (persistentEntity.getIdProperty().getType() == int.class && idValue.equals(0))
-				|| (persistentEntity.getIdProperty().getType() == long.class && idValue.equals(0L));
+		Optional<JdbcPersistentProperty> idProperty = persistentEntity.getIdProperty();
+		return !idValue.isPresent() //
+				|| !idProperty.isPresent() //
+				|| (((Optional<JdbcPersistentProperty>) idProperty).get().getType() == int.class && idValue.equals(0)) //
+				|| (((Optional<JdbcPersistentProperty>) idProperty).get().getType() == long.class && idValue.equals(0L));
 	}
 
 	private <S extends T> void setIdFromJdbc(S instance, KeyHolder holder) {
@@ -209,9 +214,9 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 			Object idValueFromJdbc = getIdFromHolder(holder);
 			if (idValueFromJdbc != null) {
 
-				Class<?> targetType = persistentEntity.getIdProperty().getType();
+				Class<?> targetType = persistentEntity.getRequiredIdProperty().getType();
 				Object converted = convert(idValueFromJdbc, targetType);
-				entityInformation.setId(instance, converted);
+				entityInformation.setId(instance, Optional.of(converted));
 			}
 
 		} catch (NonTransientDataAccessException e) {

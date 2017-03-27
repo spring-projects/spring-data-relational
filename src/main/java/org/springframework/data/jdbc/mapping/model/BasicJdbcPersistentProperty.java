@@ -15,12 +15,10 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
+import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 
 /**
@@ -35,18 +33,16 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
 	 *
-	 * @param field must not be {@literal null}.
-	 * @param propertyDescriptor can be {@literal null}.
+	 * @param property must not be {@literal null}.
 	 * @param owner must not be {@literal null}.
 	 * @param simpleTypeHolder
 	 */
 	public BasicJdbcPersistentProperty( //
-			Field field, //
-			PropertyDescriptor propertyDescriptor, //
+			Property property, //
 			PersistentEntity<?, JdbcPersistentProperty> owner, //
 			SimpleTypeHolder simpleTypeHolder //
 	) {
-		super(field, propertyDescriptor, owner, simpleTypeHolder);
+		super(property, owner, simpleTypeHolder);
 	}
 
 	@Override

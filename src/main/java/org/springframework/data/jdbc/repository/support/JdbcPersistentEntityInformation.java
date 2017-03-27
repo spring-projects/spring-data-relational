@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 import org.springframework.data.repository.core.EntityInformation;
 
@@ -25,5 +26,5 @@ import org.springframework.data.repository.core.EntityInformation;
  */
 public interface JdbcPersistentEntityInformation<T, ID extends Serializable> extends EntityInformation<T, ID> {
 
-	void setId(T instance, Object value);
+	void setId(T instance, Optional<Object> value);
 }

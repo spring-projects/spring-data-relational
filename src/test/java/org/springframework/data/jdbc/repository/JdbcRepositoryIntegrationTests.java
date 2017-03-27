@@ -22,6 +22,8 @@ import static org.mockito.Mockito.*;
 
 import lombok.Data;
 
+import java.util.Optional;
+
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
@@ -96,10 +98,12 @@ public class JdbcRepositoryIntegrationTests {
 
 		entity = repository.save(entity);
 
-		DummyEntity reloadedEntity = repository.findOne(entity.getIdProp());
+		Optional<DummyEntity> reloadedEntity = repository.findOne(entity.getIdProp());
 
-		assertEquals(entity.getIdProp(), reloadedEntity.getIdProp());
-		assertEquals(entity.getName(), reloadedEntity.getName());
+		assertTrue(reloadedEntity.isPresent());
+
+		assertEquals(entity.getIdProp(), reloadedEntity.get().getIdProp());
+		assertEquals(entity.getName(), reloadedEntity.get().getName());
 	}
 
 	@Test // DATAJDBC-97
@@ -221,9 +225,10 @@ public class JdbcRepositoryIntegrationTests {
 
 		entity = repository.save(entity);
 
-		DummyEntity reloaded = repository.findOne(entity.getIdProp());
+		Optional<DummyEntity> reloaded = repository.findOne(entity.getIdProp());
 
-		assertThat(reloaded.getName()).isEqualTo(entity.getName());
+		assertTrue(reloaded.isPresent());
+		assertThat(reloaded.get().getName()).isEqualTo(entity.getName());
 	}
 
 	@Test // DATAJDBC-98

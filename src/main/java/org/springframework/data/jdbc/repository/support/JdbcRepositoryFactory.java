@@ -43,13 +43,17 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T, ID extends Serializable> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
-		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) context.getPersistentEntity(aClass));
+
+		return context.getPersistentEntity(aClass)
+				.map(e -> new BasicJdbcPersistentEntityInformation<T, ID>((JdbcPersistentEntity<T>) e)).orElseGet(null);
 	}
 
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcPersistentEntity<?> persistentEntity = context.getPersistentEntity(repositoryInformation.getDomainType());
+		JdbcPersistentEntity<?> persistentEntity = context //
+				.getPersistentEntity(repositoryInformation.getDomainType()) //
+				.orElseThrow(() -> new IllegalArgumentException("%s does not represent a persistent entity")); //
 		return new SimpleJdbcRepository<>(persistentEntity, jdbcOperations, publisher);
 	}
 

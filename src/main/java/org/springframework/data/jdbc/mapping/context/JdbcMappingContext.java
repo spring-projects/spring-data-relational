@@ -15,13 +15,11 @@
  */
 package org.springframework.data.jdbc.mapping.context;
 
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-
 import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.context.AbstractMappingContext;
+import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
 
@@ -38,11 +36,11 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 	@Override
 	protected JdbcPersistentProperty createPersistentProperty( //
-			Field field, //
-			PropertyDescriptor descriptor, //
-			JdbcPersistentEntity owner, //
+			Property property, //
+			JdbcPersistentEntity<?> owner, //
 			SimpleTypeHolder simpleTypeHolder //
 	) {
-		return new BasicJdbcPersistentProperty(field, descriptor, owner, simpleTypeHolder);
+		return new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder);
 	}
+
 }
