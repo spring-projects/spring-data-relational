@@ -16,20 +16,25 @@
 package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import lombok.Data;
 import lombok.Value;
+
+import javax.sql.DataSource;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -42,6 +47,7 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
  * @author Jens Schauder
  */
 @ContextConfiguration
+@EnableJdbcRepositories(considerNestedRepositories = true)
 public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	@Configuration
@@ -55,15 +61,6 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 			return JdbcRepositoryIdGenerationIntegrationTests.class;
 		}
 
-		@Bean
-		ReadOnlyIdEntityRepository readOnlyIdRepository() {
-			return factory.getRepository(ReadOnlyIdEntityRepository.class);
-		}
-
-		@Bean
-		PrimitiveIdEntityRepository primitiveIdRepository() {
-			return factory.getRepository(PrimitiveIdEntityRepository.class);
-		}
 	}
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
@@ -120,5 +117,34 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		@Id private final long id;
 		String name;
+	}
+
+	@Configuration
+	@ComponentScan("org.springframework.data.jdbc.testing")
+	public static class TestConfiguration {
+
+		@Bean
+		Class<?> testClass() {
+			return JdbcRepositoryIdGenerationIntegrationTests.class;
+		}
+
+		@Bean
+		NamedParameterJdbcTemplate template(DataSource db) {
+			return new NamedParameterJdbcTemplate(db);
+		}
+
+		@Bean
+		ReadOnlyIdEntityRepository readOnlyIdRepository(DataSource db) {
+
+			return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class))
+					.getRepository(ReadOnlyIdEntityRepository.class);
+		}
+
+		@Bean
+		PrimitiveIdEntityRepository primitiveIdRepository(NamedParameterJdbcTemplate template) {
+
+			return new JdbcRepositoryFactory(template, mock(ApplicationEventPublisher.class))
+					.getRepository(PrimitiveIdEntityRepository.class);
+		}
 	}
 }
