@@ -15,37 +15,46 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
+import java.util.Optional;
+
+import org.springframework.context.ApplicationEvent;
 
 /**
- * Gets published before an entity gets updated in the database.
+ * The common superclass for all events published by JDBC repositories. {@link #getSource} contains the
+ * {@link Identifier} of the entity triggering the event.
  *
  * @author Jens Schauder
+ * @author Oliver Gierke
  * @since 2.0
  */
-public class BeforeUpdate extends BeforeSave implements WithId {
+class SimpleJdbcEvent extends ApplicationEvent implements JdbcEvent {
 
-	private static final long serialVersionUID = 794561215071613972L;
+	private static final long serialVersionUID = -1798807778668751659L;
 
-	private final Specified id;
+	private final Object entity;
 
-	/**
-	 * @param id of the entity about to get updated
-	 * @param instance the entity about to get updated.
-	 */
-	public BeforeUpdate(Specified id, Object instance) {
+	SimpleJdbcEvent(Identifier id, Optional<Object> entity) {
 
-		super(id, instance);
+		super(id);
 
-		this.id = id;
+		this.entity = entity.orElse(null);
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.mapping.event.JdbcEvent#getId()
 	 */
 	@Override
-	public Specified getId() {
-		return id;
+	public Identifier getId() {
+		return (Identifier) getSource();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.mapping.event.JdbcEvent#getOptionalEntity()
+	 */
+	@Override
+	public Optional<Object> getOptionalEntity() {
+		return Optional.ofNullable(entity);
 	}
 }

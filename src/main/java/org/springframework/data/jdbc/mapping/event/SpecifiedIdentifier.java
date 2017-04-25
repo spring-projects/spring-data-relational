@@ -15,19 +15,30 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
+import lombok.Value;
+
 import java.util.Optional;
 
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
+
 /**
- * A {@link SimpleJdbcEvent} which is guaranteed to have an entity.
- *
+ * Simple value object for {@link Specified}.
+ * 
  * @author Jens Schauder
+ * @author Oliver Gierke
  * @since 2.0
  */
-public class JdbcEventWithEntity extends SimpleJdbcEvent implements WithEntity {
+@Value(staticConstructor = "of")
+class SpecifiedIdentifier implements Specified {
 
-	private static final long serialVersionUID = 4891455396602090638L;
+	Object value;
 
-	public JdbcEventWithEntity(Identifier id, Object entity) {
-		super(id, Optional.of(entity));
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.mapping.event.Identifier#getOptionalValue()
+	 */
+	@Override
+	public Optional<? extends Object> getOptionalValue() {
+		return Optional.of(value);
 	}
 }

@@ -31,11 +31,16 @@ public class BasicJdbcPersistentEntityInformation<T, ID extends Serializable> ex
 	private final JdbcPersistentEntity<T> persistentEntity;
 
 	public BasicJdbcPersistentEntityInformation(JdbcPersistentEntity<T> persistentEntity) {
+
 		super(persistentEntity);
 
 		this.persistentEntity = persistentEntity;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation#setId(java.lang.Object, java.util.Optional)
+	 */
 	@Override
 	public void setId(T instance, Optional<Object> value) {
 		persistentEntity.getPropertyAccessor(instance).setProperty(persistentEntity.getRequiredIdProperty(), value);

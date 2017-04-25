@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import lombok.RequiredArgsConstructor;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -26,8 +28,10 @@ import org.springframework.data.convert.EntityInstantiator;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.jdbc.core.RowMapper;
@@ -36,65 +40,68 @@ import org.springframework.jdbc.core.RowMapper;
  * Maps a ResultSet to an entity of type {@code T}
  *
  * @author Jens Schauder
+ * @author Oliver Gierke
  * @since 2.0
  */
+@RequiredArgsConstructor
 class EntityRowMapper<T> implements RowMapper<T> {
 
 	private final JdbcPersistentEntity<T> entity;
 	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
 	private final ConversionService conversions = new DefaultConversionService();
 
-	EntityRowMapper(JdbcPersistentEntity<T> entity) {
-		this.entity = entity;
-	}
-
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.jdbc.core.RowMapper#mapRow(java.sql.ResultSet, int)
+	 */
 	@Override
-	public T mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public T mapRow(ResultSet resultSet, int rowNumber) throws SQLException {
 
-		T t = createInstance(rs);
+		T result = createInstance(resultSet);
 
 		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
-			setProperty(rs, t, property);
+
+			PersistentPropertyAccessor accessor = entity.getPropertyAccessor(result);
+			ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
+
+			propertyAccessor.setProperty(property, readFrom(resultSet, property));
 		});
 
-		return t;
+		return result;
 	}
 
 	private T createInstance(ResultSet rs) {
-
-		return instantiator.createInstance(entity, new ResultSetParameterValueProvider(rs));
+		return instantiator.createInstance(entity, ResultSetParameterValueProvider.of(rs, conversions));
 	}
 
-	private void setProperty(ResultSet rs, T t, PersistentProperty property) {
+	private static Optional<Object> readFrom(ResultSet resultSet, PersistentProperty<?> property) {
 
 		try {
-
-			Object converted = conversions.convert(rs.getObject(property.getName()), property.getType());
-			entity.getPropertyAccessor(t).setProperty(property, Optional.of(converted));
-		} catch (Exception e) {
-			throw new RuntimeException(String.format("Couldn't set property %s.", property.getName()), e);
+			return Optional.ofNullable(resultSet.getObject(property.getName()));
+		} catch (SQLException o_O) {
+			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
 		}
 	}
 
-	private class ResultSetParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
+	@RequiredArgsConstructor(staticName = "of")
+	private static class ResultSetParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
 
-		private final ResultSet rs;
+		private final ResultSet resultSet;
+		private final ConversionService conversionService;
 
-		ResultSetParameterValueProvider(ResultSet rs) {
-			this.rs = rs;
-		}
-
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
+		 */
 		@Override
 		public <S> Optional<S> getParameterValue(Parameter<S, JdbcPersistentProperty> parameter) {
 
 			return parameter.getName().map(name -> {
-				try {
-					return conversions.convert(rs.getObject(name), parameter.getType().getType());
-				} catch (SQLException e) {
 
-					throw new MappingException( //
-							String.format("Couldn't read column %s from ResultSet.", name) //
-					);
+				try {
+					return conversionService.convert(resultSet.getObject(name), parameter.getType().getType());
+				} catch (SQLException o_O) {
+					throw new MappingException(String.format("Couldn't read column %s from ResultSet.", name), o_O);
 				}
 			});
 		}

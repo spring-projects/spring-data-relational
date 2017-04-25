@@ -28,6 +28,8 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  */
 public class AfterDelete extends JdbcEventWithId {
 
+	private static final long serialVersionUID = 3594807189931141582L;
+
 	/**
 	 * @param id of the entity.
 	 * @param instance the deleted entity if it is available.

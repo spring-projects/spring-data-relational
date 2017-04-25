@@ -25,6 +25,8 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  */
 public class AfterUpdate extends AfterSave {
 
+	private static final long serialVersionUID = -1765706904721563399L;
+
 	/**
 	 * @param id of the entity
 	 * @param instance the updated entity.

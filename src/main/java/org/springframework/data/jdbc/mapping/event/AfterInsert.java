@@ -25,6 +25,8 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  */
 public class AfterInsert extends AfterSave {
 
+	private static final long serialVersionUID = 1312645717283677063L;
+
 	/**
 	 * @param id identifier of the entity triggering the event.
 	 * @param instance the newly inserted entity.

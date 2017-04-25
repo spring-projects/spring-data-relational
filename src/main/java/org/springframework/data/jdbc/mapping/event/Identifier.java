@@ -15,10 +15,9 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import lombok.Data;
-import lombok.NonNull;
-
 import java.util.Optional;
+
+import org.springframework.util.Assert;
 
 /**
  * Wrapper for an identifier of an entity. Might either be a {@link Specified} or {@link Unset#UNSET}
@@ -28,36 +27,53 @@ import java.util.Optional;
  */
 public interface Identifier {
 
-	static Identifier fromNullable(Object value) {
-		return (value != null) ? new Specified(value) : Unset.UNSET;
-	}
-
-	Optional<Object> getOptionalValue();
-
 	/**
-	 * An unset identifier. Always returns {@link Optional#empty()} as value.
+	 * Creates a new {@link Specified} identifier for the given, non-null value.
+	 * 
+	 * @param identifier must not be {@literal null}.
+	 * @return will never be {@literal null}.
 	 */
-	enum Unset implements Identifier {
-		UNSET {
-			@Override
-			public Optional<Object> getOptionalValue() {
-				return Optional.empty();
-			}
-		}
+	static Specified of(Object identifier) {
+
+		Assert.notNull(identifier, "Identifier must not be null!");
+
+		return SpecifiedIdentifier.of(identifier);
 	}
 
 	/**
-	 * An {@link Identifier} guaranteed to have a non empty value. Since it is guaranteed to exist the value can get
-	 * access directly.
+	 * Creates a new {@link Identifier} for the given optional source value.
+	 * 
+	 * @param identifier must not be {@literal null}.
+	 * @return
 	 */
-	@Data
-	class Specified implements Identifier {
+	static Identifier of(Optional<? extends Object> identifier) {
 
-		@NonNull private final Object value;
+		Assert.notNull(identifier, "Identifier must not be null!");
 
-		@Override
-		public Optional<Object> getOptionalValue() {
-			return Optional.of(value);
+		return identifier.map(it -> (Identifier) Identifier.of(it)).orElse(Unset.UNSET);
+	}
+
+	/**
+	 * Returns the identifier value.
+	 * 
+	 * @return will never be {@literal null}.
+	 */
+	Optional<? extends Object> getOptionalValue();
+
+	/**
+	 * A specified identifier that exposes a definitely present identifier value.
+	 *
+	 * @author Oliver Gierke
+	 */
+	interface Specified extends Identifier {
+
+		/**
+		 * Returns the identifier value.
+		 * 
+		 * @return will never be {@literal null}.
+		 */
+		default Object getValue() {
+			return getOptionalValue().orElseThrow(() -> new IllegalStateException("Should not happen!"));
 		}
 	}
 }

@@ -20,14 +20,30 @@ import java.util.Optional;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * A {@link JdbcEvent} guaranteed to have an identifier.
+ * A {@link SimpleJdbcEvent} guaranteed to have an identifier.
  *
  * @author Jens Schauder
  * @since 2.0
  */
-public class JdbcEventWithId extends JdbcEvent implements WithId {
+public class JdbcEventWithId extends SimpleJdbcEvent implements WithId {
+
+	private static final long serialVersionUID = -8071323168471611098L;
+
+	private final Specified id;
 
 	public JdbcEventWithId(Specified id, Optional<Object> entity) {
+
 		super(id, entity);
+
+		this.id = id;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.mapping.event.JdbcEvent#getId()
+	 */
+	@Override
+	public Specified getId() {
+		return id;
 	}
 }

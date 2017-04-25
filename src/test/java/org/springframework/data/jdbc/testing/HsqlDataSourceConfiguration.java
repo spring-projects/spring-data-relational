@@ -17,36 +17,34 @@ package org.springframework.data.jdbc.testing;
 
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
-import org.springframework.stereotype.Component;
 
 /**
+ * {@link DataSource} setup for HSQL.
+ * 
  * @author Jens Schauder
+ * @author Oliver Gierke
  */
-@Component
+@Configuration
 @Profile({ "hsql", "default" })
-class HsqlDataSourceFactoryBean extends DataSourceFactoryBean {
+class HsqlDataSourceConfiguration {
 
-	HsqlDataSourceFactoryBean(Class<?> testClass) {
-		super(testClass);
-	}
+	@Autowired Class<?> context;
 
-	@Override
-	String scriptSuffix() {
-		return "hsql";
-	}
-
-	@Override
-	DataSource create(String scriptName) {
+	@Bean
+	DataSource dataSource() {
 
 		return new EmbeddedDatabaseBuilder() //
 				.generateUniqueName(true) //
 				.setType(EmbeddedDatabaseType.HSQL) //
 				.setScriptEncoding("UTF-8") //
 				.ignoreFailedDrops(true) //
-				.addScript(scriptName) //
+				.addScript(TestUtils.createScriptName(context, "hsql")) //
 				.build();
 	}
 }
