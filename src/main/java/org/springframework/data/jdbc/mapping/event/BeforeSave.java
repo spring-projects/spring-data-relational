@@ -23,6 +23,8 @@ package org.springframework.data.jdbc.mapping.event;
  */
 public class BeforeSave extends JdbcEventWithEntity {
 
+	private static final long serialVersionUID = -6996874391990315443L;
+
 	/**
 	 * @param id of the entity to be saved.
 	 * @param instance the entity about to get saved.

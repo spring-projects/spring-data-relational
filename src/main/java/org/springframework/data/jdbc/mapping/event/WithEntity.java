@@ -16,16 +16,18 @@
 package org.springframework.data.jdbc.mapping.event;
 
 /**
- * Interface for {@link JdbcEvent}s which are guaranteed to have an entity. Allows direct access to that entity, without
- * going through an {@link java.util.Optional}
+ * Interface for {@link SimpleJdbcEvent}s which are guaranteed to have an entity. Allows direct access to that entity,
+ * without going through an {@link java.util.Optional}
  *
  * @author Jens Schauder
  * @since 2.0
  */
-public interface WithEntity {
+public interface WithEntity extends JdbcEvent {
 
+	/**
+	 * @return will never be {@literal null}.
+	 */
 	default Object getEntity() {
-		return ((JdbcEvent) this).getOptionalEntity()
-				.orElseThrow(() -> new IllegalStateException("Entity must not be NULL"));
+		return getOptionalEntity().orElseThrow(() -> new IllegalStateException("Entity must not be NULL"));
 	}
 }

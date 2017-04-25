@@ -27,4 +27,16 @@ import org.springframework.data.repository.core.EntityInformation;
 public interface JdbcPersistentEntityInformation<T, ID extends Serializable> extends EntityInformation<T, ID> {
 
 	void setId(T instance, Optional<Object> value);
+
+	/**
+	 * Returns the identifier of the given entity or throws and exception if it can't be obtained.
+	 * 
+	 * @param entity must not be {@literal null}.
+	 * @return the identifier of the given entity
+	 * @throws IllegalArgumentException in case no identifier can be obtained for the given entity.
+	 */
+	default ID getRequiredId(T entity) {
+		return getId(entity).orElseThrow(() -> new IllegalArgumentException(
+				String.format("Could not obtain required identifier from entity %s!", entity)));
+	}
 }

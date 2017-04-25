@@ -18,15 +18,16 @@ package org.springframework.data.jdbc.mapping.event;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * Interface for {@link JdbcEvent}s which are guaranteed to have a {@link Specified} identifier. Offers direct access to
- * the {@link Specified} identifier.
+ * Interface for {@link SimpleJdbcEvent}s which are guaranteed to have a {@link Specified} identifier. Offers direct
+ * access to the {@link Specified} identifier.
  *
  * @author Jens Schauder
  * @since 2.0
  */
-public interface WithId {
+public interface WithId extends JdbcEvent {
 
-	default Specified getSpecifiedId() {
-		return (Specified) ((JdbcEvent) this).getId();
-	}
+	/**
+	 * Events with an identifier will always return a {@link Specified} one.
+	 */
+	Specified getId();
 }

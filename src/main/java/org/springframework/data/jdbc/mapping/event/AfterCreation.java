@@ -26,6 +26,8 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  */
 public class AfterCreation extends JdbcEventWithIdAndEntity {
 
+	private static final long serialVersionUID = -4185777271143436728L;
+
 	/**
 	 * @param id of the entity
 	 * @param entity the newly instantiated entity.

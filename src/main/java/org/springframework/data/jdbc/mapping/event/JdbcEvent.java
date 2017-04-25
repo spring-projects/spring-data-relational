@@ -15,40 +15,26 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import lombok.Getter;
-
 import java.util.Optional;
 
-import org.springframework.context.ApplicationEvent;
-
 /**
- * The common superclass for all events published by JDBC repositories. {@link #getSource} contains the
- * {@link Identifier} of the entity triggering the event.
  *
- * @author Jens Schauder
- * @since 2.0
+ * @author Oliver Gierke
  */
-@Getter
-public class JdbcEvent extends ApplicationEvent {
-
-	/**
-	 * The optional entity for which this event was published. Might be empty in cases of delete events where only the
-	 * identifier was passed to the delete method.
-	 */
-	private final Optional<Object> optionalEntity;
-
-	JdbcEvent(Identifier id, Optional<Object> optionalEntity) {
-		super(id);
-		this.optionalEntity = optionalEntity;
-	}
+public interface JdbcEvent {
 
 	/**
 	 * The identifier of the entity, triggering this event. Also available via {@link #getSource()}.
 	 *
 	 * @return the source of the event as an {@link Identifier}.
 	 */
-	public Identifier getId() {
-		return (Identifier) getSource();
-	}
+	Identifier getId();
+
+	/**
+	 * Returns the entity the event was triggered for.
+	 * 
+	 * @return will never be {@literal null}.
+	 */
+	Optional<Object> getOptionalEntity();
 
 }

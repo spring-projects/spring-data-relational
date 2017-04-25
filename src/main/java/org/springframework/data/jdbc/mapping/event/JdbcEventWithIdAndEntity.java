@@ -22,13 +22,15 @@ import java.util.Optional;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * A {@link JdbcEvent} which is guaranteed to have an identifier and an entity.
+ * A {@link SimpleJdbcEvent} which is guaranteed to have an identifier and an entity.
  *
  * @author Jens Schauder
  * @since 2.0
  */
 @Getter
-public class JdbcEventWithIdAndEntity extends JdbcEvent implements WithId, WithEntity {
+public class JdbcEventWithIdAndEntity extends JdbcEventWithId implements WithEntity {
+
+	private static final long serialVersionUID = -3194462549552515519L;
 
 	public JdbcEventWithIdAndEntity(Specified id, Object entity) {
 		super(id, Optional.of(entity));

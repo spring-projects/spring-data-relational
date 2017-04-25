@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.convert.ConversionService;
@@ -35,13 +34,16 @@ import org.springframework.data.jdbc.mapping.event.AfterUpdate;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
 import org.springframework.data.jdbc.mapping.event.BeforeInsert;
 import org.springframework.data.jdbc.mapping.event.BeforeUpdate;
+import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityImpl;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.repository.support.BasicJdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.util.Streamable;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -66,11 +68,15 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	private final ApplicationEventPublisher publisher;
 	private final ConversionService conversions = new DefaultConversionService();
 
-	public SimpleJdbcRepository( //
-			JdbcPersistentEntity<T> persistentEntity, //
-			NamedParameterJdbcOperations jdbcOperations, //
-			ApplicationEventPublisher publisher //
-	) {
+	/**
+	 * Creates a new {@link SimpleJdbcRepository} for the given {@link JdbcPersistentEntityImpl}
+	 * 
+	 * @param persistentEntity
+	 * @param jdbcOperations
+	 * @param publisher
+	 */
+	public SimpleJdbcRepository(JdbcPersistentEntity<T> persistentEntity, NamedParameterJdbcOperations jdbcOperations,
+			ApplicationEventPublisher publisher) {
 
 		Assert.notNull(persistentEntity, "PersistentEntity must not be null.");
 		Assert.notNull(jdbcOperations, "JdbcOperations must not be null.");
@@ -85,6 +91,10 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 		this.sql = new SqlGenerator(persistentEntity);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#save(S)
+	 */
 	@Override
 	public <S extends T> S save(S instance) {
 
@@ -97,6 +107,10 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 		return instance;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#save(java.lang.Iterable)
+	 */
 	@Override
 	public <S extends T> Iterable<S> save(Iterable<S> entities) {
 
@@ -105,6 +119,10 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 		return savedEntities;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#findOne(java.io.Serializable)
+	 */
 	@Override
 	public Optional<T> findOne(ID id) {
 
@@ -112,43 +130,69 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 				.ofNullable(operations.queryForObject(sql.getFindOne(), new MapSqlParameterSource("id", id), entityRowMapper));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#exists(java.io.Serializable)
+	 */
 	@Override
 	public boolean exists(ID id) {
-
 		return operations.queryForObject(sql.getExists(), new MapSqlParameterSource("id", id), Boolean.class);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#findAll()
+	 */
 	@Override
 	public Iterable<T> findAll() {
 		return operations.query(sql.getFindAll(), entityRowMapper);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#findAll(java.lang.Iterable)
+	 */
 	@Override
 	public Iterable<T> findAll(Iterable<ID> ids) {
 		return operations.query(sql.getFindAllInList(), new MapSqlParameterSource("ids", ids), entityRowMapper);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#count()
+	 */
 	@Override
 	public long count() {
 		return operations.getJdbcOperations().queryForObject(sql.getCount(), Long.class);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#delete(java.io.Serializable)
+	 */
 	@Override
 	public void delete(ID id) {
-		doDelete(new Specified(id), Optional.empty());
+		doDelete(Identifier.of(id), Optional.empty());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Object)
+	 */
 	@Override
 	public void delete(T instance) {
-		doDelete(new Specified(entityInformation.getId(instance).orElse(null)), Optional.of(instance));
+		doDelete(Identifier.of(entityInformation.getRequiredId(instance)), Optional.of(instance));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Iterable)
+	 */
 	@Override
 	public void delete(Iterable<? extends T> entities) {
 
-		List<ID> idList = StreamSupport.stream(entities.spliterator(), false) //
-				.map(e -> entityInformation.getId(e)
-						.orElseThrow(() -> new IllegalArgumentException(String.format("Can't obtain id for %s", e)))) //
+		List<ID> idList = Streamable.of(entities).stream() //
+				.map(e -> entityInformation.getRequiredId(e)) //
 				.collect(Collectors.toList());
 
 		MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource("ids", idList);
@@ -189,7 +233,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 			throw new IllegalStateException(String.format(ENTITY_NEW_AFTER_INSERT, persistentEntity));
 		}
 
-		publisher.publishEvent(new AfterInsert(new Specified(entityInformation.getId(instance)), instance));
+		publisher.publishEvent(new AfterInsert(Identifier.of(entityInformation.getRequiredId(instance)), instance));
 	}
 
 	private <S extends T> ID getIdValueOrNull(S instance) {
@@ -211,27 +255,26 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 		try {
 
-			Object idValueFromJdbc = getIdFromHolder(holder);
-			if (idValueFromJdbc != null) {
+			getIdFromHolder(holder).ifPresent(it -> {
 
 				Class<?> targetType = persistentEntity.getRequiredIdProperty().getType();
-				Object converted = convert(idValueFromJdbc, targetType);
+				Object converted = convert(it, targetType);
 				entityInformation.setId(instance, Optional.of(converted));
-			}
+			});
 
 		} catch (NonTransientDataAccessException e) {
-			throw new UnableToSetIdException("Unable to set id of " + instance, e);
+			throw new UnableToSetId("Unable to set id of " + instance, e);
 		}
 	}
 
-	private Object getIdFromHolder(KeyHolder holder) {
+	private Optional<Object> getIdFromHolder(KeyHolder holder) {
 
 		try {
-			// mysql just returns one value with a special name
-			return holder.getKey();
+			// MySQL just returns one value with a special name
+			return Optional.ofNullable(holder.getKey());
 		} catch (InvalidDataAccessApiUsageException e) {
-			// postgress returns a value for each column
-			return holder.getKeys().get(persistentEntity.getIdColumn());
+			// Postgres returns a value for each column
+			return Optional.ofNullable(holder.getKeys().get(persistentEntity.getIdColumn()));
 		}
 
 	}
@@ -249,7 +292,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 	private <S extends T> void doUpdate(S instance) {
 
-		Specified specifiedId = new Specified(entityInformation.getId(instance));
+		Specified specifiedId = Identifier.of(entityInformation.getRequiredId(instance));
 		publisher.publishEvent(new BeforeUpdate(specifiedId, instance));
 		operations.update(sql.getUpdate(), getPropertyMap(instance));
 		publisher.publishEvent(new AfterUpdate(specifiedId, instance));

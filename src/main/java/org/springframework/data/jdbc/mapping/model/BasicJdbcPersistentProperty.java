@@ -35,21 +35,26 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	 *
 	 * @param property must not be {@literal null}.
 	 * @param owner must not be {@literal null}.
-	 * @param simpleTypeHolder
+	 * @param simpleTypeHolder must not be {@literal null}.
 	 */
-	public BasicJdbcPersistentProperty( //
-			Property property, //
-			PersistentEntity<?, JdbcPersistentProperty> owner, //
-			SimpleTypeHolder simpleTypeHolder //
-	) {
+	public BasicJdbcPersistentProperty(Property property, PersistentEntity<?, JdbcPersistentProperty> owner,
+			SimpleTypeHolder simpleTypeHolder) {
 		super(property, owner, simpleTypeHolder);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.mapping.model.AbstractPersistentProperty#createAssociation()
+	 */
 	@Override
 	protected Association<JdbcPersistentProperty> createAssociation() {
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty#getColumnName()
+	 */
 	public String getColumnName() {
 		return getName();
 	}

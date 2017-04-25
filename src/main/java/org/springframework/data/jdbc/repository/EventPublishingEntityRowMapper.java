@@ -15,15 +15,15 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.mapping.event.AfterCreation;
-import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
+import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -35,18 +35,22 @@ import org.springframework.jdbc.core.RowMapper;
  * @since 2.0
  */
 @RequiredArgsConstructor
-public class EventPublishingEntityRowMapper<T, ID extends Serializable> implements RowMapper<T> {
+public class EventPublishingEntityRowMapper<T> implements RowMapper<T> {
 
-	private final RowMapper<T> delegate;
-	private final JdbcPersistentEntityInformation<T, ID> entityInformation;
-	private final ApplicationEventPublisher publisher;
+	private final @NonNull RowMapper<T> delegate;
+	private final @NonNull JdbcPersistentEntityInformation<T, ?> entityInformation;
+	private final @NonNull ApplicationEventPublisher publisher;
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.jdbc.core.RowMapper#mapRow(java.sql.ResultSet, int)
+	 */
 	@Override
 	public T mapRow(ResultSet resultSet, int i) throws SQLException {
 
 		T instance = delegate.mapRow(resultSet, i);
 
-		publisher.publishEvent(new AfterCreation(new Specified(entityInformation.getId(instance)), instance));
+		publisher.publishEvent(new AfterCreation(Identifier.of(entityInformation.getRequiredId(instance)), instance));
 
 		return instance;
 	}

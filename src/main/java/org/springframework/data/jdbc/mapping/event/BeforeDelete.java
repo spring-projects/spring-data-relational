@@ -27,6 +27,8 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  */
 public class BeforeDelete extends JdbcEventWithId {
 
+	private static final long serialVersionUID = -5483432053368496651L;
+
 	/**
 	 * @param id the id of the entity
 	 * @param entity the entity about to get deleted. Might be empty.

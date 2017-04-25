@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
-import org.springframework.data.jdbc.mapping.event.Identifier.Unset;
-
 /**
  * Gets published before an entity gets inserted into the database. When the id-property of the entity must get set
  * manually, an event listener for this event may do so. <br>
@@ -26,6 +24,8 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Unset;
  * @since 2.0
  */
 public class BeforeInsert extends BeforeSave {
+
+	private static final long serialVersionUID = -5350552051337308870L;
 
 	/**
 	 * @param instance the entity about to get inserted.

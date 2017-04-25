@@ -15,31 +15,26 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import org.springframework.data.mapping.model.BasicPersistentEntity;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.data.mapping.PersistentEntity;
 
 /**
- * Meta data a repository might need for implementing persistence operations for instances of type {@code T}
- *
  * @author Jens Schauder
+ * @author Oliver Gierke
  * @since 2.0
  */
-public class JdbcPersistentEntity<T> extends BasicPersistentEntity<T, JdbcPersistentProperty> {
+public interface JdbcPersistentEntity<T> extends PersistentEntity<T, JdbcPersistentProperty> {
 
-	private final String tableName;
+	/**
+	 * Returns the name of the table backing the given entity.
+	 * 
+	 * @return
+	 */
+	String getTableName();
 
-	public JdbcPersistentEntity(TypeInformation<T> information) {
-
-		super(information);
-
-		tableName = getType().getSimpleName();
-	}
-
-	public String getTableName() {
-		return tableName;
-	}
-
-	public String getIdColumn() {
-		return getRequiredIdProperty().getName();
-	}
+	/**
+	 * Returns the column representing the identifier.
+	 * 
+	 * @return will never be {@literal null}.
+	 */
+	String getIdColumn();
 }

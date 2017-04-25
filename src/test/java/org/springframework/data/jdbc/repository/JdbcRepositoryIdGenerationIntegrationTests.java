@@ -15,27 +15,21 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
-
-import java.util.Optional;
-
-import javax.sql.DataSource;
+import lombok.Value;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.repository.JdbcRepositoryIdGenerationIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -47,8 +41,30 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
  *
  * @author Jens Schauder
  */
-@ContextConfiguration(classes = TestConfiguration.class)
+@ContextConfiguration
 public class JdbcRepositoryIdGenerationIntegrationTests {
+
+	@Configuration
+	@Import(TestConfiguration.class)
+	static class Config {
+
+		@Autowired JdbcRepositoryFactory factory;
+
+		@Bean
+		Class<?> testClass() {
+			return JdbcRepositoryIdGenerationIntegrationTests.class;
+		}
+
+		@Bean
+		ReadOnlyIdEntityRepository readOnlyIdRepository() {
+			return factory.getRepository(ReadOnlyIdEntityRepository.class);
+		}
+
+		@Bean
+		PrimitiveIdEntityRepository primitiveIdRepository() {
+			return factory.getRepository(PrimitiveIdEntityRepository.class);
+		}
+	}
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
@@ -60,17 +76,15 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	@Test // DATAJDBC-98
 	public void idWithoutSetterGetsSet() {
 
-		ReadOnlyIdEntity entity = new ReadOnlyIdEntity(null);
-		entity.setName("Entity Name");
-		entity = readOnlyIdrepository.save(entity);
+		ReadOnlyIdEntity entity = readOnlyIdrepository.save(new ReadOnlyIdEntity(null, "Entity Name"));
 
 		assertThat(entity.getId()).isNotNull();
 
-		Optional<ReadOnlyIdEntity> reloadedEntity = readOnlyIdrepository.findOne(entity.getId());
+		assertThat(readOnlyIdrepository.findOne(entity.getId())).hasValueSatisfying(it -> {
 
-		assertTrue(reloadedEntity.isPresent());
-		assertEquals(entity.getId(), reloadedEntity.get().getId());
-		assertEquals(entity.getName(), reloadedEntity.get().getName());
+			assertThat(it.getId()).isEqualTo(entity.getId());
+			assertThat(it.getName()).isEqualTo(entity.getName());
+		});
 	}
 
 	@Test // DATAJDBC-98
@@ -78,26 +92,26 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		PrimitiveIdEntity entity = new PrimitiveIdEntity(0);
 		entity.setName("Entity Name");
-		entity = primitiveIdRepository.save(entity);
 
-		assertThat(entity.getId()).isNotNull();
-		assertThat(entity.getId()).isNotEqualTo(0L);
+		PrimitiveIdEntity saved = primitiveIdRepository.save(entity);
 
-		Optional<PrimitiveIdEntity> reloadedEntity = primitiveIdRepository.findOne(entity.getId());
+		assertThat(saved.getId()).isNotEqualTo(0L);
 
-		assertTrue(reloadedEntity.isPresent());
-		assertEquals(entity.getId(), reloadedEntity.get().getId());
-		assertEquals(entity.getName(), reloadedEntity.get().getName());
+		assertThat(primitiveIdRepository.findOne(saved.getId())).hasValueSatisfying(it -> {
+
+			assertThat(it.getId()).isEqualTo(saved.getId());
+			assertThat(it.getName()).isEqualTo(saved.getName());
+		});
 	}
-
-	private interface ReadOnlyIdEntityRepository extends CrudRepository<ReadOnlyIdEntity, Long> {}
 
 	private interface PrimitiveIdEntityRepository extends CrudRepository<PrimitiveIdEntity, Long> {}
 
-	@Data
+	public interface ReadOnlyIdEntityRepository extends CrudRepository<ReadOnlyIdEntity, Long> {}
+
+	@Value
 	static class ReadOnlyIdEntity {
 
-		@Id private final Long id;
+		@Id Long id;
 		String name;
 	}
 
@@ -106,34 +120,5 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		@Id private final long id;
 		String name;
-	}
-
-	@Configuration
-	@ComponentScan("org.springframework.data.jdbc.testing")
-	static class TestConfiguration {
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryIdGenerationIntegrationTests.class;
-		}
-
-		@Bean
-		NamedParameterJdbcTemplate template(DataSource db) {
-			return new NamedParameterJdbcTemplate(db);
-		}
-
-		@Bean
-		ReadOnlyIdEntityRepository readOnlyIdRepository(DataSource db) {
-
-			return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class))
-					.getRepository(ReadOnlyIdEntityRepository.class);
-		}
-
-		@Bean
-		PrimitiveIdEntityRepository primitiveIdRepository(NamedParameterJdbcTemplate template) {
-
-			return new JdbcRepositoryFactory(template, mock(ApplicationEventPublisher.class))
-					.getRepository(PrimitiveIdEntityRepository.class);
-		}
 	}
 }

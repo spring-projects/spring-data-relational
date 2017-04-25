@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository;
+package org.springframework.data.jdbc.mapping.event;
 
-import org.springframework.dao.NonTransientDataAccessException;
+import java.util.Optional;
 
 /**
- * Signals failure to set the id property of an entity.
- *
- * @author Jens Schauder
+ * An unset identifier. Always returns {@link Optional#empty()} as value.
+ * 
+ * @author Jens Schaude
+ * @author Oliver Gierke
  * @since 2.0
  */
-public class UnableToSetIdException extends NonTransientDataAccessException {
+enum Unset implements Identifier {
 
-	public UnableToSetIdException(String message, Throwable cause) {
-		super(message, cause);
+	UNSET;
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.mapping.event.Identifier#getOptionalValue()
+	 */
+	@Override
+	public Optional<Object> getOptionalValue() {
+		return Optional.empty();
 	}
 }

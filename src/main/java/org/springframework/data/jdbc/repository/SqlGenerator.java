@@ -51,6 +51,7 @@ class SqlGenerator {
 	private final List<String> nonIdPropertyNames = new ArrayList<>();
 
 	SqlGenerator(JdbcPersistentEntity<?> entity) {
+
 		this.entity = entity;
 
 		initPropertyNames();
@@ -72,6 +73,7 @@ class SqlGenerator {
 	}
 
 	private <T> void initPropertyNames() {
+
 		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
 			propertyNames.add(p.getName());
 			if (!entity.isIdProperty(p)) {
@@ -143,8 +145,7 @@ class SqlGenerator {
 	private String createInsertSql() {
 
 		String insertTemplate = "insert into %s (%s) values (%s)";
-
-		String tableColumns = nonIdPropertyNames.stream().collect(Collectors.joining(", "));
+		String tableColumns = String.join(", ", nonIdPropertyNames);
 		String parameterNames = nonIdPropertyNames.stream().collect(Collectors.joining(", :", ":", ""));
 
 		return String.format(insertTemplate, entity.getTableName(), tableColumns, parameterNames);
@@ -154,7 +155,8 @@ class SqlGenerator {
 
 		String updateTemplate = "update %s set %s where %s = :%s";
 
-		String setClause = propertyNames.stream().map(n -> String.format("%s = :%s", n, n))
+		String setClause = propertyNames.stream()//
+				.map(n -> String.format("%s = :%s", n, n))//
 				.collect(Collectors.joining(", "));
 
 		return String.format(updateTemplate, entity.getTableName(), setClause, entity.getIdColumn(), entity.getIdColumn());
