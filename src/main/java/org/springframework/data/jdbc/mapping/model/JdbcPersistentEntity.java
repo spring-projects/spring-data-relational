@@ -16,18 +16,19 @@
 package org.springframework.data.jdbc.mapping.model;
 
 import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.model.MutablePersistentEntity;
 
 /**
  * @author Jens Schauder
  * @author Oliver Gierke
  * @since 2.0
  */
-public interface JdbcPersistentEntity<T> extends PersistentEntity<T, JdbcPersistentProperty> {
+public interface JdbcPersistentEntity<T> extends MutablePersistentEntity<T, JdbcPersistentProperty> {
 
 	/**
 	 * Returns the name of the table backing the given entity.
 	 * 
-	 * @return
+	 * @return the table name.
 	 */
 	String getTableName();
 

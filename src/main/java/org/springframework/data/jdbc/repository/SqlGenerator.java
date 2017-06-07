@@ -24,7 +24,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
 
 /**
- * Generates SQL statements to be used by {@Link SimpleJdbcRepository}
+ * Generates SQL statements to be used by {@link SimpleJdbcRepository}
  *
  * @author Jens Schauder
  * @since 2.0
@@ -37,8 +37,6 @@ class SqlGenerator {
 
 	private final String existsSql;
 	private final String countSql;
-
-	private final String insertSql;
 
 	private final String updateSql;
 
@@ -63,8 +61,6 @@ class SqlGenerator {
 		existsSql = createExistsSql();
 		countSql = createCountSql();
 
-		insertSql = createInsertSql();
-
 		updateSql = createUpdateSql();
 
 		deleteByIdSql = createDeleteSql();
@@ -72,7 +68,7 @@ class SqlGenerator {
 		deleteByListSql = createDeleteByListSql();
 	}
 
-	private <T> void initPropertyNames() {
+	private void initPropertyNames() {
 
 		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
 			propertyNames.add(p.getName());
@@ -98,8 +94,8 @@ class SqlGenerator {
 		return findOneSql;
 	}
 
-	String getInsert() {
-		return insertSql;
+	String getInsert(boolean excludeId) {
+		return createInsertSql(excludeId);
 	}
 
 	String getUpdate() {
@@ -138,20 +134,21 @@ class SqlGenerator {
 		return String.format("select count(*) from %s where %s = :id", entity.getTableName(), entity.getIdColumn());
 	}
 
-	private <T> String createCountSql() {
+	private String createCountSql() {
 		return String.format("select count(*) from %s", entity.getTableName());
 	}
 
-	private String createInsertSql() {
+	private String createInsertSql(boolean excludeId) {
 
 		String insertTemplate = "insert into %s (%s) values (%s)";
-		String tableColumns = String.join(", ", nonIdPropertyNames);
-		String parameterNames = nonIdPropertyNames.stream().collect(Collectors.joining(", :", ":", ""));
+		List<String> propertyNamesForInsert = excludeId ? nonIdPropertyNames : propertyNames;
+		String tableColumns = String.join(", ", propertyNamesForInsert);
+		String parameterNames = propertyNamesForInsert.stream().collect(Collectors.joining(", :", ":", ""));
 
 		return String.format(insertTemplate, entity.getTableName(), tableColumns, parameterNames);
 	}
 
-	private <T> String createUpdateSql() {
+	private String createUpdateSql() {
 
 		String updateTemplate = "update %s set %s where %s = :%s";
 

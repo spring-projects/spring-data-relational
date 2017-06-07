@@ -16,8 +16,11 @@
 package org.springframework.data.jdbc.mapping.context;
 
 import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentProperty;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityImpl;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.repository.support.BasicJdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
@@ -30,14 +33,14 @@ import org.springframework.data.util.TypeInformation;
  * @author Jens Schauder
  * @since 2.0
  */
-public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntityImpl<?>, JdbcPersistentProperty> {
+public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> {
 
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.mapping.context.AbstractMappingContext#createPersistentEntity(org.springframework.data.util.TypeInformation)
 	 */
 	@Override
-	protected <T> JdbcPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
+	protected <T> JdbcPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
 		return new JdbcPersistentEntityImpl<>(typeInformation);
 	}
 
@@ -46,8 +49,13 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	 * @see org.springframework.data.mapping.context.AbstractMappingContext#createPersistentProperty(org.springframework.data.mapping.model.Property, org.springframework.data.mapping.model.MutablePersistentEntity, org.springframework.data.mapping.model.SimpleTypeHolder)
 	 */
 	@Override
-	protected JdbcPersistentProperty createPersistentProperty(Property property, JdbcPersistentEntityImpl<?> owner,
+	protected JdbcPersistentProperty createPersistentProperty(Property property, JdbcPersistentEntity<?> owner,
 			SimpleTypeHolder simpleTypeHolder) {
 		return new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> JdbcPersistentEntityInformation<T, ?> getRequiredPersistentEntityInformation(Class<T> type) {
+		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) getRequiredPersistentEntity(type));
 	}
 }
