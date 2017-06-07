@@ -27,9 +27,16 @@ import org.springframework.data.mapping.PersistentProperty;
 public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersistentProperty> {
 
 	/**
-	 * Returns the name of the column backing that property.
+	 * Returns the name of the column backing this property.
 	 * 
-	 * @return
+	 * @return the name of the column backing this property.
 	 */
 	String getColumnName();
+
+	/**
+	 * The type to be used to store this property in the database.
+	 *
+	 * @return a {@link Class} that is suitable for usage with JDBC drivers
+	 */
+	Class<?> getColumnType();
 }
