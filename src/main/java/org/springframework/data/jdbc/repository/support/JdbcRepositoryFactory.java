@@ -42,7 +42,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T, ID extends Serializable> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
+	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
 
 		return context.getPersistentEntity(aClass)
 				.map(e -> new BasicJdbcPersistentEntityInformation<T, ID>((JdbcPersistentEntity<T>) e)).orElseGet(null);

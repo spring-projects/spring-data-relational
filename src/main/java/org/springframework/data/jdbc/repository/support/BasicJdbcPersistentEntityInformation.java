@@ -25,7 +25,7 @@ import org.springframework.data.repository.core.support.PersistentEntityInformat
  * @author Jens Schauder
  * @since 2.0
  */
-public class BasicJdbcPersistentEntityInformation<T, ID extends Serializable> extends PersistentEntityInformation<T, ID>
+public class BasicJdbcPersistentEntityInformation<T, ID> extends PersistentEntityInformation<T, ID>
 		implements JdbcPersistentEntityInformation<T, ID> {
 
 	private final JdbcPersistentEntity<T> persistentEntity;

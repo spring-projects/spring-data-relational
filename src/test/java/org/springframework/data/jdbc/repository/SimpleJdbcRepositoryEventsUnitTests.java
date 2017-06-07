@@ -64,7 +64,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		DummyEntity entity1 = new DummyEntity(null);
 		DummyEntity entity2 = new DummyEntity(23L);
 
-		repository.save(asList(entity1, entity2));
+		repository.saveAll(asList(entity1, entity2));
 
 		assertThat(publisher.events.get(0)).isInstanceOf(BeforeInsert.class);
 		assertThat(publisher.events.get(1)).isInstanceOf(AfterInsert.class);
@@ -92,7 +92,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Test // DATAJDBC-99
 	public void publishesEventsOnDeleteById() {
 
-		repository.delete(23L);
+		repository.deleteById(23L);
 
 		assertThat(publisher.events.get(0)).isInstanceOf(BeforeDelete.class);
 		assertThat(publisher.events.get(1)).isInstanceOf(AfterDelete.class);

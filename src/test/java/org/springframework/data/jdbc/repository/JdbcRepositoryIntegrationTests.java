@@ -85,7 +85,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
-		assertThat(repository.findOne(entity.getIdProp())).hasValueSatisfying(it -> {
+		assertThat(repository.findById(entity.getIdProp())).hasValueSatisfying(it -> {
 
 			assertThat(it.getIdProp()).isEqualTo(entity.getIdProp());
 			assertThat(it.getName()).isEqualTo(entity.getName());
@@ -98,7 +98,7 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntity entity = createDummyEntity();
 		DummyEntity other = createDummyEntity();
 
-		repository.save(asList(entity, other));
+		repository.saveAll(asList(entity, other));
 
 		assertThat(repository.findAll()) //
 				.extracting(DummyEntity::getIdProp) //
@@ -110,8 +110,8 @@ public class JdbcRepositoryIntegrationTests {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
-		assertThat(repository.exists(entity.getIdProp())).isTrue();
-		assertThat(repository.exists(entity.getIdProp() + 1)).isFalse();
+		assertThat(repository.existsById(entity.getIdProp())).isTrue();
+		assertThat(repository.existsById(entity.getIdProp() + 1)).isFalse();
 	}
 
 	@Test // DATAJDBC-97
@@ -133,7 +133,7 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntity entity = repository.save(createDummyEntity());
 		DummyEntity other = repository.save(createDummyEntity());
 
-		assertThat(repository.findAll(asList(entity.getIdProp(), other.getIdProp())))//
+		assertThat(repository.findAllById(asList(entity.getIdProp(), other.getIdProp())))//
 				.extracting(DummyEntity::getIdProp)//
 				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
 	}
@@ -155,7 +155,7 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntity two = repository.save(createDummyEntity());
 		DummyEntity three = repository.save(createDummyEntity());
 
-		repository.delete(two.getIdProp());
+		repository.deleteById(two.getIdProp());
 
 		assertThat(repository.findAll()) //
 				.extracting(DummyEntity::getIdProp) //
@@ -183,7 +183,7 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntity two = repository.save(createDummyEntity());
 		DummyEntity three = repository.save(createDummyEntity());
 
-		repository.delete(asList(one, three));
+		repository.deleteAll(asList(one, three));
 
 		assertThat(repository.findAll()) //
 				.extracting(DummyEntity::getIdProp) //
@@ -212,7 +212,7 @@ public class JdbcRepositoryIntegrationTests {
 		entity.setName("something else");
 		DummyEntity saved = repository.save(entity);
 
-		assertThat(repository.findOne(entity.getIdProp())).hasValueSatisfying(it -> {
+		assertThat(repository.findById(entity.getIdProp())).hasValueSatisfying(it -> {
 			assertThat(it.getName()).isEqualTo(saved.getName());
 		});
 	}
@@ -226,7 +226,7 @@ public class JdbcRepositoryIntegrationTests {
 		entity.setName("something else");
 		other.setName("others Name");
 
-		repository.save(asList(entity, other));
+		repository.saveAll(asList(entity, other));
 
 		assertThat(repository.findAll()) //
 				.extracting(DummyEntity::getName) //

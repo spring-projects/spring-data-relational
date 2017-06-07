@@ -112,7 +112,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	 * @see org.springframework.data.repository.CrudRepository#save(java.lang.Iterable)
 	 */
 	@Override
-	public <S extends T> Iterable<S> save(Iterable<S> entities) {
+	public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
 
 		List<S> savedEntities = new ArrayList<>();
 		entities.forEach(e -> savedEntities.add(save(e)));
@@ -124,7 +124,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	 * @see org.springframework.data.repository.CrudRepository#findOne(java.io.Serializable)
 	 */
 	@Override
-	public Optional<T> findOne(ID id) {
+	public Optional<T> findById(ID id) {
 
 		return Optional
 				.ofNullable(operations.queryForObject(sql.getFindOne(), new MapSqlParameterSource("id", id), entityRowMapper));
@@ -135,7 +135,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	 * @see org.springframework.data.repository.CrudRepository#exists(java.io.Serializable)
 	 */
 	@Override
-	public boolean exists(ID id) {
+	public boolean existsById(ID id) {
 		return operations.queryForObject(sql.getExists(), new MapSqlParameterSource("id", id), Boolean.class);
 	}
 
@@ -153,7 +153,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	 * @see org.springframework.data.repository.CrudRepository#findAll(java.lang.Iterable)
 	 */
 	@Override
-	public Iterable<T> findAll(Iterable<ID> ids) {
+	public Iterable<T> findAllById(Iterable<ID> ids) {
 		return operations.query(sql.getFindAllInList(), new MapSqlParameterSource("ids", ids), entityRowMapper);
 	}
 
@@ -171,7 +171,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	 * @see org.springframework.data.repository.CrudRepository#delete(java.io.Serializable)
 	 */
 	@Override
-	public void delete(ID id) {
+	public void deleteById(ID id) {
 		doDelete(Identifier.of(id), Optional.empty());
 	}
 
@@ -189,7 +189,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 	 * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Iterable)
 	 */
 	@Override
-	public void delete(Iterable<? extends T> entities) {
+	public void deleteAll(Iterable<? extends T> entities) {
 
 		List<ID> idList = Streamable.of(entities).stream() //
 				.map(e -> entityInformation.getRequiredId(e)) //
