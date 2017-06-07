@@ -80,7 +80,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		assertThat(entity.getId()).isNotNull();
 
-		assertThat(readOnlyIdrepository.findOne(entity.getId())).hasValueSatisfying(it -> {
+		assertThat(readOnlyIdrepository.findById(entity.getId())).hasValueSatisfying(it -> {
 
 			assertThat(it.getId()).isEqualTo(entity.getId());
 			assertThat(it.getName()).isEqualTo(entity.getName());
@@ -97,7 +97,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		assertThat(saved.getId()).isNotEqualTo(0L);
 
-		assertThat(primitiveIdRepository.findOne(saved.getId())).hasValueSatisfying(it -> {
+		assertThat(primitiveIdRepository.findById(saved.getId())).hasValueSatisfying(it -> {
 
 			assertThat(it.getId()).isEqualTo(saved.getId());
 			assertThat(it.getName()).isEqualTo(saved.getName());

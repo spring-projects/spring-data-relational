@@ -24,7 +24,7 @@ import org.springframework.data.repository.core.EntityInformation;
  * @author Jens Schauder
  * @since 2.0
  */
-public interface JdbcPersistentEntityInformation<T, ID extends Serializable> extends EntityInformation<T, ID> {
+public interface JdbcPersistentEntityInformation<T, ID> extends EntityInformation<T, ID> {
 
 	void setId(T instance, Optional<Object> value);
 
