@@ -17,11 +17,10 @@ package org.springframework.data.jdbc.repository.support;
 
 import lombok.RequiredArgsConstructor;
 
-import java.io.Serializable;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.mapping.context.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.repository.JdbcEntityTemplate;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -48,13 +47,18 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 				.map(e -> new BasicJdbcPersistentEntityInformation<T, ID>((JdbcPersistentEntity<T>) e)).orElseGet(null);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
 		JdbcPersistentEntity<?> persistentEntity = context //
 				.getPersistentEntity(repositoryInformation.getDomainType()) //
 				.orElseThrow(() -> new IllegalArgumentException("%s does not represent a persistent entity")); //
-		return new SimpleJdbcRepository<>(persistentEntity, jdbcOperations, publisher);
+		JdbcPersistentEntityInformation persistentEntityInformation = context
+				.getRequiredPersistentEntityInformation(persistentEntity.getType());
+		JdbcEntityTemplate template = new JdbcEntityTemplate(publisher, jdbcOperations, context);
+
+		return new SimpleJdbcRepository<>(template, persistentEntityInformation);
 	}
 
 	@Override

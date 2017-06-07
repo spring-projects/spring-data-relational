@@ -48,7 +48,7 @@ class EntityRowMapper<T> implements RowMapper<T> {
 
 	private final JdbcPersistentEntity<T> entity;
 	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
-	private final ConversionService conversions = new DefaultConversionService();
+	private final ConversionService conversions;
 
 	/*
 	 * (non-Javadoc)
