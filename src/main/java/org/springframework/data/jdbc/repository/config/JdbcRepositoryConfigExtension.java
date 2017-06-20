@@ -30,7 +30,7 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 
 	/*
-	* (non-Javadoc
+	* (non-Javadoc)
 	* @see org.springframework.data.repository.config.RepositoryConfigurationExtension#getModuleName()
 	 */
 	@Override
@@ -39,9 +39,8 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	}
 
 	/*
-	* (non-Javadoc
-	* @see 	* @see org.springframework.data.repository.config
-.RepositoryConfigurationExtensionSupport#getRepositoryFactoryBeanClassName()
+	* (non-Javadoc)
+	* @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getRepositoryFactoryBeanClassName()
 	 */
 	@Override
 	public String getRepositoryFactoryBeanClassName() {
@@ -49,7 +48,7 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	}
 
 	/*
-	* (non-Javadoc
+	* (non-Javadoc)
 	* @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getModulePrefix()
 	 */
 	@Override

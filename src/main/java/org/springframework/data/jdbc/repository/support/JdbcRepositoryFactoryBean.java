@@ -26,6 +26,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
+import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -43,6 +44,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private static final String NO_NAMED_PARAMETER_JDBC_OPERATION_ERROR_MESSAGE = //
 			"No unique NamedParameterJdbcOperation could be found, " //
 					+ "nor JdbcOperations or DataSource to construct one from.";
+
+	private static final String NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME = "namedParameterJdbcTemplate";
+	private static final String JDBC_OPERATIONS_BEAN_NAME = "jdbcTemplate";
+	private static final String DATA_SOURCE_BEAN_NAME = "dataSource";
 
 	private final ApplicationEventPublisher applicationEventPublisher;
 	private final ApplicationContext context;
@@ -62,24 +67,24 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 	private NamedParameterJdbcOperations findOrCreateJdbcOperations() {
 
-		return getNamedParameterJdbcOperations() //
-				.orElseGet(() -> getJdbcOperations().map(NamedParameterJdbcTemplate::new) //
-						.orElseGet(() -> getDataSource().map(NamedParameterJdbcTemplate::new) //
-								.orElseThrow(() -> new IllegalStateException( //
-										NO_NAMED_PARAMETER_JDBC_OPERATION_ERROR_MESSAGE //
-		))));
+		return Optionals
+				.firstNonEmpty( //
+						this::getNamedParameterJdbcOperations, //
+						() -> getJdbcOperations().map(NamedParameterJdbcTemplate::new), //
+						() -> getDataSource().map(NamedParameterJdbcTemplate::new)) //
+				.orElseThrow(() -> new IllegalStateException(NO_NAMED_PARAMETER_JDBC_OPERATION_ERROR_MESSAGE));
 	}
 
 	private Optional<NamedParameterJdbcOperations> getNamedParameterJdbcOperations() {
-		return getBean(NamedParameterJdbcOperations.class, "namedParameterJdbcOperations");
+		return getBean(NamedParameterJdbcOperations.class, NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME);
 	}
 
 	private Optional<JdbcOperations> getJdbcOperations() {
-		return getBean(JdbcOperations.class, "jdbcOperations");
+		return getBean(JdbcOperations.class, JDBC_OPERATIONS_BEAN_NAME);
 	}
 
 	private Optional<DataSource> getDataSource() {
-		return getBean(DataSource.class, "dataSource");
+		return getBean(DataSource.class, DATA_SOURCE_BEAN_NAME);
 	}
 
 	private <R> Optional<R> getBean(Class<R> type, String name) {

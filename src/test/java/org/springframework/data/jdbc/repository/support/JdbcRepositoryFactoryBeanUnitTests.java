@@ -28,7 +28,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  */
 public class JdbcRepositoryFactoryBeanUnitTests {
 
-	static final String JDBC_OPERATIONS = "jdbcOperations";
+	static final String JDBC_OPERATIONS_FIELD_NAME = "jdbcOperations";
+	static final String EXPECTED_JDBC_OPERATIONS_BEAN_NAME = "jdbcTemplate";
+	static final String EXPECTED_NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME = "namedParameterJdbcTemplate";
 
 	ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 	ApplicationContext context = mock(ApplicationContext.class);
@@ -96,7 +98,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	public void multipleJdbcOperationsGetDisambiguatedByName() {
 
 		JdbcOperations expectedOperations = mock(JdbcOperations.class);
-		jdbcOperations.put("jdbcOperations", expectedOperations);
+		jdbcOperations.put(EXPECTED_JDBC_OPERATIONS_BEAN_NAME, expectedOperations);
 		jdbcOperations.put("arbitraryName", mock(JdbcOperations.class));
 
 		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
@@ -121,7 +123,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	public void multipleNamedJdbcOperationsGetDisambiguatedByName() {
 
 		NamedParameterJdbcOperations expectedOperations = mock(NamedParameterJdbcOperations.class);
-		namedJdbcOperations.put("namedParameterJdbcOperations", expectedOperations);
+		namedJdbcOperations.put(EXPECTED_NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME, expectedOperations);
 		namedJdbcOperations.put("arbitraryName", mock(NamedParameterJdbcOperations.class));
 
 		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
@@ -171,14 +173,15 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 	private Condition<? super RepositoryFactorySupport> using(NamedParameterJdbcOperations expectedOperations) {
 
-		Predicate<RepositoryFactorySupport> predicate = r -> getField(r, JDBC_OPERATIONS) == expectedOperations;
+		Predicate<RepositoryFactorySupport> predicate = r -> getField(r, JDBC_OPERATIONS_FIELD_NAME) == expectedOperations;
 		return new Condition<>(predicate, "uses " + expectedOperations);
 	}
 
 	private Condition<? super RepositoryFactorySupport> using(JdbcOperations expectedOperations) {
 
 		Predicate<RepositoryFactorySupport> predicate = r -> {
-			NamedParameterJdbcOperations namedOperations = (NamedParameterJdbcOperations) getField(r, JDBC_OPERATIONS);
+			NamedParameterJdbcOperations namedOperations = (NamedParameterJdbcOperations) getField(r,
+					JDBC_OPERATIONS_FIELD_NAME);
 			return namedOperations.getJdbcOperations() == expectedOperations;
 		};
 
@@ -189,7 +192,8 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		Predicate<RepositoryFactorySupport> predicate = r -> {
 
-			NamedParameterJdbcOperations namedOperations = (NamedParameterJdbcOperations) getField(r, JDBC_OPERATIONS);
+			NamedParameterJdbcOperations namedOperations = (NamedParameterJdbcOperations) getField(r,
+					JDBC_OPERATIONS_FIELD_NAME);
 			JdbcTemplate jdbcOperations = (JdbcTemplate) namedOperations.getJdbcOperations();
 			return jdbcOperations.getDataSource() == expectedDataSource;
 		};
