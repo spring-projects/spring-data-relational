@@ -15,11 +15,20 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.util.ClassUtils;
 
 /**
  * Meta data about a property to be used by repository implementations.
@@ -29,6 +38,14 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
  */
 public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<JdbcPersistentProperty>
 		implements JdbcPersistentProperty {
+
+	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
+
+	static {
+		javaToDbType.put(Enum.class, String.class);
+		javaToDbType.put(ZonedDateTime.class, String.class);
+		javaToDbType.put(Temporal.class, Date.class);
+	}
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
@@ -57,5 +74,22 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	 */
 	public String getColumnName() {
 		return getName();
+	}
+
+	/**
+	 * The type to be used to store this property in the database.
+	 *
+	 * @return a {@link Class} that is suitable for usage with JDBC drivers
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Class getColumnType() {
+
+		Class type = getType();
+		return javaToDbType.entrySet().stream() //
+				.filter(e -> e.getKey().isAssignableFrom(type)) //
+				.map(e -> (Class)e.getValue()) //
+				.findFirst() //
+				.orElseGet(() -> ClassUtils.resolvePrimitiveIfNecessary(type));
 	}
 }
