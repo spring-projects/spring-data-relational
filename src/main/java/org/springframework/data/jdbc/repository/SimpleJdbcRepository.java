@@ -210,8 +210,8 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 		this.persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
 
-			Optional<Object> value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
-			parameters.put(property.getColumnName(), value.orElse(null));
+			Object value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
+			parameters.put(property.getColumnName(), value);
 		});
 
 		return parameters;
@@ -238,17 +238,17 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 	private <S extends T> ID getIdValueOrNull(S instance) {
 
-		Optional<ID> idValue = entityInformation.getId(instance);
-		return isIdPropertySimpleTypeAndValueZero(idValue) ? null : idValue.get();
+		ID idValue = entityInformation.getId(instance);
+		return isIdPropertySimpleTypeAndValueZero(idValue) ? null : idValue;
 	}
 
-	private boolean isIdPropertySimpleTypeAndValueZero(Optional<ID> idValue) {
+	private boolean isIdPropertySimpleTypeAndValueZero(ID idValue) {
 
-		Optional<JdbcPersistentProperty> idProperty = persistentEntity.getIdProperty();
-		return !idValue.isPresent() //
-				|| !idProperty.isPresent() //
-				|| (((Optional<JdbcPersistentProperty>) idProperty).get().getType() == int.class && idValue.equals(0)) //
-				|| (((Optional<JdbcPersistentProperty>) idProperty).get().getType() == long.class && idValue.equals(0L));
+		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
+		return idValue == null //
+				|| idProperty == null //
+				|| (idProperty.getType() == int.class && idValue.equals(0)) //
+				|| (idProperty.getType() == long.class && idValue.equals(0L));
 	}
 
 	private <S extends T> void setIdFromJdbc(S instance, KeyHolder holder) {
@@ -259,7 +259,7 @@ public class SimpleJdbcRepository<T, ID extends Serializable> implements CrudRep
 
 				Class<?> targetType = persistentEntity.getRequiredIdProperty().getType();
 				Object converted = convert(it, targetType);
-				entityInformation.setId(instance, Optional.of(converted));
+				entityInformation.setId(instance, converted);
 			});
 
 		} catch (NonTransientDataAccessException e) {

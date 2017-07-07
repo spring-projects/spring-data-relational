@@ -27,12 +27,12 @@ import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
 import org.springframework.data.convert.EntityInstantiator;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -74,10 +74,10 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		return instantiator.createInstance(entity, ResultSetParameterValueProvider.of(rs, conversions));
 	}
 
-	private static Optional<Object> readFrom(ResultSet resultSet, PersistentProperty<?> property) {
+	private static Object readFrom(ResultSet resultSet, PersistentProperty<?> property) {
 
 		try {
-			return Optional.ofNullable(resultSet.getObject(property.getName()));
+			return resultSet.getObject(property.getName());
 		} catch (SQLException o_O) {
 			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
 		}
@@ -94,16 +94,16 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
 		 */
 		@Override
-		public <S> Optional<S> getParameterValue(Parameter<S, JdbcPersistentProperty> parameter) {
+		public <T> T getParameterValue(Parameter<T, JdbcPersistentProperty> parameter) {
 
-			return parameter.getName().map(name -> {
+			String name = parameter.getName();
+			if (name == null ) return null;
 
 				try {
 					return conversionService.convert(resultSet.getObject(name), parameter.getType().getType());
 				} catch (SQLException o_O) {
 					throw new MappingException(String.format("Couldn't read column %s from ResultSet.", name), o_O);
 				}
-			});
 		}
 	}
 }
