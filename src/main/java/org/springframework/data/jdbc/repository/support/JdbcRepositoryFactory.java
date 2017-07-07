@@ -17,11 +17,10 @@ package org.springframework.data.jdbc.repository.support;
 
 import lombok.RequiredArgsConstructor;
 
-import java.io.Serializable;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.mapping.context.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityImpl;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -44,16 +43,18 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
 
-		return context.getPersistentEntity(aClass)
-				.map(e -> new BasicJdbcPersistentEntityInformation<T, ID>((JdbcPersistentEntity<T>) e)).orElseGet(null);
+		JdbcPersistentEntityImpl<?> persistentEntity = context.getPersistentEntity(aClass);
+		if (persistentEntity == null)
+			return null;
+		return new BasicJdbcPersistentEntityInformation<T, ID>((JdbcPersistentEntity<T>) persistentEntity);
 	}
 
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcPersistentEntity<?> persistentEntity = context //
-				.getPersistentEntity(repositoryInformation.getDomainType()) //
-				.orElseThrow(() -> new IllegalArgumentException("%s does not represent a persistent entity")); //
+		JdbcPersistentEntity<?> persistentEntity = context
+				.getRequiredPersistentEntity(repositoryInformation.getDomainType());
+
 		return new SimpleJdbcRepository<>(persistentEntity, jdbcOperations, publisher);
 	}
 

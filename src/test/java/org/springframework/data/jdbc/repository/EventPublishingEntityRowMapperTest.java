@@ -51,7 +51,7 @@ public class EventPublishingEntityRowMapperTest {
 	public void eventGetsPublishedAfterInstantiation() throws SQLException {
 
 		when(rowMapperDelegate.mapRow(any(ResultSet.class), anyInt())).thenReturn(new DummyEntity(1L));
-		when(entityInformation.getId(any())).thenReturn(Optional.of(1L));
+		when(entityInformation.getId(any())).thenReturn(1L);
 
 		EventPublishingEntityRowMapper<?> rowMapper = new EventPublishingEntityRowMapper<>(rowMapperDelegate,
 				entityInformation, publisher);

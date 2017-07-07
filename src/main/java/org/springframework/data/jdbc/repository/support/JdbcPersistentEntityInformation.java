@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import java.io.Serializable;
 import java.util.Optional;
 
 import org.springframework.data.repository.core.EntityInformation;
@@ -26,7 +25,7 @@ import org.springframework.data.repository.core.EntityInformation;
  */
 public interface JdbcPersistentEntityInformation<T, ID> extends EntityInformation<T, ID> {
 
-	void setId(T instance, Optional<Object> value);
+	void setId(T instance, Object value);
 
 	/**
 	 * Returns the identifier of the given entity or throws and exception if it can't be obtained.
@@ -36,7 +35,8 @@ public interface JdbcPersistentEntityInformation<T, ID> extends EntityInformatio
 	 * @throws IllegalArgumentException in case no identifier can be obtained for the given entity.
 	 */
 	default ID getRequiredId(T entity) {
-		return getId(entity).orElseThrow(() -> new IllegalArgumentException(
-				String.format("Could not obtain required identifier from entity %s!", entity)));
+		ID id = getId(entity);
+		if (id == null) throw new IllegalStateException(String.format("Could not obtain required identifier from entity %s!", entity));
+		return id;
 	}
 }
