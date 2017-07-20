@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository.support;
-
-import java.util.Optional;
+package org.springframework.data.jdbc.mapping.model;
 
 import org.springframework.data.repository.core.EntityInformation;
 
@@ -35,8 +33,11 @@ public interface JdbcPersistentEntityInformation<T, ID> extends EntityInformatio
 	 * @throws IllegalArgumentException in case no identifier can be obtained for the given entity.
 	 */
 	default ID getRequiredId(T entity) {
+
 		ID id = getId(entity);
-		if (id == null) throw new IllegalStateException(String.format("Could not obtain required identifier from entity %s!", entity));
+		if (id == null)
+			throw new IllegalStateException(String.format("Could not obtain required identifier from entity %s!", entity));
+
 		return id;
 	}
 }

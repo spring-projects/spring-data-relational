@@ -15,13 +15,14 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityImpl;
-import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.core.JdbcEntityOperations;
+import org.springframework.data.jdbc.core.JdbcEntityTemplate;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.repository.CrudRepository;
 
 /**
@@ -35,7 +36,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	private final JdbcEntityOperations entityOperations;
 
 	/**
-	 * Creates a new {@link SimpleJdbcRepository} for the given {@link JdbcPersistentEntityImpl}
+	 * Creates a new {@link SimpleJdbcRepository}.
 	 */
 	public SimpleJdbcRepository(JdbcEntityTemplate entityOperations,
 			JdbcPersistentEntityInformation<T, ID> entityInformation) {
@@ -51,11 +52,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	@Override
 	public <S extends T> S save(S instance) {
 
-		if (entityInformation.isNew(instance)) {
-			entityOperations.insert(instance, entityInformation.getJavaType());
-		} else {
-			entityOperations.update(instance, entityInformation.getJavaType());
-		}
+		entityOperations.save(instance, entityInformation.getJavaType());
 
 		return instance;
 	}
@@ -142,7 +139,11 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public void deleteAll(Iterable<? extends T> entities) {
-		entityOperations.deleteAll(entities, entityInformation.getJavaType());
+
+		for (T entity : entities) {
+			entityOperations.delete(entity, (Class<T>) entity.getClass());
+
+		}
 	}
 
 	@Override

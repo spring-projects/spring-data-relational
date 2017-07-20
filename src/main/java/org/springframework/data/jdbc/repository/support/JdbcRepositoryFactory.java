@@ -18,9 +18,11 @@ package org.springframework.data.jdbc.repository.support;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.jdbc.mapping.context.JdbcMappingContext;
+import org.springframework.data.jdbc.core.JdbcEntityTemplate;
+import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
-import org.springframework.data.jdbc.repository.JdbcEntityTemplate;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -43,21 +45,18 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
 
-		JdbcPersistentEntityImpl<?> persistentEntity = context.getPersistentEntity(aClass);
+		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(aClass);
 		if (persistentEntity == null)
 			return null;
-		return new BasicJdbcPersistentEntityInformation<T, ID>((JdbcPersistentEntity<T>) persistentEntity);
+		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) persistentEntity);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcPersistentEntity<?> persistentEntity = context //
-				.getPersistentEntity(repositoryInformation.getDomainType()) //
-				.orElseThrow(() -> new IllegalArgumentException("%s does not represent a persistent entity")); //
 		JdbcPersistentEntityInformation persistentEntityInformation = context
-				.getRequiredPersistentEntityInformation(persistentEntity.getType());
+				.getRequiredPersistentEntityInformation(repositoryInformation.getDomainType());
 		JdbcEntityTemplate template = new JdbcEntityTemplate(publisher, jdbcOperations, context);
 
 		return new SimpleJdbcRepository<>(template, persistentEntityInformation);

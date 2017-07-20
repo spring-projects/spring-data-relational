@@ -1,0 +1,58 @@
+/*
+ * Copyright 2017 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.springframework.data.jdbc.core.conversion;
+
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.mapping.model.PropertyPaths;
+
+/**
+ * Converts an entity that is about to be deleted into {@link DbAction}s inside a {@link DbChange} that need to be
+ * executed against the database to recreate the appropriate state in the database.
+ *
+ * @author Jens Schauder
+ */
+public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
+
+	public JdbcEntityDeleteWriter(JdbcMappingContext context) {
+		super(context);
+	}
+
+	@Override
+	public void write(Object id, DbChange dbChange) {
+
+		if (id == null) {
+			deleteAll(dbChange);
+		} else {
+			deleteById(id, dbChange);
+		}
+	}
+
+	private void deleteAll(DbChange dbChange) {
+
+		context.referencedEntities(dbChange.getEntityType(), null)
+				.forEach(p -> dbChange.addAction(DbAction.deleteAll(PropertyPaths.getLeafType(p), p, null)));
+
+		dbChange.addAction(DbAction.deleteAll(dbChange.getEntityType(), null, null));
+	}
+
+	private void deleteById(Object id, DbChange dbChange) {
+
+		deleteReferencedEntities(id, dbChange);
+
+		dbChange.addAction(DbAction.delete(id, dbChange.getEntityType(), dbChange.getEntity(), null, null));
+	}
+
+}
