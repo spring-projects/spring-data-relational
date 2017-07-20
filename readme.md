@@ -1,9 +1,19 @@
 
 # Spring Data JDBC 
 
-The primary goal of the [Spring Data](http://projects.spring.io/spring-data) project is to make it easier to build Spring-powered applications that use data access technologies. This module deals with enhanced support for JDBC based data access layers.
+The primary goal of the [Spring Data](http://projects.spring.io/spring-data) project is to make it easier to build Spring-powered applications that use data access technologies. **Spring Data JDBC** offers the popular Repository abstraction based on JDBC
+
+## This is NOT an ORM
+
+Spring Data JDBC does not try to be an ORM. It is not a competitor to JPA. Instead it is more of a construction kit for your personal ORM that you can define the way you like or need it.
+
+This means that it does rather little out of the box. But it offers plenty of places where you can put your own logic, or integrate it with the technology of your choice for generating SQL statements.
 
 ## Features ##
+
+### CRUD operations 
+
+### Events
 
 ## Getting Help ##
 
