@@ -67,7 +67,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return JdbcRepositoryIntegrationTests.class;
+			return EnableJdbcRepositoriesIntegrationTests.class;
 		}
 	}
 

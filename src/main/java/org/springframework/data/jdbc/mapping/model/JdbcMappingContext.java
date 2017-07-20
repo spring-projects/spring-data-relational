@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.mapping.context;
+package org.springframework.data.jdbc.mapping.model;
 
-import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentProperty;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityImpl;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
-import org.springframework.data.jdbc.repository.support.BasicJdbcPersistentEntityInformation;
-import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
+import static java.util.Arrays.*;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.temporal.Temporal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
+import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
@@ -34,6 +39,40 @@ import org.springframework.data.util.TypeInformation;
  * @since 2.0
  */
 public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> {
+
+	private static final HashSet<Class<?>> CUSTOM_SIMPLE_TYPES = new HashSet<>(asList( //
+			BigDecimal.class, //
+			BigInteger.class, //
+			Temporal.class //
+	));
+
+	public JdbcMappingContext() {
+		setSimpleTypeHolder(new SimpleTypeHolder(CUSTOM_SIMPLE_TYPES, true));
+	}
+
+	public List<PropertyPath> referencedEntities(Class<?> rootType, PropertyPath path) {
+
+		List<PropertyPath> paths = new ArrayList<>();
+
+		Class<?> currentType = path == null ? rootType : PropertyPaths.getLeafType(path);
+		JdbcPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(currentType);
+
+		String rootPrefix = path == null ? "" : path.toDotPath() + ".";
+
+		for (JdbcPersistentProperty property : persistentEntity) {
+			if (property.isEntity()) {
+
+				PropertyPath nextPath = path == null ? PropertyPath.from(property.getName(), rootType)
+						: PropertyPaths.extendBy(path, property.getColumnName());
+				paths.add(nextPath);
+				paths.addAll(referencedEntities(rootType, nextPath));
+			}
+		}
+
+		Collections.reverse(paths);
+
+		return paths;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -51,11 +90,12 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	@Override
 	protected JdbcPersistentProperty createPersistentProperty(Property property, JdbcPersistentEntity<?> owner,
 			SimpleTypeHolder simpleTypeHolder) {
-		return new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder);
+		return new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder, this);
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> JdbcPersistentEntityInformation<T, ?> getRequiredPersistentEntityInformation(Class<T> type) {
 		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) getRequiredPersistentEntity(type));
 	}
+
 }

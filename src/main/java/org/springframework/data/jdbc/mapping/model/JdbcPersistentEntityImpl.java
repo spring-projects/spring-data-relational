@@ -26,7 +26,7 @@ import org.springframework.data.util.TypeInformation;
  * @author Jens Schauder
  * @since 2.0
  */
-public class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersistentProperty>
+class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersistentProperty>
 		implements JdbcPersistentEntity<T> {
 
 	private final @Getter String tableName;
@@ -36,7 +36,7 @@ public class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPe
 	 * 
 	 * @param information must not be {@literal null}.
 	 */
-	public JdbcPersistentEntityImpl(TypeInformation<T> information) {
+	JdbcPersistentEntityImpl(TypeInformation<T> information) {
 
 		super(information);
 
@@ -50,5 +50,10 @@ public class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPe
 	@Override
 	public String getIdColumn() {
 		return getRequiredIdProperty().getName();
+	}
+
+	@Override
+	public String toString() {
+		return String.format("JdbcpersistentEntityImpl<%s>", getType());
 	}
 }

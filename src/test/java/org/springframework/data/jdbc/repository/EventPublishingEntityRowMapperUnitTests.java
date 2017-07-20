@@ -15,14 +15,15 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.*;
 
 import lombok.Value;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,8 +31,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.EventPublishingEntityRowMapper;
 import org.springframework.data.jdbc.mapping.event.AfterCreation;
-import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
@@ -41,7 +43,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Oliver Gierke
  */
 @RunWith(MockitoJUnitRunner.class)
-public class EventPublishingEntityRowMapperTest {
+public class EventPublishingEntityRowMapperUnitTests {
 
 	@Mock RowMapper<DummyEntity> rowMapperDelegate;
 	@Mock JdbcPersistentEntityInformation<DummyEntity, Long> entityInformation;
@@ -51,7 +53,7 @@ public class EventPublishingEntityRowMapperTest {
 	public void eventGetsPublishedAfterInstantiation() throws SQLException {
 
 		when(rowMapperDelegate.mapRow(any(ResultSet.class), anyInt())).thenReturn(new DummyEntity(1L));
-		when(entityInformation.getId(any())).thenReturn(1L);
+		when(entityInformation.getRequiredId(any())).thenReturn(1L);
 
 		EventPublishingEntityRowMapper<?> rowMapper = new EventPublishingEntityRowMapper<>(rowMapperDelegate,
 				entityInformation, publisher);

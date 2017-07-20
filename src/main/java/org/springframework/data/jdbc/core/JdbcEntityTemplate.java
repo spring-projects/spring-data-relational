@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository;
+package org.springframework.data.jdbc.core;
 
-import lombok.RequiredArgsConstructor;
-
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,13 +23,16 @@ import java.util.stream.StreamSupport;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.convert.Jsr310Converters;
-import org.springframework.data.jdbc.mapping.context.JdbcMappingContext;
+import org.springframework.data.jdbc.core.conversion.DbChange;
+import org.springframework.data.jdbc.core.conversion.DbChange.Kind;
+import org.springframework.data.jdbc.core.conversion.Interpreter;
+import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
+import org.springframework.data.jdbc.core.conversion.JdbcEntityDeleteWriter;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
 import org.springframework.data.jdbc.mapping.event.AfterInsert;
 import org.springframework.data.jdbc.mapping.event.AfterUpdate;
@@ -43,22 +41,25 @@ import org.springframework.data.jdbc.mapping.event.BeforeInsert;
 import org.springframework.data.jdbc.mapping.event.BeforeUpdate;
 import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
+import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
-import org.springframework.data.jdbc.repository.support.BasicJdbcPersistentEntityInformation;
-import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.repository.core.EntityInformation;
-import org.springframework.data.util.Streamable;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.util.Assert;
 
 /**
+ * {@link JdbcEntityOperations} implementation, storing complete entities including references in a JDBC data store.
+ *
  * @author Jens Schauder
  */
-@RequiredArgsConstructor
 public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	private static final String ENTITY_NEW_AFTER_INSERT = "Entity [%s] still 'new' after insert. Please set either"
@@ -69,6 +70,24 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	private final NamedParameterJdbcOperations operations;
 	private final JdbcMappingContext context;
 	private final ConversionService conversions = getDefaultConversionService();
+	private final Interpreter interpreter;
+	private final SqlGeneratorSource sqlGeneratorSource;
+
+	private final JdbcEntityWriter jdbcConverter;
+	private final JdbcEntityDeleteWriter jdbcEntityDeleteConverter;
+
+	public JdbcEntityTemplate(ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations,
+			JdbcMappingContext context) {
+
+		this.publisher = publisher;
+		this.operations = operations;
+		this.context = context;
+
+		jdbcConverter = new JdbcEntityWriter(this.context);
+		jdbcEntityDeleteConverter = new JdbcEntityDeleteWriter(this.context);
+		sqlGeneratorSource = new SqlGeneratorSource(this.context);
+		interpreter = new JdbcInterpreter(this.context, this);
+	}
 
 	private static GenericConversionService getDefaultConversionService() {
 
@@ -79,13 +98,18 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	}
 
 	@Override
-	public <S> void insert(S instance, Class<S> domainType) {
+	public <T> void save(T instance, Class<T> domainType) {
+		createDbChange(instance).executeWith(interpreter);
+	}
+
+	@Override
+	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameter) {
 
 		publisher.publishEvent(new BeforeInsert(instance));
 
 		KeyHolder holder = new GeneratedKeyHolder();
-		JdbcPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
-		JdbcPersistentEntityInformation<S, ?> entityInformation = context
+		JdbcPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
+		JdbcPersistentEntityInformation<T, ?> entityInformation = context
 				.getRequiredPersistentEntityInformation(domainType);
 
 		Map<String, Object> propertyMap = getPropertyMap(instance, persistentEntity);
@@ -94,7 +118,10 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		JdbcPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 		propertyMap.put(idProperty.getColumnName(), convert(idValue, idProperty.getColumnType()));
 
-		operations.update(sql(domainType).getInsert(idValue == null), new MapSqlParameterSource(propertyMap), holder);
+		propertyMap.putAll(additionalParameter);
+
+		operations.update(sql(domainType).getInsert(idValue == null, additionalParameter.keySet()),
+				new MapSqlParameterSource(propertyMap), holder);
 
 		setIdFromJdbc(instance, holder, persistentEntity);
 
@@ -117,19 +144,6 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		publisher.publishEvent(new BeforeUpdate(specifiedId, instance));
 		operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity));
 		publisher.publishEvent(new AfterUpdate(specifiedId, instance));
-	}
-
-	@Override
-	public <S> void delete(S entity, Class<S> domainType) {
-
-		JdbcPersistentEntityInformation<S, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation(domainType);
-		delete(Identifier.of(entityInformation.getRequiredId(entity)), Optional.of(entity), domainType);
-	}
-
-	@Override
-	public <S> void deleteById(Object id, Class<S> domainType) {
-		delete(Identifier.of(id), Optional.empty(), domainType);
 	}
 
 	@Override
@@ -170,27 +184,43 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	}
 
 	@Override
-	public <T> void deleteAll(Iterable<? extends T> entities, Class<T> domainType) {
+	public <S> void delete(S entity, Class<S> domainType) {
 
-		JdbcPersistentEntityInformation<T, ?> entityInformation = context
+		JdbcPersistentEntityInformation<S, ?> entityInformation = context
 				.getRequiredPersistentEntityInformation(domainType);
+		deleteTree(entityInformation.getRequiredId(entity), entity, domainType);
+	}
 
-		Class<?> targetType = context.getRequiredPersistentEntity(domainType).getRequiredIdProperty().getColumnType();
-		List<?> idList = Streamable.of(entities).stream() //
-				.map(entityInformation::getRequiredId) //
-				.map(id -> convert(id, targetType))
-				.collect(Collectors.toList());
-
-		MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource("ids", idList);
-		operations.update(sql(domainType).getDeleteByList(), sqlParameterSource);
+	@Override
+	public <S> void deleteById(Object id, Class<S> domainType) {
+		deleteTree(id, null, domainType);
 	}
 
 	@Override
 	public void deleteAll(Class<?> domainType) {
-		operations.getJdbcOperations().update(sql(domainType).getDeleteAll());
+
+		DbChange change = createDeletingDbChange(domainType);
+		change.executeWith(interpreter);
 	}
 
-	private void delete(Specified specifiedId, Optional<Object> optionalEntity, Class<?> domainType) {
+	void doDelete(Object rootId, PropertyPath propertyPath) {
+
+		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(propertyPath.getTypeInformation());
+
+		JdbcPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(propertyPath.getOwningType());
+
+		JdbcPersistentProperty referencingProperty = rootEntity.getRequiredPersistentProperty(propertyPath.getSegment());
+		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
+
+		String format = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
+
+		HashMap<String, Object> parameters = new HashMap<>();
+		parameters.put("rootId", rootId);
+		operations.update(format, parameters);
+
+	}
+
+	void doDelete(Specified specifiedId, Optional<Object> optionalEntity, Class<?> domainType) {
 
 		publisher.publishEvent(new BeforeDelete(specifiedId, optionalEntity));
 
@@ -203,6 +233,34 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		publisher.publishEvent(new AfterDelete(specifiedId, optionalEntity));
 	}
 
+	private void deleteTree(Object id, Object entity, Class<?> domainType) {
+
+		DbChange change = createDeletingDbChange(id, entity, domainType);
+
+		change.executeWith(interpreter);
+	}
+
+	private <T> DbChange createDbChange(T instance) {
+
+		DbChange dbChange = new DbChange(Kind.SAVE, instance.getClass(), instance);
+		jdbcConverter.write(instance, dbChange);
+		return dbChange;
+	}
+
+	private DbChange createDeletingDbChange(Object id, Object entity, Class<?> domainType) {
+
+		DbChange dbChange = new DbChange(Kind.DELETE, domainType, entity);
+		jdbcEntityDeleteConverter.write(id, dbChange);
+		return dbChange;
+	}
+
+	private DbChange createDeletingDbChange(Class<?> domainType) {
+
+		DbChange dbChange = new DbChange(Kind.DELETE, domainType, null);
+		jdbcEntityDeleteConverter.write(null, dbChange);
+		return dbChange;
+	}
+
 	private <T> MapSqlParameterSource createIdParameterSource(Object id, Class<T> domainType) {
 		return new MapSqlParameterSource("id",
 				convert(id, getRequiredPersistentEntity(domainType).getRequiredIdProperty().getColumnType()));
@@ -213,11 +271,12 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		Map<String, Object> parameters = new HashMap<>();
 
 		persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
+			if (!property.isEntity()) {
+				Object value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
 
-			Optional<Object> value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
-
-			Object convertedValue = convert(value.orElse(null), property.getColumnType());
-			parameters.put(property.getColumnName(), convertedValue);
+				Object convertedValue = convert(value, property.getColumnType());
+				parameters.put(property.getColumnName(), convertedValue);
+			}
 		});
 
 		return parameters;
@@ -227,10 +286,9 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 		EntityInformation<S, ID> entityInformation = new BasicJdbcPersistentEntityInformation<>(persistentEntity);
 
-		Optional<ID> idValue = entityInformation.getId(instance);
+		ID idValue = entityInformation.getId(instance);
 
-		return isIdPropertySimpleTypeAndValueZero(idValue, persistentEntity) ? null
-				: idValue.orElseThrow(() -> new IllegalStateException("idValue must have a value at this point."));
+		return isIdPropertySimpleTypeAndValueZero(idValue, persistentEntity) ? null : idValue;
 	}
 
 	private <S> void setIdFromJdbc(S instance, KeyHolder holder, JdbcPersistentEntity<S> persistentEntity) {
@@ -244,7 +302,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 				Class<?> targetType = persistentEntity.getRequiredIdProperty().getType();
 				Object converted = convert(it, targetType);
-				entityInformation.setId(instance, Optional.of(converted));
+				entityInformation.setId(instance, converted);
 			});
 
 		} catch (NonTransientDataAccessException e) {
@@ -264,17 +322,25 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	}
 
 	private <V> V convert(Object from, Class<V> to) {
-		return conversions.convert(from, to);
+
+		if (from == null) {
+			return null;
+		}
+
+		JdbcPersistentEntity<?> persistentEntity = context.getPersistentEntity(from.getClass());
+
+		Object id = persistentEntity == null ? null : persistentEntity.getIdentifierAccessor(from).getIdentifier();
+
+		return conversions.convert(id == null ? from : id, to);
 	}
 
-	private <S, ID> boolean isIdPropertySimpleTypeAndValueZero(Optional<ID> idValue,
-			JdbcPersistentEntity<S> persistentEntity) {
+	private <S, ID> boolean isIdPropertySimpleTypeAndValueZero(ID idValue, JdbcPersistentEntity<S> persistentEntity) {
 
-		Optional<JdbcPersistentProperty> idProperty = persistentEntity.getIdProperty();
-		return !idValue.isPresent() //
-				|| !idProperty.isPresent() //
-				|| (idProperty.get().getType() == int.class && idValue.get().equals(0)) //
-				|| (idProperty.get().getType() == long.class && idValue.get().equals(0L));
+		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
+		return idValue == null //
+				|| idProperty == null //
+				|| (idProperty.getType() == int.class && idValue.equals(0)) //
+				|| (idProperty.getType() == long.class && idValue.equals(0L));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -283,10 +349,17 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	}
 
 	private SqlGenerator sql(Class<?> domainType) {
-		return new SqlGenerator(context.getRequiredPersistentEntity(domainType));
+		return sqlGeneratorSource.getSqlGenerator(domainType);
 	}
 
 	private <T> EntityRowMapper<T> getEntityRowMapper(Class<T> domainType) {
-		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), conversions);
+		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), conversions, context);
+	}
+
+	<T> void doDeleteAll(Class<T> domainType, PropertyPath propertyPath) {
+
+		operations.getJdbcOperations()
+				.update(sql(propertyPath == null ? domainType : propertyPath.getOwningType().getType())
+						.createDeleteAllSql(propertyPath));
 	}
 }

@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository;
+package org.springframework.data.jdbc.core;
+
+import java.util.Map;
 
 /**
  * Specifies a operations one can perform on a database, based on an <em>Domain Type</em>.
@@ -22,7 +24,7 @@ package org.springframework.data.jdbc.repository;
  */
 public interface JdbcEntityOperations {
 
-	<T> void insert(T instance, Class<T> domainType);
+	<T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameter);
 
 	<T> void update(T instance, Class<T> domainType);
 
@@ -40,7 +42,7 @@ public interface JdbcEntityOperations {
 
 	<T> boolean existsById(Object id, Class<T> domainType);
 
-	<T> void deleteAll(Iterable<? extends T> entities, Class<T> domainType);
-
 	void deleteAll(Class<?> domainType);
+
+	<T> void save(T instance, Class<T> domainType);
 }

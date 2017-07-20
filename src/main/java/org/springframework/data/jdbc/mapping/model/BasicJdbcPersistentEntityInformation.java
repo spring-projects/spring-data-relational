@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository.support;
+package org.springframework.data.jdbc.mapping.model;
 
-import java.io.Serializable;
-import java.util.Optional;
-
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.repository.core.support.PersistentEntityInformation;
 
 /**
@@ -39,7 +35,7 @@ public class BasicJdbcPersistentEntityInformation<T, ID> extends PersistentEntit
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation#setId(java.lang.Object, java.util.Optional)
+	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation#setId(java.lang.Object, java.util.Optional)
 	 */
 	@Override
 	public void setId(T instance, Object value) {

@@ -20,8 +20,6 @@ import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
 
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
@@ -40,6 +38,7 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 		implements JdbcPersistentProperty {
 
 	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
+	private final JdbcMappingContext context;
 
 	static {
 		javaToDbType.put(Enum.class, String.class);
@@ -49,14 +48,16 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
-	 *
+	 * 
 	 * @param property must not be {@literal null}.
 	 * @param owner must not be {@literal null}.
 	 * @param simpleTypeHolder must not be {@literal null}.
+	 * @param context
 	 */
 	public BasicJdbcPersistentProperty(Property property, PersistentEntity<?, JdbcPersistentProperty> owner,
-			SimpleTypeHolder simpleTypeHolder) {
+			SimpleTypeHolder simpleTypeHolder, JdbcMappingContext context) {
 		super(property, owner, simpleTypeHolder);
+		this.context = context;
 	}
 
 	/*
@@ -85,10 +86,32 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	@Override
 	public Class getColumnType() {
 
-		Class type = getType();
+		Class columnType = columnTypeIfEntity(getType());
+
+		return columnType == null ? columnTypeForNonEntity(getType()) : columnType;
+	}
+
+	private Class columnTypeIfEntity(Class type) {
+
+		JdbcPersistentEntity<?> persistentEntity = context.getPersistentEntity(type);
+
+		if (persistentEntity == null) {
+			return null;
+		}
+
+		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
+
+		if (idProperty == null) {
+			return null;
+		}
+		return idProperty.getColumnType();
+	}
+
+	private Class columnTypeForNonEntity(Class type) {
+
 		return javaToDbType.entrySet().stream() //
 				.filter(e -> e.getKey().isAssignableFrom(type)) //
-				.map(e -> (Class)e.getValue()) //
+				.map(e -> (Class) e.getValue()) //
 				.findFirst() //
 				.orElseGet(() -> ClassUtils.resolvePrimitiveIfNecessary(type));
 	}

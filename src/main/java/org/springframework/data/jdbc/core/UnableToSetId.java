@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository;
+package org.springframework.data.jdbc.core;
 
 import org.springframework.dao.NonTransientDataAccessException;
 
@@ -27,7 +27,7 @@ public class UnableToSetId extends NonTransientDataAccessException {
 
 	private static final long serialVersionUID = 3285001352389420376L;
 
-	public UnableToSetId(String message, Throwable cause) {
+	UnableToSetId(String message, Throwable cause) {
 		super(message, cause);
 	}
 }

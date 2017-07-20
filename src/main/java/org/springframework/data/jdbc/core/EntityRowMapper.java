@@ -13,31 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository;
+package org.springframework.data.jdbc.core;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
 
 import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
 import org.springframework.data.convert.EntityInstantiator;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor.Parameter;
-import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
- * Maps a ResultSet to an entity of type {@code T}
+ * Maps a ResultSet to an entity of type {@code T}, including entities referenced.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
@@ -49,6 +48,7 @@ class EntityRowMapper<T> implements RowMapper<T> {
 	private final JdbcPersistentEntity<T> entity;
 	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
 	private final ConversionService conversions;
+	private final JdbcMappingContext context;
 
 	/*
 	 * (non-Javadoc)
@@ -58,36 +58,59 @@ class EntityRowMapper<T> implements RowMapper<T> {
 	public T mapRow(ResultSet resultSet, int rowNumber) throws SQLException {
 
 		T result = createInstance(resultSet);
+		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(result);
+		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
 
-		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
-
-			PersistentPropertyAccessor accessor = entity.getPropertyAccessor(result);
-			ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
-
-			propertyAccessor.setProperty(property, readFrom(resultSet, property));
-		});
+		for (JdbcPersistentProperty property : entity) {
+			propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
+		}
 
 		return result;
 	}
 
 	private T createInstance(ResultSet rs) {
-		return instantiator.createInstance(entity, ResultSetParameterValueProvider.of(rs, conversions));
+		return instantiator.createInstance(entity, ResultSetParameterValueProvider.of(rs, conversions, ""));
 	}
 
-	private static Object readFrom(ResultSet resultSet, PersistentProperty<?> property) {
+	private Object readFrom(ResultSet resultSet, JdbcPersistentProperty property, String prefix) {
 
 		try {
-			return resultSet.getObject(property.getName());
+			if (property.isEntity())
+				return readEntityFrom(resultSet, property);
+			return resultSet.getObject(prefix + property.getColumnName());
 		} catch (SQLException o_O) {
 			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
 		}
 	}
 
+	private <S> S readEntityFrom(ResultSet rs, PersistentProperty<?> property) {
+
+		String prefix = property.getName() + "_";
+
+		@SuppressWarnings("unchecked")
+		JdbcPersistentEntity<S> entity = (JdbcPersistentEntity<S>) context.getRequiredPersistentEntity(property.getType());
+
+		if (readFrom(rs, entity.getRequiredIdProperty(), prefix) == null)
+			return null;
+
+		S instance = instantiator.createInstance(entity, ResultSetParameterValueProvider.of(rs, conversions, prefix));
+
+		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(instance);
+		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
+
+		for (JdbcPersistentProperty p : entity) {
+			propertyAccessor.setProperty(p, readFrom(rs, p, prefix));
+		}
+
+		return instance;
+	}
+
 	@RequiredArgsConstructor(staticName = "of")
 	private static class ResultSetParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
 
-		private final ResultSet resultSet;
-		private final ConversionService conversionService;
+		@NonNull private final ResultSet resultSet;
+		@NonNull private final ConversionService conversionService;
+		@NonNull private final String prefix;
 
 		/*
 		 * (non-Javadoc)
@@ -97,13 +120,14 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		public <T> T getParameterValue(Parameter<T, JdbcPersistentProperty> parameter) {
 
 			String name = parameter.getName();
-			if (name == null ) return null;
+			if (name == null)
+				return null;
 
-				try {
-					return conversionService.convert(resultSet.getObject(name), parameter.getType().getType());
-				} catch (SQLException o_O) {
-					throw new MappingException(String.format("Couldn't read column %s from ResultSet.", name), o_O);
-				}
+			try {
+				return conversionService.convert(resultSet.getObject(prefix + name), parameter.getType().getType());
+			} catch (SQLException o_O) {
+				throw new MappingException(String.format("Couldn't read column %s from ResultSet.", name), o_O);
+			}
 		}
 	}
 }

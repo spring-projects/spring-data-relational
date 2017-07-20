@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository;
+package org.springframework.data.jdbc.core;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.sql.SQLException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.mapping.event.AfterCreation;
 import org.springframework.data.jdbc.mapping.event.Identifier;
-import org.springframework.data.jdbc.repository.support.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
