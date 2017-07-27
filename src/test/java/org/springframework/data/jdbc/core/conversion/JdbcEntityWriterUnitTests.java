@@ -23,10 +23,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
-import org.springframework.data.jdbc.core.conversion.DbChange.Kind;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 
 /**
@@ -43,10 +43,10 @@ public class JdbcEntityWriterUnitTests {
 	public void newEntityGetsConvertedToOneInsert() {
 
 		SomeEntity entity = new SomeEntity(null);
-		DbChange<SomeEntity> dbChange = new DbChange(Kind.SAVE, SomeEntity.class, entity);
-		converter.write(entity, dbChange);
+		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.SAVE, SomeEntity.class, entity);
+		converter.write(entity, aggregateChange);
 
-		assertThat(dbChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
 				.containsExactly( //
 						tuple(Insert.class, SomeEntity.class) //
 		);
@@ -57,11 +57,11 @@ public class JdbcEntityWriterUnitTests {
 
 		SomeEntity entity = new SomeEntity(23L);
 
-		DbChange<SomeEntity> dbChange = new DbChange(Kind.SAVE, SomeEntity.class, entity);
+		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.SAVE, SomeEntity.class, entity);
 
-		converter.write(entity, dbChange);
+		converter.write(entity, aggregateChange);
 
-		assertThat(dbChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
 				.containsExactly( //
 						tuple(Delete.class, OtherEntity.class), //
 						tuple(Update.class, SomeEntity.class) //
@@ -74,11 +74,11 @@ public class JdbcEntityWriterUnitTests {
 		SomeEntity entity = new SomeEntity(23L);
 		entity.setOther(new OtherEntity(null));
 
-		DbChange<SomeEntity> dbChange = new DbChange(Kind.SAVE, SomeEntity.class, entity);
+		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.SAVE, SomeEntity.class, entity);
 
-		converter.write(entity, dbChange);
+		converter.write(entity, aggregateChange);
 
-		assertThat(dbChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
 				.containsExactly( //
 						tuple(Delete.class, OtherEntity.class), //
 						tuple(Update.class, SomeEntity.class), //

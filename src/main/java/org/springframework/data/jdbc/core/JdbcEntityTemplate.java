@@ -28,11 +28,11 @@ import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.convert.Jsr310Converters;
-import org.springframework.data.jdbc.core.conversion.DbChange;
-import org.springframework.data.jdbc.core.conversion.DbChange.Kind;
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
+import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
-import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityDeleteWriter;
+import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
 import org.springframework.data.jdbc.mapping.event.AfterInsert;
 import org.springframework.data.jdbc.mapping.event.AfterUpdate;
@@ -63,7 +63,7 @@ import org.springframework.util.Assert;
 public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	private static final String ENTITY_NEW_AFTER_INSERT = "Entity [%s] still 'new' after insert. Please set either"
-			+ " the id property in a before insert event handler, or ensure the database creates a value and your "
+			+ " the id property in a BeforeInsert event handler, or ensure the database creates a value and your "
 			+ "JDBC driver returns it.";
 
 	private final ApplicationEventPublisher publisher;
@@ -73,8 +73,8 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	private final Interpreter interpreter;
 	private final SqlGeneratorSource sqlGeneratorSource;
 
-	private final JdbcEntityWriter jdbcConverter;
-	private final JdbcEntityDeleteWriter jdbcEntityDeleteConverter;
+	private final JdbcEntityWriter jdbcEntityWriter;
+	private final JdbcEntityDeleteWriter jdbcEntityDeleteWriter;
 
 	public JdbcEntityTemplate(ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations,
 			JdbcMappingContext context) {
@@ -83,10 +83,10 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		this.operations = operations;
 		this.context = context;
 
-		jdbcConverter = new JdbcEntityWriter(this.context);
-		jdbcEntityDeleteConverter = new JdbcEntityDeleteWriter(this.context);
-		sqlGeneratorSource = new SqlGeneratorSource(this.context);
-		interpreter = new JdbcInterpreter(this.context, this);
+		this.jdbcEntityWriter = new JdbcEntityWriter(this.context);
+		this.jdbcEntityDeleteWriter = new JdbcEntityDeleteWriter(this.context);
+		this.sqlGeneratorSource = new SqlGeneratorSource(this.context);
+		this.interpreter = new DefaultJdbcInterpreter(this.context, this);
 	}
 
 	private static GenericConversionService getDefaultConversionService() {
@@ -99,11 +99,11 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	@Override
 	public <T> void save(T instance, Class<T> domainType) {
-		createDbChange(instance).executeWith(interpreter);
+		createChange(instance).executeWith(interpreter);
 	}
 
 	@Override
-	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameter) {
+	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
 		publisher.publishEvent(new BeforeInsert(instance));
 
@@ -118,9 +118,9 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		JdbcPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 		propertyMap.put(idProperty.getColumnName(), convert(idValue, idProperty.getColumnType()));
 
-		propertyMap.putAll(additionalParameter);
+		propertyMap.putAll(additionalParameters);
 
-		operations.update(sql(domainType).getInsert(idValue == null, additionalParameter.keySet()),
+		operations.update(sql(domainType).getInsert(idValue == null, additionalParameters.keySet()),
 				new MapSqlParameterSource(propertyMap), holder);
 
 		setIdFromJdbc(instance, holder, persistentEntity);
@@ -177,8 +177,13 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 		String findAllInListSql = sql(domainType).getFindAllInList();
 		Class<?> targetType = getRequiredPersistentEntity(domainType).getRequiredIdProperty().getColumnType();
-		MapSqlParameterSource parameter = new MapSqlParameterSource("ids",
-				StreamSupport.stream(ids.spliterator(), false).map(id -> convert(id, targetType)).collect(Collectors.toList()));
+
+		MapSqlParameterSource parameter = new MapSqlParameterSource( //
+				"ids", //
+				StreamSupport.stream(ids.spliterator(), false) //
+						.map(id -> convert(id, targetType)) //
+						.collect(Collectors.toList()) //
+		);
 
 		return operations.query(findAllInListSql, parameter, getEntityRowMapper(domainType));
 	}
@@ -199,7 +204,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	@Override
 	public void deleteAll(Class<?> domainType) {
 
-		DbChange change = createDeletingDbChange(domainType);
+		AggregateChange change = createDeletingChange(domainType);
 		change.executeWith(interpreter);
 	}
 
@@ -225,7 +230,6 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		publisher.publishEvent(new BeforeDelete(specifiedId, optionalEntity));
 
 		String deleteByIdSql = sql(domainType).getDeleteById();
-
 		MapSqlParameterSource parameter = createIdParameterSource(specifiedId.getValue(), domainType);
 
 		operations.update(deleteByIdSql, parameter);
@@ -235,30 +239,30 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	private void deleteTree(Object id, Object entity, Class<?> domainType) {
 
-		DbChange change = createDeletingDbChange(id, entity, domainType);
+		AggregateChange change = createDeletingChange(id, entity, domainType);
 
 		change.executeWith(interpreter);
 	}
 
-	private <T> DbChange createDbChange(T instance) {
+	private <T> AggregateChange createChange(T instance) {
 
-		DbChange dbChange = new DbChange(Kind.SAVE, instance.getClass(), instance);
-		jdbcConverter.write(instance, dbChange);
-		return dbChange;
+		AggregateChange aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
+		jdbcEntityWriter.write(instance, aggregateChange);
+		return aggregateChange;
 	}
 
-	private DbChange createDeletingDbChange(Object id, Object entity, Class<?> domainType) {
+	private AggregateChange createDeletingChange(Object id, Object entity, Class<?> domainType) {
 
-		DbChange dbChange = new DbChange(Kind.DELETE, domainType, entity);
-		jdbcEntityDeleteConverter.write(id, dbChange);
-		return dbChange;
+		AggregateChange aggregateChange = new AggregateChange(Kind.DELETE, domainType, entity);
+		jdbcEntityDeleteWriter.write(id, aggregateChange);
+		return aggregateChange;
 	}
 
-	private DbChange createDeletingDbChange(Class<?> domainType) {
+	private AggregateChange createDeletingChange(Class<?> domainType) {
 
-		DbChange dbChange = new DbChange(Kind.DELETE, domainType, null);
-		jdbcEntityDeleteConverter.write(null, dbChange);
-		return dbChange;
+		AggregateChange aggregateChange = new AggregateChange(Kind.DELETE, domainType, null);
+		jdbcEntityDeleteWriter.write(null, aggregateChange);
+		return aggregateChange;
 	}
 
 	private <T> MapSqlParameterSource createIdParameterSource(Object id, Class<T> domainType) {

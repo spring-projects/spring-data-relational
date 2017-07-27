@@ -46,8 +46,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
 
 		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(aClass);
-		if (persistentEntity == null)
-			return null;
 		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) persistentEntity);
 	}
 

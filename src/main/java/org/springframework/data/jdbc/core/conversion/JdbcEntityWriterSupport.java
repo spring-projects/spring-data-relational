@@ -20,11 +20,11 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.PropertyPaths;
 
 /**
- * Common infrastructure needed by different implementations of {@link EntityWriter}<Object, DbChange>.
+ * Common infrastructure needed by different implementations of {@link EntityWriter}<Object, AggregateChange>.
  *
  * @author Jens Schauder
  */
-abstract class JdbcEntityWriterSupport implements EntityWriter<Object, DbChange> {
+abstract class JdbcEntityWriterSupport implements EntityWriter<Object, AggregateChange> {
 	protected final JdbcMappingContext context;
 
 	JdbcEntityWriterSupport(JdbcMappingContext context) {
@@ -32,15 +32,15 @@ abstract class JdbcEntityWriterSupport implements EntityWriter<Object, DbChange>
 	}
 
 	/**
-	 * add {@link org.springframework.data.jdbc.core.conversion.DbAction.Delete} actions to the {@link DbChange} for
+	 * add {@link org.springframework.data.jdbc.core.conversion.DbAction.Delete} actions to the {@link AggregateChange} for
 	 * deleting all referenced entities.
 	 *
 	 * @param id id of the aggregate root, of which the referenced entities get deleted.
-	 * @param dbChange the change object to which the actions should get added. Must not be {@literal null}
+	 * @param aggregateChange the change object to which the actions should get added. Must not be {@literal null}
 	 */
-	void deleteReferencedEntities(Object id, DbChange dbChange) {
+	void deleteReferencedEntities(Object id, AggregateChange aggregateChange) {
 
-		context.referencedEntities(dbChange.getEntityType(), null)
-				.forEach(p -> dbChange.addAction(DbAction.delete(id, PropertyPaths.getLeafType(p), null, p, null)));
+		context.referencedEntities(aggregateChange.getEntityType(), null)
+				.forEach(p -> aggregateChange.addAction(DbAction.delete(id, PropertyPaths.getLeafType(p), null, p, null)));
 	}
 }

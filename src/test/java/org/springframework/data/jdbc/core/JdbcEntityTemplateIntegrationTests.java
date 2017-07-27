@@ -47,26 +47,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class JdbcEntityTemplateIntegrationTests {
 
-	@Configuration
-	@Import(TestConfiguration.class)
-	static class Config {
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcEntityTemplateIntegrationTests.class;
-		}
-
-		@Bean
-		JdbcEntityOperations operations(ApplicationEventPublisher publisher,
-				NamedParameterJdbcOperations namedParameterJdbcOperations) {
-
-			return new JdbcEntityTemplate(publisher, namedParameterJdbcOperations, new JdbcMappingContext());
-		}
-	}
-
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
-
 	@Autowired JdbcEntityOperations template;
 
 	LegoSet legoSet = createLegoSet();
@@ -247,12 +229,31 @@ public class JdbcEntityTemplateIntegrationTests {
 		private String name;
 
 		private Manual manual;
+
 	}
 
 	@Data
 	static class Manual {
-		@Id private final Long id;
 
+		@Id private final Long id;
 		private String content;
+
+	}
+
+	@Configuration
+	@Import(TestConfiguration.class)
+	static class Config {
+
+		@Bean
+		Class<?> testClass() {
+			return JdbcEntityTemplateIntegrationTests.class;
+		}
+
+		@Bean
+		JdbcEntityOperations operations(ApplicationEventPublisher publisher,
+				NamedParameterJdbcOperations namedParameterJdbcOperations) {
+
+			return new JdbcEntityTemplate(publisher, namedParameterJdbcOperations, new JdbcMappingContext());
+		}
 	}
 }

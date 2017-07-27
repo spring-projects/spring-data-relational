@@ -24,6 +24,8 @@ import java.util.Map;
  */
 public interface JdbcEntityOperations {
 
+	<T> void save(T instance, Class<T> domainType);
+
 	<T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameter);
 
 	<T> void update(T instance, Class<T> domainType);
@@ -31,6 +33,8 @@ public interface JdbcEntityOperations {
 	<T> void deleteById(Object id, Class<T> domainType);
 
 	<T> void delete(T entity, Class<T> domainType);
+
+	void deleteAll(Class<?> domainType);
 
 	long count(Class<?> domainType);
 
@@ -41,8 +45,4 @@ public interface JdbcEntityOperations {
 	<T> Iterable<T> findAll(Class<T> domainType);
 
 	<T> boolean existsById(Object id, Class<T> domainType);
-
-	void deleteAll(Class<?> domainType);
-
-	<T> void save(T instance, Class<T> domainType);
 }

@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
-import org.springframework.data.jdbc.core.conversion.DbChange.Kind;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 
 /**
@@ -42,11 +42,11 @@ public class JdbcEntityDeleteWriterUnitTests {
 
 		SomeEntity entity = new SomeEntity(23L);
 
-		DbChange<SomeEntity> dbChange = new DbChange(Kind.DELETE, SomeEntity.class, entity);
+		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.DELETE, SomeEntity.class, entity);
 
-		converter.write(entity, dbChange);
+		converter.write(entity, aggregateChange);
 
-		Assertions.assertThat(dbChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType)
+		Assertions.assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType)
 				.containsExactly( //
 						Tuple.tuple(Delete.class, YetAnother.class), //
 						Tuple.tuple(Delete.class, OtherEntity.class), //
