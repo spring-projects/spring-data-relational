@@ -22,11 +22,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Represents the change happening to the aggregate (as used in the context of Domain Driven Design) as a whole.
+ *
  * @author Jens Schauder
  */
 @RequiredArgsConstructor
 @Getter
-public class DbChange<T> {
+public class AggregateChange<T> {
 
 	private final Kind kind;
 

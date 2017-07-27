@@ -29,8 +29,10 @@ import org.springframework.util.Assert;
 public class PropertyPaths {
 
 	public static Class<?> getLeafType(PropertyPath path) {
-		if (path.hasNext())
+
+		if (path.hasNext()) {
 			return getLeafType(path.next());
+		}
 		return path.getType();
 	}
 

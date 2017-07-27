@@ -158,7 +158,9 @@ class SqlGenerator {
 	}
 
 	private Stream<String> getColumnNameStream(String prefix) {
-		return StreamUtils.createStreamFromIterator(entity.iterator()).flatMap(p -> getColumnNameStream(p, prefix));
+
+		return StreamUtils.createStreamFromIterator(entity.iterator()) //
+				.flatMap(p -> getColumnNameStream(p, prefix));
 	}
 
 	private Stream<String> getColumnNameStream(JdbcPersistentProperty p, String prefix) {
@@ -216,6 +218,7 @@ class SqlGenerator {
 	}
 
 	String createDeleteAllSql(PropertyPath path) {
+
 		if (path == null) {
 			return String.format("DELETE FROM %s", entity.getTableName());
 		}

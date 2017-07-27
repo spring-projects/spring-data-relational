@@ -47,11 +47,13 @@ class SelectBuilder {
 	}
 
 	SelectBuilder where(Function<WhereConditionBuilder, WhereConditionBuilder> whereSpec) {
+
 		conditions.add(whereSpec.apply(new WhereConditionBuilder(this)).build());
 		return this;
 	}
 
 	SelectBuilder join(Function<Join.JoinBuilder, Join.JoinBuilder> joinSpec) {
+
 		joins.add(joinSpec.apply(Join.builder()).build());
 		return this;
 	}
@@ -62,9 +64,15 @@ class SelectBuilder {
 	}
 
 	private String whereClause() {
-		if (conditions.isEmpty())
+
+		if (conditions.isEmpty()) {
 			return "";
-		return conditions.stream().map(wc -> wc.toSql()).collect(Collectors.joining("AND", " WHERE ", ""));
+		}
+
+		return conditions.stream() //
+				.map(WhereCondition::toSql) //
+				.collect(Collectors.joining("AND", " WHERE ", "") //
+				);
 	}
 
 	private String joinClause() {
@@ -76,13 +84,16 @@ class SelectBuilder {
 	}
 
 	private String joinConditions(Join j) {
-		return j.conditions.stream().map(w -> String.format("%s %s %s", w.fromExpression, w.operation, w.toExpression))
+
+		return j.conditions.stream() //
+				.map(w -> String.format("%s %s %s", w.fromExpression, w.operation, w.toExpression)) //
 				.collect(Collectors.joining(" AND ", " ON ", ""));
 	}
 
 	private String selectFrom() {
+
 		return columns.stream() //
-				.map(c -> c.columnDefinition()) //
+				.map(Column::columnDefinition) //
 				.collect(Collectors.joining(", ", "SELECT ", " FROM " + tableName));
 	}
 
@@ -101,13 +112,13 @@ class SelectBuilder {
 
 		WhereConditionBuilder eq() {
 
-			operation = "=";
+			this.operation = "=";
 			return this;
 		}
 
 		public WhereConditionBuilder in() {
 
-			operation = "in";
+			this.operation = "in";
 			return this;
 		}
 
@@ -125,7 +136,7 @@ class SelectBuilder {
 
 		WhereConditionBuilder variable(String var) {
 
-			expression = ":" + var;
+			this.expression = ":" + var;
 			return this;
 		}
 

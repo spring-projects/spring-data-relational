@@ -35,12 +35,13 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
  *
  * @author Jens Schauder
  */
-class JdbcInterpreter implements Interpreter {
+class DefaultJdbcInterpreter implements Interpreter {
 
 	private final JdbcMappingContext context;
 	private final JdbcEntityTemplate template;
 
-	JdbcInterpreter(JdbcMappingContext context, JdbcEntityTemplate template) {
+	DefaultJdbcInterpreter(JdbcMappingContext context, JdbcEntityTemplate template) {
+
 		this.context = context;
 		this.template = template;
 	}

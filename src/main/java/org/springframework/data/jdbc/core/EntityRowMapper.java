@@ -75,8 +75,11 @@ class EntityRowMapper<T> implements RowMapper<T> {
 	private Object readFrom(ResultSet resultSet, JdbcPersistentProperty property, String prefix) {
 
 		try {
-			if (property.isEntity())
+
+			if (property.isEntity()) {
 				return readEntityFrom(resultSet, property);
+			}
+
 			return resultSet.getObject(prefix + property.getColumnName());
 		} catch (SQLException o_O) {
 			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
@@ -90,8 +93,9 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		@SuppressWarnings("unchecked")
 		JdbcPersistentEntity<S> entity = (JdbcPersistentEntity<S>) context.getRequiredPersistentEntity(property.getType());
 
-		if (readFrom(rs, entity.getRequiredIdProperty(), prefix) == null)
+		if (readFrom(rs, entity.getRequiredIdProperty(), prefix) == null) {
 			return null;
+		}
 
 		S instance = instantiator.createInstance(entity, ResultSetParameterValueProvider.of(rs, conversions, prefix));
 
@@ -120,8 +124,9 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		public <T> T getParameterValue(Parameter<T, JdbcPersistentProperty> parameter) {
 
 			String name = parameter.getName();
-			if (name == null)
+			if (name == null) {
 				return null;
+			}
 
 			try {
 				return conversionService.convert(resultSet.getObject(prefix + name), parameter.getType().getType());

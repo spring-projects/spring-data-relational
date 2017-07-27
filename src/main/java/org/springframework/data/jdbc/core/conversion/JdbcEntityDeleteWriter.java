@@ -19,7 +19,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.PropertyPaths;
 
 /**
- * Converts an entity that is about to be deleted into {@link DbAction}s inside a {@link DbChange} that need to be
+ * Converts an entity that is about to be deleted into {@link DbAction}s inside a {@link AggregateChange} that need to be
  * executed against the database to recreate the appropriate state in the database.
  *
  * @author Jens Schauder
@@ -31,28 +31,28 @@ public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 	}
 
 	@Override
-	public void write(Object id, DbChange dbChange) {
+	public void write(Object id, AggregateChange aggregateChange) {
 
 		if (id == null) {
-			deleteAll(dbChange);
+			deleteAll(aggregateChange);
 		} else {
-			deleteById(id, dbChange);
+			deleteById(id, aggregateChange);
 		}
 	}
 
-	private void deleteAll(DbChange dbChange) {
+	private void deleteAll(AggregateChange aggregateChange) {
 
-		context.referencedEntities(dbChange.getEntityType(), null)
-				.forEach(p -> dbChange.addAction(DbAction.deleteAll(PropertyPaths.getLeafType(p), p, null)));
+		context.referencedEntities(aggregateChange.getEntityType(), null)
+				.forEach(p -> aggregateChange.addAction(DbAction.deleteAll(PropertyPaths.getLeafType(p), p, null)));
 
-		dbChange.addAction(DbAction.deleteAll(dbChange.getEntityType(), null, null));
+		aggregateChange.addAction(DbAction.deleteAll(aggregateChange.getEntityType(), null, null));
 	}
 
-	private void deleteById(Object id, DbChange dbChange) {
+	private void deleteById(Object id, AggregateChange aggregateChange) {
 
-		deleteReferencedEntities(id, dbChange);
+		deleteReferencedEntities(id, aggregateChange);
 
-		dbChange.addAction(DbAction.delete(id, dbChange.getEntityType(), dbChange.getEntity(), null, null));
+		aggregateChange.addAction(DbAction.delete(id, aggregateChange.getEntityType(), aggregateChange.getEntity(), null, null));
 	}
 
 }

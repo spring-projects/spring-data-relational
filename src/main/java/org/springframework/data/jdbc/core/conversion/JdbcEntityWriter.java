@@ -28,7 +28,7 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.util.StreamUtils;
 
 /**
- * Converts an entity that is about to be saved into {@link DbAction}s inside a {@link DbChange} that need to be
+ * Converts an entity that is about to be saved into {@link DbAction}s inside a {@link AggregateChange} that need to be
  * executed against the database to recreate the appropriate state in the database.
  *
  * @author Jens Schauder
@@ -40,39 +40,40 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	@Override
-	public void write(Object o, DbChange dbChange) {
-		write(o, dbChange, null);
+	public void write(Object o, AggregateChange aggregateChange) {
+		write(o, aggregateChange, null);
 	}
 
-	private void write(Object o, DbChange dbChange, DbAction dependingOn) {
+	private void write(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
 
-		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dbChange.getEntityType());
+		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(aggregateChange.getEntityType());
 
 		JdbcPersistentEntityInformation<Object, ?> entityInformation = context
 				.getRequiredPersistentEntityInformation((Class<Object>) o.getClass());
 
 		if (entityInformation.isNew(o)) {
-			Insert<Object> insert = DbAction.insert(o, dependingOn);
-			dbChange.addAction(insert);
 
-			referencedEntities(o).forEach(e -> saveReferencedEntities(e, dbChange, insert));
+			Insert<Object> insert = DbAction.insert(o, dependingOn);
+			aggregateChange.addAction(insert);
+
+			referencedEntities(o).forEach(e -> saveReferencedEntities(e, aggregateChange, insert));
 		} else {
 
-			deleteReferencedEntities(entityInformation.getRequiredId(o), dbChange);
+			deleteReferencedEntities(entityInformation.getRequiredId(o), aggregateChange);
 
 			Update<Object> update = DbAction.update(o, dependingOn);
-			dbChange.addAction(update);
+			aggregateChange.addAction(update);
 
-			referencedEntities(o).forEach(e -> insertReferencedEntities(e, dbChange, update));
+			referencedEntities(o).forEach(e -> insertReferencedEntities(e, aggregateChange, update));
 		}
 	}
 
-	private void saveReferencedEntities(Object o, DbChange dbChange, DbAction dependingOn) {
+	private void saveReferencedEntities(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
 
 		DbAction action = saveAction(o, dependingOn);
-		dbChange.addAction(action);
+		aggregateChange.addAction(action);
 
-		referencedEntities(o).forEach(e -> saveReferencedEntities(e, dbChange, action));
+		referencedEntities(o).forEach(e -> saveReferencedEntities(e, aggregateChange, action));
 	}
 
 	private <T> DbAction saveAction(T t, DbAction dependingOn) {
@@ -80,17 +81,17 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 		JdbcPersistentEntityInformation<T, ?> entityInformation = context
 				.getRequiredPersistentEntityInformation((Class<T>) t.getClass());
 
-		if (entityInformation.isNew(t))
+		if (entityInformation.isNew(t)) {
 			return DbAction.insert(t, dependingOn);
-		else
+		} else {
 			return DbAction.update(t, dependingOn);
+		}
 	}
 
-	private void insertReferencedEntities(Object o, DbChange dbChange, DbAction dependingOn) {
+	private void insertReferencedEntities(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
 
-		System.out.println("adding an insert");
-		dbChange.addAction(DbAction.insert(o, dependingOn));
-		referencedEntities(o).forEach(e -> insertReferencedEntities(e, dbChange, dependingOn));
+		aggregateChange.addAction(DbAction.insert(o, dependingOn));
+		referencedEntities(o).forEach(e -> insertReferencedEntities(e, aggregateChange, dependingOn));
 	}
 
 	private Stream<Object> referencedEntities(Object o) {

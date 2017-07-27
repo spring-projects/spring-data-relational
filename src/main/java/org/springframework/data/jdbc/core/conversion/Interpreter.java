@@ -25,9 +25,11 @@ import org.springframework.data.jdbc.core.conversion.DbAction.Update;
  */
 public interface Interpreter {
 
-	<T>void interpret(Update<T> update);
-	<T>void interpret(Insert<T> insert);
+	<T> void interpret(Update<T> update);
+
+	<T> void interpret(Insert<T> insert);
 
 	<T> void interpret(Delete<T> delete);
+
 	<T> void interpret(DeleteAll<T> delete);
 }
