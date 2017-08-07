@@ -27,6 +27,7 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 
 /**
@@ -37,7 +38,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcEntityWriterUnitTests {
 
-	JdbcEntityWriter converter = new JdbcEntityWriter(new JdbcMappingContext());
+	JdbcEntityWriter converter = new JdbcEntityWriter(new JdbcMappingContext(new DefaultNamingStrategy()));
 
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {

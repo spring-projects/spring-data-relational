@@ -29,6 +29,7 @@ import org.springframework.data.util.TypeInformation;
 class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersistentProperty>
 		implements JdbcPersistentEntity<T> {
 
+	private final NamingStrategy namingStrategy;
 	private final @Getter String tableName;
 
 	/**
@@ -36,11 +37,12 @@ class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersisten
 	 * 
 	 * @param information must not be {@literal null}.
 	 */
-	JdbcPersistentEntityImpl(TypeInformation<T> information) {
+	JdbcPersistentEntityImpl(TypeInformation<T> information, NamingStrategy namingStrategy) {
 
 		super(information);
 
-		tableName = getType().getSimpleName();
+		this.namingStrategy = namingStrategy;
+		this.tableName = this.namingStrategy.getQualifiedTableName(getType());
 	}
 
 	/* 
@@ -49,7 +51,7 @@ class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersisten
 	 */
 	@Override
 	public String getIdColumn() {
-		return getRequiredIdProperty().getName();
+		return this.namingStrategy.getColumnName(getRequiredIdProperty());
 	}
 
 	@Override

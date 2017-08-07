@@ -25,6 +25,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 
 /**
@@ -35,7 +36,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcEntityDeleteWriterUnitTests {
 
-	JdbcEntityDeleteWriter converter = new JdbcEntityDeleteWriter(new JdbcMappingContext());
+	JdbcEntityDeleteWriter converter = new JdbcEntityDeleteWriter(new JdbcMappingContext(new DefaultNamingStrategy()));
 
 	@Test
 	public void deleteDeletesTheEntityAndReferencedEntities() {

@@ -33,6 +33,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
+import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
@@ -128,22 +130,36 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 			return JdbcRepositoryIdGenerationIntegrationTests.class;
 		}
 
+		/**
+		 * {@link NamingStrategy} that harmlessly uppercases the table name,
+		 * demonstrating how to inject one while not breaking existing SQL operations.
+		 */
+		@Bean
+		NamingStrategy namingStrategy() {
+			return new DefaultNamingStrategy() {
+				@Override
+				public String getTableName(Class<?> type) {
+					return type.getSimpleName().toUpperCase();
+				}
+			};
+		}
+
 		@Bean
 		NamedParameterJdbcTemplate template(DataSource db) {
 			return new NamedParameterJdbcTemplate(db);
 		}
 
 		@Bean
-		ReadOnlyIdEntityRepository readOnlyIdRepository(DataSource db) {
+		ReadOnlyIdEntityRepository readOnlyIdRepository(DataSource db, NamingStrategy namingStrategy) {
 
-			return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class))
+			return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class), namingStrategy)
 					.getRepository(ReadOnlyIdEntityRepository.class);
 		}
 
 		@Bean
 		PrimitiveIdEntityRepository primitiveIdRepository(NamedParameterJdbcTemplate template) {
 
-			return new JdbcRepositoryFactory(template, mock(ApplicationEventPublisher.class))
+			return new JdbcRepositoryFactory(template, mock(ApplicationEventPublisher.class), new DefaultNamingStrategy())
 					.getRepository(PrimitiveIdEntityRepository.class);
 		}
 	}

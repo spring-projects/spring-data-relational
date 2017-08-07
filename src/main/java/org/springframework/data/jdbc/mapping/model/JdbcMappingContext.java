@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.mapping.model;
 
 import static java.util.Arrays.*;
 
+import lombok.Getter;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.temporal.Temporal;
@@ -46,7 +48,11 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 			Temporal.class //
 	));
 
-	public JdbcMappingContext() {
+	private final @Getter NamingStrategy namingStrategy;
+
+	public JdbcMappingContext(NamingStrategy namingStrategy) {
+
+		this.namingStrategy = namingStrategy;
 		setSimpleTypeHolder(new SimpleTypeHolder(CUSTOM_SIMPLE_TYPES, true));
 	}
 
@@ -80,7 +86,7 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	 */
 	@Override
 	protected <T> JdbcPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
-		return new JdbcPersistentEntityImpl<>(typeInformation);
+		return new JdbcPersistentEntityImpl<>(typeInformation, this.namingStrategy);
 	}
 
 	/*

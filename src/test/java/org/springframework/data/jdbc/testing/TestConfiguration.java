@@ -22,6 +22,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -41,7 +42,7 @@ public class TestConfiguration {
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory() {
-		return new JdbcRepositoryFactory(namedParameterJdbcTemplate(), publisher);
+		return new JdbcRepositoryFactory(namedParameterJdbcTemplate(), publisher, new DefaultNamingStrategy());
 	}
 
 	@Bean

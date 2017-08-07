@@ -23,6 +23,8 @@ import javax.sql.DataSource;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
+import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
@@ -45,9 +47,12 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 			"No unique NamedParameterJdbcOperation could be found, " //
 					+ "nor JdbcOperations or DataSource to construct one from.";
 
+	private static final String NO_NAMING_STRATEGY_ERROR_MESSAGE = "No unique NamingStrategy could be found.";
+
 	private static final String NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME = "namedParameterJdbcTemplate";
 	private static final String JDBC_OPERATIONS_BEAN_NAME = "jdbcTemplate";
 	private static final String DATA_SOURCE_BEAN_NAME = "dataSource";
+	private static final String NAMING_STRATEGY_BEAN_NAME = "namingStrategy";
 
 	private final ApplicationEventPublisher applicationEventPublisher;
 	private final ApplicationContext context;
@@ -62,7 +67,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return new JdbcRepositoryFactory(findOrCreateJdbcOperations(), applicationEventPublisher);
+		return new JdbcRepositoryFactory(findOrCreateJdbcOperations(), applicationEventPublisher, findOrCreateNamingStrategy());
 	}
 
 	private NamedParameterJdbcOperations findOrCreateJdbcOperations() {
@@ -75,6 +80,12 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 				.orElseThrow(() -> new IllegalStateException(NO_NAMED_PARAMETER_JDBC_OPERATION_ERROR_MESSAGE));
 	}
 
+	private NamingStrategy findOrCreateNamingStrategy() {
+
+		return getNamingStrategy()
+			.orElse(new DefaultNamingStrategy());
+	}
+
 	private Optional<NamedParameterJdbcOperations> getNamedParameterJdbcOperations() {
 		return getBean(NamedParameterJdbcOperations.class, NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME);
 	}
@@ -85,6 +96,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 	private Optional<DataSource> getDataSource() {
 		return getBean(DataSource.class, DATA_SOURCE_BEAN_NAME);
+	}
+
+	private Optional<NamingStrategy> getNamingStrategy() {
+		return getBean(NamingStrategy.class, NAMING_STRATEGY_BEAN_NAME);
 	}
 
 	private <R> Optional<R> getBean(Class<R> type, String name) {
