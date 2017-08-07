@@ -74,7 +74,7 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty#getColumnName()
 	 */
 	public String getColumnName() {
-		return getName();
+		return this.context.getNamingStrategy().getColumnName(this);
 	}
 
 	/**

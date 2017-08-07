@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.springframework.data.mapping.PropertyHandler;
 
 /**
- * Unti tests for the {@link BasicJdbcPersistentProperty}.
+ * Unit tests for the {@link BasicJdbcPersistentProperty}.
  * 
  * @author Jens Schauder
  */
@@ -36,7 +36,9 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {
-		JdbcPersistentEntity<?> persistentEntity = new JdbcMappingContext().getRequiredPersistentEntity(DummyEntity.class);
+		
+		JdbcPersistentEntity<?> persistentEntity = new JdbcMappingContext(new DefaultNamingStrategy())
+			.getRequiredPersistentEntity(DummyEntity.class);
 
 		persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
 			switch (p.getName()) {
