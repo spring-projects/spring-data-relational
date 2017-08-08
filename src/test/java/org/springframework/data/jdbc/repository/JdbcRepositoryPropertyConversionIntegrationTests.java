@@ -15,8 +15,7 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
@@ -26,11 +25,12 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
 
 import org.assertj.core.api.Condition;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,6 +52,12 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Tests storing and retrieving various data types that are considered essential and that might need conversion to
  * something the database driver can handle.
+ *
+ *
+ * no millis
+ * no large BigIntegers
+ * 
+ *
  *
  * @author Jens Schauder
  */
@@ -78,7 +84,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		@Bean
 		ApplicationListener applicationListener() {
 			return (ApplicationListener<BeforeInsert>) beforeInsert -> ((EntityWithColumnsRequiringConversions) beforeInsert
-					.getEntity()).setIdTimestamp(LocalDateTime.now());
+					.getEntity()).setIdTimestamp(getNow());
 		}
 
 	}
@@ -94,14 +100,15 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
 
 		assertThat(repository.findById(entity.getIdTimestamp())).hasValueSatisfying(it -> {
-
-			assertThat(it.getIdTimestamp()).isEqualTo(entity.getIdTimestamp());
-			assertThat(it.getSomeEnum()).isEqualTo(entity.getSomeEnum());
-			assertThat(it.getBigDecimal()).isEqualTo(entity.getBigDecimal());
-			assertThat(it.isBool()).isEqualTo(entity.isBool());
-			assertThat(it.getBigInteger()).isEqualTo(entity.getBigInteger());
-			assertThat(it.getDate()).is(representingTheSameAs(entity.getDate()));
-			assertThat(it.getLocalDateTime()).isEqualTo(entity.getLocalDateTime());
+			SoftAssertions softly = new SoftAssertions();
+			softly.assertThat(it.getIdTimestamp()).isEqualTo(entity.getIdTimestamp());
+			softly.assertThat(it.getSomeEnum()).isEqualTo(entity.getSomeEnum());
+			softly.assertThat(it.getBigDecimal()).isEqualTo(entity.getBigDecimal());
+			softly.assertThat(it.isBool()).isEqualTo(entity.isBool());
+			softly.assertThat(it.getBigInteger()).isEqualTo(entity.getBigInteger());
+			softly.assertThat(it.getDate()).is(representingTheSameAs(entity.getDate()));
+			softly.assertThat(it.getLocalDateTime()).isEqualTo(entity.getLocalDateTime());
+			softly.assertAll();
 		});
 	}
 
@@ -145,13 +152,20 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 
 		EntityWithColumnsRequiringConversions entity = new EntityWithColumnsRequiringConversions();
 		entity.setSomeEnum(SomeEnum.VALUE);
-		entity.setBigDecimal(new BigDecimal(Double.MAX_VALUE).multiply(BigDecimal.TEN));
+		entity.setBigDecimal(new BigDecimal("123456789012345678901234567890123456789012345678901234567890"));
 		entity.setBool(true);
-		entity.setBigInteger(BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.TEN));
-		entity.setDate(new Date());
-		entity.setLocalDateTime(LocalDateTime.now());
+		// Postgres doesn't seem to be able to handle BigInts larger then a Long, since the driver reads them as Long
+		entity.setBigInteger(BigInteger.valueOf(Long.MAX_VALUE));
+		entity.setDate(Date.from(getNow().toInstant(ZoneOffset.UTC)));
+		entity.setLocalDateTime(getNow());
 
 		return entity;
+	}
+
+	private static LocalDateTime getNow() {
+		LocalDateTime now = LocalDateTime.now();
+
+		return now.withNano(0);
 	}
 
 	private Condition<Date> representingTheSameAs(Date other) {

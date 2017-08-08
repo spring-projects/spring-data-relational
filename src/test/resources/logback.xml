@@ -9,7 +9,7 @@
 
 	<logger name="org.springframework.data" level="info" />
 
-	<logger name="org.springframework.jdbc.core.JdbcTemplate" level="debug" />
+	<logger name="org.springframework.jdbc.core" level="trace" />
 
 	<root level="info">
 		<appender-ref ref="console" />
