@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
@@ -34,6 +33,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -52,12 +52,6 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Tests storing and retrieving various data types that are considered essential and that might need conversion to
  * something the database driver can handle.
- *
- *
- * no millis
- * no large BigIntegers
- * 
- *
  *
  * @author Jens Schauder
  */
@@ -162,10 +156,9 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		return entity;
 	}
 
+	// DATAJDBC-119
 	private static LocalDateTime getNow() {
-		LocalDateTime now = LocalDateTime.now();
-
-		return now.withNano(0);
+		return LocalDateTime.now().withNano(0);
 	}
 
 	private Condition<Date> representingTheSameAs(Date other) {
