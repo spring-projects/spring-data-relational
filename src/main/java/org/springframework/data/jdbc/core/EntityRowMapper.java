@@ -128,10 +128,11 @@ class EntityRowMapper<T> implements RowMapper<T> {
 				return null;
 			}
 
+			String column = prefix + name;
 			try {
-				return conversionService.convert(resultSet.getObject(prefix + name), parameter.getType().getType());
+				return conversionService.convert(resultSet.getObject(column), parameter.getType().getType());
 			} catch (SQLException o_O) {
-				throw new MappingException(String.format("Couldn't read column %s from ResultSet.", name), o_O);
+				throw new MappingException(String.format("Couldn't read column %s from ResultSet.", column), o_O);
 			}
 		}
 	}

@@ -40,7 +40,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.event.BeforeInsert;
+import org.springframework.data.jdbc.mapping.event.BeforeSave;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
@@ -77,7 +77,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 
 		@Bean
 		ApplicationListener applicationListener() {
-			return (ApplicationListener<BeforeInsert>) beforeInsert -> ((EntityWithColumnsRequiringConversions) beforeInsert
+			return (ApplicationListener<BeforeSave>) beforeInsert -> ((EntityWithColumnsRequiringConversions) beforeInsert
 					.getEntity()).setIdTimestamp(getNow());
 		}
 

@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.mapping.event;
 
 import java.util.Optional;
 
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
@@ -33,8 +34,9 @@ public class AfterDelete extends JdbcEventWithId {
 	/**
 	 * @param id of the entity.
 	 * @param instance the deleted entity if it is available.
+	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
 	 */
-	public AfterDelete(Specified id, Optional<Object> instance) {
-		super(id, instance);
+	public AfterDelete(Specified id, Optional<Object> instance, AggregateChange change) {
+		super(id, instance, change);
 	}
 }

@@ -40,6 +40,10 @@ public interface Identifier {
 		return SpecifiedIdentifier.of(identifier);
 	}
 
+	static Identifier ofNullable(Object identifier) {
+		return identifier == null ? Unset.UNSET : of(identifier);
+	}
+
 	/**
 	 * Creates a new {@link Identifier} for the given optional source value.
 	 * 

@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.mapping.event;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEvent;
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
 
 /**
  * The common superclass for all events published by JDBC repositories. {@link #getSource} contains the
@@ -32,12 +33,14 @@ class SimpleJdbcEvent extends ApplicationEvent implements JdbcEvent {
 	private static final long serialVersionUID = -1798807778668751659L;
 
 	private final Object entity;
+	private final AggregateChange change;
 
-	SimpleJdbcEvent(Identifier id, Optional<Object> entity) {
+	SimpleJdbcEvent(Identifier id, Optional<Object> entity, AggregateChange change) {
 
 		super(id);
 
 		this.entity = entity.orElse(null);
+		this.change = change;
 	}
 
 	/*
@@ -56,5 +59,9 @@ class SimpleJdbcEvent extends ApplicationEvent implements JdbcEvent {
 	@Override
 	public Optional<Object> getOptionalEntity() {
 		return Optional.ofNullable(entity);
+	}
+
+	public AggregateChange getChange() {
+		return change;
 	}
 }
