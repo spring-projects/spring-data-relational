@@ -25,7 +25,6 @@ import org.springframework.data.jdbc.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
-import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 
@@ -74,7 +73,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 	public <T> void interpret(Delete<T> delete) {
 
 		if (delete.getPropertyPath() == null) {
-			template.doDelete(Identifier.of(delete.getRootId()), Optional.ofNullable(delete.getEntity()),
+			template.doDelete(delete.getRootId(), Optional.ofNullable(delete.getEntity()),
 					delete.getEntityType());
 		} else {
 			template.doDelete(delete.getRootId(), delete.getPropertyPath());

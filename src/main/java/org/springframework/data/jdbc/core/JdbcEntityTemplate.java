@@ -36,11 +36,9 @@ import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityDeleteWriter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
-import org.springframework.data.jdbc.mapping.event.AfterInsert;
-import org.springframework.data.jdbc.mapping.event.AfterUpdate;
+import org.springframework.data.jdbc.mapping.event.AfterSave;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
-import org.springframework.data.jdbc.mapping.event.BeforeInsert;
-import org.springframework.data.jdbc.mapping.event.BeforeUpdate;
+import org.springframework.data.jdbc.mapping.event.BeforeSave;
 import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentEntityInformation;
@@ -102,13 +100,28 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	@Override
 	public <T> void save(T instance, Class<T> domainType) {
-		createChange(instance).executeWith(interpreter);
+
+		JdbcPersistentEntityInformation<T, ?> entityInformation = context.getRequiredPersistentEntityInformation(domainType);
+
+		AggregateChange change = createChange(instance);
+
+		publisher.publishEvent(new BeforeSave( //
+				Identifier.ofNullable(entityInformation.getId(instance)), //
+				instance, //
+				change //
+		));
+
+		change.executeWith(interpreter);
+
+		publisher.publishEvent(new AfterSave( //
+				Identifier.of(entityInformation.getId(instance)), //
+				instance, //
+				change //
+		));
 	}
 
 	@Override
 	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
-
-		publisher.publishEvent(new BeforeInsert(instance));
 
 		KeyHolder holder = new GeneratedKeyHolder();
 		JdbcPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
@@ -132,23 +145,17 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 			throw new IllegalStateException(String.format(ENTITY_NEW_AFTER_INSERT, persistentEntity));
 		}
 
-		publisher.publishEvent(new AfterInsert(Identifier.of(entityInformation.getRequiredId(instance)), instance));
-
 	}
 
 	@Override
 	public <S> void update(S instance, Class<S> domainType) {
 
 		JdbcPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
-		JdbcPersistentEntityInformation<S, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation(domainType);
 
-		Specified specifiedId = Identifier.of(entityInformation.getRequiredId(instance));
-		publisher.publishEvent(new BeforeUpdate(specifiedId, instance));
 		operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity));
-		publisher.publishEvent(new AfterUpdate(specifiedId, instance));
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	@Override
 	public long count(Class<?> domainType) {
 		return operations.getJdbcOperations().queryForObject(sql(domainType).getCount(), Long.class);
@@ -211,9 +218,21 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		change.executeWith(interpreter);
 	}
 
-	void doDelete(Object rootId, PropertyPath propertyPath) {
+	private void deleteTree(Object id, Object entity, Class<?> domainType) {
 
-		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(propertyPath.getTypeInformation());
+		AggregateChange change = createDeletingChange(id, entity, domainType);
+
+		Specified specifiedId = Identifier.of(id);
+		Optional<Object> optionalEntity = Optional.ofNullable(entity);
+		publisher.publishEvent(new BeforeDelete(specifiedId, optionalEntity, change));
+
+		change.executeWith(interpreter);
+
+		publisher.publishEvent(new AfterDelete(specifiedId, optionalEntity, change));
+
+	}
+
+	void doDelete(Object rootId, PropertyPath propertyPath) {
 
 		JdbcPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(propertyPath.getOwningType());
 
@@ -228,23 +247,12 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	}
 
-	void doDelete(Specified specifiedId, Optional<Object> optionalEntity, Class<?> domainType) {
-
-		publisher.publishEvent(new BeforeDelete(specifiedId, optionalEntity));
+	void doDelete(Object id, Optional<Object> optionalEntity, Class<?> domainType) {
 
 		String deleteByIdSql = sql(domainType).getDeleteById();
-		MapSqlParameterSource parameter = createIdParameterSource(specifiedId.getValue(), domainType);
+		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
 
 		operations.update(deleteByIdSql, parameter);
-
-		publisher.publishEvent(new AfterDelete(specifiedId, optionalEntity));
-	}
-
-	private void deleteTree(Object id, Object entity, Class<?> domainType) {
-
-		AggregateChange change = createDeletingChange(id, entity, domainType);
-
-		change.executeWith(interpreter);
 	}
 
 	private <T> AggregateChange createChange(T instance) {

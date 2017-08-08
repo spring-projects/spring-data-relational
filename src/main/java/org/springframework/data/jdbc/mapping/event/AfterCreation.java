@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
@@ -31,8 +32,9 @@ public class AfterCreation extends JdbcEventWithIdAndEntity {
 	/**
 	 * @param id of the entity
 	 * @param entity the newly instantiated entity.
+	 * @param change
 	 */
-	public AfterCreation(Specified id, Object entity) {
-		super(id, entity);
+	public AfterCreation(Specified id, Object entity, AggregateChange change) {
+		super(id, entity, change);
 	}
 }

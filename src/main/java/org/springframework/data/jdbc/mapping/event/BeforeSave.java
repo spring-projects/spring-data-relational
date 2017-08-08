@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
+
 /**
  * Subclasses of this get published before an entity gets saved to the database.
  *
@@ -28,8 +30,9 @@ public class BeforeSave extends JdbcEventWithEntity {
 	/**
 	 * @param id of the entity to be saved.
 	 * @param instance the entity about to get saved.
+	 * @param change
 	 */
-	BeforeSave(Identifier id, Object instance) {
-		super(id, instance);
+	public BeforeSave(Identifier id, Object instance, AggregateChange change) {
+		super(id, instance, change);
 	}
 }

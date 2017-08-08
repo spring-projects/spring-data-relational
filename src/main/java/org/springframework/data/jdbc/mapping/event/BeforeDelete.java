@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.mapping.event;
 
 import java.util.Optional;
 
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
@@ -32,8 +33,9 @@ public class BeforeDelete extends JdbcEventWithId {
 	/**
 	 * @param id the id of the entity
 	 * @param entity the entity about to get deleted. Might be empty.
+	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
 	 */
-	public <T> BeforeDelete(Specified id, Optional<Object> entity) {
-		super(id, entity);
+	public <T> BeforeDelete(Specified id, Optional<Object> entity, AggregateChange change) {
+		super(id, entity, change);
 	}
 }

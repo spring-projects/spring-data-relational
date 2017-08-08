@@ -50,7 +50,7 @@ public class EventPublishingEntityRowMapper<T> implements RowMapper<T> {
 
 		T instance = delegate.mapRow(resultSet, i);
 
-		publisher.publishEvent(new AfterCreation(Identifier.of(entityInformation.getRequiredId(instance)), instance));
+		publisher.publishEvent(new AfterCreation(Identifier.of(entityInformation.getRequiredId(instance)), instance, null));
 
 		return instance;
 	}

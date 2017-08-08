@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.mapping.event;
 
 import java.util.Optional;
 
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
+
 /**
  * A {@link SimpleJdbcEvent} which is guaranteed to have an entity.
  *
@@ -27,7 +29,7 @@ public class JdbcEventWithEntity extends SimpleJdbcEvent implements WithEntity {
 
 	private static final long serialVersionUID = 4891455396602090638L;
 
-	public JdbcEventWithEntity(Identifier id, Object entity) {
-		super(id, Optional.of(entity));
+	public JdbcEventWithEntity(Identifier id, Object entity, AggregateChange change) {
+		super(id, Optional.of(entity), change);
 	}
 }

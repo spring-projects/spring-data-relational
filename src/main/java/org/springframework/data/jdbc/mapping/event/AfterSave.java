@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
@@ -30,8 +31,9 @@ public class AfterSave extends JdbcEventWithIdAndEntity {
 	/**
 	 * @param id identifier of
 	 * @param instance the newly saved entity.
+	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
 	 */
-	AfterSave(Specified id, Object instance) {
-		super(id, instance);
+	public AfterSave(Specified id, Object instance, AggregateChange change) {
+		super(id, instance, change);
 	}
 }

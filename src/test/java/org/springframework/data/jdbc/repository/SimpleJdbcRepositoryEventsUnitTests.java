@@ -2,26 +2,27 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import junit.framework.AssertionFailedError;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.assertj.core.groups.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
-import org.springframework.data.jdbc.mapping.event.AfterInsert;
-import org.springframework.data.jdbc.mapping.event.AfterUpdate;
+import org.springframework.data.jdbc.mapping.event.AfterSave;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
-import org.springframework.data.jdbc.mapping.event.BeforeInsert;
-import org.springframework.data.jdbc.mapping.event.BeforeUpdate;
+import org.springframework.data.jdbc.mapping.event.BeforeSave;
 import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.JdbcEvent;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
@@ -55,8 +56,12 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		repository.save(entity);
 
-		assertThat(publisher.events.get(0)).isInstanceOf(BeforeUpdate.class);
-		assertThat(publisher.events.get(1)).isInstanceOf(AfterUpdate.class);
+		assertThat(publisher.events) //
+				.extracting(e -> (Class) e.getClass()) //
+				.containsExactly( //
+						BeforeSave.class, //
+						AfterSave.class //
+		);
 	}
 
 	@Test // DATAJDBC-99
@@ -67,10 +72,14 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		repository.saveAll(asList(entity1, entity2));
 
-		assertThat(publisher.events.get(0)).isInstanceOf(BeforeInsert.class);
-		assertThat(publisher.events.get(1)).isInstanceOf(AfterInsert.class);
-		assertThat(publisher.events.get(2)).isInstanceOf(BeforeUpdate.class);
-		assertThat(publisher.events.get(3)).isInstanceOf(AfterUpdate.class);
+		assertThat(publisher.events) //
+				.extracting(e -> (Class) e.getClass()) //
+				.containsExactly( //
+						BeforeSave.class, //
+						AfterSave.class, //
+						BeforeSave.class, //
+						AfterSave.class //
+		);
 	}
 
 	@Test // DATAJDBC-99
@@ -80,14 +89,14 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		repository.delete(entity);
 
-		assertThat(publisher.events.get(0)).isInstanceOf(BeforeDelete.class);
-		assertThat(publisher.events.get(1)).isInstanceOf(AfterDelete.class);
-
-		assertThat(publisher.events.get(0).getOptionalEntity()).hasValue(entity);
-		assertThat(publisher.events.get(1).getOptionalEntity()).hasValue(entity);
-
-		assertThat(publisher.events.get(0).getId()).isEqualTo(Identifier.of(23L));
-		assertThat(publisher.events.get(1).getId()).isEqualTo(Identifier.of(23L));
+		assertThat(publisher.events).extracting( //
+				e -> (Class) e.getClass(), //
+				e -> e.getOptionalEntity().orElseGet(AssertionFailedError::new), //
+				JdbcEvent::getId //
+		).containsExactly( //
+				Tuple.tuple(BeforeDelete.class, entity, Identifier.of(23L)), //
+				Tuple.tuple(AfterDelete.class, entity, Identifier.of(23L)) //
+		);
 	}
 
 	@Test // DATAJDBC-99
@@ -95,8 +104,12 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		repository.deleteById(23L);
 
-		assertThat(publisher.events.get(0)).isInstanceOf(BeforeDelete.class);
-		assertThat(publisher.events.get(1)).isInstanceOf(AfterDelete.class);
+		assertThat(publisher.events) //
+				.extracting(e -> (Class) e.getClass()) //
+				.containsExactly( //
+						BeforeDelete.class, //
+						AfterDelete.class //
+		);
 	}
 
 	private static NamedParameterJdbcOperations createIdGeneratingOperations() {

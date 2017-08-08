@@ -19,6 +19,7 @@ import lombok.Getter;
 
 import java.util.Optional;
 
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
@@ -32,7 +33,7 @@ public class JdbcEventWithIdAndEntity extends JdbcEventWithId implements WithEnt
 
 	private static final long serialVersionUID = -3194462549552515519L;
 
-	public JdbcEventWithIdAndEntity(Specified id, Object entity) {
-		super(id, Optional.of(entity));
+	public JdbcEventWithIdAndEntity(Specified id, Object entity, AggregateChange change) {
+		super(id, Optional.of(entity), change);
 	}
 }

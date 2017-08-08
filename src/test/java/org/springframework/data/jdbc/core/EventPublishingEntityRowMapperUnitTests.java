@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository;
+package org.springframework.data.jdbc.core;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -31,7 +31,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.EventPublishingEntityRowMapper;
 import org.springframework.data.jdbc.mapping.event.AfterCreation;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.jdbc.core.RowMapper;

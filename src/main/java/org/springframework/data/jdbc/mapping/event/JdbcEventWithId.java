@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.mapping.event;
 
 import java.util.Optional;
 
+import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
@@ -31,9 +32,9 @@ public class JdbcEventWithId extends SimpleJdbcEvent implements WithId {
 
 	private final Specified id;
 
-	public JdbcEventWithId(Specified id, Optional<Object> entity) {
+	public JdbcEventWithId(Specified id, Optional<Object> entity, AggregateChange change) {
 
-		super(id, entity);
+		super(id, entity, change);
 
 		this.id = id;
 	}
