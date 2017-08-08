@@ -1,0 +1,2 @@
+DROP TABLE DummyEntity
+CREATE TABLE DummyEntity ( id SERIAL PRIMARY KEY)

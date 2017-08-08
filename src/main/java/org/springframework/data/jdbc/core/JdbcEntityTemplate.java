@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core;
 
+import java.math.BigInteger;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +51,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -279,7 +282,11 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 				Object value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
 
 				Object convertedValue = convert(value, property.getColumnType());
-				parameters.put(property.getColumnName(), convertedValue);
+				if (convertedValue instanceof BigInteger) {
+					parameters.put(property.getColumnName(), new SqlParameterValue(Types.BIGINT, convertedValue));
+				} else {
+					parameters.put(property.getColumnName(), convertedValue);
+				}
 			}
 		});
 
