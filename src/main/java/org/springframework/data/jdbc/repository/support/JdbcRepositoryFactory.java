@@ -15,14 +15,13 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.JdbcEntityTemplate;
 import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -34,12 +33,18 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Jens Schauder
  * @since 2.0
  */
-@RequiredArgsConstructor
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
-	private final JdbcMappingContext context = new JdbcMappingContext();
+	private final JdbcMappingContext context;
 	private final NamedParameterJdbcOperations jdbcOperations;
 	private final ApplicationEventPublisher publisher;
+
+	public JdbcRepositoryFactory(NamedParameterJdbcOperations namedParameterJdbcOperations, ApplicationEventPublisher publisher, NamingStrategy namingStrategy) {
+
+		this.jdbcOperations = namedParameterJdbcOperations;
+		this.publisher = publisher;
+		this.context = new JdbcMappingContext(namingStrategy);
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override

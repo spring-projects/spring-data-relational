@@ -24,6 +24,7 @@ import org.springframework.data.jdbc.mapping.event.BeforeInsert;
 import org.springframework.data.jdbc.mapping.event.BeforeUpdate;
 import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.JdbcEvent;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -43,7 +44,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	public void before() {
 
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(operations, publisher);
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(operations, publisher, new DefaultNamingStrategy());
 		repository = factory.getRepository(DummyEntityRepository.class);
 	}
 

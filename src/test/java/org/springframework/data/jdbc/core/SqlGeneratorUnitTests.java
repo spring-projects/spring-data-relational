@@ -18,10 +18,13 @@ package org.springframework.data.jdbc.core;
 import static org.assertj.core.api.Assertions.*;
 
 import org.assertj.core.api.SoftAssertions;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
 
 /**
@@ -31,22 +34,33 @@ import org.springframework.data.mapping.PropertyPath;
  */
 public class SqlGeneratorUnitTests {
 
-	JdbcMappingContext context = new JdbcMappingContext();
-	JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-	SqlGenerator sqlGenerator = new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
+	private NamingStrategy namingStrategy;
+	private JdbcMappingContext context;
+	private JdbcPersistentEntity<?> persistentEntity;
+	private SqlGenerator sqlGenerator;
+
+	@Before
+	public void setUp() {
+
+		this.namingStrategy = new DefaultNamingStrategy();
+		this.context = new JdbcMappingContext(namingStrategy);
+		this.persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+		this.sqlGenerator = new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
+	}
 
 	@Test // DATAJDBC-112
 	public void findOne() {
 
 		String sql = sqlGenerator.getFindOne();
 
-		new SoftAssertions().assertThat(sql) //
+		SoftAssertions softAssertions = new SoftAssertions();
+		softAssertions.assertThat(sql) //
 				.startsWith("SELECT") //
-				.contains("DummyEntity.id as id,") //
-				.contains("DummyEntity.name as name,") //
-				.contains("ref.id AS ref_id") //
+				.contains("DummyEntity.id AS id,") //
+				.contains("DummyEntity.name AS name,") //
+				.contains("ref.l1id AS ref_l1id") //
 				.contains("ref.content AS ref_content").contains(" FROM DummyEntity");
-		new SoftAssertions().assertAll();
+		softAssertions.assertAll();
 	}
 
 	@Test // DATAJDBC-112
