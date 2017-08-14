@@ -38,6 +38,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  * repository factories via Spring configuration.
  *
  * @author Jens Schauder
+ * @author Greg Turnquist
  * @since 2.0
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> //
@@ -46,8 +47,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private static final String NO_NAMED_PARAMETER_JDBC_OPERATION_ERROR_MESSAGE = //
 			"No unique NamedParameterJdbcOperation could be found, " //
 					+ "nor JdbcOperations or DataSource to construct one from.";
-
-	private static final String NO_NAMING_STRATEGY_ERROR_MESSAGE = "No unique NamingStrategy could be found.";
 
 	private static final String NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME = "namedParameterJdbcTemplate";
 	private static final String JDBC_OPERATIONS_BEAN_NAME = "jdbcTemplate";
@@ -67,23 +66,21 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return new JdbcRepositoryFactory(findOrCreateJdbcOperations(), applicationEventPublisher, findOrCreateNamingStrategy());
+		return new JdbcRepositoryFactory(findOrCreateJdbcOperations(), applicationEventPublisher,
+				findOrCreateNamingStrategy());
 	}
 
 	private NamedParameterJdbcOperations findOrCreateJdbcOperations() {
 
-		return Optionals
-				.firstNonEmpty( //
-						this::getNamedParameterJdbcOperations, //
-						() -> getJdbcOperations().map(NamedParameterJdbcTemplate::new), //
-						() -> getDataSource().map(NamedParameterJdbcTemplate::new)) //
+		return Optionals.firstNonEmpty( //
+				this::getNamedParameterJdbcOperations, //
+				() -> getJdbcOperations().map(NamedParameterJdbcTemplate::new), //
+				() -> getDataSource().map(NamedParameterJdbcTemplate::new)) //
 				.orElseThrow(() -> new IllegalStateException(NO_NAMED_PARAMETER_JDBC_OPERATION_ERROR_MESSAGE));
 	}
 
 	private NamingStrategy findOrCreateNamingStrategy() {
-
-		return getNamingStrategy()
-			.orElse(new DefaultNamingStrategy());
+		return getNamingStrategy().orElse(new DefaultNamingStrategy());
 	}
 
 	private Optional<NamedParameterJdbcOperations> getNamedParameterJdbcOperations() {

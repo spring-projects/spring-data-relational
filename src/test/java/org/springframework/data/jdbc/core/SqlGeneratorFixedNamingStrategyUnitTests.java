@@ -28,10 +28,8 @@ import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
 
 /**
- * Unit tests to a fixed {@link NamingStrategy} implementation containing a hard wired schema, table, and property prefix.
- *
- * NOTE: Due to the need to verify SQL generation and {@link SqlGenerator}'s package-private status suggests
- * this unit test exist in this package, not {@literal org.springframework.data.jdbc.mappings.model}.
+ * Unit tests the {@link SqlGenerator} with a fixed {@link NamingStrategy} implementation containing a hard wired
+ * schema, table, and property prefix.
  *
  * @author Greg Turnquist
  */
@@ -61,7 +59,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		public String getTableName(Class<?> type) {
 			return type.getSimpleName().toUpperCase();
 		}
-		
+
 		@Override
 		public String getColumnName(JdbcPersistentProperty property) {
 			return property.getName().toLowerCase();
@@ -77,12 +75,14 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SoftAssertions softAssertions = new SoftAssertions();
 		softAssertions.assertThat(sql) //
-			.startsWith("SELECT") //
-			.contains("FixedCustomSchema.FixedCustomTablePrefix_DummyEntity.FixedCustomPropertyPrefix_id AS FixedCustomPropertyPrefix_id,") //
-			.contains("FixedCustomSchema.FixedCustomTablePrefix_DummyEntity.FixedCustomPropertyPrefix_name AS FixedCustomPropertyPrefix_name,") //
-			.contains("ref.FixedCustomPropertyPrefix_l1id AS ref_FixedCustomPropertyPrefix_l1id") //
-			.contains("ref.FixedCustomPropertyPrefix_content AS ref_FixedCustomPropertyPrefix_content") //
-			.contains("FROM FixedCustomSchema.FixedCustomTablePrefix_DummyEntity");
+				.startsWith("SELECT") //
+				.contains(
+						"FixedCustomSchema.FixedCustomTablePrefix_DummyEntity.FixedCustomPropertyPrefix_id AS FixedCustomPropertyPrefix_id,") //
+				.contains(
+						"FixedCustomSchema.FixedCustomTablePrefix_DummyEntity.FixedCustomPropertyPrefix_name AS FixedCustomPropertyPrefix_name,") //
+				.contains("ref.FixedCustomPropertyPrefix_l1id AS ref_FixedCustomPropertyPrefix_l1id") //
+				.contains("ref.FixedCustomPropertyPrefix_content AS ref_FixedCustomPropertyPrefix_content") //
+				.contains("FROM FixedCustomSchema.FixedCustomTablePrefix_DummyEntity");
 		softAssertions.assertAll();
 	}
 
@@ -95,12 +95,12 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SoftAssertions softAssertions = new SoftAssertions();
 		softAssertions.assertThat(sql) //
-			.startsWith("SELECT") //
-			.contains("DUMMYENTITY.id AS id,") //
-			.contains("DUMMYENTITY.name AS name,") //
-			.contains("ref.l1id AS ref_l1id") //
-			.contains("ref.content AS ref_content") //
-			.contains("FROM DUMMYENTITY");
+				.startsWith("SELECT") //
+				.contains("DUMMYENTITY.id AS id,") //
+				.contains("DUMMYENTITY.name AS name,") //
+				.contains("ref.l1id AS ref_l1id") //
+				.contains("ref.content AS ref_content") //
+				.contains("FROM DUMMYENTITY");
 		softAssertions.assertAll();
 	}
 
@@ -111,8 +111,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " +
-			"WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity = :rootId");
+		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity = :rootId");
 	}
 
 	@Test // DATAJDBC-107
@@ -122,12 +122,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref.further", DummyEntity.class));
 
-		assertThat(sql).isEqualTo(
-			"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity " +
-				"WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity IN " +
-					"(SELECT FixedCustomPropertyPrefix_l1id " +
-					"FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " +
-					"WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity = :rootId)");
+		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity IN "
+				+ "(SELECT FixedCustomPropertyPrefix_l1id " + "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity = :rootId)");
 	}
 
 	@Test // DATAJDBC-107
@@ -147,8 +145,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " +
-			"WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity IS NOT NULL");
+		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-107
@@ -158,12 +156,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref.further", DummyEntity.class));
 
-		assertThat(sql).isEqualTo(
-			"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity " +
-				"WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity IN " +
-					"(SELECT FixedCustomPropertyPrefix_l1id " +
-					"FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " +
-					"WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity IS NOT NULL)");
+		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity IN "
+				+ "(SELECT FixedCustomPropertyPrefix_l1id " + "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity IS NOT NULL)");
 	}
 
 	/**

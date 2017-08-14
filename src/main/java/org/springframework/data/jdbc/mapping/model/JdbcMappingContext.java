@@ -38,6 +38,7 @@ import org.springframework.data.util.TypeInformation;
  * {@link MappingContext} implementation for JDBC.
  * 
  * @author Jens Schauder
+ * @author Greg Turnquist
  * @since 2.0
  */
 public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> {
@@ -62,8 +63,6 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 		Class<?> currentType = path == null ? rootType : PropertyPaths.getLeafType(path);
 		JdbcPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(currentType);
-
-		String rootPrefix = path == null ? "" : path.toDotPath() + ".";
 
 		for (JdbcPersistentProperty property : persistentEntity) {
 			if (property.isEntity()) {

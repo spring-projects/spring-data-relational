@@ -47,6 +47,7 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
  * Testing special cases for id generation with {@link SimpleJdbcRepository}.
  *
  * @author Jens Schauder
+ * @author Greg Turnquist
  */
 @ContextConfiguration
 @EnableJdbcRepositories(considerNestedRepositories = true)
@@ -131,8 +132,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		}
 
 		/**
-		 * {@link NamingStrategy} that harmlessly uppercases the table name,
-		 * demonstrating how to inject one while not breaking existing SQL operations.
+		 * {@link NamingStrategy} that harmlessly uppercases the table name, demonstrating how to inject one while not
+		 * breaking existing SQL operations.
 		 */
 		@Bean
 		NamingStrategy namingStrategy() {
@@ -152,8 +153,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		@Bean
 		ReadOnlyIdEntityRepository readOnlyIdRepository(DataSource db, NamingStrategy namingStrategy) {
 
-			return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class), namingStrategy)
-					.getRepository(ReadOnlyIdEntityRepository.class);
+			return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class),
+					namingStrategy).getRepository(ReadOnlyIdEntityRepository.class);
 		}
 
 		@Bean

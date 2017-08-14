@@ -26,12 +26,14 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
  * Meta data about a property to be used by repository implementations.
  *
  * @author Jens Schauder
+ * @author Greg Turnquist
  * @since 2.0
  */
 public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<JdbcPersistentProperty>
@@ -52,11 +54,15 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	 * @param property must not be {@literal null}.
 	 * @param owner must not be {@literal null}.
 	 * @param simpleTypeHolder must not be {@literal null}.
-	 * @param context
+	 * @param context must not be {@literal null}
 	 */
 	public BasicJdbcPersistentProperty(Property property, PersistentEntity<?, JdbcPersistentProperty> owner,
 			SimpleTypeHolder simpleTypeHolder, JdbcMappingContext context) {
+
 		super(property, owner, simpleTypeHolder);
+
+		Assert.notNull(context, "context must not be null.");
+
 		this.context = context;
 	}
 

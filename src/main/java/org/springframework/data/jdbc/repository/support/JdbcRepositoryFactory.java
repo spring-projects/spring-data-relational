@@ -31,6 +31,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * @author Jens Schauder
+ * @author Greg Turnquist
  * @since 2.0
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
@@ -39,7 +40,8 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final NamedParameterJdbcOperations jdbcOperations;
 	private final ApplicationEventPublisher publisher;
 
-	public JdbcRepositoryFactory(NamedParameterJdbcOperations namedParameterJdbcOperations, ApplicationEventPublisher publisher, NamingStrategy namingStrategy) {
+	public JdbcRepositoryFactory(NamedParameterJdbcOperations namedParameterJdbcOperations,
+			ApplicationEventPublisher publisher, NamingStrategy namingStrategy) {
 
 		this.jdbcOperations = namedParameterJdbcOperations;
 		this.publisher = publisher;

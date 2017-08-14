@@ -24,6 +24,7 @@ import org.springframework.data.util.TypeInformation;
  * Meta data a repository might need for implementing persistence operations for instances of type {@code T}
  *
  * @author Jens Schauder
+ * @author Greg Turnquist
  * @since 2.0
  */
 class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersistentProperty>

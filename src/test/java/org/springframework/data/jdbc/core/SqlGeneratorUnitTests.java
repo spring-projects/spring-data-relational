@@ -31,20 +31,18 @@ import org.springframework.data.mapping.PropertyPath;
  * Unit tests for the {@link SqlGenerator}.
  * 
  * @author Jens Schauder
+ * @author Greg Turnquist
  */
 public class SqlGeneratorUnitTests {
 
-	private NamingStrategy namingStrategy;
-	private JdbcMappingContext context;
-	private JdbcPersistentEntity<?> persistentEntity;
 	private SqlGenerator sqlGenerator;
 
 	@Before
 	public void setUp() {
 
-		this.namingStrategy = new DefaultNamingStrategy();
-		this.context = new JdbcMappingContext(namingStrategy);
-		this.persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+		NamingStrategy namingStrategy = new DefaultNamingStrategy();
+		JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
+		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 		this.sqlGenerator = new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}
 
@@ -105,6 +103,7 @@ public class SqlGeneratorUnitTests {
 				"DELETE FROM SecondLevelReferencedEntity WHERE ReferencedEntity IN (SELECT l1id FROM ReferencedEntity WHERE DummyEntity IS NOT NULL)");
 	}
 
+	@SuppressWarnings("unused")
 	static class DummyEntity {
 
 		@Id Long id;
@@ -112,6 +111,7 @@ public class SqlGeneratorUnitTests {
 		ReferencedEntity ref;
 	}
 
+	@SuppressWarnings("unused")
 	static class ReferencedEntity {
 
 		@Id Long l1id;
@@ -119,6 +119,7 @@ public class SqlGeneratorUnitTests {
 		SecondLevelReferencedEntity further;
 	}
 
+	@SuppressWarnings("unused")
 	static class SecondLevelReferencedEntity {
 
 		@Id Long l2id;
