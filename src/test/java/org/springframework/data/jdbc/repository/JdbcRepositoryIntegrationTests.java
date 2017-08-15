@@ -233,6 +233,14 @@ public class JdbcRepositoryIntegrationTests {
 				.containsExactlyInAnyOrder(entity.getName(), other.getName());
 	}
 
+	@Test // DATAJDBC-112
+	public void findByIdReturnsEmptyWhenNoneFound() {
+
+		// NOT saving anything, so DB is empty
+
+		assertThat(repository.findById(-1L)).isEmpty();
+	}
+
 	private static DummyEntity createDummyEntity() {
 
 		DummyEntity entity = new DummyEntity();
