@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.core;
 
 import java.util.Map;
 
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+
 /**
  * Specifies a operations one can perform on a database, based on an <em>Domain Type</em>.
  *
@@ -44,5 +46,8 @@ public interface JdbcEntityOperations {
 
 	<T> Iterable<T> findAll(Class<T> domainType);
 
+	<T> Iterable<T> findAllByProperty(Object id, JdbcPersistentProperty property);
+
 	<T> boolean existsById(Object id, Class<T> domainType);
+
 }

@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.math.BigInteger;
-import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -46,10 +44,10 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.repository.core.EntityInformation;
-import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -101,7 +99,8 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	@Override
 	public <T> void save(T instance, Class<T> domainType) {
 
-		JdbcPersistentEntityInformation<T, ?> entityInformation = context.getRequiredPersistentEntityInformation(domainType);
+		JdbcPersistentEntityInformation<T, ?> entityInformation = context
+				.getRequiredPersistentEntityInformation(domainType);
 
 		AggregateChange change = createChange(instance);
 
@@ -128,16 +127,17 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		JdbcPersistentEntityInformation<T, ?> entityInformation = context
 				.getRequiredPersistentEntityInformation(domainType);
 
-		Map<String, Object> propertyMap = getPropertyMap(instance, persistentEntity);
+		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity);
 
 		Object idValue = getIdValueOrNull(instance, persistentEntity);
 		JdbcPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-		propertyMap.put(idProperty.getColumnName(), convert(idValue, idProperty.getColumnType()));
+		parameterSource.addValue(idProperty.getColumnName(), convert(idValue, idProperty.getColumnType()),
+				JdbcUtil.sqlTypeFor(idProperty.getColumnType()));
 
-		propertyMap.putAll(additionalParameters);
+		additionalParameters.forEach(parameterSource::addValue);
 
-		operations.update(sql(domainType).getInsert(idValue == null, additionalParameters.keySet()),
-				new MapSqlParameterSource(propertyMap), holder);
+		operations.update(sql(domainType).getInsert(idValue == null, additionalParameters.keySet()), parameterSource,
+				holder);
 
 		setIdFromJdbc(instance, holder, persistentEntity);
 
@@ -199,6 +199,17 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	}
 
 	@Override
+	public <T> Iterable<T> findAllByProperty(Object id, JdbcPersistentProperty property) {
+
+		Class<?> actualType = property.getActualType();
+		String findAllByProperty = sql(actualType).getFindAllByProperty(property.getReverseColumnName());
+
+		MapSqlParameterSource parameter = new MapSqlParameterSource(property.getReverseColumnName(), id);
+
+		return (Iterable<T>) operations.query(findAllByProperty, parameter, getEntityRowMapper(actualType));
+	}
+
+	@Override
 	public <S> void delete(S entity, Class<S> domainType) {
 
 		JdbcPersistentEntityInformation<S, ?> entityInformation = context
@@ -247,7 +258,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	}
 
-	void doDelete(Object id, Optional<Object> optionalEntity, Class<?> domainType) {
+	void doDelete(Object id, Class<?> domainType) {
 
 		String deleteByIdSql = sql(domainType).getDeleteById();
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
@@ -281,20 +292,16 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 				convert(id, getRequiredPersistentEntity(domainType).getRequiredIdProperty().getColumnType()));
 	}
 
-	private <S> Map<String, Object> getPropertyMap(final S instance, JdbcPersistentEntity<S> persistentEntity) {
+	private <S> MapSqlParameterSource getPropertyMap(final S instance, JdbcPersistentEntity<S> persistentEntity) {
 
-		Map<String, Object> parameters = new HashMap<>();
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
 		persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
 			if (!property.isEntity()) {
 				Object value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
 
 				Object convertedValue = convert(value, property.getColumnType());
-				if (convertedValue instanceof BigInteger) {
-					parameters.put(property.getColumnName(), new SqlParameterValue(Types.BIGINT, convertedValue));
-				} else {
-					parameters.put(property.getColumnName(), convertedValue);
-				}
+				parameters.addValue(property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
 			}
 		});
 
@@ -372,7 +379,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	}
 
 	private <T> EntityRowMapper<T> getEntityRowMapper(Class<T> domainType) {
-		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), conversions, context);
+		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), conversions, context, this);
 	}
 
 	<T> void doDeleteAll(Class<T> domainType, PropertyPath propertyPath) {
@@ -380,5 +387,9 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		operations.getJdbcOperations()
 				.update(sql(propertyPath == null ? domainType : propertyPath.getOwningType().getType())
 						.createDeleteAllSql(propertyPath));
+	}
+
+	public NamedParameterJdbcOperations getOperations() {
+		return operations;
 	}
 }

@@ -17,7 +17,10 @@ package org.springframework.data.jdbc.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,61 +46,159 @@ public class JdbcEntityWriterUnitTests {
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {
 
-		SomeEntity entity = new SomeEntity(null);
-		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.SAVE, SomeEntity.class, entity);
+		SingleReferenceEntity entity = new SingleReferenceEntity(null);
+		AggregateChange<SingleReferenceEntity> aggregateChange = //
+				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
+
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType) //
 				.containsExactly( //
-						tuple(Insert.class, SomeEntity.class) //
+						tuple(Insert.class, SingleReferenceEntity.class) //
 		);
 	}
 
 	@Test // DATAJDBC-112
 	public void existingEntityGetsConvertedToUpdate() {
 
-		SomeEntity entity = new SomeEntity(23L);
-
-		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.SAVE, SomeEntity.class, entity);
+		SingleReferenceEntity entity = new SingleReferenceEntity(23L);
+		AggregateChange<SingleReferenceEntity> aggregateChange = //
+				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType) //
 				.containsExactly( //
-						tuple(Delete.class, OtherEntity.class), //
-						tuple(Update.class, SomeEntity.class) //
+						tuple(Delete.class, Element.class), //
+						tuple(Update.class, SingleReferenceEntity.class) //
 		);
 	}
 
 	@Test // DATAJDBC-112
 	public void referenceTriggersDeletePlusInsert() {
 
-		SomeEntity entity = new SomeEntity(23L);
-		entity.setOther(new OtherEntity(null));
+		SingleReferenceEntity entity = new SingleReferenceEntity(23L);
+		entity.other = new Element(null);
 
-		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.SAVE, SomeEntity.class, entity);
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SingleReferenceEntity.class,
+				entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType) //
+				.containsExactly( //
+						tuple(Delete.class, Element.class), //
+						tuple(Update.class, SingleReferenceEntity.class), //
+						tuple(Insert.class, Element.class) //
+		);
+	}
+
+	@Test // DATAJDBC-113
+	public void newEntityWithEmptySetResultsInSingleInsert() {
+
+		SetContainer entity = new SetContainer(null);
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
 				.containsExactly( //
-						tuple(Delete.class, OtherEntity.class), //
-						tuple(Update.class, SomeEntity.class), //
-						tuple(Insert.class, OtherEntity.class) //
+						tuple(Insert.class, SetContainer.class));
+	}
+
+	@Test // DATAJDBC-113
+	public void newEntityWithSetResultsInAdditionalInsertPerElement() {
+
+		SetContainer entity = new SetContainer(null);
+		entity.elements.add(new Element(null));
+		entity.elements.add(new Element(null));
+
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+				.containsExactly( //
+						tuple(Insert.class, SetContainer.class), //
+						tuple(Insert.class, Element.class), //
+						tuple(Insert.class, Element.class) //
 		);
 	}
 
-	@Data
-	private static class SomeEntity {
+	@Test // DATAJDBC-113
+	public void cascadingReferencesTriggerCascadingActions() {
+
+		CascadingReferenceEntity entity = new CascadingReferenceEntity(null);
+
+		entity.other.add(createMiddleElement( //
+				new Element(null), //
+				new Element(null)) //
+		);
+
+		entity.other.add(createMiddleElement( //
+				new Element(null), //
+				new Element(null)) //
+		);
+
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+				.containsExactly( //
+						tuple(Insert.class, CascadingReferenceEntity.class), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class), //
+						tuple(Insert.class, Element.class), //
+						tuple(Insert.class, Element.class), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class), //
+						tuple(Insert.class, Element.class), //
+						tuple(Insert.class, Element.class) //
+		);
+	}
+
+	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {
+
+		CascadingReferenceMiddleElement middleElement1 = new CascadingReferenceMiddleElement(null);
+		middleElement1.element.add(first);
+		middleElement1.element.add(second);
+		return middleElement1;
+	}
+
+	@RequiredArgsConstructor
+	static class SingleReferenceEntity {
 
 		@Id final Long id;
-		OtherEntity other;
+		Element other;
 		// should not trigger own Dbaction
 		String name;
 	}
 
-	@Data
-	private class OtherEntity {
+	@RequiredArgsConstructor
+	private static class CascadingReferenceMiddleElement {
+
+		@Id final Long id;
+		final Set<Element> element = new HashSet<>();
+	}
+
+	@RequiredArgsConstructor
+	private static class CascadingReferenceEntity {
+
+		@Id final Long id;
+		final Set<CascadingReferenceMiddleElement> other = new HashSet<>();
+	}
+
+	@RequiredArgsConstructor
+	private static class SetContainer {
+
+		@Id final Long id;
+		Set<Element> elements = new HashSet<>();
+	}
+
+	@RequiredArgsConstructor
+	private static class Element {
 		@Id final Long id;
 	}
+
 }

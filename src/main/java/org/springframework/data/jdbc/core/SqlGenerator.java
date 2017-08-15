@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,8 +59,7 @@ class SqlGenerator {
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 	private final SqlGeneratorSource sqlGeneratorSource;
 
-	SqlGenerator(JdbcMappingContext context, JdbcPersistentEntity<?> entity,
-				 SqlGeneratorSource sqlGeneratorSource) {
+	SqlGenerator(JdbcMappingContext context, JdbcPersistentEntity<?> entity, SqlGeneratorSource sqlGeneratorSource) {
 
 		this.context = context;
 		this.entity = entity;
@@ -88,6 +88,10 @@ class SqlGenerator {
 		return findAllSql.get();
 	}
 
+	String getFindAllByProperty(String columnName) {
+		return String.format("%s WHERE %s = :%s", findAllSql.get(), columnName, columnName);
+	}
+
 	String getExists() {
 		return existsSql.get();
 	}
@@ -96,7 +100,7 @@ class SqlGenerator {
 		return findOneSql.get();
 	}
 
-	String getInsert(boolean excludeId, Set additionalColumns) {
+	String getInsert(boolean excludeId, Set<String> additionalColumns) {
 		return createInsertSql(excludeId, additionalColumns);
 	}
 
@@ -124,37 +128,49 @@ class SqlGenerator {
 	}
 
 	private SelectBuilder createSelectBuilder() {
+
 		SelectBuilder builder = new SelectBuilder(entity.getTableName());
-
-		for (JdbcPersistentProperty property : entity) {
-			if (!property.isEntity()) {
-
-				builder.column(cb -> cb //
-						.tableAlias(entity.getTableName()) //
-						.column(property.getColumnName()) //
-						.as(property.getColumnName()));
-			}
-		}
-
-		for (JdbcPersistentProperty property : entity) {
-			if (property.isEntity()) {
-
-				JdbcPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getType());
-				String joinAlias = property.getName();
-				builder.join(jb -> jb.leftOuter().table(refEntity.getTableName()).as(joinAlias) //
-						.where(entity.getTableName()).eq().column(entity.getTableName(), entity.getIdColumn()));
-
-				for (JdbcPersistentProperty refProperty : refEntity) {
-					builder.column( //
-							cb -> cb.tableAlias(joinAlias) //
-									.column(refProperty.getColumnName()) //
-									.as(joinAlias + "_" + refProperty.getColumnName()) //
-					);
-				}
-			}
-		}
+		addColumnsForSimpleProperties(builder);
+		addColumnsAndJoinsForOneToOneReferences(builder);
 
 		return builder;
+	}
+
+	private void addColumnsAndJoinsForOneToOneReferences(SelectBuilder builder) {
+
+		for (JdbcPersistentProperty property : entity) {
+			if (!property.isEntity() || Collection.class.isAssignableFrom(property.getType())) {
+				continue;
+			}
+
+			JdbcPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getActualType());
+			String joinAlias = property.getName();
+			builder.join(jb -> jb.leftOuter().table(refEntity.getTableName()).as(joinAlias) //
+					.where(property.getReverseColumnName()).eq().column(entity.getTableName(), entity.getIdColumn()));
+
+			for (JdbcPersistentProperty refProperty : refEntity) {
+				builder.column( //
+						cb -> cb.tableAlias(joinAlias) //
+								.column(refProperty.getColumnName()) //
+								.as(joinAlias + "_" + refProperty.getColumnName()) //
+				);
+			}
+		}
+	}
+
+	private void addColumnsForSimpleProperties(SelectBuilder builder) {
+
+		for (JdbcPersistentProperty property : entity) {
+
+			if (property.isEntity()) {
+				continue;
+			}
+
+			builder.column(cb -> cb //
+					.tableAlias(entity.getTableName()) //
+					.column(property.getColumnName()) //
+					.as(property.getColumnName()));
+		}
 	}
 
 	private Stream<String> getColumnNameStream(String prefix) {
@@ -191,11 +207,13 @@ class SqlGenerator {
 		return String.format("select count(*) from %s", entity.getTableName());
 	}
 
-	private String createInsertSql(boolean excludeId, Set additionalColumns) {
+	private String createInsertSql(boolean excludeId, Set<String> additionalColumns) {
 
 		String insertTemplate = "insert into %s (%s) values (%s)";
+
 		List<String> propertyNamesForInsert = new ArrayList<>(excludeId ? nonIdPropertyNames : propertyNames);
 		propertyNamesForInsert.addAll(additionalColumns);
+
 		String tableColumns = String.join(", ", propertyNamesForInsert);
 		String parameterNames = propertyNamesForInsert.stream().collect(Collectors.joining(", :", ":", ""));
 
@@ -225,29 +243,31 @@ class SqlGenerator {
 
 		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(PropertyPaths.getLeafType(path));
 
-		String innerMostCondition = String.format("%s IS NOT NULL", entity.getTableName(), entity.getTableName(),
-				entity.getIdColumn());
+		JdbcPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
+		JdbcPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
+
+		String innerMostCondition = String.format("%s IS NOT NULL", property.getReverseColumnName());
 
 		String condition = cascadeConditions(innerMostCondition, path.next());
 
-		return String.format("DELETE FROM %s WHERE %s", entityToDelete.getTableName(), condition, condition);
-
+		return String.format("DELETE FROM %s WHERE %s", entityToDelete.getTableName(), condition);
 	}
 
 	private String createDeleteByListSql() {
-		return String.format("doDelete from %s where %s in (:ids)", entity.getTableName(), entity.getIdColumn());
+		return String.format("DELETE FROM %s WHERE %s IN (:ids)", entity.getTableName(), entity.getIdColumn());
 	}
 
 	String createDeleteByPath(PropertyPath path) {
 
 		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(PropertyPaths.getLeafType(path));
+		JdbcPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
+		JdbcPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
 
-		String innerMostCondition = String.format("%s = :rootId", entity.getTableName());
+		String innerMostCondition = String.format("%s = :rootId", property.getReverseColumnName());
 
 		String condition = cascadeConditions(innerMostCondition, path.next());
 
 		return String.format("DELETE FROM %s WHERE %s", entityToDelete.getTableName(), condition);
-
 	}
 
 	private String cascadeConditions(String innerCondition, PropertyPath path) {
@@ -261,10 +281,10 @@ class SqlGenerator {
 
 		Assert.notNull(property, "could not find property for path " + path.getSegment() + " in " + entity);
 
-		String tableName = entity.getTableName();
-		String idColumn = entity.getIdColumn();
-
-		return String.format("%s IN (SELECT %s FROM %s WHERE %s)", tableName, idColumn, tableName, innerCondition);
-
+		return String.format("%s IN (SELECT %s FROM %s WHERE %s)", //
+				property.getReverseColumnName(), //
+				entity.getIdColumn(), //
+				entity.getTableName(), innerCondition //
+		);
 	}
 }

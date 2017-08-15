@@ -162,6 +162,17 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity IS NOT NULL)");
 	}
 
+	@Test // DATAJDBC-113
+	public void deleteByList() {
+
+		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
+
+		String sql = sqlGenerator.getDeleteByList();
+
+		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_DummyEntity WHERE FixedCustomPropertyPrefix_id IN (:ids)");
+	}
+
+
 	/**
 	 * Plug in a custom {@link NamingStrategy} for this test case.
 	 *

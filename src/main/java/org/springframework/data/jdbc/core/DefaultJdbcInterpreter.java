@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.data.jdbc.core.conversion.DbAction;
 import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
@@ -73,8 +72,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 	public <T> void interpret(Delete<T> delete) {
 
 		if (delete.getPropertyPath() == null) {
-			template.doDelete(delete.getRootId(), Optional.ofNullable(delete.getEntity()),
-					delete.getEntityType());
+			template.doDelete(delete.getRootId(), delete.getEntityType());
 		} else {
 			template.doDelete(delete.getRootId(), delete.getPropertyPath());
 		}

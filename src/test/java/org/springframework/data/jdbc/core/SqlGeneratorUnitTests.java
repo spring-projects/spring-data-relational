@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Set;
+
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +59,9 @@ public class SqlGeneratorUnitTests {
 				.contains("DummyEntity.id AS id,") //
 				.contains("DummyEntity.name AS name,") //
 				.contains("ref.l1id AS ref_l1id") //
-				.contains("ref.content AS ref_content").contains(" FROM DummyEntity");
+				.contains("ref.content AS ref_content").contains(" FROM DummyEntity") //
+				// 1-N relationships do not get loaded via join
+				.doesNotContain("Element AS elements");
 		softAssertions.assertAll();
 	}
 
@@ -109,6 +113,7 @@ public class SqlGeneratorUnitTests {
 		@Id Long id;
 		String name;
 		ReferencedEntity ref;
+		Set<Element> elements;
 	}
 
 	@SuppressWarnings("unused")
@@ -124,5 +129,10 @@ public class SqlGeneratorUnitTests {
 
 		@Id Long l2id;
 		String something;
+	}
+
+	static class Element {
+		@Id Long id;
+		String content;
 	}
 }
