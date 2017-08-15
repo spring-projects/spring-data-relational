@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.conversion;
 
+import java.util.Collection;
 import java.util.stream.Stream;
 
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
@@ -26,6 +27,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.util.StreamUtils;
+import org.springframework.util.ClassUtils;
 
 /**
  * Converts an entity that is about to be saved into {@link DbAction}s inside a {@link AggregateChange} that need to be
@@ -45,8 +47,6 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	private void write(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
-
-		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(aggregateChange.getEntityType());
 
 		JdbcPersistentEntityInformation<Object, ?> entityInformation = context
 				.getRequiredPersistentEntityInformation((Class<Object>) o.getClass());
@@ -70,22 +70,34 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
 	private void saveReferencedEntities(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
 
-		DbAction action = saveAction(o, dependingOn);
-		aggregateChange.addAction(action);
+		saveActions(o, dependingOn).forEach(a -> {
 
-		referencedEntities(o).forEach(e -> saveReferencedEntities(e, aggregateChange, action));
+			aggregateChange.addAction(a);
+			referencedEntities(o).forEach(e -> saveReferencedEntities(e, aggregateChange, a));
+		});
+
 	}
 
-	private <T> DbAction saveAction(T t, DbAction dependingOn) {
+	private <T> Stream<DbAction> saveActions(T t, DbAction dependingOn) {
+
+		if (Collection.class.isAssignableFrom(ClassUtils.getUserClass(t))) {
+			return collectionSaveAction((Collection) t, dependingOn);
+		}
+
+		return Stream.of(singleSaveAction(t, dependingOn));
+	}
+
+	private Stream<DbAction> collectionSaveAction(Collection collection, DbAction dependingOn) {
+
+		return collection.stream().map(e -> singleSaveAction(e, dependingOn));
+	}
+
+	private <T> DbAction singleSaveAction(T t, DbAction dependingOn) {
 
 		JdbcPersistentEntityInformation<T, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation((Class<T>) t.getClass());
+				.getRequiredPersistentEntityInformation((Class<T>) ClassUtils.getUserClass(t));
 
-		if (entityInformation.isNew(t)) {
-			return DbAction.insert(t, dependingOn);
-		} else {
-			return DbAction.update(t, dependingOn);
-		}
+		return entityInformation.isNew(t) ? DbAction.insert(t, dependingOn) : DbAction.update(t, dependingOn);
 	}
 
 	private void insertReferencedEntities(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
@@ -105,13 +117,33 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
 	private Stream<?> referencedEntity(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
 
-		Class<?> type = p.getActualType();
+		Class<?> actualType = p.getActualType();
 		JdbcPersistentEntity<?> persistentEntity = context //
-				.getPersistentEntity(type);
+				.getPersistentEntity(actualType);
 
 		if (persistentEntity == null) {
 			return Stream.empty();
 		}
+
+		Class<?> type = p.getType();
+		if (Collection.class.isAssignableFrom(type))
+			return collectionPropertyAsStream(p, propertyAccessor);
+
+		return singlePropertyAsStream(p, propertyAccessor);
+	}
+
+	private Stream<Object> collectionPropertyAsStream(JdbcPersistentProperty p,
+			PersistentPropertyAccessor propertyAccessor) {
+
+		Object property = propertyAccessor.getProperty(p);
+		if (property == null) {
+			return Stream.empty();
+		}
+
+		return ((Collection<Object>) property).stream();
+	}
+
+	private Stream<Object> singlePropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 		if (property == null) {

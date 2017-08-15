@@ -92,9 +92,19 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	@Override
 	public Class getColumnType() {
 
-		Class columnType = columnTypeIfEntity(getType());
+		Class columnType = columnTypeIfEntity(getActualType());
 
-		return columnType == null ? columnTypeForNonEntity(getType()) : columnType;
+		return columnType == null ? columnTypeForNonEntity(getActualType()) : columnType;
+	}
+
+	@Override
+	public JdbcPersistentEntity<?> getOwner() {
+		return (JdbcPersistentEntity<?>) super.getOwner();
+	}
+
+	@Override
+	public String getReverseColumnName() {
+		return getOwner().getTableName();
 	}
 
 	private Class columnTypeIfEntity(Class type) {

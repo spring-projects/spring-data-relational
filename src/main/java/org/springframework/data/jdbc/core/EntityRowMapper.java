@@ -16,10 +16,10 @@
 package org.springframework.data.jdbc.core;
 
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Set;
 
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
@@ -42,13 +42,26 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Oliver Gierke
  * @since 2.0
  */
-@RequiredArgsConstructor
 class EntityRowMapper<T> implements RowMapper<T> {
 
 	private final JdbcPersistentEntity<T> entity;
 	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
 	private final ConversionService conversions;
 	private final JdbcMappingContext context;
+	private final JdbcEntityOperations template;
+	private final JdbcPersistentProperty idProperty;
+
+	@java.beans.ConstructorProperties({ "entity", "conversions", "context", "template" })
+	public EntityRowMapper(JdbcPersistentEntity<T> entity, ConversionService conversions, JdbcMappingContext context,
+			JdbcEntityOperations template) {
+
+		this.entity = entity;
+		this.conversions = conversions;
+		this.context = context;
+		this.template = template;
+
+		idProperty = entity.getRequiredIdProperty();
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -58,11 +71,19 @@ class EntityRowMapper<T> implements RowMapper<T> {
 	public T mapRow(ResultSet resultSet, int rowNumber) throws SQLException {
 
 		T result = createInstance(resultSet);
-		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(result);
-		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
+
+		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(entity.getPropertyAccessor(result),
+				conversions);
+
+		Object id = readFrom(resultSet, idProperty, "");
 
 		for (JdbcPersistentProperty property : entity) {
-			propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
+
+			if (Set.class.isAssignableFrom(property.getType())) {
+				propertyAccessor.setProperty(property, template.findAllByProperty(id, property));
+			} else {
+				propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
+			}
 		}
 
 		return result;
@@ -91,7 +112,8 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		String prefix = property.getName() + "_";
 
 		@SuppressWarnings("unchecked")
-		JdbcPersistentEntity<S> entity = (JdbcPersistentEntity<S>) context.getRequiredPersistentEntity(property.getType());
+		JdbcPersistentEntity<S> entity = (JdbcPersistentEntity<S>) context
+				.getRequiredPersistentEntity(property.getActualType());
 
 		if (readFrom(rs, entity.getRequiredIdProperty(), prefix) == null) {
 			return null;
@@ -109,12 +131,24 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		return instance;
 	}
 
-	@RequiredArgsConstructor(staticName = "of")
 	private static class ResultSetParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
 
 		@NonNull private final ResultSet resultSet;
 		@NonNull private final ConversionService conversionService;
 		@NonNull private final String prefix;
+
+		@java.beans.ConstructorProperties({ "resultSet", "conversionService", "prefix" })
+		private ResultSetParameterValueProvider(ResultSet resultSet, ConversionService conversionService, String prefix) {
+
+			this.resultSet = resultSet;
+			this.conversionService = conversionService;
+			this.prefix = prefix;
+		}
+
+		public static ResultSetParameterValueProvider of(ResultSet resultSet, ConversionService conversionService,
+				String prefix) {
+			return new ResultSetParameterValueProvider(resultSet, conversionService, prefix);
+		}
 
 		/*
 		 * (non-Javadoc)

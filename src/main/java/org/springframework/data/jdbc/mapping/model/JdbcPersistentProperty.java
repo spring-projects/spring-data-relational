@@ -39,4 +39,9 @@ public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersisten
 	 * @return a {@link Class} that is suitable for usage with JDBC drivers
 	 */
 	Class<?> getColumnType();
+
+	@Override
+	JdbcPersistentEntity<?> getOwner();
+
+	String getReverseColumnName();
 }
