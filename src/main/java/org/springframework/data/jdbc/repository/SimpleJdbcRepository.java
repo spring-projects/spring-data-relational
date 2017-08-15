@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.jdbc.core.JdbcEntityOperations;
 import org.springframework.data.jdbc.core.JdbcEntityTemplate;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.repository.CrudRepository;
 
@@ -76,7 +76,11 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	@Override
 	public Optional<T> findById(ID id) {
 
-		return Optional.ofNullable(entityOperations.findById(id, entityInformation.getJavaType()));
+		try {
+			return Optional.of(entityOperations.findById(id, entityInformation.getJavaType()));
+		} catch (EmptyResultDataAccessException ex) {
+			return Optional.empty();
+		}
 	}
 
 	/*
