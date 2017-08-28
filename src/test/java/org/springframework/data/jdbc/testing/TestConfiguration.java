@@ -17,12 +17,16 @@ package org.springframework.data.jdbc.testing;
 
 import javax.sql.DataSource;
 
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -32,6 +36,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * Infrastructure configuration for integration tests.
  *
  * @author Oliver Gierke
+ * @author Jens Schauder
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -39,10 +44,21 @@ public class TestConfiguration {
 
 	@Autowired DataSource dataSource;
 	@Autowired ApplicationEventPublisher publisher;
+	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory() {
-		return new JdbcRepositoryFactory(namedParameterJdbcTemplate(), publisher, new DefaultNamingStrategy());
+
+		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+
+		return new JdbcRepositoryFactory( //
+				publisher, //
+				context, //
+				new DefaultDataAccessStrategy( //
+						new SqlGeneratorSource(context), //
+						namedParameterJdbcTemplate(), //
+						context) //
+		);
 	}
 
 	@Bean

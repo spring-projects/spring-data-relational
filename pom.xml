@@ -1,243 +1,263 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-jdbc</artifactId>
     <version>1.0.0.BUILD-SNAPSHOT</version>
 
-    <name>Spring Data JDBC</name>
-    <description>Spring Data module for JDBC repositories.</description>
-    <url>http://projects.spring.io/spring-data-jdbc</url>
+	<name>Spring Data JDBC</name>
+	<description>Spring Data module for JDBC repositories.</description>
+	<url>http://projects.spring.io/spring-data-jdbc</url>
 
-    <parent>
-        <groupId>org.springframework.data.build</groupId>
-        <artifactId>spring-data-parent</artifactId>
-        <version>2.0.0.BUILD-SNAPSHOT</version>
-    </parent>
+	<parent>
+		<groupId>org.springframework.data.build</groupId>
+		<artifactId>spring-data-parent</artifactId>
+		<version>2.0.0.BUILD-SNAPSHOT</version>
+	</parent>
 
-    <properties>
+	<properties>
 
-        <dist.key>DATAJDBC</dist.key>
+		<dist.key>DATAJDBC</dist.key>
 
-        <springdata.commons>2.0.0.BUILD-SNAPSHOT</springdata.commons>
+		<springdata.commons>2.0.0.BUILD-SNAPSHOT</springdata.commons>
 
-        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-        <hsqldb1>1.8.0.10</hsqldb1>
+		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+		<hsqldb1>1.8.0.10</hsqldb1>
 
-    </properties>
+	</properties>
 
-    <profiles>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jfrog.buildinfo</groupId>
-                        <artifactId>artifactory-maven-plugin</artifactId>
-                        <inherited>false</inherited>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+	<profiles>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jfrog.buildinfo</groupId>
+						<artifactId>artifactory-maven-plugin</artifactId>
+						<inherited>false</inherited>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 
-        <profile>
-            <id>all-dbs</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>mysql-test</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <includes>
-                                        <include>**/*IntegrationTests.java</include>
-                                    </includes>
-                                    <systemPropertyVariables>
-                                        <spring.profiles.active>mysql</spring.profiles.active>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>postgres-test</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <includes>
-                                        <include>**/*IntegrationTests.java</include>
-                                    </includes>
-                                    <systemPropertyVariables>
-                                        <spring.profiles.active>postgres</spring.profiles.active>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+		<profile>
+			<id>all-dbs</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>mysql-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>mysql</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>postgres-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>postgres</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
-    <dependencies>
+	<dependencies>
 
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>spring-data-commons</artifactId>
-            <version>${springdata.commons}</version>
-        </dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>spring-data-commons</artifactId>
+			<version>${springdata.commons}</version>
+		</dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+		</dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+		</dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+		</dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+		</dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 
-        <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.2.8</version>
-            <scope>test</scope>
-        </dependency>
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+			<version>1.3.1</version>
+			<optional>true</optional>
+		</dependency>
 
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.6.2</version>
-            <scope>test</scope>
-        </dependency>
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>3.4.4</version>
+			<optional>true</optional>
+		</dependency>
 
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.41</version>
-            <scope>test</scope>
-        </dependency>
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>2.2.8</version>
+			<scope>test</scope>
+		</dependency>
 
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.0.0</version>
-            <scope>test</scope>
-        </dependency>
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.6.2</version>
+			<scope>test</scope>
+		</dependency>
 
-        <dependency>
-            <groupId>de.schauderhaft.degraph</groupId>
-            <artifactId>degraph-check</artifactId>
-            <version>0.1.4</version>
-            <scope>test</scope>
-        </dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.41</version>
+			<scope>test</scope>
+		</dependency>
 
-    </dependencies>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.0.0</version>
+			<scope>test</scope>
+		</dependency>
 
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.12</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-        <plugins>
+		<dependency>
+			<groupId>de.schauderhaft.degraph</groupId>
+			<artifactId>degraph-check</artifactId>
+			<version>0.1.4</version>
+			<scope>test</scope>
+		</dependency>
 
-            <!--
-                 Jacoco plugin redeclared to make sure it's downloaded and
-                 the agents can be explicitly added to the test executions.
-            -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco}</version>
-                <configuration>
-                    <destFile>${jacoco.destfile}</destFile>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>jacoco-initialize</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+	</dependencies>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default-test</id>
-                        <configuration>
-                            <includes>
-                                <include>**/*Tests.java</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>wagon-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.asciidoctor</groupId>
-                <artifactId>asciidoctor-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.12</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
 
-    <repositories>
-        <repository>
-            <id>spring-libs-snapshot</id>
-            <url>https://repo.spring.io/libs-snapshot</url>
-        </repository>
-    </repositories>
+			<!--
+				 Jacoco plugin redeclared to make sure it's downloaded and
+				 the agents can be explicitly added to the test executions.
+			-->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco}</version>
+				<configuration>
+					<destFile>${jacoco.destfile}</destFile>
+				</configuration>
+				<executions>
+					<execution>
+						<id>jacoco-initialize</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>spring-plugins-snapshot</id>
-            <url>https://repo.spring.io/plugins-snapshot</url>
-        </pluginRepository>
-    </pluginRepositories>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-test</id>
+						<configuration>
+							<includes>
+								<include>**/*Tests.java</include>
+							</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>wagon-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.asciidoctor</groupId>
+				<artifactId>asciidoctor-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+	<repositories>
+		<repository>
+			<id>spring-libs-snapshot</id>
+			<url>https://repo.spring.io/libs-snapshot</url>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>spring-plugins-snapshot</id>
+			<url>https://repo.spring.io/plugins-snapshot</url>
+		</pluginRepository>
+	</pluginRepositories>
 
 </project>

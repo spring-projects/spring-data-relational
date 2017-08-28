@@ -13,31 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.mybatis;
 
 /**
- * Specifies a operations one can perform on a database, based on an <em>Domain Type</em>.
- *
  * @author Jens Schauder
  */
-public interface JdbcEntityOperations {
-
-	<T> void save(T instance, Class<T> domainType);
-
-	<T> void deleteById(Object id, Class<T> domainType);
-
-	<T> void delete(T entity, Class<T> domainType);
-
-	void deleteAll(Class<?> domainType);
-
-	long count(Class<?> domainType);
-
-	<T> T findById(Object id, Class<T> domainType);
-
-	<T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType);
-
-	<T> Iterable<T> findAll(Class<T> domainType);
-
-	<T> boolean existsById(Object id, Class<T> domainType);
+public interface DummyEntityMapper {
 
 }

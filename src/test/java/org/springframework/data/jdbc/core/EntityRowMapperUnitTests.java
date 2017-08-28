@@ -99,7 +99,7 @@ public class EntityRowMapperUnitTests {
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
 
 		JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
-		JdbcEntityOperations template = mock(JdbcEntityOperations.class);
+		DataAccessStrategy template = mock(DataAccessStrategy.class);
 
 		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(template).findAllByProperty(eq(23L),
 				any(JdbcPersistentProperty.class));
