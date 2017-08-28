@@ -13,31 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.mybatis;
+
+import org.apache.ibatis.type.Alias;
+import org.springframework.data.annotation.Id;
 
 /**
- * Specifies a operations one can perform on a database, based on an <em>Domain Type</em>.
- *
  * @author Jens Schauder
  */
-public interface JdbcEntityOperations {
+@Alias("DummyEntity")
+class DummyEntity {
 
-	<T> void save(T instance, Class<T> domainType);
+	@Id final Long id;
+	final String name;
 
-	<T> void deleteById(Object id, Class<T> domainType);
-
-	<T> void delete(T entity, Class<T> domainType);
-
-	void deleteAll(Class<?> domainType);
-
-	long count(Class<?> domainType);
-
-	<T> T findById(Object id, Class<T> domainType);
-
-	<T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType);
-
-	<T> Iterable<T> findAll(Class<T> domainType);
-
-	<T> boolean existsById(Object id, Class<T> domainType);
-
+	public DummyEntity(Long id, String name) {
+		this.id = id;
+		this.name = name;
+	}
 }

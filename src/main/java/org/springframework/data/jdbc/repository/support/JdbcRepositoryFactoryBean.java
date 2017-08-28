@@ -16,15 +16,26 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.core.CascadingDataAccessStrategy;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
+import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
+import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
+import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
@@ -32,6 +43,7 @@ import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.util.ClassUtils;
 
 /**
  * Special adapter for Springs {@link org.springframework.beans.factory.FactoryBean} interface to allow easy setup of
@@ -52,6 +64,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private static final String JDBC_OPERATIONS_BEAN_NAME = "jdbcTemplate";
 	private static final String DATA_SOURCE_BEAN_NAME = "dataSource";
 	private static final String NAMING_STRATEGY_BEAN_NAME = "namingStrategy";
+	private static final String SQL_SESSION_FACTORY_BEAN_NAME = "sqlSessionFactory";
 
 	private final ApplicationEventPublisher applicationEventPublisher;
 	private final ApplicationContext context;
@@ -66,8 +79,40 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return new JdbcRepositoryFactory(findOrCreateJdbcOperations(), applicationEventPublisher,
-				findOrCreateNamingStrategy());
+
+		final JdbcMappingContext context = new JdbcMappingContext(findOrCreateNamingStrategy());
+
+		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
+
+		List<DataAccessStrategy> accessStrategies = Stream.of( //
+				createMyBatisDataAccessStrategy(), //
+				createDefaultAccessStrategy(context, delegatingDataAccessStrategy) //
+		) //
+				.filter(Optional::isPresent) //
+				.map(Optional::get) //
+				.collect(Collectors.toList());
+
+		CascadingDataAccessStrategy strategy = new CascadingDataAccessStrategy(accessStrategies);
+		delegatingDataAccessStrategy.setDelegate(strategy);
+
+		return new JdbcRepositoryFactory(applicationEventPublisher, context, strategy);
+	}
+
+	private Optional<DataAccessStrategy> createMyBatisDataAccessStrategy() {
+
+		if (!ClassUtils.isPresent("org.apache.ibatis.session.SqlSessionFactory", this.getClass().getClassLoader())) {
+			return Optional.empty();
+		}
+
+		return getBean(SqlSessionFactory.class, SQL_SESSION_FACTORY_BEAN_NAME)
+				.map(ssf -> new MyBatisDataAccessStrategy(ssf));
+	}
+
+	private Optional<DataAccessStrategy> createDefaultAccessStrategy(JdbcMappingContext context,
+			DelegatingDataAccessStrategy delegatingDataAccessStrategy) {
+
+		return Optional.of(new DefaultDataAccessStrategy(new SqlGeneratorSource(context), findOrCreateJdbcOperations(),
+				context, delegatingDataAccessStrategy));
 	}
 
 	private NamedParameterJdbcOperations findOrCreateJdbcOperations() {

@@ -22,7 +22,7 @@ This means that it does rather little out of the box. But it offers plenty of pl
 
 === Fast running tests
 
-Fast running tests can executed with a simple 
+Fast running tests can executed with a simple
 
 [source]
 ----
@@ -44,8 +44,9 @@ This will also execute the unit tests.
 
 Currently the following _databasetypes_ are available:
 
-* hsql (default, does not need to be running)
+* hsql (default, does not require a running database)
 * mysql
+* postgres
 
 === Run tests with all databases
 

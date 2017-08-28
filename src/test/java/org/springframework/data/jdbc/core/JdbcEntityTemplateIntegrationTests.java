@@ -254,7 +254,23 @@ public class JdbcEntityTemplateIntegrationTests {
 		JdbcEntityOperations operations(ApplicationEventPublisher publisher,
 				NamedParameterJdbcOperations namedParameterJdbcOperations) {
 
-			return new JdbcEntityTemplate(publisher, namedParameterJdbcOperations, new JdbcMappingContext(new DefaultNamingStrategy()));
+			final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+			return new JdbcEntityTemplate(publisher, context, dataAccessStrategy(namedParameterJdbcOperations, context));
+		}
+
+		private DelegatingDataAccessStrategy dataAccessStrategy(NamedParameterJdbcOperations namedParameterJdbcOperations,
+				JdbcMappingContext context) {
+
+			DelegatingDataAccessStrategy accessStrategy = new DelegatingDataAccessStrategy();
+			
+			accessStrategy.setDelegate(new DefaultDataAccessStrategy( //
+					new SqlGeneratorSource(context), //
+					namedParameterJdbcOperations, //
+					context, //
+					accessStrategy) //
+			);
+
+			return accessStrategy;
 		}
 	}
 }

@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import lombok.Data;
 import lombok.Value;
@@ -27,7 +26,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -50,7 +48,6 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
  * @author Greg Turnquist
  */
 @ContextConfiguration
-@EnableJdbcRepositories(considerNestedRepositories = true)
 public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	@Configuration
@@ -124,6 +121,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	@Configuration
 	@ComponentScan("org.springframework.data.jdbc.testing")
+	@EnableJdbcRepositories(considerNestedRepositories = true)
 	public static class TestConfiguration {
 
 		@Bean
@@ -148,20 +146,6 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		@Bean
 		NamedParameterJdbcTemplate template(DataSource db) {
 			return new NamedParameterJdbcTemplate(db);
-		}
-
-		@Bean
-		ReadOnlyIdEntityRepository readOnlyIdRepository(DataSource db, NamingStrategy namingStrategy) {
-
-			return new JdbcRepositoryFactory(new NamedParameterJdbcTemplate(db), mock(ApplicationEventPublisher.class),
-					namingStrategy).getRepository(ReadOnlyIdEntityRepository.class);
-		}
-
-		@Bean
-		PrimitiveIdEntityRepository primitiveIdRepository(NamedParameterJdbcTemplate template) {
-
-			return new JdbcRepositoryFactory(template, mock(ApplicationEventPublisher.class), new DefaultNamingStrategy())
-					.getRepository(PrimitiveIdEntityRepository.class);
 		}
 	}
 }

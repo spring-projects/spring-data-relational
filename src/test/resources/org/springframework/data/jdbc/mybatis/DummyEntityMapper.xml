@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springframework.data.jdbc.mybatis.DummyEntityMapper">
+	<resultMap id="dummyEntityMap" type="DummyEntity">
+		<constructor>
+			<idArg column="id" javaType="long"/>
+			<arg column="name" javaType="String"/>
+		</constructor>
+	</resultMap>
+	<insert id="insert" parameterType="MyBatisContext" useGeneratedKeys="true" keyProperty="instance.id" keyColumn="ID">
+		INSERT INTO DummyEntity (id) VALUES (DEFAULT)
+	</insert>
+	<select id="findById" resultType="MyBatisContext" resultMap="dummyEntityMap">
+		SELECT
+			id,
+			'Name based on an id' || id AS name
+		FROM DummyEntity
+		WHERE id = #{id}
+	</select>
+</mapper>

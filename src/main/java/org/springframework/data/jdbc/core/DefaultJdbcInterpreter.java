@@ -28,7 +28,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 
 /**
- * {@link Interpreter} for {@link DbAction}s using a {@link JdbcEntityTemplate} for performing actual database
+ * {@link Interpreter} for {@link DbAction}s using a {@link DataAccessStrategy} for performing actual database
  * interactions.
  *
  * @author Jens Schauder
@@ -36,16 +36,45 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 class DefaultJdbcInterpreter implements Interpreter {
 
 	private final JdbcMappingContext context;
-	private final JdbcEntityTemplate template;
+	private final DataAccessStrategy accessStrategy;
 
-	DefaultJdbcInterpreter(JdbcMappingContext context, JdbcEntityTemplate template) {
+	DefaultJdbcInterpreter(JdbcMappingContext context, DataAccessStrategy accessStrategy) {
 
 		this.context = context;
-		this.template = template;
+		this.accessStrategy = accessStrategy;
 	}
 
 	@Override
 	public <T> void interpret(Insert<T> insert) {
+		accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
+	}
+
+	@Override
+	public <T> void interpret(Update<T> update) {
+		accessStrategy.update(update.getEntity(), update.getEntityType());
+	}
+
+	@Override
+	public <T> void interpret(Delete<T> delete) {
+
+		if (delete.getPropertyPath() == null) {
+			accessStrategy.delete(delete.getRootId(), delete.getEntityType());
+		} else {
+			accessStrategy.delete(delete.getRootId(), delete.getPropertyPath());
+		}
+	}
+
+	@Override
+	public <T> void interpret(DeleteAll<T> delete) {
+		
+		if (delete.getEntityType() == null) {
+			accessStrategy.deleteAll(delete.getPropertyPath());
+		} else {
+			accessStrategy.deleteAll(delete.getEntityType());
+		}
+	}
+
+	private <T> Map<String, Object> createAdditionalColumnValues(Insert<T> insert) {
 
 		Map<String, Object> additionalColumnValues = new HashMap<>();
 		DbAction dependingOn = insert.getDependingOn();
@@ -59,28 +88,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 			additionalColumnValues.put(columnName, identifier);
 		}
-
-		template.insert(insert.getEntity(), insert.getEntityType(), additionalColumnValues);
+		return additionalColumnValues;
 	}
 
-	@Override
-	public <T> void interpret(Update<T> update) {
-		template.update(update.getEntity(), update.getEntityType());
-	}
-
-	@Override
-	public <T> void interpret(Delete<T> delete) {
-
-		if (delete.getPropertyPath() == null) {
-			template.doDelete(delete.getRootId(), delete.getEntityType());
-		} else {
-			template.doDelete(delete.getRootId(), delete.getPropertyPath());
-		}
-
-	}
-
-	@Override
-	public <T> void interpret(DeleteAll<T> delete) {
-		template.doDeleteAll(delete.getEntityType(), delete.getPropertyPath());
-	}
 }
