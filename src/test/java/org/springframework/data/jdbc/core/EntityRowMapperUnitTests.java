@@ -19,7 +19,6 @@ import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.ResultSet;
@@ -191,7 +190,6 @@ public class EntityRowMapperUnitTests {
 		}
 
 		private Object getObject(String column) {
-
 			return values.get(index).get(column);
 		}
 

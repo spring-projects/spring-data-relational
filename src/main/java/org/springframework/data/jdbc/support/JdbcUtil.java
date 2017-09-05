@@ -36,7 +36,7 @@ import org.springframework.jdbc.support.JdbcUtils;
 @UtilityClass
 public class JdbcUtil {
 
-	private static final Map<Class, Integer> sqlTypeMappings = new HashMap<>();
+	private static final Map<Class<?>, Integer> sqlTypeMappings = new HashMap<>();
 
 	static {
 
@@ -63,7 +63,7 @@ public class JdbcUtil {
 		sqlTypeMappings.put(Timestamp.class, Types.TIMESTAMP);
 	}
 
-	public static int sqlTypeFor(Class type) {
+	public static int sqlTypeFor(Class<?> type) {
 		return sqlTypeMappings.keySet().stream() //
 				.filter(k -> k.isAssignableFrom(type)) //
 				.findFirst() //

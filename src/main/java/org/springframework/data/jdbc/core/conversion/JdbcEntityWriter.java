@@ -126,21 +126,20 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 		}
 
 		Class<?> type = p.getType();
-		if (Collection.class.isAssignableFrom(type))
-			return collectionPropertyAsStream(p, propertyAccessor);
 
-		return singlePropertyAsStream(p, propertyAccessor);
+		return Collection.class.isAssignableFrom(type) //
+				? collectionPropertyAsStream(p, propertyAccessor) //
+				: singlePropertyAsStream(p, propertyAccessor);
 	}
 
 	private Stream<Object> collectionPropertyAsStream(JdbcPersistentProperty p,
 			PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
-		if (property == null) {
-			return Stream.empty();
-		}
 
-		return ((Collection<Object>) property).stream();
+		return property == null //
+				? Stream.empty() //
+				: ((Collection<Object>) property).stream();
 	}
 
 	private Stream<Object> singlePropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
