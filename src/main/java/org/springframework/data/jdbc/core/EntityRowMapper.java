@@ -51,7 +51,6 @@ class EntityRowMapper<T> implements RowMapper<T> {
 	private final JdbcEntityOperations template;
 	private final JdbcPersistentProperty idProperty;
 
-	@java.beans.ConstructorProperties({ "entity", "conversions", "context", "template" })
 	public EntityRowMapper(JdbcPersistentEntity<T> entity, ConversionService conversions, JdbcMappingContext context,
 			JdbcEntityOperations template) {
 
@@ -137,7 +136,6 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		@NonNull private final ConversionService conversionService;
 		@NonNull private final String prefix;
 
-		@java.beans.ConstructorProperties({ "resultSet", "conversionService", "prefix" })
 		private ResultSetParameterValueProvider(ResultSet resultSet, ConversionService conversionService, String prefix) {
 
 			this.resultSet = resultSet;
