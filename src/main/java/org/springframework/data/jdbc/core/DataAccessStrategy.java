@@ -33,7 +33,8 @@ public interface DataAccessStrategy {
 
 	void delete(Object id, Class<?> domainType);
 
-	/** Deletes all entities reachable via {@literal propertyPath} from the instance identified by {@literal rootId}.
+	/**
+	 * Deletes all entities reachable via {@literal propertyPath} from the instance identified by {@literal rootId}.
 	 *
 	 * @param rootId Id of the root object on which the {@literal propertyPath} is based.
 	 * @param propertyPath Leading from the root object to the entities to be deleted.
@@ -42,7 +43,8 @@ public interface DataAccessStrategy {
 
 	<T> void deleteAll(Class<T> domainType);
 
-	/** Deletes all entities reachable via {@literal propertyPath} from any instance.
+	/**
+	 * Deletes all entities reachable via {@literal propertyPath} from any instance.
 	 *
 	 * @param propertyPath Leading from the root object to the entities to be deleted.
 	 */
