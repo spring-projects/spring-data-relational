@@ -50,7 +50,6 @@ public class MyBatisHsqlIntegrationTests {
 
 	@org.springframework.context.annotation.Configuration
 	@Import(TestConfiguration.class)
-
 	@EnableJdbcRepositories(considerNestedRepositories = true)
 	static class Config {
 

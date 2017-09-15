@@ -82,6 +82,24 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		final JdbcMappingContext context = new JdbcMappingContext(findOrCreateNamingStrategy());
 
+		return new JdbcRepositoryFactory(applicationEventPublisher, context, createDataAccessStrategy(context));
+	}
+
+	/**
+	 * <p>
+	 * Create the {@link DataAccessStrategy}, by combining all applicable strategies into one.
+	 * </p>
+	 * <p>
+	 * The challenge is that the {@link DefaultDataAccessStrategy} when used for reading needs a
+	 * {@link DataAccessStrategy} for loading referenced entities (see.
+	 * {@link DefaultDataAccessStrategy#getEntityRowMapper(Class)}. But it should use all configured
+	 * {@link DataAccessStrategy}s for this. This creates a cyclic dependency. In order to build this the
+	 * {@link DefaultDataAccessStrategy} gets passed in a {@link DelegatingDataAccessStrategy} which at the end gets set
+	 * to the full {@link CascadingDataAccessStrategy}.
+	 * </p>
+	 */
+	private CascadingDataAccessStrategy createDataAccessStrategy(JdbcMappingContext context) {
+
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
 
 		List<DataAccessStrategy> accessStrategies = Stream.of( //
@@ -95,7 +113,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		CascadingDataAccessStrategy strategy = new CascadingDataAccessStrategy(accessStrategies);
 		delegatingDataAccessStrategy.setDelegate(strategy);
 
-		return new JdbcRepositoryFactory(applicationEventPublisher, context, strategy);
+		return strategy;
 	}
 
 	private Optional<DataAccessStrategy> createMyBatisDataAccessStrategy() {

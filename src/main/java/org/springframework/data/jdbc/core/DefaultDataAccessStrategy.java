@@ -44,7 +44,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.Assert;
 
 /**
- * Generates and executes actual SQL statements.
+ * The default {@link DataAccessStrategy} is to generate SQL statements based on meta data from the entity.
  *
  * @author Jens Schauder
  */
@@ -70,7 +70,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	/**
-	 * creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
+	 * Creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
 	 *
 	 * Only suitable if this is the only access strategy in use.
 	 */
@@ -141,18 +141,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		HashMap<String, Object> parameters = new HashMap<>();
 		parameters.put("rootId", rootId);
 		operations.update(format, parameters);
-
 	}
 
 	@Override
 	public <T> void deleteAll(Class<T> domainType) {
-
 		operations.getJdbcOperations().update(sql(domainType).createDeleteAllSql(null));
 	}
 
 	@Override
 	public <T> void deleteAll(PropertyPath propertyPath) {
-
 		operations.getJdbcOperations().update(sql(propertyPath.getOwningType().getType()).createDeleteAllSql(propertyPath));
 	}
 
@@ -244,10 +241,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		ID idValue = entityInformation.getId(instance);
 
-		return isIdPropertySimpleTypeAndValueZero(idValue, persistentEntity) ? null : idValue;
+		return isIdPropertyNullOrScalarZero(idValue, persistentEntity) ? null : idValue;
 	}
 
-	private <S, ID> boolean isIdPropertySimpleTypeAndValueZero(ID idValue, JdbcPersistentEntity<S> persistentEntity) {
+	private <S, ID> boolean isIdPropertyNullOrScalarZero(ID idValue, JdbcPersistentEntity<S> persistentEntity) {
 
 		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
 		return idValue == null //

@@ -23,6 +23,7 @@ import java.util.Collections;
 
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -44,7 +45,8 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(sessionFactory);
 
-	{
+	@Before
+	public void before() {
 
 		doReturn(session).when(sessionFactory).openSession();
 		doReturn(false).when(session).selectOne(any(), any());
