@@ -48,16 +48,16 @@ class EntityRowMapper<T> implements RowMapper<T> {
 	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
 	private final ConversionService conversions;
 	private final JdbcMappingContext context;
-	private final JdbcEntityOperations template;
+	private final DataAccessStrategy accessStrategy;
 	private final JdbcPersistentProperty idProperty;
 
 	public EntityRowMapper(JdbcPersistentEntity<T> entity, ConversionService conversions, JdbcMappingContext context,
-			JdbcEntityOperations template) {
+			DataAccessStrategy accessStrategy) {
 
 		this.entity = entity;
 		this.conversions = conversions;
 		this.context = context;
-		this.template = template;
+		this.accessStrategy = accessStrategy;
 
 		idProperty = entity.getRequiredIdProperty();
 	}
@@ -79,7 +79,7 @@ class EntityRowMapper<T> implements RowMapper<T> {
 		for (JdbcPersistentProperty property : entity) {
 
 			if (Set.class.isAssignableFrom(property.getType())) {
-				propertyAccessor.setProperty(property, template.findAllByProperty(id, property));
+				propertyAccessor.setProperty(property, accessStrategy.findAllByProperty(id, property));
 			} else {
 				propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
 			}

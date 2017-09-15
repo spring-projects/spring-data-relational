@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
 import org.springframework.data.jdbc.mapping.event.AfterSave;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
@@ -26,6 +28,7 @@ import org.springframework.data.jdbc.mapping.event.BeforeSave;
 import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.JdbcEvent;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -44,8 +47,17 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Before
 	public void before() {
 
-		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(operations, publisher, new DefaultNamingStrategy());
+		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory( //
+				publisher, //
+				context, //
+				new DefaultDataAccessStrategy( //
+						new SqlGeneratorSource(context), //
+						createIdGeneratingOperations(), //
+						context //
+				) //
+		);
+
 		repository = factory.getRepository(DummyEntityRepository.class);
 	}
 

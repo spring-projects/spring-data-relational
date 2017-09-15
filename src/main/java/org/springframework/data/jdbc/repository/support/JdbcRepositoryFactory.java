@@ -16,18 +16,17 @@
 package org.springframework.data.jdbc.repository.support;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcEntityTemplate;
 import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
-import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * @author Jens Schauder
@@ -37,15 +36,15 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 	private final JdbcMappingContext context;
-	private final NamedParameterJdbcOperations jdbcOperations;
 	private final ApplicationEventPublisher publisher;
+	private final DataAccessStrategy accessStrategy;
 
-	public JdbcRepositoryFactory(NamedParameterJdbcOperations namedParameterJdbcOperations,
-			ApplicationEventPublisher publisher, NamingStrategy namingStrategy) {
+	public JdbcRepositoryFactory(ApplicationEventPublisher publisher, JdbcMappingContext context,
+			DataAccessStrategy dataAccessStrategy) {
 
-		this.jdbcOperations = namedParameterJdbcOperations;
 		this.publisher = publisher;
-		this.context = new JdbcMappingContext(namingStrategy);
+		this.context = context;
+		this.accessStrategy = dataAccessStrategy;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -62,7 +61,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 		JdbcPersistentEntityInformation persistentEntityInformation = context
 				.getRequiredPersistentEntityInformation(repositoryInformation.getDomainType());
-		JdbcEntityTemplate template = new JdbcEntityTemplate(publisher, jdbcOperations, context);
+		JdbcEntityTemplate template = new JdbcEntityTemplate(publisher, context, accessStrategy);
 
 		return new SimpleJdbcRepository<>(template, persistentEntityInformation);
 	}
@@ -71,4 +70,5 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	protected Class<?> getRepositoryBaseClass(RepositoryMetadata repositoryMetadata) {
 		return SimpleJdbcRepository.class;
 	}
+
 }
