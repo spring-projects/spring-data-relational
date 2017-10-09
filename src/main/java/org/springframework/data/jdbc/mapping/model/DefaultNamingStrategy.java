@@ -50,4 +50,14 @@ public class DefaultNamingStrategy implements NamingStrategy {
 	public String getColumnName(JdbcPersistentProperty property) {
 		return property.getName();
 	}
+
+	@Override
+	public String getReverseColumnName(JdbcPersistentProperty property) {
+		return property.getOwner().getTableName();
+	}
+
+	@Override
+	public String getKeyColumn(JdbcPersistentProperty property) {
+		return getReverseColumnName(property) + "_key";
+	}
 }

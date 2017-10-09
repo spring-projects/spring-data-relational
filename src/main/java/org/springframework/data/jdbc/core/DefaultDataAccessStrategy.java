@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -71,7 +72,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	/**
 	 * Creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
-	 *
 	 * Only suitable if this is the only access strategy in use.
 	 */
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, NamedParameterJdbcOperations operations,
@@ -149,7 +149,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void deleteAll(PropertyPath propertyPath) {
+	public void deleteAll(PropertyPath propertyPath) {
 		operations.getJdbcOperations().update(sql(propertyPath.getOwningType().getType()).createDeleteAllSql(propertyPath));
 	}
 
@@ -193,14 +193,18 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
+	public Iterable findAllByProperty(Object rootId, JdbcPersistentProperty property) {
 
 		Class<?> actualType = property.getActualType();
-		String findAllByProperty = sql(actualType).getFindAllByProperty(property.getReverseColumnName());
+		boolean isMap = property.getTypeInformation().isMap();
+		String findAllByProperty = sql(actualType).getFindAllByProperty(property.getReverseColumnName(),
+				property.getKeyColumn());
 
 		MapSqlParameterSource parameter = new MapSqlParameterSource(property.getReverseColumnName(), rootId);
 
-		return (Iterable<T>) operations.query(findAllByProperty, parameter, getEntityRowMapper(actualType));
+		return operations.query(findAllByProperty, parameter, isMap //
+				? getMapEntityRowMapper(property) //
+				: getEntityRowMapper(actualType));
 	}
 
 	@Override
@@ -287,7 +291,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), conversions, context, accessStrategy);
 	}
 
+	private RowMapper getMapEntityRowMapper(JdbcPersistentProperty property) {
+		return new MapEntityRowMapper(getEntityRowMapper(property.getActualType()), property.getKeyColumn());
+	}
+
 	private <T> MapSqlParameterSource createIdParameterSource(Object id, Class<T> domainType) {
+
 		return new MapSqlParameterSource("id",
 				convert(id, getRequiredPersistentEntity(domainType).getRequiredIdProperty().getColumnType()));
 	}
@@ -313,5 +322,4 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private SqlGenerator sql(Class<?> domainType) {
 		return sqlGeneratorSource.getSqlGenerator(domainType);
 	}
-
 }

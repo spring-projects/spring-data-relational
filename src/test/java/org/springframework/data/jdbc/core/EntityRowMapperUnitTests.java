@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,7 +37,9 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.Jsr310Converters;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
@@ -50,11 +53,14 @@ import org.springframework.util.Assert;
  */
 public class EntityRowMapperUnitTests {
 
+	public static final long ID_FOR_ENTITY_REFERENCING_MAP = 42L;
+	public static final long ID_FOR_ENTITY_NOT_REFERENCING_MAP = 23L;
+
 	@Test // DATAJDBC-113
 	public void simpleEntitiesGetProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("id", "name"), //
-				23L, "alpha");
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
 		rs.next();
 
 		Trivial extracted = createRowMapper(Trivial.class).mapRow(rs, 1);
@@ -62,15 +68,14 @@ public class EntityRowMapperUnitTests {
 		assertThat(extracted) //
 				.isNotNull() //
 				.extracting(e -> e.id, e -> e.name) //
-				.containsExactly(23L, "alpha");
-
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
 	}
 
 	@Test // DATAJDBC-113
 	public void simpleOneToOneGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("id", "name", "child_id", "child_name"), //
-				23L, "alpha", 42L, "beta");
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
 		rs.next();
 
 		OneToOne extracted = createRowMapper(OneToOne.class).mapRow(rs, 1);
@@ -78,14 +83,14 @@ public class EntityRowMapperUnitTests {
 		assertThat(extracted) //
 				.isNotNull() //
 				.extracting(e -> e.id, e -> e.name, e -> e.child.id, e -> e.child.name) //
-				.containsExactly(23L, "alpha", 42L, "beta");
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
 	}
 
 	@Test // DATAJDBC-113
 	public void collectionReferenceGetsLoadedWithAdditionalSelect() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("id", "name"), //
-				23L, "alpha");
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
 		rs.next();
 
 		OneToSet extracted = createRowMapper(OneToSet.class).mapRow(rs, 1);
@@ -93,19 +98,45 @@ public class EntityRowMapperUnitTests {
 		assertThat(extracted) //
 				.isNotNull() //
 				.extracting(e -> e.id, e -> e.name, e -> e.children.size()) //
-				.containsExactly(23L, "alpha", 2);
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 2);
+	}
+
+	@Test // DATAJDBC-131
+	public void mapReferenceGetsLoadedWithAdditionalSelect() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("id", "name"), //
+				ID_FOR_ENTITY_REFERENCING_MAP, "alpha");
+		rs.next();
+
+		OneToMap extracted = createRowMapper(OneToMap.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name, e -> e.children.size()) //
+				.containsExactly(ID_FOR_ENTITY_REFERENCING_MAP, "alpha", 2);
 	}
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
 
 		JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
-		DataAccessStrategy template = mock(DataAccessStrategy.class);
+		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
-		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(template).findAllByProperty(eq(23L),
+		// the ID of the entity is used to determin what kind of resultset is needed for subsequent selects.
+		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
 				any(JdbcPersistentProperty.class));
 
+		doReturn(new HashSet<>(asList( //
+				new SimpleEntry("one", new Trivial()), //
+				new SimpleEntry("two", new Trivial()) //
+		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP), any(JdbcPersistentProperty.class));
+
+		GenericConversionService conversionService = new GenericConversionService();
+		conversionService.addConverter(new IterableOfEntryToMapConverter());
+		DefaultConversionService.addDefaultConverters(conversionService);
+		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
+
 		return new EntityRowMapper<>((JdbcPersistentEntity<T>) context.getRequiredPersistentEntity(type),
-				new DefaultConversionService(), context, template);
+				conversionService, context, accessStrategy);
 	}
 
 	private static ResultSet mockResultSet(List<String> columns, Object... values) {
@@ -223,4 +254,11 @@ public class EntityRowMapperUnitTests {
 		Set<Trivial> children;
 	}
 
+	@RequiredArgsConstructor
+	static class OneToMap {
+
+		@Id Long id;
+		String name;
+		Map<String, Trivial> children;
+	}
 }

@@ -44,4 +44,6 @@ public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersisten
 	JdbcPersistentEntity<?> getOwner();
 
 	String getReverseColumnName();
+
+	String getKeyColumn();
 }

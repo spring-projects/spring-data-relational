@@ -29,7 +29,7 @@ public interface DataAccessStrategy {
 
 	<T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters);
 
-	<S> void update(S instance, Class<S> domainType);
+	<T> void update(T instance, Class<T> domainType);
 
 	void delete(Object id, Class<?> domainType);
 

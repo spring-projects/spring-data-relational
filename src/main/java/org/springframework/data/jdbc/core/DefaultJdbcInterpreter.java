@@ -77,6 +77,13 @@ class DefaultJdbcInterpreter implements Interpreter {
 	private <T> Map<String, Object> createAdditionalColumnValues(Insert<T> insert) {
 
 		Map<String, Object> additionalColumnValues = new HashMap<>();
+		addDependingOnInformation(insert, additionalColumnValues);
+		additionalColumnValues.putAll(insert.getAdditionalValues());
+
+		return additionalColumnValues;
+	}
+
+	private <T> void addDependingOnInformation(Insert<T> insert, Map<String, Object> additionalColumnValues) {
 		DbAction dependingOn = insert.getDependingOn();
 
 		if (dependingOn != null) {
@@ -88,7 +95,5 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 			additionalColumnValues.put(columnName, identifier);
 		}
-		return additionalColumnValues;
 	}
-
 }
