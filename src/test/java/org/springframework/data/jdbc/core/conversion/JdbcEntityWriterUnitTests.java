@@ -19,7 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
@@ -41,6 +43,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcEntityWriterUnitTests {
 
+	public static final long SOME_ENTITY_ID = 23L;
 	JdbcEntityWriter converter = new JdbcEntityWriter(new JdbcMappingContext(new DefaultNamingStrategy()));
 
 	@Test // DATAJDBC-112
@@ -62,7 +65,7 @@ public class JdbcEntityWriterUnitTests {
 	@Test // DATAJDBC-112
 	public void existingEntityGetsConvertedToUpdate() {
 
-		SingleReferenceEntity entity = new SingleReferenceEntity(23L);
+		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 		AggregateChange<SingleReferenceEntity> aggregateChange = //
 				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
 
@@ -79,7 +82,7 @@ public class JdbcEntityWriterUnitTests {
 	@Test // DATAJDBC-112
 	public void referenceTriggersDeletePlusInsert() {
 
-		SingleReferenceEntity entity = new SingleReferenceEntity(23L);
+		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 		entity.other = new Element(null);
 
 		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SingleReferenceEntity.class,
@@ -158,12 +161,73 @@ public class JdbcEntityWriterUnitTests {
 		);
 	}
 
+	@Test // DATAJDBC-131
+	public void newEntityWithEmptyMapResultsInSingleInsert() {
+
+		MapContainer entity = new MapContainer(null);
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, MapContainer.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+				.containsExactly( //
+						tuple(Insert.class, MapContainer.class));
+	}
+
+	@Test // DATAJDBC-131
+	public void newEntityWithMapResultsInAdditionalInsertPerElement() {
+
+		MapContainer entity = new MapContainer(null);
+		entity.elements.put("one", new Element(null));
+		entity.elements.put("two", new Element(null));
+
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, JdbcEntityWriterUnitTests::getMapKey) //
+				.containsExactlyInAnyOrder( //
+						tuple(Insert.class, MapContainer.class, null), //
+						tuple(Insert.class, Element.class, "one"), //
+						tuple(Insert.class, Element.class, "two") //
+				).containsSubsequence( // container comes before the elements
+						tuple(Insert.class, MapContainer.class, null), //
+						tuple(Insert.class, Element.class, "two") //
+				).containsSubsequence( // container comes before the elements
+						tuple(Insert.class, MapContainer.class, null), //
+						tuple(Insert.class, Element.class, "one") //
+		);
+	}
+
+	@Test // DATAJDBC-112
+	public void mapTriggersDeletePlusInsert() {
+
+		MapContainer entity = new MapContainer(SOME_ENTITY_ID);
+		entity.elements.put("one", new Element(null));
+
+		AggregateChange<MapContainer> aggregateChange = new AggregateChange(Kind.SAVE, MapContainer.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, JdbcEntityWriterUnitTests::getMapKey) //
+				.containsExactly( //
+						tuple(Delete.class, Element.class, null), //
+						tuple(Update.class, MapContainer.class, null), //
+						tuple(Insert.class, Element.class, "one") //
+		);
+	}
+
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {
 
 		CascadingReferenceMiddleElement middleElement1 = new CascadingReferenceMiddleElement(null);
 		middleElement1.element.add(first);
 		middleElement1.element.add(second);
 		return middleElement1;
+	}
+
+	private static Object getMapKey(DbAction a) {
+		return a.getAdditionalValues().get("MapContainer_key");
 	}
 
 	@RequiredArgsConstructor
@@ -194,6 +258,13 @@ public class JdbcEntityWriterUnitTests {
 
 		@Id final Long id;
 		Set<Element> elements = new HashSet<>();
+	}
+
+	@RequiredArgsConstructor
+	private static class MapContainer {
+
+		@Id final Long id;
+		Map<String, Element> elements = new HashMap<>();
 	}
 
 	@RequiredArgsConstructor

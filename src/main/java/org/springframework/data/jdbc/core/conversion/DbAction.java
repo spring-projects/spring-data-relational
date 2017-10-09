@@ -18,6 +18,9 @@ package org.springframework.data.jdbc.core.conversion;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.util.Assert;
 
@@ -39,6 +42,13 @@ public abstract class DbAction<T> {
 	 * The entity of which the database representation is affected by this action. Might be {@literal null}.
 	 */
 	private final T entity;
+
+	/**
+	 * Key-value-pairs to specify additional values to be used with the statement which can't be obtained from the entity,
+	 * nor from {@link DbAction}s {@literal this} depends on. A used case are map keys, which need to be persisted with
+	 * the map value but aren't part of the value.
+	 */
+	private final Map<String, Object> additionalValues = new HashMap<>();
 
 	/**
 	 * Another action, this action depends on. For example the insert for one entity might need the id of another entity,
