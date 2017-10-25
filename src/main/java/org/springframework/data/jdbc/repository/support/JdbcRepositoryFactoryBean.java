@@ -118,12 +118,22 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 	private Optional<DataAccessStrategy> createMyBatisDataAccessStrategy() {
 
-		if (!ClassUtils.isPresent("org.apache.ibatis.session.SqlSessionFactory", this.getClass().getClassLoader())) {
+		String myBatisSqlSessionFactoryClassName = "org.apache.ibatis.session.SqlSessionFactory";
+		ClassLoader classLoader = this.getClass().getClassLoader();
+
+		if (!ClassUtils.isPresent(myBatisSqlSessionFactoryClassName, classLoader)) {
 			return Optional.empty();
 		}
 
-		return getBean(SqlSessionFactory.class, SQL_SESSION_FACTORY_BEAN_NAME)
-				.map(ssf -> new MyBatisDataAccessStrategy(ssf));
+		try {
+			
+			return getBean(classLoader.loadClass(myBatisSqlSessionFactoryClassName), SQL_SESSION_FACTORY_BEAN_NAME)
+					// note that the cast to SqlSessionFactory happens in a lambda, which is basically a separate class
+					// thus it won't get loaded if this code path doesn't get executed.
+					.map(ssf -> new MyBatisDataAccessStrategy((SqlSessionFactory) ssf));
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException("Detected MyBatis on classpath but failed to load the class " + myBatisSqlSessionFactoryClassName);
+		}
 	}
 
 	private Optional<DataAccessStrategy> createDefaultAccessStrategy(JdbcMappingContext context,
