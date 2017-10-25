@@ -25,9 +25,11 @@ import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.instrument.classloading.ShadowingClassLoader;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Tests the dependency injection for {@link JdbcRepositoryFactoryBean}.
@@ -209,6 +211,29 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		RepositoryFactorySupport factory = factoryBean.doCreateRepositoryFactory();
 
 		assertThat(findDataAccessStrategy(factory, MyBatisDataAccessStrategy.class)).isNotNull();
+	}
+
+	@Test // DATAJDBC-136
+	public void canBeLoadedWithoutMyBatis() throws Exception {
+
+		String sqlSessionFactoryClassName = SqlSessionFactory.class.getName();
+
+		ShadowingClassLoader classLoader = new ShadowingClassLoader(this.getClass().getClassLoader()) {
+
+			@Override
+			public Class<?> loadClass(String name) throws ClassNotFoundException {
+
+				if (name.equals(sqlSessionFactoryClassName)) {
+					throw new ClassNotFoundException("%s is configured not to get loaded by this classloader");
+				}
+				return super.loadClass(name);
+			}
+		};
+
+		Class<?> loadedClass = classLoader.loadClass(JdbcRepositoryFactoryBean.class.getName());
+
+		assertThat(loadedClass).isNotNull();
+		ReflectionUtils.getAllDeclaredMethods(loadedClass);
 	}
 
 	private Condition<? super RepositoryFactorySupport> using(NamedParameterJdbcOperations expectedOperations) {
