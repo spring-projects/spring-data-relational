@@ -149,7 +149,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public void deleteAll(PropertyPath propertyPath) {
+	public <T> void deleteAll(PropertyPath propertyPath) {
 		operations.getJdbcOperations().update(sql(propertyPath.getOwningType().getType()).createDeleteAllSql(propertyPath));
 	}
 
@@ -192,17 +192,17 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return operations.query(findAllInListSql, parameter, getEntityRowMapper(domainType));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Iterable findAllByProperty(Object rootId, JdbcPersistentProperty property) {
+	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
 
 		Class<?> actualType = property.getActualType();
-		boolean isMap = property.getTypeInformation().isMap();
 		String findAllByProperty = sql(actualType).getFindAllByProperty(property.getReverseColumnName(),
 				property.getKeyColumn());
 
 		MapSqlParameterSource parameter = new MapSqlParameterSource(property.getReverseColumnName(), rootId);
 
-		return operations.query(findAllByProperty, parameter, isMap //
+		return (Iterable<T>)operations.query(findAllByProperty, parameter, property.isQualified() //
 				? getMapEntityRowMapper(property) //
 				: getEntityRowMapper(actualType));
 	}

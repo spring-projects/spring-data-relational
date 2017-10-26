@@ -46,4 +46,9 @@ public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersisten
 	String getReverseColumnName();
 
 	String getKeyColumn();
+
+	/**
+	 * Returns if this property is a qualified property, i.e. a property referencing multiple elements that can get picked by a key or an index.
+	 */
+	boolean isQualified();
 }

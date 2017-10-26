@@ -110,7 +110,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	private void insertReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange, DbAction dependingOn) {
 
 		Insert<Object> insert;
-		if (propertyAndValue.property.isMap()) {
+		if (propertyAndValue.property.isQualified()) {
 
 			Entry<Object, Object> valueAsEntry = (Entry<Object, Object>) propertyAndValue.value;
 		insert = DbAction.insert(valueAsEntry.getValue(), dependingOn);
