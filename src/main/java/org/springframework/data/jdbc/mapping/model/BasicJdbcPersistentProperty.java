@@ -109,7 +109,12 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 
 	@Override
 	public String getKeyColumn() {
-		return isMap() ? context.getNamingStrategy().getKeyColumn(this) : null;
+		return isQualified() ? context.getNamingStrategy().getKeyColumn(this) : null;
+	}
+
+	@Override
+	public boolean isQualified() {
+		return isMap();
 	}
 
 	private Class columnTypeIfEntity(Class type) {
