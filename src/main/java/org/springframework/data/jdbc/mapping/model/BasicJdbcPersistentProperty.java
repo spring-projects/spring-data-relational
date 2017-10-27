@@ -80,7 +80,7 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty#getColumnName()
 	 */
 	public String getColumnName() {
-		return this.context.getNamingStrategy().getColumnName(this);
+		return context.getNamingStrategy().getColumnName(this);
 	}
 
 	/**
@@ -104,7 +104,17 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 
 	@Override
 	public String getReverseColumnName() {
-		return getOwner().getTableName();
+		return context.getNamingStrategy().getReverseColumnName(this);
+	}
+
+	@Override
+	public String getKeyColumn() {
+		return isQualified() ? context.getNamingStrategy().getKeyColumn(this) : null;
+	}
+
+	@Override
+	public boolean isQualified() {
+		return isMap();
 	}
 
 	private Class columnTypeIfEntity(Class type) {

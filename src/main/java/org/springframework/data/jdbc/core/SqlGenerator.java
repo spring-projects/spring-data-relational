@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,8 +89,24 @@ class SqlGenerator {
 		return findAllSql.get();
 	}
 
-	String getFindAllByProperty(String columnName) {
-		return String.format("%s WHERE %s = :%s", findAllSql.get(), columnName, columnName);
+	/**
+	 * Returns a query for selecting all simple properties of an entity, including those for one-to-one relationships.
+	 * Results are limited to those rows referencing some other entity using the column specified by
+	 * {@literal columnName}. This is used to select values for a complex property ({@link Set}, {@link Map} ...) based on
+	 * a referencing entity.
+	 *
+	 * @param columnName name of the column of the FK back to the referencing entity.
+	 * @param keyColumn if the property is of type {@link Map} this column contains the map key.
+	 * @return a SQL String.
+	 */
+	String getFindAllByProperty(String columnName, String keyColumn) {
+
+		String baseSelect = (keyColumn != null) //
+				? createSelectBuilder().column(cb -> cb.tableAlias(entity.getTableName()).column(keyColumn).as(keyColumn))
+						.build()
+				: getFindAll();
+
+		return String.format("%s WHERE %s = :%s", baseSelect, columnName, columnName);
 	}
 
 	String getExists() {
@@ -136,10 +153,19 @@ class SqlGenerator {
 		return builder;
 	}
 
+	/**
+	 * Adds the columns to the provided {@link SelectBuilder} representing simplem properties, including those from
+	 * one-to-one relationships.
+	 * 
+	 * @param builder The {@link SelectBuilder} to be modified.
+	 */
 	private void addColumnsAndJoinsForOneToOneReferences(SelectBuilder builder) {
 
 		for (JdbcPersistentProperty property : entity) {
-			if (!property.isEntity() || Collection.class.isAssignableFrom(property.getType())) {
+			if (!property.isEntity() //
+					|| Collection.class.isAssignableFrom(property.getType()) //
+					|| Map.class.isAssignableFrom(property.getType()) //
+			) {
 				continue;
 			}
 

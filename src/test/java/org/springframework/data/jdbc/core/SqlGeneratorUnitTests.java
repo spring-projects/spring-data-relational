@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
@@ -108,6 +109,31 @@ public class SqlGeneratorUnitTests {
 				"DELETE FROM SecondLevelReferencedEntity WHERE ReferencedEntity IN (SELECT x_l1id FROM ReferencedEntity WHERE DummyEntity IS NOT NULL)");
 	}
 
+	@Test // DATAJDBC-131
+	public void findAllByProperty() {
+
+		// this would get called when DummyEntity is the element type of a Set
+		String sql = sqlGenerator.getFindAllByProperty("back-ref", null);
+
+		assertThat(sql).isEqualTo("SELECT DummyEntity.id AS id, DummyEntity.name AS name, "
+				+ "ref.l1id AS ref_l1id, ref.content AS ref_content, ref.further AS ref_further "
+				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.id "
+				+ "WHERE back-ref = :back-ref");
+	}
+
+	@Test // DATAJDBC-131
+	public void findAllByPropertyWithKey() {
+
+		// this would get called when DummyEntity is th element type of a Map
+		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column");
+
+		assertThat(sql).isEqualTo("SELECT DummyEntity.id AS id, DummyEntity.name AS name, "
+				+ "ref.l1id AS ref_l1id, ref.content AS ref_content, ref.further AS ref_further, "
+				+ "DummyEntity.key-column AS key-column "
+				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.id "
+				+ "WHERE back-ref = :back-ref");
+	}
+
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
@@ -115,6 +141,7 @@ public class SqlGeneratorUnitTests {
 		String name;
 		ReferencedEntity ref;
 		Set<Element> elements;
+		Map<Integer, Element> mappedElements;
 	}
 
 	@SuppressWarnings("unused")

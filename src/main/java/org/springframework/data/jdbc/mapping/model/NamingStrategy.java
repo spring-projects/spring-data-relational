@@ -30,4 +30,17 @@ public interface NamingStrategy {
 		return this.getSchema() + (this.getSchema().equals("") ? "" : ".") + this.getTableName(type);
 	}
 
+	/**
+	 * For a reference A -> B this is the name in the table for B which references A.
+	 *
+	 * @return a column name.
+	 */
+	String getReverseColumnName(JdbcPersistentProperty property);
+
+	/**
+	 * For a map valued reference A -> Map&gt;X,B&lt; this is the name of the column in the tabel for B holding the key of the map.
+	 * @return
+	 */
+	String getKeyColumn(JdbcPersistentProperty property);
+
 }

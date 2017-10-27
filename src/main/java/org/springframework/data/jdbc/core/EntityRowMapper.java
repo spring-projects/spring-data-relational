@@ -19,6 +19,7 @@ import lombok.NonNull;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.core.convert.ConversionService;
@@ -80,6 +81,11 @@ class EntityRowMapper<T> implements RowMapper<T> {
 
 			if (Set.class.isAssignableFrom(property.getType())) {
 				propertyAccessor.setProperty(property, accessStrategy.findAllByProperty(id, property));
+			} else if (Map.class.isAssignableFrom(property.getType())) {
+
+				Iterable<Object> allByProperty = accessStrategy.findAllByProperty(id, property);
+				IterableOfEntryToMapConverter converter = new IterableOfEntryToMapConverter();
+				propertyAccessor.setProperty(property, converter.convert(allByProperty));
 			} else {
 				propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
 			}
