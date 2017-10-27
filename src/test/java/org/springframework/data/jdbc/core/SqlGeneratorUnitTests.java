@@ -26,6 +26,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
 
@@ -42,7 +43,7 @@ public class SqlGeneratorUnitTests {
 	@Before
 	public void setUp() {
 
-		NamingStrategy namingStrategy = new DefaultNamingStrategy();
+		NamingStrategy namingStrategy = new PrefixingNamingStrategy();
 		JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
 		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 		this.sqlGenerator = new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
@@ -56,10 +57,10 @@ public class SqlGeneratorUnitTests {
 		SoftAssertions softAssertions = new SoftAssertions();
 		softAssertions.assertThat(sql) //
 				.startsWith("SELECT") //
-				.contains("DummyEntity.id AS id,") //
-				.contains("DummyEntity.name AS name,") //
-				.contains("ref.l1id AS ref_l1id") //
-				.contains("ref.content AS ref_content").contains(" FROM DummyEntity") //
+				.contains("DummyEntity.x_id AS x_id,") //
+				.contains("DummyEntity.x_name AS x_name,") //
+				.contains("ref.x_l1id AS ref_x_l1id") //
+				.contains("ref.x_content AS ref_x_content").contains(" FROM DummyEntity") //
 				// 1-N relationships do not get loaded via join
 				.doesNotContain("Element AS elements");
 		softAssertions.assertAll();
@@ -79,7 +80,7 @@ public class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo(
-				"DELETE FROM SecondLevelReferencedEntity WHERE ReferencedEntity IN (SELECT l1id FROM ReferencedEntity WHERE DummyEntity = :rootId)");
+				"DELETE FROM SecondLevelReferencedEntity WHERE ReferencedEntity IN (SELECT x_l1id FROM ReferencedEntity WHERE DummyEntity = :rootId)");
 	}
 
 	@Test // DATAJDBC-112
@@ -104,7 +105,7 @@ public class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo(
-				"DELETE FROM SecondLevelReferencedEntity WHERE ReferencedEntity IN (SELECT l1id FROM ReferencedEntity WHERE DummyEntity IS NOT NULL)");
+				"DELETE FROM SecondLevelReferencedEntity WHERE ReferencedEntity IN (SELECT x_l1id FROM ReferencedEntity WHERE DummyEntity IS NOT NULL)");
 	}
 
 	@SuppressWarnings("unused")
@@ -134,5 +135,14 @@ public class SqlGeneratorUnitTests {
 	static class Element {
 		@Id Long id;
 		String content;
+	}
+
+	private static class PrefixingNamingStrategy extends DefaultNamingStrategy {
+
+		@Override
+		public String getColumnName(JdbcPersistentProperty property) {
+			return "x_" + super.getColumnName(property);
+		}
+
 	}
 }

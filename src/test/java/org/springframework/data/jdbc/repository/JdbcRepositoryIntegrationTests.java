@@ -63,7 +63,9 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
+
 	}
+
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();

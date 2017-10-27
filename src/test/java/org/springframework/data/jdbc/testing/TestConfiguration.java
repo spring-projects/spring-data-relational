@@ -27,6 +27,7 @@ import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -49,7 +50,12 @@ public class TestConfiguration {
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory() {
 
-		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(){
+			@Override
+			public String getColumnName(JdbcPersistentProperty property) {
+				return super.getColumnName(property);
+			}
+		});
 
 		return new JdbcRepositoryFactory( //
 				publisher, //
