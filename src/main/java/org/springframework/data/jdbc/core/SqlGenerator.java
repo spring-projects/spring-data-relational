@@ -43,8 +43,8 @@ class SqlGenerator {
 
 	private final JdbcPersistentEntity<?> entity;
 	private final JdbcMappingContext context;
-	private final List<String> propertyNames = new ArrayList<>();
-	private final List<String> nonIdPropertyNames = new ArrayList<>();
+	private final List<String> columnNames = new ArrayList<>();
+	private final List<String> nonIdColumnNames = new ArrayList<>();
 
 	private final Lazy<String> findOneSql = Lazy.of(this::createFindOneSelectSql);
 	private final Lazy<String> findAllSql = Lazy.of(this::createFindAllSql);
@@ -64,17 +64,17 @@ class SqlGenerator {
 		this.context = context;
 		this.entity = entity;
 		this.sqlGeneratorSource = sqlGeneratorSource;
-		initPropertyNames();
+		initColumnNames();
 	}
 
-	private void initPropertyNames() {
+	private void initColumnNames() {
 
 		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
 			// the referencing column of referenced entity is expected to be on the other side of the relation
 			if (!p.isEntity()) {
-				propertyNames.add(p.getName());
+				columnNames.add(p.getColumnName());
 				if (!entity.isIdProperty(p)) {
-					nonIdPropertyNames.add(p.getName());
+					nonIdColumnNames.add(p.getColumnName());
 				}
 			}
 		});
@@ -211,11 +211,11 @@ class SqlGenerator {
 
 		String insertTemplate = "insert into %s (%s) values (%s)";
 
-		List<String> propertyNamesForInsert = new ArrayList<>(excludeId ? nonIdPropertyNames : propertyNames);
-		propertyNamesForInsert.addAll(additionalColumns);
+		List<String> columnNamesForInsert = new ArrayList<>(excludeId ? nonIdColumnNames : columnNames);
+		columnNamesForInsert.addAll(additionalColumns);
 
-		String tableColumns = String.join(", ", propertyNamesForInsert);
-		String parameterNames = propertyNamesForInsert.stream().collect(Collectors.joining(", :", ":", ""));
+		String tableColumns = String.join(", ", columnNamesForInsert);
+		String parameterNames = columnNamesForInsert.stream().collect(Collectors.joining(", :", ":", ""));
 
 		return String.format(insertTemplate, entity.getTableName(), tableColumns, parameterNames);
 	}
@@ -224,7 +224,7 @@ class SqlGenerator {
 
 		String updateTemplate = "update %s set %s where %s = :%s";
 
-		String setClause = propertyNames.stream()//
+		String setClause = columnNames.stream()//
 				.map(n -> String.format("%s = :%s", n, n))//
 				.collect(Collectors.joining(", "));
 
