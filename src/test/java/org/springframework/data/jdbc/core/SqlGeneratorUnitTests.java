@@ -15,14 +15,13 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-
 import java.util.Map;
 import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
@@ -30,6 +29,8 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -115,9 +116,9 @@ public class SqlGeneratorUnitTests {
 		// this would get called when DummyEntity is the element type of a Set
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", null);
 
-		assertThat(sql).isEqualTo("SELECT DummyEntity.id AS id, DummyEntity.name AS name, "
-				+ "ref.l1id AS ref_l1id, ref.content AS ref_content, ref.further AS ref_further "
-				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.id "
+		assertThat(sql).isEqualTo("SELECT DummyEntity.x_id AS x_id, DummyEntity.x_name AS x_name, "
+				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further "
+				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.x_id "
 				+ "WHERE back-ref = :back-ref");
 	}
 
@@ -127,10 +128,10 @@ public class SqlGeneratorUnitTests {
 		// this would get called when DummyEntity is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column");
 
-		assertThat(sql).isEqualTo("SELECT DummyEntity.id AS id, DummyEntity.name AS name, "
-				+ "ref.l1id AS ref_l1id, ref.content AS ref_content, ref.further AS ref_further, "
+		assertThat(sql).isEqualTo("SELECT DummyEntity.x_id AS x_id, DummyEntity.x_name AS x_name, "
+				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, "
 				+ "DummyEntity.key-column AS key-column "
-				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.id "
+				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.x_id "
 				+ "WHERE back-ref = :back-ref");
 	}
 
