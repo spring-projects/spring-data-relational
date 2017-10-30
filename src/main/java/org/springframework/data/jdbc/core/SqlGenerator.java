@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
-import org.springframework.data.jdbc.mapping.model.PropertyPaths;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
@@ -267,7 +266,7 @@ class SqlGenerator {
 			return String.format("DELETE FROM %s", entity.getTableName());
 		}
 
-		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(PropertyPaths.getLeafType(path));
+		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(path.getLeafType());
 
 		JdbcPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
 		JdbcPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
@@ -285,7 +284,7 @@ class SqlGenerator {
 
 	String createDeleteByPath(PropertyPath path) {
 
-		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(PropertyPaths.getLeafType(path));
+		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(path.getLeafType());
 		JdbcPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
 		JdbcPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
 

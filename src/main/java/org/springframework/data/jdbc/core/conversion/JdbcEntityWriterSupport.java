@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core.conversion;
 
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.PropertyPaths;
 
 /**
  * Common infrastructure needed by different implementations of {@link EntityWriter}<Object, AggregateChange>.
@@ -41,6 +40,6 @@ abstract class JdbcEntityWriterSupport implements EntityWriter<Object, Aggregate
 	void deleteReferencedEntities(Object id, AggregateChange aggregateChange) {
 
 		context.referencedEntities(aggregateChange.getEntityType(), null)
-				.forEach(p -> aggregateChange.addAction(DbAction.delete(id, PropertyPaths.getLeafType(p), null, p, null)));
+				.forEach(p -> aggregateChange.addAction(DbAction.delete(id, p.getLeafType(), null, new JdbcPropertyPath(p), null)));
 	}
 }

@@ -204,7 +204,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 
 				List<DbAction> actions = event.getChange().getActions();
 				actions.clear();
-				actions.add(DbAction.update(entity, null));
+				actions.add(DbAction.update(entity, null, null));
 			};
 		}
 
@@ -223,7 +223,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 
 
 				List<DbAction> actions = event.getChange().getActions();
-				actions.add(DbAction.insert(log, null));
+				actions.add(DbAction.insert(log, null, null));
 			};
 		}
 
