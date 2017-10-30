@@ -61,14 +61,14 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 		List<PropertyPath> paths = new ArrayList<>();
 
-		Class<?> currentType = path == null ? rootType : PropertyPaths.getLeafType(path);
+		Class<?> currentType = path == null ? rootType : path.getLeafType();
 		JdbcPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(currentType);
 
 		for (JdbcPersistentProperty property : persistentEntity) {
 			if (property.isEntity()) {
 
 				PropertyPath nextPath = path == null ? PropertyPath.from(property.getName(), rootType)
-						: PropertyPaths.extendBy(path, property.getColumnName());
+						: path.nested(property.getColumnName());
 				paths.add(nextPath);
 				paths.addAll(referencedEntities(rootType, nextPath));
 			}

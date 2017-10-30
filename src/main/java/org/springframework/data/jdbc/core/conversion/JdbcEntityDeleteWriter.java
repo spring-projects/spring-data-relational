@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core.conversion;
 
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.PropertyPaths;
 
 /**
  * Converts an entity that is about to be deleted into {@link DbAction}s inside a {@link AggregateChange} that need to be
@@ -43,7 +42,7 @@ public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 	private void deleteAll(AggregateChange aggregateChange) {
 
 		context.referencedEntities(aggregateChange.getEntityType(), null)
-				.forEach(p -> aggregateChange.addAction(DbAction.deleteAll(PropertyPaths.getLeafType(p), new JdbcPropertyPath(p), null)));
+				.forEach(p -> aggregateChange.addAction(DbAction.deleteAll(p.getLeafType(), new JdbcPropertyPath(p), null)));
 
 		aggregateChange.addAction(DbAction.deleteAll(aggregateChange.getEntityType(), null, null));
 	}
@@ -54,5 +53,4 @@ public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 
 		aggregateChange.addAction(DbAction.delete(id, aggregateChange.getEntityType(), aggregateChange.getEntity(), null, null));
 	}
-
 }
