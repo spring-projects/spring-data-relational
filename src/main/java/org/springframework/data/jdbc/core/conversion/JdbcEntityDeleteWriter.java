@@ -43,7 +43,7 @@ public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 	private void deleteAll(AggregateChange aggregateChange) {
 
 		context.referencedEntities(aggregateChange.getEntityType(), null)
-				.forEach(p -> aggregateChange.addAction(DbAction.deleteAll(PropertyPaths.getLeafType(p), p, null)));
+				.forEach(p -> aggregateChange.addAction(DbAction.deleteAll(PropertyPaths.getLeafType(p), new JdbcPropertyPath(p), null)));
 
 		aggregateChange.addAction(DbAction.deleteAll(aggregateChange.getEntityType(), null, null));
 	}

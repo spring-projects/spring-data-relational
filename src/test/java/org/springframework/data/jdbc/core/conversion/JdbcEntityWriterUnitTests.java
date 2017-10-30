@@ -56,9 +56,9 @@ public class JdbcEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Insert.class, SingleReferenceEntity.class) //
+						tuple(Insert.class, SingleReferenceEntity.class, "") //
 		);
 	}
 
@@ -72,10 +72,10 @@ public class JdbcEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class), //
-						tuple(Update.class, SingleReferenceEntity.class) //
+						tuple(Delete.class, Element.class, "other"), //
+						tuple(Update.class, SingleReferenceEntity.class, "") //
 		);
 	}
 
@@ -91,11 +91,11 @@ public class JdbcEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class), //
-						tuple(Update.class, SingleReferenceEntity.class), //
-						tuple(Insert.class, Element.class) //
+						tuple(Delete.class, Element.class, "other"), //
+						tuple(Update.class, SingleReferenceEntity.class, ""), //
+						tuple(Insert.class, Element.class, "other") //
 		);
 	}
 
@@ -107,9 +107,10 @@ public class JdbcEntityWriterUnitTests {
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Insert.class, SetContainer.class));
+						tuple(Insert.class, SetContainer.class, ""));
 	}
 
 	@Test // DATAJDBC-113
@@ -122,11 +123,11 @@ public class JdbcEntityWriterUnitTests {
 		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Insert.class, SetContainer.class), //
-						tuple(Insert.class, Element.class), //
-						tuple(Insert.class, Element.class) //
+						tuple(Insert.class, SetContainer.class, ""), //
+						tuple(Insert.class, Element.class, "elements"), //
+						tuple(Insert.class, Element.class, "elements") //
 		);
 	}
 
@@ -149,15 +150,15 @@ public class JdbcEntityWriterUnitTests {
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Insert.class, CascadingReferenceEntity.class), //
-						tuple(Insert.class, CascadingReferenceMiddleElement.class), //
-						tuple(Insert.class, Element.class), //
-						tuple(Insert.class, Element.class), //
-						tuple(Insert.class, CascadingReferenceMiddleElement.class), //
-						tuple(Insert.class, Element.class), //
-						tuple(Insert.class, Element.class) //
+						tuple(Insert.class, CascadingReferenceEntity.class, ""), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
+						tuple(Insert.class, Element.class, "other.element"), //
+						tuple(Insert.class, Element.class, "other.element"), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
+						tuple(Insert.class, Element.class, "other.element"), //
+						tuple(Insert.class, Element.class, "other.element") //
 		);
 	}
 
@@ -169,9 +170,9 @@ public class JdbcEntityWriterUnitTests {
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType) //
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Insert.class, MapContainer.class));
+						tuple(Insert.class, MapContainer.class, ""));
 	}
 
 	@Test // DATAJDBC-131
@@ -185,17 +186,17 @@ public class JdbcEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions())
-				.extracting(DbAction::getClass, DbAction::getEntityType, JdbcEntityWriterUnitTests::getMapKey) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::getMapKey, this::extractPath) //
 				.containsExactlyInAnyOrder( //
-						tuple(Insert.class, MapContainer.class, null), //
-						tuple(Insert.class, Element.class, "one"), //
-						tuple(Insert.class, Element.class, "two") //
+						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, "one", "elements"), //
+						tuple(Insert.class, Element.class, "two", "elements") //
 				).containsSubsequence( // container comes before the elements
-						tuple(Insert.class, MapContainer.class, null), //
-						tuple(Insert.class, Element.class, "two") //
+						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, "two", "elements") //
 				).containsSubsequence( // container comes before the elements
-						tuple(Insert.class, MapContainer.class, null), //
-						tuple(Insert.class, Element.class, "one") //
+						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, "one", "elements") //
 		);
 	}
 
@@ -210,11 +211,11 @@ public class JdbcEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, JdbcEntityWriterUnitTests::getMapKey) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::getMapKey, this::extractPath) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class, null), //
-						tuple(Update.class, MapContainer.class, null), //
-						tuple(Insert.class, Element.class, "one") //
+						tuple(Delete.class, Element.class, null, "elements"), //
+						tuple(Update.class, MapContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, "one", "elements") //
 		);
 	}
 
@@ -226,8 +227,12 @@ public class JdbcEntityWriterUnitTests {
 		return middleElement1;
 	}
 
-	private static Object getMapKey(DbAction a) {
+	private Object getMapKey(DbAction a) {
 		return a.getAdditionalValues().get("MapContainer_key");
+	}
+
+	private String extractPath(DbAction action) {
+		return action.getPropertyPath().toDotPath();
 	}
 
 	@RequiredArgsConstructor

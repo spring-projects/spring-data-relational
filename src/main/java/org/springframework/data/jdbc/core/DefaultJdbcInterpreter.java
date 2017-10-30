@@ -26,6 +26,8 @@ import org.springframework.data.jdbc.core.conversion.DbAction.Update;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.mapping.PropertyPath;
+import org.springframework.util.Assert;
 
 /**
  * {@link Interpreter} for {@link DbAction}s using a {@link DataAccessStrategy} for performing actual database
@@ -60,15 +62,15 @@ class DefaultJdbcInterpreter implements Interpreter {
 		if (delete.getPropertyPath() == null) {
 			accessStrategy.delete(delete.getRootId(), delete.getEntityType());
 		} else {
-			accessStrategy.delete(delete.getRootId(), delete.getPropertyPath());
+			accessStrategy.delete(delete.getRootId(), delete.getPropertyPath().getPath());
 		}
 	}
 
 	@Override
 	public <T> void interpret(DeleteAll<T> delete) {
-		
+
 		if (delete.getEntityType() == null) {
-			accessStrategy.deleteAll(delete.getPropertyPath());
+			accessStrategy.deleteAll(delete.getPropertyPath().getPath());
 		} else {
 			accessStrategy.deleteAll(delete.getEntityType());
 		}
@@ -84,16 +86,32 @@ class DefaultJdbcInterpreter implements Interpreter {
 	}
 
 	private <T> void addDependingOnInformation(Insert<T> insert, Map<String, Object> additionalColumnValues) {
+
 		DbAction dependingOn = insert.getDependingOn();
 
-		if (dependingOn != null) {
-
-			JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
-			String columnName = persistentEntity.getTableName();
-			Object entity = dependingOn.getEntity();
-			Object identifier = persistentEntity.getIdentifierAccessor(entity).getIdentifier();
-
-			additionalColumnValues.put(columnName, identifier);
+		if (dependingOn == null) {
+			return;
 		}
+
+		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
+
+		String columnName = getColumnNameForReverseColumn(insert, persistentEntity);
+
+		Object identifier = getIdFromEntityDependingOn(dependingOn, persistentEntity);
+
+		additionalColumnValues.put(columnName, identifier);
+	}
+
+	private Object getIdFromEntityDependingOn(DbAction dependingOn, JdbcPersistentEntity<?> persistentEntity) {
+		return persistentEntity.getIdentifierAccessor(dependingOn.getEntity()).getIdentifier();
+	}
+
+	private <T> String getColumnNameForReverseColumn(Insert<T> insert, JdbcPersistentEntity<?> persistentEntity) {
+		
+		PropertyPath path = insert.getPropertyPath().getPath();
+
+		Assert.notNull(path, "There shouldn't be an insert depending on another insert without having a PropertyPath.");
+
+		return persistentEntity.getRequiredPersistentProperty(path.getSegment()).getReverseColumnName();
 	}
 }

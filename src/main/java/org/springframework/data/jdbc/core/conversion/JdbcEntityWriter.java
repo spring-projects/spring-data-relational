@@ -52,76 +52,85 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
 	private void write(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
 
-		JdbcPersistentEntityInformation<Object, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation((Class<Object>) o.getClass());
+		Class<Object> type = (Class<Object>) o.getClass();
+		JdbcPersistentEntityInformation<Object, ?> entityInformation = context.getRequiredPersistentEntityInformation(type);
+		JdbcPropertyPath propertyPath = JdbcPropertyPath.from("", type);
 
 		if (entityInformation.isNew(o)) {
 
-			Insert<Object> insert = DbAction.insert(o, dependingOn);
+			Insert<Object> insert = DbAction.insert(o, propertyPath, dependingOn);
 			aggregateChange.addAction(insert);
 
-			referencedEntities(o).forEach(propertyAndValue -> saveReferencedEntities(propertyAndValue, aggregateChange, insert));
+			referencedEntities(o).forEach(propertyAndValue -> saveReferencedEntities(propertyAndValue, aggregateChange,
+					propertyPath.nested(propertyAndValue.property.getName()), insert));
 		} else {
 
 			deleteReferencedEntities(entityInformation.getRequiredId(o), aggregateChange);
 
-			Update<Object> update = DbAction.update(o, dependingOn);
+			Update<Object> update = DbAction.update(o, propertyPath, dependingOn);
 			aggregateChange.addAction(update);
 
-			referencedEntities(o).forEach(propertyAndValue -> insertReferencedEntities(propertyAndValue, aggregateChange, update));
+			referencedEntities(o).forEach(
+					propertyAndValue -> insertReferencedEntities(propertyAndValue, aggregateChange, propertyPath.nested(propertyAndValue.property.getName()), update));
 		}
 	}
 
-	private void saveReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange, DbAction dependingOn) {
+	private void saveReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange,
+			JdbcPropertyPath propertyPath, DbAction dependingOn) {
 
-		saveActions(propertyAndValue, dependingOn).forEach(a -> {
+		saveActions(propertyAndValue, propertyPath, dependingOn).forEach(a -> {
 
 			aggregateChange.addAction(a);
-			referencedEntities(propertyAndValue.value).forEach(pav -> saveReferencedEntities(pav, aggregateChange, a));
+			referencedEntities(propertyAndValue.value)
+					.forEach(pav -> saveReferencedEntities(pav, aggregateChange, propertyPath.nested(pav.property.getName()), a));
 		});
 	}
 
-	private Stream<DbAction> saveActions(PropertyAndValue propertyAndValue, DbAction dependingOn) {
+	private Stream<DbAction> saveActions(PropertyAndValue propertyAndValue, JdbcPropertyPath propertyPath,
+			DbAction dependingOn) {
 
 		if (Map.Entry.class.isAssignableFrom(ClassUtils.getUserClass(propertyAndValue.value))) {
-			return mapEntrySaveAction(propertyAndValue, dependingOn);
+			return mapEntrySaveAction(propertyAndValue, propertyPath, dependingOn);
 		}
 
-		return Stream.of(singleSaveAction(propertyAndValue.value, dependingOn));
+		return Stream.of(singleSaveAction(propertyAndValue.value, propertyPath, dependingOn));
 	}
 
-	private Stream<DbAction> mapEntrySaveAction(PropertyAndValue propertyAndValue, DbAction dependingOn) {
+	private Stream<DbAction> mapEntrySaveAction(PropertyAndValue propertyAndValue, JdbcPropertyPath propertyPath,
+			DbAction dependingOn) {
 
 		Map.Entry<Object, Object> entry = (Map.Entry) propertyAndValue.value;
 
-		DbAction action = singleSaveAction(entry.getValue(), dependingOn);
+		DbAction action = singleSaveAction(entry.getValue(), propertyPath, dependingOn);
 		action.getAdditionalValues().put(propertyAndValue.property.getKeyColumn(), entry.getKey());
 		return Stream.of(action);
 	}
 
-	private <T> DbAction singleSaveAction(T t, DbAction dependingOn) {
+	private <T> DbAction singleSaveAction(T t, JdbcPropertyPath propertyPath, DbAction dependingOn) {
 
 		JdbcPersistentEntityInformation<T, ?> entityInformation = context
 				.getRequiredPersistentEntityInformation((Class<T>) ClassUtils.getUserClass(t));
 
-		return entityInformation.isNew(t) ? DbAction.insert(t, dependingOn) : DbAction.update(t, dependingOn);
+		return entityInformation.isNew(t) ? DbAction.insert(t, propertyPath, dependingOn)
+				: DbAction.update(t, propertyPath, dependingOn);
 	}
 
-	private void insertReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange, DbAction dependingOn) {
+	private void insertReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange,
+			JdbcPropertyPath propertyPath, DbAction dependingOn) {
 
 		Insert<Object> insert;
 		if (propertyAndValue.property.isQualified()) {
 
 			Entry<Object, Object> valueAsEntry = (Entry<Object, Object>) propertyAndValue.value;
-		insert = DbAction.insert(valueAsEntry.getValue(), dependingOn);
+			insert = DbAction.insert(valueAsEntry.getValue(), propertyPath, dependingOn);
 			insert.getAdditionalValues().put(propertyAndValue.property.getKeyColumn(), valueAsEntry.getKey());
 		} else {
-			insert = DbAction.insert(propertyAndValue.value, dependingOn);
+			insert = DbAction.insert(propertyAndValue.value, propertyPath, dependingOn);
 		}
 
 		aggregateChange.addAction(insert);
 		referencedEntities(insert.getEntity())
-				.forEach(pav -> insertReferencedEntities(pav, aggregateChange, dependingOn));
+				.forEach(pav -> insertReferencedEntities(pav, aggregateChange, propertyPath.nested(pav.property.getName()), dependingOn));
 	}
 
 	private Stream<PropertyAndValue> referencedEntities(Object o) {
@@ -133,7 +142,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 				.flatMap( //
 						p -> referencedEntity(p, persistentEntity.getPropertyAccessor(o)) //
 								.map(e -> new PropertyAndValue(p, e)) //
-				);
+		);
 	}
 
 	private Stream<Object> referencedEntity(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {

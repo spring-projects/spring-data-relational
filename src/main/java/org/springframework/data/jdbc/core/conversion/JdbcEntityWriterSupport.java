@@ -41,6 +41,6 @@ abstract class JdbcEntityWriterSupport implements EntityWriter<Object, Aggregate
 	void deleteReferencedEntities(Object id, AggregateChange aggregateChange) {
 
 		context.referencedEntities(aggregateChange.getEntityType(), null)
-				.forEach(p -> aggregateChange.addAction(DbAction.delete(id, PropertyPaths.getLeafType(p), null, p, null)));
+				.forEach(p -> aggregateChange.addAction(DbAction.delete(id, PropertyPaths.getLeafType(p), null, new JdbcPropertyPath(p), null)));
 	}
 }

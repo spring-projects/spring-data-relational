@@ -21,7 +21,6 @@ import lombok.ToString;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.data.mapping.PropertyPath;
 import org.springframework.util.Assert;
 
 /**
@@ -44,6 +43,11 @@ public abstract class DbAction<T> {
 	private final T entity;
 
 	/**
+	 * The path from the Aggregate Root to the entity affected by this {@link DbAction}.
+	 */
+	private final JdbcPropertyPath propertyPath;
+
+	/**
 	 * Key-value-pairs to specify additional values to be used with the statement which can't be obtained from the entity,
 	 * nor from {@link DbAction}s {@literal this} depends on. A used case are map keys, which need to be persisted with
 	 * the map value but aren't part of the value.
@@ -57,27 +61,28 @@ public abstract class DbAction<T> {
 	 */
 	private final DbAction dependingOn;
 
-	private DbAction(Class<T> entityType, T entity, DbAction dependingOn) {
+	private DbAction(Class<T> entityType, T entity, JdbcPropertyPath propertyPath, DbAction dependingOn) {
 
 		this.entityType = entityType;
 		this.entity = entity;
+		this.propertyPath = propertyPath;
 		this.dependingOn = dependingOn;
 	}
 
-	public static <T> Insert<T> insert(T entity, DbAction dependingOn) {
-		return new Insert<>(entity, dependingOn);
+	public static <T> Insert<T> insert(T entity, JdbcPropertyPath propertyPath, DbAction dependingOn) {
+		return new Insert<>(entity, propertyPath, dependingOn);
 	}
 
-	public static <T> Update<T> update(T entity, DbAction dependingOn) {
-		return new Update<>(entity, dependingOn);
+	public static <T> Update<T> update(T entity, JdbcPropertyPath propertyPath, DbAction dependingOn) {
+		return new Update<>(entity, propertyPath, dependingOn);
 	}
 
-	public static <T> Delete<T> delete(Object id, Class<T> type, T entity, PropertyPath propertyPath,
+	public static <T> Delete<T> delete(Object id, Class<T> type, T entity, JdbcPropertyPath propertyPath,
 			DbAction dependingOn) {
 		return new Delete<>(id, type, entity, propertyPath, dependingOn);
 	}
 
-	public static <T> DeleteAll<T> deleteAll(Class<T> type, PropertyPath propertyPath, DbAction dependingOn) {
+	public static <T> DeleteAll<T> deleteAll(Class<T> type, JdbcPropertyPath propertyPath, DbAction dependingOn) {
 		return new DeleteAll<>(type, propertyPath, dependingOn);
 	}
 
@@ -90,8 +95,9 @@ public abstract class DbAction<T> {
 	 */
 	abstract static class InsertOrUpdate<T> extends DbAction<T> {
 
-		InsertOrUpdate(T entity, DbAction dependingOn) {
-			super((Class<T>) entity.getClass(), entity, dependingOn);
+		@SuppressWarnings("unchecked")
+		InsertOrUpdate(T entity, JdbcPropertyPath propertyPath, DbAction dependingOn) {
+			super((Class<T>) entity.getClass(), entity, propertyPath, dependingOn);
 		}
 	}
 
@@ -102,8 +108,8 @@ public abstract class DbAction<T> {
 	 */
 	public static class Insert<T> extends InsertOrUpdate<T> {
 
-		private Insert(T entity, DbAction dependingOn) {
-			super(entity, dependingOn);
+		private Insert(T entity, JdbcPropertyPath propertyPath, DbAction dependingOn) {
+			super(entity, propertyPath, dependingOn);
 		}
 
 		@Override
@@ -119,8 +125,8 @@ public abstract class DbAction<T> {
 	 */
 	public static class Update<T> extends InsertOrUpdate<T> {
 
-		private Update(T entity, DbAction dependingOn) {
-			super(entity, dependingOn);
+		private Update(T entity, JdbcPropertyPath propertyPath, DbAction dependingOn) {
+			super(entity, propertyPath, dependingOn);
 		}
 
 		@Override
@@ -143,20 +149,13 @@ public abstract class DbAction<T> {
 		 */
 		private final Object rootId;
 
-		/**
-		 * {@link PropertyPath} which connects the aggregate root with the entities to be deleted. If this is the action to
-		 * delete the root enity itself, this is {@literal null}.
-		 */
-		private final PropertyPath propertyPath;
+		private Delete(Object rootId, Class<T> type, T entity, JdbcPropertyPath propertyPath, DbAction dependingOn) {
 
-		private Delete(Object rootId, Class<T> type, T entity, PropertyPath propertyPath, DbAction dependingOn) {
-
-			super(type, entity, dependingOn);
+			super(type, entity, propertyPath, dependingOn);
 
 			Assert.notNull(rootId, "rootId must not be null.");
 
 			this.rootId = rootId;
-			this.propertyPath = propertyPath;
 		}
 
 		@Override
@@ -170,19 +169,10 @@ public abstract class DbAction<T> {
 	 *
 	 * @param <T> type o the entity for which this represents a database interaction
 	 */
-	@Getter
 	public static class DeleteAll<T> extends DbAction<T> {
 
-		/**
-		 *
-		 */
-		private final PropertyPath propertyPath;
-
-		private DeleteAll(Class<T> entityType, PropertyPath propertyPath, DbAction dependingOn) {
-
-			super(entityType, null, dependingOn);
-
-			this.propertyPath = propertyPath;
+		private DeleteAll(Class<T> entityType, JdbcPropertyPath propertyPath, DbAction dependingOn) {
+			super(entityType, null, propertyPath, dependingOn);
 		}
 
 		@Override
