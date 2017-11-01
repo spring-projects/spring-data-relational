@@ -27,6 +27,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.core.convert.support.GenericConversionService;
+import org.springframework.data.convert.Jsr310Converters;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
@@ -50,11 +54,19 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	));
 
 	private final @Getter NamingStrategy namingStrategy;
+	private GenericConversionService conversions = getDefaultConversionService();
 
-	public JdbcMappingContext(NamingStrategy namingStrategy) {
+	public JdbcMappingContext(NamingStrategy namingStrategy, ConversionCustomizer customizer) {
 
 		this.namingStrategy = namingStrategy;
+
+		customizer.customize(conversions);
+
 		setSimpleTypeHolder(new SimpleTypeHolder(CUSTOM_SIMPLE_TYPES, true));
+	}
+
+	public JdbcMappingContext() {
+		this(new DefaultNamingStrategy(), __ -> {});
 	}
 
 	public List<PropertyPath> referencedEntities(Class<?> rootType, PropertyPath path) {
@@ -101,6 +113,18 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	@SuppressWarnings("unchecked")
 	public <T> JdbcPersistentEntityInformation<T, ?> getRequiredPersistentEntityInformation(Class<T> type) {
 		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) getRequiredPersistentEntity(type));
+	}
+
+	public ConversionService getConversions() {
+		return conversions;
+	}
+
+	private static GenericConversionService getDefaultConversionService() {
+
+		DefaultConversionService conversionService = new DefaultConversionService();
+		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
+
+		return conversionService;
 	}
 
 }

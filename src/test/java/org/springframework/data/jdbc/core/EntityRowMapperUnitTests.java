@@ -40,7 +40,6 @@ import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.Jsr310Converters;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
@@ -118,7 +117,7 @@ public class EntityRowMapperUnitTests {
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
 
-		JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+		JdbcMappingContext context = new JdbcMappingContext();
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determin what kind of resultset is needed for subsequent selects.

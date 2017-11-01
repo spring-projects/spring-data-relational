@@ -37,7 +37,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {
 		
-		JdbcPersistentEntity<?> persistentEntity = new JdbcMappingContext(new DefaultNamingStrategy())
+		JdbcPersistentEntity<?> persistentEntity = new JdbcMappingContext()
 			.getRequiredPersistentEntity(DummyEntity.class);
 
 		persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {

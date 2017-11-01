@@ -27,7 +27,6 @@ import org.springframework.data.jdbc.mapping.event.BeforeDelete;
 import org.springframework.data.jdbc.mapping.event.BeforeSave;
 import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.JdbcEvent;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.repository.CrudRepository;
@@ -47,7 +46,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Before
 	public void before() {
 
-		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+		final JdbcMappingContext context = new JdbcMappingContext();
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory( //
 				publisher, //
 				context, //

@@ -46,7 +46,7 @@ public class SqlGeneratorUnitTests {
 	public void setUp() {
 
 		NamingStrategy namingStrategy = new PrefixingNamingStrategy();
-		JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
+		JdbcMappingContext context = new JdbcMappingContext(namingStrategy, __ -> {});
 		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 		this.sqlGenerator = new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}

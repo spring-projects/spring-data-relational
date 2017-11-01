@@ -180,7 +180,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	 */
 	private SqlGenerator configureSqlGenerator(NamingStrategy namingStrategy) {
 
-		JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
+		JdbcMappingContext context = new JdbcMappingContext(namingStrategy, __ -> {});
 		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}

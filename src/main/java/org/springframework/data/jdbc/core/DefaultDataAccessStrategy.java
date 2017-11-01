@@ -21,13 +21,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.support.DefaultConversionService;
-import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
-import org.springframework.data.convert.Jsr310Converters;
 import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
@@ -58,7 +54,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final SqlGeneratorSource sqlGeneratorSource;
 	private final NamedParameterJdbcOperations operations;
 	private final JdbcMappingContext context;
-	private final ConversionService conversions = getDefaultConversionService();
 	private final DataAccessStrategy accessStrategy;
 
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, NamedParameterJdbcOperations operations,
@@ -215,14 +210,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return operations.queryForObject(existsSql, parameter, Boolean.class);
 	}
 
-	private static GenericConversionService getDefaultConversionService() {
-
-		DefaultConversionService conversionService = new DefaultConversionService();
-		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
-
-		return conversionService;
-	}
-
 	private <S> MapSqlParameterSource getPropertyMap(final S instance, JdbcPersistentEntity<S> persistentEntity) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
@@ -288,7 +275,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private <T> EntityRowMapper<T> getEntityRowMapper(Class<T> domainType) {
-		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), conversions, context, accessStrategy);
+		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context.getConversions(), context, accessStrategy);
 	}
 
 	private RowMapper getMapEntityRowMapper(JdbcPersistentProperty property) {
@@ -316,7 +303,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Object id = persistentEntity == null ? null : persistentEntity.getIdentifierAccessor(from).getIdentifier();
 
-		return conversions.convert(id == null ? from : id, to);
+		return context.getConversions().convert(id == null ? from : id, to);
 	}
 
 	private SqlGenerator sql(Class<?> domainType) {

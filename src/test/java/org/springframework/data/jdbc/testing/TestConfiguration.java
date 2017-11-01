@@ -50,12 +50,12 @@ public class TestConfiguration {
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory() {
 
-		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(){
+		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy() {
 			@Override
 			public String getColumnName(JdbcPersistentProperty property) {
 				return super.getColumnName(property);
 			}
-		});
+		}, __ -> {});
 
 		return new JdbcRepositoryFactory( //
 				publisher, //
