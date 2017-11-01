@@ -100,8 +100,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		additionalParameters.forEach(parameterSource::addValue);
 
-		operations.update(sql(domainType).getInsert(idValue == null, additionalParameters.keySet()), parameterSource,
-				holder);
+		boolean idValueDoesNotComeFromEntity = //
+				idValue == null //
+				|| additionalParameters.containsKey(idProperty.getColumnName());
+
+		operations.update( //
+				sql(domainType).getInsert(idValueDoesNotComeFromEntity, additionalParameters.keySet()), //
+				parameterSource, //
+				holder //
+		);
 
 		setIdFromJdbc(instance, holder, persistentEntity);
 
@@ -202,7 +209,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		MapSqlParameterSource parameter = new MapSqlParameterSource(property.getReverseColumnName(), rootId);
 
-		return (Iterable<T>)operations.query(findAllByProperty, parameter, property.isQualified() //
+		return (Iterable<T>) operations.query(findAllByProperty, parameter, property.isQualified() //
 				? getMapEntityRowMapper(property) //
 				: getEntityRowMapper(actualType));
 	}
