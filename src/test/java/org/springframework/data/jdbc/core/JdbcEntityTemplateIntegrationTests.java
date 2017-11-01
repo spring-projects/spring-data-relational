@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -254,7 +253,7 @@ public class JdbcEntityTemplateIntegrationTests {
 		JdbcEntityOperations operations(ApplicationEventPublisher publisher,
 				NamedParameterJdbcOperations namedParameterJdbcOperations) {
 
-			final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+			final JdbcMappingContext context = new JdbcMappingContext();
 			return new JdbcEntityTemplate(publisher, context, dataAccessStrategy(namedParameterJdbcOperations, context));
 		}
 

@@ -32,6 +32,7 @@ import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.jdbc.mapping.model.ConversionCustomizer;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
@@ -65,22 +66,23 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private static final String DATA_SOURCE_BEAN_NAME = "dataSource";
 	private static final String NAMING_STRATEGY_BEAN_NAME = "namingStrategy";
 	private static final String SQL_SESSION_FACTORY_BEAN_NAME = "sqlSessionFactory";
+	private static final String CONVERSION_CUSTOMIZER_BEAN_NAME = "conversionCustomizer";
 
 	private final ApplicationEventPublisher applicationEventPublisher;
-	private final ApplicationContext context;
+	private final ApplicationContext applicationContext;
 
 	JdbcRepositoryFactoryBean(Class<? extends T> repositoryInterface, ApplicationEventPublisher applicationEventPublisher,
-			ApplicationContext context) {
+			ApplicationContext applicationContext) {
 
 		super(repositoryInterface);
 		this.applicationEventPublisher = applicationEventPublisher;
-		this.context = context;
+		this.applicationContext = applicationContext;
 	}
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
 
-		final JdbcMappingContext context = new JdbcMappingContext(findOrCreateNamingStrategy());
+		final JdbcMappingContext context = new JdbcMappingContext(findOrCreateNamingStrategy(), findOrCreateConversionCustomizer());
 
 		return new JdbcRepositoryFactory(applicationEventPublisher, context, createDataAccessStrategy(context));
 	}
@@ -156,6 +158,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		return getNamingStrategy().orElse(new DefaultNamingStrategy());
 	}
 
+	private ConversionCustomizer findOrCreateConversionCustomizer() {
+		return getConversionCustomizer().orElse(conversionService->{});
+	}
+
 	private Optional<NamedParameterJdbcOperations> getNamedParameterJdbcOperations() {
 		return getBean(NamedParameterJdbcOperations.class, NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME);
 	}
@@ -172,9 +178,13 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		return getBean(NamingStrategy.class, NAMING_STRATEGY_BEAN_NAME);
 	}
 
+	private Optional<ConversionCustomizer> getConversionCustomizer() {
+		return getBean(ConversionCustomizer.class, CONVERSION_CUSTOMIZER_BEAN_NAME);
+	}
+
 	private <R> Optional<R> getBean(Class<R> type, String name) {
 
-		Map<String, R> beansOfType = context.getBeansOfType(type);
+		Map<String, R> beansOfType = applicationContext.getBeansOfType(type);
 
 		if (beansOfType.size() == 1) {
 			return beansOfType.values().stream().findFirst();

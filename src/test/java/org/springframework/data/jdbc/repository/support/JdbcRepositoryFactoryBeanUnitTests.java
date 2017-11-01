@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.util.ReflectionTestUtils.*;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,11 +18,15 @@ import org.assertj.core.api.Condition;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
+import org.springframework.data.jdbc.mapping.model.ConversionCustomizer;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
@@ -29,6 +34,7 @@ import org.springframework.instrument.classloading.ShadowingClassLoader;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.lang.Nullable;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -43,6 +49,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 	static final String ACCESS_STRATEGY_FIELD_NAME_IN_FACTORY = "accessStrategy";
 	static final String OPERATIONS_FIELD_NAME_IN_DEFAULT_ACCESS_STRATEGY = "operations";
+	private static final String MAPPING_CONTEXT_FIELD_NAME_IN_FACTORY = "context";
 
 	ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 	ApplicationContext context = mock(ApplicationContext.class);
@@ -52,12 +59,15 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	Map<String, NamedParameterJdbcOperations> namedJdbcOperations = new HashMap<>();
 	Map<String, SqlSessionFactory> sqlSessionFactories = new HashMap<>();
 
+	Map<String, ConversionCustomizer> conversionCustomizers = new HashMap<>();
+
 	{
 
 		when(context.getBeansOfType(DataSource.class)).thenReturn(dataSources);
 		when(context.getBeansOfType(JdbcOperations.class)).thenReturn(jdbcOperations);
 		when(context.getBeansOfType(NamedParameterJdbcOperations.class)).thenReturn(namedJdbcOperations);
 		when(context.getBeansOfType(SqlSessionFactory.class)).thenReturn(sqlSessionFactories);
+		when(context.getBeansOfType(ConversionCustomizer.class)).thenReturn(conversionCustomizers);
 	}
 
 	@Test // DATAJDBC-100
@@ -234,6 +244,33 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		assertThat(loadedClass).isNotNull();
 		ReflectionUtils.getAllDeclaredMethods(loadedClass);
+	}
+
+	@Test // DATAJDBC-147
+	public void registersConversionsCorrectly() {
+
+		dataSources.put("anyname", mock(DataSource.class));
+		conversionCustomizers.put("anyname", cs -> {
+
+			cs.addConverter(new Converter<Duration, Long>() {
+
+				@Nullable
+				@Override
+				public Long convert(Duration duration) {
+					return duration.toHours();
+				}
+			});
+		});
+
+		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
+				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
+
+		RepositoryFactorySupport factory = factoryBean.doCreateRepositoryFactory();
+
+		JdbcMappingContext mappingContext = (JdbcMappingContext) getField(factory, MAPPING_CONTEXT_FIELD_NAME_IN_FACTORY);
+		ConversionService conversions = mappingContext.getConversions();
+
+		assertThat(conversions.convert(Duration.ofDays(3), Long.class)).isEqualTo(72L);
 	}
 
 	private Condition<? super RepositoryFactorySupport> using(NamedParameterJdbcOperations expectedOperations) {

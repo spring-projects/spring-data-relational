@@ -15,21 +15,21 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import lombok.RequiredArgsConstructor;
-
 import java.util.HashMap;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Jens Schauder
@@ -39,7 +39,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	public static final long ID_FROM_ADDITIONAL_VALUES = 23L;
 	public static final long ORIGINAL_ID = 4711L;
 
-	JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy());
+	JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(), __ -> {});
 	NamedParameterJdbcOperations jdbcOperations = mock(NamedParameterJdbcOperations.class);
 	HashMap<String, Object> additionalParameters = new HashMap<>();
 	ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
