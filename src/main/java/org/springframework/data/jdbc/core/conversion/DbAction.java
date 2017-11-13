@@ -86,7 +86,26 @@ public abstract class DbAction<T> {
 		return new DeleteAll<>(type, propertyPath, dependingOn);
 	}
 
-	abstract void executeWith(Interpreter interpreter);
+	/**
+	 * Executing this DbAction with the given {@link Interpreter}.
+	 *
+	 * @param interpreter the {@link Interpreter} responsible for actually executing the {@link DbAction}.
+	 */
+	void executeWith(Interpreter interpreter) {
+
+		try {
+			doExecuteWith(interpreter);
+		} catch (Exception e) {
+			throw new DbActionExecutionException(this, e);
+		}
+	}
+
+	/**
+	 * Executing this DbAction with the given {@link Interpreter} without any exception handling.
+	 *
+	 * @param interpreter the {@link Interpreter} responsible for actually executing the {@link DbAction}.
+	 */
+	protected abstract void doExecuteWith(Interpreter interpreter);
 
 	/**
 	 * {@link InsertOrUpdate} must reference an entity.
@@ -113,7 +132,7 @@ public abstract class DbAction<T> {
 		}
 
 		@Override
-		void executeWith(Interpreter interpreter) {
+		protected void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
 		}
 	}
@@ -130,7 +149,7 @@ public abstract class DbAction<T> {
 		}
 
 		@Override
-		void executeWith(Interpreter interpreter) {
+		protected void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
 		}
 	}
@@ -159,7 +178,7 @@ public abstract class DbAction<T> {
 		}
 
 		@Override
-		void executeWith(Interpreter interpreter) {
+		protected void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
 		}
 	}
@@ -176,7 +195,7 @@ public abstract class DbAction<T> {
 		}
 
 		@Override
-		void executeWith(Interpreter interpreter) {
+		protected void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
 		}
 	}
