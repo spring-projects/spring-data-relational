@@ -32,18 +32,19 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBea
  * repositories by default.
  *
  * @author Jens Schauder
+ * @author Greg Turnquist
  * @since 2.0
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-@Import(JdbcRepositoriesRegistrar.class)
+@Import({JdbcRepositoriesRegistrar.class, JdbcConfiguration.class})
 public @interface EnableJdbcRepositories {
 
 	/**
 	 * Alias for the {@link #basePackages()} attribute. Allows for more concise annotation declarations e.g.:
-	 * {@code @EnableJpaRepositories("org.my.pkg")} instead of {@code @EnableJpaRepositories(basePackages="org.my.pkg")}.
+	 * {@code @EnableJdbcRepositories("org.my.pkg")} instead of {@code @EnableJdbcRepositories(basePackages="org.my.pkg")}.
 	 */
 	String[] value() default {};
 
