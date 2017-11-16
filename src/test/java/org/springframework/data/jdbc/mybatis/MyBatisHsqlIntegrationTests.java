@@ -29,9 +29,8 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.jdbc.repository.JdbcRepositoryIdGenerationIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Tests the integration with Mybatis.
  *
  * @author Jens Schauder
+ * @author Greg Turnquist
  */
 @ContextConfiguration
 @Transactional
@@ -52,8 +52,6 @@ public class MyBatisHsqlIntegrationTests {
 	@Import(TestConfiguration.class)
 	@EnableJdbcRepositories(considerNestedRepositories = true)
 	static class Config {
-
-		@Autowired JdbcRepositoryFactory factory;
 
 		@Bean
 		Class<?> testClass() {
@@ -74,6 +72,11 @@ public class MyBatisHsqlIntegrationTests {
 			sqlSessionFactoryBean.setConfiguration(configuration);
 
 			return sqlSessionFactoryBean;
+		}
+
+		@Bean
+		MyBatisDataAccessStrategy dataAccessStrategy(SqlSessionFactory factory) {
+			return new MyBatisDataAccessStrategy(factory);
 		}
 	}
 
