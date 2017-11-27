@@ -2,338 +2,101 @@ package org.springframework.data.jdbc.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.util.ReflectionTestUtils.*;
 
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Predicate;
-
-import javax.sql.DataSource;
-
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.assertj.core.api.Condition;
+import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.converter.Converter;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
-import org.springframework.data.jdbc.mapping.model.ConversionCustomizer;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.core.support.RepositoryComposition;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
-import org.springframework.instrument.classloading.ShadowingClassLoader;
-import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * Tests the dependency injection for {@link JdbcRepositoryFactoryBean}.
  *
  * @author Jens Schauder
+ * @author Greg Turnquist
  */
+@RunWith(MockitoJUnitRunner.class)
 public class JdbcRepositoryFactoryBeanUnitTests {
 
-	static final String EXPECTED_JDBC_OPERATIONS_BEAN_NAME = "jdbcTemplate";
-	static final String EXPECTED_NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME = "namedParameterJdbcTemplate";
+	JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean;
 
-	static final String ACCESS_STRATEGY_FIELD_NAME_IN_FACTORY = "accessStrategy";
-	static final String OPERATIONS_FIELD_NAME_IN_DEFAULT_ACCESS_STRATEGY = "operations";
-	private static final String MAPPING_CONTEXT_FIELD_NAME_IN_FACTORY = "context";
+	StubRepositoryFactorySupport factory;
+	@Mock ListableBeanFactory beanFactory;
+	@Mock Repository<?, ?> repository;
+	@Mock DataAccessStrategy dataAccessStrategy;
+	@Mock JdbcMappingContext mappingContext;
 
-	ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-	ApplicationContext context = mock(ApplicationContext.class);
+	@Before
+	public void setUp() {
 
-	Map<String, DataSource> dataSources = new HashMap<>();
-	Map<String, JdbcOperations> jdbcOperations = new HashMap<>();
-	Map<String, NamedParameterJdbcOperations> namedJdbcOperations = new HashMap<>();
-	Map<String, SqlSessionFactory> sqlSessionFactories = new HashMap<>();
+		factory = Mockito.spy(new StubRepositoryFactorySupport(repository));
 
-	Map<String, ConversionCustomizer> conversionCustomizers = new HashMap<>();
-
-	{
-
-		when(context.getBeansOfType(DataSource.class)).thenReturn(dataSources);
-		when(context.getBeansOfType(JdbcOperations.class)).thenReturn(jdbcOperations);
-		when(context.getBeansOfType(NamedParameterJdbcOperations.class)).thenReturn(namedJdbcOperations);
-		when(context.getBeansOfType(SqlSessionFactory.class)).thenReturn(sqlSessionFactories);
-		when(context.getBeansOfType(ConversionCustomizer.class)).thenReturn(conversionCustomizers);
+		// Setup standard configuration
+		factoryBean = new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class);
 	}
 
-	@Test // DATAJDBC-100
-	public void exceptionWithUsefulMessage() {
+	@Test
+	public void setsUpBasicInstanceCorrectly() {
 
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
+		factoryBean.setDataAccessStrategy(dataAccessStrategy);
+		factoryBean.setMappingContext(mappingContext);
+		factoryBean.afterPropertiesSet();
 
-		assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(factoryBean::doCreateRepositoryFactory);
-
+		assertThat(factoryBean.getObject()).isNotNull();
 	}
 
-	@Test // DATAJDBC-100
-	public void singleDataSourceGetsUsedForCreatingRepositoryFactory() {
+	@Test(expected = IllegalArgumentException.class)
+	public void requiresListableBeanFactory() {
 
-		DataSource expectedDataSource = mock(DataSource.class);
-		dataSources.put("arbitraryName", expectedDataSource);
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedDataSource));
+		factoryBean.setBeanFactory(mock(BeanFactory.class));
 	}
 
-	@Test // DATAJDBC-100
-	public void multipleDataSourcesGetDisambiguatedByName() {
-
-		DataSource expectedDataSource = mock(DataSource.class);
-		dataSources.put("dataSource", expectedDataSource);
-		dataSources.put("arbitraryName", mock(DataSource.class));
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedDataSource));
-	}
-
-	@Test // DATAJDBC-100
-	public void singleJdbcOperationsUsedForCreatingRepositoryFactory() {
-
-		JdbcOperations expectedOperations = mock(JdbcOperations.class);
-		jdbcOperations.put("arbitraryName", expectedOperations);
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedOperations));
-	}
-
-	@Test // DATAJDBC-100
-	public void multipleJdbcOperationsGetDisambiguatedByName() {
-
-		JdbcOperations expectedOperations = mock(JdbcOperations.class);
-		jdbcOperations.put(EXPECTED_JDBC_OPERATIONS_BEAN_NAME, expectedOperations);
-		jdbcOperations.put("arbitraryName", mock(JdbcOperations.class));
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedOperations));
-	}
-
-	@Test // DATAJDBC-100
-	public void singleNamedJdbcOperationsUsedForCreatingRepositoryFactory() {
-
-		NamedParameterJdbcOperations expectedOperations = mock(NamedParameterJdbcOperations.class);
-		namedJdbcOperations.put("arbitraryName", expectedOperations);
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedOperations));
-	}
-
-	@Test // DATAJDBC-100
-	public void multipleNamedJdbcOperationsGetDisambiguatedByName() {
-
-		NamedParameterJdbcOperations expectedOperations = mock(NamedParameterJdbcOperations.class);
-		namedJdbcOperations.put(EXPECTED_NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME, expectedOperations);
-		namedJdbcOperations.put("arbitraryName", mock(NamedParameterJdbcOperations.class));
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedOperations));
-	}
-
-	@Test // DATAJDBC-100
-	public void namedParameterJdbcOperationsTakePrecedenceOverDataSource() {
-
-		NamedParameterJdbcOperations expectedOperations = mock(NamedParameterJdbcOperations.class);
-		namedJdbcOperations.put("arbitraryName", expectedOperations);
-		dataSources.put("arbitraryName", mock(DataSource.class));
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedOperations));
-	}
-
-	@Test // DATAJDBC-100
-	public void jdbcOperationsTakePrecedenceOverDataSource() {
-
-		JdbcOperations expectedOperations = mock(JdbcOperations.class);
-		jdbcOperations.put("arbitraryName", expectedOperations);
-		dataSources.put("arbitraryName", mock(DataSource.class));
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedOperations));
-	}
-
-	@Test // DATAJDBC-100
-	public void namedParameterJdbcOperationsTakePrecedenceOverJdbcOperations() {
-
-		NamedParameterJdbcOperations expectedOperations = mock(NamedParameterJdbcOperations.class);
-		namedJdbcOperations.put("arbitraryName", expectedOperations);
-		jdbcOperations.put("arbitraryName", mock(JdbcOperations.class));
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		assertThat(factoryBean.doCreateRepositoryFactory()).is(using(expectedOperations));
-	}
-
-	@Test // DATAJDBC-123
-	public void withoutSqlSessionFactoryThereIsNoMyBatisIntegration() {
-
-		dataSources.put("anyname", mock(DataSource.class));
-		sqlSessionFactories.clear();
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		RepositoryFactorySupport factory = factoryBean.doCreateRepositoryFactory();
-
-		assertThat(findDataAccessStrategy(factory, MyBatisDataAccessStrategy.class)).isNull();
-	}
-
-	@Test // DATAJDBC-123
-	public void withSqlSessionFactoryThereIsMyBatisIntegration() {
-
-		dataSources.put("anyname", mock(DataSource.class));
-		sqlSessionFactories.put("anyname", mock(SqlSessionFactory.class));
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		RepositoryFactorySupport factory = factoryBean.doCreateRepositoryFactory();
-
-		assertThat(findDataAccessStrategy(factory, MyBatisDataAccessStrategy.class)).isNotNull();
-	}
-
-	@Test // DATAJDBC-136
-	public void canBeLoadedWithoutMyBatis() throws Exception {
-
-		String sqlSessionFactoryClassName = SqlSessionFactory.class.getName();
-
-		ShadowingClassLoader classLoader = new ShadowingClassLoader(this.getClass().getClassLoader()) {
-
-			@Override
-			public Class<?> loadClass(String name) throws ClassNotFoundException {
-
-				if (name.equals(sqlSessionFactoryClassName)) {
-					throw new ClassNotFoundException("%s is configured not to get loaded by this classloader");
-				}
-				return super.loadClass(name);
-			}
-		};
-
-		Class<?> loadedClass = classLoader.loadClass(JdbcRepositoryFactoryBean.class.getName());
-
-		assertThat(loadedClass).isNotNull();
-		ReflectionUtils.getAllDeclaredMethods(loadedClass);
-	}
-
-	@Test // DATAJDBC-147
-	public void registersConversionsCorrectly() {
-
-		dataSources.put("anyname", mock(DataSource.class));
-		conversionCustomizers.put("anyname", cs -> {
-
-			cs.addConverter(new Converter<Duration, Long>() {
-
-				@Nullable
-				@Override
-				public Long convert(Duration duration) {
-					return duration.toHours();
-				}
-			});
-		});
-
-		JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean = //
-				new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class, eventPublisher, context);
-
-		RepositoryFactorySupport factory = factoryBean.doCreateRepositoryFactory();
-
-		JdbcMappingContext mappingContext = (JdbcMappingContext) getField(factory, MAPPING_CONTEXT_FIELD_NAME_IN_FACTORY);
-		ConversionService conversions = mappingContext.getConversions();
-
-		assertThat(conversions.convert(Duration.ofDays(3), Long.class)).isEqualTo(72L);
-	}
-
-	private Condition<? super RepositoryFactorySupport> using(NamedParameterJdbcOperations expectedOperations) {
-
-		Predicate<RepositoryFactorySupport> predicate = r -> extractNamedParameterJdbcOperations(r) == expectedOperations;
-		return new Condition<>(predicate, "uses " + expectedOperations);
-	}
-
-	private NamedParameterJdbcOperations extractNamedParameterJdbcOperations(RepositoryFactorySupport r) {
-
-		DefaultDataAccessStrategy defaultDataAccessStrategy = findDataAccessStrategy(r, DefaultDataAccessStrategy.class);
-		return (NamedParameterJdbcOperations) getField(defaultDataAccessStrategy,
-				OPERATIONS_FIELD_NAME_IN_DEFAULT_ACCESS_STRATEGY);
-	}
-
-	private Condition<? super RepositoryFactorySupport> using(JdbcOperations expectedOperations) {
-
-		Predicate<RepositoryFactorySupport> predicate = r -> extractNamedParameterJdbcOperations(r)
-				.getJdbcOperations() == expectedOperations;
-
-		return new Condition<>(predicate, "uses " + expectedOperations);
-	}
-
-	private Condition<? super RepositoryFactorySupport> using(DataSource expectedDataSource) {
-
-		Predicate<RepositoryFactorySupport> predicate = r -> {
-
-			NamedParameterJdbcOperations namedOperations = extractNamedParameterJdbcOperations(r);
-			JdbcTemplate jdbcOperations = (JdbcTemplate) namedOperations.getJdbcOperations();
-			return jdbcOperations.getDataSource() == expectedDataSource;
-		};
-
-		return new Condition<>(predicate, "using " + expectedDataSource);
-	}
-
-	private static <T extends DataAccessStrategy> T findDataAccessStrategy(RepositoryFactorySupport r, Class<T> type) {
-
-		DataAccessStrategy accessStrategy = (DataAccessStrategy) getField(r, ACCESS_STRATEGY_FIELD_NAME_IN_FACTORY);
-		return findDataAccessStrategy(accessStrategy, type);
-	}
-
-	private static <T extends DataAccessStrategy> T findDataAccessStrategy(DataAccessStrategy accessStrategy,
-			Class<T> type) {
-
-		if (type.isInstance(accessStrategy))
-			return (T) accessStrategy;
-
-		if (accessStrategy instanceof DelegatingDataAccessStrategy) {
-			return findDataAccessStrategy((DataAccessStrategy) getField(accessStrategy, "delegate"), type);
+	/**
+	 * required to trick Mockito on invoking protected getRepository(Class<T> repositoryInterface, Optional<Object>
+	 * customImplementation
+	 */
+	private static class StubRepositoryFactorySupport extends RepositoryFactorySupport {
+
+		private final Repository<?, ?> repository;
+
+		private StubRepositoryFactorySupport(Repository<?, ?> repository) {
+			this.repository = repository;
 		}
 
-		if (accessStrategy instanceof CascadingDataAccessStrategy) {
-			List<DataAccessStrategy> strategies = (List<DataAccessStrategy>) getField(accessStrategy, "strategies");
-			return strategies.stream() //
-					.map((DataAccessStrategy das) -> findDataAccessStrategy(das, type)) //
-					.filter(Objects::nonNull) //
-					.findFirst() //
-					.orElse(null);
+		@Override
+		public <T> T getRepository(Class<T> repositoryInterface, RepositoryComposition.RepositoryFragments fragments) {
+			return (T) repository;
 		}
 
-		return null;
-	}
+		@Override
+		public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
+			return null;
+		}
 
+		@Override
+		protected Object getTargetRepository(RepositoryInformation metadata) {
+			return null;
+		}
+
+		@Override
+		protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
+			return null;
+		}
+	}
+	
 	private static class DummyEntity {
 		@Id private Long id;
 	}

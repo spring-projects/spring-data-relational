@@ -19,6 +19,7 @@ import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
 import junit.framework.AssertionFailedError;
+
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -31,18 +32,23 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.conversion.DbAction;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
 import org.springframework.data.jdbc.mapping.event.BeforeSave;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -52,6 +58,7 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
  * executed against the database.
  *
  * @author Jens Schauder
+ * @author Greg Turnquist
  */
 @ContextConfiguration
 public class JdbcRepositoryManipulateDbActionsIntegrationTests {
@@ -227,6 +234,11 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 			};
 		}
 
+		@Bean
+		DefaultDataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context,
+															@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations operations) {
+			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), operations, context);
+		}
 	}
 
 }

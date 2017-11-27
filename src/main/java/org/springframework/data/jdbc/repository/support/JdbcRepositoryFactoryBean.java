@@ -16,35 +16,16 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import javax.sql.DataSource;
-
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.jdbc.core.CascadingDataAccessStrategy;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
-import org.springframework.data.jdbc.core.SqlGeneratorSource;
-import org.springframework.data.jdbc.mapping.model.ConversionCustomizer;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.NamingStrategy;
-import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
-import org.springframework.data.util.Optionals;
-import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.util.ClassUtils;
+import org.springframework.util.Assert;
 
 /**
  * Special adapter for Springs {@link org.springframework.beans.factory.FactoryBean} interface to allow easy setup of
@@ -55,141 +36,50 @@ import org.springframework.util.ClassUtils;
  * @since 2.0
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> //
-		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> {
+		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
 
-	private static final String NO_NAMED_PARAMETER_JDBC_OPERATION_ERROR_MESSAGE = //
-			"No unique NamedParameterJdbcOperation could be found, " //
-					+ "nor JdbcOperations or DataSource to construct one from.";
+	private ApplicationEventPublisher publisher;
+	private JdbcMappingContext mappingContext;
+	private DataAccessStrategy dataAccessStrategy;
 
-	private static final String NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME = "namedParameterJdbcTemplate";
-	private static final String JDBC_OPERATIONS_BEAN_NAME = "jdbcTemplate";
-	private static final String DATA_SOURCE_BEAN_NAME = "dataSource";
-	private static final String NAMING_STRATEGY_BEAN_NAME = "namingStrategy";
-	private static final String SQL_SESSION_FACTORY_BEAN_NAME = "sqlSessionFactory";
-	private static final String CONVERSION_CUSTOMIZER_BEAN_NAME = "conversionCustomizer";
-
-	private final ApplicationEventPublisher applicationEventPublisher;
-	private final ApplicationContext applicationContext;
-
-	JdbcRepositoryFactoryBean(Class<? extends T> repositoryInterface, ApplicationEventPublisher applicationEventPublisher,
-			ApplicationContext applicationContext) {
-
+	JdbcRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
 		super(repositoryInterface);
-		this.applicationEventPublisher = applicationEventPublisher;
-		this.applicationContext = applicationContext;
 	}
 
 	@Override
-	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-
-		final JdbcMappingContext context = new JdbcMappingContext(findOrCreateNamingStrategy(), findOrCreateConversionCustomizer());
-
-		return new JdbcRepositoryFactory(applicationEventPublisher, context, createDataAccessStrategy(context));
+	public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
+		
+		super.setApplicationEventPublisher(publisher);
+		this.publisher = publisher;
 	}
 
 	/**
-	 * <p>
-	 * Create the {@link DataAccessStrategy}, by combining all applicable strategies into one.
-	 * </p>
-	 * <p>
-	 * The challenge is that the {@link DefaultDataAccessStrategy} when used for reading needs a
-	 * {@link DataAccessStrategy} for loading referenced entities (see.
-	 * {@link DefaultDataAccessStrategy#getEntityRowMapper(Class)}. But it should use all configured
-	 * {@link DataAccessStrategy}s for this. This creates a cyclic dependency. In order to build this the
-	 * {@link DefaultDataAccessStrategy} gets passed in a {@link DelegatingDataAccessStrategy} which at the end gets set
-	 * to the full {@link CascadingDataAccessStrategy}.
-	 * </p>
+	 * Creates the actual {@link RepositoryFactorySupport} instance.
+	 *
+	 * @return
 	 */
-	private CascadingDataAccessStrategy createDataAccessStrategy(JdbcMappingContext context) {
-
-		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
-
-		List<DataAccessStrategy> accessStrategies = Stream.of( //
-				createMyBatisDataAccessStrategy(), //
-				createDefaultAccessStrategy(context, delegatingDataAccessStrategy) //
-		) //
-				.filter(Optional::isPresent) //
-				.map(Optional::get) //
-				.collect(Collectors.toList());
-
-		CascadingDataAccessStrategy strategy = new CascadingDataAccessStrategy(accessStrategies);
-		delegatingDataAccessStrategy.setDelegate(strategy);
-
-		return strategy;
+	@Override
+	protected RepositoryFactorySupport doCreateRepositoryFactory() {
+		return new JdbcRepositoryFactory(publisher, mappingContext, dataAccessStrategy);
 	}
 
-	private Optional<DataAccessStrategy> createMyBatisDataAccessStrategy() {
+	@Autowired
+	protected void setMappingContext(JdbcMappingContext mappingContext) {
 
-		String myBatisSqlSessionFactoryClassName = "org.apache.ibatis.session.SqlSessionFactory";
-		ClassLoader classLoader = this.getClass().getClassLoader();
-
-		if (!ClassUtils.isPresent(myBatisSqlSessionFactoryClassName, classLoader)) {
-			return Optional.empty();
-		}
-
-		try {
-			
-			return getBean(classLoader.loadClass(myBatisSqlSessionFactoryClassName), SQL_SESSION_FACTORY_BEAN_NAME)
-					// note that the cast to SqlSessionFactory happens in a lambda, which is basically a separate class
-					// thus it won't get loaded if this code path doesn't get executed.
-					.map(ssf -> new MyBatisDataAccessStrategy((SqlSessionFactory) ssf));
-		} catch (ClassNotFoundException e) {
-			throw new IllegalStateException("Detected MyBatis on classpath but failed to load the class " + myBatisSqlSessionFactoryClassName);
-		}
+		super.setMappingContext(mappingContext);
+		this.mappingContext = mappingContext;
 	}
 
-	private Optional<DataAccessStrategy> createDefaultAccessStrategy(JdbcMappingContext context,
-			DelegatingDataAccessStrategy delegatingDataAccessStrategy) {
-
-		return Optional.of(new DefaultDataAccessStrategy(new SqlGeneratorSource(context), findOrCreateJdbcOperations(),
-				context, delegatingDataAccessStrategy));
+	@Autowired
+	public void setDataAccessStrategy(DataAccessStrategy dataAccessStrategy) {
+		this.dataAccessStrategy = dataAccessStrategy;
 	}
 
-	private NamedParameterJdbcOperations findOrCreateJdbcOperations() {
+	@Override
+	public void afterPropertiesSet() {
 
-		return Optionals.firstNonEmpty( //
-				this::getNamedParameterJdbcOperations, //
-				() -> getJdbcOperations().map(NamedParameterJdbcTemplate::new), //
-				() -> getDataSource().map(NamedParameterJdbcTemplate::new)) //
-				.orElseThrow(() -> new IllegalStateException(NO_NAMED_PARAMETER_JDBC_OPERATION_ERROR_MESSAGE));
-	}
-
-	private NamingStrategy findOrCreateNamingStrategy() {
-		return getNamingStrategy().orElse(new DefaultNamingStrategy());
-	}
-
-	private ConversionCustomizer findOrCreateConversionCustomizer() {
-		return getConversionCustomizer().orElse(conversionService->{});
-	}
-
-	private Optional<NamedParameterJdbcOperations> getNamedParameterJdbcOperations() {
-		return getBean(NamedParameterJdbcOperations.class, NAMED_PARAMETER_JDBC_OPERATIONS_BEAN_NAME);
-	}
-
-	private Optional<JdbcOperations> getJdbcOperations() {
-		return getBean(JdbcOperations.class, JDBC_OPERATIONS_BEAN_NAME);
-	}
-
-	private Optional<DataSource> getDataSource() {
-		return getBean(DataSource.class, DATA_SOURCE_BEAN_NAME);
-	}
-
-	private Optional<NamingStrategy> getNamingStrategy() {
-		return getBean(NamingStrategy.class, NAMING_STRATEGY_BEAN_NAME);
-	}
-
-	private Optional<ConversionCustomizer> getConversionCustomizer() {
-		return getBean(ConversionCustomizer.class, CONVERSION_CUSTOMIZER_BEAN_NAME);
-	}
-
-	private <R> Optional<R> getBean(Class<R> type, String name) {
-
-		Map<String, R> beansOfType = applicationContext.getBeansOfType(type);
-
-		if (beansOfType.size() == 1) {
-			return beansOfType.values().stream().findFirst();
-		}
-
-		return Optional.ofNullable(beansOfType.get(name));
+		Assert.notNull(this.dataAccessStrategy, "DataAccessStrategy must not be null!");
+		Assert.notNull(this.mappingContext, "MappingContext must not be null!");
+		super.afterPropertiesSet();
 	}
 }
