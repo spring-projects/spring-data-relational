@@ -1,6 +1,6 @@
 = Spring Data JDBC
 
-The primary goal of the http://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data JDBC* offers the popular Repository abstraction based on JDBC
+The primary goal of the http://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data JDBC* offers the popular Repository abstraction based on JDBC.
 
 == This is NOT an ORM
 
@@ -8,15 +8,213 @@ Spring Data JDBC does not try to be an ORM. It is not a competitor to JPA. Inste
 
 This means that it does rather little out of the box. But it offers plenty of places where you can put your own logic, or integrate it with the technology of your choice for generating SQL statements.
 
+== Maven Coordinates
+
+```xml
+<dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-jdbc</artifactId>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
+</dependency>
+```
+
 == Features
 
 === CRUD operations
 
+In order use Spring Data JDBC you need the following:
+
+ 1. An entity with an attribute marked as _id_ using the spring datas https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
+
+     public class Person {
+         @Id
+         Integer id;
+     }
+
+ 2. A repository
+
+     public interface PersonRepository extends CrudRepository<Person, Integer> {}
+
+ 3. Add `@EnableJdbcRepositories` to your application context configuration.
+
+ 4. Make sure your application context contains a bean of type `DataSource`.
+
+Now you can get an instance of the repository interface injected into your beans and use it:
+
+```java
+    @Autowired
+	private PersonRepository repository;
+
+	public void someMethod() {
+		Person person = repository.save(new Person());
+	}
+```
+
+=== Id generation
+
+Spring Data JDBC uses the id to identify entities but also to determine if an entity is new or already existing in the database.
+If the id is `null` or of a primitive type and `0` or `0.0` the entity is considered new.
+
+When your data base has some autoincrement column for the id column the generated value will get set in the entity after inserting it into the database.
+
+There are few ways to tweak this behavior.
+If you don't like the logic to distinguish between new and existing entities you can implement https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Persistable.html[`Persistable`] with your entity and overwrite `isNew()` with your own logic.
+
+One important constraint is that after saving an entity the entity shouldn't be _new_ anymore.
+With autoincrement columns this happens automatically since the the id gets set by Spring Data with the value from the id column.
+If you are not using autoincrement columns you can use that using a `BeforeSave`-listener which sets the id of the entity (see below).
+
+=== NamingStrategy
+
+When you use the standard implementations of `CrudRepository` as provided by Spring Data JDBC it will expect a certain table structure.
+You can tweak that by providing a https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/model/NamingStrategy.java[`NamingStrategy`] in your application context.
+
 === Events
+
+Spring Data Jdbc triggers events which will get publish to any matching `ApplicationListener`  in the application context.
+For example the following listener will get invoked before an aggregate gets saved.
+
+``` java
+	@Bean
+	public ApplicationListener<BeforeSave> timeStampingSaveTime() {
+
+		return event -> {
+
+			Object entity = event.getEntity();
+			if (entity instanceof Category) {
+				Category category = (Category) entity;
+				category.timeStamp();
+			}
+		};
+	}
+```
+
+.Available events
+|===
+| Type | Published ...
+
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`AfterDelete`]
+| after an aggregate root got deleted.
+
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/BeforeDelete.java[`BeforeDelete`],
+| before an aggregate root gets deleted.
+
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterSave.java[`AfterSave`],
+| after an aggregate root gets saved, i.e. inserted or updated.
+
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`BeforeSave`],
+| before an aggregate root gets saved, i.e. inserted or updated but after the decision was made if it will get updated or deleted.
+The event has a reference to an https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/core/conversion/AggregateChange.java[`AggregateChange`] instance.
+The instance can be modified by adding or removing https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/core/conversion/DbAction.java[`DbAction`]s.
+
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`AfterCreation`]
+| after an aggregate root got created from a database `ResultSet` and all it's property set
+|===
+
+
+=== MyBatis
+
+For each operation in `CrudRepository` Spring Data Jdbc will execute multiple statements.
+If there is a https://github.com/mybatis/mybatis-3/blob/master/src/main/java/org/apache/ibatis/session/SqlSessionFactory.java[`SqlSessionFactory`] in the application context, it will checked if it offers a statement for each step.
+If one is found that statement will be used (including its configured mapping to an entity).
+
+The name of the statement is constructed by concatenating the fully qualified name of the entity type  with `Mapper.` and a string determining the kind of statement.
+E.g. if an instance of `org.example.User` is to be inserted Spring Data Jdbc will look for a statement named `org.example.UserMapper.insert`.
+
+Upon execution of the statement an instance of [`MyBatisContext`] will get passed as an argument which makes various arguments available to the statement.
+
+[cols="default,default,default,asciidoc"]
+|===
+| Name | Purpose | CrudRepository methods which might trigger this statement | Attributes available in the `MyBatisContext`
+
+| `insert` | Insert for a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`. |
+`getInstance`:
+        the instance to be saved
+
+`getDomainType`: the type of the entity to be saved.
+
+`get(<key>)`: id of the referencing entity, where `<key>` is the name of the back reference column as provided by the `NamingStrategy`.
+
+
+| `update` | Update for a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`.|
+`getInstance`: the instance to be saved
+
+`getDomainType`: the type of the entity to be saved.
+
+| `delete` | Delete  a single entity. | `delete`, `deleteById`.|
+`getId`: the id of the instance to be deleted
+
+`getDomainType`: the type of the entity to be deleted.
+
+| `deleteAll.<propertyPath>` | Delete all entities referenced by any aggregate root of the type used as prefix via the given property path.
+Note that the type used for prefixing the statement name is the name of the aggregate root not the one of the entity to be deleted. | `deleteAll`.|
+
+`getDomainType`: the type of the entities to be deleted.
+
+| `deleteAll` | Delete all aggregate roots of the type used as the prefix | `deleteAll`.|
+
+`getDomainType`: the type of the entities to be deleted.
+
+| `delete.<propertyPath>` | Delete all entities referenced by an aggregate root via the given propertyPath | `deleteById`.|
+
+`getId`: the id of the aggregate root for which referenced entities are to be deleted.
+
+`getDomainType`: the type of the entities to be deleted.
+
+
+| `findById` | Select an aggregate root by id | `findById`.|
+
+`getId`: the id of the entity to load.
+
+`getDomainType`: the type of the entity to load.
+
+| `findAll` | Select all aggregate roots | `findAll`.|
+
+`getDomainType`: the type of the entity to load.
+
+| `findAllById` | Select a set of aggregate roots by ids | `findAllById`.|
+
+`getId`: list of  ids of the entities to load.
+
+`getDomainType`: the type of the entity to load.
+
+
+| `findAllByProperty.<propertyName>` | Select a set of entities that is referenced by another entity. The type of the referencing entity is used for the prefix. The referenced entities type as the suffix. | All `find*` methods.|
+
+`getId`: the id of the entity referencing the entities to be loaded.
+
+`getDomainType`: the type of the entity to load.
+
+| `count` | Count the number of aggregate root of the type used as prefix | `count` |
+
+`getDomainType` the type of aggregate roots to count.
+|===
+
+== Features planned for the not to far future
+
+=== Query annotation
+
+Just annotate a method with a SQL query to use this whenever the method gets called.
+
+=== MyBatis per method support
+
+The current MyBatis supported is rather elaborate in that it allows to execute multiple statements for a single method call.
+But sometimes less is more and it should be possible to annotate a method with a simple annotation to identify a SQL statement in a MyBatis mapping to be executed.
+
+== Spring Boot integration
+
+There is https://github.com/schauder/spring-data-jdbc-boot-starter[preliminary Spring Boot integration].
+
+Currently you will need to build it locally.
 
 == Getting Help
 
-== Quick Start
+Right now the best source of information is the source code in this repository.
+Especially the integration tests (type `t` and then `IntegrationTests.java`)
+
+We are keeping an eye on the (soon to be created) https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on stackoverflow].
+
+If you think you found a bug, or have a feature request please https://jira.spring.io/browse/DATAJDBC/?selectedTab=com.atlassian.jira.jira-projects-plugin:summary-panel[create a ticket in our issue tracker].
 
 == Execute Tests
 
@@ -33,7 +231,7 @@ This will execute unit tests and integration tests using an in-memory database.
 
 === Running tests with a real database
 
-To run the integration tests against a specific database you nned to have the database running on your local machine and then execute.
+To run the integration tests against a specific database you need to have the database running on your local machine and then execute.
 
 [source]
 ----
