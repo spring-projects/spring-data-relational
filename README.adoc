@@ -10,13 +10,14 @@ This means that it does rather little out of the box. But it offers plenty of pl
 
 == Maven Coordinates
 
-```xml
+[source,xml]
+----
 <dependency>
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-jdbc</artifactId>
     <version>1.0.0.BUILD-SNAPSHOT</version>
 </dependency>
-```
+----
 
 == Features
 
@@ -24,31 +25,37 @@ This means that it does rather little out of the box. But it offers plenty of pl
 
 In order use Spring Data JDBC you need the following:
 
- 1. An entity with an attribute marked as _id_ using the spring datas https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
-
-     public class Person {
-         @Id
-         Integer id;
-     }
-
- 2. A repository
-
-     public interface PersonRepository extends CrudRepository<Person, Integer> {}
-
- 3. Add `@EnableJdbcRepositories` to your application context configuration.
-
- 4. Make sure your application context contains a bean of type `DataSource`.
+1. An entity with an attribute marked as _id_ using the spring datas https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
++
+[source,java]
+----
+ public class Person {
+	 @Id
+	 Integer id;
+ }
+----
++
+1. A repository
++
+[source,java]
+----
+public interface PersonRepository extends CrudRepository<Person, Integer> {}
+----
++
+1. Add `@EnableJdbcRepositories` to your application context configuration.
+1. Make sure your application context contains a bean of type `DataSource`.
 
 Now you can get an instance of the repository interface injected into your beans and use it:
 
-```java
-    @Autowired
-	private PersonRepository repository;
+[source,java]
+----
+@Autowired
+private PersonRepository repository;
 
-	public void someMethod() {
-		Person person = repository.save(new Person());
-	}
-```
+public void someMethod() {
+	Person person = repository.save(new Person());
+}
+----
 
 === Id generation
 
@@ -74,38 +81,39 @@ You can tweak that by providing a https://github.com/spring-projects/spring-data
 Spring Data Jdbc triggers events which will get publish to any matching `ApplicationListener`  in the application context.
 For example the following listener will get invoked before an aggregate gets saved.
 
-``` java
-	@Bean
-	public ApplicationListener<BeforeSave> timeStampingSaveTime() {
+[source,java]
+----
+@Bean
+public ApplicationListener<BeforeSave> timeStampingSaveTime() {
 
-		return event -> {
+	return event -> {
 
-			Object entity = event.getEntity();
-			if (entity instanceof Category) {
-				Category category = (Category) entity;
-				category.timeStamp();
-			}
-		};
-	}
-```
+		Object entity = event.getEntity();
+		if (entity instanceof Category) {
+			Category category = (Category) entity;
+			category.timeStamp();
+		}
+	};
+}
+----
 
 .Available events
 |===
-| Type | Published ...
+| Event | When It's Published
+
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/BeforeDelete.java[`BeforeDelete`]
+| before an aggregate root gets deleted.
 
 | https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`AfterDelete`]
 | after an aggregate root got deleted.
 
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/BeforeDelete.java[`BeforeDelete`],
-| before an aggregate root gets deleted.
-
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterSave.java[`AfterSave`],
-| after an aggregate root gets saved, i.e. inserted or updated.
-
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`BeforeSave`],
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`BeforeSave`]
 | before an aggregate root gets saved, i.e. inserted or updated but after the decision was made if it will get updated or deleted.
 The event has a reference to an https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/core/conversion/AggregateChange.java[`AggregateChange`] instance.
 The instance can be modified by adding or removing https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/core/conversion/DbAction.java[`DbAction`]s.
+
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterSave.java[`AfterSave`]
+| after an aggregate root gets saved, i.e. inserted or updated.
 
 | https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`AfterCreation`]
 | after an aggregate root got created from a database `ResultSet` and all it's property set
