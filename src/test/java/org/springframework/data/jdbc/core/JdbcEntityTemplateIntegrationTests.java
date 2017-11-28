@@ -15,8 +15,9 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import lombok.Data;
 
@@ -32,7 +33,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -250,26 +250,8 @@ public class JdbcEntityTemplateIntegrationTests {
 		}
 
 		@Bean
-		JdbcEntityOperations operations(ApplicationEventPublisher publisher,
-				NamedParameterJdbcOperations namedParameterJdbcOperations) {
-
-			final JdbcMappingContext context = new JdbcMappingContext();
-			return new JdbcEntityTemplate(publisher, context, dataAccessStrategy(namedParameterJdbcOperations, context));
-		}
-
-		private DelegatingDataAccessStrategy dataAccessStrategy(NamedParameterJdbcOperations namedParameterJdbcOperations,
-				JdbcMappingContext context) {
-
-			DelegatingDataAccessStrategy accessStrategy = new DelegatingDataAccessStrategy();
-			
-			accessStrategy.setDelegate(new DefaultDataAccessStrategy( //
-					new SqlGeneratorSource(context), //
-					namedParameterJdbcOperations, //
-					context, //
-					accessStrategy) //
-			);
-
-			return accessStrategy;
+		JdbcEntityOperations operations(ApplicationEventPublisher publisher, JdbcMappingContext context, DataAccessStrategy dataAccessStrategy) {
+			return new JdbcEntityTemplate(publisher, context, dataAccessStrategy);
 		}
 	}
 }

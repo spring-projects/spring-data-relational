@@ -15,20 +15,24 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.util.Optional;
+
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.mapping.model.*;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -75,5 +79,30 @@ public class TestConfiguration {
 	@Bean
 	PlatformTransactionManager transactionManager() {
 		return new DataSourceTransactionManager(dataSource);
+	}
+
+	@Bean
+	DataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context,
+												 @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations operations) {
+
+		DelegatingDataAccessStrategy accessStrategy = new DelegatingDataAccessStrategy();
+
+		accessStrategy.setDelegate(new DefaultDataAccessStrategy( //
+				new SqlGeneratorSource(context), //
+				operations, //
+				context, //
+				accessStrategy) //
+		);
+
+		return accessStrategy;
+	}
+
+	@Bean
+	JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
+										  Optional<ConversionCustomizer> conversionCustomizer) {
+
+		return new JdbcMappingContext(
+				namingStrategy.orElse(new DefaultNamingStrategy()),
+				conversionCustomizer.orElse(conversionService -> {}));
 	}
 }

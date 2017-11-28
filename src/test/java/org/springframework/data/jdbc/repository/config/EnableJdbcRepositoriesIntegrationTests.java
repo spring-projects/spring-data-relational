@@ -15,23 +15,18 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import lombok.Data;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.SqlGeneratorSource;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -73,13 +68,6 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		@Bean
 		Class<?> testClass() {
 			return EnableJdbcRepositoriesIntegrationTests.class;
-		}
-
-
-		@Bean
-		DefaultDataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context,
-															@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations operations) {
-			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), operations, context);
 		}
 	}
 }
