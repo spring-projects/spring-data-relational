@@ -4,9 +4,20 @@ The primary goal of the http://projects.spring.io/spring-data[Spring Data] proje
 
 == This is NOT an ORM
 
-Spring Data JDBC does not try to be an ORM. It is not a competitor to JPA. Instead it is more of a construction kit for your personal ORM that you can define the way you like or need it.
+Spring Data JDBC does not try to be an ORM. It is not a competitor to JPA.
+Instead it is more of a construction kit for your personal ORM that you can define the way you like or need it.
 
-This means that it does rather little out of the box. But it offers plenty of places where you can put your own logic, or integrate it with the technology of your choice for generating SQL statements.
+This means that it does rather little out of the box.
+But it offers plenty of places where you can put your own logic, or integrate it with the technology of your choice for generating SQL statements.
+
+== The Aggregate Root
+
+Spring Data repositories are inspired by the repository as described in the book Domain Driven Design by Eric Evans.
+One consequence of this is that you should have a repository per Aggregate Root.
+Aggregate Root is another concept from the same book and describes an entity which controls the lifecycle of other entities which together are an Aggregate.
+An Aggregate is a subset of your model which is consistent between method calls to your Aggregate Root.
+
+Spring Data JDBC tries its best to encourage modelling your domain along these ideas.
 
 == Maven Coordinates
 
@@ -56,6 +67,49 @@ public void someMethod() {
 	Person person = repository.save(new Person());
 }
 ----
+
+==== Supported types in your entity
+
+Properties of the following types are currently supported:
+
+* all primitive types and their boxed types (`int`, `float`, `Integer`, `Float` ...)
+
+* enums get mapped to their name.
+
+* `String`
+
+* `java.util.Date`, `java.time.LocalDate`, `java.time.LocalDateTime`, `java.time.LocalTime`
+
+and anything your database driver accepts.
+
+* references to other entities, which will be considered a one-to-one relationship.
+The table of the referenced entity is expected to have an additional column named like the table of the referencing entity.
+This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` according to your preferences.
+
+* `Set<some entity>` will be considered a one-to-many relationship.
+The table of the referenced entity is expected to have an additional column named like the table of the referencing entity.
+This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` according to your preferences.
+
+* `Map<simple type, some entity>` will be considered a qualified one to many relationship.
+The table of the referenced entity is expected to have two additional columns: One named like the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
+This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` and `NamingStrategy.getKeyColumn(JdbcPersistentProperty property)` according to your preferences.
+
+The handling of referenced entities is very limited.
+Part of this is because this project is still before it's first release.
+
+But another reason is the idea of <<The Aggregate Root,Aggregate Roots>> as described above.
+If you reference another entity that entity is by definition part of your Aggregate.
+So if you remove the reference it will get deleted.
+This also means references will be 1-1 or 1-n, but not n-1 or n-m.
+
+If your having n-1 or n-m references you are probably dealing with two separate Aggregates.
+References between those should be encode as simple ids, which should map just fine with Spring Data JDBC.
+
+Also the mapping we offer is very limited for a third reason which already was mentioned at the very beginning of the document: This is not an ORM.
+We will offer ways to plug in your own SQL in various ways.
+But the default mapping itself will stay limited.
+If you want highly customizable mappings which support almost everything one can imagine you will probably be much happier with (Spring Data) JPA.
+Which is a very powerful and mature technology.
 
 === Id generation
 
@@ -208,6 +262,8 @@ Just annotate a method with a SQL query to use this whenever the method gets cal
 
 The current MyBatis supported is rather elaborate in that it allows to execute multiple statements for a single method call.
 But sometimes less is more and it should be possible to annotate a method with a simple annotation to identify a SQL statement in a MyBatis mapping to be executed.
+
+=== Support of lists in entities
 
 == Spring Boot integration
 
