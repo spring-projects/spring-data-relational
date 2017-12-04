@@ -24,11 +24,7 @@ import java.util.stream.StreamSupport;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
-import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentEntityInformation;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.mapping.model.*;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
@@ -233,9 +229,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return parameters;
 	}
 
+	@SuppressWarnings("unchecked")
 	private <S, ID> ID getIdValueOrNull(S instance, JdbcPersistentEntity<S> persistentEntity) {
 
-		EntityInformation<S, ID> entityInformation = new BasicJdbcPersistentEntityInformation<>(persistentEntity);
+		EntityInformation<S, ID> entityInformation = (EntityInformation<S, ID>) context.getRequiredPersistentEntityInformation(persistentEntity.getType());
 
 		ID idValue = entityInformation.getId(instance);
 

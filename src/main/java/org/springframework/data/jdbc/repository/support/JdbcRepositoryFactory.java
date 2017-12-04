@@ -18,9 +18,7 @@ package org.springframework.data.jdbc.repository.support;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcEntityTemplate;
-import org.springframework.data.jdbc.mapping.model.BasicJdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.repository.core.EntityInformation;
@@ -50,9 +48,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
-
-		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(aClass);
-		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) persistentEntity);
+		return (EntityInformation<T, ID>) context.getRequiredPersistentEntityInformation(aClass);
 	}
 
 	@SuppressWarnings("unchecked")
