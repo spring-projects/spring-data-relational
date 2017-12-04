@@ -15,7 +15,9 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.repository.core.support.PersistentEntityInformation;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Jens Schauder
@@ -31,6 +33,18 @@ public class BasicJdbcPersistentEntityInformation<T, ID> extends PersistentEntit
 		super(persistentEntity);
 
 		this.persistentEntity = persistentEntity;
+	}
+
+	@Override
+	public boolean isNew(T entity) {
+		return entity instanceof Persistable ? ((Persistable) entity).isNew() : super.isNew(entity);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Nullable
+	@Override
+	public ID getId(T entity) {
+		return entity instanceof Persistable ? ((Persistable<ID>)entity).getId() : super.getId(entity);
 	}
 
 	/*
