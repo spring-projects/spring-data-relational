@@ -23,7 +23,7 @@ import java.util.Map;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 
 /**
- * Provides {@link SqlGenerator}s per domain type. Instances get cched, so when asked multiple times for the same domain
+ * Provides {@link SqlGenerator}s per domain type. Instances get cached, so when asked multiple times for the same domain
  * type, the same generator will get returned.
  *
  * @author Jens Schauder
