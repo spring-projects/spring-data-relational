@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
@@ -38,16 +39,22 @@ import org.springframework.data.mapping.PropertyPath;
  * For methods taking a {@link PropertyPath} the entityTyoe if the context is set to the class of the leaf type.
  *
  * @author Jens Schauder
+ * @author Kazuki Shimizu
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	private static final String MAPPER_SUFFIX = "Mapper";
 
-	private final SqlSessionFactory sqlSessionFactory;
+	private final SqlSession sqlSession;
 
 	public MyBatisDataAccessStrategy(SqlSessionFactory sqlSessionFactory) {
 
-		this.sqlSessionFactory = sqlSessionFactory;
+		this(new SqlSessionTemplate(sqlSessionFactory));
+	}
+
+	public MyBatisDataAccessStrategy(SqlSessionTemplate sqlSessionTemplate) {
+
+		this.sqlSession = sqlSessionTemplate;
 	}
 
 	@Override
@@ -139,6 +146,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private SqlSession sqlSession() {
-		return sqlSessionFactory.openSession();
+		return this.sqlSession;
 	}
 }

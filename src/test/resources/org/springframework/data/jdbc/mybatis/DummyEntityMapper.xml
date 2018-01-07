@@ -12,11 +12,19 @@
 	<insert id="insert" parameterType="MyBatisContext" useGeneratedKeys="true" keyProperty="instance.id" keyColumn="ID">
 		INSERT INTO DummyEntity (id) VALUES (DEFAULT)
 	</insert>
-	<select id="findById" resultType="MyBatisContext" resultMap="dummyEntityMap">
+	<select id="findById" resultMap="dummyEntityMap">
 		SELECT
 			id,
 			'Name based on an id' || id AS name
 		FROM DummyEntity
 		WHERE id = #{id}
 	</select>
+	<select id="findAll" resultMap="dummyEntityMap">
+		SELECT
+			id,
+			'Name based on an id' || id AS name
+		FROM DummyEntity
+		ORDER BY id
+	</select>
+
 </mapper>
