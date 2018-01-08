@@ -15,21 +15,20 @@
  */
 package org.springframework.data.jdbc.core.conversion;
 
+import static org.mockito.Mockito.*;
+
+import org.junit.Test;
+
 /**
- * Exception thrown when during the execution of a {@link DbAction} an exception gets thrown. Provides additional
- * context information about the action and the entity.
- *
  * @author Jens Schauder
  */
-public class DbActionExecutionException extends RuntimeException {
-	public DbActionExecutionException(DbAction<?> action, Throwable cause) {
-		super( //
-				String.format("Failed to execute %s for instance %s of type %s with path %s", //
-						action.getClass().getSimpleName(), //
-						action.getEntity(), //
-						action.getEntityType(), //
-						action.getPropertyPath() == null ? "" : action.getPropertyPath().toDotPath() //
-				), //
-				cause);
+public class DbActionExecutionExceptionTest {
+
+	@Test // DATAJDBC-162
+	public void constructorWorksWithNullPropertyPath() {
+
+		DbAction<?> action = mock(DbAction.class);
+		new DbActionExecutionException(action, null);
 	}
+
 }
