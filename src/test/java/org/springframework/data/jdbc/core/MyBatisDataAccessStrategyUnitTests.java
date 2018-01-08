@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 		accessStrategy.deleteAll(PropertyPath.from("class.name.bytes", String.class));
 
-		verify(session).delete(eq("java.lang.StringMapper.deleteAll.class.name.bytes"), captor.capture());
+		verify(session).delete(eq("java.lang.StringMapper.deleteAll-class-name-bytes"), captor.capture());
 
 		assertThat(captor.getValue()) //
 				.isNotNull() //
@@ -167,7 +167,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 		accessStrategy.delete("rootid", PropertyPath.from("class.name.bytes", String.class));
 
-		verify(session).delete(eq("java.lang.StringMapper.delete.class.name.bytes"), captor.capture());
+		verify(session).delete(eq("java.lang.StringMapper.delete-class-name-bytes"), captor.capture());
 
 		assertThat(captor.getValue()) //
 				.isNotNull() //
@@ -248,6 +248,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 		);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test // DATAJDBC-123
 	public void findAllByProperty() {
 
@@ -259,7 +260,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 		accessStrategy.findAllByProperty("id", property);
 
-		verify(session).selectList(eq("java.lang.StringMapper.findAllByProperty.propertyName"), captor.capture());
+		verify(session).selectList(eq("java.lang.StringMapper.findAllByProperty-propertyName"), captor.capture());
 
 		assertThat(captor.getValue()) //
 				.isNotNull() //
@@ -295,6 +296,31 @@ public class MyBatisDataAccessStrategyUnitTests {
 						"id", //
 						String.class, //
 						null //
+		);
+	}
+
+	@Test // DATAJDBC-157
+	public void count() {
+
+		doReturn(0L).when(session).selectOne(anyString(), any());
+
+		accessStrategy.count(String.class);
+
+
+		verify(session).selectOne(eq("java.lang.StringMapper.count"), captor.capture());
+
+		assertThat(captor.getValue()) //
+				.isNotNull() //
+				.extracting( //
+						MyBatisContext::getInstance, //
+						MyBatisContext::getId, //
+						MyBatisContext::getDomainType, //
+						c -> c.get("key") //
+				).containsExactly( //
+				null, //
+				null, //
+				String.class, //
+				null //
 		);
 	}
 

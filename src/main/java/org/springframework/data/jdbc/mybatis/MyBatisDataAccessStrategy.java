@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,12 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
 
 /**
- * {@link DataAccessStrategy} implementation based on MyBatis.
- *
- * Each method gets mapped to a statement. The name of the statement gets constructed as follows:
- *
- * The namespace is based on the class of the entity plus the suffix "Mapper". This is then followed by the method name separated by a dot.
- *
- * For methods taking a {@link PropertyPath} as argument, the relevant entity is that of the root of the path, and the path itself gets as dot separated String appended to the statement name.
- *
- * Each statement gets an instance of {@link MyBatisContext}, which at least has the entityType set.
- *
- * For methods taking a {@link PropertyPath} the entityTyoe if the context is set to the class of the leaf type.
+ * {@link DataAccessStrategy} implementation based on MyBatis. Each method gets mapped to a statement. The name of the
+ * statement gets constructed as follows: The namespace is based on the class of the entity plus the suffix "Mapper".
+ * This is then followed by the method name separated by a dot. For methods taking a {@link PropertyPath} as argument,
+ * the relevant entity is that of the root of the path, and the path itself gets as dot separated String appended to the
+ * statement name. Each statement gets an instance of {@link MyBatisContext}, which at least has the entityType set. For
+ * methods taking a {@link PropertyPath} the entityTyoe if the context is set to the class of the leaf type.
  *
  * @author Jens Schauder
  */
@@ -73,7 +68,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void delete(Object rootId, PropertyPath propertyPath) {
 
-		sqlSession().delete(mapper(propertyPath.getOwningType().getType()) + ".delete." + propertyPath.toDotPath(),
+		sqlSession().delete(mapper(propertyPath.getOwningType().getType()) + ".delete-" + toDashPath(propertyPath),
 				new MyBatisContext(rootId, null, propertyPath.getLeafProperty().getTypeInformation().getType(),
 						Collections.emptyMap()));
 	}
@@ -94,7 +89,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		Class leaveType = propertyPath.getLeafProperty().getTypeInformation().getType();
 
 		sqlSession().delete( //
-				mapper(baseType) + ".deleteAll." + propertyPath.toDotPath(), //
+				mapper(baseType) + ".deleteAll-" + toDashPath(propertyPath), //
 				new MyBatisContext(null, null, leaveType, Collections.emptyMap()) //
 		);
 	}
@@ -119,7 +114,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
-		return sqlSession().selectList(mapper(property.getOwner().getType()) + ".findAllByProperty." + property.getName(),
+		return sqlSession().selectList(mapper(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
 				new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap()));
 	}
 
@@ -131,7 +126,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public long count(Class<?> domainType) {
-		return sqlSession().selectOne(mapper(domainType) + ".count");
+		return sqlSession().selectOne(mapper(domainType) + ".count",
+				new MyBatisContext(null, null, domainType, Collections.emptyMap()));
 	}
 
 	private String mapper(Class<?> domainType) {
@@ -140,5 +136,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	private SqlSession sqlSession() {
 		return sqlSessionFactory.openSession();
+	}
+
+	private String toDashPath(PropertyPath propertyPath) {
+		return propertyPath.toDotPath().replaceAll("\\.", "-");
 	}
 }
