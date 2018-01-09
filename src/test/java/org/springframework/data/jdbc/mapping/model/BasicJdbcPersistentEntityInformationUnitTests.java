@@ -15,11 +15,13 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Java6Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 
 /**
@@ -27,7 +29,7 @@ import org.springframework.lang.Nullable;
  */
 public class BasicJdbcPersistentEntityInformationUnitTests {
 
-	JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(), cs -> {});
+	JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(), mock(NamedParameterJdbcOperations.class), cs -> {});
 	private DummyEntity dummyEntity = new DummyEntity();
 	private PersistableDummyEntity persistableDummyEntity = new PersistableDummyEntity();
 

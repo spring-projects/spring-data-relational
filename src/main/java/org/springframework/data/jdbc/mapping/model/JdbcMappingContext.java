@@ -37,6 +37,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * {@link MappingContext} implementation for JDBC.
@@ -53,20 +54,22 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 			Temporal.class //
 	));
 
-	private final @Getter NamingStrategy namingStrategy;
+	@Getter private final NamingStrategy namingStrategy;
+	@Getter private final NamedParameterJdbcOperations template;
 	private GenericConversionService conversions = getDefaultConversionService();
 
-	public JdbcMappingContext(NamingStrategy namingStrategy, ConversionCustomizer customizer) {
+	public JdbcMappingContext(NamingStrategy namingStrategy, NamedParameterJdbcOperations template,
+			ConversionCustomizer customizer) {
 
 		this.namingStrategy = namingStrategy;
+		this.template = template;
 
 		customizer.customize(conversions);
-
 		setSimpleTypeHolder(new SimpleTypeHolder(CUSTOM_SIMPLE_TYPES, true));
 	}
 
-	public JdbcMappingContext() {
-		this(new DefaultNamingStrategy(), __ -> {});
+	public JdbcMappingContext(NamedParameterJdbcOperations template) {
+		this(new DefaultNamingStrategy(), template, __ -> {});
 	}
 
 	public List<PropertyPath> referencedEntities(Class<?> rootType, PropertyPath path) {
@@ -126,5 +129,4 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 		return conversionService;
 	}
-
 }

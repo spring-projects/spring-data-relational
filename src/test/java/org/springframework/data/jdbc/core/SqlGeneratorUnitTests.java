@@ -15,13 +15,15 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import java.util.Map;
 import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
@@ -29,8 +31,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
-
-import static org.assertj.core.api.Assertions.*;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -46,7 +47,7 @@ public class SqlGeneratorUnitTests {
 	public void setUp() {
 
 		NamingStrategy namingStrategy = new PrefixingNamingStrategy();
-		JdbcMappingContext context = new JdbcMappingContext(namingStrategy, __ -> {});
+		JdbcMappingContext context = new JdbcMappingContext(namingStrategy, mock(NamedParameterJdbcOperations.class), __ -> {});
 		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 		this.sqlGenerator = new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}

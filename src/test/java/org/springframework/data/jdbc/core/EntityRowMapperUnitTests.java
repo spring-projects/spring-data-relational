@@ -43,6 +43,7 @@ import org.springframework.data.convert.Jsr310Converters;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
@@ -117,7 +118,7 @@ public class EntityRowMapperUnitTests {
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
 
-		JdbcMappingContext context = new JdbcMappingContext();
+		JdbcMappingContext context = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determin what kind of resultset is needed for subsequent selects.
