@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public @interface EnableJdbcRepositories {
 	 * {@code META-INF/jdbc-named-queries.properties}.
 	 */
 	String namedQueriesLocation() default "";
-	
+
 	/**
 	 * Returns the postfix to be used when looking up custom repository implementations. Defaults to {@literal Impl}. So
 	 * for a repository named {@code PersonRepository} the corresponding implementation class will be looked up scanning

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 	}
 
 	private <T> String getColumnNameForReverseColumn(Insert<T> insert, JdbcPersistentEntity<?> persistentEntity) {
-		
+
 		PropertyPath path = insert.getPropertyPath().getPath();
 
 		Assert.notNull(path, "There shouldn't be an insert depending on another insert without having a PropertyPath.");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public interface JdbcPersistentEntityInformation<T, ID> extends EntityInformatio
 
 	/**
 	 * Returns the identifier of the given entity or throws and exception if it can't be obtained.
-	 * 
+	 *
 	 * @param entity must not be {@literal null}.
 	 * @return the identifier of the given entity
 	 * @throws IllegalArgumentException in case no identifier can be obtained for the given entity.

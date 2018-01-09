@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public interface Identifier {
 
 	/**
 	 * Creates a new {@link Specified} identifier for the given, non-null value.
-	 * 
+	 *
 	 * @param identifier must not be {@literal null}.
 	 * @return will never be {@literal null}.
 	 */
@@ -46,7 +46,7 @@ public interface Identifier {
 
 	/**
 	 * Creates a new {@link Identifier} for the given optional source value.
-	 * 
+	 *
 	 * @param identifier must not be {@literal null}.
 	 * @return
 	 */
@@ -59,7 +59,7 @@ public interface Identifier {
 
 	/**
 	 * Returns the identifier value.
-	 * 
+	 *
 	 * @return will never be {@literal null}.
 	 */
 	Optional<? extends Object> getOptionalValue();
@@ -73,7 +73,7 @@ public interface Identifier {
 
 		/**
 		 * Returns the identifier value.
-		 * 
+		 *
 		 * @return will never be {@literal null}.
 		 */
 		default Object getValue() {

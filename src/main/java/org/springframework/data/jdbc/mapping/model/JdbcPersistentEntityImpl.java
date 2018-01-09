@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersisten
 
 	/**
 	 * Creates a new {@link JdbcPersistentEntityImpl} for the given {@link TypeInformation}.
-	 * 
+	 *
 	 * @param information must not be {@literal null}.
 	 */
 	JdbcPersistentEntityImpl(TypeInformation<T> information, NamingStrategy namingStrategy) {
@@ -46,7 +46,7 @@ class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersisten
 		this.tableName = this.namingStrategy.getQualifiedTableName(getType());
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity#getIdColumn()
 	 */

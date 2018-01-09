@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 /**
  * Basic configuration expecting subclasses to provide a {@link DataSource} via {@link #createDataSource()} to be
  * exposed to the {@link ApplicationContext}.
- * 
+ *
  * @author Jens Schauder
  * @author Oliver Gierke
  */
@@ -63,7 +63,7 @@ abstract class DataSourceConfiguration {
 
 	/**
 	 * Return the {@link DataSource} to be exposed as a Spring bean.
-	 * 
+	 *
 	 * @return
 	 */
 	protected abstract DataSource createDataSource();
@@ -72,7 +72,7 @@ abstract class DataSourceConfiguration {
 	 * Callback to customize the {@link ResourceDatabasePopulator} before it will be applied to the {@link DataSource}. It
 	 * will be pre-populated with a SQL script derived from the name of the current test class and the activated Spring
 	 * profile.
-	 * 
+	 *
 	 * @param populator will never be {@literal null}.
 	 */
 	protected void customizePopulator(ResourceDatabasePopulator populator) {}

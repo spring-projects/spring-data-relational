@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ class SqlGenerator {
 	/**
 	 * Adds the columns to the provided {@link SelectBuilder} representing simplem properties, including those from
 	 * one-to-one relationships.
-	 * 
+	 *
 	 * @param builder The {@link SelectBuilder} to be modified.
 	 */
 	private void addColumnsAndJoinsForOneToOneReferences(SelectBuilder builder) {

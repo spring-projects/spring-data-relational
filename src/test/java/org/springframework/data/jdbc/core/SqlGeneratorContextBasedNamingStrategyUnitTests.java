@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	public void cascadingDeleteSecondLevel() {
 
 		testAgainstMultipleUsers(user -> {
-			
+
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
 			String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref.further", DummyEntity.class));
@@ -187,7 +187,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 		JdbcMappingContext context = new JdbcMappingContext(namingStrategy, __ -> {});
 		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-		
+
 		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}
 

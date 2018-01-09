@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ import org.springframework.util.Assert;
 
 /**
  * Utility methods for testing.
- * 
+ *
  * @author Oliver Gierke
  */
 public interface TestUtils {
 
 	/**
 	 * Returns the name of the SQL script to be loaded for the given test class and database type.
-	 * 
+	 *
 	 * @param testClass must not be {@literal null}.
 	 * @param databaseType must not be {@literal null} or empty.
 	 * @return

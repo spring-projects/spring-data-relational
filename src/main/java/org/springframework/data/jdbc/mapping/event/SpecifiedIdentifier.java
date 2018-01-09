@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
  * Simple value object for {@link Specified}.
- * 
+ *
  * @author Jens Schauder
  * @author Oliver Gierke
  * @since 2.0
@@ -33,7 +33,7 @@ class SpecifiedIdentifier implements Specified {
 
 	Object value;
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.mapping.event.Identifier#getOptionalValue()
 	 */
