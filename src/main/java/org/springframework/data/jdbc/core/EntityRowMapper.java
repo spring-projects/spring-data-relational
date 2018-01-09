@@ -43,7 +43,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Oliver Gierke
  * @since 2.0
  */
-class EntityRowMapper<T> implements RowMapper<T> {
+public class EntityRowMapper<T> implements RowMapper<T> {
 
 	private final JdbcPersistentEntity<T> entity;
 	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();

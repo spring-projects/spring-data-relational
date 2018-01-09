@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +34,7 @@ import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for the {@link JdbcEntityWriter}
@@ -43,7 +45,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 public class JdbcEntityWriterUnitTests {
 
 	public static final long SOME_ENTITY_ID = 23L;
-	JdbcEntityWriter converter = new JdbcEntityWriter(new JdbcMappingContext());
+	JdbcEntityWriter converter = new JdbcEntityWriter(new JdbcMappingContext(mock(NamedParameterJdbcOperations.class)));
 
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {

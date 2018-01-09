@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +30,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests to verify a contextual {@link NamingStrategy} implementation that customizes using a user-centric {@link ThreadLocal}.
@@ -185,7 +187,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	 */
 	private SqlGenerator configureSqlGenerator(NamingStrategy namingStrategy) {
 
-		JdbcMappingContext context = new JdbcMappingContext(namingStrategy, __ -> {});
+		JdbcMappingContext context = new JdbcMappingContext(namingStrategy, mock(NamedParameterJdbcOperations.class), __ -> {});
 		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));

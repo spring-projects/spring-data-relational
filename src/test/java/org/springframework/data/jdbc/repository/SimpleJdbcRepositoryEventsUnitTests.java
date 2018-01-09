@@ -46,7 +46,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Before
 	public void before() {
 
-		final JdbcMappingContext context = new JdbcMappingContext();
+		final JdbcMappingContext context = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory( //
 				publisher, //
 				context, //

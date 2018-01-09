@@ -30,7 +30,10 @@ import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
-import org.springframework.data.jdbc.mapping.model.*;
+import org.springframework.data.jdbc.mapping.model.ConversionCustomizer;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -54,19 +57,16 @@ public class TestConfiguration {
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory() {
 
-		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy() {
-			@Override
-			public String getColumnName(JdbcPersistentProperty property) {
-				return super.getColumnName(property);
-			}
-		}, __ -> {});
+		NamedParameterJdbcTemplate jdbcTemplate = namedParameterJdbcTemplate();
+
+		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(), jdbcTemplate, __ -> {});
 
 		return new JdbcRepositoryFactory( //
 				publisher, //
 				context, //
 				new DefaultDataAccessStrategy( //
 						new SqlGeneratorSource(context), //
-						namedParameterJdbcTemplate(), //
+						jdbcTemplate, //
 						context) //
 		);
 	}
@@ -83,7 +83,7 @@ public class TestConfiguration {
 
 	@Bean
 	DataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context,
-												 @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations operations) {
+			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations operations) {
 
 		DelegatingDataAccessStrategy accessStrategy = new DelegatingDataAccessStrategy();
 
@@ -98,11 +98,13 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
-										  Optional<ConversionCustomizer> conversionCustomizer) {
+	JdbcMappingContext jdbcMappingContext(NamedParameterJdbcOperations template, Optional<NamingStrategy> namingStrategy,
+			Optional<ConversionCustomizer> conversionCustomizer) {
 
-		return new JdbcMappingContext(
-				namingStrategy.orElse(new DefaultNamingStrategy()),
-				conversionCustomizer.orElse(conversionService -> {}));
+		return new JdbcMappingContext( //
+				namingStrategy.orElse(new DefaultNamingStrategy()), //
+				template, //
+				conversionCustomizer.orElse(conversionService -> {}) //
+		);
 	}
 }

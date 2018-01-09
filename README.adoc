@@ -57,6 +57,19 @@ public void someMethod() {
 }
 ----
 
+=== Query annotation
+
+You can annotate a query method with `@Query` to specify a SQL statement to be used for that method.
+You can bind method arguments using named parameters in the SQL statement like in the following example:
+
+[source,java]
+----
+@Query("SELECT * FROM DUMMYENTITY WHERE name  < :upper and name > :lower")
+List<DummyEntity> findByNameRange(@Param("lower") String lower, @Param("upper") String upper);
+----
+
+If you compile your sources with the `-parameters` compiler flag you can omit the `@Param` annotations.
+
 === Id generation
 
 Spring Data JDBC uses the id to identify entities but also to determine if an entity is new or already existing in the database.
@@ -200,9 +213,12 @@ Note that the type used for prefixing the statement name is the name of the aggr
 
 == Features planned for the not to far future
 
-=== Query annotation
+=== Advance query annotation support
 
-Just annotate a method with a SQL query to use this whenever the method gets called.
+* customizable `RowMapper`
+* projections
+* modifying queries
+* SpEL expressions
 
 === MyBatis per method support
 
@@ -218,7 +234,7 @@ Currently you will need to build it locally.
 == Getting Help
 
 Right now the best source of information is the source code in this repository.
-Especially the integration tests (type `t` and then `IntegrationTests.java`)
+Especially the integration tests (When you are reading this on github type `t` and then `IntegrationTests.java`)
 
 We are keeping an eye on the (soon to be created) https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on stackoverflow].
 
