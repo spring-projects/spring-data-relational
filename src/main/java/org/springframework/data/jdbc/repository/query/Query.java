@@ -22,6 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.springframework.data.annotation.QueryAnnotation;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Annotation to provide SQL statements that will get used for executing the method.
@@ -36,5 +37,14 @@ import org.springframework.data.annotation.QueryAnnotation;
 @QueryAnnotation
 @Documented
 public @interface Query {
+
+	/**
+	 * The SQL statement to execute when the annotated method gets invoked.
+	 */
 	String value();
+
+	/**
+	 * Optional {@link RowMapper} to use to convert the result of the query to domain class instances.
+	 */
+	Class<? extends RowMapper> rowMapperClass() default RowMapper.class;
 }

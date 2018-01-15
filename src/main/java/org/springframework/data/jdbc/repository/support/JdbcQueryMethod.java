@@ -28,9 +28,7 @@ import org.springframework.lang.Nullable;
 
 /**
  * {@link QueryMethod} implementation that implements a method by executing the query from a {@link Query} annotation on
- * that method.
- *
- * Binds method arguments to named parameters in the SQL statement.
+ * that method. Binds method arguments to named parameters in the SQL statement.
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
@@ -40,6 +38,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	private final Method method;
 
 	public JdbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory) {
+
 		super(method, metadata, factory);
 
 		this.method = method;
@@ -52,12 +51,18 @@ public class JdbcQueryMethod extends QueryMethod {
 	 */
 	@Nullable
 	public String getAnnotatedQuery() {
-
-		Query queryAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
-
-		return queryAnnotation == null ? null : queryAnnotation.value();
+		return getMergedAnnotationAttribute("value");
 	}
-	
+
+	/**
+	 * Returns the class to be used as {@link org.springframework.jdbc.core.RowMapper}
+	 *
+	 * @return May be {@code null}.
+	 */
+	public Class<?> getRowMapperClass() {
+		return getMergedAnnotationAttribute("rowMapperClass");
+	}
+
 	/**
 	 * Returns whether the query method is a modifying one.
 	 *
@@ -68,4 +73,10 @@ public class JdbcQueryMethod extends QueryMethod {
 		return AnnotationUtils.findAnnotation(method, Modifying.class) != null;
 	}
 
+	@SuppressWarnings("unchecked")
+	private <T> T getMergedAnnotationAttribute(String attribute) {
+
+		Query queryAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
+		return (T) AnnotationUtils.getValue(queryAnnotation, attribute);
+	}
 }
