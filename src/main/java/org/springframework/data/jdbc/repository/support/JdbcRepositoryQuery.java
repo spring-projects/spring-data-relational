@@ -15,11 +15,13 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.util.StringUtils;
 
 /**
  * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
@@ -36,29 +38,34 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private final JdbcMappingContext context;
 	private final RowMapper<?> rowMapper;
 
-	JdbcRepositoryQuery(JdbcQueryMethod queryMethod, JdbcMappingContext context, RowMapper rowMapper) {
+	JdbcRepositoryQuery(JdbcQueryMethod queryMethod, JdbcMappingContext context, RowMapper defaultRowMapper) {
 
 		this.queryMethod = queryMethod;
 		this.context = context;
-		this.rowMapper = rowMapper;
+		this.rowMapper = createRowMapper(queryMethod, defaultRowMapper);
+	}
+
+	private static RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod, RowMapper defaultRowMapper) {
+
+		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
+
+		return rowMapperClass == null || rowMapperClass == RowMapper.class ? defaultRowMapper
+				: (RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass);
 	}
 
 	@Override
 	public Object execute(Object[] objects) {
 
-		String query = queryMethod.getAnnotatedQuery();
+		String query = determineQuery();
 
-		MapSqlParameterSource parameters = new MapSqlParameterSource();
-		queryMethod.getParameters().getBindableParameters().forEach(p -> {
-
-			String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
-			parameters.addValue(parameterName, objects[p.getIndex()]);
-		});
+		MapSqlParameterSource parameters = bindParameters(objects);
 
 		if (queryMethod.isModifyingQuery()) {
+
 			int updatedCount = context.getTemplate().update(query, parameters);
 			Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
-			return (returnedObjectType == boolean.class || returnedObjectType == Boolean.class) ? updatedCount != 0 : updatedCount;
+			return (returnedObjectType == boolean.class || returnedObjectType == Boolean.class) ? updatedCount != 0
+					: updatedCount;
 		}
 
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
@@ -75,5 +82,26 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	@Override
 	public JdbcQueryMethod getQueryMethod() {
 		return queryMethod;
+	}
+
+	private String determineQuery() {
+
+		String query = queryMethod.getAnnotatedQuery();
+
+		if (StringUtils.isEmpty(query)) {
+			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
+		}
+		return query;
+	}
+
+	private MapSqlParameterSource bindParameters(Object[] objects) {
+
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+		queryMethod.getParameters().getBindableParameters().forEach(p -> {
+
+			String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
+			parameters.addValue(parameterName, objects[p.getIndex()]);
+		});
+		return parameters;
 	}
 }
