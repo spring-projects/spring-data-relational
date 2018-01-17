@@ -53,11 +53,11 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private final DataAccessStrategy accessStrategy;
 	private final JdbcPersistentProperty idProperty;
 
-	public EntityRowMapper(JdbcPersistentEntity<T> entity, ConversionService conversions, JdbcMappingContext context,
-						   DataAccessStrategy accessStrategy) {
+	public EntityRowMapper(JdbcPersistentEntity<T> entity, JdbcMappingContext context,
+			DataAccessStrategy accessStrategy) {
 
 		this.entity = entity;
-		this.conversions = conversions;
+		this.conversions = context.getConversions();
 		this.context = context;
 		this.accessStrategy = accessStrategy;
 

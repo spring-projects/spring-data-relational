@@ -22,6 +22,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
@@ -41,6 +42,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private ApplicationEventPublisher publisher;
 	private JdbcMappingContext mappingContext;
 	private DataAccessStrategy dataAccessStrategy;
+	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
 
 	JdbcRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
 		super(repositoryInterface);
@@ -60,7 +62,15 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	 */
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return new JdbcRepositoryFactory(publisher, mappingContext, dataAccessStrategy);
+
+		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(publisher, mappingContext,
+				dataAccessStrategy);
+
+		if (rowMapperMap != null) {
+			jdbcRepositoryFactory.setRowMapperMap(rowMapperMap);
+		}
+
+		return jdbcRepositoryFactory;
 	}
 
 	@Autowired
@@ -73,6 +83,11 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	@Autowired
 	public void setDataAccessStrategy(DataAccessStrategy dataAccessStrategy) {
 		this.dataAccessStrategy = dataAccessStrategy;
+	}
+
+	@Autowired(required = false)
+	public void setRowMapperMap(RowMapperMap rowMapperMap) {
+		this.rowMapperMap = rowMapperMap;
 	}
 
 	@Override

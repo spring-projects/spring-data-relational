@@ -22,6 +22,7 @@ import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcEntityTemplate;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -42,6 +43,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final JdbcMappingContext context;
 	private final ApplicationEventPublisher publisher;
 	private final DataAccessStrategy accessStrategy;
+	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
 
 	public JdbcRepositoryFactory(ApplicationEventPublisher publisher, JdbcMappingContext context,
 			DataAccessStrategy dataAccessStrategy) {
@@ -84,6 +86,10 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(evaluationContextProvider, context, accessStrategy));
+		return Optional.of(new JdbcQueryLookupStrategy(evaluationContextProvider, context, accessStrategy, rowMapperMap));
+	}
+
+	public void setRowMapperMap(RowMapperMap rowMapperMap) {
+		this.rowMapperMap = rowMapperMap;
 	}
 }

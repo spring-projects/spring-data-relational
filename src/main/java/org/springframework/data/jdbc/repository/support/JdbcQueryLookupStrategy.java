@@ -21,6 +21,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -40,13 +41,15 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 	private final JdbcMappingContext context;
 	private final DataAccessStrategy accessStrategy;
+	private final RowMapperMap rowMapperMap;
 	private final ConversionService conversionService;
 
 	JdbcQueryLookupStrategy(EvaluationContextProvider evaluationContextProvider, JdbcMappingContext context,
-			DataAccessStrategy accessStrategy) {
+			DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap) {
 
 		this.context = context;
 		this.accessStrategy = accessStrategy;
+		this.rowMapperMap = rowMapperMap;
 		this.conversionService = context.getConversions();
 	}
 
@@ -55,22 +58,32 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			ProjectionFactory projectionFactory, NamedQueries namedQueries) {
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
-		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
-		RowMapper<?> rowMapper = queryMethod.isModifyingQuery() ? null : createRowMapper(returnedObjectType);
+		RowMapper<?> rowMapper = queryMethod.isModifyingQuery() ? null : createRowMapper(queryMethod);
 
 		return new JdbcRepositoryQuery(queryMethod, context, rowMapper);
 	}
 
-	private RowMapper<?> createRowMapper(Class<?> returnedObjectType) {
+	private RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod) {
+
+		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
 		return context.getSimpleTypeHolder().isSimpleType(returnedObjectType)
 				? SingleColumnRowMapper.newInstance(returnedObjectType, conversionService)
-				: new EntityRowMapper<>( //
-						context.getRequiredPersistentEntity(returnedObjectType), //
-						conversionService, //
+				: determineDefaultRowMapper(queryMethod);
+	}
+
+	private RowMapper<?> determineDefaultRowMapper(JdbcQueryMethod queryMethod) {
+
+		Class<?> domainType = queryMethod.getReturnedObjectType();
+
+		RowMapper typeMappedRowMapper = rowMapperMap.rowMapperFor(domainType);
+
+		return typeMappedRowMapper == null //
+				? new EntityRowMapper<>( //
+						context.getRequiredPersistentEntity(domainType), //
 						context, //
-						accessStrategy //
-				);
+						accessStrategy) //
+				: typeMappedRowMapper;
 	}
 }
