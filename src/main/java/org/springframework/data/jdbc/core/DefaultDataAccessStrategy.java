@@ -283,7 +283,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	public <T> EntityRowMapper<T> getEntityRowMapper(Class<T> domainType) {
-		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context.getConversions(), context, accessStrategy);
+		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, accessStrategy);
 	}
 
 	private RowMapper getMapEntityRowMapper(JdbcPersistentProperty property) {

@@ -15,20 +15,28 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import lombok.Data;
 
+import java.lang.reflect.Field;
+
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
+import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Tests the {@link EnableJdbcRepositories} annotation.
@@ -40,7 +48,17 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @ContextConfiguration(classes = TestConfiguration.class)
 public class EnableJdbcRepositoriesIntegrationTests {
 
+	static final Field ROW_MAPPER_MAP = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "rowMapperMap");
+	public static final RowMapper DUMMY_ENTITY_ROW_MAPPER = mock(RowMapper.class);
+	public static final RowMapper STRING_ROW_MAPPER = mock(RowMapper.class);
+
+	@Autowired JdbcRepositoryFactoryBean factoryBean;
 	@Autowired DummyRepository repository;
+
+	@BeforeClass
+	public static void setup() {
+		ROW_MAPPER_MAP.setAccessible(true);
+	}
 
 	@Test // DATAJDBC-100
 	public void repositoryGetsPickedUp() {
@@ -50,6 +68,15 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		Iterable<DummyEntity> all = repository.findAll();
 
 		assertNotNull(all);
+	}
+
+	@Test // DATAJDBC-166
+	public void customRowMapperConfigurationGetsPickedUp() {
+
+		RowMapperMap mapping = (RowMapperMap) ReflectionUtils.getField(ROW_MAPPER_MAP, factoryBean);
+
+		assertThat(mapping.rowMapperFor(String.class)).isEqualTo(STRING_ROW_MAPPER);
+		assertThat(mapping.rowMapperFor(DummyEntity.class)).isEqualTo(DUMMY_ENTITY_ROW_MAPPER);
 	}
 
 	interface DummyRepository extends CrudRepository<DummyEntity, Long> {
@@ -69,5 +96,13 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		Class<?> testClass() {
 			return EnableJdbcRepositoriesIntegrationTests.class;
 		}
+
+		@Bean
+		RowMapperMap rowMappers() {
+			return new ConfigurableRowMapperMap() //
+					.register(DummyEntity.class, DUMMY_ENTITY_ROW_MAPPER) //
+					.register(String.class, STRING_ROW_MAPPER);
+		}
+
 	}
 }

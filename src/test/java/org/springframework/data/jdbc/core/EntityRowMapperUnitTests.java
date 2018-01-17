@@ -28,7 +28,6 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
-import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -204,7 +203,7 @@ public class EntityRowMapperUnitTests {
 		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
 
 		return new EntityRowMapper<>((JdbcPersistentEntity<T>) context.getRequiredPersistentEntity(type),
-				conversionService, context, accessStrategy);
+				context, accessStrategy);
 	}
 
 	private static ResultSet mockResultSet(List<String> columns, Object... values) {

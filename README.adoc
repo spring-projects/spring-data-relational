@@ -124,6 +124,34 @@ List<DummyEntity> findByNameRange(@Param("lower") String lower, @Param("upper") 
 
 If you compile your sources with the `-parameters` compiler flag you can omit the `@Param` annotations.
 
+==== Custom RowMapper
+
+You can configure the `RowMapper` to use using either the `@Query(rowMapperClass = ....)` or you can register a `RowMapperMap` bean and register `RowMapper` per method return type.
+
+[source,java]
+----
+
+		@Bean
+		RowMapperMap rowMappers() {
+			return new ConfigurableRowMapperMap() //
+					.register(Person.class, new PersonRowMapper()) //
+					.register(Address.class, new AddressRowMapper());
+		}
+
+----
+
+When determining the `RowMapper` to use for a method the following steps are followed based on the return type of the method:
+
+1. If the type is a simple type no `RowMapper` is used.
+    Instead the query is expected to return a single row with a single column and a conversion to the return type is applied to that value.
+
+2. The entity classes in the `RowMapperMap` are iterated until one is found that is a superclass or interface of the return type in question.
+    The `RowMapper` registered for that class is used.
+    Iterating happens in the order of registration, so make sure to register more general types after specific ones.
+
+If applicable wrapper type like collections or `Optional` are unwrapped.
+So a return type of `Optional<Person>` will use the type `Person` in the steps above.
+
 === Id generation
 
 Spring Data JDBC uses the id to identify entities but also to determine if an entity is new or already existing in the database.
