@@ -38,7 +38,6 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 
 		this.queryMethod = queryMethod;
 		this.context = context;
-
 		this.rowMapper = rowMapper;
 	}
 

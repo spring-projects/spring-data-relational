@@ -60,8 +60,8 @@ public class QueryAnnotationHsqlIntegrationTests {
 		List<DummyEntity> entities = repository.findByNameContainingCapitalLetter();
 
 		assertThat(entities) //
-				.extracting(e -> e.name) //
-				.containsExactlyInAnyOrder("Example", "EXAMPLE");
+			.extracting(e -> e.name) //
+			.containsExactlyInAnyOrder("Example", "EXAMPLE");
 
 	}
 
@@ -75,8 +75,8 @@ public class QueryAnnotationHsqlIntegrationTests {
 		List<DummyEntity> entities = repository.findByNamedRangeWithNamedParameter("a", "c");
 
 		assertThat(entities) //
-				.extracting(e -> e.name) //
-				.containsExactlyInAnyOrder("b");
+			.extracting(e -> e.name) //
+			.containsExactlyInAnyOrder("b");
 
 	}
 
