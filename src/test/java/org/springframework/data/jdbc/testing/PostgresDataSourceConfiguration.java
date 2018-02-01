@@ -21,25 +21,36 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
  * {@link DataSource} setup for PostgreSQL
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Sedat Gokcen
  */
 @Configuration
 @Profile("postgres")
 public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 
+	private static final PostgreSQLContainer POSTGRESQL_CONTAINER = new PostgreSQLContainer();
+
+	static {
+		POSTGRESQL_CONTAINER.start();
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.testing.DataSourceConfiguration#createDataSource()
 	 */
+	@Override
 	protected DataSource createDataSource() {
 
 		PGSimpleDataSource ds = new PGSimpleDataSource();
-		ds.setUrl("jdbc:postgresql:///postgres");
+		ds.setUrl(POSTGRESQL_CONTAINER.getJdbcUrl());
+		ds.setUser(POSTGRESQL_CONTAINER.getUsername());
+		ds.setPassword(POSTGRESQL_CONTAINER.getPassword());
 
 		return ds;
 	}
