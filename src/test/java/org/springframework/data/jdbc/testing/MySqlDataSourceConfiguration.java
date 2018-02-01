@@ -15,15 +15,16 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.sql.SQLException;
+
 import javax.annotation.PostConstruct;
+import javax.script.ScriptException;
 import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.datasource.init.DataSourceInitializer;
-import org.springframework.jdbc.datasource.init.DatabasePopulator;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.jdbc.ext.ScriptUtils;
 
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
@@ -32,35 +33,45 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Sedat Gokcen
  */
 @Configuration
 @Profile("mysql")
 class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 
+	private static final MySQLContainer MYSQL_CONTAINER = new MySQLContainer();
+
+	static {
+		MYSQL_CONTAINER.withConfigurationOverride("mysql_cnf_override").withDatabaseName("test").start();
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.testing.DataSourceConfiguration#createDataSource()
 	 */
+	@Override
 	protected DataSource createDataSource() {
 
-		MysqlDataSource dataSource = new MysqlDataSource();
-		dataSource.setUrl("jdbc:mysql:///test?user=root");
+		MysqlDataSource dataSource = getCommonDataSource();
+		dataSource.setDatabaseName(MYSQL_CONTAINER.getDatabaseName());
 
 		return dataSource;
 	}
 
 	@PostConstruct
-	public void initDatabase() {
+	public void initDatabase() throws SQLException, ScriptException {
+
+		MysqlDataSource dataSource = getCommonDataSource();
+		ScriptUtils.executeSqlScript(dataSource.getConnection(), null, "DROP DATABASE test;CREATE DATABASE test;");
+	}
+
+	private MysqlDataSource getCommonDataSource() {
 
 		MysqlDataSource dataSource = new MysqlDataSource();
-		dataSource.setUrl("jdbc:mysql:///?user=root");
+		dataSource.setUrl(MYSQL_CONTAINER.getJdbcUrl());
+		dataSource.setUser(MYSQL_CONTAINER.getUsername());
+		dataSource.setPassword(MYSQL_CONTAINER.getPassword());
 
-		ClassPathResource createScript = new ClassPathResource("create-mysql.sql");
-		DatabasePopulator databasePopulator = new ResourceDatabasePopulator(createScript);
-
-		DataSourceInitializer initializer = new DataSourceInitializer();
-		initializer.setDatabasePopulator(databasePopulator);
-		initializer.setDataSource(dataSource);
-		initializer.afterPropertiesSet();
+		return dataSource;
 	}
 }
