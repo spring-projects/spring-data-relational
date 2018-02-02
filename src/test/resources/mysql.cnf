@@ -1,0 +1,4 @@
+[mysqld]
+
+# the only change we make, other params with the comments all together are the default ones.
+lower_case_table_names = 1

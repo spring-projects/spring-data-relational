@@ -24,7 +24,9 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
- * {@link DataSource} setup for PostgreSQL
+ * {@link DataSource} setup for PostgreSQL.
+ *
+ * Starts a docker container with a Postgres database.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
@@ -47,12 +49,12 @@ public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 	@Override
 	protected DataSource createDataSource() {
 
-		PGSimpleDataSource ds = new PGSimpleDataSource();
-		ds.setUrl(POSTGRESQL_CONTAINER.getJdbcUrl());
-		ds.setUser(POSTGRESQL_CONTAINER.getUsername());
-		ds.setPassword(POSTGRESQL_CONTAINER.getPassword());
+		PGSimpleDataSource dataSource = new PGSimpleDataSource();
+		dataSource.setUrl(POSTGRESQL_CONTAINER.getJdbcUrl());
+		dataSource.setUser(POSTGRESQL_CONTAINER.getUsername());
+		dataSource.setPassword(POSTGRESQL_CONTAINER.getPassword());
 
-		return ds;
+		return dataSource;
 	}
 
 	/*

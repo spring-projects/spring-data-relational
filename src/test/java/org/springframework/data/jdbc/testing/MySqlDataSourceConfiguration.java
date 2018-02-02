@@ -31,6 +31,8 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 /**
  * {@link DataSource} setup for MySQL.
  *
+ * Starts a docker container with a MySql database and sets up a database name "test" in it.
+ *
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Sedat Gokcen
@@ -39,10 +41,10 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 @Profile("mysql")
 class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 
-	private static final MySQLContainer MYSQL_CONTAINER = new MySQLContainer();
+	private static final MySQLContainer MYSQL_CONTAINER = new MySQLContainer().withConfigurationOverride("");
 
 	static {
-		MYSQL_CONTAINER.withConfigurationOverride("mysql_cnf_override").withDatabaseName("test").start();
+		MYSQL_CONTAINER.start();
 	}
 
 	/*
@@ -52,7 +54,10 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 	@Override
 	protected DataSource createDataSource() {
 
-		MysqlDataSource dataSource = getCommonDataSource();
+		MysqlDataSource dataSource = new MysqlDataSource();
+		dataSource.setUrl(MYSQL_CONTAINER.getJdbcUrl());
+		dataSource.setUser(MYSQL_CONTAINER.getUsername());
+		dataSource.setPassword(MYSQL_CONTAINER.getPassword());
 		dataSource.setDatabaseName(MYSQL_CONTAINER.getDatabaseName());
 
 		return dataSource;
@@ -60,18 +65,6 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 
 	@PostConstruct
 	public void initDatabase() throws SQLException, ScriptException {
-
-		MysqlDataSource dataSource = getCommonDataSource();
-		ScriptUtils.executeSqlScript(dataSource.getConnection(), null, "DROP DATABASE test;CREATE DATABASE test;");
-	}
-
-	private MysqlDataSource getCommonDataSource() {
-
-		MysqlDataSource dataSource = new MysqlDataSource();
-		dataSource.setUrl(MYSQL_CONTAINER.getJdbcUrl());
-		dataSource.setUser(MYSQL_CONTAINER.getUsername());
-		dataSource.setPassword(MYSQL_CONTAINER.getPassword());
-
-		return dataSource;
+		ScriptUtils.executeSqlScript(createDataSource().getConnection(), null, "DROP DATABASE test;CREATE DATABASE test;");
 	}
 }
