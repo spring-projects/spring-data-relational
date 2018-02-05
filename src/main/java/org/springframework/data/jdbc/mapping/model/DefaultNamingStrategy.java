@@ -23,41 +23,8 @@ package org.springframework.data.jdbc.mapping.model;
  * a different strategy on the fly.
  *
  * @author Greg Turnquist
+ * @author Michael Simons
+ * @deprecated Use {@link NamingStrategy} for a default implementation and implement methods as needed
  */
 public class DefaultNamingStrategy implements NamingStrategy {
-
-	/**
-	 * No schema at all!
-	 */
-	@Override
-	public String getSchema() {
-		return "";
-	}
-
-	/**
-	 * Look up the {@link Class}'s simple name.
-	 */
-	@Override
-	public String getTableName(Class<?> type) {
-		return type.getSimpleName();
-	}
-
-
-	/**
-	 * Look up the {@link JdbcPersistentProperty}'s name.
-	 */
-	@Override
-	public String getColumnName(JdbcPersistentProperty property) {
-		return property.getName();
-	}
-
-	@Override
-	public String getReverseColumnName(JdbcPersistentProperty property) {
-		return property.getOwner().getTableName();
-	}
-
-	@Override
-	public String getKeyColumn(JdbcPersistentProperty property) {
-		return getReverseColumnName(property) + "_key";
-	}
 }
