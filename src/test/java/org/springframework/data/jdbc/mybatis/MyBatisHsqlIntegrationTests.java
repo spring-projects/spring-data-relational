@@ -26,6 +26,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -37,6 +38,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Tests the integration with Mybatis.
@@ -75,8 +78,13 @@ public class MyBatisHsqlIntegrationTests {
 		}
 
 		@Bean
-		MyBatisDataAccessStrategy dataAccessStrategy(SqlSessionFactory factory) {
-			return new MyBatisDataAccessStrategy(factory);
+		SqlSessionTemplate sqlSessionTemplate(SqlSessionFactory factory) {
+			return new SqlSessionTemplate(factory);
+		}
+
+		@Bean
+		MyBatisDataAccessStrategy dataAccessStrategy(SqlSession sqlSession) {
+			return new MyBatisDataAccessStrategy(sqlSession);
 		}
 	}
 

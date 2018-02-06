@@ -39,16 +39,14 @@ import org.springframework.data.mapping.PropertyPath;
  */
 public class MyBatisDataAccessStrategyUnitTests {
 
-	SqlSessionFactory sessionFactory = mock(SqlSessionFactory.class);
 	SqlSession session = mock(SqlSession.class);
 	ArgumentCaptor<MyBatisContext> captor = ArgumentCaptor.forClass(MyBatisContext.class);
 
-	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(sessionFactory);
+	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session);
 
 	@Before
 	public void before() {
 
-		doReturn(session).when(sessionFactory).openSession();
 		doReturn(false).when(session).selectOne(any(), any());
 	}
 

@@ -15,15 +15,14 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import java.util.Collections;
-import java.util.Map;
-
 import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * {@link DataAccessStrategy} implementation based on MyBatis. Each method gets mapped to a statement. The name of the
@@ -42,14 +41,16 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	private final SqlSession sqlSession;
 
-	public MyBatisDataAccessStrategy(SqlSessionFactory sqlSessionFactory) {
-
-		this(new SqlSessionTemplate(sqlSessionFactory));
-	}
-
-	public MyBatisDataAccessStrategy(SqlSessionTemplate sqlSessionTemplate) {
-
-		this.sqlSession = sqlSessionTemplate;
+	/**
+	 * Constructs a {@link DataAccessStrategy} based on MyBatis.
+	 * <p>
+	 * Use a {@link SqlSessionTemplate} for {@link SqlSession} or a similar implementation tying the session to the
+	 * proper transaction.
+	 *
+	 * @param sqlSession Must be non {@literal null}.
+	 */
+	public MyBatisDataAccessStrategy(SqlSession sqlSession) {
+		this.sqlSession = sqlSession;
 	}
 
 	@Override
