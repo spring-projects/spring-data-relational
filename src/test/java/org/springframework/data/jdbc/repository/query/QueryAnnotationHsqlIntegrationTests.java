@@ -111,7 +111,11 @@ public class QueryAnnotationHsqlIntegrationTests {
 		List<DummyEntity> findByNameContainingCapitalLetter();
 
 
-		@Query("SELECT * FROM DUMMYENTITY WHERE name  < :upper and name > :lower")
+		@Query({
+			"SELECT * FROM DUMMYENTITY",
+			"WHERE name  < :upper",
+			"and name > :lower"
+			})
 		List<DummyEntity> findByNamedRangeWithNamedParameter(@Param("lower") String lower, @Param("upper") String upper);
 	}
 }

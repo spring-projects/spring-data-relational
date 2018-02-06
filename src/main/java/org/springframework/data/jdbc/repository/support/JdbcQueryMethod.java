@@ -16,6 +16,8 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.lang.reflect.Method;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -44,7 +46,11 @@ public class JdbcQueryMethod extends QueryMethod {
 	public String getAnnotatedQuery() {
 
 		Query queryAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
+		if(queryAnnotation == null) {
+			return null;
+		}
 
-		return queryAnnotation == null ? null : queryAnnotation.value();
+		return queryAnnotation.value().length == 1 ? queryAnnotation.value()[0]
+				: Stream.of(queryAnnotation.value()).collect(Collectors.joining(" "));
 	}
 }

@@ -36,5 +36,5 @@ import org.springframework.data.annotation.QueryAnnotation;
 @QueryAnnotation
 @Documented
 public @interface Query {
-	String value();
+	String[] value();
 }
