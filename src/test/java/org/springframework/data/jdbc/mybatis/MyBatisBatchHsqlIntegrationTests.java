@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@ package org.springframework.data.jdbc.mybatis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import junit.framework.AssertionFailedError;
+import java.util.Iterator;
 
 import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -39,14 +40,13 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Tests the integration with Mybatis.
+ * Tests the integration with Mybatis batch mode.
  *
- * @author Jens Schauder
- * @author Greg Turnquist
+ * @author Kazuki Shimizu
  */
 @ContextConfiguration
 @Transactional
-public class MyBatisHsqlIntegrationTests {
+public class MyBatisBatchHsqlIntegrationTests {
 
 	@org.springframework.context.annotation.Configuration
 	@Import(TestConfiguration.class)
@@ -55,13 +55,14 @@ public class MyBatisHsqlIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return MyBatisHsqlIntegrationTests.class;
+			return MyBatisBatchHsqlIntegrationTests.class;
 		}
 
 		@Bean
 		SqlSessionFactoryBean createSessionFactory(EmbeddedDatabase db) {
 
 			Configuration configuration = new Configuration();
+			configuration.setDefaultExecutorType(ExecutorType.BATCH);
 			configuration.getTypeAliasRegistry().registerAlias("MyBatisContext", MyBatisContext.class);
 
 			configuration.getTypeAliasRegistry().registerAlias(DummyEntity.class);
@@ -75,39 +76,51 @@ public class MyBatisHsqlIntegrationTests {
 		}
 
 		@Bean
-		MyBatisDataAccessStrategy dataAccessStrategy(SqlSessionFactory factory) {
-			return new MyBatisDataAccessStrategy(factory);
+		SqlSessionTemplate SqlSessionTemplate(SqlSessionFactory factory) {
+			return new SqlSessionTemplate(factory);
+		}
+
+		@Bean
+		MyBatisDataAccessStrategy dataAccessStrategy(SqlSessionTemplate template) {
+			return new MyBatisDataAccessStrategy(template);
 		}
 	}
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
-	@Autowired SqlSessionFactory sqlSessionFactory;
 	@Autowired DummyEntityRepository repository;
 
-	@Test // DATAJDBC-123
-	public void mybatisSelfTest() {
+	@Test
+	public void batchInsertAndSelect() {
 
-		SqlSession session = sqlSessionFactory.openSession();
+		DummyEntity entity1 = new DummyEntity("some name");
+		DummyEntity saved1 = repository.save(entity1);
+		
+		DummyEntity entity2 = new DummyEntity("some name");
+		DummyEntity saved2 = repository.save(entity2);
 
-		session.selectList("org.springframework.data.jdbc.mybatis.DummyEntityMapper.findById");
-	}
+		assertThat(saved1.id).isEqualTo(0);
+		assertThat(saved2.id).isEqualTo(0);
+		
+		Iterator<DummyEntity> loadedEntities = repository.findAll().iterator();
 
-	@Test // DATAJDBC-123
-	public void myBatisGetsUsedForInsertAndSelect() {
-
-		DummyEntity entity = new DummyEntity("some name");
-		DummyEntity saved = repository.save(entity);
-
-		assertThat(saved.id).isNotEqualTo(0);
-
-		DummyEntity reloaded = repository.findById(saved.id).orElseThrow(AssertionFailedError::new);
-
-		assertThat(reloaded).isNotNull().extracting(e -> e.id, e -> e.name);
+		DummyEntity loaded1 = loadedEntities.next();
+		assertThat(saved1.id).isNotEqualTo(0);
+		assertThat(loaded1.id).isEqualTo(saved1.id);
+		assertThat(loaded1).isNotNull().extracting(e -> e.id, e -> e.name);
+		
+		DummyEntity loaded2 = loadedEntities.next();
+		assertThat(saved2.id).isNotEqualTo(0);
+		assertThat(loaded2.id).isEqualTo(saved2.id);
+		assertThat(loaded2).isNotNull().extracting(e -> e.id, e -> e.name);
+		
+		assertThat(loadedEntities.hasNext()).isFalse();
+		
 	}
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 	}
+
 }

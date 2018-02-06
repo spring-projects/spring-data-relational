@@ -21,12 +21,17 @@ import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 
+import javax.sql.DataSource;
+
+import org.apache.ibatis.mapping.Environment;
+import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.mybatis.spring.transaction.SpringManagedTransactionFactory;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.mybatis.MyBatisContext;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
@@ -36,20 +41,27 @@ import org.springframework.data.mapping.PropertyPath;
  * Unit tests for the {@link MyBatisDataAccessStrategy}, mainly ensuring that the correct statements get's looked up.
  *
  * @author Jens Schauder
+ * @author Kazuki Shimizu
  */
 public class MyBatisDataAccessStrategyUnitTests {
 
+	DataSource dataSource = mock(DataSource.class);
 	SqlSessionFactory sessionFactory = mock(SqlSessionFactory.class);
 	SqlSession session = mock(SqlSession.class);
 	ArgumentCaptor<MyBatisContext> captor = ArgumentCaptor.forClass(MyBatisContext.class);
 
-	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(sessionFactory);
+	MyBatisDataAccessStrategy accessStrategy;
 
 	@Before
 	public void before() {
 
-		doReturn(session).when(sessionFactory).openSession();
+		Configuration configuration = new Configuration();
+		Environment environment = new Environment("unittest", new SpringManagedTransactionFactory(), dataSource);
+		configuration.setEnvironment(environment);
+		doReturn(configuration).when(sessionFactory).getConfiguration();
+		doReturn(session).when(sessionFactory).openSession(configuration.getDefaultExecutorType());
 		doReturn(false).when(session).selectOne(any(), any());
+		this.accessStrategy = new MyBatisDataAccessStrategy(sessionFactory);
 	}
 
 	@Test // DATAJDBC-123

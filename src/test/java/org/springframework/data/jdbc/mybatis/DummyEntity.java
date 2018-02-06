@@ -24,9 +24,12 @@ import org.springframework.data.annotation.Id;
 @Alias("DummyEntity")
 class DummyEntity {
 
-	@Id final Long id;
+	@Id final long id;
 	final String name;
 
+	public DummyEntity(String name) {
+		this(0L, name);
+	}
 	public DummyEntity(Long id, String name) {
 		this.id = id;
 		this.name = name;
