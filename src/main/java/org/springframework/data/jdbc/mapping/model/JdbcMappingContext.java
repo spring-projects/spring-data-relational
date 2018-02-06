@@ -83,7 +83,7 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 			if (property.isEntity()) {
 
 				PropertyPath nextPath = path == null ? PropertyPath.from(property.getName(), rootType)
-						: path.nested(property.getColumnName());
+						: path.nested(property.getName());
 				paths.add(nextPath);
 				paths.addAll(referencedEntities(rootType, nextPath));
 			}
