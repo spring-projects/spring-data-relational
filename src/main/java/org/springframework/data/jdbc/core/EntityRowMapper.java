@@ -19,10 +19,8 @@ import lombok.NonNull;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.Set;
-
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
 import org.springframework.data.convert.EntityInstantiator;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
@@ -44,6 +42,8 @@ import org.springframework.jdbc.core.RowMapper;
  * @since 2.0
  */
 public class EntityRowMapper<T> implements RowMapper<T> {
+
+	private static final Converter ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
 	private final JdbcPersistentEntity<T> entity;
 	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
@@ -79,13 +79,12 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 		for (JdbcPersistentProperty property : entity) {
 
-			if (Set.class.isAssignableFrom(property.getType())) {
+			if (property.isCollectionLike()) {
 				propertyAccessor.setProperty(property, accessStrategy.findAllByProperty(id, property));
-			} else if (Map.class.isAssignableFrom(property.getType())) {
+			} else if (property.isMap()) {
 
 				Iterable<Object> allByProperty = accessStrategy.findAllByProperty(id, property);
-				IterableOfEntryToMapConverter converter = new IterableOfEntryToMapConverter();
-				propertyAccessor.setProperty(property, converter.convert(allByProperty));
+				propertyAccessor.setProperty(property, ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(allByProperty));
 			} else {
 				propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
 			}

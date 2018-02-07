@@ -115,7 +115,7 @@ public class SqlGeneratorUnitTests {
 	public void findAllByProperty() {
 
 		// this would get called when DummyEntity is the element type of a Set
-		String sql = sqlGenerator.getFindAllByProperty("back-ref", null);
+		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, false);
 
 		assertThat(sql).isEqualTo("SELECT DummyEntity.x_id AS x_id, DummyEntity.x_name AS x_name, "
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further "
@@ -127,13 +127,33 @@ public class SqlGeneratorUnitTests {
 	public void findAllByPropertyWithKey() {
 
 		// this would get called when DummyEntity is th element type of a Map
-		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column");
+		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", false);
 
 		assertThat(sql).isEqualTo("SELECT DummyEntity.x_id AS x_id, DummyEntity.x_name AS x_name, "
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, "
 				+ "DummyEntity.key-column AS key-column "
 				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.x_id "
 				+ "WHERE back-ref = :back-ref");
+	}
+
+	@Test (expected = IllegalArgumentException.class) // DATAJDBC-130
+	public void findAllByPropertyOrderedWithoutKey() {
+		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, true);
+	}
+
+	@Test // DATAJDBC-131
+	public void findAllByPropertyWithKeyOrdered() {
+
+		// this would get called when DummyEntity is th element type of a Map
+		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", true);
+
+		assertThat(sql).isEqualTo("SELECT DummyEntity.x_id AS x_id, DummyEntity.x_name AS x_name, "
+				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, "
+				+ "DummyEntity.key-column AS key-column "
+				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.x_id "
+				+ "WHERE back-ref = :back-ref "
+				+ "ORDER BY key-column"
+		);
 	}
 
 	@SuppressWarnings("unused")

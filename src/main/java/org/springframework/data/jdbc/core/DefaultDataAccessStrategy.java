@@ -200,11 +200,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Class<?> actualType = property.getActualType();
 		String findAllByProperty = sql(actualType).getFindAllByProperty(property.getReverseColumnName(),
-				property.getKeyColumn());
+				property.getKeyColumn(), property.isOrdered());
 
 		MapSqlParameterSource parameter = new MapSqlParameterSource(property.getReverseColumnName(), rootId);
 
-		return (Iterable<T>) operations.query(findAllByProperty, parameter, property.isQualified() //
+		return (Iterable<T>) operations.query(findAllByProperty, parameter, property.isMap() //
 				? getMapEntityRowMapper(property) //
 				: getEntityRowMapper(actualType));
 	}
