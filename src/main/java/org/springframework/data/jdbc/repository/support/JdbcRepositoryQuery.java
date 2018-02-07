@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
@@ -53,7 +54,15 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 			parameters.addValue(parameterName, objects[p.getIndex()]);
 		});
 
-		return context.getTemplate().query(query, parameters, rowMapper);
+		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
+			return context.getTemplate().query(query, parameters, rowMapper);
+		} else {
+			try {
+				return context.getTemplate().queryForObject(query, parameters, rowMapper);
+			} catch (EmptyResultDataAccessException e) {
+				return null;
+			}
+		}
 	}
 
 	@Override
