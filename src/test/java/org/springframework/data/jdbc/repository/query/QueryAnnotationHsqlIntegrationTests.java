@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -80,6 +82,45 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 	}
 
+	@Test // DATAJDBC-164
+	public void executeCustomQueryWithReturnTypeIsOptional() {
+
+		DummyEntity dummyEntity = dummyEntity("a");
+		repository.save(dummyEntity);
+
+		Optional<DummyEntity> entity = repository.findByIdWithReturnTypeIsOptional(dummyEntity.id);
+
+		assertThat(entity).map(e -> e.name).contains("a");
+
+	}
+
+	@Test // DATAJDBC-164
+	public void executeCustomQueryWithReturnTypeIsEntity() {
+
+		DummyEntity dummyEntity = dummyEntity("a");
+		repository.save(dummyEntity);
+
+		DummyEntity entity = repository.findByIdWithReturnTypeIsEntity(dummyEntity.id);
+
+		assertThat(entity).isNotNull();
+		assertThat(entity.name).isEqualTo("a");
+
+	}
+
+	@Test // DATAJDBC-164
+	public void executeCustomQueryWithReturnTypeIsStream() {
+
+		repository.save(dummyEntity("a"));
+		repository.save(dummyEntity("b"));
+
+		Stream<DummyEntity> entities = repository.findAllWithReturnTypeIsStream();
+
+		assertThat(entities) //
+			.extracting(e -> e.name) //
+			.containsExactlyInAnyOrder("a", "b");
+
+	}
+
 	private DummyEntity dummyEntity(String name) {
 
 		DummyEntity entity = new DummyEntity();
@@ -110,8 +151,17 @@ public class QueryAnnotationHsqlIntegrationTests {
 		@Query("SELECT * FROM DUMMYENTITY WHERE lower(name) <> name")
 		List<DummyEntity> findByNameContainingCapitalLetter();
 
-
 		@Query("SELECT * FROM DUMMYENTITY WHERE name  < :upper and name > :lower")
 		List<DummyEntity> findByNamedRangeWithNamedParameter(@Param("lower") String lower, @Param("upper") String upper);
+		
+		@Query("SELECT * FROM DUMMYENTITY WHERE id = :id FOR UPDATE")
+		Optional<DummyEntity> findByIdWithReturnTypeIsOptional(@Param("id") Long id);
+
+		@Query("SELECT * FROM DUMMYENTITY WHERE id = :id FOR UPDATE")
+		DummyEntity findByIdWithReturnTypeIsEntity(@Param("id") Long id);
+
+		@Query("SELECT * FROM DUMMYENTITY")
+		Stream<DummyEntity> findAllWithReturnTypeIsStream();
+
 	}
 }
