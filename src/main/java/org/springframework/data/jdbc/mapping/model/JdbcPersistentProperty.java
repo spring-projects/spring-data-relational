@@ -51,4 +51,9 @@ public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersisten
 	 * Returns if this property is a qualified property, i.e. a property referencing multiple elements that can get picked by a key or an index.
 	 */
 	boolean isQualified();
+
+	/**
+	 * Returns whether this property is an ordered property.
+	 */
+	boolean isOrdered();
 }

@@ -20,8 +20,10 @@ import static org.mockito.Mockito.*;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -167,7 +169,7 @@ public class JdbcEntityWriterUnitTests {
 	public void newEntityWithEmptyMapResultsInSingleInsert() {
 
 		MapContainer entity = new MapContainer(null);
-		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, MapContainer.class, entity);
+		AggregateChange<MapContainer> aggregateChange = new AggregateChange(Kind.SAVE, MapContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
@@ -183,7 +185,7 @@ public class JdbcEntityWriterUnitTests {
 		entity.elements.put("one", new Element(null));
 		entity.elements.put("two", new Element(null));
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
+		AggregateChange<MapContainer> aggregateChange = new AggregateChange(Kind.SAVE, MapContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions())
@@ -193,15 +195,53 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Insert.class, Element.class, "one", "elements"), //
 						tuple(Insert.class, Element.class, "two", "elements") //
 				).containsSubsequence( // container comes before the elements
-						tuple(Insert.class, MapContainer.class, null, ""), //
-						tuple(Insert.class, Element.class, "two", "elements") //
-				).containsSubsequence( // container comes before the elements
-						tuple(Insert.class, MapContainer.class, null, ""), //
-						tuple(Insert.class, Element.class, "one", "elements") //
+				tuple(Insert.class, MapContainer.class, null, ""), //
+				tuple(Insert.class, Element.class, "two", "elements") //
+		).containsSubsequence( // container comes before the elements
+				tuple(Insert.class, MapContainer.class, null, ""), //
+				tuple(Insert.class, Element.class, "one", "elements") //
 		);
 	}
 
-	@Test // DATAJDBC-112
+	@Test // DATAJDBC-130
+	public void newEntityWithEmptyListResultsInSingleInsert() {
+
+		ListContainer entity = new ListContainer(null);
+		AggregateChange<ListContainer> aggregateChange = new AggregateChange(Kind.SAVE, ListContainer.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+				.containsExactly( //
+						tuple(Insert.class, ListContainer.class, ""));
+	}
+
+	@Test // DATAJDBC-130
+	public void newEntityWithListResultsInAdditionalInsertPerElement() {
+
+		ListContainer entity = new ListContainer(null);
+		entity.elements.add( new Element(null));
+		entity.elements.add( new Element(null));
+
+		AggregateChange<ListContainer> aggregateChange = new AggregateChange(Kind.SAVE, ListContainer.class, entity);
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::getListKey, this::extractPath) //
+				.containsExactlyInAnyOrder( //
+						tuple(Insert.class, ListContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, 0, "elements"), //
+						tuple(Insert.class, Element.class, 1, "elements") //
+				).containsSubsequence( // container comes before the elements
+				tuple(Insert.class, ListContainer.class, null, ""), //
+				tuple(Insert.class, Element.class, 1, "elements") //
+		).containsSubsequence( // container comes before the elements
+				tuple(Insert.class, ListContainer.class, null, ""), //
+				tuple(Insert.class, Element.class, 0, "elements") //
+		);
+	}
+
+	@Test // DATAJDBC-131
 	public void mapTriggersDeletePlusInsert() {
 
 		MapContainer entity = new MapContainer(SOME_ENTITY_ID);
@@ -217,7 +257,26 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(Update.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "one", "elements") //
-		);
+				);
+	}
+
+	@Test // DATAJDBC-130
+	public void listTriggersDeletePlusInsert() {
+
+		ListContainer entity = new ListContainer(SOME_ENTITY_ID);
+		entity.elements.add( new Element(null));
+
+		AggregateChange<ListContainer> aggregateChange = new AggregateChange(Kind.SAVE, ListContainer.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::getListKey, this::extractPath) //
+				.containsExactly( //
+						tuple(Delete.class, Element.class, null, "elements"), //
+						tuple(Update.class, ListContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, 0, "elements") //
+				);
 	}
 
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {
@@ -230,6 +289,10 @@ public class JdbcEntityWriterUnitTests {
 
 	private Object getMapKey(DbAction a) {
 		return a.getAdditionalValues().get("MapContainer_key");
+	}
+
+	private Object getListKey(DbAction a) {
+		return a.getAdditionalValues().get("ListContainer_key");
 	}
 
 	private String extractPath(DbAction action) {
@@ -271,6 +334,13 @@ public class JdbcEntityWriterUnitTests {
 
 		@Id final Long id;
 		Map<String, Element> elements = new HashMap<>();
+	}
+
+	@RequiredArgsConstructor
+	private static class ListContainer {
+
+		@Id final Long id;
+		List< Element> elements = new ArrayList<>();
 	}
 
 	@RequiredArgsConstructor

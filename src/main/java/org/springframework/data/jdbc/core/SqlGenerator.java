@@ -95,17 +95,22 @@ class SqlGenerator {
 	 * a referencing entity.
 	 *
 	 * @param columnName name of the column of the FK back to the referencing entity.
-	 * @param keyColumn if the property is of type {@link Map} this column contains the map key.
+	 * @param keyColumn  if the property is of type {@link Map} this column contains the map key.
+	 * @param ordered    whether the SQL statement should include an ORDER BY for the keyColumn. If this is {@literal true}, the keyColumn must not be {@literal null}.
 	 * @return a SQL String.
 	 */
-	String getFindAllByProperty(String columnName, String keyColumn) {
+	String getFindAllByProperty(String columnName, String keyColumn, boolean ordered) {
+
+		Assert.isTrue(keyColumn != null || !ordered, "If the SQL statement should be ordered a keyColumn to order by must be provided.");
 
 		String baseSelect = (keyColumn != null) //
 				? createSelectBuilder().column(cb -> cb.tableAlias(entity.getTableName()).column(keyColumn).as(keyColumn))
-						.build()
+				.build()
 				: getFindAll();
 
-		return String.format("%s WHERE %s = :%s", baseSelect, columnName, columnName);
+		String orderBy = ordered ? " ORDER BY " + keyColumn : "";
+
+		return String.format("%s WHERE %s = :%s%s", baseSelect, columnName, columnName, orderBy);
 	}
 
 	String getExists() {

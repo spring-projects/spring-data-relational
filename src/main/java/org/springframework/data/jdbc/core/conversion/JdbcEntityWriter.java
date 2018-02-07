@@ -16,12 +16,6 @@
 package org.springframework.data.jdbc.core.conversion;
 
 import lombok.RequiredArgsConstructor;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Stream;
-
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
@@ -32,6 +26,13 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.util.ClassUtils;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 /**
  * Converts an entity that is about to be saved into {@link DbAction}s inside a {@link AggregateChange} that need to be
@@ -157,6 +158,10 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
 		Class<?> type = p.getType();
 
+		if (List.class.isAssignableFrom(type)) {
+			return listPropertyAsStream(p, propertyAccessor);
+		}
+
 		if (Collection.class.isAssignableFrom(type)) {
 			return collectionPropertyAsStream(p, propertyAccessor);
 		}
@@ -176,6 +181,21 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 		return property == null //
 				? Stream.empty() //
 				: ((Collection<Object>) property).stream();
+	}
+
+	private Stream<Object> listPropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+
+		Object property = propertyAccessor.getProperty(p);
+
+		if (property == null) return Stream.empty();
+
+		List<Object> listProperty = (List<Object>) property;
+		HashMap<Integer, Object> map = new HashMap<>();
+		for (int i = 0; i < listProperty.size(); i++) {
+			map.put(i, listProperty.get(i));
+		}
+
+		return map.entrySet().stream().map(e -> (Object) e);
 	}
 
 	private Stream<Object> mapPropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {

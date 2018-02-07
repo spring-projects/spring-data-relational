@@ -15,12 +15,6 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import java.time.ZonedDateTime;
-import java.time.temporal.Temporal;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
@@ -28,6 +22,13 @@ import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Meta data about a property to be used by repository implementations.
@@ -114,7 +115,16 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 
 	@Override
 	public boolean isQualified() {
-		return isMap();
+		return isMap() || isListLike();
+	}
+
+	private boolean isListLike() {
+		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
+	}
+
+	@Override
+	public boolean isOrdered() {
+		return isListLike();
 	}
 
 	private Class columnTypeIfEntity(Class type) {
