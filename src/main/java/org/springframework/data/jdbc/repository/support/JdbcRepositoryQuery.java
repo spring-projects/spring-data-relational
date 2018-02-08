@@ -26,6 +26,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
  * method.
  *
  * @author Jens Schauder
+ * @author Kazuki Shimizu
  */
 class JdbcRepositoryQuery implements RepositoryQuery {
 
@@ -57,6 +58,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
 			return context.getTemplate().query(query, parameters, rowMapper);
 		} else {
+
 			try {
 				return context.getTemplate().queryForObject(query, parameters, rowMapper);
 			} catch (EmptyResultDataAccessException e) {

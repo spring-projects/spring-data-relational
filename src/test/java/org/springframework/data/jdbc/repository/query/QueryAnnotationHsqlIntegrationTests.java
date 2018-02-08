@@ -15,12 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import static org.assertj.core.api.Assertions.*;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,21 +33,29 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests the execution of queries from {@link Query} annotations on repository methods.
  *
  * @author Jens Schauder
+ * @author Kazuki Shimizu
  */
 @ContextConfiguration
 @Transactional
 public class QueryAnnotationHsqlIntegrationTests {
 
-	@Autowired DummyEntityRepository repository;
+	@Autowired
+	DummyEntityRepository repository;
 
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
+	@ClassRule
+	public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule
+	public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Test // DATAJDBC-164
 	public void executeCustomQueryWithoutParameter() {
@@ -65,8 +67,8 @@ public class QueryAnnotationHsqlIntegrationTests {
 		List<DummyEntity> entities = repository.findByNameContainingCapitalLetter();
 
 		assertThat(entities) //
-			.extracting(e -> e.name) //
-			.containsExactlyInAnyOrder("Example", "EXAMPLE");
+				.extracting(e -> e.name) //
+				.containsExactlyInAnyOrder("Example", "EXAMPLE");
 
 	}
 
@@ -80,18 +82,17 @@ public class QueryAnnotationHsqlIntegrationTests {
 		List<DummyEntity> entities = repository.findByNamedRangeWithNamedParameter("a", "c");
 
 		assertThat(entities) //
-			.extracting(e -> e.name) //
-			.containsExactlyInAnyOrder("b");
+				.extracting(e -> e.name) //
+				.containsExactlyInAnyOrder("b");
 
 	}
 
 	@Test // DATAJDBC-172
 	public void executeCustomQueryWithReturnTypeIsOptional() {
 
-		DummyEntity dummyEntity = dummyEntity("a");
-		repository.save(dummyEntity);
+		repository.save(dummyEntity("a"));
 
-		Optional<DummyEntity> entity = repository.findByIdWithReturnTypeIsOptional(dummyEntity.id);
+		Optional<DummyEntity> entity = repository.findByNameAsOptional("a");
 
 		assertThat(entity).map(e -> e.name).contains("a");
 
@@ -160,8 +161,8 @@ public class QueryAnnotationHsqlIntegrationTests {
 		Stream<DummyEntity> entities = repository.findAllWithReturnTypeIsStream();
 
 		assertThat(entities) //
-			.extracting(e -> e.name) //
-			.containsExactlyInAnyOrder("a", "b");
+				.extracting(e -> e.name) //
+				.containsExactlyInAnyOrder("a", "b");
 
 	}
 
@@ -185,7 +186,8 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 	private static class DummyEntity {
 
-		@Id Long id;
+		@Id
+		Long id;
 
 		String name;
 	}
