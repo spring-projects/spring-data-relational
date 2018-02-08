@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -37,6 +38,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests the execution of queries from {@link Query} annotations on repository methods.
@@ -97,10 +100,9 @@ public class QueryAnnotationHsqlIntegrationTests {
 	@Test // DATAJDBC-172
 	public void executeCustomQueryWithReturnTypeIsOptionalWhenEntityNotFound() {
 
-		DummyEntity dummyEntity = dummyEntity("a");
-		repository.save(dummyEntity);
+		repository.save(dummyEntity("a"));
 
-		Optional<DummyEntity> entity = repository.findByIdWithReturnTypeIsOptional(9999L);
+		Optional<DummyEntity> entity = repository.findByNameAsOptional("x");
 
 		assertThat(entity).isNotPresent();
 
@@ -109,14 +111,44 @@ public class QueryAnnotationHsqlIntegrationTests {
 	@Test // DATAJDBC-172
 	public void executeCustomQueryWithReturnTypeIsEntity() {
 
-		DummyEntity dummyEntity = dummyEntity("a");
-		repository.save(dummyEntity);
+		repository.save(dummyEntity("a"));
 
-		DummyEntity entity = repository.findByIdWithReturnTypeIsEntity(dummyEntity.id);
+		DummyEntity entity = repository.findByNameAsEntity("a");
 
 		assertThat(entity).isNotNull();
 		assertThat(entity.name).isEqualTo("a");
 
+	}
+
+	@Test // DATAJDBC-172
+	public void executeCustomQueryWithReturnTypeIsEntityWhenEntityNotFound() {
+
+		repository.save(dummyEntity("a"));
+
+		DummyEntity entity = repository.findByNameAsEntity("x");
+
+		assertThat(entity).isNull();
+
+	}
+
+	@Test // DATAJDBC-172
+	public void executeCustomQueryWithReturnTypeIsEntityWhenEntityDuplicateResult() {
+
+		repository.save(dummyEntity("a"));
+		repository.save(dummyEntity("a"));
+
+		assertThatExceptionOfType(DataAccessException.class) //
+				.isThrownBy(() -> repository.findByNameAsEntity("a"));
+	}
+
+	@Test // DATAJDBC-172
+	public void executeCustomQueryWithReturnTypeIsOptionalWhenEntityDuplicateResult() {
+
+		repository.save(dummyEntity("a"));
+		repository.save(dummyEntity("a"));
+
+		assertThatExceptionOfType(DataAccessException.class) //
+				.isThrownBy(() -> repository.findByNameAsOptional("a"));
 	}
 
 	@Test // DATAJDBC-172
@@ -165,12 +197,12 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 		@Query("SELECT * FROM DUMMYENTITY WHERE name  < :upper and name > :lower")
 		List<DummyEntity> findByNamedRangeWithNamedParameter(@Param("lower") String lower, @Param("upper") String upper);
-		
-		@Query("SELECT * FROM DUMMYENTITY WHERE id = :id FOR UPDATE")
-		Optional<DummyEntity> findByIdWithReturnTypeIsOptional(@Param("id") Long id);
 
-		@Query("SELECT * FROM DUMMYENTITY WHERE id = :id FOR UPDATE")
-		DummyEntity findByIdWithReturnTypeIsEntity(@Param("id") Long id);
+		@Query("SELECT * FROM DUMMYENTITY WHERE name = :name")
+		Optional<DummyEntity> findByNameAsOptional(@Param("name") String name);
+
+		@Query("SELECT * FROM DUMMYENTITY WHERE name = :name")
+		DummyEntity findByNameAsEntity(@Param("name") String name);
 
 		@Query("SELECT * FROM DUMMYENTITY")
 		Stream<DummyEntity> findAllWithReturnTypeIsStream();
