@@ -15,12 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
@@ -40,6 +34,12 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.util.Assert;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 /**
  * The default {@link DataAccessStrategy} is to generate SQL statements based on meta data from the entity.
  *
@@ -57,7 +57,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final DataAccessStrategy accessStrategy;
 
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, NamedParameterJdbcOperations operations,
-			JdbcMappingContext context, DataAccessStrategy accessStrategy) {
+									 JdbcMappingContext context, DataAccessStrategy accessStrategy) {
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
 		this.operations = operations;
@@ -70,7 +70,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * Only suitable if this is the only access strategy in use.
 	 */
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, NamedParameterJdbcOperations operations,
-			JdbcMappingContext context) {
+									 JdbcMappingContext context) {
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
 		this.operations = operations;
@@ -97,7 +97,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		boolean idValueDoesNotComeFromEntity = //
 				idValue == null //
-				|| additionalParameters.containsKey(idProperty.getColumnName());
+						|| additionalParameters.containsKey(idProperty.getColumnName());
 
 		operations.update( //
 				sql(domainType).getInsert(idValueDoesNotComeFromEntity, additionalParameters.keySet()), //

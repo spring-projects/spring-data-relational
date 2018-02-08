@@ -15,24 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import lombok.RequiredArgsConstructor;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.naming.OperationNotSupportedException;
-
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -45,6 +28,21 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
+
+import javax.naming.OperationNotSupportedException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests the extraction of entities from a {@link ResultSet} by the {@link EntityRowMapper}.
@@ -137,7 +135,7 @@ public class EntityRowMapperUnitTests {
 		JdbcMappingContext context = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
-		// the ID of the entity is used to determin what kind of resultset is needed for subsequent selects.
+		// the ID of the entity is used to determine what kind of ResultSet is needed for subsequent selects.
 		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
 				any(JdbcPersistentProperty.class));
 
@@ -169,7 +167,7 @@ public class EntityRowMapperUnitTests {
 								"Number of values [%d] must be a multiple of the number of columns [%d]", //
 								values.length, //
 								columns.size() //
-				) //
+						) //
 		);
 
 		List<Map<String, Object>> result = convertValues(columns, values);
@@ -255,14 +253,16 @@ public class EntityRowMapperUnitTests {
 	@RequiredArgsConstructor
 	static class Trivial {
 
-		@Id Long id;
+		@Id
+		Long id;
 		String name;
 	}
 
 	@RequiredArgsConstructor
 	static class OneToOne {
 
-		@Id Long id;
+		@Id
+		Long id;
 		String name;
 		Trivial child;
 	}
@@ -270,7 +270,8 @@ public class EntityRowMapperUnitTests {
 	@RequiredArgsConstructor
 	static class OneToSet {
 
-		@Id Long id;
+		@Id
+		Long id;
 		String name;
 		Set<Trivial> children;
 	}
@@ -278,7 +279,8 @@ public class EntityRowMapperUnitTests {
 	@RequiredArgsConstructor
 	static class OneToMap {
 
-		@Id Long id;
+		@Id
+		Long id;
 		String name;
 		Map<String, Trivial> children;
 	}

@@ -77,7 +77,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	private void saveReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange,
-			JdbcPropertyPath propertyPath, DbAction dependingOn) {
+										JdbcPropertyPath propertyPath, DbAction dependingOn) {
 
 		saveActions(propertyAndValue, propertyPath, dependingOn).forEach(a -> {
 
@@ -88,7 +88,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	private Stream<DbAction> saveActions(PropertyAndValue propertyAndValue, JdbcPropertyPath propertyPath,
-			DbAction dependingOn) {
+										 DbAction dependingOn) {
 
 		if (Map.Entry.class.isAssignableFrom(ClassUtils.getUserClass(propertyAndValue.value))) {
 			return mapEntrySaveAction(propertyAndValue, propertyPath, dependingOn);
@@ -98,7 +98,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	private Stream<DbAction> mapEntrySaveAction(PropertyAndValue propertyAndValue, JdbcPropertyPath propertyPath,
-			DbAction dependingOn) {
+												DbAction dependingOn) {
 
 		Map.Entry<Object, Object> entry = (Map.Entry) propertyAndValue.value;
 
@@ -117,7 +117,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	private void insertReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange,
-			JdbcPropertyPath propertyPath, DbAction dependingOn) {
+										  JdbcPropertyPath propertyPath, DbAction dependingOn) {
 
 		Insert<Object> insert;
 		if (propertyAndValue.property.isQualified()) {
@@ -143,7 +143,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 				.flatMap( //
 						p -> referencedEntity(p, persistentEntity.getPropertyAccessor(o)) //
 								.map(e -> new PropertyAndValue(p, e)) //
-		);
+				);
 	}
 
 	private Stream<Object> referencedEntity(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
@@ -174,7 +174,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	private Stream<Object> collectionPropertyAsStream(JdbcPersistentProperty p,
-			PersistentPropertyAccessor propertyAccessor) {
+													  PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 

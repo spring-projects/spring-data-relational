@@ -39,7 +39,7 @@ public class IterableOfEntryToMapConverterUnitTests {
 	@Test
 	public void testConversions() {
 
-		HashMap<Object, Object> map = new HashMap<>();
+		Map<Object, Object> map = new HashMap<>();
 		map.put("key", "value");
 		List<Object[]> testValues = asList( //
 				new Object[] { emptySet(), emptyMap() }, //

@@ -52,13 +52,13 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
 	 *
-	 * @param property must not be {@literal null}.
-	 * @param owner must not be {@literal null}.
+	 * @param property         must not be {@literal null}.
+	 * @param owner            must not be {@literal null}.
 	 * @param simpleTypeHolder must not be {@literal null}.
-	 * @param context must not be {@literal null}
+	 * @param context          must not be {@literal null}
 	 */
 	public BasicJdbcPersistentProperty(Property property, PersistentEntity<?, JdbcPersistentProperty> owner,
-			SimpleTypeHolder simpleTypeHolder, JdbcMappingContext context) {
+									   SimpleTypeHolder simpleTypeHolder, JdbcMappingContext context) {
 
 		super(property, owner, simpleTypeHolder);
 

@@ -16,9 +16,6 @@
 package org.springframework.data.jdbc.core;
 
 import lombok.NonNull;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
@@ -33,6 +30,9 @@ import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.jdbc.core.RowMapper;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Maps a ResultSet to an entity of type {@code T}, including entities referenced.
@@ -53,7 +53,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private final JdbcPersistentProperty idProperty;
 
 	public EntityRowMapper(JdbcPersistentEntity<T> entity, ConversionService conversions, JdbcMappingContext context,
-			DataAccessStrategy accessStrategy) {
+						   DataAccessStrategy accessStrategy) {
 
 		this.entity = entity;
 		this.conversions = conversions;
@@ -137,9 +137,12 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 	private static class ResultSetParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
 
-		@NonNull private final ResultSet resultSet;
-		@NonNull private final ConversionService conversionService;
-		@NonNull private final String prefix;
+		@NonNull
+		private final ResultSet resultSet;
+		@NonNull
+		private final ConversionService conversionService;
+		@NonNull
+		private final String prefix;
 
 		private ResultSetParameterValueProvider(ResultSet resultSet, ConversionService conversionService, String prefix) {
 
@@ -149,7 +152,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		}
 
 		public static ResultSetParameterValueProvider of(ResultSet resultSet, ConversionService conversionService,
-				String prefix) {
+														 String prefix) {
 			return new ResultSetParameterValueProvider(resultSet, conversionService, prefix);
 		}
 
