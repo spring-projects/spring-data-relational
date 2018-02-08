@@ -15,14 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
@@ -32,6 +24,14 @@ import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.util.Assert;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
@@ -169,7 +169,7 @@ class SqlGenerator {
 			if (!property.isEntity() //
 					|| Collection.class.isAssignableFrom(property.getType()) //
 					|| Map.class.isAssignableFrom(property.getType()) //
-			) {
+					) {
 				continue;
 			}
 

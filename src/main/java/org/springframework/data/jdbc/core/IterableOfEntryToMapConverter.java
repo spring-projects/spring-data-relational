@@ -15,15 +15,15 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.ConditionalConverter;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * A converter for creating a {@link Map} from an {@link Iterable<Map.Entry>}.
@@ -36,7 +36,7 @@ class IterableOfEntryToMapConverter implements ConditionalConverter, Converter<I
 	@Override
 	public Map convert(Iterable source) {
 
-		HashMap result = new HashMap();
+		Map result = new HashMap();
 
 		source.forEach(element -> {
 
