@@ -16,10 +16,15 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 
+import org.springframework.core.convert.ConversionService;
+import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -27,22 +32,27 @@ import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SingleColumnRowMapper;
 
 /**
  * {@link QueryLookupStrategy} for JDBC repositories. Currently only supports annotated queries.
  *
  * @author Jens Schauder
+ * @author Kazuki Shimizu
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
-
+	private static final SimpleTypeHolder SIMPLE_TYPE_HOLDER = new CustomConversions(StoreConversions.NONE,
+			Collections.emptyList()).getSimpleTypeHolder();
 	private final JdbcMappingContext context;
 	private final DataAccessStrategy accessStrategy;
+	private final ConversionService conversionService;
 
 	JdbcQueryLookupStrategy(EvaluationContextProvider evaluationContextProvider, JdbcMappingContext context,
 			DataAccessStrategy accessStrategy) {
 
 		this.context = context;
 		this.accessStrategy = accessStrategy;
+		this.conversionService = context.getConversions();
 	}
 
 	@Override
@@ -50,10 +60,27 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			ProjectionFactory projectionFactory, NamedQueries namedQueries) {
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
-		Class<?> domainType = queryMethod.getReturnedObjectType();
-		RowMapper<?> rowMapper = new EntityRowMapper<>(context.getRequiredPersistentEntity(domainType),
-				context.getConversions(), context, accessStrategy);
-
+		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
+		RowMapper<?> rowMapper = SIMPLE_TYPE_HOLDER.isSimpleType(returnedObjectType)
+				? new CustomSingleColumnRowMapper<>(returnedObjectType)
+				: new EntityRowMapper<>(context.getRequiredPersistentEntity(returnedObjectType), conversionService,
+						context, accessStrategy);
 		return new JdbcRepositoryQuery(queryMethod, context, rowMapper);
 	}
+	
+	private class CustomSingleColumnRowMapper<T> extends SingleColumnRowMapper<T> {
+
+		private CustomSingleColumnRowMapper(Class<T> requiredType) {
+			super(requiredType);
+		}
+
+		@Override
+		protected Object convertValueToRequiredType(Object value, Class<?> requiredType) {
+			return conversionService.canConvert(value.getClass(), requiredType)
+					? conversionService.convert(value, requiredType)
+					: super.convertValueToRequiredType(value, requiredType);
+		}
+
+	}
+
 }
