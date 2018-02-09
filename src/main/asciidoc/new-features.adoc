@@ -1,0 +1,10 @@
+[[new-features]]
+= New & Noteworthy
+
+[[new-features.1-0-0]]
+== What's new in Spring Data JPA 1.0
+* Basic support for `CrudRepository`
+* `@Query` support.
+* MyBatis support.
+* Id generation.
+* Event support.
