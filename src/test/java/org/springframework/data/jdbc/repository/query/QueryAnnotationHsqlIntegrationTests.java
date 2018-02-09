@@ -33,6 +33,8 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -165,6 +167,48 @@ public class QueryAnnotationHsqlIntegrationTests {
 				.containsExactlyInAnyOrder("a", "b");
 
 	}
+	
+	@Test // DATAJDBC-175
+	public void executeCustomQueryWithReturnTypeIsNubmer() {
+
+		repository.save(dummyEntity("aaa"));
+		repository.save(dummyEntity("bbb"));
+		repository.save(dummyEntity("cac"));
+
+		int count = repository.countByNameContaining("a");
+
+		assertThat(count).isEqualTo(2);
+
+	}
+
+	@Test // DATAJDBC-175
+	public void executeCustomQueryWithReturnTypeIsBoolean() {
+
+		repository.save(dummyEntity("aaa"));
+		repository.save(dummyEntity("bbb"));
+		repository.save(dummyEntity("cac"));
+
+		assertThat(repository.existsByNameContaining("a")).isTrue();
+		assertThat(repository.existsByNameContaining("d")).isFalse();
+
+	}
+
+	@Test // DATAJDBC-175
+	public void executeCustomQueryWithReturnTypeIsDate() {
+
+		Date now = new Date();
+		assertThat(repository.nowWithDate()).isAfterOrEqualsTo(now);
+
+	}
+
+	@Test // DATAJDBC-175
+	public void executeCustomQueryWithReturnTypeIsLocalDateTimeList() {
+
+		LocalDateTime now = LocalDateTime.now();
+		repository.nowWithLocalDateTimeList() //
+				.forEach(d -> assertThat(d).isAfterOrEqualTo(now));
+
+	}
 
 	private DummyEntity dummyEntity(String name) {
 
@@ -208,6 +252,18 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 		@Query("SELECT * FROM DUMMYENTITY")
 		Stream<DummyEntity> findAllWithReturnTypeIsStream();
+
+		@Query("SELECT count(*) FROM DUMMYENTITY WHERE name like '%' || :name || '%'")
+		int countByNameContaining(@Param("name") String name);
+
+		@Query("SELECT count(*) FROM DUMMYENTITY WHERE name like '%' || :name || '%'")
+		boolean existsByNameContaining(@Param("name") String name);
+
+		@Query("VALUES (current_timestamp)")
+		Date nowWithDate();
+
+		@Query("VALUES (current_timestamp),(current_timestamp)")
+		List<LocalDateTime> nowWithLocalDateTimeList();
 
 	}
 }
