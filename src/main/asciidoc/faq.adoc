@@ -1,0 +1,5 @@
+[[faq]]
+[appendix]
+= Frequently asked questions
+
+Sorry, no Frequently asked questions so far.
