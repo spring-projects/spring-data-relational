@@ -26,7 +26,7 @@ import java.util.Map;
 
 /**
  * {@link DataAccessStrategy} implementation based on MyBatis. Each method gets mapped to a statement. The name of the
- * statement gets constructed as follows: The namespace is based on the class of the entity plus the suffix "Mapper".
+ * statement gets constructed as follows: By default, the namespace is based on the class of the entity plus the suffix "Mapper".
  * This is then followed by the method name separated by a dot. For methods taking a {@link PropertyPath} as argument,
  * the relevant entity is that of the root of the path, and the path itself gets as dot separated String appended to the
  * statement name. Each statement gets an instance of {@link MyBatisContext}, which at least has the entityType set. For
@@ -37,9 +37,8 @@ import java.util.Map;
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
-	private static final String MAPPER_SUFFIX = "Mapper";
-
 	private final SqlSession sqlSession;
+	private MyBatisNamingStrategy namingStrategy = new MyBatisNamingStrategy() {};
 
 	/**
 	 * Constructs a {@link DataAccessStrategy} based on MyBatis.
@@ -53,30 +52,38 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		this.sqlSession = sqlSession;
 	}
 
+	/**
+	 * Set a naming strategy for MyBatis objects.
+	 * @param namingStrategy Must be non {@literal null}
+	 */
+	public void setNamingStrategy(MyBatisNamingStrategy namingStrategy) {
+		this.namingStrategy = namingStrategy;
+	}
+
 	@Override
 	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
-		sqlSession().insert(mapper(domainType) + ".insert",
+		sqlSession().insert(namespace(domainType) + ".insert",
 				new MyBatisContext(null, instance, domainType, additionalParameters));
 	}
 
 	@Override
 	public <S> void update(S instance, Class<S> domainType) {
 
-		sqlSession().update(mapper(domainType) + ".update",
+		sqlSession().update(namespace(domainType) + ".update",
 				new MyBatisContext(null, instance, domainType, Collections.emptyMap()));
 	}
 
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 
-		sqlSession().delete(mapper(domainType) + ".delete",
+		sqlSession().delete(namespace(domainType) + ".delete",
 				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
 	}
 
 	@Override
 	public void delete(Object rootId, PropertyPath propertyPath) {
 
-		sqlSession().delete(mapper(propertyPath.getOwningType().getType()) + ".delete-" + toDashPath(propertyPath),
+		sqlSession().delete(namespace(propertyPath.getOwningType().getType()) + ".delete-" + toDashPath(propertyPath),
 				new MyBatisContext(rootId, null, propertyPath.getLeafProperty().getTypeInformation().getType(),
 						Collections.emptyMap()));
 	}
@@ -85,7 +92,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public <T> void deleteAll(Class<T> domainType) {
 
 		sqlSession().delete( //
-				mapper(domainType) + ".deleteAll", //
+				namespace(domainType) + ".deleteAll", //
 				new MyBatisContext(null, null, domainType, Collections.emptyMap()) //
 		);
 	}
@@ -97,49 +104,49 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		Class leaveType = propertyPath.getLeafProperty().getTypeInformation().getType();
 
 		sqlSession().delete( //
-				mapper(baseType) + ".deleteAll-" + toDashPath(propertyPath), //
+				namespace(baseType) + ".deleteAll-" + toDashPath(propertyPath), //
 				new MyBatisContext(null, null, leaveType, Collections.emptyMap()) //
 		);
 	}
 
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
-		return sqlSession().selectOne(mapper(domainType) + ".findById",
+		return sqlSession().selectOne(namespace(domainType) + ".findById",
 				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
 	}
 
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
-		return sqlSession().selectList(mapper(domainType) + ".findAll",
+		return sqlSession().selectList(namespace(domainType) + ".findAll",
 				new MyBatisContext(null, null, domainType, Collections.emptyMap()));
 	}
 
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
-		return sqlSession().selectList(mapper(domainType) + ".findAllById",
+		return sqlSession().selectList(namespace(domainType) + ".findAllById",
 				new MyBatisContext(ids, null, domainType, Collections.emptyMap()));
 	}
 
 	@Override
 	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
-		return sqlSession().selectList(mapper(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
+		return sqlSession().selectList(namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
 				new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap()));
 	}
 
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
-		return sqlSession().selectOne(mapper(domainType) + ".existsById",
+		return sqlSession().selectOne(namespace(domainType) + ".existsById",
 				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
 	}
 
 	@Override
 	public long count(Class<?> domainType) {
-		return sqlSession().selectOne(mapper(domainType) + ".count",
+		return sqlSession().selectOne(namespace(domainType) + ".count",
 				new MyBatisContext(null, null, domainType, Collections.emptyMap()));
 	}
 
-	private String mapper(Class<?> domainType) {
-		return domainType.getName() + MAPPER_SUFFIX;
+	private String namespace(Class<?> domainType) {
+		return this.namingStrategy.getNamespace(domainType);
 	}
 
 	private SqlSession sqlSession() {
