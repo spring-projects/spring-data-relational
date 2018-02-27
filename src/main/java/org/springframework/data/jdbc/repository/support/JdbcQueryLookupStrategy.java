@@ -57,25 +57,10 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
 		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 		RowMapper<?> rowMapper = context.getSimpleTypeHolder().isSimpleType(returnedObjectType)
-				? new CustomSingleColumnRowMapper<>(returnedObjectType)
+				? SingleColumnRowMapper.newInstance(returnedObjectType, conversionService)
 				: new EntityRowMapper<>(context.getRequiredPersistentEntity(returnedObjectType), conversionService,
 						context, accessStrategy);
 		return new JdbcRepositoryQuery(queryMethod, context, rowMapper);
-	}
-	
-	private class CustomSingleColumnRowMapper<T> extends SingleColumnRowMapper<T> {
-
-		private CustomSingleColumnRowMapper(Class<T> requiredType) {
-			super(requiredType);
-		}
-
-		@Override
-		protected Object convertValueToRequiredType(Object value, Class<?> requiredType) {
-			return conversionService.canConvert(value.getClass(), requiredType)
-					? conversionService.convert(value, requiredType)
-					: super.convertValueToRequiredType(value, requiredType);
-		}
-
 	}
 
 }
