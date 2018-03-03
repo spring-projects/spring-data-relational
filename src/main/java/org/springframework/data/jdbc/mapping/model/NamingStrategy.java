@@ -16,31 +16,60 @@
 package org.springframework.data.jdbc.mapping.model;
 
 /**
+ * Interface and default implementation of a naming strategy. Defaults to no schema, 
+ * table name based on {@link Class} and column name based on {@link JdbcPersistentProperty}.
+ *
+ * NOTE: Can also be used as an adapter. Create a lambda or an anonymous subclass and 
+ * override any settings to implement a different strategy on the fly.
+ * 
  * @author Greg Turnquist
+ * @author Michael Simons
  */
 public interface NamingStrategy {
 
-	String getSchema();
+	/**
+	 * Defaults to no schema.
+	 *
+	 * @return No schema
+	 */
+	default String getSchema() {
+		return "";
+	}
 
-	String getTableName(Class<?> type);
+	/**
+	 * Look up the {@link Class}'s simple name.
+	 */
+	default String getTableName(Class<?> type) {
+		return type.getSimpleName();
+	}
 
-	String getColumnName(JdbcPersistentProperty property);
+	/**
+	 * Look up the {@link JdbcPersistentProperty}'s name.
+	 */
+	default String getColumnName(JdbcPersistentProperty property) {
+		return property.getName();
+	}
 
 	default String getQualifiedTableName(Class<?> type) {
 		return this.getSchema() + (this.getSchema().equals("") ? "" : ".") + this.getTableName(type);
 	}
 
 	/**
-	 * For a reference A -> B this is the name in the table for B which references A.
+	 * For a reference A -&gt; B this is the name in the table for B which references A.
 	 *
+	 * @param property The property who's column name in the owner table is required
 	 * @return a column name.
 	 */
-	String getReverseColumnName(JdbcPersistentProperty property);
+	default String getReverseColumnName(JdbcPersistentProperty property) {
+		return property.getOwner().getTableName();
+	}
 
 	/**
 	 * For a map valued reference A -> Map&gt;X,B&lt; this is the name of the column in the tabel for B holding the key of the map.
 	 * @return
 	 */
-	String getKeyColumn(JdbcPersistentProperty property);
+	default String getKeyColumn(JdbcPersistentProperty property){
+		return getReverseColumnName(property) + "_key";
+	}
 
 }
