@@ -5,7 +5,7 @@
 
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-jdbc</artifactId>
-    <version>1.0.0.BUILD-SNAPSHOT</version>
+    <version>1.0.0.DATAJDBC-179-SNAPSHOT</version>
 
 	<name>Spring Data JDBC</name>
 	<description>Spring Data module for JDBC repositories.</description>
@@ -35,6 +35,33 @@
 		<testcontainers.version>1.6.0</testcontainers.version>
 
 	</properties>
+
+	<inceptionYear>2017-2018</inceptionYear>
+
+	<developers>
+		<developer>
+			<id>schauder</id>
+			<name>Jens Schauder</name>
+			<email>jschauder(at)pivotal.io</email>
+			<organization>Pivotal Software, Inc.</organization>
+			<organizationUrl>https://pivotal.io</organizationUrl>
+			<roles>
+				<role>Project Lead</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<id>gregturn</id>
+			<name>Greg L. Turnquist</name>
+			<email>gturnquist(at)pivotal.io</email>
+			<organization>Pivotal Software, Inc.</organization>
+			<organizationUrl>https://pivotal.io</organizationUrl>
+			<roles>
+				<role>Project Contributor</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+	</developers>
 
 	<inceptionYear>2017-2018</inceptionYear>
 
