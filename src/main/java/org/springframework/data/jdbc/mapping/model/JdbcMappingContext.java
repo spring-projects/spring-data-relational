@@ -44,6 +44,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Kazuki Shimizu
  * @since 2.0
  */
 public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> {
@@ -56,6 +57,7 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 	@Getter private final NamingStrategy namingStrategy;
 	@Getter private final NamedParameterJdbcOperations template;
+	@Getter private SimpleTypeHolder simpleTypeHolder;
 	private GenericConversionService conversions = getDefaultConversionService();
 
 	public JdbcMappingContext(NamingStrategy namingStrategy, NamedParameterJdbcOperations template,
@@ -70,6 +72,12 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 	public JdbcMappingContext(NamedParameterJdbcOperations template) {
 		this(new DefaultNamingStrategy(), template, __ -> {});
+	}
+
+	@Override
+	public void setSimpleTypeHolder(SimpleTypeHolder simpleTypes) {
+		super.setSimpleTypeHolder(simpleTypes);
+		this.simpleTypeHolder = simpleTypes;
 	}
 
 	public List<PropertyPath> referencedEntities(Class<?> rootType, PropertyPath path) {
