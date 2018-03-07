@@ -23,9 +23,12 @@ import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.Jsr310Converters;
+import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.mapping.model.NamingStrategy;
+import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -54,6 +57,12 @@ public class EntityRowMapperUnitTests {
 	public static final long ID_FOR_ENTITY_REFERENCING_MAP = 42L;
 	public static final long ID_FOR_ENTITY_REFERENCING_LIST = 4711L;
 	public static final long ID_FOR_ENTITY_NOT_REFERENCING_MAP = 23L;
+	public static final DefaultNamingStrategy X_APPENDING_NAMINGSTRATEGY = new DefaultNamingStrategy() {
+		@Override
+		public String getColumnName(JdbcPersistentProperty property) {
+			return super.getColumnName(property) + "x";
+		}
+	};
 
 	@Test // DATAJDBC-113
 	public void simpleEntitiesGetProperlyExtracted() throws SQLException {
@@ -63,6 +72,36 @@ public class EntityRowMapperUnitTests {
 		rs.next();
 
 		Trivial extracted = createRowMapper(Trivial.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
+	}
+
+	@Test // DATAJDBC-181
+	public void namingStrategyGetsHonored() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("idx", "namex"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
+		rs.next();
+
+		Trivial extracted = createRowMapper(Trivial.class, X_APPENDING_NAMINGSTRATEGY).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
+	}
+
+	@Test // DATAJDBC-181
+	public void namingStrategyGetsHonoredForConstructor() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("idx", "namex"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
+		rs.next();
+
+		TrivialImmutable extracted = createRowMapper(TrivialImmutable.class, X_APPENDING_NAMINGSTRATEGY).mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -131,8 +170,18 @@ public class EntityRowMapperUnitTests {
 	}
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
+		return createRowMapper(type, new DefaultNamingStrategy());
+	}
 
-		JdbcMappingContext context = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
+	private <T> EntityRowMapper<T> createRowMapper(Class<T> type, NamingStrategy namingStrategy) {
+
+		JdbcMappingContext context = new JdbcMappingContext( //
+				namingStrategy, //
+				mock(NamedParameterJdbcOperations.class), //
+				__ -> {
+				} //
+		);
+
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determine what kind of ResultSet is needed for subsequent selects.
@@ -240,7 +289,12 @@ public class EntityRowMapperUnitTests {
 		}
 
 		private Object getObject(String column) {
-			return values.get(index).get(column);
+
+			Map<String, Object> rowMap = values.get(index);
+
+			Assert.isTrue(rowMap.containsKey(column), String.format("Trying to access a column (%s) that does not exist", column));
+
+			return rowMap.get(column);
 		}
 
 		private boolean next() {
@@ -251,6 +305,13 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@RequiredArgsConstructor
+	static class TrivialImmutable {
+
+		@Id
+		private final Long id;
+		private final String name;
+	}
+
 	static class Trivial {
 
 		@Id

@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
@@ -94,7 +95,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	}
 
 	private T createInstance(ResultSet rs) {
-		return instantiator.createInstance(entity, ResultSetParameterValueProvider.of(rs, conversions, ""));
+		return instantiator.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, ""));
 	}
 
 	private Object readFrom(ResultSet resultSet, JdbcPersistentProperty property, String prefix) {
@@ -123,7 +124,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return null;
 		}
 
-		S instance = instantiator.createInstance(entity, ResultSetParameterValueProvider.of(rs, conversions, prefix));
+		S instance = instantiator.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
 
 		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(instance);
 		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
@@ -135,26 +136,17 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		return instance;
 	}
 
+	@RequiredArgsConstructor
 	private static class ResultSetParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
 
 		@NonNull
 		private final ResultSet resultSet;
 		@NonNull
+		private final JdbcPersistentEntity<?> entity;
+		@NonNull
 		private final ConversionService conversionService;
 		@NonNull
 		private final String prefix;
-
-		private ResultSetParameterValueProvider(ResultSet resultSet, ConversionService conversionService, String prefix) {
-
-			this.resultSet = resultSet;
-			this.conversionService = conversionService;
-			this.prefix = prefix;
-		}
-
-		public static ResultSetParameterValueProvider of(ResultSet resultSet, ConversionService conversionService,
-														 String prefix) {
-			return new ResultSetParameterValueProvider(resultSet, conversionService, prefix);
-		}
 
 		/*
 		 * (non-Javadoc)
@@ -163,12 +155,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		@Override
 		public <T> T getParameterValue(Parameter<T, JdbcPersistentProperty> parameter) {
 
-			String name = parameter.getName();
-			if (name == null) {
-				return null;
-			}
+			String column = prefix + entity.getRequiredPersistentProperty(parameter.getName()).getColumnName();
 
-			String column = prefix + name;
 			try {
 				return conversionService.convert(resultSet.getObject(column), parameter.getType().getType());
 			} catch (SQLException o_O) {
