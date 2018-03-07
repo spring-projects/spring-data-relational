@@ -319,7 +319,6 @@ public class EntityRowMapperUnitTests {
 		String name;
 	}
 
-	@RequiredArgsConstructor
 	static class OneToOne {
 
 		@Id
@@ -328,7 +327,6 @@ public class EntityRowMapperUnitTests {
 		Trivial child;
 	}
 
-	@RequiredArgsConstructor
 	static class OneToSet {
 
 		@Id
@@ -337,7 +335,6 @@ public class EntityRowMapperUnitTests {
 		Set<Trivial> children;
 	}
 
-	@RequiredArgsConstructor
 	static class OneToMap {
 
 		@Id
@@ -346,7 +343,6 @@ public class EntityRowMapperUnitTests {
 		Map<String, Trivial> children;
 	}
 
-	@RequiredArgsConstructor
 	static class OneToList {
 
 		@Id
