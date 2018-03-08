@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.repository.support;
 import java.lang.reflect.Method;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -30,6 +32,7 @@ import org.springframework.data.repository.query.QueryMethod;
  * Binds method arguments to named parameters in the SQL statement.
  *
  * @author Jens Schauder
+ * @author Kazuki Shimizu
  */
 public class JdbcQueryMethod extends QueryMethod {
 
@@ -47,4 +50,15 @@ public class JdbcQueryMethod extends QueryMethod {
 
 		return queryAnnotation == null ? null : queryAnnotation.value();
 	}
+	
+	/**
+	 * Returns whether the query method is a modifying one.
+	 *
+	 * @return if it's a modifying query, return {@code true}.
+	 */
+	@Override
+	public boolean isModifyingQuery() {
+		return AnnotationUtils.findAnnotation(method, Modifying.class) != null;
+	}
+
 }
