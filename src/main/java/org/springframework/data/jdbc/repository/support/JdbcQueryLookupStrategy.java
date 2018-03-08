@@ -56,15 +56,17 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
 		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
-		RowMapper<?> rowMapper = context.getSimpleTypeHolder().isSimpleType(returnedObjectType)
-				? SingleColumnRowMapper.newInstance(returnedObjectType, conversionService)
-				: new EntityRowMapper<>( //
-						context.getRequiredPersistentEntity(returnedObjectType), //
-						conversionService, //
-						context, //
-						accessStrategy //
-				);
-
+		RowMapper<?> rowMapper = null;
+		if (!queryMethod.isModifyingQuery()) {
+			rowMapper = context.getSimpleTypeHolder().isSimpleType(returnedObjectType)
+					? SingleColumnRowMapper.newInstance(returnedObjectType, conversionService)
+					: new EntityRowMapper<>( //
+							context.getRequiredPersistentEntity(returnedObjectType), //
+							conversionService, //
+							context, //
+							accessStrategy //
+					);
+		}
 		return new JdbcRepositoryQuery(queryMethod, context, rowMapper);
 	}
 

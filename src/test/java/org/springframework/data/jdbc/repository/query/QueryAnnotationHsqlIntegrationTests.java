@@ -210,6 +210,39 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 	}
 
+	@Test // DATAJDBC-182
+	public void executeCustomModifyingQueryWithReturnTypeIsNumber() {
+
+		DummyEntity entity = dummyEntity("a");
+		repository.save(entity);
+
+		assertThat(repository.updateName(entity.id, "b")).isEqualTo(1);
+		assertThat(repository.updateName(9999L, "b")).isEqualTo(0);
+		assertThat(repository.findById(entity.id)).isPresent().map(e -> e.name).contains("b");
+
+	}
+
+	@Test // DATAJDBC-182
+	public void executeCustomModifyingQueryWithReturnTypeIsBoolean() {
+
+		DummyEntity entity = dummyEntity("a");
+		repository.save(entity);
+
+		assertThat(repository.deleteByName("a")).isTrue();
+		assertThat(repository.deleteByName("b")).isFalse();
+		assertThat(repository.findById(entity.id)).isNotPresent();
+
+	}
+
+	@Test // DATAJDBC-182
+	public void executeCustomModifyingQueryWithReturnTypeIsVoid() {
+
+		repository.insert("Spring Data JDBC");
+
+		assertThat(repository.findByNameAsEntity("Spring Data JDBC")).isNotNull();
+
+	}
+
 	private DummyEntity dummyEntity(String name) {
 
 		DummyEntity entity = new DummyEntity();
@@ -264,6 +297,18 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 		@Query("VALUES (current_timestamp),(current_timestamp)")
 		List<LocalDateTime> nowWithLocalDateTimeList();
+
+		@Modifying
+		@Query("UPDATE DUMMYENTITY SET name = :name WHERE id = :id")
+		int updateName(@Param("id") Long id, @Param("name") String name);
+
+		@Modifying
+		@Query("DELETE FROM DUMMYENTITY WHERE name = :name")
+		boolean deleteByName(@Param("name") String name);
+
+		@Modifying
+		@Query("INSERT INTO DUMMYENTITY (name) VALUES(:name)")
+		void insert(@Param("name") String name);
 
 	}
 }
