@@ -55,15 +55,20 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 			parameters.addValue(parameterName, objects[p.getIndex()]);
 		});
 
+		if (queryMethod.isModifyingQuery()) {
+			int updatedCount = context.getTemplate().update(query, parameters);
+			Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
+			return (returnedObjectType == boolean.class || returnedObjectType == Boolean.class) ? updatedCount != 0 : updatedCount;
+		}
+
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
 			return context.getTemplate().query(query, parameters, rowMapper);
-		} else {
+		}
 
-			try {
-				return context.getTemplate().queryForObject(query, parameters, rowMapper);
-			} catch (EmptyResultDataAccessException e) {
-				return null;
-			}
+		try {
+			return context.getTemplate().queryForObject(query, parameters, rowMapper);
+		} catch (EmptyResultDataAccessException e) {
+			return null;
 		}
 	}
 
