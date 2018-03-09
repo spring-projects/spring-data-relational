@@ -203,6 +203,45 @@ public class JdbcEntityWriterUnitTests {
 		);
 	}
 
+	@Test // DATAJDBC-183
+	public void newEntityWithFullMapResultsInAdditionalInsertPerElement() {
+
+		MapContainer entity = new MapContainer(null);
+		entity.elements.put("1", new Element(null));
+		entity.elements.put("2", new Element(null));
+		entity.elements.put("3", new Element(null));
+		entity.elements.put("4", new Element(null));
+		entity.elements.put("5", new Element(null));
+		entity.elements.put("6", new Element(null));
+		entity.elements.put("7", new Element(null));
+		entity.elements.put("8", new Element(null));
+		entity.elements.put("9", new Element(null));
+		entity.elements.put("0", new Element(null));
+		entity.elements.put("a", new Element(null));
+		entity.elements.put("b", new Element(null));
+
+		AggregateChange<MapContainer> aggregateChange = new AggregateChange(Kind.SAVE, MapContainer.class, entity);
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::getMapKey, this::extractPath) //
+				.containsExactlyInAnyOrder( //
+						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, "1", "elements"), //
+						tuple(Insert.class, Element.class, "2", "elements"), //
+						tuple(Insert.class, Element.class, "3", "elements"), //
+						tuple(Insert.class, Element.class, "4", "elements"), //
+						tuple(Insert.class, Element.class, "5", "elements"), //
+						tuple(Insert.class, Element.class, "6", "elements"), //
+						tuple(Insert.class, Element.class, "7", "elements"), //
+						tuple(Insert.class, Element.class, "8", "elements"), //
+						tuple(Insert.class, Element.class, "9", "elements"), //
+						tuple(Insert.class, Element.class, "0", "elements"), //
+						tuple(Insert.class, Element.class, "a", "elements"), //
+						tuple(Insert.class, Element.class, "b", "elements") //
+				);
+	}
+
 	@Test // DATAJDBC-130
 	public void newEntityWithEmptyListResultsInSingleInsert() {
 
