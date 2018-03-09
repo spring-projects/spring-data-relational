@@ -24,6 +24,7 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryMethod;
+import org.springframework.lang.Nullable;
 
 /**
  * {@link QueryMethod} implementation that implements a method by executing the query from a {@link Query} annotation on
@@ -44,6 +45,12 @@ public class JdbcQueryMethod extends QueryMethod {
 		this.method = method;
 	}
 
+	/**
+	 * Returns the annotated query if it exists.
+	 *
+	 * @return May be {@code null}.
+	 */
+	@Nullable
 	public String getAnnotatedQuery() {
 
 		Query queryAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);

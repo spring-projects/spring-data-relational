@@ -15,6 +15,14 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,14 +41,6 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.*;
-
 /**
  * Tests the execution of queries from {@link Query} annotations on repository methods.
  *
@@ -51,13 +51,10 @@ import static org.assertj.core.api.Assertions.*;
 @Transactional
 public class QueryAnnotationHsqlIntegrationTests {
 
-	@Autowired
-	DummyEntityRepository repository;
+	@Autowired DummyEntityRepository repository;
 
-	@ClassRule
-	public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule
-	public SpringMethodRule methodRule = new SpringMethodRule();
+	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Test // DATAJDBC-164
 	public void executeCustomQueryWithoutParameter() {
@@ -167,7 +164,7 @@ public class QueryAnnotationHsqlIntegrationTests {
 				.containsExactlyInAnyOrder("a", "b");
 
 	}
-	
+
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsNubmer() {
 
@@ -211,36 +208,40 @@ public class QueryAnnotationHsqlIntegrationTests {
 	}
 
 	@Test // DATAJDBC-182
-	public void executeCustomModifyingQueryWithReturnTypeIsNumber() {
+	public void executeCustomModifyingQueryWithReturnTypeNumber() {
 
 		DummyEntity entity = dummyEntity("a");
 		repository.save(entity);
 
 		assertThat(repository.updateName(entity.id, "b")).isEqualTo(1);
-		assertThat(repository.updateName(9999L, "b")).isEqualTo(0);
-		assertThat(repository.findById(entity.id)).isPresent().map(e -> e.name).contains("b");
+		assertThat(repository.updateName(9999L, "c")).isEqualTo(0);
 
+		assertThat(repository.findById(entity.id)) //
+				.describedAs("update was not performed as expected") //
+				.isPresent() //
+				.map(e -> e.name).contains("b");
 	}
 
 	@Test // DATAJDBC-182
-	public void executeCustomModifyingQueryWithReturnTypeIsBoolean() {
+	public void executeCustomModifyingQueryWithReturnTypeBoolean() {
 
 		DummyEntity entity = dummyEntity("a");
 		repository.save(entity);
 
 		assertThat(repository.deleteByName("a")).isTrue();
 		assertThat(repository.deleteByName("b")).isFalse();
-		assertThat(repository.findById(entity.id)).isNotPresent();
 
+		assertThat(repository.findById(entity.id)) //
+				.describedAs("delete not performed as expected") //
+				.isNotPresent();
 	}
 
 	@Test // DATAJDBC-182
-	public void executeCustomModifyingQueryWithReturnTypeIsVoid() {
+	public void executeCustomModifyingQueryWithReturnTypeVoid() {
 
 		repository.insert("Spring Data JDBC");
 
 		assertThat(repository.findByNameAsEntity("Spring Data JDBC")).isNotNull();
-
 	}
 
 	private DummyEntity dummyEntity(String name) {
@@ -263,49 +264,59 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 	private static class DummyEntity {
 
-		@Id
-		Long id;
+		@Id Long id;
 
 		String name;
 	}
 
 	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
+		// DATAJDBC-164
 		@Query("SELECT * FROM DUMMYENTITY WHERE lower(name) <> name")
 		List<DummyEntity> findByNameContainingCapitalLetter();
 
+		// DATAJDBC-164
 		@Query("SELECT * FROM DUMMYENTITY WHERE name  < :upper and name > :lower")
 		List<DummyEntity> findByNamedRangeWithNamedParameter(@Param("lower") String lower, @Param("upper") String upper);
 
 		@Query("SELECT * FROM DUMMYENTITY WHERE name = :name")
 		Optional<DummyEntity> findByNameAsOptional(@Param("name") String name);
 
+		// DATAJDBC-172
 		@Query("SELECT * FROM DUMMYENTITY WHERE name = :name")
 		DummyEntity findByNameAsEntity(@Param("name") String name);
 
+		// DATAJDBC-172
 		@Query("SELECT * FROM DUMMYENTITY")
 		Stream<DummyEntity> findAllWithReturnTypeIsStream();
 
+		// DATAJDBC-175
 		@Query("SELECT count(*) FROM DUMMYENTITY WHERE name like '%' || :name || '%'")
 		int countByNameContaining(@Param("name") String name);
 
+		// DATAJDBC-175
 		@Query("SELECT count(*) FROM DUMMYENTITY WHERE name like '%' || :name || '%'")
 		boolean existsByNameContaining(@Param("name") String name);
 
+		// DATAJDBC-175
 		@Query("VALUES (current_timestamp)")
 		Date nowWithDate();
 
+		// DATAJDBC-175
 		@Query("VALUES (current_timestamp),(current_timestamp)")
 		List<LocalDateTime> nowWithLocalDateTimeList();
 
+		// DATAJDBC-182
 		@Modifying
 		@Query("UPDATE DUMMYENTITY SET name = :name WHERE id = :id")
 		int updateName(@Param("id") Long id, @Param("name") String name);
 
+		// DATAJDBC-182
 		@Modifying
 		@Query("DELETE FROM DUMMYENTITY WHERE name = :name")
 		boolean deleteByName(@Param("name") String name);
 
+		// DATAJDBC-182
 		@Modifying
 		@Query("INSERT INTO DUMMYENTITY (name) VALUES(:name)")
 		void insert(@Param("name") String name);
