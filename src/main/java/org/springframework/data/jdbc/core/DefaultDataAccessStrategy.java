@@ -89,25 +89,25 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity);
 
 		Object idValue = getIdValueOrNull(instance, persistentEntity);
-		JdbcPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-		parameterSource.addValue(idProperty.getColumnName(), convert(idValue, idProperty.getColumnType()),
-				JdbcUtil.sqlTypeFor(idProperty.getColumnType()));
+		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
+
+		if (idValue != null) {
+			additionalParameters.put(idProperty.getColumnName(), convert(idValue, idProperty.getColumnType()));
+		}
 
 		additionalParameters.forEach(parameterSource::addValue);
 
-		boolean idValueDoesNotComeFromEntity = //
-				idValue == null //
-						|| additionalParameters.containsKey(idProperty.getColumnName());
-
 		operations.update( //
-				sql(domainType).getInsert(idValueDoesNotComeFromEntity, additionalParameters.keySet()), //
+				sql(domainType).getInsert(additionalParameters.keySet()), //
 				parameterSource, //
 				holder //
 		);
 
 		setIdFromJdbc(instance, holder, persistentEntity);
 
-		if (entityInformation.isNew(instance)) {
+		// if there is an id property and it was null before the save
+		// The database should have created an id and provided it.
+		if (idProperty != null && idValue == null && entityInformation.isNew(instance)) {
 			throw new IllegalStateException(String.format(ENTITY_NEW_AFTER_INSERT, persistentEntity));
 		}
 
@@ -197,6 +197,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
+
+		Assert.notNull(rootId, "rootId must not be null.");
 
 		Class<?> actualType = property.getActualType();
 		String findAllByProperty = sql(actualType).getFindAllByProperty(property.getReverseColumnName(),

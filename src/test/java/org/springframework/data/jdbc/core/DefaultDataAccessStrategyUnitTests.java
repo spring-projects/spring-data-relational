@@ -42,7 +42,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	NamedParameterJdbcOperations jdbcOperations = mock(NamedParameterJdbcOperations.class);
 	JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(), jdbcOperations, __ -> {});
 	HashMap<String, Object> additionalParameters = new HashMap<>();
-	ArgumentCaptor<SqlParameterSource> captor = ArgumentCaptor.forClass(SqlParameterSource.class);
+	ArgumentCaptor<SqlParameterSource> paramSourceCaptor = ArgumentCaptor.forClass(SqlParameterSource.class);
 
 	DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
 			new SqlGeneratorSource(context), //
@@ -57,21 +57,25 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
-		verify(jdbcOperations).update(eq("insert into DummyEntity (id) values (:id)"), captor.capture(),
+		verify(jdbcOperations).update(eq("insert into DummyEntity (id) values (:id)"), paramSourceCaptor.capture(),
 				any(KeyHolder.class));
-		assertThat(captor.getValue().getValue("id")).isEqualTo(ID_FROM_ADDITIONAL_VALUES);
 	}
 
 	@Test // DATAJDBC-146
 	public void additionalParametersGetAddedToStatement() {
 
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+
 		additionalParameters.put("reference", ID_FROM_ADDITIONAL_VALUES);
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
-		verify(jdbcOperations).update(eq("insert into DummyEntity (id, reference) values (:id, :reference)"),
-				captor.capture(), any(KeyHolder.class));
-		assertThat(captor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
+		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
+
+		assertThat(sqlCaptor.getValue()) //
+				.containsSequence("insert into DummyEntity (", "id", ") values (", ":id", ")") //
+				.containsSequence("insert into DummyEntity (", "reference", ") values (", ":reference", ")");
+		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 	}
 
 	@RequiredArgsConstructor

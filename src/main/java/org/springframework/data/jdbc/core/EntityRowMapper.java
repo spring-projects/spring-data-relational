@@ -31,6 +31,8 @@ import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -61,7 +63,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		this.context = context;
 		this.accessStrategy = accessStrategy;
 
-		idProperty = entity.getRequiredIdProperty();
+		idProperty = entity.getIdProperty();
 	}
 
 	/*
@@ -76,7 +78,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(entity.getPropertyAccessor(result),
 				conversions);
 
-		Object id = readFrom(resultSet, idProperty, "");
+		Object id = idProperty == null ? null : readFrom(resultSet, idProperty, "");
 
 		for (JdbcPersistentProperty property : entity) {
 
