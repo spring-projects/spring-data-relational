@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -121,8 +122,8 @@ class SqlGenerator {
 		return findOneSql.get();
 	}
 
-	String getInsert(boolean excludeId, Set<String> additionalColumns) {
-		return createInsertSql(excludeId, additionalColumns);
+	String getInsert(Set<String> additionalColumns) {
+		return createInsertSql(additionalColumns);
 	}
 
 	String getUpdate() {
@@ -237,11 +238,11 @@ class SqlGenerator {
 		return String.format("select count(*) from %s", entity.getTableName());
 	}
 
-	private String createInsertSql(boolean excludeId, Set<String> additionalColumns) {
+	private String createInsertSql(Set<String> additionalColumns) {
 
 		String insertTemplate = "insert into %s (%s) values (%s)";
 
-		List<String> columnNamesForInsert = new ArrayList<>(excludeId ? nonIdColumnNames : columnNames);
+		LinkedHashSet<String> columnNamesForInsert = new LinkedHashSet<>(nonIdColumnNames);
 		columnNamesForInsert.addAll(additionalColumns);
 
 		String tableColumns = String.join(", ", columnNamesForInsert);
