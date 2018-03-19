@@ -78,13 +78,13 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 			Update<Object> update = DbAction.update(o, propertyPath, dependingOn);
 			aggregateChange.addAction(update);
 
-			referencedEntities(o).forEach(
-					propertyAndValue -> insertReferencedEntities(propertyAndValue, aggregateChange, propertyPath.nested(propertyAndValue.property.getName()), update));
+			referencedEntities(o).forEach(propertyAndValue -> insertReferencedEntities(propertyAndValue, aggregateChange,
+					propertyPath.nested(propertyAndValue.property.getName()), update));
 		}
 	}
 
 	private void insertReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange,
-										  JdbcPropertyPath propertyPath, DbAction dependingOn) {
+			JdbcPropertyPath propertyPath, DbAction dependingOn) {
 
 		Insert<Object> insert;
 		if (propertyAndValue.property.isQualified()) {
@@ -116,7 +116,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 				.flatMap( //
 						p -> referencedEntity(p, persistentEntity.getPropertyAccessor(o)) //
 								.map(e -> new PropertyAndValue(p, e)) //
-				);
+		);
 	}
 
 	private Stream<Object> referencedEntity(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
@@ -147,7 +147,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	private Stream<Object> collectionPropertyAsStream(JdbcPersistentProperty p,
-													  PersistentPropertyAccessor propertyAccessor) {
+			PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 
@@ -160,7 +160,9 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
 		Object property = propertyAccessor.getProperty(p);
 
-		if (property == null) return Stream.empty();
+		if (property == null) {
+			return Stream.empty();
+		}
 
 		// ugly hackery since Java streams don't have a zip method.
 		AtomicInteger index = new AtomicInteger();

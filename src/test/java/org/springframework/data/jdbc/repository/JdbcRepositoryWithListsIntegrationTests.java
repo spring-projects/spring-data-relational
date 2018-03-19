@@ -132,8 +132,6 @@ public class JdbcRepositoryWithListsIntegrationTests {
 
 		Iterable<DummyEntity> reloaded = repository.findAll();
 
-		reloaded.forEach(de -> System.out.println("id " + de.id + " content " + de.content.iterator().next().content));
-
 		assertThat(reloaded) //
 				.extracting(e -> e.id, e -> e.content.size()) //
 				.containsExactly(tuple(entity.id, entity.content.size()));
