@@ -32,6 +32,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
+import org.springframework.data.jdbc.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -161,6 +162,39 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Insert.class, Element.class, "other.element"), //
 						tuple(Insert.class, Element.class, "other.element") //
 				);
+	}
+
+	@Test // DATAJDBC-188
+	public void cascadingReferencesTriggerCascadingActionsForUpdate() {
+
+		CascadingReferenceEntity entity = new CascadingReferenceEntity(23L);
+
+		entity.other.add(createMiddleElement( //
+				new Element(null), //
+				new Element(null)) //
+		);
+
+		entity.other.add(createMiddleElement( //
+				new Element(null), //
+				new Element(null)) //
+		);
+
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, CascadingReferenceEntity.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+				.containsExactly( //
+						tuple(Delete.class, Element.class, "other.element"),
+						tuple(Delete.class, CascadingReferenceMiddleElement.class, "other"),
+						tuple(Update.class, CascadingReferenceEntity.class, ""), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
+						tuple(Insert.class, Element.class, "other.element"), //
+						tuple(Insert.class, Element.class, "other.element"), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
+						tuple(Insert.class, Element.class, "other.element"), //
+						tuple(Insert.class, Element.class, "other.element") //
+		);
 	}
 
 	@Test // DATAJDBC-131
