@@ -63,11 +63,11 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@Test // DATAJDBC-100
 	public void repositoryGetsPickedUp() {
 
-		assertNotNull(repository);
+		assertThat(repository).isNotNull();
 
 		Iterable<DummyEntity> all = repository.findAll();
 
-		assertNotNull(all);
+		assertThat(all).isNotNull();
 	}
 
 	@Test // DATAJDBC-166

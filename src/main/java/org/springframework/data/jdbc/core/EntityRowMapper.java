@@ -17,6 +17,10 @@ package org.springframework.data.jdbc.core;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
@@ -31,9 +35,6 @@ import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.jdbc.core.RowMapper;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /**
  * Maps a ResultSet to an entity of type {@code T}, including entities referenced.
@@ -124,7 +125,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return null;
 		}
 
-		S instance = instantiator.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
+		S instance = instantiator.createInstance(entity,
+				new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
 
 		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(instance);
 		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
@@ -139,14 +141,10 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	@RequiredArgsConstructor
 	private static class ResultSetParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
 
-		@NonNull
-		private final ResultSet resultSet;
-		@NonNull
-		private final JdbcPersistentEntity<?> entity;
-		@NonNull
-		private final ConversionService conversionService;
-		@NonNull
-		private final String prefix;
+		@NonNull private final ResultSet resultSet;
+		@NonNull private final JdbcPersistentEntity<?> entity;
+		@NonNull private final ConversionService conversionService;
+		@NonNull private final String prefix;
 
 		/*
 		 * (non-Javadoc)
