@@ -94,6 +94,10 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 		this.simpleTypeHolder = simpleTypes;
 	}
 
+	/**
+	 * returns all {@link PropertyPath}s reachable from the root type in the order needed for deleting, i.e. the deepest
+	 * reference first.
+	 */
 	public List<PropertyPath> referencedEntities(Class<?> rootType, PropertyPath path) {
 
 		List<PropertyPath> paths = new ArrayList<>();

@@ -25,6 +25,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
+import org.springframework.data.jdbc.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 
 /**
@@ -37,21 +38,46 @@ public class JdbcEntityDeleteWriterUnitTests {
 
 	JdbcEntityDeleteWriter converter = new JdbcEntityDeleteWriter(new JdbcMappingContext());
 
-	@Test
+	private static Object dotPath(DbAction dba) {
+
+		JdbcPropertyPath propertyPath = dba.getPropertyPath();
+		return propertyPath == null ? null : propertyPath.toDotPath();
+	}
+
+	@Test // DATAJDBC-112
 	public void deleteDeletesTheEntityAndReferencedEntities() {
 
 		SomeEntity entity = new SomeEntity(23L);
 
 		AggregateChange<SomeEntity> aggregateChange = new AggregateChange<>(Kind.DELETE, SomeEntity.class, entity);
 
-		converter.write(entity, aggregateChange);
+		converter.write(entity.id, aggregateChange);
 
-		Assertions.assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType)
+		Assertions.assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, JdbcEntityDeleteWriterUnitTests::dotPath) //
 				.containsExactly( //
-						Tuple.tuple(Delete.class, YetAnother.class), //
-						Tuple.tuple(Delete.class, OtherEntity.class), //
-						Tuple.tuple(Delete.class, SomeEntity.class) //
-				);
+						Tuple.tuple(Delete.class, YetAnother.class, "other.yetAnother"), //
+						Tuple.tuple(Delete.class, OtherEntity.class, "other"), //
+						Tuple.tuple(Delete.class, SomeEntity.class, null) //
+		);
+	}
+
+	@Test // DATAJDBC-188
+	public void deleteAllDeletesAllEntitiesAndReferencedEntities() {
+
+		SomeEntity entity = new SomeEntity(23L);
+
+		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.DELETE, SomeEntity.class, null);
+
+		converter.write(null, aggregateChange);
+
+		Assertions.assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, JdbcEntityDeleteWriterUnitTests::dotPath) //
+				.containsExactly( //
+						Tuple.tuple(DeleteAll.class, YetAnother.class, "other.yetAnother"), //
+						Tuple.tuple(DeleteAll.class, OtherEntity.class, "other"), //
+						Tuple.tuple(DeleteAll.class, SomeEntity.class, null) //
+		);
 	}
 
 	@Data
