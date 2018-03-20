@@ -32,6 +32,8 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
 /**
+ * Unit tests for {@link DefaultDataAccessStrategy}.
+ *
  * @author Jens Schauder
  */
 public class DefaultDataAccessStrategyUnitTests {
