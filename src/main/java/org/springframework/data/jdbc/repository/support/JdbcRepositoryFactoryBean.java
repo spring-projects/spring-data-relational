@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
+import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.repository.Repository;
@@ -80,7 +82,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.mappingContext = mappingContext;
 	}
 
-	@Autowired
+	@Autowired(required = false)
 	public void setDataAccessStrategy(DataAccessStrategy dataAccessStrategy) {
 		this.dataAccessStrategy = dataAccessStrategy;
 	}
@@ -93,8 +95,15 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	@Override
 	public void afterPropertiesSet() {
 
-		Assert.notNull(this.dataAccessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(this.mappingContext, "MappingContext must not be null!");
+
+		if (dataAccessStrategy == null) {
+
+			dataAccessStrategy = new DefaultDataAccessStrategy( //
+					new SqlGeneratorSource(mappingContext), //
+					mappingContext);
+		}
+
 		super.afterPropertiesSet();
 	}
 }

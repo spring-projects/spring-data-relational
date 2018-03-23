@@ -48,7 +48,6 @@ public class DefaultDataAccessStrategyUnitTests {
 
 	DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
 			new SqlGeneratorSource(context), //
-			jdbcOperations, //
 			context //
 	);
 

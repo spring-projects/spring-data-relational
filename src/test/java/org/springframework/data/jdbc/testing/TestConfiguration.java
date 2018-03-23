@@ -21,14 +21,12 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.model.ConversionCustomizer;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
@@ -54,24 +52,21 @@ public class TestConfiguration {
 	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
 	@Bean
-	JdbcRepositoryFactory jdbcRepositoryFactory() {
+	JdbcRepositoryFactory jdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy) {
 
-		NamedParameterJdbcTemplate jdbcTemplate = namedParameterJdbcTemplate();
+		NamedParameterJdbcOperations jdbcTemplate = namedParameterJdbcTemplate();
 
 		final JdbcMappingContext context = new JdbcMappingContext(NamingStrategy.INSTANCE, jdbcTemplate, __ -> {});
 
 		return new JdbcRepositoryFactory( //
 				publisher, //
 				context, //
-				new DefaultDataAccessStrategy( //
-						new SqlGeneratorSource(context), //
-						jdbcTemplate, //
-						context) //
+				dataAccessStrategy //
 		);
 	}
 
 	@Bean
-	NamedParameterJdbcTemplate namedParameterJdbcTemplate() {
+	NamedParameterJdbcOperations namedParameterJdbcTemplate() {
 		return new NamedParameterJdbcTemplate(dataSource);
 	}
 
@@ -81,19 +76,8 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	DataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context,
-			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations operations) {
-
-		DelegatingDataAccessStrategy accessStrategy = new DelegatingDataAccessStrategy();
-
-		accessStrategy.setDelegate(new DefaultDataAccessStrategy( //
-				new SqlGeneratorSource(context), //
-				operations, //
-				context, //
-				accessStrategy) //
-		);
-
-		return accessStrategy;
+	DataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context) {
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context);
 	}
 
 	@Bean

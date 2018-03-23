@@ -15,14 +15,21 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import org.apache.ibatis.session.SqlSession;
-import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
-import org.springframework.data.mapping.PropertyPath;
+import static java.util.Arrays.*;
 
 import java.util.Collections;
 import java.util.Map;
+
+import org.apache.ibatis.session.SqlSession;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.data.jdbc.core.CascadingDataAccessStrategy;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
+import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
+import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.mapping.PropertyPath;
 
 /**
  * {@link DataAccessStrategy} implementation based on MyBatis. Each method gets mapped to a statement. The name of the
@@ -42,10 +49,42 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	private final SqlSession sqlSession;
 
 	/**
+	 * Create a {@link DataAccessStrategy} that first checks for queries defined by MyBatis and if it doesn't find one
+	 * used a {@link DefaultDataAccessStrategy}
+	 * 
+	 * @param context
+	 * @param sqlSession
+	 * @return
+	 */
+	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context, SqlSession sqlSession) {
+
+		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
+		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
+		// created. That is the purpose of the DelegatingAccessStrategy.
+		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
+		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession);
+
+		CascadingDataAccessStrategy cascadingDataAccessStrategy = new CascadingDataAccessStrategy(
+				asList(myBatisDataAccessStrategy, delegatingDataAccessStrategy));
+
+		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
+				new SqlGeneratorSource(context), //
+				context, //
+				cascadingDataAccessStrategy);
+
+		delegatingDataAccessStrategy.setDelegate(defaultDataAccessStrategy);
+
+		return cascadingDataAccessStrategy;
+	}
+
+	/**
 	 * Constructs a {@link DataAccessStrategy} based on MyBatis.
 	 * <p>
-	 * Use a {@link SqlSessionTemplate} for {@link SqlSession} or a similar implementation tying the session to the
-	 * proper transaction.
+	 * Use a {@link SqlSessionTemplate} for {@link SqlSession} or a similar implementation tying the session to the proper
+	 * transaction. Note that the resulting {@link DataAccessStrategy} only handles MyBatis. It does not include the
+	 * functionality of the {@link org.springframework.data.jdbc.core.DefaultDataAccessStrategy} which one normally still
+	 * wants. Use {@link #createCombinedAccessStrategy(JdbcMappingContext, SqlSession)} to create such a
+	 * {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.
 	 */
