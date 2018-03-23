@@ -25,7 +25,6 @@ import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
@@ -33,10 +32,9 @@ import org.springframework.data.mapping.PropertyPath;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
- * Unit tests to verify a contextual {@link NamingStrategy} implementation that customizes using a user-centric {@link ThreadLocal}.
- *
- * NOTE: Due to the need to verify SQL generation and {@link SqlGenerator}'s package-private status suggests
- * this unit test exist in this package, not {@literal org.springframework.data.jdbc.mappings.model}.
+ * Unit tests to verify a contextual {@link NamingStrategy} implementation that customizes using a user-centric
+ * {@link ThreadLocal}. NOTE: Due to the need to verify SQL generation and {@link SqlGenerator}'s package-private status
+ * suggests this unit test exist in this package, not {@literal org.springframework.data.jdbc.mappings.model}.
  *
  * @author Greg Turnquist
  */
@@ -45,9 +43,10 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	private final ThreadLocal<String> userHandler = new ThreadLocal<>();
 
 	/**
-	 * Use a {@link DefaultNamingStrategy}, but override the schema with a {@link ThreadLocal}-based setting.
+	 * Use a {@link NamingStrategy}, but override the schema with a {@link ThreadLocal}-based setting.
 	 */
-	private final NamingStrategy contextualNamingStrategy = new DefaultNamingStrategy() {
+	private final NamingStrategy contextualNamingStrategy = new NamingStrategy() {
+
 		@Override
 		public String getSchema() {
 			return userHandler.get();
@@ -65,12 +64,12 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SoftAssertions softAssertions = new SoftAssertions();
 			softAssertions.assertThat(sql) //
-				.startsWith("SELECT") //
-				.contains(user + ".DummyEntity.id AS id,") //
-				.contains(user + ".DummyEntity.name AS name,") //
-				.contains("ref.l1id AS ref_l1id") //
-				.contains("ref.content AS ref_content") //
-				.contains("FROM " + user + ".DummyEntity");
+					.startsWith("SELECT") //
+					.contains(user + ".DummyEntity.id AS id,") //
+					.contains(user + ".DummyEntity.name AS name,") //
+					.contains("ref.l1id AS ref_l1id") //
+					.contains("ref.content AS ref_content") //
+					.contains("FROM " + user + ".DummyEntity");
 			softAssertions.assertAll();
 		});
 	}
@@ -84,8 +83,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref", DummyEntity.class));
 
-			assertThat(sql).isEqualTo(
-				"DELETE FROM " + user + ".ReferencedEntity WHERE " + user + ".DummyEntity = :rootId");
+			assertThat(sql).isEqualTo("DELETE FROM " + user + ".ReferencedEntity WHERE " + user + ".DummyEntity = :rootId");
 		});
 	}
 

@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
@@ -37,7 +36,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  */
 public class SqlGeneratorFixedNamingStrategyUnitTests {
 
-	final NamingStrategy fixedCustomTablePrefixStrategy = new DefaultNamingStrategy() {
+	final NamingStrategy fixedCustomTablePrefixStrategy = new NamingStrategy() {
 
 		@Override
 		public String getSchema() {
@@ -55,7 +54,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		}
 	};
 
-	final NamingStrategy upperCaseLowerCaseStrategy = new DefaultNamingStrategy() {
+	final NamingStrategy upperCaseLowerCaseStrategy = new NamingStrategy() {
 
 		@Override
 		public String getTableName(Class<?> type) {

@@ -15,14 +15,14 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import org.junit.Test;
-import org.springframework.data.mapping.PropertyPath;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.Test;
+import org.springframework.data.mapping.PropertyPath;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for {@link JdbcMappingContext}.
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
  */
 public class JdbcMappingContextUnitTests {
 
-	NamingStrategy namingStrategy = new DefaultNamingStrategy();
+	NamingStrategy namingStrategy = NamingStrategy.INSTANCE;
 	NamedParameterJdbcOperations jdbcTemplate = mock(NamedParameterJdbcOperations.class);
 	ConversionCustomizer customizer = mock(ConversionCustomizer.class);
 
@@ -47,7 +47,7 @@ public class JdbcMappingContextUnitTests {
 				.containsExactly( //
 						"one.two", //
 						"one" //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-142
@@ -64,7 +64,7 @@ public class JdbcMappingContextUnitTests {
 				.containsExactly( //
 						"one.two", //
 						"one" //
-				);
+		);
 	}
 
 	private static class DummyEntity {

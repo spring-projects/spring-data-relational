@@ -25,7 +25,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
@@ -186,11 +185,11 @@ public class SqlGeneratorUnitTests {
 		String content;
 	}
 
-	private static class PrefixingNamingStrategy extends DefaultNamingStrategy {
+	private static class PrefixingNamingStrategy implements NamingStrategy {
 
 		@Override
 		public String getColumnName(JdbcPersistentProperty property) {
-			return "x_" + super.getColumnName(property);
+			return "x_" + NamingStrategy.super.getColumnName(property);
 		}
 
 	}

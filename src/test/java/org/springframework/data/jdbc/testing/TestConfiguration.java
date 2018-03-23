@@ -31,7 +31,6 @@ import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.model.ConversionCustomizer;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -59,7 +58,7 @@ public class TestConfiguration {
 
 		NamedParameterJdbcTemplate jdbcTemplate = namedParameterJdbcTemplate();
 
-		final JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(), jdbcTemplate, __ -> {});
+		final JdbcMappingContext context = new JdbcMappingContext(NamingStrategy.INSTANCE, jdbcTemplate, __ -> {});
 
 		return new JdbcRepositoryFactory( //
 				publisher, //
@@ -102,7 +101,7 @@ public class TestConfiguration {
 			Optional<ConversionCustomizer> conversionCustomizer) {
 
 		return new JdbcMappingContext( //
-				namingStrategy.orElse(new DefaultNamingStrategy()), //
+				namingStrategy.orElse(NamingStrategy.INSTANCE), //
 				template, //
 				conversionCustomizer.orElse(conversionService -> {}) //
 		);

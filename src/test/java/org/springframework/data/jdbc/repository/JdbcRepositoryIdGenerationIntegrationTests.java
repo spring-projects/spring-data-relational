@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 import lombok.Value;
@@ -31,7 +31,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -134,7 +133,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		 */
 		@Bean
 		NamingStrategy namingStrategy() {
-			return new DefaultNamingStrategy() {
+			return new NamingStrategy() {
 				@Override
 				public String getTableName(Class<?> type) {
 					return type.getSimpleName().toUpperCase();

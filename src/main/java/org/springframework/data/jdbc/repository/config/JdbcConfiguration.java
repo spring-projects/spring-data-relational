@@ -20,7 +20,6 @@ import java.util.Optional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.mapping.model.ConversionCustomizer;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -35,9 +34,9 @@ public class JdbcConfiguration {
 
 	@Bean
 	JdbcMappingContext jdbcMappingContext(NamedParameterJdbcTemplate template, Optional<NamingStrategy> namingStrategy,
-										  Optional<ConversionCustomizer> conversionCustomizer) {
+			Optional<ConversionCustomizer> conversionCustomizer) {
 
-		return new JdbcMappingContext(
-				namingStrategy.orElse(new DefaultNamingStrategy()), template, conversionCustomizer.orElse(conversionService -> {}));
+		return new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE), template,
+				conversionCustomizer.orElse(conversionService -> {}));
 	}
 }

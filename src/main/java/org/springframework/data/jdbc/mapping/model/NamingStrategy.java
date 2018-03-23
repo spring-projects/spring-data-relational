@@ -16,11 +16,11 @@
 package org.springframework.data.jdbc.mapping.model;
 
 /**
- * Interface and default implementation of a naming strategy. Defaults to no schema, 
- * table name based on {@link Class} and column name based on {@link JdbcPersistentProperty}.
- *
- * NOTE: Can also be used as an adapter. Create a lambda or an anonymous subclass and 
- * override any settings to implement a different strategy on the fly.
+ * Interface and default implementation of a naming strategy. Defaults to no schema, table name based on {@link Class}
+ * and column name based on {@link JdbcPersistentProperty}.
+ * <p>
+ * NOTE: Can also be used as an adapter. Create a lambda or an anonymous subclass and override any settings to implement
+ * a different strategy on the fly.
  * 
  * @author Greg Turnquist
  * @author Michael Simons
@@ -28,9 +28,16 @@ package org.springframework.data.jdbc.mapping.model;
 public interface NamingStrategy {
 
 	/**
+	 * Empty implementation of the interface utilizing only the default implementation.
+	 * <p>
+	 * Using this avoids creating essentially the same class over and over again.
+	 */
+	NamingStrategy INSTANCE = new NamingStrategy() {};
+
+	/**
 	 * Defaults to no schema.
 	 *
-	 * @return No schema
+	 * @return Empty String representing no schema
 	 */
 	default String getSchema() {
 		return "";
@@ -58,17 +65,19 @@ public interface NamingStrategy {
 	 * For a reference A -&gt; B this is the name in the table for B which references A.
 	 *
 	 * @param property The property who's column name in the owner table is required
-	 * @return a column name.
+	 * @return a column name. Must not be {@code null}.
 	 */
 	default String getReverseColumnName(JdbcPersistentProperty property) {
 		return property.getOwner().getTableName();
 	}
 
 	/**
-	 * For a map valued reference A -> Map&gt;X,B&lt; this is the name of the column in the tabel for B holding the key of the map.
-	 * @return
+	 * For a map valued reference A -> Map&gt;X,B&lt; this is the name of the column in the table for B holding the key of
+	 * the map.
+	 * 
+	 * @return name of the key column. Must not be {@code null}.
 	 */
-	default String getKeyColumn(JdbcPersistentProperty property){
+	default String getKeyColumn(JdbcPersistentProperty property) {
 		return getReverseColumnName(property) + "_key";
 	}
 

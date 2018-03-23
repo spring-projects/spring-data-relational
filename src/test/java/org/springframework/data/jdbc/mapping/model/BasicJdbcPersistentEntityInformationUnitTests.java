@@ -29,7 +29,10 @@ import org.springframework.lang.Nullable;
  */
 public class BasicJdbcPersistentEntityInformationUnitTests {
 
-	JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy(), mock(NamedParameterJdbcOperations.class), cs -> {});
+	JdbcMappingContext context = new JdbcMappingContext( //
+			NamingStrategy.INSTANCE, //
+			mock(NamedParameterJdbcOperations.class), //
+			cs -> {});
 	private DummyEntity dummyEntity = new DummyEntity();
 	private PersistableDummyEntity persistableDummyEntity = new PersistableDummyEntity();
 

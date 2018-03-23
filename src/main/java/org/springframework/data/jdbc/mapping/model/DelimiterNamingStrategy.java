@@ -22,14 +22,14 @@ import org.springframework.data.util.ParsingUtils;
  * column name based on {@link JdbcPersistentProperty}. The default delimiter is '_', resulting in snake case.
  *
  * @author Kazuki Shimizu
+ * @author Jens Schauder
  */
-public class DelimiterNamingStrategy extends DefaultNamingStrategy {
+public class DelimiterNamingStrategy implements NamingStrategy {
 
 	private final String delimiter;
 
 	/**
-	 * Construct a instance with '_' as delimiter.
-	 * This results in a snake case naming strategy.
+	 * Construct a instance with '_' as delimiter. This results in a snake case naming strategy.
 	 */
 	public DelimiterNamingStrategy() {
 		this("_");
@@ -49,7 +49,7 @@ public class DelimiterNamingStrategy extends DefaultNamingStrategy {
 	 */
 	@Override
 	public String getTableName(Class<?> type) {
-		return ParsingUtils.reconcatenateCamelCase(super.getTableName(type), delimiter);
+		return ParsingUtils.reconcatenateCamelCase(NamingStrategy.super.getTableName(type), delimiter);
 	}
 
 	/**
@@ -57,7 +57,7 @@ public class DelimiterNamingStrategy extends DefaultNamingStrategy {
 	 */
 	@Override
 	public String getColumnName(JdbcPersistentProperty property) {
-		return ParsingUtils.reconcatenateCamelCase(super.getColumnName(property), delimiter);
+		return ParsingUtils.reconcatenateCamelCase(NamingStrategy.super.getColumnName(property), delimiter);
 	}
 
 	/**

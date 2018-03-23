@@ -27,9 +27,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.conversion.DbAction;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.JdbcPropertyPath;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
@@ -42,7 +42,7 @@ public class DefaultJdbcInterpreterUnitTests {
 	static final long CONTAINER_ID = 23L;
 	static final String BACK_REFERENCE = "back-reference";
 
-	JdbcMappingContext context = new JdbcMappingContext(new DefaultNamingStrategy() {
+	JdbcMappingContext context = new JdbcMappingContext(new NamingStrategy() {
 		@Override
 		public String getReverseColumnName(JdbcPersistentProperty property) {
 			return BACK_REFERENCE;

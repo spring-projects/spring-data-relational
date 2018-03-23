@@ -15,23 +15,12 @@
  */
 package org.springframework.data.jdbc.core;
 
-import lombok.RequiredArgsConstructor;
-import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.springframework.core.convert.support.DefaultConversionService;
-import org.springframework.core.convert.support.GenericConversionService;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.convert.Jsr310Converters;
-import org.springframework.data.jdbc.mapping.model.DefaultNamingStrategy;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
-import org.springframework.data.jdbc.mapping.model.NamingStrategy;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.util.Assert;
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import javax.naming.OperationNotSupportedException;
+import lombok.RequiredArgsConstructor;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.AbstractMap.SimpleEntry;
@@ -42,9 +31,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import javax.naming.OperationNotSupportedException;
+
+import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.core.convert.support.GenericConversionService;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.Jsr310Converters;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.mapping.model.NamingStrategy;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.util.Assert;
 
 /**
  * Tests the extraction of entities from a {@link ResultSet} by the {@link EntityRowMapper}.
@@ -56,10 +57,10 @@ public class EntityRowMapperUnitTests {
 	public static final long ID_FOR_ENTITY_REFERENCING_MAP = 42L;
 	public static final long ID_FOR_ENTITY_REFERENCING_LIST = 4711L;
 	public static final long ID_FOR_ENTITY_NOT_REFERENCING_MAP = 23L;
-	public static final DefaultNamingStrategy X_APPENDING_NAMINGSTRATEGY = new DefaultNamingStrategy() {
+	public static final NamingStrategy X_APPENDING_NAMINGSTRATEGY = new NamingStrategy() {
 		@Override
 		public String getColumnName(JdbcPersistentProperty property) {
-			return super.getColumnName(property) + "x";
+			return NamingStrategy.super.getColumnName(property) + "x";
 		}
 	};
 
@@ -169,7 +170,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
-		return createRowMapper(type, new DefaultNamingStrategy());
+		return createRowMapper(type, NamingStrategy.INSTANCE);
 	}
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type, NamingStrategy namingStrategy) {
@@ -177,15 +178,14 @@ public class EntityRowMapperUnitTests {
 		JdbcMappingContext context = new JdbcMappingContext( //
 				namingStrategy, //
 				mock(NamedParameterJdbcOperations.class), //
-				__ -> {
-				} //
+				__ -> {} //
 		);
 
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determine what kind of ResultSet is needed for subsequent selects.
-		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
-				any(JdbcPersistentProperty.class));
+		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(accessStrategy)
+				.findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP), any(JdbcPersistentProperty.class));
 
 		doReturn(new HashSet<>(asList( //
 				new SimpleEntry("one", new Trivial()), //
@@ -202,8 +202,8 @@ public class EntityRowMapperUnitTests {
 		DefaultConversionService.addDefaultConverters(conversionService);
 		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
 
-		return new EntityRowMapper<>((JdbcPersistentEntity<T>) context.getRequiredPersistentEntity(type),
-				context, accessStrategy);
+		return new EntityRowMapper<>((JdbcPersistentEntity<T>) context.getRequiredPersistentEntity(type), context,
+				accessStrategy);
 	}
 
 	private static ResultSet mockResultSet(List<String> columns, Object... values) {
@@ -215,7 +215,7 @@ public class EntityRowMapperUnitTests {
 								"Number of values [%d] must be a multiple of the number of columns [%d]", //
 								values.length, //
 								columns.size() //
-						) //
+				) //
 		);
 
 		List<Map<String, Object>> result = convertValues(columns, values);
@@ -291,7 +291,8 @@ public class EntityRowMapperUnitTests {
 
 			Map<String, Object> rowMap = values.get(index);
 
-			Assert.isTrue(rowMap.containsKey(column), String.format("Trying to access a column (%s) that does not exist", column));
+			Assert.isTrue(rowMap.containsKey(column),
+					String.format("Trying to access a column (%s) that does not exist", column));
 
 			return rowMap.get(column);
 		}
@@ -306,46 +307,40 @@ public class EntityRowMapperUnitTests {
 	@RequiredArgsConstructor
 	static class TrivialImmutable {
 
-		@Id
-		private final Long id;
+		@Id private final Long id;
 		private final String name;
 	}
 
 	static class Trivial {
 
-		@Id
-		Long id;
+		@Id Long id;
 		String name;
 	}
 
 	static class OneToOne {
 
-		@Id
-		Long id;
+		@Id Long id;
 		String name;
 		Trivial child;
 	}
 
 	static class OneToSet {
 
-		@Id
-		Long id;
+		@Id Long id;
 		String name;
 		Set<Trivial> children;
 	}
 
 	static class OneToMap {
 
-		@Id
-		Long id;
+		@Id Long id;
 		String name;
 		Map<String, Trivial> children;
 	}
 
 	static class OneToList {
 
-		@Id
-		Long id;
+		@Id Long id;
 		String name;
 		List<Trivial> children;
 	}

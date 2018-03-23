@@ -71,7 +71,7 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	}
 
 	public JdbcMappingContext(NamedParameterJdbcOperations template) {
-		this(new DefaultNamingStrategy(), template, __ -> {});
+		this(NamingStrategy.INSTANCE, template, __ -> {});
 	}
 
 	@Override
