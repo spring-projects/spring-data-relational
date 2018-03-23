@@ -46,13 +46,12 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Before
 	public void before() {
 
-		final JdbcMappingContext context = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
+		final JdbcMappingContext context = new JdbcMappingContext(createIdGeneratingOperations());
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory( //
 				publisher, //
 				context, //
 				new DefaultDataAccessStrategy( //
 						new SqlGeneratorSource(context), //
-						createIdGeneratingOperations(), //
 						context //
 				) //
 		);

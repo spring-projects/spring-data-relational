@@ -56,11 +56,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final JdbcMappingContext context;
 	private final DataAccessStrategy accessStrategy;
 
-	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, NamedParameterJdbcOperations operations,
-			JdbcMappingContext context, DataAccessStrategy accessStrategy) {
+	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, JdbcMappingContext context,
+			DataAccessStrategy accessStrategy) {
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
-		this.operations = operations;
+		this.operations = context.getTemplate();
 		this.context = context;
 		this.accessStrategy = accessStrategy;
 	}
@@ -69,11 +69,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * Creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
 	 * Only suitable if this is the only access strategy in use.
 	 */
-	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, NamedParameterJdbcOperations operations,
-			JdbcMappingContext context) {
+	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, JdbcMappingContext context) {
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
-		this.operations = operations;
+		this.operations = context.getTemplate();
 		this.context = context;
 		this.accessStrategy = this;
 	}

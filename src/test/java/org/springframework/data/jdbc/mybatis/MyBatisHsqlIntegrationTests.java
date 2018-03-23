@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import junit.framework.AssertionFailedError;
 
@@ -30,6 +30,8 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
@@ -38,8 +40,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Tests the integration with Mybatis.
@@ -83,8 +83,8 @@ public class MyBatisHsqlIntegrationTests {
 		}
 
 		@Bean
-		MyBatisDataAccessStrategy dataAccessStrategy(SqlSession sqlSession) {
-			return new MyBatisDataAccessStrategy(sqlSession);
+		DataAccessStrategy dataAccessStrategy(JdbcMappingContext context, SqlSession sqlSession) {
+			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, sqlSession);
 		}
 	}
 
