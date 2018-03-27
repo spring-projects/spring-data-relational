@@ -36,7 +36,8 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
- * @since 2.0
+ * @author Christoph Strobl
+ * @since 1.0
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> //
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
@@ -67,10 +68,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(publisher, mappingContext,
 				dataAccessStrategy);
-
-		if (rowMapperMap != null) {
-			jdbcRepositoryFactory.setRowMapperMap(rowMapperMap);
-		}
+		jdbcRepositoryFactory.setRowMapperMap(rowMapperMap);
 
 		return jdbcRepositoryFactory;
 	}
@@ -82,11 +80,18 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.mappingContext = mappingContext;
 	}
 
+	/**
+	 * @param dataAccessStrategy can be {@literal null}.
+	 */
 	@Autowired(required = false)
 	public void setDataAccessStrategy(DataAccessStrategy dataAccessStrategy) {
 		this.dataAccessStrategy = dataAccessStrategy;
 	}
 
+	/**
+	 * @param rowMapperMap can be {@literal null}. {@link #afterPropertiesSet()} defaults to {@link RowMapperMap#EMPTY} if
+	 *          {@literal null}.
+	 */
 	@Autowired(required = false)
 	public void setRowMapperMap(RowMapperMap rowMapperMap) {
 		this.rowMapperMap = rowMapperMap;
@@ -95,13 +100,17 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	@Override
 	public void afterPropertiesSet() {
 
-		Assert.notNull(this.mappingContext, "MappingContext must not be null!");
+		Assert.state(this.mappingContext != null, "MappingContext is required and must not be null!");
 
 		if (dataAccessStrategy == null) {
 
 			dataAccessStrategy = new DefaultDataAccessStrategy( //
 					new SqlGeneratorSource(mappingContext), //
 					mappingContext);
+		}
+
+		if (rowMapperMap == null) {
+			rowMapperMap = RowMapperMap.EMPTY;
 		}
 
 		super.afterPropertiesSet();
