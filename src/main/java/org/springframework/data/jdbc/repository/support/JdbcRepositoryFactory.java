@@ -30,12 +30,14 @@ import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.util.Assert;
 
 /**
  * Creates repository implementation based on JDBC.
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Christoph Strobl
  * @since 2.0
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
@@ -89,7 +91,12 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		return Optional.of(new JdbcQueryLookupStrategy(evaluationContextProvider, context, accessStrategy, rowMapperMap));
 	}
 
+	/**
+	 * @param rowMapperMap must not be {@literal null} consider {@link RowMapperMap#EMPTY} instead.
+	 */
 	public void setRowMapperMap(RowMapperMap rowMapperMap) {
+
+		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
 		this.rowMapperMap = rowMapperMap;
 	}
 }
