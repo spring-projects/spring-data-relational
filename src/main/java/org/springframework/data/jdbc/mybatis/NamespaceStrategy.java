@@ -16,16 +16,20 @@
 package org.springframework.data.jdbc.mybatis;
 
 /**
- * The naming strategy for MyBatis.
+ * A strategy to derive a MyBatis namespace from a domainType.
  *
  * @author Kazuki Shimizu
+ * @author Jens Schauder
  */
-public interface MyBatisNamingStrategy {
+public interface NamespaceStrategy {
+
+	NamespaceStrategy DEFAULT_INSTANCE = new NamespaceStrategy() {};
 
 	/**
-	 * Get a namespace that correspond domain type.
+	 * Get a namespace that corresponds to the given domain type.
 	 * <p>
 	 * By default, the namespace is based on the class of the entity plus the suffix "Mapper".
+	 *
 	 * @param domainType Must be non {@literal null}.
 	 * @return a namespace that correspond domain type
 	 */

@@ -30,14 +30,16 @@ import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.util.Assert;
 
 /**
  * {@link DataAccessStrategy} implementation based on MyBatis. Each method gets mapped to a statement. The name of the
- * statement gets constructed as follows: By default, the namespace is based on the class of the entity plus the suffix "Mapper".
- * This is then followed by the method name separated by a dot. For methods taking a {@link PropertyPath} as argument,
- * the relevant entity is that of the root of the path, and the path itself gets as dot separated String appended to the
- * statement name. Each statement gets an instance of {@link MyBatisContext}, which at least has the entityType set. For
- * methods taking a {@link PropertyPath} the entityTyoe if the context is set to the class of the leaf type.
+ * statement gets constructed as follows: By default, the namespace is based on the class of the entity plus the suffix
+ * "Mapper". This is then followed by the method name separated by a dot. For methods taking a {@link PropertyPath} as
+ * argument, the relevant entity is that of the root of the path, and the path itself gets as dot separated String
+ * appended to the statement name. Each statement gets an instance of {@link MyBatisContext}, which at least has the
+ * entityType set. For methods taking a {@link PropertyPath} the entityTyoe if the context is set to the class of the
+ * leaf type.
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
@@ -45,23 +47,29 @@ import org.springframework.data.mapping.PropertyPath;
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	private final SqlSession sqlSession;
-	private MyBatisNamingStrategy namingStrategy = new MyBatisNamingStrategy() {};
+	private NamespaceStrategy namespaceStrategy = NamespaceStrategy.DEFAULT_INSTANCE;
 
 	/**
 	 * Create a {@link DataAccessStrategy} that first checks for queries defined by MyBatis and if it doesn't find one
-	 * used a {@link DefaultDataAccessStrategy}
-	 * 
-	 * @param context
-	 * @param sqlSession
-	 * @return
+	 * uses a {@link DefaultDataAccessStrategy}
 	 */
 	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context, SqlSession sqlSession) {
+		return createCombinedAccessStrategy(context, sqlSession, NamespaceStrategy.DEFAULT_INSTANCE);
+	}
+
+	/**
+	 * Create a {@link DataAccessStrategy} that first checks for queries defined by MyBatis and if it doesn't find one
+	 * uses a {@link DefaultDataAccessStrategy}
+	 */
+	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context, SqlSession sqlSession,
+			NamespaceStrategy namespaceStrategy) {
 
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
 		// created. That is the purpose of the DelegatingAccessStrategy.
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
 		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession);
+		myBatisDataAccessStrategy.setNamespaceStrategy(namespaceStrategy);
 
 		CascadingDataAccessStrategy cascadingDataAccessStrategy = new CascadingDataAccessStrategy(
 				asList(myBatisDataAccessStrategy, delegatingDataAccessStrategy));
@@ -92,11 +100,15 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	/**
-	 * Set a naming strategy for MyBatis objects.
-	 * @param namingStrategy Must be non {@literal null}
+	 * Set a NamespaceStrategy to be used.
+	 * 
+	 * @param namespaceStrategy Must be non {@literal null}
 	 */
-	public void setNamingStrategy(MyBatisNamingStrategy namingStrategy) {
-		this.namingStrategy = namingStrategy;
+	public void setNamespaceStrategy(NamespaceStrategy namespaceStrategy) {
+
+		Assert.notNull(namespaceStrategy, "The NamespaceStrategy must not be null");
+
+		this.namespaceStrategy = namespaceStrategy;
 	}
 
 	@Override
@@ -168,7 +180,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
-		return sqlSession().selectList(namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
+		return sqlSession().selectList(
+				namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
 				new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap()));
 	}
 
@@ -185,7 +198,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private String namespace(Class<?> domainType) {
-		return this.namingStrategy.getNamespace(domainType);
+		return this.namespaceStrategy.getNamespace(domainType);
 	}
 
 	private SqlSession sqlSession() {

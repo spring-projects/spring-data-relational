@@ -15,11 +15,11 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.io.IOException;
+import static org.assertj.core.api.Assertions.*;
 
 import junit.framework.AssertionFailedError;
+
+import java.io.IOException;
 
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
@@ -38,19 +38,38 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Tests the integration for customizing namespace with Mybatis.
+ * Tests the integration for customizing the namespace with Mybatis.
  *
  * @author Kazuki Shimizu
+ * @author Jens Schauder
  */
 @ContextConfiguration
 @Transactional
 public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
+
+	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
+
+	@Autowired SqlSessionFactory sqlSessionFactory;
+	@Autowired DummyEntityRepository repository;
+
+	@Test // DATAJDBC-178
+	public void myBatisGetsUsedForInsertAndSelect() {
+
+		DummyEntity entity = new DummyEntity(null, "some name");
+		DummyEntity saved = repository.save(entity);
+
+		assertThat(saved.id).isNotNull();
+
+		DummyEntity reloaded = repository.findById(saved.id).orElseThrow(AssertionFailedError::new);
+
+		assertThat(reloaded.name).isEqualTo("name " + saved.id);
+	}
 
 	@org.springframework.context.annotation.Configuration
 	@Import(TestConfiguration.class)
@@ -85,37 +104,19 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 
 		@Bean
 		MyBatisDataAccessStrategy dataAccessStrategy(SqlSession sqlSession) {
+
 			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession);
-			strategy.setNamingStrategy(new MyBatisNamingStrategy() {
+
+			strategy.setNamespaceStrategy(new NamespaceStrategy() {
 				@Override
 				public String getNamespace(Class<?> domainType) {
 					return domainType.getPackage().getName() + ".mapper." + domainType.getSimpleName() + "Mapper";
 				}
 			});
+
 			return strategy;
 		}
 	}
 
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
-
-	@Autowired SqlSessionFactory sqlSessionFactory;
-	@Autowired DummyEntityRepository repository;
-
-	@Test // DATAJDBC-178
-	public void myBatisGetsUsedForInsertAndSelect() {
-
-		DummyEntity entity = new DummyEntity(null, "some name");
-		DummyEntity saved = repository.save(entity);
-
-		assertThat(saved.id).isNotNull();
-
-		DummyEntity reloaded = repository.findById(saved.id).orElseThrow(AssertionFailedError::new);
-
-		assertThat(reloaded.name).isEqualTo("name " + saved.id);
-	}
-
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
-	}
-
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 }
