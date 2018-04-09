@@ -34,9 +34,9 @@ Spring Data JDBC tries its best to encourage modelling your domain along these i
 
 === CRUD operations
 
-In order use Spring Data JDBC you need the following:
+In order to use Spring Data JDBC you need the following:
 
-1. An entity with an attribute marked as _id_ using the spring datas https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
+1. An entity with an attribute marked as _id_ using the Spring Data https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
 +
 [source,java]
 ----
@@ -90,26 +90,26 @@ This name can be changed by implementing `NamingStrategy.getReverseColumnName(Jd
 The table of the referenced entity is expected to have an additional column named like the table of the referencing entity.
 This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` according to your preferences.
 
-* `Map<simple type, some entity>` will be considered a qualified one to many relationship.
+* `Map<simple type, some entity>` will be considered a qualified one-to-many relationship.
 The table of the referenced entity is expected to have two additional columns: One named like the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
 This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` and `NamingStrategy.getKeyColumn(JdbcPersistentProperty property)` according to your preferences.
 
 The handling of referenced entities is very limited.
-Part of this is because this project is still before it's first release.
+Part of this is because this project is still before its first release.
 
 But another reason is the idea of <<The Aggregate Root,Aggregate Roots>> as described above.
 If you reference another entity that entity is by definition part of your Aggregate.
 So if you remove the reference it will get deleted.
 This also means references will be 1-1 or 1-n, but not n-1 or n-m.
 
-If your having n-1 or n-m references you are probably dealing with two separate Aggregates.
-References between those should be encode as simple ids, which should map just fine with Spring Data JDBC.
+If you are having n-1 or n-m references you are probably dealing with two separate Aggregates.
+References between those should be encoded as simple ids, which should map just fine with Spring Data JDBC.
 
-Also the mapping we offer is very limited for a third reason which already was mentioned at the very beginning of the document: This is not an ORM.
+Also the mapping we offer is very limited for a third reason which already was mentioned at the very beginning of the document: this is not an ORM.
 We will offer ways to plug in your own SQL in various ways.
 But the default mapping itself will stay limited.
-If you want highly customizable mappings which support almost everything one can imagine you will probably be much happier with (Spring Data) JPA.
-Which is a very powerful and mature technology.
+If you want highly customizable mappings which support almost everything one can imagine you will probably be much happier with (Spring Data) JPA,
+which is a very powerful and mature technology.
 
 === Query annotation
 
@@ -126,7 +126,7 @@ If you compile your sources with the `-parameters` compiler flag you can omit th
 
 ==== Custom RowMapper
 
-You can configure the `RowMapper` to use using either the `@Query(rowMapperClass = ....)` or you can register a `RowMapperMap` bean and register `RowMapper` per method return type.
+You can configure the `RowMapper` to use, using either the `@Query(rowMapperClass = ....)` or you can register a `RowMapperMap` bean and register `RowMapper` per method return type.
 
 [source,java]
 ----
@@ -142,39 +142,39 @@ You can configure the `RowMapper` to use using either the `@Query(rowMapperClass
 
 When determining the `RowMapper` to use for a method the following steps are followed based on the return type of the method:
 
-1. If the type is a simple type no `RowMapper` is used.
+1. If the type is a simple type, no `RowMapper` is used.
     Instead the query is expected to return a single row with a single column and a conversion to the return type is applied to that value.
 
 2. The entity classes in the `RowMapperMap` are iterated until one is found that is a superclass or interface of the return type in question.
     The `RowMapper` registered for that class is used.
     Iterating happens in the order of registration, so make sure to register more general types after specific ones.
 
-If applicable wrapper type like collections or `Optional` are unwrapped.
-So a return type of `Optional<Person>` will use the type `Person` in the steps above.
+If applicable, wrapper types like collections or `Optional` are unwrapped.
+Thus, a return type of `Optional<Person>` will use the type `Person` in the steps above.
 
 === Id generation
 
-Spring Data JDBC uses the id to identify entities but also to determine if an entity is new or already existing in the database.
-If the id is `null` or of a primitive type and `0` or `0.0` the entity is considered new.
+Spring Data JDBC uses the id to identify entities, but also to determine if an entity is new or already existing in the database.
+If the id is `null` or of a primitive type having value `0` or `0.0`, the entity is considered new.
 
-When your data base has some autoincrement column for the id column the generated value will get set in the entity after inserting it into the database.
+If your database has some autoincrement-column for the id-column, the generated value will get set in the entity after inserting it into the database.
 
 There are few ways to tweak this behavior.
 If you don't like the logic to distinguish between new and existing entities you can implement https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Persistable.html[`Persistable`] with your entity and overwrite `isNew()` with your own logic.
 
 One important constraint is that after saving an entity the entity shouldn't be _new_ anymore.
-With autoincrement columns this happens automatically since the the id gets set by Spring Data with the value from the id column.
-If you are not using autoincrement columns you can use that using a `BeforeSave`-listener which sets the id of the entity (see below).
+With autoincrement-columns this happens automatically since the id gets set by Spring Data with the value from the id-column.
+If you are not using autoincrement-columns, you can use a `BeforeSave`-listener which sets the id of the entity (see below).
 
 === NamingStrategy
 
-When you use the standard implementations of `CrudRepository` as provided by Spring Data JDBC it will expect a certain table structure.
+If you use the standard implementations of `CrudRepository` as provided by Spring Data JDBC, it will expect a certain table structure.
 You can tweak that by providing a https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/model/NamingStrategy.java[`NamingStrategy`] in your application context.
 
 === Events
 
-Spring Data Jdbc triggers events which will get publish to any matching `ApplicationListener`  in the application context.
-For example the following listener will get invoked before an aggregate gets saved.
+Spring Data JDBC triggers events which will get published to any matching `ApplicationListener`  in the application context.
+For example, the following listener will get invoked before an Aggregate gets saved.
 
 [source,java]
 ----
@@ -202,7 +202,7 @@ public ApplicationListener<BeforeSave> timeStampingSaveTime() {
 | https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`AfterDelete`]
 | after an aggregate root got deleted.
 
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`BeforeSave`]
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/BeforeSave.java[`BeforeSave`]
 | before an aggregate root gets saved, i.e. inserted or updated but after the decision was made if it will get updated or deleted.
 The event has a reference to an https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/core/conversion/AggregateChange.java[`AggregateChange`] instance.
 The instance can be modified by adding or removing https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/core/conversion/DbAction.java[`DbAction`]s.
@@ -210,19 +210,19 @@ The instance can be modified by adding or removing https://github.com/spring-pro
 | https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterSave.java[`AfterSave`]
 | after an aggregate root gets saved, i.e. inserted or updated.
 
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`AfterCreation`]
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterCreation.java[`AfterCreation`]
 | after an aggregate root got created from a database `ResultSet` and all it's property set
 |===
 
 
 === MyBatis
 
-For each operation in `CrudRepository` Spring Data Jdbc will execute multiple statements.
-If there is a https://github.com/mybatis/mybatis-3/blob/master/src/main/java/org/apache/ibatis/session/SqlSessionFactory.java[`SqlSessionFactory`] in the application context, it will checked if it offers a statement for each step.
-If one is found that statement will be used (including its configured mapping to an entity).
+For each operation in `CrudRepository` Spring Data JDBC will execute multiple statements.
+If there is a https://github.com/mybatis/mybatis-3/blob/master/src/main/java/org/apache/ibatis/session/SqlSessionFactory.java[`SqlSessionFactory`] in the application context, it will be checked if it offers a statement for each step.
+If one is found, that statement will be used (including its configured mapping to an entity).
 
 The name of the statement is constructed by concatenating the fully qualified name of the entity type  with `Mapper.` and a string determining the kind of statement.
-E.g. if an instance of `org.example.User` is to be inserted Spring Data Jdbc will look for a statement named `org.example.UserMapper.insert`.
+E.g. if an instance of `org.example.User` is to be inserted, Spring Data JDBC will look for a statement named `org.example.UserMapper.insert`.
 
 Upon execution of the statement an instance of [`MyBatisContext`] will get passed as an argument which makes various arguments available to the statement.
 
@@ -250,7 +250,7 @@ Upon execution of the statement an instance of [`MyBatisContext`] will get passe
 `getDomainType`: the type of the entity to be deleted.
 
 | `deleteAll.<propertyPath>` | Delete all entities referenced by any aggregate root of the type used as prefix via the given property path.
-Note that the type used for prefixing the statement name is the name of the aggregate root not the one of the entity to be deleted. | `deleteAll`.|
+Note that the type used for prefixing the statement name is the name of the aggregate root, not the one of the entity to be deleted. | `deleteAll`.|
 
 `getDomainType`: the type of the entities to be deleted.
 
@@ -293,9 +293,9 @@ Note that the type used for prefixing the statement name is the name of the aggr
 `getDomainType` the type of aggregate roots to count.
 |===
 
-== Features planned for the not to far future
+== Features planned for the not too distant future
 
-=== Advance query annotation support
+=== Advanced query annotation support
 
 * customizable `RowMapper`
 * projections
@@ -305,7 +305,7 @@ Note that the type used for prefixing the statement name is the name of the aggr
 === MyBatis per method support
 
 The current MyBatis supported is rather elaborate in that it allows to execute multiple statements for a single method call.
-But sometimes less is more and it should be possible to annotate a method with a simple annotation to identify a SQL statement in a MyBatis mapping to be executed.
+But sometimes less is more, and it should be possible to annotate a method with a simple annotation to identify a SQL statement in a MyBatis mapping to be executed.
 
 === Support of lists in entities
 
@@ -318,7 +318,7 @@ Currently you will need to build it locally.
 == Getting Help
 
 Right now the best source of information is the source code in this repository.
-Especially the integration tests (When you are reading this on github type `t` and then `IntegrationTests.java`)
+Especially the integration tests (if you are reading this on github, type `t` and then `IntegrationTests.java`)
 
 We are keeping an eye on the (soon to be created) https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on stackoverflow].
 
@@ -328,7 +328,7 @@ If you think you found a bug, or have a feature request please https://jira.spri
 
 === Fast running tests
 
-Fast running tests can executed with a simple
+Fast running tests can be executed with a simple
 
 [source]
 ----
@@ -369,7 +369,7 @@ Here are some ways for you to get involved in the community:
 
 * Get involved with the Spring community by helping out on http://stackoverflow.com/questions/tagged/spring-data-jdbc[stackoverflow] by responding to questions and joining the debate.
 * Create https://jira.spring.io/browse/DATAJDBC[JIRA] tickets for bugs and new features and comment and vote on the ones that you are interested in.
-* Github is for social coding: if you want to write code, we encourage contributions through pull requests from http://help.github.com/forking/[forks of this repository]. If you want to contribute code this way, please reference a JIRA ticket as well covering the specific issue you are addressing.
+* Github is for social coding: if you want to write code, we encourage contributions through pull requests from http://help.github.com/forking/[forks of this repository]. If you want to contribute code this way, please reference a JIRA ticket as well, covering the specific issue you are addressing.
 * Watch for upcoming articles on Spring by http://spring.io/blog[subscribing] to spring.io.
 
 Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement]. Signing the contributor’s agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. If you forget to do so, you'll be reminded when you submit a pull request. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
