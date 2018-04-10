@@ -231,7 +231,7 @@ class SqlGenerator {
 	}
 
 	private String createExistsSql() {
-		return String.format("select count(*) from %s where %s = :id", entity.getTableName(), entity.getIdColumn());
+		return String.format("SELECT COUNT(*) FROM %s WHERE %s = :id", entity.getTableName(), entity.getIdColumn());
 	}
 
 	private String createCountSql() {
@@ -240,7 +240,7 @@ class SqlGenerator {
 
 	private String createInsertSql(Set<String> additionalColumns) {
 
-		String insertTemplate = "insert into %s (%s) values (%s)";
+		String insertTemplate = "INSERT INTO %s (%s) VALUES (%s)";
 
 		LinkedHashSet<String> columnNamesForInsert = new LinkedHashSet<>(nonIdColumnNames);
 		columnNamesForInsert.addAll(additionalColumns);
@@ -253,7 +253,7 @@ class SqlGenerator {
 
 	private String createUpdateSql() {
 
-		String updateTemplate = "update %s set %s where %s = :%s";
+		String updateTemplate = "UPDATE %s SET %s WHERE %s = :%s";
 
 		String setClause = columnNames.stream()//
 				.map(n -> String.format("%s = :%s", n, n))//
@@ -263,7 +263,7 @@ class SqlGenerator {
 	}
 
 	private String createDeleteSql() {
-		return String.format("DELETE from %s where %s = :id", entity.getTableName(), entity.getIdColumn());
+		return String.format("DELETE FROM %s WHERE %s = :id", entity.getTableName(), entity.getIdColumn());
 	}
 
 	String createDeleteAllSql(PropertyPath path) {
