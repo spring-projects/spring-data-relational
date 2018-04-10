@@ -353,6 +353,7 @@ Currently the following _databasetypes_ are available:
 * hsql (default, does not require a running database)
 * mysql
 * postgres
+* mariadb
 
 === Run tests with all databases
 
@@ -361,7 +362,7 @@ Currently the following _databasetypes_ are available:
 mvn test -Pall-dbs
 ----
 
-This will execute the unit tests, and all the integration tests with all the databases we currently support for testing. The databases must be running.
+This will execute the unit tests, and all the integration tests with all the databases we currently support for testing. Running the integration-tests depends on Docker.
 
 == Contributing to Spring Data JDBC
 

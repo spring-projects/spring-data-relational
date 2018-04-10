@@ -32,6 +32,7 @@
 		<mybatis-spring.version>1.3.2</mybatis-spring.version>
 		<mysql-connector-java.version>5.1.41</mysql-connector-java.version>
 		<postgresql.version>42.0.0</postgresql.version>
+		<mariadb-java-client.version>2.2.3</mariadb-java-client.version>
 		<testcontainers.version>1.6.0</testcontainers.version>
 
 	</properties>
@@ -118,6 +119,24 @@
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>postgres</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>mariadb-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>mariadb</spring.profiles.active>
 									</systemPropertyVariables>
 								</configuration>
 							</execution>
@@ -210,6 +229,13 @@
 		</dependency>
 
 		<dependency>
+		    <groupId>org.mariadb.jdbc</groupId>
+		    <artifactId>mariadb-java-client</artifactId>
+		    <version>${mariadb-java-client.version}</version>
+		    <scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>de.schauderhaft.degraph</groupId>
 			<artifactId>degraph-check</artifactId>
 			<version>${degraph-check.version}</version>
@@ -226,6 +252,13 @@
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>postgresql</artifactId>
+			<version>${testcontainers.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mariadb</artifactId>
 			<version>${testcontainers.version}</version>
 			<scope>test</scope>
 		</dependency>
