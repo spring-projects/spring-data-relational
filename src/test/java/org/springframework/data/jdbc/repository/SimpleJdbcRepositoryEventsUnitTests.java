@@ -21,6 +21,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.jdbc.mapping.event.AfterCreation;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
 import org.springframework.data.jdbc.mapping.event.AfterSave;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
@@ -42,18 +43,22 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	FakePublisher publisher = new FakePublisher();
 
 	DummyEntityRepository repository;
+	DefaultDataAccessStrategy dataAccessStrategy;
 
 	@Before
 	public void before() {
 
 		final JdbcMappingContext context = new JdbcMappingContext(createIdGeneratingOperations());
+
+		dataAccessStrategy = spy(new DefaultDataAccessStrategy( //
+				new SqlGeneratorSource(context), //
+				context //
+		));
+
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory( //
 				publisher, //
 				context, //
-				new DefaultDataAccessStrategy( //
-						new SqlGeneratorSource(context), //
-						context //
-				) //
+				dataAccessStrategy //
 		);
 
 		repository = factory.getRepository(DummyEntityRepository.class);
@@ -119,6 +124,57 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						BeforeDelete.class, //
 						AfterDelete.class //
+		);
+	}
+
+	@Test // DATAJDBC-197
+	public void publishesEventsOnFindAll() {
+
+		DummyEntity entity1 = new DummyEntity(42L);
+		DummyEntity entity2 = new DummyEntity(23L);
+
+		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any(Class.class));
+
+		repository.findAll();
+
+		assertThat(publisher.events) //
+				.extracting(e -> (Class) e.getClass()) //
+				.containsExactly( //
+						AfterCreation.class, //
+						AfterCreation.class //
+		);
+	}
+
+	@Test // DATAJDBC-197
+	public void publishesEventsOnFindAllById() {
+
+		DummyEntity entity1 = new DummyEntity(42L);
+		DummyEntity entity2 = new DummyEntity(23L);
+
+		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAllById(any(Iterable.class), any(Class.class));
+
+		repository.findAllById(asList(42L, 23L));
+
+		assertThat(publisher.events) //
+				.extracting(e -> (Class) e.getClass()) //
+				.containsExactly( //
+						AfterCreation.class, //
+						AfterCreation.class //
+		);
+	}
+
+	@Test // DATAJDBC-197
+	public void publishesEventsOnFindById() {
+
+		DummyEntity entity1 = new DummyEntity(23L);
+		doReturn(entity1).when(dataAccessStrategy).findById(eq(23L), any(Class.class));
+
+		repository.findById(23L);
+
+		assertThat(publisher.events) //
+				.extracting(e -> (Class) e.getClass()) //
+				.containsExactly( //
+						AfterCreation.class //
 		);
 	}
 
