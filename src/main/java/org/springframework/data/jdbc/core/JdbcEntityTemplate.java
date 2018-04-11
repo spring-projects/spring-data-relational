@@ -23,6 +23,7 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityDeleteWriter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
+import org.springframework.data.jdbc.mapping.event.AfterCreation;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
 import org.springframework.data.jdbc.mapping.event.AfterSave;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
@@ -90,7 +91,12 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
-		return accessStrategy.findById(id, domainType);
+
+		T entity = accessStrategy.findById(id, domainType);
+		if (entity != null) {
+			publishAfterCreation(id, entity);
+		}
+		return entity;
 	}
 
 	@Override
@@ -100,12 +106,18 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
-		return accessStrategy.findAll(domainType);
+
+		Iterable<T> all = accessStrategy.findAll(domainType);
+		publishAfterCreation(all);
+		return all;
 	}
 
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
-		return accessStrategy.findAllById(ids, domainType);
+
+		Iterable<T> allById = accessStrategy.findAllById(ids, domainType);
+		publishAfterCreation(allById);
+		return allById;
 	}
 
 	@Override
@@ -160,5 +172,16 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		AggregateChange aggregateChange = new AggregateChange(Kind.DELETE, domainType, null);
 		jdbcEntityDeleteWriter.write(null, aggregateChange);
 		return aggregateChange;
+	}
+
+	private <T> void publishAfterCreation(Iterable<T> all) {
+
+		all.forEach(e -> {
+			publishAfterCreation(context.getRequiredPersistentEntityInformation((Class<T>) e.getClass()).getRequiredId(e), e);
+		});
+	}
+
+	private <T> void publishAfterCreation(Object id, T entity) {
+		publisher.publishEvent(new AfterCreation(Identifier.of(id), entity));
 	}
 }
