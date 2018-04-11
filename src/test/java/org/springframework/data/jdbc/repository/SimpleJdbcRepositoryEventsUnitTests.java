@@ -4,10 +4,12 @@ import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import junit.framework.AssertionFailedError;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,8 +23,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
-import org.springframework.data.jdbc.mapping.event.AfterCreation;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
+import org.springframework.data.jdbc.mapping.event.AfterLoadEvent;
 import org.springframework.data.jdbc.mapping.event.AfterSave;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
 import org.springframework.data.jdbc.mapping.event.BeforeSave;
@@ -36,11 +38,14 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
 /**
+ * Unit tests for application events via {@link SimpleJdbcRepository}.
+ *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class SimpleJdbcRepositoryEventsUnitTests {
 
-	FakePublisher publisher = new FakePublisher();
+	CollectingEventPublisher publisher = new CollectingEventPublisher();
 
 	DummyEntityRepository repository;
 	DefaultDataAccessStrategy dataAccessStrategy;
@@ -48,7 +53,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Before
 	public void before() {
 
-		final JdbcMappingContext context = new JdbcMappingContext(createIdGeneratingOperations());
+		JdbcMappingContext context = new JdbcMappingContext(createIdGeneratingOperations());
 
 		dataAccessStrategy = spy(new DefaultDataAccessStrategy( //
 				new SqlGeneratorSource(context), //
@@ -105,7 +110,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		repository.delete(entity);
 
 		assertThat(publisher.events).extracting( //
-				e -> (Class) e.getClass(), //
+				JdbcEvent::getClass, //
 				e -> e.getOptionalEntity().orElseGet(AssertionFailedError::new), //
 				JdbcEvent::getId //
 		).containsExactly( //
@@ -140,8 +145,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterCreation.class, //
-						AfterCreation.class //
+						AfterLoadEvent.class, //
+						AfterLoadEvent.class //
 		);
 	}
 
@@ -158,8 +163,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterCreation.class, //
-						AfterCreation.class //
+						AfterLoadEvent.class, //
+						AfterLoadEvent.class //
 		);
 	}
 
@@ -174,7 +179,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterCreation.class //
+						AfterLoadEvent.class //
 		);
 	}
 
@@ -198,12 +203,13 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
-	@Data
+	@Value
+	@RequiredArgsConstructor
 	static class DummyEntity {
-		private final @Id Long id;
+		@Id Long id;
 	}
 
-	static class FakePublisher implements ApplicationEventPublisher {
+	static class CollectingEventPublisher implements ApplicationEventPublisher {
 
 		List<JdbcEvent> events = new ArrayList<>();
 

@@ -23,8 +23,8 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityDeleteWriter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
-import org.springframework.data.jdbc.mapping.event.AfterCreation;
 import org.springframework.data.jdbc.mapping.event.AfterDelete;
+import org.springframework.data.jdbc.mapping.event.AfterLoadEvent;
 import org.springframework.data.jdbc.mapping.event.AfterSave;
 import org.springframework.data.jdbc.mapping.event.BeforeDelete;
 import org.springframework.data.jdbc.mapping.event.BeforeSave;
@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformati
  * {@link JdbcEntityOperations} implementation, storing aggregates in and obtaining them from a JDBC data store.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class JdbcEntityTemplate implements JdbcEntityOperations {
 
@@ -94,7 +95,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 		T entity = accessStrategy.findById(id, domainType);
 		if (entity != null) {
-			publishAfterCreation(id, entity);
+			publishAfterLoad(id, entity);
 		}
 		return entity;
 	}
@@ -108,7 +109,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 
 		Iterable<T> all = accessStrategy.findAll(domainType);
-		publishAfterCreation(all);
+		publishAfterLoad(all);
 		return all;
 	}
 
@@ -116,7 +117,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
 		Iterable<T> allById = accessStrategy.findAllById(ids, domainType);
-		publishAfterCreation(allById);
+		publishAfterLoad(allById);
 		return allById;
 	}
 
@@ -153,35 +154,38 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 		publisher.publishEvent(new AfterDelete(specifiedId, optionalEntity, change));
 	}
 
+	@SuppressWarnings("unchecked")
 	private <T> AggregateChange createChange(T instance) {
 
-		AggregateChange aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
+		AggregateChange<?> aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
 		jdbcEntityWriter.write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
+	@SuppressWarnings("unchecked")
 	private AggregateChange createDeletingChange(Object id, Object entity, Class<?> domainType) {
 
-		AggregateChange aggregateChange = new AggregateChange(Kind.DELETE, domainType, entity);
+		AggregateChange<?> aggregateChange = new AggregateChange(Kind.DELETE, domainType, entity);
 		jdbcEntityDeleteWriter.write(id, aggregateChange);
 		return aggregateChange;
 	}
 
 	private AggregateChange createDeletingChange(Class<?> domainType) {
 
-		AggregateChange aggregateChange = new AggregateChange(Kind.DELETE, domainType, null);
+		AggregateChange<?> aggregateChange = new AggregateChange<>(Kind.DELETE, domainType, null);
 		jdbcEntityDeleteWriter.write(null, aggregateChange);
 		return aggregateChange;
 	}
 
-	private <T> void publishAfterCreation(Iterable<T> all) {
+	@SuppressWarnings("unchecked")
+	private <T> void publishAfterLoad(Iterable<T> all) {
 
-		all.forEach(e -> {
-			publishAfterCreation(context.getRequiredPersistentEntityInformation((Class<T>) e.getClass()).getRequiredId(e), e);
-		});
+		for (T e : all) {
+			publishAfterLoad(context.getRequiredPersistentEntityInformation((Class<T>) e.getClass()).getRequiredId(e), e);
+		}
 	}
 
-	private <T> void publishAfterCreation(Object id, T entity) {
-		publisher.publishEvent(new AfterCreation(Identifier.of(id), entity));
+	private <T> void publishAfterLoad(Object id, T entity) {
+		publisher.publishEvent(new AfterLoadEvent(Identifier.of(id), entity));
 	}
 }

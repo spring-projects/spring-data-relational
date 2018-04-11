@@ -22,9 +22,8 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * postprocessing of entities.
  *
  * @author Jens Schauder
- * @since 2.0
  */
-public class AfterCreation extends JdbcEventWithIdAndEntity {
+public class AfterLoadEvent extends JdbcEventWithIdAndEntity {
 
 	private static final long serialVersionUID = -4185777271143436728L;
 
@@ -32,7 +31,7 @@ public class AfterCreation extends JdbcEventWithIdAndEntity {
 	 * @param id of the entity
 	 * @param entity the newly instantiated entity.
 	 */
-	public AfterCreation(Specified id, Object entity) {
+	public AfterLoadEvent(Specified id, Object entity) {
 		super(id, entity, null);
 	}
 }
