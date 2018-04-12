@@ -23,11 +23,11 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityDeleteWriter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
-import org.springframework.data.jdbc.mapping.event.AfterDelete;
+import org.springframework.data.jdbc.mapping.event.AfterDeleteEvent;
 import org.springframework.data.jdbc.mapping.event.AfterLoadEvent;
-import org.springframework.data.jdbc.mapping.event.AfterSave;
-import org.springframework.data.jdbc.mapping.event.BeforeDelete;
-import org.springframework.data.jdbc.mapping.event.BeforeSave;
+import org.springframework.data.jdbc.mapping.event.AfterSaveEvent;
+import org.springframework.data.jdbc.mapping.event.BeforeDeleteEvent;
+import org.springframework.data.jdbc.mapping.event.BeforeSaveEvent;
 import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
@@ -71,7 +71,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 		AggregateChange change = createChange(instance);
 
-		publisher.publishEvent(new BeforeSave( //
+		publisher.publishEvent(new BeforeSaveEvent( //
 				Identifier.ofNullable(entityInformation.getId(instance)), //
 				instance, //
 				change //
@@ -79,7 +79,7 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 		change.executeWith(interpreter);
 
-		publisher.publishEvent(new AfterSave( //
+		publisher.publishEvent(new AfterSaveEvent( //
 				Identifier.of(entityInformation.getId(instance)), //
 				instance, //
 				change //
@@ -148,11 +148,11 @@ public class JdbcEntityTemplate implements JdbcEntityOperations {
 
 		Specified specifiedId = Identifier.of(id);
 		Optional<Object> optionalEntity = Optional.ofNullable(entity);
-		publisher.publishEvent(new BeforeDelete(specifiedId, optionalEntity, change));
+		publisher.publishEvent(new BeforeDeleteEvent(specifiedId, optionalEntity, change));
 
 		change.executeWith(interpreter);
 
-		publisher.publishEvent(new AfterDelete(specifiedId, optionalEntity, change));
+		publisher.publishEvent(new AfterDeleteEvent(specifiedId, optionalEntity, change));
 	}
 
 	@SuppressWarnings("unchecked")

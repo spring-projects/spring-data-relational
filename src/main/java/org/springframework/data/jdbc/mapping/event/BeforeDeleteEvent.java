@@ -15,24 +15,27 @@
  */
 package org.springframework.data.jdbc.mapping.event;
 
+import java.util.Optional;
+
 import org.springframework.data.jdbc.core.conversion.AggregateChange;
+import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
 
 /**
- * Subclasses of this get published before an entity gets saved to the database.
+ * Gets published when an entity is about to get deleted.
  *
  * @author Jens Schauder
  * @since 1.0
  */
-public class BeforeSave extends JdbcEventWithEntity {
+public class BeforeDeleteEvent extends JdbcEventWithId {
 
-	private static final long serialVersionUID = -6996874391990315443L;
+	private static final long serialVersionUID = -5483432053368496651L;
 
 	/**
-	 * @param id of the entity to be saved.
-	 * @param instance the entity about to get saved.
-	 * @param change
+	 * @param id the id of the entity
+	 * @param entity the entity about to get deleted. Might be empty.
+	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
 	 */
-	public BeforeSave(Identifier id, Object instance, AggregateChange change) {
-		super(id, instance, change);
+	public <T> BeforeDeleteEvent(Specified id, Optional<Object> entity, AggregateChange change) {
+		super(id, entity, change);
 	}
 }

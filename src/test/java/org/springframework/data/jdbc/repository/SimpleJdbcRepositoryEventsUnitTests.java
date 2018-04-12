@@ -23,11 +23,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
-import org.springframework.data.jdbc.mapping.event.AfterDelete;
+import org.springframework.data.jdbc.mapping.event.AfterDeleteEvent;
 import org.springframework.data.jdbc.mapping.event.AfterLoadEvent;
-import org.springframework.data.jdbc.mapping.event.AfterSave;
-import org.springframework.data.jdbc.mapping.event.BeforeDelete;
-import org.springframework.data.jdbc.mapping.event.BeforeSave;
+import org.springframework.data.jdbc.mapping.event.AfterSaveEvent;
+import org.springframework.data.jdbc.mapping.event.BeforeDeleteEvent;
+import org.springframework.data.jdbc.mapping.event.BeforeSaveEvent;
 import org.springframework.data.jdbc.mapping.event.Identifier;
 import org.springframework.data.jdbc.mapping.event.JdbcEvent;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
@@ -79,8 +79,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						BeforeSave.class, //
-						AfterSave.class //
+						BeforeSaveEvent.class, //
+						AfterSaveEvent.class //
 		);
 	}
 
@@ -95,10 +95,10 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						BeforeSave.class, //
-						AfterSave.class, //
-						BeforeSave.class, //
-						AfterSave.class //
+						BeforeSaveEvent.class, //
+						AfterSaveEvent.class, //
+						BeforeSaveEvent.class, //
+						AfterSaveEvent.class //
 		);
 	}
 
@@ -114,8 +114,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				e -> e.getOptionalEntity().orElseGet(AssertionFailedError::new), //
 				JdbcEvent::getId //
 		).containsExactly( //
-				Tuple.tuple(BeforeDelete.class, entity, Identifier.of(23L)), //
-				Tuple.tuple(AfterDelete.class, entity, Identifier.of(23L)) //
+				Tuple.tuple(BeforeDeleteEvent.class, entity, Identifier.of(23L)), //
+				Tuple.tuple(AfterDeleteEvent.class, entity, Identifier.of(23L)) //
 		);
 	}
 
@@ -127,8 +127,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						BeforeDelete.class, //
-						AfterDelete.class //
+						BeforeDeleteEvent.class, //
+						AfterDeleteEvent.class //
 		);
 	}
 

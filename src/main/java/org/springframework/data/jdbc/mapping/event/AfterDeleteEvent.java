@@ -27,7 +27,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * @author Jens Schauder
  * @since 1.0
  */
-public class AfterDelete extends JdbcEventWithId {
+public class AfterDeleteEvent extends JdbcEventWithId {
 
 	private static final long serialVersionUID = 3594807189931141582L;
 
@@ -36,7 +36,7 @@ public class AfterDelete extends JdbcEventWithId {
 	 * @param instance the deleted entity if it is available.
 	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
 	 */
-	public AfterDelete(Specified id, Optional<Object> instance, AggregateChange change) {
+	public AfterDeleteEvent(Specified id, Optional<Object> instance, AggregateChange change) {
 		super(id, instance, change);
 	}
 }

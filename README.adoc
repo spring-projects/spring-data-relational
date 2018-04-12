@@ -179,7 +179,7 @@ For example, the following listener will get invoked before an Aggregate gets sa
 [source,java]
 ----
 @Bean
-public ApplicationListener<BeforeSave> timeStampingSaveTime() {
+public ApplicationListener<BeforeSaveEvent> timeStampingSaveTime() {
 
 	return event -> {
 
@@ -196,21 +196,21 @@ public ApplicationListener<BeforeSave> timeStampingSaveTime() {
 |===
 | Event | When It's Published
 
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/BeforeDelete.java[`BeforeDelete`]
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/BeforeDeleteEvent.java[`BeforeDeleteEvent`]
 | before an aggregate root gets deleted.
 
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`AfterDelete`]
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterDeleteEvent.java[`AfterDeleteEvent`]
 | after an aggregate root got deleted.
 
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/BeforeSave.java[`BeforeSave`]
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/BeforeSaveEvent.java[`BeforeSaveEvent`]
 | before an aggregate root gets saved, i.e. inserted or updated but after the decision was made if it will get updated or deleted.
 The event has a reference to an https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/core/conversion/AggregateChange.java[`AggregateChange`] instance.
 The instance can be modified by adding or removing https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/core/conversion/DbAction.java[`DbAction`]s.
 
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterSave.java[`AfterSave`]
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterSaveEvent.java[`AfterSaveEvent`]
 | after an aggregate root gets saved, i.e. inserted or updated.
 
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterCreation.java[`AfterCreation`]
+| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/event/AfterLoadEvent.java[`AfterLoadEvent`]
 | after an aggregate root got created from a database `ResultSet` and all it's property set
 |===
 

@@ -38,8 +38,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.conversion.DbAction;
-import org.springframework.data.jdbc.mapping.event.BeforeDelete;
-import org.springframework.data.jdbc.mapping.event.BeforeSave;
+import org.springframework.data.jdbc.mapping.event.BeforeDeleteEvent;
+import org.springframework.data.jdbc.mapping.event.BeforeSaveEvent;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
@@ -196,7 +196,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 		}
 
 		@Bean
-		ApplicationListener<BeforeDelete> softDeleteListener() {
+		ApplicationListener<BeforeDeleteEvent> softDeleteListener() {
 
 			return event -> {
 
@@ -210,9 +210,9 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 		}
 
 		@Bean
-		ApplicationListener<BeforeSave> logOnSaveListener() {
+		ApplicationListener<BeforeSaveEvent> logOnSaveListener() {
 
-			// this would actually be easier to implement with an AfterSave listener, but we want to test AggregateChange
+			// this would actually be easier to implement with an AfterSaveEvent listener, but we want to test AggregateChange
 			// manipulation.
 			return event -> {
 
