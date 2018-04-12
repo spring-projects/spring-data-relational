@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -49,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  */
 @ContextConfiguration
+@ActiveProfiles("hsql")
 @Transactional
 public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 
