@@ -34,6 +34,7 @@ import org.springframework.util.Assert;
  * interactions.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 class DefaultJdbcInterpreter implements Interpreter {
 

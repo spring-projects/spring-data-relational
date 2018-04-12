@@ -22,6 +22,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * postprocessing of entities.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public class AfterLoadEvent extends JdbcEventWithIdAndEntity {
 

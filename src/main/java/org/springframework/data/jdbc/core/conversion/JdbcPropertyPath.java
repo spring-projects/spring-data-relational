@@ -25,6 +25,7 @@ import org.springframework.util.StringUtils;
  * See https://jira.spring.io/browse/DATACMNS-1204.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public class JdbcPropertyPath {
 

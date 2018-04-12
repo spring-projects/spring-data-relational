@@ -22,7 +22,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * Subclasses of this get published after a new instance or a changed instance was saved in the database.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class AfterSave extends JdbcEventWithIdAndEntity {
 

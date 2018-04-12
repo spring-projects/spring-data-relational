@@ -32,6 +32,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @since 1.0
  */
 public class JdbcQueryMethod extends QueryMethod {
 

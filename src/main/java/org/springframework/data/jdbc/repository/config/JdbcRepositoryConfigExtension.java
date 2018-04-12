@@ -25,7 +25,7 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
  * registration process by registering JDBC repositories.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 

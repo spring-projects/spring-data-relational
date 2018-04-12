@@ -26,7 +26,7 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
- * @since 2.0
+ * @since 1.0
  */
 class SimpleJdbcEvent extends ApplicationEvent implements JdbcEvent {
 

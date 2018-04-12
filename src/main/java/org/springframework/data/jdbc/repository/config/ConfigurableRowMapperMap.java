@@ -25,6 +25,7 @@ import org.springframework.jdbc.core.RowMapper;
  * A {@link RowMapperMap} that allows for registration of {@link RowMapper}s via a fluent Api.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public class ConfigurableRowMapperMap implements RowMapperMap {
 

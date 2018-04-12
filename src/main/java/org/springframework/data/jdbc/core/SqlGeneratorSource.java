@@ -27,6 +27,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
  * type, the same generator will get returned.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 @RequiredArgsConstructor
 public class SqlGeneratorSource {

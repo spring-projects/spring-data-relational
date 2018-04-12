@@ -35,7 +35,7 @@ import java.util.Set;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
- * @since 2.0
+ * @since 1.0
  */
 public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<JdbcPersistentProperty>
 		implements JdbcPersistentProperty {

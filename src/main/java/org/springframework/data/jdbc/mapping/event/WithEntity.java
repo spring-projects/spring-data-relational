@@ -20,7 +20,7 @@ package org.springframework.data.jdbc.mapping.event;
  * without going through an {@link java.util.Optional}
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public interface WithEntity extends JdbcEvent {
 

@@ -45,7 +45,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Kazuki Shimizu
- * @since 2.0
+ * @since 1.0
  */
 public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> {
 

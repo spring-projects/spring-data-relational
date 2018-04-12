@@ -21,7 +21,7 @@ import org.springframework.data.mapping.model.MutablePersistentEntity;
 /**
  * @author Jens Schauder
  * @author Oliver Gierke
- * @since 2.0
+ * @since 1.0
  */
 public interface JdbcPersistentEntity<T> extends MutablePersistentEntity<T, JdbcPersistentProperty> {
 

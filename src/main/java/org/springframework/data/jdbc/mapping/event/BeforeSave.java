@@ -21,7 +21,7 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange;
  * Subclasses of this get published before an entity gets saved to the database.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class BeforeSave extends JdbcEventWithEntity {
 

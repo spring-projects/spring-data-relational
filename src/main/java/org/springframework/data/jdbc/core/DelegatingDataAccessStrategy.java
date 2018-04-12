@@ -26,6 +26,7 @@ import org.springframework.util.Assert;
  * cyclical dependencies.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 

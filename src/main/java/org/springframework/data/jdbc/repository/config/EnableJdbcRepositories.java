@@ -33,7 +33,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBea
  *
  * @author Jens Schauder
  * @author Greg Turnquist
- * @since 2.0
+ * @since 1.0
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

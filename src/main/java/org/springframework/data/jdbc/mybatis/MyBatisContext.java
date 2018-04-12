@@ -21,7 +21,9 @@ import java.util.Map;
  * {@link MyBatisContext} instances get passed to MyBatis mapped statements as arguments, making Ids, instances, domainType and other attributes available to the statements.
  *
  * All methods might return {@literal null} depending on the kind of values available on invocation.
+ *
  * @author Jens Schauder
+ * @since 1.0
  */
 public class MyBatisContext {
 

@@ -31,6 +31,7 @@ import org.springframework.jdbc.core.RowMapper;
  * Those parameters will get bound to the arguments of the annotated method.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

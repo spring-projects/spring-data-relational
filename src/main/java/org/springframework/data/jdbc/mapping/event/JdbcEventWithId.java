@@ -24,7 +24,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * A {@link SimpleJdbcEvent} guaranteed to have an identifier.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class JdbcEventWithId extends SimpleJdbcEvent implements WithId {
 

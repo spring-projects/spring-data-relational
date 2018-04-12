@@ -39,6 +39,7 @@ import org.springframework.util.ClassUtils;
  * executed against the database to recreate the appropriate state in the database.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 

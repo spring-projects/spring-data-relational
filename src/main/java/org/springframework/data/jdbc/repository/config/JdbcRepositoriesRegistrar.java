@@ -25,7 +25,7 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
  * {@link ImportBeanDefinitionRegistrar} to enable {@link EnableJdbcRepositories} annotation.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 class JdbcRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport {
 

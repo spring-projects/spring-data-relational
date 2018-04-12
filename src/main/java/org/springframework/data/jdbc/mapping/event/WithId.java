@@ -22,7 +22,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * access to the {@link Specified} identifier.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public interface WithId extends JdbcEvent {
 

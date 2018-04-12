@@ -22,6 +22,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
  * Common infrastructure needed by different implementations of {@link EntityWriter}<Object, AggregateChange>.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 abstract class JdbcEntityWriterSupport implements EntityWriter<Object, AggregateChange> {
 	protected final JdbcMappingContext context;

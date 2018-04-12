@@ -23,6 +23,7 @@ import org.springframework.data.util.ParsingUtils;
  *
  * @author Kazuki Shimizu
  * @author Jens Schauder
+ * @since 1.0
  */
 public class DelimiterNamingStrategy implements NamingStrategy {
 

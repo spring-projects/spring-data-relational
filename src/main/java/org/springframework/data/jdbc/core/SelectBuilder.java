@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
  * {@link JdbcEntityTemplate}.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 class SelectBuilder {
 

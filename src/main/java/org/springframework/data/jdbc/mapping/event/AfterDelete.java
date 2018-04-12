@@ -25,7 +25,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * not depends on the delete method used.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class AfterDelete extends JdbcEventWithId {
 

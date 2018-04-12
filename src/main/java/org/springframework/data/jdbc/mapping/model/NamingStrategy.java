@@ -24,6 +24,7 @@ package org.springframework.data.jdbc.mapping.model;
  * 
  * @author Greg Turnquist
  * @author Michael Simons
+ * @since 1.0
  */
 public interface NamingStrategy {
 

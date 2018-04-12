@@ -29,6 +29,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @since 1.0
  */
 class JdbcRepositoryQuery implements RepositoryQuery {
 

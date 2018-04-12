@@ -19,6 +19,7 @@ import org.springframework.core.convert.support.GenericConversionService;
 
 /**
  * @author Jens Schauder
+ * @since 1.0
  */
 public interface ConversionCustomizer {
 

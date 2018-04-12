@@ -36,6 +36,7 @@ import org.springframework.jdbc.core.SingleColumnRowMapper;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @since 1.0
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 

@@ -30,6 +30,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  *
  * @author Greg Turnquist
  * @author Jens Schauder
+ * @since 1.0
  */
 @Configuration
 public class JdbcConfiguration {

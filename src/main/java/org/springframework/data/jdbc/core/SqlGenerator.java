@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 class SqlGenerator {
 

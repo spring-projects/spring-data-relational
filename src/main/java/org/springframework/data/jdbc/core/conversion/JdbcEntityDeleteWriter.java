@@ -22,6 +22,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
  * executed against the database to recreate the appropriate state in the database.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 

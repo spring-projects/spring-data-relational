@@ -44,6 +44,7 @@ import org.springframework.util.Assert;
  * The default {@link DataAccessStrategy} is to generate SQL statements based on meta data from the entity.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
 

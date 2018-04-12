@@ -21,7 +21,7 @@ import org.springframework.dao.NonTransientDataAccessException;
  * Signals failure to set the id property of an entity.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class UnableToSetId extends NonTransientDataAccessException {
 

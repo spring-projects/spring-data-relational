@@ -19,7 +19,7 @@ import org.springframework.data.repository.core.EntityInformation;
 
 /**
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public interface JdbcPersistentEntityInformation<T, ID> extends EntityInformation<T, ID> {
 

@@ -21,6 +21,7 @@ import org.springframework.jdbc.core.RowMapper;
  * A map from a type to a {@link RowMapper} to be used for extracting that type from {@link java.sql.ResultSet}s.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public interface RowMapperMap {
 

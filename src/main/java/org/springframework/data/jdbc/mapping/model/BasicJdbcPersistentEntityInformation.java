@@ -21,7 +21,7 @@ import org.springframework.lang.Nullable;
 
 /**
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class BasicJdbcPersistentEntityInformation<T, ID> extends PersistentEntityInformation<T, ID>
 		implements JdbcPersistentEntityInformation<T, ID> {

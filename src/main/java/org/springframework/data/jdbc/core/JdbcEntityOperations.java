@@ -19,6 +19,7 @@ package org.springframework.data.jdbc.core;
  * Specifies a operations one can perform on a database, based on an <em>Domain Type</em>.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 public interface JdbcEntityOperations {
 

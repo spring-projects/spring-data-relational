@@ -22,7 +22,7 @@ import java.util.Optional;
  *
  * @author Jens Schaude
  * @author Oliver Gierke
- * @since 2.0
+ * @since 1.0
  */
 enum Unset implements Identifier {
 

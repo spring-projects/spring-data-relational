@@ -38,6 +38,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformati
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @since 1.0
  */
 public class JdbcEntityTemplate implements JdbcEntityOperations {
 

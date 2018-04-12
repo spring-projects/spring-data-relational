@@ -25,7 +25,7 @@ import org.springframework.data.util.TypeInformation;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
- * @since 2.0
+ * @since 1.0
  */
 class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersistentProperty>
 		implements JdbcPersistentEntity<T> {

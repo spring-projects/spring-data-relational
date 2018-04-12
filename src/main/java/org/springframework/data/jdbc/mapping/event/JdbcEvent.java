@@ -20,6 +20,7 @@ import java.util.Optional;
 /**
  *
  * @author Oliver Gierke
+ * @since 1.0
  */
 public interface JdbcEvent {
 

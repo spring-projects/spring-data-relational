@@ -23,7 +23,7 @@ import org.springframework.util.Assert;
  * Wrapper for an identifier of an entity. Might either be a {@link Specified} or {@link Unset#UNSET}
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public interface Identifier {
 

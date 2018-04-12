@@ -34,6 +34,7 @@ import org.springframework.dao.DataAccessException;
  * exceptions this {@link Collector} throws itself an exception, gathering all exceptions thrown.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionCollector<T>.ResultOrException, T> {
 

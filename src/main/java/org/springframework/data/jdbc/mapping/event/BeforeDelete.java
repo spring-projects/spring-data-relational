@@ -24,7 +24,7 @@ import org.springframework.data.jdbc.mapping.event.Identifier.Specified;
  * Gets published when an entity is about to get deleted.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class BeforeDelete extends JdbcEventWithId {
 

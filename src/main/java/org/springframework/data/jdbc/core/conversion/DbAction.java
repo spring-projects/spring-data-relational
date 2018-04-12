@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  * Abstracts over a single interaction with a database.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 @ToString
 @Getter

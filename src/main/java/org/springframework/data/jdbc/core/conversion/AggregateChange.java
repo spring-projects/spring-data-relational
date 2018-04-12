@@ -25,6 +25,7 @@ import java.util.List;
  * Represents the change happening to the aggregate (as used in the context of Domain Driven Design) as a whole.
  *
  * @author Jens Schauder
+ * @since 1.0
  */
 @RequiredArgsConstructor
 @Getter

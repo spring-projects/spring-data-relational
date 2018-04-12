@@ -43,6 +43,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @since 1.0
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 

@@ -23,7 +23,7 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange;
  * A {@link SimpleJdbcEvent} which is guaranteed to have an entity.
  *
  * @author Jens Schauder
- * @since 2.0
+ * @since 1.0
  */
 public class JdbcEventWithEntity extends SimpleJdbcEvent implements WithEntity {
 
