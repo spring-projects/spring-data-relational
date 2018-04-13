@@ -14,14 +14,14 @@
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
 		<artifactId>spring-data-parent</artifactId>
-		<version>2.1.0.M2</version>
+		<version>2.1.0.BUILD-SNAPSHOT</version>
 	</parent>
 
 	<properties>
 
 		<dist.key>DATAJDBC</dist.key>
 
-		<springdata.commons>2.1.0.M2</springdata.commons>
+		<springdata.commons>2.1.0.BUILD-SNAPSHOT</springdata.commons>
 		<java-module-name>spring.data.jdbc</java-module-name>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
@@ -329,8 +329,8 @@
 
 	<repositories>
 		<repository>
-			<id>spring-libs-milestone</id>
-			<url>https://repo.spring.io/libs-milestone</url>
+			<id>spring-libs-snapshot</id>
+			<url>https://repo.spring.io/libs-snapshot</url>
 		</repository>
 	</repositories>
 
