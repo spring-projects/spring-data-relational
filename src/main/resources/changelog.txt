@@ -1,6 +1,29 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.0.M2 (2018-04-13)
+----------------------------------------
+* DATAJDBC-200 - Rename event classes to have an "Event" suffix.
+* DATAJDBC-199 - Fix @since JavaDoc comments.
+* DATAJDBC-198 - running integration-tests against specific db causes errors for *HsqlIntegrationTests.
+* DATAJDBC-197 - AfterCreation doesn't get triggered. EventPublishingRowMapper is not used.
+* DATAJDBC-196 - support for MariaDB integration-tests.
+* DATAJDBC-195 - create SQL with a uniform style.
+* DATAJDBC-194 - Do some polishing on the readme.
+* DATAJDBC-190 - Fix some wrong/weird usage of AssertJ.
+* DATAJDBC-189 - Make the DefaultNamingStrategy into default methods of the NamingStrategy.
+* DATAJDBC-184 - Support snake case (delimiter character) naming strategy.
+* DATAJDBC-182 - Support modifying query.
+* DATAJDBC-180 - Update to latest Testcontainers version.
+* DATAJDBC-179 - Provide more detailed project details.
+* DATAJDBC-178 - Allow generating any namespace in MyBatisDataAccessStrategy.
+* DATAJDBC-176 - Release 1.0 M2 (Lovelace).
+* DATAJDBC-175 - Supports simple types as return type for annotated methods.
+* DATAJDBC-172 - Support Streams, Entities, Collections and Optionals as return type for annotated methods.
+* DATAJDBC-155 - JdbcRepositoryFactory should not require a DataAccessStrategy, but construct on on its own when none is available.
+* DATAJDBC-130 - Support Lists.
+
+
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
