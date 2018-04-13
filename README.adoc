@@ -152,6 +152,19 @@ When determining the `RowMapper` to use for a method the following steps are fol
 If applicable, wrapper types like collections or `Optional` are unwrapped.
 Thus, a return type of `Optional<Person>` will use the type `Person` in the steps above.
 
+==== Modifying query
+
+You can mark as a modifying query using the `@Modifying` on query method.
+
+[source,java]
+----
+@Modifying
+@Query("UPDATE DUMMYENTITY SET name = :name WHERE id = :id")
+boolean updateName(@Param("id") Long id, @Param("name") String name);
+----
+
+The return types that can be specified are `void`, `int`(updated record count) and `boolean`(whether record was updated).
+
 === Id generation
 
 Spring Data JDBC uses the id to identify entities, but also to determine if an entity is new or already existing in the database.
