@@ -243,7 +243,7 @@ For each operation in `CrudRepository` Spring Data JDBC will execute multiple st
 If there is a https://github.com/mybatis/mybatis-3/blob/master/src/main/java/org/apache/ibatis/session/SqlSessionFactory.java[`SqlSessionFactory`] in the application context, it will be checked if it offers a statement for each step.
 If one is found, that statement will be used (including its configured mapping to an entity).
 
-The name of the statement is constructed by concatenating the fully qualified name of the entity type  with `Mapper.` and a string determining the kind of statement.
+By default, the name of the statement is constructed by concatenating the fully qualified name of the entity type  with `Mapper.` and a string determining the kind of statement.
 E.g. if an instance of `org.example.User` is to be inserted, Spring Data JDBC will look for a statement named `org.example.UserMapper.insert`.
 
 Upon execution of the statement an instance of [`MyBatisContext`] will get passed as an argument which makes various arguments available to the statement.
@@ -314,6 +314,10 @@ Note that the type used for prefixing the statement name is the name of the aggr
 
 `getDomainType` the type of aggregate roots to count.
 |===
+
+==== NamespaceStrategy
+
+You can customize the namespace part of a statement name using https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mybatis/NamespaceStrategy.java[`NamespaceStrategy`].
 
 == Features planned for the not too distant future
 
