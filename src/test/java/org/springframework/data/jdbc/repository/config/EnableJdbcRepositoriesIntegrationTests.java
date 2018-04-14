@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
@@ -89,7 +90,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	}
 
 	@ComponentScan("org.springframework.data.jdbc.testing")
-	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true, includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class))
 	static class TestConfiguration {
 
 		@Bean
