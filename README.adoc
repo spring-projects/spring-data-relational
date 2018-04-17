@@ -186,14 +186,8 @@ If you are not using autoincrement-columns, you can use a `BeforeSave`-listener 
 If you use the standard implementations of `CrudRepository` as provided by Spring Data JDBC, it will expect a certain table structure.
 You can tweak that by providing a https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/model/NamingStrategy.java[`NamingStrategy`] in your application context.
 
-.Optional classes of NamingStrategy
-|===
-| Class | Description
-
-| https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/model/DelimiterNamingStrategy.java[`DelimiterNamingStrategy`]
-| The delimiter character implementation of NamingStrategy. The default delimiter is `_`(underscore), resulting in snake case.
-|===
-
+In many cases a https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/model/DelimiterNamingStrategy.java[`DelimiterNamingStrategy`]
+might be good basis for a custom implementation
 
 === Events
 
