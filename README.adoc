@@ -94,6 +94,8 @@ This name can be changed by implementing `NamingStrategy.getReverseColumnName(Jd
 The table of the referenced entity is expected to have two additional columns: One named like the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
 This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` and `NamingStrategy.getKeyColumn(JdbcPersistentProperty property)` according to your preferences.
 
+* `List<some entity>` will be mapped like a  `Map<Integer, some entity>`.
+
 The handling of referenced entities is very limited.
 Part of this is because this project is still before its first release.
 
@@ -330,8 +332,6 @@ You can customize the namespace part of a statement name using https://github.co
 
 The current MyBatis supported is rather elaborate in that it allows to execute multiple statements for a single method call.
 But sometimes less is more, and it should be possible to annotate a method with a simple annotation to identify a SQL statement in a MyBatis mapping to be executed.
-
-=== Support of lists in entities
 
 == Spring Boot integration
 
