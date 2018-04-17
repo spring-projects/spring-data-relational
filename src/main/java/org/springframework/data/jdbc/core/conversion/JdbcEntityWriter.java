@@ -99,7 +99,6 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
 		aggregateChange.addAction(insert);
 		referencedEntities(insert.getEntity()) //
-				.peek(System.out::println)
 				.forEach(pav -> insertReferencedEntities( //
 						pav, //
 						aggregateChange, //
