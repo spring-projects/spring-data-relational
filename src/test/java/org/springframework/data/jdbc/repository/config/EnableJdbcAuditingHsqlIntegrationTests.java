@@ -15,7 +15,17 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import static org.assertj.core.api.Assertions.*;
+
 import lombok.Data;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -32,144 +42,178 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.repository.CrudRepository;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * Tests the {@link EnableJdbcAuditing} annotation.
  *
  * @author Kazuki Shimizu
+ * @author Jens Schauder
  */
 public class EnableJdbcAuditingHsqlIntegrationTests {
 
+	SoftAssertions softly = new SoftAssertions();
+
 	@Test
-	public void auditForAnnotatedEntity() throws InterruptedException {
-		try (ConfigurableApplicationContext context =
-				 new AnnotationConfigApplicationContext(TestConfiguration.class, AuditingConfiguration.class)) {
+	public void auditForAnnotatedEntity() {
 
-			AuditingAnnotatedDummyEntityRepository repository = context.getBean(AuditingAnnotatedDummyEntityRepository.class);
+		configureRepositoryWith( //
+				AuditingAnnotatedDummyEntityRepository.class, //
+				TestConfiguration.class, //
+				AuditingConfiguration.class) //
+						.accept(repository -> {
 
-			AuditingConfiguration.currentAuditor = "user01";
-			LocalDateTime now = LocalDateTime.now();
+							AuditingConfiguration.currentAuditor = "user01";
+							LocalDateTime now = LocalDateTime.now();
 
-			AuditingAnnotatedDummyEntity entity = new AuditingAnnotatedDummyEntity();
-			entity.setName("Spring Data");
-			repository.save(entity);
+							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-			assertThat(entity.id).isNotNull();
-			assertThat(entity.getCreatedBy()).isEqualTo("user01");
-			assertThat(entity.getCreatedDate()).isAfter(now);
-			assertThat(entity.getLastModifiedBy()).isEqualTo("user01");
-			assertThat(entity.getLastModifiedDate()).isAfterOrEqualTo(entity.getCreatedDate());
-			assertThat(entity.getLastModifiedDate()).isAfter(now);
-			assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
+							softly.assertThat(entity.id).isNotNull();
+							softly.assertThat(entity.getCreatedBy()).isEqualTo("user01");
+							softly.assertThat(entity.getCreatedDate()).isAfter(now);
+							softly.assertThat(entity.getLastModifiedBy()).isEqualTo("user01");
+							softly.assertThat(entity.getLastModifiedDate()).isAfterOrEqualTo(entity.getCreatedDate());
+							softly.assertThat(entity.getLastModifiedDate()).isAfter(now);
+							softly.assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
 
-			LocalDateTime beforeCreatedDate = entity.getCreatedDate();
-			LocalDateTime beforeLastModifiedDate = entity.getLastModifiedDate();
+							LocalDateTime beforeCreatedDate = entity.getCreatedDate();
+							LocalDateTime beforeLastModifiedDate = entity.getLastModifiedDate();
 
-			TimeUnit.MILLISECONDS.sleep(100);
-			AuditingConfiguration.currentAuditor = "user02";
+							softly.assertAll();
 
-			entity.setName("Spring Data JDBC");
-			repository.save(entity);
+							sleepMillis(10);
 
-			assertThat(entity.getCreatedBy()).isEqualTo("user01");
-			assertThat(entity.getCreatedDate()).isEqualTo(beforeCreatedDate);
-			assertThat(entity.getLastModifiedBy()).isEqualTo("user02");
-			assertThat(entity.getLastModifiedDate()).isAfter(beforeLastModifiedDate);
-			assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
-		}
+							AuditingConfiguration.currentAuditor = "user02";
+
+							entity = repository.save(entity);
+
+							softly.assertThat(entity.getCreatedBy()).isEqualTo("user01");
+							softly.assertThat(entity.getCreatedDate()).isEqualTo(beforeCreatedDate);
+							softly.assertThat(entity.getLastModifiedBy()).isEqualTo("user02");
+							softly.assertThat(entity.getLastModifiedDate()).isAfter(beforeLastModifiedDate);
+							softly.assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
+						});
 	}
 
 	@Test
 	public void noAnnotatedEntity() {
-		try (ConfigurableApplicationContext context =
-				 new AnnotationConfigApplicationContext(TestConfiguration.class, AuditingConfiguration.class)) {
 
-			DummyEntityRepository repository = context.getBean(DummyEntityRepository.class);
+		configureRepositoryWith( //
+				DummyEntityRepository.class, //
+				TestConfiguration.class, //
+				AuditingConfiguration.class) //
+						.accept(repository -> {
 
-			DummyEntity entity = new DummyEntity();
-			entity.setName("Spring Data");
-			repository.save(entity);
+							DummyEntity entity = repository.save(new DummyEntity());
 
-			assertThat(entity.id).isNotNull();
-			assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
+							softly.assertThat(entity.id).isNotNull();
+							softly.assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
 
-			entity.setName("Spring Data JDBC");
-			repository.save(entity);
+							softly.assertAll();
 
-			assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
-		}
+							entity = repository.save(entity);
+
+							assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
+						});
 	}
 
 	@Test
-	public void customizeEnableJdbcAuditingAttributes() {
-		// Test for 'auditorAwareRef', 'dateTimeProviderRef' and 'modifyOnCreate'
-		try (ConfigurableApplicationContext context =
-				 new AnnotationConfigApplicationContext(TestConfiguration.class, CustomizeAuditingConfiguration1.class)) {
-			AuditingAnnotatedDummyEntityRepository repository = context.getBean(AuditingAnnotatedDummyEntityRepository.class);
+	public void customDateTimeProvider() {
 
-			LocalDateTime currentDateTime = LocalDate.of(2018, 4, 14).atStartOfDay();
-			CustomizeAuditingConfiguration1.currentDateTime = currentDateTime;
+		configureRepositoryWith( //
+				AuditingAnnotatedDummyEntityRepository.class, //
+				TestConfiguration.class, //
+				CustomizeAuditorAwareAndDateTimeProvider.class) //
+						.accept(repository -> {
 
-			AuditingAnnotatedDummyEntity entity = new AuditingAnnotatedDummyEntity();
-			entity.setName("Spring Data JDBC");
-			repository.save(entity);
+							LocalDateTime currentDateTime = LocalDate.of(2018, 4, 14).atStartOfDay();
+							CustomizeAuditorAwareAndDateTimeProvider.currentDateTime = currentDateTime;
 
-			assertThat(entity.id).isNotNull();
-			assertThat(entity.getCreatedBy()).isEqualTo("custom user");
-			assertThat(entity.getCreatedDate()).isEqualTo(currentDateTime);
-			assertThat(entity.getLastModifiedBy()).isNull();
-			assertThat(entity.getLastModifiedDate()).isNull();
-		}
-		// Test for 'setDates'
-		try (ConfigurableApplicationContext context =
-				 new AnnotationConfigApplicationContext(TestConfiguration.class, CustomizeAuditingConfiguration2.class)) {
-			AuditingAnnotatedDummyEntityRepository repository = context.getBean(AuditingAnnotatedDummyEntityRepository.class);
+							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-			AuditingAnnotatedDummyEntity entity = new AuditingAnnotatedDummyEntity();
-			entity.setName("Spring Data JDBC");
-			repository.save(entity);
+							softly.assertThat(entity.id).isNotNull();
+							softly.assertThat(entity.getCreatedBy()).isEqualTo("custom user");
+							softly.assertThat(entity.getCreatedDate()).isEqualTo(currentDateTime);
+							softly.assertThat(entity.getLastModifiedBy()).isNull();
+							softly.assertThat(entity.getLastModifiedDate()).isNull();
+						});
+	}
 
-			assertThat(entity.id).isNotNull();
-			assertThat(entity.getCreatedBy()).isEqualTo("user");
-			assertThat(entity.getCreatedDate()).isNull();
-			assertThat(entity.getLastModifiedBy()).isEqualTo("user");
-			assertThat(entity.getLastModifiedDate()).isNull();
-		}
+	@Test
+	public void customAuditorAware() {
+
+		configureRepositoryWith( //
+				AuditingAnnotatedDummyEntityRepository.class, //
+				TestConfiguration.class, //
+				CustomizeAuditorAware.class) //
+						.accept(repository -> {
+
+							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
+
+							softly.assertThat(entity.id).isNotNull();
+							softly.assertThat(entity.getCreatedBy()).isEqualTo("user");
+							softly.assertThat(entity.getCreatedDate()).isNull();
+							softly.assertThat(entity.getLastModifiedBy()).isEqualTo("user");
+							softly.assertThat(entity.getLastModifiedDate()).isNull();
+						});
+	}
+
+	/**
+	 * Usage looks like this:
+	 * <p>
+	 * {@code configure(MyRepository.class, MyConfiguration) .accept(repository -> { // perform tests on repository here
+	 * }); }
+	 *
+	 * @param repositoryType the type of repository you want to perform tests on.
+	 * @param configurationClasses the classes containing the configuration for the
+	 *          {@link org.springframework.context.ApplicationContext}.
+	 * @param <T> type of the entity managed by the repository.
+	 * @param <R> type of the repository.
+	 * @return a Consumer for repositories of type {@code R}.
+	 */
+	private <T, R extends CrudRepository<T, Long>> Consumer<Consumer<R>> configureRepositoryWith(Class<R> repositoryType,
+			Class... configurationClasses) {
+
+		return (Consumer<R> test) -> {
+
+			try (ConfigurableApplicationContext context = new AnnotationConfigApplicationContext(configurationClasses)) {
+
+				test.accept(context.getBean(repositoryType));
+
+				softly.assertAll();
+			}
+		};
 	}
 
 
-	interface AuditingAnnotatedDummyEntityRepository extends CrudRepository<AuditingAnnotatedDummyEntity, Long> {
+	private void sleepMillis(int timeout) {
+
+		try {
+			TimeUnit.MILLISECONDS.sleep(timeout);
+		} catch (InterruptedException e) {
+
+			throw new RuntimeException("Failed to sleep", e);
+		}
 	}
+
+	interface AuditingAnnotatedDummyEntityRepository extends CrudRepository<AuditingAnnotatedDummyEntity, Long> {}
 
 	@Data
 	static class AuditingAnnotatedDummyEntity {
-		@Id
-		private Long id;
-		private String name;
-		@CreatedBy
-		private String createdBy;
-		@CreatedDate
-		private LocalDateTime createdDate;
-		@LastModifiedBy
-		private String lastModifiedBy;
-		@LastModifiedDate
-		private LocalDateTime lastModifiedDate;
+
+		@Id Long id;
+		@CreatedBy String createdBy;
+		@CreatedDate LocalDateTime createdDate;
+		@LastModifiedBy String lastModifiedBy;
+		@LastModifiedDate LocalDateTime lastModifiedDate;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
-	}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
 	@Data
 	static class DummyEntity {
-		@Id
-		private Long id;
-		private String name;
+
+		@Id private Long id;
+		// not actually used, exists just to avoid empty value list during insert.
+		String name;
 	}
 
 	@ComponentScan("org.springframework.data.jdbc.testing")
@@ -183,36 +227,42 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 		@Bean
 		NamingStrategy namingStrategy() {
+
 			return new NamingStrategy() {
+
 				public String getTableName(Class<?> type) {
 					return "DummyEntity";
 				}
 			};
 		}
-
 	}
 
 	@EnableJdbcAuditing
 	static class AuditingConfiguration {
-		private static String currentAuditor;
+		static String currentAuditor;
+
 		@Bean
 		AuditorAware<String> auditorAware() {
 			return () -> Optional.ofNullable(currentAuditor);
 		}
 	}
 
-	@EnableJdbcAuditing(auditorAwareRef = "customAuditorAware", dateTimeProviderRef = "customDateTimeProvider", modifyOnCreate = false)
-	static class CustomizeAuditingConfiguration1 {
-		private static LocalDateTime currentDateTime;
+	@EnableJdbcAuditing(auditorAwareRef = "customAuditorAware", dateTimeProviderRef = "customDateTimeProvider",
+			modifyOnCreate = false)
+	static class CustomizeAuditorAwareAndDateTimeProvider {
+		static LocalDateTime currentDateTime;
+
 		@Bean
 		@Primary
 		AuditorAware<String> auditorAware() {
 			return () -> Optional.of("default user");
 		}
+
 		@Bean
 		AuditorAware<String> customAuditorAware() {
 			return () -> Optional.of("custom user");
 		}
+
 		@Bean
 		DateTimeProvider customDateTimeProvider() {
 			return () -> Optional.ofNullable(currentDateTime);
@@ -220,11 +270,11 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 	}
 
 	@EnableJdbcAuditing(setDates = false)
-	static class CustomizeAuditingConfiguration2 {
+	static class CustomizeAuditorAware {
+
 		@Bean
 		AuditorAware<String> auditorAware() {
 			return () -> Optional.of("user");
 		}
 	}
-
 }

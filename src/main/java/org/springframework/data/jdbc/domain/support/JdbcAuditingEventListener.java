@@ -19,30 +19,22 @@ import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.auditing.AuditingHandler;
 import org.springframework.data.jdbc.mapping.event.BeforeSaveEvent;
+import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
  * Spring JDBC event listener to capture auditing information on persisting and updating entities.
  * <p>
- * You can enable this class just a matter of activating auditing using {@link org.springframework.data.jdbc.repository.config.EnableJdbcAuditing} in your Spring config:
- *
- * <pre>
- * &#064;Configuration
- * &#064;EnableJdbcRepositories
- * &#064;EnableJdbcAuditing
- * class JdbcRepositoryConfig {
- * }
- * </pre>
+ * An instance of this class gets registered when you apply {@link EnableJdbcAuditing} to your Spring config.
  *
  * @author Kazuki Shimizu
- * @see org.springframework.data.jdbc.repository.config.EnableJdbcAuditing
+ * @see EnableJdbcAuditing
  * @since 1.0
  */
 public class JdbcAuditingEventListener implements ApplicationListener<BeforeSaveEvent> {
 
-	@Nullable
-	private AuditingHandler handler;
+	@Nullable private AuditingHandler handler;
 
 	/**
 	 * Configures the {@link AuditingHandler} to be used to set the current auditor on the domain types touched.
@@ -50,18 +42,24 @@ public class JdbcAuditingEventListener implements ApplicationListener<BeforeSave
 	 * @param auditingHandler must not be {@literal null}.
 	 */
 	public void setAuditingHandler(ObjectFactory<AuditingHandler> auditingHandler) {
+
 		Assert.notNull(auditingHandler, "AuditingHandler must not be null!");
+
 		this.handler = auditingHandler.getObject();
 	}
 
 	/**
 	 * {@inheritDoc}
+	 * 
 	 * @param event a notification event for indicating before save
 	 */
 	@Override
 	public void onApplicationEvent(BeforeSaveEvent event) {
+
 		if (handler != null) {
+
 			event.getOptionalEntity().ifPresent(entity -> {
+
 				if (event.getId().getOptionalValue().isPresent()) {
 					handler.markModified(entity);
 				} else {
@@ -70,5 +68,4 @@ public class JdbcAuditingEventListener implements ApplicationListener<BeforeSave
 			});
 		}
 	}
-
 }

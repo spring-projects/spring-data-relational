@@ -27,7 +27,8 @@ import org.springframework.data.config.ParsingUtils;
 import org.springframework.data.jdbc.domain.support.JdbcAuditingEventListener;
 
 /**
- * {@link ImportBeanDefinitionRegistrar} to enable {@link EnableJdbcAuditing} annotation.
+ * {@link ImportBeanDefinitionRegistrar} which registers additional beans in order to enable auditing via the
+ * {@link EnableJdbcAuditing} annotation.
  *
  * @see EnableJdbcAuditing
  * @author Kazuki Shimizu
@@ -37,8 +38,9 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 
 	/**
 	 * {@inheritDoc}
+	 * 
 	 * @return return the {@link EnableJdbcAuditing}
-	 * @see org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport#getAnnotation()
+	 * @see AuditingBeanDefinitionRegistrarSupport#getAnnotation()
 	 */
 	@Override
 	protected Class<? extends Annotation> getAnnotation() {
@@ -47,8 +49,9 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 
 	/**
 	 * {@inheritDoc}
+	 * 
 	 * @return return "{@literal jdbcAuditingHandler}"
-	 * @see org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport#getAuditingHandlerBeanName()
+	 * @see AuditingBeanDefinitionRegistrarSupport#getAuditingHandlerBeanName()
 	 */
 	@Override
 	protected String getAuditingHandlerBeanName() {
@@ -61,22 +64,25 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	 */
 	@Override
 	protected BeanDefinitionBuilder getAuditHandlerBeanDefinitionBuilder(AuditingConfiguration configuration) {
+
 		BeanDefinitionBuilder builder = super.getAuditHandlerBeanDefinitionBuilder(configuration);
 		return builder.addConstructorArgReference("jdbcMappingContext");
 	}
 
 	/**
-	 * Register the bean definition of {@link JdbcAuditingEventListener}.
-	 * {@inheritDoc}
-	 * @see org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport#registerAuditListenerBeanDefinition(BeanDefinition, BeanDefinitionRegistry)
+	 * Register the bean definition of {@link JdbcAuditingEventListener}. {@inheritDoc}
+	 * 
+	 * @see AuditingBeanDefinitionRegistrarSupport#registerAuditListenerBeanDefinition(BeanDefinition,
+	 *      BeanDefinitionRegistry)
 	 */
 	@Override
 	protected void registerAuditListenerBeanDefinition(BeanDefinition auditingHandlerDefinition,
-													   BeanDefinitionRegistry registry) {
+			BeanDefinitionRegistry registry) {
+
 		Class<?> listenerClass = JdbcAuditingEventListener.class;
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(listenerClass);
 		builder.addPropertyValue("auditingHandler",
-			ParsingUtils.getObjectFactoryBeanDefinition(getAuditingHandlerBeanName(), null));
+				ParsingUtils.getObjectFactoryBeanDefinition(getAuditingHandlerBeanName(), null));
 		registerInfrastructureBeanWithId(builder.getRawBeanDefinition(), listenerClass.getName(), registry);
 	}
 

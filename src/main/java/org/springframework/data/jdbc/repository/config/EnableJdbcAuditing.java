@@ -29,22 +29,6 @@ import org.springframework.data.domain.AuditorAware;
 /**
  * Annotation to enable auditing in JDBC via annotation configuration.
  *
- * If you use the auditing feature, you should be configures beans of Spring Data JDBC
- * using {@link org.springframework.data.jdbc.repository.config.EnableJdbcRepositories} in your Spring config:
- *
- * <pre>
- * &#064;Configuration
- * &#064;EnableJdbcRepositories
- * &#064;EnableJdbcAuditing
- * class JdbcRepositoryConfig {
- * }
- * </pre>
- *
- * <p>
- * Note: This feature cannot use to a entity that implements {@link org.springframework.data.domain.Auditable}
- * because the Spring Data JDBC does not support an {@link java.util.Optional} property yet.
- * </p>
- *
  * @see EnableJdbcRepositories
  * @author Kazuki Shimizu
  * @since 1.0
