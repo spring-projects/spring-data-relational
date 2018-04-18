@@ -64,10 +64,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> void save(T instance, Class<T> domainType) {
+	public <T> void save(T instance) {
 
 		JdbcPersistentEntityInformation<T, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation(domainType);
+				.getRequiredPersistentEntityInformation((Class<T>) instance.getClass());
 
 		AggregateChange change = createChange(instance);
 

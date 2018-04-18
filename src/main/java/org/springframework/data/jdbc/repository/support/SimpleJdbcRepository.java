@@ -44,7 +44,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	@Override
 	public <S extends T> S save(S instance) {
 
-		entityOperations.save(instance, entityInformation.getJavaType());
+		entityOperations.save(instance);
 
 		return instance;
 	}
