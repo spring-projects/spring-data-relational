@@ -32,6 +32,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -41,6 +42,7 @@ import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jdbc.core.mapping.NamingStrategy;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Tests the {@link EnableJdbcAuditing} annotation.
@@ -48,6 +50,7 @@ import org.springframework.data.repository.CrudRepository;
  * @author Kazuki Shimizu
  * @author Jens Schauder
  */
+@ActiveProfiles("hsql")
 public class EnableJdbcAuditingHsqlIntegrationTests {
 
 	SoftAssertions softly = new SoftAssertions();
