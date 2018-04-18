@@ -20,6 +20,7 @@ import java.io.Serializable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
@@ -49,6 +50,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private DataAccessStrategy dataAccessStrategy;
 	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
 	private NamedParameterJdbcOperations operations;
+	private EntityInstantiators instantiators = new EntityInstantiators();
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
@@ -115,6 +117,11 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.operations = operations;
 	}
 
+	@Autowired(required = false)
+	public void setInstantiators(EntityInstantiators instantiators) {
+		this.instantiators = instantiators;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#afterPropertiesSet()
@@ -127,11 +134,16 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		if (dataAccessStrategy == null) {
 
 			SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
-			this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, operations);
+			this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, operations,
+					instantiators);
 		}
 
 		if (rowMapperMap == null) {
 			this.rowMapperMap = RowMapperMap.EMPTY;
+		}
+
+		if (instantiators == null) {
+			this.instantiators = new EntityInstantiators();
 		}
 
 		super.afterPropertiesSet();

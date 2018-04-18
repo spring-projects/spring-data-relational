@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.support;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -49,6 +50,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final NamedParameterJdbcOperations operations;
 
 	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
+	private EntityInstantiators instantiators = new EntityInstantiators();
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy}, {@link JdbcMappingContext}
@@ -80,6 +82,18 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
 
 		this.rowMapperMap = rowMapperMap;
+	}
+
+	/**
+	 * Set the {@link EntityInstantiators} used for instantiating entity instances.
+	 * 
+	 * @param instantiators Must not be {@code null}.
+	 */
+	public void setEntityInstantiators(EntityInstantiators instantiators) {
+
+		Assert.notNull(instantiators, "EntityInstantiators must not be null.");
+
+		this.instantiators = instantiators;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -127,6 +141,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(context, accessStrategy, rowMapperMap, operations));
+		return Optional.of(new JdbcQueryLookupStrategy(context, instantiators, accessStrategy, rowMapperMap, operations));
 	}
 }
