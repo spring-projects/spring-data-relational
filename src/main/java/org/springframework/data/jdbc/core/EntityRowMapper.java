@@ -24,8 +24,7 @@ import java.util.Map;
 
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
-import org.springframework.data.convert.EntityInstantiator;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
@@ -49,7 +48,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
 	private final JdbcPersistentEntity<T> entity;
-	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
+
 	private final ConversionService conversions;
 	private final JdbcMappingContext context;
 	private final DataAccessStrategy accessStrategy;
@@ -97,7 +96,9 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	}
 
 	private T createInstance(ResultSet rs) {
-		return instantiator.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, ""));
+
+		return context.getInstantiatorFor(entity) //
+				.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, ""));
 	}
 
 	/**
@@ -135,8 +136,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return null;
 		}
 
-		S instance = instantiator.createInstance(entity,
-				new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
+		S instance = context.getInstantiatorFor(entity) //
+				.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
 
 		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(instance);
 		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
