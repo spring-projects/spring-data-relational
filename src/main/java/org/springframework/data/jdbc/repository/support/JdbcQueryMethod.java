@@ -61,7 +61,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 * @return May be {@code null}.
 	 */
 	public Class<?> getRowMapperClass() {
-		return getMergedAnnotationAttribute("rowMapperClass");
+		return getMergedAnnotationAttribute("rowMapper");
 	}
 
 	/**

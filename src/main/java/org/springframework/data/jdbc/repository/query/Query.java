@@ -47,5 +47,5 @@ public @interface Query {
 	/**
 	 * Optional {@link RowMapper} to use to convert the result of the query to domain class instances.
 	 */
-	Class<? extends RowMapper> rowMapperClass() default RowMapper.class;
+	Class<? extends RowMapper> rowMapper() default RowMapper.class;
 }

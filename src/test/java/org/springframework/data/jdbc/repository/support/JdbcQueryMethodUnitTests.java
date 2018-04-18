@@ -60,7 +60,7 @@ public class JdbcQueryMethodUnitTests {
 		assertThat(queryMethod.getRowMapperClass()).isEqualTo(CustomRowMapper.class);
 	}
 
-	@Query(value = DUMMY_SELECT, rowMapperClass = CustomRowMapper.class)
+	@Query(value = DUMMY_SELECT, rowMapper = CustomRowMapper.class)
 	private void queryMethod() {}
 
 	private class CustomRowMapper implements RowMapper {

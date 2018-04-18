@@ -128,7 +128,7 @@ If you compile your sources with the `-parameters` compiler flag you can omit th
 
 ==== Custom RowMapper
 
-You can configure the `RowMapper` to use, using either the `@Query(rowMapperClass = ....)` or you can register a `RowMapperMap` bean and register `RowMapper` per method return type.
+You can configure the `RowMapper` to use, using either the `@Query(rowMapper = ....)` or you can register a `RowMapperMap` bean and register `RowMapper` per method return type.
 
 [source,java]
 ----
