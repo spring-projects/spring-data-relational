@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 /**
  * Builder for creating Select-statements. Not intended for general purpose, but only for the needs of the
- * {@link JdbcEntityTemplate}.
+ * {@link JdbcAggregateTemplate}.
  *
  * @author Jens Schauder
  * @since 1.0

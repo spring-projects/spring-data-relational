@@ -19,11 +19,10 @@ import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.JdbcEntityTemplate;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.repository.RowMapperMap;
-import org.springframework.data.jdbc.repository.SimpleJdbcRepository;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -98,7 +97,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		JdbcPersistentEntityInformation<?, ?> persistentEntityInformation = context
 				.getRequiredPersistentEntityInformation(repositoryInformation.getDomainType());
 
-		JdbcEntityTemplate template = new JdbcEntityTemplate(publisher, context, accessStrategy);
+		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, accessStrategy);
 
 		return new SimpleJdbcRepository<>(template, persistentEntityInformation);
 	}

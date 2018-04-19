@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.core.conversion;
 
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
 
 /**
  * Converts an entity that is about to be deleted into {@link DbAction}s inside a {@link AggregateChange} that need to be
