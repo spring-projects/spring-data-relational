@@ -325,11 +325,11 @@ public class JdbcEntityWriterUnitTests {
 	}
 
 	private Object getMapKey(DbAction a) {
-		return a.getAdditionalValues().get("MapContainer_key");
+		return a.getAdditionalValues().get("map_container_key");
 	}
 
 	private Object getListKey(DbAction a) {
-		return a.getAdditionalValues().get("ListContainer_key");
+		return a.getAdditionalValues().get("list_container_key");
 	}
 
 	private String extractPath(DbAction action) {

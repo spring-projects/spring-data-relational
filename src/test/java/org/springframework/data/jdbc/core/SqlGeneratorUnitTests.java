@@ -57,10 +57,10 @@ public class SqlGeneratorUnitTests {
 		SoftAssertions softAssertions = new SoftAssertions();
 		softAssertions.assertThat(sql) //
 				.startsWith("SELECT") //
-				.contains("DummyEntity.x_id AS x_id,") //
-				.contains("DummyEntity.x_name AS x_name,") //
+				.contains("dummy_entity.x_id AS x_id,") //
+				.contains("dummy_entity.x_name AS x_name,") //
 				.contains("ref.x_l1id AS ref_x_l1id") //
-				.contains("ref.x_content AS ref_x_content").contains(" FROM DummyEntity") //
+				.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
 				// 1-N relationships do not get loaded via join
 				.doesNotContain("Element AS elements");
 		softAssertions.assertAll();
@@ -71,7 +71,7 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM ReferencedEntity WHERE DummyEntity = :rootId");
+		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE dummy_entity = :rootId");
 	}
 
 	@Test // DATAJDBC-112
@@ -80,7 +80,7 @@ public class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo(
-				"DELETE FROM SecondLevelReferencedEntity WHERE ReferencedEntity IN (SELECT x_l1id FROM ReferencedEntity WHERE DummyEntity = :rootId)");
+				"DELETE FROM second_level_referenced_entity WHERE referenced_entity IN (SELECT x_l1id FROM referenced_entity WHERE dummy_entity = :rootId)");
 	}
 
 	@Test // DATAJDBC-112
@@ -88,7 +88,7 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.createDeleteAllSql(null);
 
-		assertThat(sql).isEqualTo("DELETE FROM DummyEntity");
+		assertThat(sql).isEqualTo("DELETE FROM dummy_entity");
 	}
 
 	@Test // DATAJDBC-112
@@ -96,7 +96,7 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM ReferencedEntity WHERE DummyEntity IS NOT NULL");
+		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE dummy_entity IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-112
@@ -105,7 +105,7 @@ public class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo(
-				"DELETE FROM SecondLevelReferencedEntity WHERE ReferencedEntity IN (SELECT x_l1id FROM ReferencedEntity WHERE DummyEntity IS NOT NULL)");
+				"DELETE FROM second_level_referenced_entity WHERE referenced_entity IN (SELECT x_l1id FROM referenced_entity WHERE dummy_entity IS NOT NULL)");
 	}
 
 	@Test // DATAJDBC-131
@@ -114,9 +114,9 @@ public class SqlGeneratorUnitTests {
 		// this would get called when DummyEntity is the element type of a Set
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, false);
 
-		assertThat(sql).isEqualTo("SELECT DummyEntity.x_id AS x_id, DummyEntity.x_name AS x_name, "
+		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, "
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further "
-				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.x_id "
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.x_id "
 				+ "WHERE back-ref = :back-ref");
 	}
 
@@ -126,10 +126,10 @@ public class SqlGeneratorUnitTests {
 		// this would get called when DummyEntity is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", false);
 
-		assertThat(sql).isEqualTo("SELECT DummyEntity.x_id AS x_id, DummyEntity.x_name AS x_name, "
+		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, "
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, "
-				+ "DummyEntity.key-column AS key-column "
-				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.x_id "
+				+ "dummy_entity.key-column AS key-column "
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.x_id "
 				+ "WHERE back-ref = :back-ref");
 	}
 
@@ -144,10 +144,10 @@ public class SqlGeneratorUnitTests {
 		// this would get called when DummyEntity is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", true);
 
-		assertThat(sql).isEqualTo("SELECT DummyEntity.x_id AS x_id, DummyEntity.x_name AS x_name, "
+		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, "
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, "
-				+ "DummyEntity.key-column AS key-column "
-				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.x_id "
+				+ "dummy_entity.key-column AS key-column "
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.x_id "
 				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
 	}
 

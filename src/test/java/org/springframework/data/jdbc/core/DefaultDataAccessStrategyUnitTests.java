@@ -57,7 +57,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
-		verify(jdbcOperations).update(eq("INSERT INTO DummyEntity (id) VALUES (:id)"), paramSourceCaptor.capture(),
+		verify(jdbcOperations).update(eq("INSERT INTO dummy_entity (id) VALUES (:id)"), paramSourceCaptor.capture(),
 				any(KeyHolder.class));
 	}
 
@@ -73,8 +73,8 @@ public class DefaultDataAccessStrategyUnitTests {
 		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
 		assertThat(sqlCaptor.getValue()) //
-				.containsSequence("INSERT INTO DummyEntity (", "id", ") VALUES (", ":id", ")") //
-				.containsSequence("INSERT INTO DummyEntity (", "reference", ") VALUES (", ":reference", ")");
+				.containsSequence("INSERT INTO dummy_entity (", "id", ") VALUES (", ":id", ")") //
+				.containsSequence("INSERT INTO dummy_entity (", "reference", ") VALUES (", ":reference", ")");
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 	}
 

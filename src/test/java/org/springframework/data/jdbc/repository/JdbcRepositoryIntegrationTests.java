@@ -78,8 +78,8 @@ public class JdbcRepositoryIntegrationTests {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummyentity",
-				"idProp = " + entity.getIdProp())).isEqualTo(1);
+		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
+				"id_Prop = " + entity.getIdProp())).isEqualTo(1);
 	}
 
 	@Test // DATAJDBC-95

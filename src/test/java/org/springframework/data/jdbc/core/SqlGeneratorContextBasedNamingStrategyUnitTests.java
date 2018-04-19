@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.assertj.core.api.SoftAssertions;
@@ -63,11 +64,11 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 			SoftAssertions softAssertions = new SoftAssertions();
 			softAssertions.assertThat(sql) //
 					.startsWith("SELECT") //
-					.contains(user + ".DummyEntity.id AS id,") //
-					.contains(user + ".DummyEntity.name AS name,") //
+					.contains(user + ".dummy_entity.id AS id,") //
+					.contains(user + ".dummy_entity.name AS name,") //
 					.contains("ref.l1id AS ref_l1id") //
 					.contains("ref.content AS ref_content") //
-					.contains("FROM " + user + ".DummyEntity");
+					.contains("FROM " + user + ".dummy_entity");
 			softAssertions.assertAll();
 		});
 	}
@@ -81,7 +82,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref", DummyEntity.class));
 
-			assertThat(sql).isEqualTo("DELETE FROM " + user + ".ReferencedEntity WHERE " + user + ".DummyEntity = :rootId");
+			assertThat(sql).isEqualTo("DELETE FROM " + user + ".referenced_entity WHERE " + user + ".dummy_entity = :rootId");
 		});
 	}
 
@@ -94,9 +95,11 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref.further", DummyEntity.class));
 
-			assertThat(sql)
-					.isEqualTo("DELETE FROM " + user + ".SecondLevelReferencedEntity " + "WHERE " + user + ".ReferencedEntity IN "
-							+ "(SELECT l1id FROM " + user + ".ReferencedEntity " + "WHERE " + user + ".DummyEntity = :rootId)");
+			assertThat(sql).isEqualTo(
+				"DELETE FROM " + user + ".second_level_referenced_entity " +
+					"WHERE " + user + ".referenced_entity IN " +
+						"(SELECT l1id FROM " + user + ".referenced_entity " +
+						"WHERE " + user + ".dummy_entity = :rootId)");
 		});
 	}
 
@@ -109,7 +112,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			String sql = sqlGenerator.createDeleteAllSql(null);
 
-			assertThat(sql).isEqualTo("DELETE FROM " + user + ".DummyEntity");
+			assertThat(sql).isEqualTo("DELETE FROM " + user + ".dummy_entity");
 		});
 	}
 
@@ -122,7 +125,8 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref", DummyEntity.class));
 
-			assertThat(sql).isEqualTo("DELETE FROM " + user + ".ReferencedEntity WHERE " + user + ".DummyEntity IS NOT NULL");
+			assertThat(sql).isEqualTo(
+				"DELETE FROM " + user + ".referenced_entity WHERE " + user + ".dummy_entity IS NOT NULL");
 		});
 	}
 
@@ -135,9 +139,11 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref.further", DummyEntity.class));
 
-			assertThat(sql)
-					.isEqualTo("DELETE FROM " + user + ".SecondLevelReferencedEntity " + "WHERE " + user + ".ReferencedEntity IN "
-							+ "(SELECT l1id FROM " + user + ".ReferencedEntity " + "WHERE " + user + ".DummyEntity IS NOT NULL)");
+			assertThat(sql).isEqualTo(
+				"DELETE FROM " + user + ".second_level_referenced_entity " +
+				"WHERE " + user + ".referenced_entity IN " +
+					"(SELECT l1id FROM " + user + ".referenced_entity " +
+					"WHERE " + user + ".dummy_entity IS NOT NULL)");
 		});
 	}
 
@@ -146,15 +152,23 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	 */
 	private void testAgainstMultipleUsers(Consumer<String> testAssertions) {
 
+		AtomicReference<Error> exception = new AtomicReference<>();
 		CountDownLatch latch = new CountDownLatch(2);
 
-		threadedTest("User1", latch, testAssertions);
-		threadedTest("User2", latch, testAssertions);
+		threadedTest("User1", latch, testAssertions, exception);
+		threadedTest("User2", latch, testAssertions, exception);
 
 		try {
-			latch.await(10L, TimeUnit.SECONDS);
+			if (!latch.await(10L, TimeUnit.SECONDS)){
+				fail("Test failed due to a time out.");
+			}
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
+		}
+
+		Error ex = exception.get();
+		if (ex != null) {
+			throw ex;
 		}
 	}
 
@@ -162,14 +176,21 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	 * Inside a {@link Runnable}, fetch the {@link ThreadLocal}-based username and execute the provided set of assertions.
 	 * Then signal through the provided {@link CountDownLatch}.
 	 */
-	private void threadedTest(String user, CountDownLatch latch, Consumer<String> testAssertions) {
+	private void threadedTest(String user, CountDownLatch latch, Consumer<String> testAssertions, AtomicReference<Error> exception) {
 
 		new Thread(() -> {
-			userHandler.set(user);
 
-			testAssertions.accept(user);
+			try {
 
-			latch.countDown();
+				userHandler.set(user);
+				testAssertions.accept(user);
+
+			} catch (Error ex) {
+				exception.compareAndSet(null, ex);
+			} finally {
+				latch.countDown();
+			}
+
 		}).start();
 	}
 

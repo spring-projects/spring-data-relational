@@ -32,6 +32,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityImplUnitTe
  *
  * @author Kazuki Shimizu
  * @author Oliver Gierke
+ * @author Jens Schauder
  */
 public class NamingStrategyUnitTests {
 
@@ -42,31 +43,31 @@ public class NamingStrategyUnitTests {
 	@Test
 	public void getTableName() {
 
-		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("DummyEntity");
-		assertThat(target.getTableName(DummySubEntity.class)).isEqualTo("DummySubEntity");
+		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
+		assertThat(target.getTableName(DummySubEntity.class)).isEqualTo("dummy_sub_entity");
 	}
 
 	@Test
 	public void getColumnName() {
 
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))).isEqualTo("id");
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("createdAt");
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("created_at");
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo("dummySubEntities");
+				.isEqualTo("dummy_sub_entities");
 	}
 
 	@Test
 	public void getReverseColumnName() {
 
 		assertThat(target.getReverseColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo("DummyEntity");
+				.isEqualTo("dummy_entity");
 	}
 
 	@Test
 	public void getKeyColumn() {
 
 		assertThat(target.getKeyColumn(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo("DummyEntity_key");
+				.isEqualTo("dummy_entity_key");
 	}
 
 	@Test
@@ -77,7 +78,7 @@ public class NamingStrategyUnitTests {
 	@Test
 	public void getQualifiedTableName() {
 
-		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("DummyEntity");
+		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
 
 		NamingStrategy strategy = new NamingStrategy() {
 			@Override
@@ -86,7 +87,7 @@ public class NamingStrategyUnitTests {
 			}
 		};
 
-		assertThat(strategy.getQualifiedTableName(persistentEntity.getType())).isEqualTo("schema.DummyEntity");
+		assertThat(strategy.getQualifiedTableName(persistentEntity.getType())).isEqualTo("schema.dummy_entity");
 	}
 
 	static class DummyEntity {
