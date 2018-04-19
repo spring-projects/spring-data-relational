@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
@@ -39,7 +39,7 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Integration tests for {@link JdbcEntityTemplate}.
+ * Integration tests for {@link JdbcAggregateTemplate}.
  *
  * @author Jens Schauder
  */
@@ -49,7 +49,8 @@ public class JdbcEntityTemplateIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
-	@Autowired JdbcEntityOperations template;
+	@Autowired
+	JdbcAggregateOperations template;
 
 	LegoSet legoSet = createLegoSet();
 
@@ -250,8 +251,8 @@ public class JdbcEntityTemplateIntegrationTests {
 		}
 
 		@Bean
-		JdbcEntityOperations operations(ApplicationEventPublisher publisher, JdbcMappingContext context, DataAccessStrategy dataAccessStrategy) {
-			return new JdbcEntityTemplate(publisher, context, dataAccessStrategy);
+		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, JdbcMappingContext context, DataAccessStrategy dataAccessStrategy) {
+			return new JdbcAggregateTemplate(publisher, context, dataAccessStrategy);
 		}
 	}
 }

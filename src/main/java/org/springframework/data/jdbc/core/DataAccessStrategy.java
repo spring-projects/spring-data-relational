@@ -17,11 +17,11 @@ package org.springframework.data.jdbc.core;
 
 import java.util.Map;
 
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
 
 /**
- * Abstraction for accesses to the database that should be implementable with a single SQL statement and relates to a single entity as opposed to {@link JdbcEntityOperations} which provides interactions related to complete aggregates.
+ * Abstraction for accesses to the database that should be implementable with a single SQL statement and relates to a single entity as opposed to {@link JdbcAggregateOperations} which provides interactions related to complete aggregates.
  *
  * @author Jens Schauder
  * @since 1.0

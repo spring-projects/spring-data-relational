@@ -20,7 +20,7 @@ import java.lang.reflect.Method;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
