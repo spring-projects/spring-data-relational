@@ -1,4 +1,4 @@
 DROP TABLE element;
-DROP TABLE dummyentity;
-CREATE TABLE dummyentity ( id SERIAL PRIMARY KEY, NAME VARCHAR(100));
-CREATE TABLE element (id SERIAL PRIMARY KEY, content VARCHAR(100),dummyentity_key BIGINT, dummyentity BIGINT);
+DROP TABLE dummy_entity;
+CREATE TABLE dummy_entity ( id SERIAL PRIMARY KEY, NAME VARCHAR(100));
+CREATE TABLE element (id SERIAL PRIMARY KEY, content VARCHAR(100),dummy_entity_key BIGINT, dummy_entity BIGINT);

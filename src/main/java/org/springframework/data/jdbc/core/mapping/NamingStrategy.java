@@ -15,9 +15,12 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
+import org.springframework.data.util.ParsingUtils;
+import org.springframework.util.Assert;
+
 /**
  * Interface and default implementation of a naming strategy. Defaults to no schema, table name based on {@link Class}
- * and column name based on {@link JdbcPersistentProperty}.
+ * and column name based on {@link JdbcPersistentProperty} with name parts of both separated by '_'.
  * <p>
  * NOTE: Can also be used as an adapter. Create a lambda or an anonymous subclass and override any settings to implement
  * a different strategy on the fly.
@@ -25,6 +28,7 @@ package org.springframework.data.jdbc.core.mapping;
  * @author Greg Turnquist
  * @author Michael Simons
  * @author Kazuki Shimizu
+ * @author Jens Schauder
  * @author Oliver Gierke
  * @since 1.0
  */
@@ -47,17 +51,24 @@ public interface NamingStrategy {
 	}
 
 	/**
-	 * Defaults to returning the given type's simple name.
+	 * The name of the table to be used for persisting entities having the type passed as an argument. The default
+	 * implementation takes the {@code type.getSimpleName()} and separates camel case parts with '_'.
 	 */
 	default String getTableName(Class<?> type) {
-		return type.getSimpleName();
+
+		Assert.notNull(type, "Type must not be null.");
+
+		return ParsingUtils.reconcatenateCamelCase(type.getSimpleName(), "_");
 	}
 
 	/**
-	 * Defaults to return the given {@link JdbcPersistentProperty}'s name;
+	 * Defaults to return the given {@link JdbcPersistentProperty}'s name with the parts of a camel case name separated by '_';
 	 */
 	default String getColumnName(JdbcPersistentProperty property) {
-		return property.getName();
+
+		Assert.notNull(property, "Property must not be null.");
+
+		return ParsingUtils.reconcatenateCamelCase(property.getName(), "_");
 	}
 
 	default String getQualifiedTableName(Class<?> type) {
@@ -71,6 +82,9 @@ public interface NamingStrategy {
 	 * @return a column name. Must not be {@code null}.
 	 */
 	default String getReverseColumnName(JdbcPersistentProperty property) {
+
+		Assert.notNull(property,"Property must not be null.");
+
 		return property.getOwner().getTableName();
 	}
 
@@ -81,6 +95,9 @@ public interface NamingStrategy {
 	 * @return name of the key column. Must not be {@code null}.
 	 */
 	default String getKeyColumn(JdbcPersistentProperty property) {
+
+		Assert.notNull(property, "Property must not be null.");
+
 		return getReverseColumnName(property) + "_key";
 	}
 }

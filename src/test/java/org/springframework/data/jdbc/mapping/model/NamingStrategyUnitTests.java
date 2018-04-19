@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.mapping;
+package org.springframework.data.jdbc.mapping.model;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import lombok.Data;
 
@@ -24,22 +25,23 @@ import java.util.List;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.mapping.DelimiterNamingStrategy;
+import org.springframework.data.jdbc.core.mapping.ConversionCustomizer;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.jdbc.core.mapping.NamingStrategy;
 
 /**
- * Unit tests for the {@link DelimiterNamingStrategy}.
+ * Unit tests for the default {@link NamingStrategy}.
  *
  * @author Kazuki Shimizu
- * @author Oliver Gierke
+ * @author Jens Schauder
  */
-public class DelimiterNamingStrategyUnitTests {
+public class NamingStrategyUnitTests {
 
-	DelimiterNamingStrategy target = new DelimiterNamingStrategy();
+	private final NamingStrategy target = NamingStrategy.INSTANCE;
 
-	JdbcPersistentEntity<?> persistentEntity = new JdbcMappingContext(target)
-			.getRequiredPersistentEntity(DummyEntity.class);
+	private final JdbcPersistentEntity<?> persistentEntity = //
+			new JdbcMappingContext(target, mock(ConversionCustomizer.class)).getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-184
 	public void getTableName() {

@@ -278,30 +278,30 @@ public class QueryAnnotationHsqlIntegrationTests {
 	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 		// DATAJDBC-164
-		@Query("SELECT * FROM DUMMYENTITY WHERE lower(name) <> name")
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE lower(name) <> name")
 		List<DummyEntity> findByNameContainingCapitalLetter();
 
 		// DATAJDBC-164
-		@Query("SELECT * FROM DUMMYENTITY WHERE name  < :upper and name > :lower")
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE name  < :upper and name > :lower")
 		List<DummyEntity> findByNamedRangeWithNamedParameter(@Param("lower") String lower, @Param("upper") String upper);
 
-		@Query("SELECT * FROM DUMMYENTITY WHERE name = :name")
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE name = :name")
 		Optional<DummyEntity> findByNameAsOptional(@Param("name") String name);
 
 		// DATAJDBC-172
-		@Query("SELECT * FROM DUMMYENTITY WHERE name = :name")
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE name = :name")
 		DummyEntity findByNameAsEntity(@Param("name") String name);
 
 		// DATAJDBC-172
-		@Query("SELECT * FROM DUMMYENTITY")
+		@Query("SELECT * FROM DUMMY_ENTITY")
 		Stream<DummyEntity> findAllWithReturnTypeIsStream();
 
 		// DATAJDBC-175
-		@Query("SELECT count(*) FROM DUMMYENTITY WHERE name like '%' || :name || '%'")
+		@Query("SELECT count(*) FROM DUMMY_ENTITY WHERE name like '%' || :name || '%'")
 		int countByNameContaining(@Param("name") String name);
 
 		// DATAJDBC-175
-		@Query("SELECT count(*) FROM DUMMYENTITY WHERE name like '%' || :name || '%'")
+		@Query("SELECT count(*) FROM DUMMY_ENTITY WHERE name like '%' || :name || '%'")
 		boolean existsByNameContaining(@Param("name") String name);
 
 		// DATAJDBC-175
@@ -314,17 +314,17 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 		// DATAJDBC-182
 		@Modifying
-		@Query("UPDATE DUMMYENTITY SET name = :name WHERE id = :id")
+		@Query("UPDATE DUMMY_ENTITY SET name = :name WHERE id = :id")
 		int updateName(@Param("id") Long id, @Param("name") String name);
 
 		// DATAJDBC-182
 		@Modifying
-		@Query("DELETE FROM DUMMYENTITY WHERE name = :name")
+		@Query("DELETE FROM DUMMY_ENTITY WHERE name = :name")
 		boolean deleteByName(@Param("name") String name);
 
 		// DATAJDBC-182
 		@Modifying
-		@Query("INSERT INTO DUMMYENTITY (name) VALUES(:name)")
+		@Query("INSERT INTO DUMMY_ENTITY (name) VALUES(:name)")
 		void insert(@Param("name") String name);
 
 	}
