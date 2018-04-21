@@ -15,6 +15,10 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
+import org.springframework.core.annotation.AnnotatedElementUtils;
+
+import java.util.Optional;
+
 /**
  * Interface and default implementation of a naming strategy. Defaults to no schema, table name based on {@link Class}
  * and column name based on {@link JdbcPersistentProperty}.
@@ -45,17 +49,23 @@ public interface NamingStrategy {
 	}
 
 	/**
-	 * Look up the {@link Class}'s simple name.
+	 * Look up the {@link Class}'s simple name or {@link Table#value()}.
 	 */
 	default String getTableName(Class<?> type) {
-		return type.getSimpleName();
+		Table table = AnnotatedElementUtils.findMergedAnnotation(type, Table.class);
+		return Optional.ofNullable(table)//
+			.map(Table::value)//
+			.orElse(type.getSimpleName());
 	}
 
 	/**
-	 * Look up the {@link JdbcPersistentProperty}'s name.
+	 * Look up the {@link JdbcPersistentProperty}'s name or {@link Column#value()}.
 	 */
 	default String getColumnName(JdbcPersistentProperty property) {
-		return property.getName();
+		Column column = property.findAnnotation(Column.class);
+		return Optional.ofNullable(column)//
+			.map(Column::value)//
+			.orElse(property.getName());
 	}
 
 	default String getQualifiedTableName(Class<?> type) {
