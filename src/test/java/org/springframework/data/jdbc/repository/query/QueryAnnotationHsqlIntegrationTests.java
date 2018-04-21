@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -195,7 +196,7 @@ public class QueryAnnotationHsqlIntegrationTests {
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsDate() {
 
-		Date now = new Date();
+		Date now = new Timestamp(System.currentTimeMillis());
 		assertThat(repository.nowWithDate()).isAfterOrEqualsTo(now);
 
 	}
