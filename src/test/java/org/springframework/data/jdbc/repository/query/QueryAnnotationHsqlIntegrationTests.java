@@ -196,6 +196,9 @@ public class QueryAnnotationHsqlIntegrationTests {
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsDate() {
 
+		// Since Timestamp extends Date the repository returns the Timestamp as it comes from the database.
+		// Trying to compare that to an actual Date results in non determistic results, so we have to use an actual
+		// Timestamp.
 		Date now = new Timestamp(System.currentTimeMillis());
 		assertThat(repository.nowWithDate()).isAfterOrEqualsTo(now);
 
