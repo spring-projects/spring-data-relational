@@ -66,7 +66,6 @@ public class JdbcRepositoryIntegrationTests {
 
 	}
 
-
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 

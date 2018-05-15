@@ -50,9 +50,12 @@ public class NamingStrategyUnitTests {
 
 	@Test // DATAJDBC-184
 	public void getColumnName() {
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))).isEqualTo("id");
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("created_at");
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
+
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))) //
+				.isEqualTo("id");
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))) //
+				.isEqualTo("created_at");
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("dummySubEntities"))) //
 				.isEqualTo("dummy_sub_entities");
 	}
 
@@ -64,7 +67,8 @@ public class NamingStrategyUnitTests {
 
 	@Test // DATAJDBC-184
 	public void getKeyColumn() {
-		assertThat(target.getKeyColumn(persistentEntity.getPersistentProperty("dummySubEntities")))
+
+		assertThat(target.getKeyColumn(persistentEntity.getPersistentProperty("dummySubEntities"))) //
 				.isEqualTo("dummy_entity_key");
 	}
 
@@ -75,11 +79,13 @@ public class NamingStrategyUnitTests {
 
 	@Test // DATAJDBC-184
 	public void getQualifiedTableName() {
+
 		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
 	}
 
 	@Data
 	private static class DummyEntity {
+
 		@Id private int id;
 		private LocalDateTime createdAt;
 		private List<DummySubEntity> dummySubEntities;
@@ -87,6 +93,7 @@ public class NamingStrategyUnitTests {
 
 	@Data
 	private static class DummySubEntity {
+
 		@Id private int id;
 		private LocalDateTime createdAt;
 	}
