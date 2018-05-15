@@ -271,7 +271,7 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Insert.class, Element.class, "0", "elements"), //
 						tuple(Insert.class, Element.class, "a", "elements"), //
 						tuple(Insert.class, Element.class, "b", "elements") //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-130
@@ -328,7 +328,7 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(Update.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "one", "elements") //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-130
@@ -347,7 +347,7 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(Update.class, ListContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, 0, "elements") //
-				);
+		);
 	}
 
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {
