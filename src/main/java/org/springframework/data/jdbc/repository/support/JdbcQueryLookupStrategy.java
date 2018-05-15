@@ -25,8 +25,8 @@ import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
@@ -45,7 +45,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final RowMapperMap rowMapperMap;
 	private final ConversionService conversionService;
 
-	JdbcQueryLookupStrategy(EvaluationContextProvider evaluationContextProvider, JdbcMappingContext context,
+	JdbcQueryLookupStrategy(QueryMethodEvaluationContextProvider evaluationContextProvider, JdbcMappingContext context,
 			DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap) {
 
 		this.context = context;

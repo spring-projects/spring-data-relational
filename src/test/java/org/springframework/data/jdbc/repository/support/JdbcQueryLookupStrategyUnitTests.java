@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
@@ -30,7 +31,7 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.repository.query.EvaluationContextProvider;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -42,7 +43,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
-	EvaluationContextProvider evaluationContextProvider = mock(EvaluationContextProvider.class);
+	QueryMethodEvaluationContextProvider evaluationContextProvider = mock(QueryMethodEvaluationContextProvider.class);
 	JdbcMappingContext mappingContext = mock(JdbcMappingContext.class, RETURNS_DEEP_STUBS);
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
