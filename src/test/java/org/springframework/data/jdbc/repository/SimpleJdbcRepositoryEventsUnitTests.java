@@ -1,10 +1,23 @@
+/*
+ * Copyright 2017-2018 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import junit.framework.AssertionFailedError;
@@ -42,6 +55,7 @@ import org.springframework.jdbc.support.KeyHolder;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Oliver Gierke
  */
 public class SimpleJdbcRepositoryEventsUnitTests {
 
@@ -61,15 +75,15 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		));
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory( //
-				publisher, //
+				dataAccessStrategy, //
 				context, //
-				dataAccessStrategy //
-		);
+				publisher);
 
 		repository = factory.getRepository(DummyEntityRepository.class);
 	}
 
 	@Test // DATAJDBC-99
+	@SuppressWarnings("rawtypes")
 	public void publishesEventsOnSave() {
 
 		DummyEntity entity = new DummyEntity(23L);
@@ -81,10 +95,11 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-99
+	@SuppressWarnings("rawtypes")
 	public void publishesEventsOnSaveMany() {
 
 		DummyEntity entity1 = new DummyEntity(null);
@@ -99,7 +114,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 						AfterSaveEvent.class, //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-99
@@ -120,6 +135,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	}
 
 	@Test // DATAJDBC-99
+	@SuppressWarnings("rawtypes")
 	public void publishesEventsOnDeleteById() {
 
 		repository.deleteById(23L);
@@ -129,16 +145,17 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						BeforeDeleteEvent.class, //
 						AfterDeleteEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-197
+	@SuppressWarnings("rawtypes")
 	public void publishesEventsOnFindAll() {
 
 		DummyEntity entity1 = new DummyEntity(42L);
 		DummyEntity entity2 = new DummyEntity(23L);
 
-		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any(Class.class));
+		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any());
 
 		repository.findAll();
 
@@ -147,16 +164,17 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						AfterLoadEvent.class, //
 						AfterLoadEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-197
+	@SuppressWarnings("rawtypes")
 	public void publishesEventsOnFindAllById() {
 
 		DummyEntity entity1 = new DummyEntity(42L);
 		DummyEntity entity2 = new DummyEntity(23L);
 
-		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAllById(any(Iterable.class), any(Class.class));
+		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAllById(any(), any());
 
 		repository.findAllById(asList(42L, 23L));
 
@@ -165,14 +183,16 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						AfterLoadEvent.class, //
 						AfterLoadEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-197
+	@SuppressWarnings("rawtypes")
 	public void publishesEventsOnFindById() {
 
 		DummyEntity entity1 = new DummyEntity(23L);
-		doReturn(entity1).when(dataAccessStrategy).findById(eq(23L), any(Class.class));
+
+		doReturn(entity1).when(dataAccessStrategy).findById(eq(23L), any());
 
 		repository.findById(23L);
 
@@ -180,7 +200,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
 						AfterLoadEvent.class //
-		);
+				);
 	}
 
 	private static NamedParameterJdbcOperations createIdGeneratingOperations() {

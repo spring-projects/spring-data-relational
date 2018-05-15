@@ -59,10 +59,9 @@ public class TestConfiguration {
 		final JdbcMappingContext context = new JdbcMappingContext(NamingStrategy.INSTANCE, jdbcTemplate, __ -> {});
 
 		return new JdbcRepositoryFactory( //
-				publisher, //
+				dataAccessStrategy, //
 				context, //
-				dataAccessStrategy //
-		);
+				publisher);
 	}
 
 	@Bean

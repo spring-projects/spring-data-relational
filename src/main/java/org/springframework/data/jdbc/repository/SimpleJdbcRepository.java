@@ -15,34 +15,27 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jdbc.core.JdbcEntityOperations;
-import org.springframework.data.jdbc.core.JdbcEntityTemplate;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.repository.CrudRepository;
 
 /**
  * @author Jens Schauder
+ * @author Oliver Gierke
  * @since 1.0
  */
+@RequiredArgsConstructor
 public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 
-	private final JdbcPersistentEntityInformation<T, ID> entityInformation;
-
-	private final JdbcEntityOperations entityOperations;
-
-	/**
-	 * Creates a new {@link SimpleJdbcRepository}.
-	 */
-	public SimpleJdbcRepository(JdbcEntityTemplate entityOperations,
-			JdbcPersistentEntityInformation<T, ID> entityInformation) {
-
-		this.entityOperations = entityOperations;
-		this.entityInformation = entityInformation;
-	}
+	private final @NonNull JdbcEntityOperations entityOperations;
+	private final @NonNull JdbcPersistentEntityInformation<T, ID> entityInformation;
 
 	/*
 	 * (non-Javadoc)
@@ -136,12 +129,9 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Iterable)
 	 */
 	@Override
+	@SuppressWarnings("unchecked")
 	public void deleteAll(Iterable<? extends T> entities) {
-
-		for (T entity : entities) {
-			entityOperations.delete(entity, (Class<T>) entity.getClass());
-
-		}
+		entities.forEach(it -> entityOperations.delete(it, (Class<T>) it.getClass()));
 	}
 
 	@Override

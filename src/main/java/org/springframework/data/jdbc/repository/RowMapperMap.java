@@ -30,6 +30,10 @@ public interface RowMapperMap {
 	 */
 	RowMapperMap EMPTY = new RowMapperMap() {
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.jdbc.repository.RowMapperMap#rowMapperFor(java.lang.Class)
+		 */
 		public <T> RowMapper<? extends T> rowMapperFor(Class<T> type) {
 			return null;
 		}

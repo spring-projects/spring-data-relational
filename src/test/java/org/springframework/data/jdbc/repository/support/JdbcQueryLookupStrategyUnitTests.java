@@ -31,7 +31,6 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -40,10 +39,10 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  * Unit tests for {@link JdbcQueryLookupStrategy}.
  *
  * @author Jens Schauder
+ * @author Oliver Gierke
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
-	QueryMethodEvaluationContextProvider evaluationContextProvider = mock(QueryMethodEvaluationContextProvider.class);
 	JdbcMappingContext mappingContext = mock(JdbcMappingContext.class, RETURNS_DEEP_STUBS);
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
@@ -53,24 +52,17 @@ public class JdbcQueryLookupStrategyUnitTests {
 	@Before
 	public void setup() {
 
-		metadata = mock(RepositoryMetadata.class);
-		when(metadata.getReturnedDomainClass(any(Method.class))).thenReturn((Class) NumberFormat.class);
+		this.metadata = mock(RepositoryMetadata.class);
 
-	}
+		doReturn(NumberFormat.class).when(metadata).getReturnedDomainClass(any(Method.class));
 
-	private Method getMethod(String name) {
-
-		try {
-			return this.getClass().getDeclaredMethod(name);
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	@Test // DATAJDBC-166
+	@SuppressWarnings("unchecked")
 	public void typeBasedRowMapperGetsUsedForQuery() {
 
-		RowMapper numberFormatMapper = mock(RowMapper.class);
+		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
 		RowMapperMap rowMapperMap = new ConfigurableRowMapperMap().register(NumberFormat.class, numberFormatMapper);
 
 		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", rowMapperMap);
@@ -83,8 +75,8 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 	private RepositoryQuery getRepositoryQuery(String name, RowMapperMap rowMapperMap) {
 
-		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(evaluationContextProvider, mappingContext,
-				accessStrategy, rowMapperMap);
+		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(mappingContext, accessStrategy,
+				rowMapperMap);
 
 		return queryLookupStrategy.resolveQuery(getMethod(name), metadata, projectionFactory, namedQueries);
 	}
@@ -93,6 +85,15 @@ public class JdbcQueryLookupStrategyUnitTests {
 	@Query("some SQL")
 	private NumberFormat returningNumberFormat() {
 		return null;
+	}
+
+	private static Method getMethod(String name) {
+
+		try {
+			return JdbcQueryLookupStrategyUnitTests.class.getDeclaredMethod(name);
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

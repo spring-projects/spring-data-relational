@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
@@ -31,6 +32,7 @@ import org.springframework.jdbc.core.RowMapper;
  * Unit tests for {@link JdbcQueryMethod}.
  *
  * @author Jens Schauder
+ * @author Oliver Gierke
  */
 public class JdbcQueryMethodUnitTests {
 
@@ -40,7 +42,8 @@ public class JdbcQueryMethodUnitTests {
 	public void returnsSqlStatement() throws NoSuchMethodException {
 
 		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
-		when(metadata.getReturnedDomainClass(any(Method.class))).thenReturn((Class) String.class);
+
+		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethod"),
 				metadata, mock(ProjectionFactory.class));
@@ -52,7 +55,8 @@ public class JdbcQueryMethodUnitTests {
 	public void returnsSpecifiedRowMapperClass() throws NoSuchMethodException {
 
 		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
-		when(metadata.getReturnedDomainClass(any(Method.class))).thenReturn((Class) String.class);
+
+		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethod"),
 				metadata, mock(ProjectionFactory.class));
@@ -63,7 +67,7 @@ public class JdbcQueryMethodUnitTests {
 	@Query(value = DUMMY_SELECT, rowMapperClass = CustomRowMapper.class)
 	private void queryMethod() {}
 
-	private class CustomRowMapper implements RowMapper {
+	private class CustomRowMapper implements RowMapper<Object> {
 
 		@Override
 		public Object mapRow(ResultSet rs, int rowNum) {

@@ -15,8 +15,8 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.*;
 
 import junit.framework.AssertionFailedError;
 import lombok.Data;
@@ -80,7 +80,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 						entity.id, //
 						entity.name, //
 						true) //
-		);
+				);
 
 	}
 
@@ -103,14 +103,14 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 						one.id, //
 						one.name, //
 						true) //
-		);
+				);
 
 		assertThat(repository.findById(two.id)) //
 				.contains(new DummyEntity( //
 						two.id, //
 						two.name, //
 						true) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-120
@@ -203,7 +203,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 				DummyEntity entity = (DummyEntity) event.getOptionalEntity().orElseThrow(AssertionFailedError::new);
 				entity.deleted = true;
 
-				List<DbAction> actions = event.getChange().getActions();
+				List<DbAction<?>> actions = event.getChange().getActions();
 				actions.clear();
 				actions.add(DbAction.update(entity, null, null));
 			};
@@ -222,8 +222,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 				log.entity = entity;
 				log.text = entity.name + " saved";
 
-
-				List<DbAction> actions = event.getChange().getActions();
+				List<DbAction<?>> actions = event.getChange().getActions();
 				actions.add(DbAction.insert(log, null, null));
 			};
 		}

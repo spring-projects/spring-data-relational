@@ -15,6 +15,11 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.sql.ResultSet;
+
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,51 +29,50 @@ import org.springframework.data.repository.query.Parameters;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
-import java.sql.ResultSet;
-
-import static org.mockito.Mockito.*;
-
 /**
  * Unit tests for {@link JdbcRepositoryQuery}.
  *
  * @author Jens Schauder
+ * @author Oliver Gierke
  */
 public class JdbcRepositoryQueryUnitTests {
 
 	JdbcQueryMethod queryMethod;
 	JdbcMappingContext context;
-	RowMapper defaultRowMapper;
+	RowMapper<?> defaultRowMapper;
 	JdbcRepositoryQuery query;
 
 	@Before
 	public void setup() throws NoSuchMethodException {
 
-		Parameters parameters = new DefaultParameters(JdbcRepositoryQueryUnitTests.class.getDeclaredMethod("dummyMethod"));
-		queryMethod = mock(JdbcQueryMethod.class);
-		when(queryMethod.getParameters()).thenReturn(parameters);
+		this.queryMethod = mock(JdbcQueryMethod.class);
 
-		context = mock(JdbcMappingContext.class, RETURNS_DEEP_STUBS);
-		defaultRowMapper = mock(RowMapper.class);
+		Parameters<?, ?> parameters = new DefaultParameters(
+				JdbcRepositoryQueryUnitTests.class.getDeclaredMethod("dummyMethod"));
+		doReturn(parameters).when(queryMethod).getParameters();
+
+		this.context = mock(JdbcMappingContext.class, RETURNS_DEEP_STUBS);
+		this.defaultRowMapper = mock(RowMapper.class);
+
+		this.query = new JdbcRepositoryQuery(queryMethod, context, defaultRowMapper);
 	}
 
 	@Test // DATAJDBC-165
 	public void emptyQueryThrowsException() {
 
-		when(queryMethod.getAnnotatedQuery()).thenReturn(null);
-		query = new JdbcRepositoryQuery(queryMethod, context, defaultRowMapper);
+		doReturn(null).when(queryMethod).getAnnotatedQuery();
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> query.execute(new Object[]{}));
+				.isThrownBy(() -> query.execute(new Object[] {}));
 	}
 
 	@Test // DATAJDBC-165
 	public void defaultRowMapperIsUsedByDefault() {
 
-		when(queryMethod.getAnnotatedQuery()).thenReturn("some sql statement");
-		when(queryMethod.getRowMapperClass()).thenReturn((Class) RowMapper.class);
-		query = new JdbcRepositoryQuery(queryMethod, context, defaultRowMapper);
+		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn(RowMapper.class).when(queryMethod).getRowMapperClass();
 
-		query.execute(new Object[]{});
+		query.execute(new Object[] {});
 
 		verify(context.getTemplate()).queryForObject(anyString(), any(SqlParameterSource.class), eq(defaultRowMapper));
 	}
@@ -76,10 +80,9 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-165
 	public void defaultRowMapperIsUsedForNull() {
 
-		when(queryMethod.getAnnotatedQuery()).thenReturn("some sql statement");
-		query = new JdbcRepositoryQuery(queryMethod, context, defaultRowMapper);
+		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 
-		query.execute(new Object[]{});
+		query.execute(new Object[] {});
 
 		verify(context.getTemplate()).queryForObject(anyString(), any(SqlParameterSource.class), eq(defaultRowMapper));
 	}
@@ -87,22 +90,23 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-165
 	public void customRowMapperIsUsedWhenSpecified() {
 
-		when(queryMethod.getAnnotatedQuery()).thenReturn("some sql statement");
-		when(queryMethod.getRowMapperClass()).thenReturn((Class) CustomRowMapper.class);
-		query = new JdbcRepositoryQuery(queryMethod, context, defaultRowMapper);
+		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
-		query.execute(new Object[]{});
+		new JdbcRepositoryQuery(queryMethod, context, defaultRowMapper).execute(new Object[] {});
 
-		verify(context.getTemplate()).queryForObject(anyString(), any(SqlParameterSource.class), isA(CustomRowMapper.class));
+		verify(context.getTemplate()) //
+				.queryForObject(anyString(), any(SqlParameterSource.class), isA(CustomRowMapper.class));
 	}
 
 	/**
 	 * The whole purpose of this method is to easily generate a {@link DefaultParameters} instance during test setup.
 	 */
-	private void dummyMethod() {
-	}
+	@SuppressWarnings("unused")
+	private void dummyMethod() {}
 
-	private static class CustomRowMapper implements RowMapper {
+	private static class CustomRowMapper implements RowMapper<Object> {
+
 		@Override
 		public Object mapRow(ResultSet rs, int rowNum) {
 			return null;

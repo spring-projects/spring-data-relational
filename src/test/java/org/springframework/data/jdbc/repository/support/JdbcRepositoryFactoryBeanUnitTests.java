@@ -24,12 +24,14 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -38,6 +40,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Christoph Strobl
+ * @author Oliver Gierke
  */
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcRepositoryFactoryBeanUnitTests {
@@ -45,10 +48,14 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean;
 
 	@Mock DataAccessStrategy dataAccessStrategy;
-	@Mock JdbcMappingContext mappingContext;
+	@Mock ApplicationEventPublisher publisher;
+
+	JdbcMappingContext mappingContext;
 
 	@Before
 	public void setUp() {
+
+		this.mappingContext = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
 
 		// Setup standard configuration
 		factoryBean = new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class);
@@ -59,6 +66,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		factoryBean.setDataAccessStrategy(dataAccessStrategy);
 		factoryBean.setMappingContext(mappingContext);
+		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.afterPropertiesSet();
 
 		assertThat(factoryBean.getObject()).isNotNull();
@@ -74,6 +82,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	public void afterPropertiesThowsExceptionWhenNoMappingContextSet() {
 
 		factoryBean.setMappingContext(null);
+		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.afterPropertiesSet();
 	}
 
@@ -81,6 +90,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	public void afterPropertiesSetDefaultsNullablePropertiesCorrectly() {
 
 		factoryBean.setMappingContext(mappingContext);
+		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.afterPropertiesSet();
 
 		assertThat(factoryBean.getObject()).isNotNull();

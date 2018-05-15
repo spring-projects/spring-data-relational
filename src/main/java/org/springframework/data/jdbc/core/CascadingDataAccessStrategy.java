@@ -100,7 +100,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private <T> T collect(Function<DataAccessStrategy, T> function) {
-		return strategies.stream().collect(new FunctionCollector<>(function));
+		return strategies.stream().collect(new FunctionCollector<T>(function));
 	}
 
 	private void collectVoid(Consumer<DataAccessStrategy> consumer) {

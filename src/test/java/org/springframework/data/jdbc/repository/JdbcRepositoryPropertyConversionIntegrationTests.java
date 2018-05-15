@@ -33,7 +33,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -76,7 +75,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		}
 
 		@Bean
-		ApplicationListener applicationListener() {
+		ApplicationListener<?> applicationListener() {
 			return (ApplicationListener<BeforeSaveEvent>) beforeInsert -> ((EntityWithColumnsRequiringConversions) beforeInsert
 					.getEntity()).setIdTimestamp(getNow());
 		}

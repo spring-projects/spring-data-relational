@@ -45,14 +45,37 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final JdbcMappingContext context;
 	private final ApplicationEventPublisher publisher;
 	private final DataAccessStrategy accessStrategy;
+
 	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
 
-	public JdbcRepositoryFactory(ApplicationEventPublisher publisher, JdbcMappingContext context,
-			DataAccessStrategy dataAccessStrategy) {
+	/**
+	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy}, {@link JdbcMappingContext}
+	 * and {@link ApplicationEventPublisher}.
+	 * 
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param publisher must not be {@literal null}.
+	 */
+	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, JdbcMappingContext context,
+			ApplicationEventPublisher publisher) {
+
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
+		Assert.notNull(context, "JdbcMappingContext must not be null!");
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
 
 		this.publisher = publisher;
 		this.context = context;
 		this.accessStrategy = dataAccessStrategy;
+	}
+
+	/**
+	 * @param rowMapperMap must not be {@literal null} consider {@link RowMapperMap#EMPTY} instead.
+	 */
+	public void setRowMapperMap(RowMapperMap rowMapperMap) {
+
+		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
+
+		this.rowMapperMap = rowMapperMap;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -61,22 +84,34 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		return (EntityInformation<T, ID>) context.getRequiredPersistentEntityInformation(aClass);
 	}
 
-	@SuppressWarnings("unchecked")
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getTargetRepository(org.springframework.data.repository.core.RepositoryInformation)
+	 */
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcPersistentEntityInformation persistentEntityInformation = context
+		JdbcPersistentEntityInformation<?, ?> persistentEntityInformation = context
 				.getRequiredPersistentEntityInformation(repositoryInformation.getDomainType());
+
 		JdbcEntityTemplate template = new JdbcEntityTemplate(publisher, context, accessStrategy);
 
 		return new SimpleJdbcRepository<>(template, persistentEntityInformation);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getRepositoryBaseClass(org.springframework.data.repository.core.RepositoryMetadata)
+	 */
 	@Override
 	protected Class<?> getRepositoryBaseClass(RepositoryMetadata repositoryMetadata) {
 		return SimpleJdbcRepository.class;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getQueryLookupStrategy(org.springframework.data.repository.query.QueryLookupStrategy.Key, org.springframework.data.repository.query.EvaluationContextProvider)
+	 */
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
@@ -88,15 +123,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(evaluationContextProvider, context, accessStrategy, rowMapperMap));
-	}
-
-	/**
-	 * @param rowMapperMap must not be {@literal null} consider {@link RowMapperMap#EMPTY} instead.
-	 */
-	public void setRowMapperMap(RowMapperMap rowMapperMap) {
-
-		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
-		this.rowMapperMap = rowMapperMap;
+		return Optional.of(new JdbcQueryLookupStrategy(context, accessStrategy, rowMapperMap));
 	}
 }

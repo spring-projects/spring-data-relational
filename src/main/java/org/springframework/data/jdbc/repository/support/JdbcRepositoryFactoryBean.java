@@ -37,6 +37,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Christoph Strobl
+ * @author Oliver Gierke
  * @since 1.0
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> //
@@ -47,14 +48,24 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private DataAccessStrategy dataAccessStrategy;
 	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
 
+	/**
+	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
+	 * 
+	 * @param repositoryInterface must not be {@literal null}.
+	 */
 	JdbcRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
 		super(repositoryInterface);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#setApplicationEventPublisher(org.springframework.context.ApplicationEventPublisher)
+	 */
 	@Override
 	public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
 
 		super.setApplicationEventPublisher(publisher);
+
 		this.publisher = publisher;
 	}
 
@@ -66,8 +77,8 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
 
-		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(publisher, mappingContext,
-				dataAccessStrategy);
+		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
+				publisher);
 		jdbcRepositoryFactory.setRowMapperMap(rowMapperMap);
 
 		return jdbcRepositoryFactory;
@@ -97,6 +108,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.rowMapperMap = rowMapperMap;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#afterPropertiesSet()
+	 */
 	@Override
 	public void afterPropertiesSet() {
 
@@ -104,13 +119,12 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		if (dataAccessStrategy == null) {
 
-			dataAccessStrategy = new DefaultDataAccessStrategy( //
-					new SqlGeneratorSource(mappingContext), //
-					mappingContext);
+			SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
+			this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext);
 		}
 
 		if (rowMapperMap == null) {
-			rowMapperMap = RowMapperMap.EMPTY;
+			this.rowMapperMap = RowMapperMap.EMPTY;
 		}
 
 		super.afterPropertiesSet();

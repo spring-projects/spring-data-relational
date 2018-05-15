@@ -21,6 +21,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -29,6 +30,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @author Oliver Gierke
  * @since 1.0
  */
 class JdbcRepositoryQuery implements RepositoryQuery {
@@ -39,26 +41,36 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private final JdbcMappingContext context;
 	private final RowMapper<?> rowMapper;
 
-	JdbcRepositoryQuery(JdbcQueryMethod queryMethod, JdbcMappingContext context, RowMapper defaultRowMapper) {
+	/**
+	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link JdbcMappingContext} and
+	 * {@link RowMapper}.
+	 * 
+	 * @param queryMethod must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
+	 */
+	JdbcRepositoryQuery(JdbcQueryMethod queryMethod, JdbcMappingContext context, RowMapper<?> defaultRowMapper) {
+
+		Assert.notNull(queryMethod, "Query method must not be null!");
+		Assert.notNull(context, "JdbcMappingContext must not be null!");
+
+		if (!queryMethod.isModifyingQuery()) {
+			Assert.notNull(defaultRowMapper, "RowMapper must not be null!");
+		}
 
 		this.queryMethod = queryMethod;
 		this.context = context;
 		this.rowMapper = createRowMapper(queryMethod, defaultRowMapper);
 	}
 
-	private static RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod, RowMapper defaultRowMapper) {
-
-		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
-
-		return rowMapperClass == null || rowMapperClass == RowMapper.class ? defaultRowMapper
-				: (RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass);
-	}
-
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.query.RepositoryQuery#execute(java.lang.Object[])
+	 */
 	@Override
 	public Object execute(Object[] objects) {
 
 		String query = determineQuery();
-
 		MapSqlParameterSource parameters = bindParameters(objects);
 
 		if (queryMethod.isModifyingQuery()) {
@@ -80,6 +92,10 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.query.RepositoryQuery#getQueryMethod()
+	 */
 	@Override
 	public JdbcQueryMethod getQueryMethod() {
 		return queryMethod;
@@ -92,17 +108,29 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		if (StringUtils.isEmpty(query)) {
 			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
 		}
+
 		return query;
 	}
 
 	private MapSqlParameterSource bindParameters(Object[] objects) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
+
 		queryMethod.getParameters().getBindableParameters().forEach(p -> {
 
 			String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
 			parameters.addValue(parameterName, objects[p.getIndex()]);
 		});
+
 		return parameters;
+	}
+
+	private static RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod, RowMapper<?> defaultRowMapper) {
+
+		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
+
+		return rowMapperClass == null || rowMapperClass == RowMapper.class //
+				? defaultRowMapper //
+				: (RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass);
 	}
 }

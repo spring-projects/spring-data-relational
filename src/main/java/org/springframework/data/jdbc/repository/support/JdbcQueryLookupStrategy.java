@@ -26,16 +26,17 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
+import org.springframework.util.Assert;
 
 /**
  * {@link QueryLookupStrategy} for JDBC repositories. Currently only supports annotated queries.
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @author Oliver Gierke
  * @since 1.0
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
@@ -45,8 +46,19 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final RowMapperMap rowMapperMap;
 	private final ConversionService conversionService;
 
-	JdbcQueryLookupStrategy(QueryMethodEvaluationContextProvider evaluationContextProvider, JdbcMappingContext context,
-			DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap) {
+	/**
+	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link JdbcMappingContext}, {@link DataAccessStrategy}
+	 * and {@link RowMapperMap}.
+	 * 
+	 * @param context must not be {@literal null}.
+	 * @param accessStrategy must not be {@literal null}.
+	 * @param rowMapperMap must not be {@literal null}.
+	 */
+	JdbcQueryLookupStrategy(JdbcMappingContext context, DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap) {
+
+		Assert.notNull(context, "JdbcMappingContext must not be null!");
+		Assert.notNull(accessStrategy, "DataAccessStrategy must not be null!");
+		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
 
 		this.context = context;
 		this.accessStrategy = accessStrategy;
@@ -54,6 +66,10 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		this.conversionService = context.getConversions();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.query.QueryLookupStrategy#resolveQuery(java.lang.reflect.Method, org.springframework.data.repository.core.RepositoryMetadata, org.springframework.data.projection.ProjectionFactory, org.springframework.data.repository.core.NamedQueries)
+	 */
 	@Override
 	public RepositoryQuery resolveQuery(Method method, RepositoryMetadata repositoryMetadata,
 			ProjectionFactory projectionFactory, NamedQueries namedQueries) {
@@ -78,7 +94,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		Class<?> domainType = queryMethod.getReturnedObjectType();
 
-		RowMapper typeMappedRowMapper = rowMapperMap.rowMapperFor(domainType);
+		RowMapper<?> typeMappedRowMapper = rowMapperMap.rowMapperFor(domainType);
 
 		return typeMappedRowMapper == null //
 				? new EntityRowMapper<>( //
