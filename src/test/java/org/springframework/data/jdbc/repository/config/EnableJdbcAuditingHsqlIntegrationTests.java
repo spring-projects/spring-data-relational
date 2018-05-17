@@ -199,7 +199,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 	@Data
 	static class AuditingAnnotatedDummyEntity {
 
-		@Id Long id;
+		@Id long id;
 		@CreatedBy String createdBy;
 		@CreatedDate LocalDateTime createdDate;
 		@LastModifiedBy String lastModifiedBy;
