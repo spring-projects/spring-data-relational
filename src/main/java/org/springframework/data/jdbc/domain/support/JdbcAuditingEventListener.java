@@ -19,6 +19,8 @@ import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.auditing.AuditingHandler;
 import org.springframework.data.jdbc.mapping.event.BeforeSaveEvent;
+import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -35,6 +37,7 @@ import org.springframework.util.Assert;
 public class JdbcAuditingEventListener implements ApplicationListener<BeforeSaveEvent> {
 
 	@Nullable private AuditingHandler handler;
+	private JdbcMappingContext context;
 
 	/**
 	 * Configures the {@link AuditingHandler} to be used to set the current auditor on the domain types touched.
@@ -49,6 +52,17 @@ public class JdbcAuditingEventListener implements ApplicationListener<BeforeSave
 	}
 
 	/**
+	 * Configures a {@link JdbcMappingContext} that use for judging whether new object or not.
+	 * @param context must not be {@literal null}
+	 */
+	public void setJdbcMappingContext(JdbcMappingContext context) {
+
+		Assert.notNull(context, "JdbcMappingContext must not be null!");
+
+		this.context = context;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 * 
 	 * @param event a notification event for indicating before save
@@ -59,11 +73,14 @@ public class JdbcAuditingEventListener implements ApplicationListener<BeforeSave
 		if (handler != null) {
 
 			event.getOptionalEntity().ifPresent(entity -> {
-
-				if (event.getId().getOptionalValue().isPresent()) {
-					handler.markModified(entity);
-				} else {
+				@SuppressWarnings("unchecked")
+				Class<Object> entityType = event.getChange().getEntityType();
+				JdbcPersistentEntityInformation<Object, ?> entityInformation =
+						context.getRequiredPersistentEntityInformation(entityType);
+				if (entityInformation.isNew(entity)) {
 					handler.markCreated(entity);
+				} else {
+					handler.markModified(entity);
 				}
 			});
 		}
