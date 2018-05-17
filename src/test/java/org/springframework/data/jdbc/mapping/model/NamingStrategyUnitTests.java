@@ -15,15 +15,15 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import org.junit.Test;
-import org.springframework.data.annotation.Id;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import org.junit.Test;
+import org.springframework.data.annotation.Id;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for the {@link NamingStrategy}.
@@ -33,63 +33,65 @@ import static org.mockito.Mockito.mock;
 public class NamingStrategyUnitTests {
 
 	private final NamingStrategy target = NamingStrategy.INSTANCE;
-	private final JdbcMappingContext context = new JdbcMappingContext(target, mock(NamedParameterJdbcOperations.class), mock(ConversionCustomizer.class));
+	private final JdbcMappingContext context = new JdbcMappingContext(
+			target,
+			mock(NamedParameterJdbcOperations.class),
+			mock(ConversionCustomizer.class));
 	private final JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test
 	public void getTableName() {
-		assertThat(target.getTableName(persistentEntity.getType()))
-				.isEqualTo("DummyEntity");
-		assertThat(target.getTableName(DummySubEntity.class))
-			.isEqualTo("dummy_sub_entity"); // DATAJDBC-106
+
+		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("DummyEntity");
+		assertThat(target.getTableName(DummySubEntity.class)).isEqualTo("dummy_sub_entity"); // DATAJDBC-106
 	}
 
 	@Test // DATAJDBC-106
 	public void getTableNameWithTableAnnotation() {
-		assertThat(target.getTableName(DummySubEntity.class))
-			.isEqualTo("dummy_sub_entity");
+
+		assertThat(target.getTableName(DummySubEntity.class)).isEqualTo("dummy_sub_entity");
 	}
 
 	@Test
 	public void getColumnName() {
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id")))
-				.isEqualTo("id");
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt")))
-				.isEqualTo("createdAt");
+
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))).isEqualTo("id");
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("createdAt");
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
 				.isEqualTo("dummySubEntities");
 	}
 
 	@Test // DATAJDBC-106
 	public void getColumnNameWithColumnAnnotation() {
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("name")))
-			.isEqualTo("dummy_name");
+
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("name"))).isEqualTo("dummy_name");
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("lastUpdatedAt")))
-			.isEqualTo("dummy_last_updated_at");
+				.isEqualTo("dummy_last_updated_at");
 	}
 
 	@Test
 	public void getReverseColumnName() {
+
 		assertThat(target.getReverseColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
 				.isEqualTo("DummyEntity");
 	}
 
 	@Test
 	public void getKeyColumn() {
+
 		assertThat(target.getKeyColumn(persistentEntity.getPersistentProperty("dummySubEntities")))
 				.isEqualTo("DummyEntity_key");
 	}
 
 	@Test
 	public void getSchema() {
-		assertThat(target.getSchema())
-				.isEmpty();
+		assertThat(target.getSchema()).isEmpty();
 	}
 
 	@Test
 	public void getQualifiedTableName() {
-		assertThat(target.getQualifiedTableName(persistentEntity.getType()))
-				.isEqualTo("DummyEntity");
+
+		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("DummyEntity");
 
 		NamingStrategy strategy = new NamingStrategy() {
 			@Override
@@ -97,18 +99,18 @@ public class NamingStrategyUnitTests {
 				return "schema";
 			}
 		};
-		assertThat(strategy.getQualifiedTableName(persistentEntity.getType()))
-			.isEqualTo("schema.DummyEntity");
+
+		assertThat(strategy.getQualifiedTableName(persistentEntity.getType())).isEqualTo("schema.DummyEntity");
 	}
 
 	private static class DummyEntity {
-		@Id
-		private int id;
-		@Column("dummy_name")
-		private String name;
+
+		@Id private int id;
+		@Column("dummy_name") private String name;
 		private LocalDateTime createdAt;
 		private LocalDateTime lastUpdatedAt;
 		private List<DummySubEntity> dummySubEntities;
+
 		@Column("dummy_last_updated_at")
 		public LocalDateTime getLastUpdatedAt() {
 			return LocalDateTime.now();
@@ -116,7 +118,5 @@ public class NamingStrategyUnitTests {
 	}
 
 	@Table("dummy_sub_entity")
-	private static class DummySubEntity {
-	}
-
+	private static class DummySubEntity {}
 }

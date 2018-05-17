@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The annotation to configure a mapping database table.
+ * The annotation to configure the mapping from a class to a database table.
  *
  * @author Kazuki Shimizu
  * @since 1.0
