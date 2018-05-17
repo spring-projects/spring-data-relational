@@ -25,10 +25,10 @@ import java.util.stream.Stream;
 
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.util.StreamUtils;

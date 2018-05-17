@@ -27,7 +27,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.util.ReflectionTestUtils;

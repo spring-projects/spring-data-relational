@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.domain.support;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.auditing.AuditingHandler;
-import org.springframework.data.jdbc.mapping.event.BeforeSaveEvent;
+import org.springframework.data.jdbc.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;

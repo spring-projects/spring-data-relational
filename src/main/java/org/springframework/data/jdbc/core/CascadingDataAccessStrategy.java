@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
 
 /**

@@ -25,9 +25,9 @@ import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
-import org.springframework.data.jdbc.mapping.model.NamingStrategy;
+import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntity;
+import org.springframework.data.jdbc.core.mapping.model.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
