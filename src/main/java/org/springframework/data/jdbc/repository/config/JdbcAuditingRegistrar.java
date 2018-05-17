@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.config;
 
 import java.lang.annotation.Annotation;
 
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -83,6 +84,7 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(listenerClass);
 		builder.addPropertyValue("auditingHandler",
 				ParsingUtils.getObjectFactoryBeanDefinition(getAuditingHandlerBeanName(), null));
+		builder.setAutowireMode(AutowireCapableBeanFactory.AUTOWIRE_BY_TYPE);
 		registerInfrastructureBeanWithId(builder.getRawBeanDefinition(), listenerClass.getName(), registry);
 	}
 
