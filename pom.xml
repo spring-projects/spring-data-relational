@@ -33,7 +33,7 @@
 		<mysql-connector-java.version>5.1.41</mysql-connector-java.version>
 		<postgresql.version>42.0.0</postgresql.version>
 		<mariadb-java-client.version>2.2.3</mariadb-java-client.version>
-		<testcontainers.version>1.7.2</testcontainers.version>
+		<testcontainers.version>1.7.3</testcontainers.version>
 
 	</properties>
 
@@ -260,13 +260,6 @@
 			<groupId>org.testcontainers</groupId>
 			<artifactId>mariadb</artifactId>
 			<version>${testcontainers.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<!-- Workaround for https://github.com/testcontainers/testcontainers-java/issues/656-->
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.6</version>
 			<scope>test</scope>
 		</dependency>
 
