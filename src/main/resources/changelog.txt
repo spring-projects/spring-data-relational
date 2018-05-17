@@ -1,6 +1,17 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.0.M3 (2018-05-17)
+----------------------------------------
+* DATAJDBC-213 - Fix Travis build.
+* DATAJDBC-212 - Adapt to SpEL extension API changes in Spring Data Commons.
+* DATAJDBC-209 - The QueryAnnotationHsqlIntegrationTests#executeCustomQueryWithReturnTypeIsDate is failed at sometimes.
+* DATAJDBC-206 - Update README with changes from recent issues.
+* DATAJDBC-204 - Support the annotation based auditing.
+* DATAJDBC-202 - Release 1.0 M3 (Lovelace).
+* DATAJDBC-201 - Reduce logging performed during build.
+
+
 Changes in version 1.0.0.M2 (2018-04-13)
 ----------------------------------------
 * DATAJDBC-200 - Rename event classes to have an "Event" suffix.
