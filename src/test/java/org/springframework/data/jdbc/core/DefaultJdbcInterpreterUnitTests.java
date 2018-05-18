@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -30,7 +31,6 @@ import org.springframework.data.jdbc.core.conversion.JdbcPropertyPath;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for {@link DefaultJdbcInterpreter}
@@ -47,7 +47,7 @@ public class DefaultJdbcInterpreterUnitTests {
 		public String getReverseColumnName(JdbcPersistentProperty property) {
 			return BACK_REFERENCE;
 		}
-	}, mock(NamedParameterJdbcOperations.class), __ -> {});
+	});
 
 	DataAccessStrategy dataAccessStrategy = mock(DataAccessStrategy.class);
 	DefaultJdbcInterpreter interpreter = new DefaultJdbcInterpreter(context, dataAccessStrategy);

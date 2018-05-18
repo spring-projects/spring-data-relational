@@ -21,6 +21,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -38,7 +39,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters. Use @Param for query method parameters, or when on Java 8+ use the javac flag -parameters.";
 
 	private final JdbcQueryMethod queryMethod;
-	private final JdbcMappingContext context;
+	private final NamedParameterJdbcOperations operations;
 	private final RowMapper<?> rowMapper;
 
 	/**
@@ -46,20 +47,21 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	 * {@link RowMapper}.
 	 * 
 	 * @param queryMethod must not be {@literal null}.
-	 * @param context must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
-	JdbcRepositoryQuery(JdbcQueryMethod queryMethod, JdbcMappingContext context, RowMapper<?> defaultRowMapper) {
+	JdbcRepositoryQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+			RowMapper<?> defaultRowMapper) {
 
 		Assert.notNull(queryMethod, "Query method must not be null!");
-		Assert.notNull(context, "JdbcMappingContext must not be null!");
+		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null!");
 
 		if (!queryMethod.isModifyingQuery()) {
 			Assert.notNull(defaultRowMapper, "RowMapper must not be null!");
 		}
 
 		this.queryMethod = queryMethod;
-		this.context = context;
+		this.operations = operations;
 		this.rowMapper = createRowMapper(queryMethod, defaultRowMapper);
 	}
 
@@ -75,18 +77,18 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 
 		if (queryMethod.isModifyingQuery()) {
 
-			int updatedCount = context.getTemplate().update(query, parameters);
+			int updatedCount = operations.update(query, parameters);
 			Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 			return (returnedObjectType == boolean.class || returnedObjectType == Boolean.class) ? updatedCount != 0
 					: updatedCount;
 		}
 
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
-			return context.getTemplate().query(query, parameters, rowMapper);
+			return operations.query(query, parameters, rowMapper);
 		}
 
 		try {
-			return context.getTemplate().queryForObject(query, parameters, rowMapper);
+			return operations.queryForObject(query, parameters, rowMapper);
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}

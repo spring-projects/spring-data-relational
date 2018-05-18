@@ -23,10 +23,10 @@ import java.sql.ResultSet;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.repository.query.DefaultParameters;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
@@ -38,9 +38,10 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 public class JdbcRepositoryQueryUnitTests {
 
 	JdbcQueryMethod queryMethod;
-	JdbcMappingContext context;
+
 	RowMapper<?> defaultRowMapper;
 	JdbcRepositoryQuery query;
+	NamedParameterJdbcOperations operations;
 
 	@Before
 	public void setup() throws NoSuchMethodException {
@@ -51,10 +52,10 @@ public class JdbcRepositoryQueryUnitTests {
 				JdbcRepositoryQueryUnitTests.class.getDeclaredMethod("dummyMethod"));
 		doReturn(parameters).when(queryMethod).getParameters();
 
-		this.context = mock(JdbcMappingContext.class, RETURNS_DEEP_STUBS);
 		this.defaultRowMapper = mock(RowMapper.class);
+		this.operations = mock(NamedParameterJdbcOperations.class);
 
-		this.query = new JdbcRepositoryQuery(queryMethod, context, defaultRowMapper);
+		this.query = new JdbcRepositoryQuery(queryMethod, operations, defaultRowMapper);
 	}
 
 	@Test // DATAJDBC-165
@@ -74,7 +75,7 @@ public class JdbcRepositoryQueryUnitTests {
 
 		query.execute(new Object[] {});
 
-		verify(context.getTemplate()).queryForObject(anyString(), any(SqlParameterSource.class), eq(defaultRowMapper));
+		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), eq(defaultRowMapper));
 	}
 
 	@Test // DATAJDBC-165
@@ -84,7 +85,7 @@ public class JdbcRepositoryQueryUnitTests {
 
 		query.execute(new Object[] {});
 
-		verify(context.getTemplate()).queryForObject(anyString(), any(SqlParameterSource.class), eq(defaultRowMapper));
+		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), eq(defaultRowMapper));
 	}
 
 	@Test // DATAJDBC-165
@@ -93,9 +94,9 @@ public class JdbcRepositoryQueryUnitTests {
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
-		new JdbcRepositoryQuery(queryMethod, context, defaultRowMapper).execute(new Object[] {});
+		new JdbcRepositoryQuery(queryMethod, operations, defaultRowMapper).execute(new Object[] {});
 
-		verify(context.getTemplate()) //
+		verify(operations) //
 				.queryForObject(anyString(), any(SqlParameterSource.class), isA(CustomRowMapper.class));
 	}
 

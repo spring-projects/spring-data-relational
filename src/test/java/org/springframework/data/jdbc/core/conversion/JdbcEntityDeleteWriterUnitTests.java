@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.core.conversion;
 
-import static org.mockito.Mockito.*;
-
 import lombok.Data;
 
 import org.assertj.core.api.Assertions;
@@ -28,7 +26,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for the {@link JdbcEntityDeleteWriter}
@@ -38,14 +35,14 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcEntityDeleteWriterUnitTests {
 
-	JdbcEntityDeleteWriter converter = new JdbcEntityDeleteWriter(new JdbcMappingContext(mock(NamedParameterJdbcOperations.class)));
+	JdbcEntityDeleteWriter converter = new JdbcEntityDeleteWriter(new JdbcMappingContext());
 
 	@Test
 	public void deleteDeletesTheEntityAndReferencedEntities() {
 
 		SomeEntity entity = new SomeEntity(23L);
 
-		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.DELETE, SomeEntity.class, entity);
+		AggregateChange<SomeEntity> aggregateChange = new AggregateChange<>(Kind.DELETE, SomeEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
@@ -54,7 +51,7 @@ public class JdbcEntityDeleteWriterUnitTests {
 						Tuple.tuple(Delete.class, YetAnother.class), //
 						Tuple.tuple(Delete.class, OtherEntity.class), //
 						Tuple.tuple(Delete.class, SomeEntity.class) //
-		);
+				);
 	}
 
 	@Data

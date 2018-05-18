@@ -40,5 +40,4 @@ public interface JdbcEntityOperations {
 	<T> Iterable<T> findAll(Class<T> domainType);
 
 	<T> boolean existsById(Object id, Class<T> domainType);
-
 }

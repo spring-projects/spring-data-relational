@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
@@ -35,8 +36,6 @@ import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * Maps a ResultSet to an entity of type {@code T}, including entities referenced.
@@ -47,7 +46,7 @@ import org.springframework.util.Assert;
  */
 public class EntityRowMapper<T> implements RowMapper<T> {
 
-	private static final Converter ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
+	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
 	private final JdbcPersistentEntity<T> entity;
 	private final EntityInstantiator instantiator = new ClassGeneratingEntityInstantiator();
@@ -101,14 +100,12 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		return instantiator.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, ""));
 	}
 
-
 	/**
 	 * Read a single value or a complete Entity from the {@link ResultSet} passed as an argument.
 	 *
 	 * @param resultSet the {@link ResultSet} to extract the value from. Must not be {@code null}.
 	 * @param property the {@link JdbcPersistentProperty} for which the value is intended. Must not be {@code null}.
 	 * @param prefix to be used for all column names accessed by this method. Must not be {@code null}.
-	 *
 	 * @return the value read from the {@link ResultSet}. May be {@code null}.
 	 */
 	private Object readFrom(ResultSet resultSet, JdbcPersistentProperty property, String prefix) {

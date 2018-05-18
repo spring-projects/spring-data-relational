@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.mapping.model;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import lombok.Data;
 
@@ -26,16 +25,16 @@ import java.util.Date;
 
 import org.junit.Test;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for the {@link BasicJdbcPersistentProperty}.
  *
  * @author Jens Schauder
+ * @author Oliver Gierke
  */
 public class BasicJdbcPersistentPropertyUnitTests {
 
-	JdbcMappingContext context = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
+	JdbcMappingContext context = new JdbcMappingContext();
 
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {

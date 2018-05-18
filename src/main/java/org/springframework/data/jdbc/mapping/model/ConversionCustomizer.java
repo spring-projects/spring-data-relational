@@ -23,5 +23,7 @@ import org.springframework.core.convert.support.GenericConversionService;
  */
 public interface ConversionCustomizer {
 
+	public static ConversionCustomizer NONE = __ -> {};
+
 	void customize(GenericConversionService conversions);
 }

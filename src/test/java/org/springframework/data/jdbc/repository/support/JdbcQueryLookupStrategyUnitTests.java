@@ -33,6 +33,7 @@ import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
@@ -48,6 +49,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
 	RepositoryMetadata metadata;
 	NamedQueries namedQueries = mock(NamedQueries.class);
+	NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
 	@Before
 	public void setup() {
@@ -69,14 +71,13 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 		repositoryQuery.execute(new Object[] {});
 
-		verify(mappingContext.getTemplate()).queryForObject(anyString(), any(SqlParameterSource.class),
-				eq(numberFormatMapper));
+		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), eq(numberFormatMapper));
 	}
 
 	private RepositoryQuery getRepositoryQuery(String name, RowMapperMap rowMapperMap) {
 
 		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(mappingContext, accessStrategy,
-				rowMapperMap);
+				rowMapperMap, operations);
 
 		return queryLookupStrategy.resolveQuery(getMethod(name), metadata, projectionFactory, namedQueries);
 	}

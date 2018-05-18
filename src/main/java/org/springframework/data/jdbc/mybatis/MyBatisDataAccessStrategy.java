@@ -30,6 +30,7 @@ import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
@@ -43,6 +44,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @author Oliver Gierke
  * @since 1.0
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
@@ -54,16 +56,17 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * Create a {@link DataAccessStrategy} that first checks for queries defined by MyBatis and if it doesn't find one
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
-	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context, SqlSession sqlSession) {
-		return createCombinedAccessStrategy(context, sqlSession, NamespaceStrategy.DEFAULT_INSTANCE);
+	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context,
+			NamedParameterJdbcOperations operations, SqlSession sqlSession) {
+		return createCombinedAccessStrategy(context, operations, sqlSession, NamespaceStrategy.DEFAULT_INSTANCE);
 	}
 
 	/**
 	 * Create a {@link DataAccessStrategy} that first checks for queries defined by MyBatis and if it doesn't find one
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
-	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context, SqlSession sqlSession,
-			NamespaceStrategy namespaceStrategy) {
+	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context,
+			NamedParameterJdbcOperations operations, SqlSession sqlSession, NamespaceStrategy namespaceStrategy) {
 
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
@@ -75,10 +78,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		CascadingDataAccessStrategy cascadingDataAccessStrategy = new CascadingDataAccessStrategy(
 				asList(myBatisDataAccessStrategy, delegatingDataAccessStrategy));
 
-		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
-				new SqlGeneratorSource(context), //
-				context, //
-				cascadingDataAccessStrategy);
+		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context);
+		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, context,
+				cascadingDataAccessStrategy, operations);
 
 		delegatingDataAccessStrategy.setDelegate(defaultDataAccessStrategy);
 
@@ -152,12 +154,12 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> void deleteAll(PropertyPath propertyPath) {
 
-		Class baseType = propertyPath.getOwningType().getType();
-		Class leaveType = propertyPath.getLeafProperty().getTypeInformation().getType();
+		Class<?> baseType = propertyPath.getOwningType().getType();
+		Class<?> leafType = propertyPath.getLeafProperty().getTypeInformation().getType();
 
 		sqlSession().delete( //
 				namespace(baseType) + ".deleteAll-" + toDashPath(propertyPath), //
-				new MyBatisContext(null, null, leaveType, Collections.emptyMap()) //
+				new MyBatisContext(null, null, leafType, Collections.emptyMap()) //
 		);
 	}
 

@@ -16,10 +16,8 @@
 package org.springframework.data.jdbc.mapping.model;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import org.junit.Test;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for {@link JdbcPersistentEntityImpl}.
@@ -29,7 +27,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  */
 public class JdbcPersistentEntityImplUnitTests {
 
-	JdbcMappingContext mappingContext = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
+	JdbcMappingContext mappingContext = new JdbcMappingContext();
 
 	@Test // DATAJDBC-106
 	public void discoversAnnotatedTableName() {

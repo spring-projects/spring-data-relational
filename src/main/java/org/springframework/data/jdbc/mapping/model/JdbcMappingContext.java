@@ -37,7 +37,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.util.Assert;
 
 /**
  * {@link MappingContext} implementation for JDBC.
@@ -45,6 +45,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Kazuki Shimizu
+ * @author Oliver Gierke
  * @since 1.0
  */
 public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> {
@@ -56,22 +57,35 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	));
 
 	@Getter private final NamingStrategy namingStrategy;
-	@Getter private final NamedParameterJdbcOperations template;
 	@Getter private SimpleTypeHolder simpleTypeHolder;
 	private GenericConversionService conversions = getDefaultConversionService();
 
-	public JdbcMappingContext(NamingStrategy namingStrategy, NamedParameterJdbcOperations template,
-			ConversionCustomizer customizer) {
+	/**
+	 * Creates a new {@link JdbcMappingContext}.
+	 */
+	public JdbcMappingContext() {
+		this(NamingStrategy.INSTANCE, ConversionCustomizer.NONE);
+	}
+
+	public JdbcMappingContext(NamingStrategy namingStrategy) {
+		this(namingStrategy, ConversionCustomizer.NONE);
+	}
+
+	/**
+	 * Creates a new {@link JdbcMappingContext} using the given {@link NamingStrategy} and {@link ConversionCustomizer}.
+	 * 
+	 * @param namingStrategy must not be {@literal null}.
+	 * @param customizer must not be {@literal null}.
+	 */
+	public JdbcMappingContext(NamingStrategy namingStrategy, ConversionCustomizer customizer) {
+
+		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
+		Assert.notNull(customizer, "ConversionCustomizer must not be null!");
 
 		this.namingStrategy = namingStrategy;
-		this.template = template;
 
 		customizer.customize(conversions);
 		setSimpleTypeHolder(new SimpleTypeHolder(CUSTOM_SIMPLE_TYPES, true));
-	}
-
-	public JdbcMappingContext(NamedParameterJdbcOperations template) {
-		this(NamingStrategy.INSTANCE, template, __ -> {});
 	}
 
 	@Override

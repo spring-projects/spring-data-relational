@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,7 +35,6 @@ import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for the {@link JdbcEntityWriter}
@@ -47,7 +45,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 public class JdbcEntityWriterUnitTests {
 
 	public static final long SOME_ENTITY_ID = 23L;
-	JdbcEntityWriter converter = new JdbcEntityWriter(new JdbcMappingContext(mock(NamedParameterJdbcOperations.class)));
+	JdbcEntityWriter converter = new JdbcEntityWriter(new JdbcMappingContext());
 
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {
@@ -62,7 +60,7 @@ public class JdbcEntityWriterUnitTests {
 				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
 						tuple(Insert.class, SingleReferenceEntity.class, "") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-112
@@ -79,7 +77,7 @@ public class JdbcEntityWriterUnitTests {
 				.containsExactly( //
 						tuple(Delete.class, Element.class, "other"), //
 						tuple(Update.class, SingleReferenceEntity.class, "") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-112
@@ -99,7 +97,7 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Delete.class, Element.class, "other"), //
 						tuple(Update.class, SingleReferenceEntity.class, ""), //
 						tuple(Insert.class, Element.class, "other") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-113
@@ -131,7 +129,7 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Insert.class, SetContainer.class, ""), //
 						tuple(Insert.class, Element.class, "elements"), //
 						tuple(Insert.class, Element.class, "elements") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-113
@@ -162,7 +160,7 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
 						tuple(Insert.class, Element.class, "other.element"), //
 						tuple(Insert.class, Element.class, "other.element") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-131
@@ -195,12 +193,12 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Insert.class, Element.class, "one", "elements"), //
 						tuple(Insert.class, Element.class, "two", "elements") //
 				).containsSubsequence( // container comes before the elements
-				tuple(Insert.class, MapContainer.class, null, ""), //
-				tuple(Insert.class, Element.class, "two", "elements") //
-		).containsSubsequence( // container comes before the elements
-				tuple(Insert.class, MapContainer.class, null, ""), //
-				tuple(Insert.class, Element.class, "one", "elements") //
-		);
+						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, "two", "elements") //
+				).containsSubsequence( // container comes before the elements
+						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, "one", "elements") //
+				);
 	}
 
 	@Test // DATAJDBC-183
@@ -259,8 +257,8 @@ public class JdbcEntityWriterUnitTests {
 	public void newEntityWithListResultsInAdditionalInsertPerElement() {
 
 		ListContainer entity = new ListContainer(null);
-		entity.elements.add( new Element(null));
-		entity.elements.add( new Element(null));
+		entity.elements.add(new Element(null));
+		entity.elements.add(new Element(null));
 
 		AggregateChange<ListContainer> aggregateChange = new AggregateChange(Kind.SAVE, ListContainer.class, entity);
 		converter.write(entity, aggregateChange);
@@ -272,12 +270,12 @@ public class JdbcEntityWriterUnitTests {
 						tuple(Insert.class, Element.class, 0, "elements"), //
 						tuple(Insert.class, Element.class, 1, "elements") //
 				).containsSubsequence( // container comes before the elements
-				tuple(Insert.class, ListContainer.class, null, ""), //
-				tuple(Insert.class, Element.class, 1, "elements") //
-		).containsSubsequence( // container comes before the elements
-				tuple(Insert.class, ListContainer.class, null, ""), //
-				tuple(Insert.class, Element.class, 0, "elements") //
-		);
+						tuple(Insert.class, ListContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, 1, "elements") //
+				).containsSubsequence( // container comes before the elements
+						tuple(Insert.class, ListContainer.class, null, ""), //
+						tuple(Insert.class, Element.class, 0, "elements") //
+				);
 	}
 
 	@Test // DATAJDBC-131
@@ -303,7 +301,7 @@ public class JdbcEntityWriterUnitTests {
 	public void listTriggersDeletePlusInsert() {
 
 		ListContainer entity = new ListContainer(SOME_ENTITY_ID);
-		entity.elements.add( new Element(null));
+		entity.elements.add(new Element(null));
 
 		AggregateChange<ListContainer> aggregateChange = new AggregateChange(Kind.SAVE, ListContainer.class, entity);
 
@@ -379,7 +377,7 @@ public class JdbcEntityWriterUnitTests {
 	private static class ListContainer {
 
 		@Id final Long id;
-		List< Element> elements = new ArrayList<>();
+		List<Element> elements = new ArrayList<>();
 	}
 
 	@RequiredArgsConstructor

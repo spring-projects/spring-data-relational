@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +29,6 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -46,7 +44,7 @@ public class SqlGeneratorUnitTests {
 	public void setUp() {
 
 		NamingStrategy namingStrategy = new PrefixingNamingStrategy();
-		JdbcMappingContext context = new JdbcMappingContext(namingStrategy, mock(NamedParameterJdbcOperations.class), __ -> {});
+		JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
 		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 		this.sqlGenerator = new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}
@@ -135,7 +133,7 @@ public class SqlGeneratorUnitTests {
 				+ "WHERE back-ref = :back-ref");
 	}
 
-	@Test (expected = IllegalArgumentException.class) // DATAJDBC-130
+	@Test(expected = IllegalArgumentException.class) // DATAJDBC-130
 	public void findAllByPropertyOrderedWithoutKey() {
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, true);
 	}
@@ -150,9 +148,7 @@ public class SqlGeneratorUnitTests {
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, "
 				+ "DummyEntity.key-column AS key-column "
 				+ "FROM DummyEntity LEFT OUTER JOIN ReferencedEntity AS ref ON ref.DummyEntity = DummyEntity.x_id "
-				+ "WHERE back-ref = :back-ref "
-				+ "ORDER BY key-column"
-		);
+				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
 	}
 
 	@SuppressWarnings("unused")

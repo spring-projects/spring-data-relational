@@ -30,6 +30,7 @@ import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
@@ -45,6 +46,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final JdbcMappingContext context;
 	private final ApplicationEventPublisher publisher;
 	private final DataAccessStrategy accessStrategy;
+	private final NamedParameterJdbcOperations operations;
 
 	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
 
@@ -55,9 +57,10 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @param publisher must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
 	 */
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, JdbcMappingContext context,
-			ApplicationEventPublisher publisher) {
+			ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(context, "JdbcMappingContext must not be null!");
@@ -66,6 +69,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		this.publisher = publisher;
 		this.context = context;
 		this.accessStrategy = dataAccessStrategy;
+		this.operations = operations;
 	}
 
 	/**
@@ -123,6 +127,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(context, accessStrategy, rowMapperMap));
+		return Optional.of(new JdbcQueryLookupStrategy(context, accessStrategy, rowMapperMap, operations));
 	}
 }

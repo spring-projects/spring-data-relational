@@ -54,14 +54,9 @@ public class TestConfiguration {
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy) {
 
-		NamedParameterJdbcOperations jdbcTemplate = namedParameterJdbcTemplate();
+		JdbcMappingContext context = new JdbcMappingContext(NamingStrategy.INSTANCE);
 
-		final JdbcMappingContext context = new JdbcMappingContext(NamingStrategy.INSTANCE, jdbcTemplate, __ -> {});
-
-		return new JdbcRepositoryFactory( //
-				dataAccessStrategy, //
-				context, //
-				publisher);
+		return new JdbcRepositoryFactory(dataAccessStrategy, context, publisher, namedParameterJdbcTemplate());
 	}
 
 	@Bean
@@ -76,17 +71,14 @@ public class TestConfiguration {
 
 	@Bean
 	DataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context);
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, namedParameterJdbcTemplate());
 	}
 
 	@Bean
 	JdbcMappingContext jdbcMappingContext(NamedParameterJdbcOperations template, Optional<NamingStrategy> namingStrategy,
 			Optional<ConversionCustomizer> conversionCustomizer) {
 
-		return new JdbcMappingContext( //
-				namingStrategy.orElse(NamingStrategy.INSTANCE), //
-				template, //
-				conversionCustomizer.orElse(conversionService -> {}) //
-		);
+		return new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE),
+				conversionCustomizer.orElse(conversionService -> {}));
 	}
 }

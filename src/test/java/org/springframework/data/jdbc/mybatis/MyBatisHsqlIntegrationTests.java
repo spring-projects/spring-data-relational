@@ -35,6 +35,7 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -85,8 +86,9 @@ public class MyBatisHsqlIntegrationTests {
 		}
 
 		@Bean
-		DataAccessStrategy dataAccessStrategy(JdbcMappingContext context, SqlSession sqlSession) {
-			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, sqlSession);
+		DataAccessStrategy dataAccessStrategy(JdbcMappingContext context, SqlSession sqlSession, EmbeddedDatabase db) {
+			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, new NamedParameterJdbcTemplate(db),
+					sqlSession);
 		}
 	}
 

@@ -28,6 +28,7 @@ import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
@@ -47,6 +48,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private JdbcMappingContext mappingContext;
 	private DataAccessStrategy dataAccessStrategy;
 	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
+	private NamedParameterJdbcOperations operations;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
@@ -78,7 +80,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
 
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
-				publisher);
+				publisher, operations);
 		jdbcRepositoryFactory.setRowMapperMap(rowMapperMap);
 
 		return jdbcRepositoryFactory;
@@ -108,6 +110,11 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.rowMapperMap = rowMapperMap;
 	}
 
+	@Autowired
+	public void setJdbcOperations(NamedParameterJdbcOperations operations) {
+		this.operations = operations;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#afterPropertiesSet()
@@ -120,7 +127,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		if (dataAccessStrategy == null) {
 
 			SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
-			this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext);
+			this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, operations);
 		}
 
 		if (rowMapperMap == null) {

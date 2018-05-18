@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.core;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -46,34 +49,27 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @since 1.0
  */
+@RequiredArgsConstructor
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private static final String ENTITY_NEW_AFTER_INSERT = "Entity [%s] still 'new' after insert. Please set either"
 			+ " the id property in a BeforeInsert event handler, or ensure the database creates a value and your "
 			+ "JDBC driver returns it.";
 
-	private final SqlGeneratorSource sqlGeneratorSource;
-	private final NamedParameterJdbcOperations operations;
-	private final JdbcMappingContext context;
-	private final DataAccessStrategy accessStrategy;
-
-	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, JdbcMappingContext context,
-			DataAccessStrategy accessStrategy) {
-
-		this.sqlGeneratorSource = sqlGeneratorSource;
-		this.operations = context.getTemplate();
-		this.context = context;
-		this.accessStrategy = accessStrategy;
-	}
+	private final @NonNull SqlGeneratorSource sqlGeneratorSource;
+	private final @NonNull JdbcMappingContext context;
+	private final @NonNull DataAccessStrategy accessStrategy;
+	private final @NonNull NamedParameterJdbcOperations operations;
 
 	/**
 	 * Creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
 	 * Only suitable if this is the only access strategy in use.
 	 */
-	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, JdbcMappingContext context) {
+	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, JdbcMappingContext context,
+			NamedParameterJdbcOperations operations) {
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
-		this.operations = context.getTemplate();
+		this.operations = operations;
 		this.context = context;
 		this.accessStrategy = this;
 	}
@@ -110,9 +106,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		if (idProperty != null && idValue == null && entityInformation.isNew(instance)) {
 			throw new IllegalStateException(String.format(ENTITY_NEW_AFTER_INSERT, persistentEntity));
 		}
-
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <S> void update(S instance, Class<S> domainType) {
 
@@ -121,6 +120,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 
@@ -130,6 +133,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		operations.update(deleteByIdSql, parameter);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PropertyPath)
+	 */
 	@Override
 	public void delete(Object rootId, PropertyPath propertyPath) {
 
@@ -145,27 +152,43 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		operations.update(format, parameters);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(java.lang.Class)
+	 */
 	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 		operations.getJdbcOperations().update(sql(domainType).createDeleteAllSql(null));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(org.springframework.data.mapping.PropertyPath)
+	 */
 	@Override
 	public <T> void deleteAll(PropertyPath propertyPath) {
 		operations.getJdbcOperations().update(sql(propertyPath.getOwningType().getType()).createDeleteAllSql(propertyPath));
 	}
 
-	@SuppressWarnings("ConstantConditions")
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
+	 */
 	@Override
 	public long count(Class<?> domainType) {
 		return operations.getJdbcOperations().queryForObject(sql(domainType).getCount(), Long.class);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
 		String findOneSql = sql(domainType).getFindOne();
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
+
 		try {
 			return operations.queryForObject(findOneSql, parameter, getEntityRowMapper(domainType));
 		} catch (EmptyResultDataAccessException e) {
@@ -173,11 +196,19 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAll(java.lang.Class)
+	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 		return operations.query(sql(domainType).getFindAll(), getEntityRowMapper(domainType));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllById(java.lang.Iterable, java.lang.Class)
+	 */
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
@@ -194,15 +225,19 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return operations.query(findAllInListSql, parameter, getEntityRowMapper(domainType));
 	}
 
-	@SuppressWarnings("unchecked")
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllByProperty(java.lang.Object, org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty)
+	 */
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
 
 		Assert.notNull(rootId, "rootId must not be null.");
 
 		Class<?> actualType = property.getActualType();
-		String findAllByProperty = sql(actualType).getFindAllByProperty(property.getReverseColumnName(),
-				property.getKeyColumn(), property.isOrdered());
+		String findAllByProperty = sql(actualType) //
+				.getFindAllByProperty(property.getReverseColumnName(), property.getKeyColumn(), property.isOrdered());
 
 		MapSqlParameterSource parameter = new MapSqlParameterSource(property.getReverseColumnName(), rootId);
 
@@ -211,11 +246,16 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				: getEntityRowMapper(actualType));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#existsById(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
 		String existsSql = sql(domainType).getExists();
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
+
 		return operations.queryForObject(existsSql, parameter, Boolean.class);
 	}
 

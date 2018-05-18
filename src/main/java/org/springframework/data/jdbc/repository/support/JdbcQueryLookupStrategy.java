@@ -29,6 +29,7 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
@@ -45,6 +46,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final DataAccessStrategy accessStrategy;
 	private final RowMapperMap rowMapperMap;
 	private final ConversionService conversionService;
+	private final NamedParameterJdbcOperations operations;
 
 	/**
 	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link JdbcMappingContext}, {@link DataAccessStrategy}
@@ -54,7 +56,8 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * @param accessStrategy must not be {@literal null}.
 	 * @param rowMapperMap must not be {@literal null}.
 	 */
-	JdbcQueryLookupStrategy(JdbcMappingContext context, DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap) {
+	JdbcQueryLookupStrategy(JdbcMappingContext context, DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap,
+			NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(context, "JdbcMappingContext must not be null!");
 		Assert.notNull(accessStrategy, "DataAccessStrategy must not be null!");
@@ -64,6 +67,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		this.accessStrategy = accessStrategy;
 		this.rowMapperMap = rowMapperMap;
 		this.conversionService = context.getConversions();
+		this.operations = operations;
 	}
 
 	/*
@@ -78,7 +82,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		RowMapper<?> rowMapper = queryMethod.isModifyingQuery() ? null : createRowMapper(queryMethod);
 
-		return new JdbcRepositoryQuery(queryMethod, context, rowMapper);
+		return new JdbcRepositoryQuery(queryMethod, operations, rowMapper);
 	}
 
 	private RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod) {

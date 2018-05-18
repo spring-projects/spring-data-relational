@@ -16,55 +16,42 @@
 package org.springframework.data.jdbc.mapping.model;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.List;
 
 import org.junit.Test;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for {@link JdbcMappingContext}.
  *
  * @author Jens Schauder
+ * @author Oliver Gierke
  */
 public class JdbcMappingContextUnitTests {
-
-	NamingStrategy namingStrategy = NamingStrategy.INSTANCE;
-	NamedParameterJdbcOperations jdbcTemplate = mock(NamedParameterJdbcOperations.class);
-	ConversionCustomizer customizer = mock(ConversionCustomizer.class);
 
 	@Test // DATAJDBC-142
 	public void referencedEntitiesGetFound() {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy, jdbcTemplate, customizer);
+		JdbcMappingContext mappingContext = new JdbcMappingContext();
 
 		List<PropertyPath> propertyPaths = mappingContext.referencedEntities(DummyEntity.class, null);
 
 		assertThat(propertyPaths) //
 				.extracting(PropertyPath::toDotPath) //
-				.containsExactly( //
-						"one.two", //
-						"one" //
-				);
+				.containsExactly("one.two", "one");
 	}
 
 	@Test // DATAJDBC-142
 	public void propertyPathDoesNotDependOnNamingStrategy() {
 
-		namingStrategy = mock(NamingStrategy.class);
-
-		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy, jdbcTemplate, customizer);
+		JdbcMappingContext mappingContext = new JdbcMappingContext();
 
 		List<PropertyPath> propertyPaths = mappingContext.referencedEntities(DummyEntity.class, null);
 
 		assertThat(propertyPaths) //
 				.extracting(PropertyPath::toDotPath) //
-				.containsExactly( //
-						"one.two", //
-						"one" //
-				);
+				.containsExactly("one.two", "one");
 	}
 
 	static class DummyEntity {

@@ -67,19 +67,16 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Before
 	public void before() {
 
-		JdbcMappingContext context = new JdbcMappingContext(createIdGeneratingOperations());
+		JdbcMappingContext context = new JdbcMappingContext();
 
-		dataAccessStrategy = spy(new DefaultDataAccessStrategy( //
-				new SqlGeneratorSource(context), //
-				context //
-		));
+		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
+		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context);
 
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory( //
-				dataAccessStrategy, //
-				context, //
-				publisher);
+		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, operations));
 
-		repository = factory.getRepository(DummyEntityRepository.class);
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, publisher, operations);
+
+		this.repository = factory.getRepository(DummyEntityRepository.class);
 	}
 
 	@Test // DATAJDBC-99

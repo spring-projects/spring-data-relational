@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 import lombok.Value;
 
-import javax.sql.DataSource;
-
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -139,11 +137,6 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 					return type.getSimpleName().toUpperCase();
 				}
 			};
-		}
-
-		@Bean
-		NamedParameterJdbcTemplate template(DataSource db) {
-			return new NamedParameterJdbcTemplate(db);
 		}
 	}
 }

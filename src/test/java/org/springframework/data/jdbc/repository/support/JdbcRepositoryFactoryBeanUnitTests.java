@@ -31,7 +31,6 @@ import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -55,7 +54,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	@Before
 	public void setUp() {
 
-		this.mappingContext = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
+		this.mappingContext = new JdbcMappingContext();
 
 		// Setup standard configuration
 		factoryBean = new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class);

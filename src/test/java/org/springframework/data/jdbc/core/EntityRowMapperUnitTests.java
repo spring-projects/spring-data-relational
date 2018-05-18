@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,6 @@ import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.jdbc.mapping.model.NamingStrategy;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
@@ -175,11 +175,7 @@ public class EntityRowMapperUnitTests {
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type, NamingStrategy namingStrategy) {
 
-		JdbcMappingContext context = new JdbcMappingContext( //
-				namingStrategy, //
-				mock(NamedParameterJdbcOperations.class), //
-				__ -> {} //
-		);
+		JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
 
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
@@ -188,13 +184,13 @@ public class EntityRowMapperUnitTests {
 				.findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP), any(JdbcPersistentProperty.class));
 
 		doReturn(new HashSet<>(asList( //
-				new SimpleEntry("one", new Trivial()), //
-				new SimpleEntry("two", new Trivial()) //
+				new SimpleEntry<>("one", new Trivial()), //
+				new SimpleEntry<>("two", new Trivial()) //
 		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP), any(JdbcPersistentProperty.class));
 
 		doReturn(new HashSet<>(asList( //
-				new SimpleEntry(1, new Trivial()), //
-				new SimpleEntry(2, new Trivial()) //
+				new SimpleEntry<>(1, new Trivial()), //
+				new SimpleEntry<>(2, new Trivial()) //
 		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST), any(JdbcPersistentProperty.class));
 
 		GenericConversionService conversionService = new GenericConversionService();
@@ -215,7 +211,7 @@ public class EntityRowMapperUnitTests {
 								"Number of values [%d] must be a multiple of the number of columns [%d]", //
 								values.length, //
 								columns.size() //
-				) //
+						) //
 		);
 
 		List<Map<String, Object>> result = convertValues(columns, values);

@@ -21,7 +21,8 @@ import org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
 
 /**
- * Abstraction for accesses to the database that should be implementable with a single SQL statement and relates to a single entity as opposed to {@link JdbcEntityOperations} which provides interactions related to complete aggregates.
+ * Abstraction for accesses to the database that should be implementable with a single SQL statement and relates to a
+ * single entity as opposed to {@link JdbcEntityOperations} which provides interactions related to complete aggregates.
  *
  * @author Jens Schauder
  * @since 1.0
@@ -68,5 +69,4 @@ public interface DataAccessStrategy {
 	<T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property);
 
 	<T> boolean existsById(Object id, Class<T> domainType);
-
 }

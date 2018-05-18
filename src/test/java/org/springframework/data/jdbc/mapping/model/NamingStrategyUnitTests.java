@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.mapping.model;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +23,6 @@ import java.util.List;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityImplUnitTests.DummySubEntity;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for the {@link NamingStrategy}.
@@ -35,8 +33,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 public class NamingStrategyUnitTests {
 
 	private final NamingStrategy target = NamingStrategy.INSTANCE;
-	private final JdbcMappingContext context = new JdbcMappingContext(target, mock(NamedParameterJdbcOperations.class),
-			mock(ConversionCustomizer.class));
+	private final JdbcMappingContext context = new JdbcMappingContext(target);
 	private final JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test

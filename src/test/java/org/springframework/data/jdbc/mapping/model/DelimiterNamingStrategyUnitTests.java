@@ -15,42 +15,38 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
+import static org.assertj.core.api.Assertions.*;
+
 import lombok.Data;
-import org.junit.Test;
-import org.springframework.data.annotation.Id;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import org.junit.Test;
+import org.springframework.data.annotation.Id;
 
 /**
  * Unit tests for the {@link DelimiterNamingStrategy}.
  *
  * @author Kazuki Shimizu
+ * @author Oliver Gierke
  */
 public class DelimiterNamingStrategyUnitTests {
 
-	private final DelimiterNamingStrategy target = new DelimiterNamingStrategy();
+	DelimiterNamingStrategy target = new DelimiterNamingStrategy();
 
-	private final JdbcPersistentEntity<?> persistentEntity =
-			new JdbcMappingContext(target, mock(NamedParameterJdbcOperations.class), mock(ConversionCustomizer.class))
-					.getRequiredPersistentEntity(DummyEntity.class);
+	JdbcPersistentEntity<?> persistentEntity = new JdbcMappingContext(target)
+			.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-184
 	public void getTableName() {
-		assertThat(target.getTableName(persistentEntity.getType()))
-				.isEqualTo("dummy_entity");
+		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
 	}
 
 	@Test // DATAJDBC-184
 	public void getColumnName() {
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id")))
-				.isEqualTo("id");
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt")))
-				.isEqualTo("created_at");
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))).isEqualTo("id");
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("created_at");
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
 				.isEqualTo("dummy_sub_entities");
 	}
@@ -69,28 +65,24 @@ public class DelimiterNamingStrategyUnitTests {
 
 	@Test // DATAJDBC-184
 	public void getSchema() {
-		assertThat(target.getSchema())
-				.isEmpty();
+		assertThat(target.getSchema()).isEmpty();
 	}
 
 	@Test // DATAJDBC-184
 	public void getQualifiedTableName() {
-		assertThat(target.getQualifiedTableName(persistentEntity.getType()))
-				.isEqualTo("dummy_entity");
+		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
 	}
 
 	@Data
 	private static class DummyEntity {
-		@Id
-		private int id;
+		@Id private int id;
 		private LocalDateTime createdAt;
 		private List<DummySubEntity> dummySubEntities;
 	}
 
 	@Data
 	private static class DummySubEntity {
-		@Id
-		private int id;
+		@Id private int id;
 		private LocalDateTime createdAt;
 	}
 
