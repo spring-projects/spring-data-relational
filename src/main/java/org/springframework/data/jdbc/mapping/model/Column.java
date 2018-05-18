@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * @since 1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.FIELD, ElementType.METHOD })
+@Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Documented
 public @interface Column {
 
@@ -36,5 +36,4 @@ public @interface Column {
 	 * The mapping column name.
 	 */
 	String value();
-
 }

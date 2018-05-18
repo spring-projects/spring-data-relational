@@ -38,5 +38,4 @@ public @interface Table {
 	 * The mapping table name.
 	 */
 	String value();
-
 }

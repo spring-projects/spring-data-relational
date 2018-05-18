@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.MutablePersistentEntity;
 
 /**

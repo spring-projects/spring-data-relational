@@ -47,7 +47,7 @@ public class JdbcMappingContextUnitTests {
 				.containsExactly( //
 						"one.two", //
 						"one" //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-142
@@ -64,21 +64,20 @@ public class JdbcMappingContextUnitTests {
 				.containsExactly( //
 						"one.two", //
 						"one" //
-		);
+				);
 	}
 
-	private static class DummyEntity {
+	static class DummyEntity {
 
 		String simpleProperty;
-
 		LevelOne one;
 	}
 
-	private static class LevelOne {
+	static class LevelOne {
 		LevelTwo two;
 	}
 
-	private static class LevelTwo {
+	static class LevelTwo {
 		String someValue;
 	}
 }

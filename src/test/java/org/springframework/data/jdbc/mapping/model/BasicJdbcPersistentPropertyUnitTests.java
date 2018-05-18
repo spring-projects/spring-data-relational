@@ -35,11 +35,12 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  */
 public class BasicJdbcPersistentPropertyUnitTests {
 
+	JdbcMappingContext context = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class));
+
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {
 
-		JdbcPersistentEntity<?> persistentEntity = new JdbcMappingContext(mock(NamedParameterJdbcOperations.class))
-			.getRequiredPersistentEntity(DummyEntity.class);
+		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 		persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
 			switch (p.getName()) {
@@ -53,10 +54,18 @@ public class BasicJdbcPersistentPropertyUnitTests {
 					assertThat(p.getColumnType()).isEqualTo(String.class);
 					break;
 				default:
-					fail("property with out assert: " + p.getName());
 			}
 		});
+	}
 
+	@Test // DATAJDBC-106
+	public void detectsAnnotatedColumnName() {
+
+		JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+
+		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo("dummy_name");
+		assertThat(entity.getRequiredPersistentProperty("localDateTime").getColumnName())
+				.isEqualTo("dummy_last_updated_at");
 	}
 
 	@Data
@@ -65,10 +74,18 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
+
+		// DATACMNS-106
+
+		private @Column("dummy_name") String name;
+
+		@Column("dummy_last_updated_at")
+		public LocalDateTime getLocalDateTime() {
+			return localDateTime;
+		}
 	}
 
 	private enum SomeEnum {
-		@SuppressWarnings("unused")
-		ALPHA
+		ALPHA;
 	}
 }

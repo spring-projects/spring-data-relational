@@ -191,7 +191,6 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}
 
-	@SuppressWarnings("unused")
 	static class DummyEntity {
 
 		@Id Long id;
@@ -199,7 +198,6 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		ReferencedEntity ref;
 	}
 
-	@SuppressWarnings("unused")
 	static class ReferencedEntity {
 
 		@Id Long l1id;
@@ -207,11 +205,9 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		SecondLevelReferencedEntity further;
 	}
 
-	@SuppressWarnings("unused")
 	static class SecondLevelReferencedEntity {
 
 		@Id Long l2id;
 		String something;
 	}
-
 }

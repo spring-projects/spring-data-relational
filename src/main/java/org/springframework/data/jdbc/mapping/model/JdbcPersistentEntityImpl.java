@@ -15,9 +15,10 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import lombok.Getter;
+import java.util.Optional;
 
 import org.springframework.data.mapping.model.BasicPersistentEntity;
+import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 
 /**
@@ -31,7 +32,7 @@ class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersisten
 		implements JdbcPersistentEntity<T> {
 
 	private final NamingStrategy namingStrategy;
-	private final @Getter String tableName;
+	private final Lazy<Optional<String>> tableName;
 
 	/**
 	 * Creates a new {@link JdbcPersistentEntityImpl} for the given {@link TypeInformation}.
@@ -43,7 +44,16 @@ class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersisten
 		super(information);
 
 		this.namingStrategy = namingStrategy;
-		this.tableName = this.namingStrategy.getQualifiedTableName(getType());
+		this.tableName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Table.class)).map(Table::value));
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity#getTableName()
+	 */
+	@Override
+	public String getTableName() {
+		return tableName.get().orElseGet(() -> namingStrategy.getQualifiedTableName(getType()));
 	}
 
 	/*
@@ -55,8 +65,12 @@ class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersisten
 		return this.namingStrategy.getColumnName(getRequiredIdProperty());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
-		return String.format("JdbcpersistentEntityImpl<%s>", getType());
+		return String.format("JdbcPersistentEntityImpl<%s>", getType());
 	}
 }

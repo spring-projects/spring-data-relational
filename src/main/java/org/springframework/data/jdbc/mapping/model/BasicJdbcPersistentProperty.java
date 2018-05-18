@@ -15,20 +15,22 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import org.springframework.data.mapping.Association;
-import org.springframework.data.mapping.PersistentEntity;
-import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
-import org.springframework.data.mapping.model.Property;
-import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+
+import org.springframework.data.mapping.Association;
+import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
+import org.springframework.data.mapping.model.Property;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.util.Lazy;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 /**
  * Meta data about a property to be used by repository implementations.
@@ -43,6 +45,8 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
 	private final JdbcMappingContext context;
 
+	private final Lazy<Optional<String>> columnName;
+
 	static {
 		javaToDbType.put(Enum.class, String.class);
 		javaToDbType.put(ZonedDateTime.class, String.class);
@@ -52,19 +56,20 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
 	 *
-	 * @param property         must not be {@literal null}.
-	 * @param owner            must not be {@literal null}.
+	 * @param property must not be {@literal null}.
+	 * @param owner must not be {@literal null}.
 	 * @param simpleTypeHolder must not be {@literal null}.
-	 * @param context          must not be {@literal null}
+	 * @param context must not be {@literal null}
 	 */
 	public BasicJdbcPersistentProperty(Property property, PersistentEntity<?, JdbcPersistentProperty> owner,
-									   SimpleTypeHolder simpleTypeHolder, JdbcMappingContext context) {
+			SimpleTypeHolder simpleTypeHolder, JdbcMappingContext context) {
 
 		super(property, owner, simpleTypeHolder);
 
 		Assert.notNull(context, "context must not be null.");
 
 		this.context = context;
+		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)).map(Column::value));
 	}
 
 	/*
@@ -81,7 +86,7 @@ public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProper
 	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty#getColumnName()
 	 */
 	public String getColumnName() {
-		return context.getNamingStrategy().getColumnName(this);
+		return columnName.get().orElseGet(() -> context.getNamingStrategy().getColumnName(this));
 	}
 
 	/**

@@ -15,10 +15,6 @@
  */
 package org.springframework.data.jdbc.mapping.model;
 
-import java.util.Optional;
-
-import org.springframework.core.annotation.AnnotatedElementUtils;
-
 /**
  * Interface and default implementation of a naming strategy. Defaults to no schema, table name based on {@link Class}
  * and column name based on {@link JdbcPersistentProperty}.
@@ -29,7 +25,7 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
  * @author Greg Turnquist
  * @author Michael Simons
  * @author Kazuki Shimizu
- *
+ * @author Oliver Gierke
  * @since 1.0
  */
 public interface NamingStrategy {
@@ -51,25 +47,17 @@ public interface NamingStrategy {
 	}
 
 	/**
-	 * Look up the {@link Class}'s simple name or {@link Table#value()}.
+	 * Defaults to returning the given type's simple name.
 	 */
 	default String getTableName(Class<?> type) {
-
-		Table table = AnnotatedElementUtils.findMergedAnnotation(type, Table.class);
-		return Optional.ofNullable(table)//
-				.map(Table::value)//
-				.orElse(type.getSimpleName());
+		return type.getSimpleName();
 	}
 
 	/**
-	 * Look up the {@link JdbcPersistentProperty}'s name or {@link Column#value()}.
+	 * Defaults to return the given {@link JdbcPersistentProperty}'s name;
 	 */
 	default String getColumnName(JdbcPersistentProperty property) {
-
-		Column column = property.findAnnotation(Column.class);
-		return Optional.ofNullable(column)//
-				.map(Column::value)//
-				.orElse(property.getName());
+		return property.getName();
 	}
 
 	default String getQualifiedTableName(Class<?> type) {
@@ -95,5 +83,4 @@ public interface NamingStrategy {
 	default String getKeyColumn(JdbcPersistentProperty property) {
 		return getReverseColumnName(property) + "_key";
 	}
-
 }
