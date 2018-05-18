@@ -16,7 +16,7 @@
 package org.springframework.data.jdbc.core.conversion;
 
 import org.springframework.data.convert.EntityWriter;
-import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 
 /**
  * Common infrastructure needed by different implementations of {@link EntityWriter}<Object, AggregateChange>.

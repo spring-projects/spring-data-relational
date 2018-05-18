@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.mapping.model;
+package org.springframework.data.jdbc.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.jdbc.core.mapping.BasicJdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.lang.Nullable;
 
 /**

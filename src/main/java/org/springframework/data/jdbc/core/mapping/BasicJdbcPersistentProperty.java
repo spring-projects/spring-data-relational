@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.mapping.model;
+package org.springframework.data.jdbc.core.mapping;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
@@ -39,7 +39,7 @@ import org.springframework.util.ClassUtils;
  * @author Greg Turnquist
  * @since 1.0
  */
-public class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<JdbcPersistentProperty>
+class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<JdbcPersistentProperty>
 		implements JdbcPersistentProperty {
 
 	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();

@@ -23,6 +23,8 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange.Kind;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityDeleteWriter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.core.mapping.event.AfterDeleteEvent;
 import org.springframework.data.jdbc.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.jdbc.core.mapping.event.AfterSaveEvent;
@@ -30,8 +32,6 @@ import org.springframework.data.jdbc.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.jdbc.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.jdbc.core.mapping.event.Identifier;
 import org.springframework.data.jdbc.core.mapping.event.Identifier.Specified;
-import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntityInformation;
 
 /**
  * {@link JdbcAggregateOperations} implementation, storing aggregates in and obtaining them from a JDBC data store.

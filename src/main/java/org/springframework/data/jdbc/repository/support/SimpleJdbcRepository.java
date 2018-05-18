@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
-import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
 import org.springframework.data.repository.CrudRepository;
 
 /**
@@ -34,19 +34,8 @@ import org.springframework.data.repository.CrudRepository;
 @RequiredArgsConstructor
 public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 
-	private final JdbcPersistentEntityInformation<T, ID> entityInformation;
-
-	private final JdbcAggregateOperations entityOperations;
-
-	/**
-	 * Creates a new {@link SimpleJdbcRepository}.
-	 */
-	public SimpleJdbcRepository(JdbcAggregateTemplate entityOperations,
-			JdbcPersistentEntityInformation<T, ID> entityInformation) {
-
-		this.entityOperations = entityOperations;
-		this.entityInformation = entityInformation;
-	}
+	private final @NonNull JdbcAggregateOperations entityOperations;
+	private final @NonNull JdbcPersistentEntityInformation<T, ID> entityInformation;
 
 	/*
 	 * (non-Javadoc)

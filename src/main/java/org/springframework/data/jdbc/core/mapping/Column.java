@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.mapping.model;
+package org.springframework.data.jdbc.core.mapping;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The annotation to configure the mapping from a class to a database table.
+ * The annotation to configure the mapping from an attribute to a database column.
  *
  * @author Kazuki Shimizu
  * @since 1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Documented
-@Inherited
-public @interface Table {
+public @interface Column {
 
 	/**
-	 * The mapping table name.
+	 * The mapping column name.
 	 */
 	String value();
 }

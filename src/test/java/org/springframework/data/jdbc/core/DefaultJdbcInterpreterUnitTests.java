@@ -27,10 +27,10 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.conversion.DbAction;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.jdbc.core.mapping.NamingStrategy;
 import org.springframework.data.jdbc.core.conversion.JdbcPropertyPath;
-import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty;
-import org.springframework.data.jdbc.core.mapping.model.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**

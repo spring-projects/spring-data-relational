@@ -13,83 +13,80 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.mapping.model;
+package org.springframework.data.jdbc.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
+
+import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityImplUnitTests.DummySubEntity;
+import org.springframework.data.jdbc.core.mapping.DelimiterNamingStrategy;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 
 /**
- * Unit tests for the {@link NamingStrategy}.
+ * Unit tests for the {@link DelimiterNamingStrategy}.
  *
  * @author Kazuki Shimizu
  * @author Oliver Gierke
  */
-public class NamingStrategyUnitTests {
+public class DelimiterNamingStrategyUnitTests {
 
-	private final NamingStrategy target = NamingStrategy.INSTANCE;
-	private final JdbcMappingContext context = new JdbcMappingContext(target);
-	private final JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+	DelimiterNamingStrategy target = new DelimiterNamingStrategy();
 
-	@Test
+	JdbcPersistentEntity<?> persistentEntity = new JdbcMappingContext(target)
+			.getRequiredPersistentEntity(DummyEntity.class);
+
+	@Test // DATAJDBC-184
 	public void getTableName() {
-
-		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("DummyEntity");
-		assertThat(target.getTableName(DummySubEntity.class)).isEqualTo("DummySubEntity");
+		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
 	}
 
-	@Test
+	@Test // DATAJDBC-184
 	public void getColumnName() {
-
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))).isEqualTo("id");
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("createdAt");
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("created_at");
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo("dummySubEntities");
+				.isEqualTo("dummy_sub_entities");
 	}
 
-	@Test
+	@Test // DATAJDBC-184
 	public void getReverseColumnName() {
-
 		assertThat(target.getReverseColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo("DummyEntity");
+				.isEqualTo("dummy_entity");
 	}
 
-	@Test
+	@Test // DATAJDBC-184
 	public void getKeyColumn() {
-
 		assertThat(target.getKeyColumn(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo("DummyEntity_key");
+				.isEqualTo("dummy_entity_key");
 	}
 
-	@Test
+	@Test // DATAJDBC-184
 	public void getSchema() {
 		assertThat(target.getSchema()).isEmpty();
 	}
 
-	@Test
+	@Test // DATAJDBC-184
 	public void getQualifiedTableName() {
-
-		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("DummyEntity");
-
-		NamingStrategy strategy = new NamingStrategy() {
-			@Override
-			public String getSchema() {
-				return "schema";
-			}
-		};
-
-		assertThat(strategy.getQualifiedTableName(persistentEntity.getType())).isEqualTo("schema.DummyEntity");
+		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
 	}
 
-	static class DummyEntity {
-
-		@Id int id;
-		LocalDateTime createdAt, lastUpdatedAt;
-		List<DummySubEntity> dummySubEntities;
+	@Data
+	private static class DummyEntity {
+		@Id private int id;
+		private LocalDateTime createdAt;
+		private List<DummySubEntity> dummySubEntities;
 	}
+
+	@Data
+	private static class DummySubEntity {
+		@Id private int id;
+		private LocalDateTime createdAt;
+	}
+
 }

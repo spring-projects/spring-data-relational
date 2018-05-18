@@ -19,9 +19,9 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.auditing.AuditingHandler;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.core.mapping.event.BeforeSaveEvent;
-import org.springframework.data.jdbc.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.mapping.model.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
 
 /**

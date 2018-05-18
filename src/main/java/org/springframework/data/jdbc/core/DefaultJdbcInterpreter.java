@@ -23,9 +23,9 @@ import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
 import org.springframework.data.jdbc.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
-import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntity;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.util.Assert;
 

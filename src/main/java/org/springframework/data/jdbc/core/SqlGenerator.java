@@ -15,9 +15,9 @@
  */
 package org.springframework.data.jdbc.core;
 
-import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;

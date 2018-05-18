@@ -24,7 +24,7 @@ import java.text.NumberFormat;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.mapping.model.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.jdbc.repository.config.ConfigurableRowMapperMap;
 import org.springframework.data.jdbc.repository.query.Query;
