@@ -183,7 +183,6 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 		};
 	}
 
-
 	private void sleepMillis(int timeout) {
 
 		try {
