@@ -14,25 +14,52 @@
  * limitations under the License.
  */
 package org.springframework.data.jdbc.degraph;
-import static de.schauderhaft.degraph.check.JCheck.classpath;
-import static org.junit.Assert.assertThat;
+
+import static de.schauderhaft.degraph.check.JCheck.*;
+import static org.junit.Assert.*;
+
+import de.schauderhaft.degraph.check.JCheck;
+import scala.runtime.AbstractFunction1;
 
 import org.junit.Test;
 
-import de.schauderhaft.degraph.check.JCheck;
-
 /**
+ * Test package dependencies for violations.
+ *
  * @author Jens Schauder
  */
 public class DependencyTests {
 
-	@Test public void test() {
-		assertThat(	classpath()
-				.noJars()
-				.including("org.springframework.data.jdbc.**")
-				.filterClasspath("*target/classes")
-				.printOnFailure("degraph.graphml"), JCheck.violationFree());
+	@Test // DATAJDBC-114
+	public void cycleFree() {
 
+		assertThat( //
+				classpath() //
+						.noJars() //
+						.including("org.springframework.data.jdbc.**") //
+						.filterClasspath("*target/classes") // exclude test code
+						.printOnFailure("degraph.graphml"),
+				JCheck.violationFree());
 	}
 
+	@Test // DATAJDBC-220
+	public void acrossModules() {
+
+		assertThat( //
+				classpath() //
+						// include only Spring Data related classes (for example no JDK code)
+						.including("org.springframework.data.**") //
+						.filterClasspath(new AbstractFunction1<String, Object>() {
+							@Override
+							public Object apply(String s) { //
+								// only the current module + commons
+								return s.endsWith("target/classes") || s.contains("spring-data-commons");
+							}
+						}) // exclude test code
+						.withSlicing("sub-modules", // sub-modules are defined by any of the following pattern.
+								"org.springframework.data.jdbc.(**).*", //
+								"org.springframework.data.(**).*") //
+						.printTo("degraph-across-modules.graphml"), // writes a graphml to this location
+				JCheck.violationFree());
+	}
 }
