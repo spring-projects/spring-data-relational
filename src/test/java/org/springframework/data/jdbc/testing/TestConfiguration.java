@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
@@ -71,7 +72,7 @@ public class TestConfiguration {
 
 	@Bean
 	DataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, namedParameterJdbcTemplate());
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, namedParameterJdbcTemplate(), new EntityInstantiators());
 	}
 
 	@Bean

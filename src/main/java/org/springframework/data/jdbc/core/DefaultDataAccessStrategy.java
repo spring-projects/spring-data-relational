@@ -27,6 +27,7 @@ import java.util.stream.StreamSupport;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
@@ -58,6 +59,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final @NonNull SqlGeneratorSource sqlGeneratorSource;
 	private final @NonNull JdbcMappingContext context;
 	private final @NonNull NamedParameterJdbcOperations operations;
+	private final @NonNull EntityInstantiators instantiators;
 	private final @NonNull DataAccessStrategy accessStrategy;
 
 	/**
@@ -65,11 +67,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * Only suitable if this is the only access strategy in use.
 	 */
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, JdbcMappingContext context,
-			NamedParameterJdbcOperations operations) {
+			NamedParameterJdbcOperations operations, EntityInstantiators instantiators) {
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
 		this.operations = operations;
 		this.context = context;
+		this.instantiators = instantiators;
 		this.accessStrategy = this;
 	}
 
@@ -321,7 +324,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	public <T> EntityRowMapper<T> getEntityRowMapper(Class<T> domainType) {
-		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, accessStrategy);
+		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, instantiators, accessStrategy);
 	}
 
 	private RowMapper getMapEntityRowMapper(JdbcPersistentProperty property) {

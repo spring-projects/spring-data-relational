@@ -27,14 +27,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import lombok.Setter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.convert.support.GenericConversionService;
-import org.springframework.data.convert.EntityInstantiator;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.convert.Jsr310Converters;
-import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
@@ -63,8 +59,6 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	@Getter private final NamingStrategy namingStrategy;
 	@Getter private SimpleTypeHolder simpleTypeHolder;
 	private GenericConversionService conversions = getDefaultConversionService();
-	@Setter
-	private EntityInstantiators instantiators = new EntityInstantiators();
 
 	/**
 	 * Creates a new {@link JdbcMappingContext}.
@@ -147,10 +141,6 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 	public ConversionService getConversions() {
 		return conversions;
-	}
-
-	public EntityInstantiator getInstantiatorFor(PersistentEntity<?, ?> entity) {
-		return instantiators.getInstantiatorFor(entity);
 	}
 
 	private static GenericConversionService getDefaultConversionService() {

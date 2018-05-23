@@ -15,7 +15,9 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
@@ -23,6 +25,7 @@ import java.text.NumberFormat;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.RowMapperMap;
@@ -76,8 +79,8 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 	private RepositoryQuery getRepositoryQuery(String name, RowMapperMap rowMapperMap) {
 
-		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(mappingContext, accessStrategy,
-				rowMapperMap, operations);
+		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(mappingContext, new EntityInstantiators(),
+				accessStrategy, rowMapperMap, operations);
 
 		return queryLookupStrategy.resolveQuery(getMethod(name), metadata, projectionFactory, namedQueries);
 	}

@@ -53,13 +53,15 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private final JdbcMappingContext context;
 	private final DataAccessStrategy accessStrategy;
 	private final JdbcPersistentProperty idProperty;
+	private final EntityInstantiators instantiators;
 
-	public EntityRowMapper(JdbcPersistentEntity<T> entity, JdbcMappingContext context,
+	public EntityRowMapper(JdbcPersistentEntity<T> entity, JdbcMappingContext context, EntityInstantiators instantiators,
 			DataAccessStrategy accessStrategy) {
 
 		this.entity = entity;
 		this.conversions = context.getConversions();
 		this.context = context;
+		this.instantiators = instantiators;
 		this.accessStrategy = accessStrategy;
 
 		idProperty = entity.getIdProperty();
@@ -97,7 +99,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 	private T createInstance(ResultSet rs) {
 
-		return context.getInstantiatorFor(entity) //
+		return instantiators.getInstantiatorFor(entity) //
 				.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, ""));
 	}
 
@@ -136,7 +138,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return null;
 		}
 
-		S instance = context.getInstantiatorFor(entity) //
+		S instance = instantiators.getInstantiatorFor(entity) //
 				.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
 
 		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(instance);
