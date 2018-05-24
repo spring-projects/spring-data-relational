@@ -285,13 +285,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
-			if (!property.isEntity()) {
-
-				Object value = propertyAccessor.getProperty(property);
-
-				Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
-				parameters.addValue(property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
+			if (property.isEntity()) {
+				return;
 			}
+
+			Object value = propertyAccessor.getProperty(property);
+			Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
+			parameters.addValue(property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
+
 		});
 
 		return parameters;

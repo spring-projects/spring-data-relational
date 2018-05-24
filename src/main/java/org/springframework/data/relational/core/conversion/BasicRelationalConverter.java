@@ -27,6 +27,7 @@ import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.convert.EntityInstantiators;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -49,6 +50,7 @@ import org.springframework.util.ClassUtils;
  * Conversion is configurable by providing a customized {@link CustomConversions}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -157,6 +159,14 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return conversionService.convert(value, type.getType());
 		}
 
+		if (AggregateReference.class.isAssignableFrom(type.getType())) {
+
+			TypeInformation<?> idType = type.getSuperTypeInformation(AggregateReference.class)
+					.getTypeArguments().get(1);
+
+			return AggregateReference.to(readValue(value, idType));
+		}
+
 		return getPotentiallyConvertedSimpleRead(value, type.getType());
 	}
 
@@ -170,6 +180,10 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 		if (value == null) {
 			return null;
+		}
+
+		if (AggregateReference.class.isAssignableFrom(value.getClass())) {
+			return  writeValue (((AggregateReference) value).getId(), type);
 		}
 
 		Class<?> rawType = type.getType();

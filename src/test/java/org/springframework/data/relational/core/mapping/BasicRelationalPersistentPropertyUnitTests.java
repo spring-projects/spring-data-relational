@@ -27,6 +27,8 @@ import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.mapping.PropertyHandler;
 
 /**
@@ -39,13 +41,14 @@ import org.springframework.data.mapping.PropertyHandler;
 public class BasicRelationalPersistentPropertyUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
+	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
+		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
 			switch (p.getName()) {
 				case "someEnum":
 					assertThat(p.getColumnType()).isEqualTo(String.class);
@@ -90,11 +93,24 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	public void detectsAnnotatedColumnAndKeyName() {
 
 		RelationalPersistentProperty listProperty = context //
-				.getRequiredPersistentEntity(DummyEntity.class) //
-				.getRequiredPersistentProperty("someList");
+			.getRequiredPersistentEntity(DummyEntity.class) //
+			.getRequiredPersistentProperty("someList");
 
 		assertThat(listProperty.getReverseColumnName()).isEqualTo("dummy_column_name");
 		assertThat(listProperty.getKeyColumn()).isEqualTo("dummy_key_column_name");
+	}
+
+	@Test // DATAJDBC-221
+	public void referencesAreNotEntitiesAndGetStoredAsTheirId() {
+
+		SoftAssertions softly = new SoftAssertions();
+
+		RelationalPersistentProperty reference = entity.getRequiredPersistentProperty("reference");
+
+		softly.assertThat(reference.isEntity()).isFalse();
+		softly.assertThat(reference.getColumnType()).isEqualTo(Long.class);
+
+		softly.assertAll();
 	}
 
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
@@ -106,11 +122,15 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	}
 
 	@Data
+	@SuppressWarnings("unused")
 	private static class DummyEntity {
 
+		@Id private final Long id;
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
+		private final AggregateReference<DummyEntity, Long> reference;
+		private final List<String> listField;
 		private final UUID uuid;
 
 		@Column(value = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
@@ -122,9 +142,18 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		public LocalDateTime getLocalDateTime() {
 			return localDateTime;
 		}
+
+		public void setListSetter(Integer integer) {
+
+		}
+
+		public List<Date> getListGetter() {
+			return null;
+		}
 	}
 
+	@SuppressWarnings("unused")
 	private enum SomeEnum {
-		ALPHA;
+		ALPHA
 	}
 }
