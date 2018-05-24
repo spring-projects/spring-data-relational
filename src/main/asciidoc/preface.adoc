@@ -1,12 +1,14 @@
 [[preface]]
 = Preface
 
+Spring Data JDBC offers a repository abstraction based on JDBC.
+
 [[project]]
 [preface]
-== Project metadata
+== Project Metadata
 
-* Version control - http://github.com/spring-projects/spring-data-jdbc
-* Bugtracker - https://jira.spring.io/browse/DATAJDBC
-* Release repository - https://repo.spring.io/libs-release
-* Milestone repository - https://repo.spring.io/libs-milestone
-* Snapshot repository - https://repo.spring.io/libs-snapshot
+* Version control: http://github.com/spring-projects/spring-data-jdbc
+* Bugtracker: https://jira.spring.io/browse/DATAJDBC
+* Release repository: https://repo.spring.io/libs-release
+* Milestone repository: https://repo.spring.io/libs-milestone
+* Snapshot repository: https://repo.spring.io/libs-snapshot

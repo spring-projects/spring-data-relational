@@ -1,73 +1,71 @@
 [[jdbc.repositories]]
 = JDBC Repositories
 
-This chapter will point out the specialties for repository support for JDBC. This builds on the core repository support explained in <<repositories>>.
-So make sure you've got a sound understanding of the basic concepts explained there.
-
-[[jdbc.introduction]]
-== Introduction
+This chapter points out the specialties for repository support for JDBC. This builds on the core repository support explained in <<repositories>>.
+You should have a sound understanding of the basic concepts explained there.
 
 [[jdbc.why]]
 === Why Spring Data JDBC?
 
-The main persistence API for relational databases in the Java world is certainly JPA, which has it's own Spring Data module.
+The main persistence API for relational databases in the Java world is certainly JPA, which has its own Spring Data module.
 Why is there another one?
 
 JPA does a lot of things in order to help the developer.
-Among others it tracks changes to entities.
+Among other things, it tracks changes to entities.
 It does lazy loading for you.
-It allows to map a wide array of object constructs to an equally wide array of database design.
+It lets you map a wide array of object constructs to an equally wide array of database designs.
 
 This is great and makes a lot of things really easy.
 Just take a look at a basic JPA tutorial.
-But often it gets really confusing why JPA does a certain thing.
-Or things that are really simple conceptually get rather difficult with JPA.
+But it often gets really confusing as to why JPA does a certain thing.
+Also, things that are really simple conceptually get rather difficult with JPA.
 
-Spring Data JDBC aims to be much simpler conceptually:
+Spring Data JDBC aims to be much simpler conceptually, by embracing the following design decisions:
 
-* If you load an entity, SQL statements get executed and once this is done you have a completely loaded entity.
+* If you load an entity, SQL statements get executed.
+Once this is done, you have a completely loaded entity.
 No lazy loading or caching is done.
 
-* If you save and entity it gets saved.
-If you don't it doesn't.
+* If you save an entity, it gets saved.
+If you do not, it does not.
 There is no dirty tracking and no session.
 
-* There is a simplistic model of how to map entities to tables.
+* There is a simple model of how to map entities to tables.
 It probably only works for rather simple cases.
-If you don't like that, just code your strategy yourself.
-Spring Data JDBC will offer only very limited support for customizing the strategy via annotations.
+If you do not like that, you should code your own strategy.
+Spring Data JDBC offers only very limited support for customizing the strategy with annotations.
 
 [[jdbc.domain-driven-design]]
 === Domain Driven Design and Relational Databases.
 
-All Spring Data modules are inspired by the concepts of Repository, Aggregate and Aggregate Root from Domain Driven Design.
-These are possibly even more important for Spring Data JDBC because they are to some extend contrary to normal practice when working with relational databases.
+All Spring Data modules are inspired by the concepts of "`repository`", "`aggregate`", and "`aggregate`" root from Domain Driven Design.
+These are possibly even more important for Spring Data JDBC, because they are, to some extent, contrary to normal practice when working with relational databases.
 
-An *Aggregate* is a group of entities that is guaranteed to be consistent between atomic changes to it.
+An aggregate is a group of entities that is guaranteed to be consistent between atomic changes to it.
 A classic example is an `Order` with `OrderItems`.
-A property on `Order`, e.g. `numberOfItems` will be consistent with the actual number of `OrderItems`.
+A property on `Order` (for example, `numberOfItems` is consistent with the actual number of `OrderItems`) remains consistent as changes are made.
 
-References across Aggregates aren't guaranteed to be consistent at all times.
-They are just guaranteed to become eventual consistent.
+References across aggregates are not guaranteed to be consistent at all times.
+They are guaranteed to become consistent eventually.
 
-Each Aggregate has exactly one *Aggregate Root* which is one of the enties of the Aggregate.
-The Aggregate gets only manipulated through methods on that Aggregate Root.
-These are the *atomic changes* mentioned above.
+Each aggregate has exactly one aggregate root, which is one of the entities of the aggregate.
+The aggregate gets manipulated only through methods on that aggregate root.
+These are the atomic changes mentioned earlier.
 
-*Repositories* are an abstraction over a persistent store that look like a collection of all the Aggregates of a certain type.
-For Spring Data in general this means you want to have one `Repository` per Aggregate Root.
-For Spring Data JDBC this means above that: All entities reachable from an Aggregate Root are considered to be part of that Aggregate Root.
-It is expected that no table outside that Aggregate has a foreign key to that table.
+A repository is an abstraction over a persistent store that looks like a collection of all the aggregates of a certain type.
+For Spring Data in general, this means you want to have one `Repository` per aggregate root.
+In addition, for Spring Data JDBC this means that all entities reachable from an aggregate root are considered to be part of that aggregate root.
+It is expected that no table outside that aggregate has a foreign key to that table.
 
-WARNING: Especially in the current implementation entities referenced from an Aggregate Root will get deleted and recreated by Spring Data JDBC!
+WARNING: In the current implementation, entities referenced from an aggregate root get deleted and recreated by Spring Data JDBC.
 
-Of course you can always overwrite the Repository methods with implementations that match your style of working and designing your database.
+You can overwrite the repository methods with implementations that match your style of working and designing your database.
 
 [[jdbc.java-config]]
-=== Annotation based configuration
-The Spring Data JDBC repositories support can be activated by an annotation through JavaConfig.
+=== Annotation-based Configuration
+The Spring Data JDBC repositories support can be activated by an annotation through Java configuration, as the following example shows:
 
-.Spring Data JDBC repositories using JavaConfig
+.Spring Data JDBC repositories using Java configuration
 ====
 [source, java]
 ----
@@ -86,108 +84,117 @@ class ApplicationConfig {
 ----
 ====
 
-The just shown configuration class sets up an embedded HSQL database using the `EmbeddedDatabaseBuilder` API of spring-jdbc. We finally activate Spring Data JDBC repositories using the `@EnableJdbcRepositories`. If no base package is configured it will use the one the configuration class resides in.
+The configuration class in the preceding example sets up an embedded HSQL database by using the `EmbeddedDatabaseBuilder` API of `spring-jdbc`.
+We activate Spring Data JDBC repositories by using the `@EnableJdbcRepositories`.
+If no base package is configured, it uses the package in which the configuration class resides.
 
 [[jdbc.entity-persistence]]
-== Persisting entities
+== Persisting Entities
 
-Saving an Aggregate can be performed via the `CrudRepository.save(…)`-Method. If the Aggregate is a new Aggregate this will result in an insert for the Aggregate Root, followed by insert statments for all directly or indirectly referenced entities.
+Saving an aggregate can be performed with the `CrudRepository.save(…)` method.
+If the aggregate is new, this results in an insert for the aggregate root, followed by insert statements for all directly or indirectly referenced entities.
 
-If the Aggregate Root is _not new_ all referenced entities will get deleted, the Aggregate Root updated and all referenced entities will get inserted again.
+If the aggregate root is not new, all referenced entities get deleted, the aggregate root gets updated, and all referenced entities get inserted again.
+Note that whether an instance is new is part of the instance's state.
 
 NOTE: This approach has some obvious downsides.
-If only few of the referenced entities have been actually changed the deletion and insertion is wasteful.
-While this process could and probably will be improved there are certain limitations to what Spring Data can offer.
-It does not know the previous state of an Aggregate.
+If only few of the referenced entities have been actually changed, the deletion and insertion is wasteful.
+While this process could and probably will be improved, there are certain limitations to what Spring Data can offer.
+It does not know the previous state of an aggregate.
 So any update process always has to take whatever it finds in the database and make sure it converts it to whatever is the state of the entity passed to the save method.
 
 [[jdbc.entity-persistence.types]]
-=== Supported types in your entity
+=== Supported Types in Your Entity
 
-Properties of the following types are currently supported:
+The properties of the following types are currently supported:
 
-* all primitive types and their boxed types (`int`, `float`, `Integer`, `Float` ...)
+* All primitive types and their boxed types (`int`, `float`, `Integer`, `Float`, and so on)
 
-* enums get mapped to their name.
+* Enums get mapped to their name.
 
 * `String`
 
-* `java.util.Date`, `java.time.LocalDate`, `java.time.LocalDateTime`, `java.time.LocalTime`
+* `java.util.Date`, `java.time.LocalDate`, `java.time.LocalDateTime`, and `java.time.LocalTime`
 
-and anything your database driver accepts.
+* Anything your database driver accepts.
 
-* references to other entities. They will be considered a one-to-one relationship.
-It is optional for such entities to have an id attribute.
-The table of the referenced entity is expected to have an additional column named like the table of the referencing entity.
-This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` according to your preferences.
+* References to other entities. They are considered a one-to-one relationship.
+It is optional for such entities to have an `id` attribute.
+The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
+You can change this name by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)`.
 
-* `Set<some entity>` will be considered a one-to-many relationship.
-The table of the referenced entity is expected to have an additional column named like the table of the referencing entity.
-This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` according to your preferences.
+* `Set<some entity>` is considered a one-to-many relationship.
+The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
+You can change this name by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)`.
 
-* `Map<simple type, some entity>` will be considered a qualified one-to-many relationship.
-The table of the referenced entity is expected to have two additional columns: One named like the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
-This name can be changed by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` and `NamingStrategy.getKeyColumn(JdbcPersistentProperty property)` according to your preferences.
+* `Map<simple type, some entity>` is considered a qualified one-to-many relationship.
+The table of the referenced entity is expected to have two additional columns: One named the same as the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
+You can change this name by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` and `NamingStrategy.getKeyColumn(JdbcPersistentProperty property)`, respectively.
 
-* `List<some entity>` will be mapped like a  `Map<Integer, some entity>`.
+* `List<some entity>` is mapped as a  `Map<Integer, some entity>`.
 
-The handling of referenced entities is very limited.
-This is based on the idea of Aggregate Roots as described above.
-If you reference another entity that entity is by definition part of your Aggregate.
-So if you remove the reference the previously referenced entity will get deleted.
-This also means references will be 1-1 or 1-n, but not n-1 or n-m.
+The handling of referenced entities is limited.
+This is based on the idea of aggregate roots as described above.
+If you reference another entity, that entity is, by definition, part of your aggregate.
+So, if you remove the reference, the previously referenced entity gets deleted.
+This also means references are 1-1 or 1-n, but not n-1 or n-m.
 
-If you are having n-1 or n-m references you are by definition dealing with two separate Aggregates.
-References between those should be encoded as simple ids, which should map just fine with Spring Data JDBC.
+If you have n-1 or n-m references, you are, by definition, dealing with two separate aggregates.
+References between those should be encoded as simple `id` values, which should map properly with Spring Data JDBC.
 
 [[jdbc.entity-persistence.naming-strategy]]
-=== NamingStrategy
+=== `NamingStrategy`
 
-When you use the standard implementations of `CrudRepository` as provided by Spring Data JDBC it will expect a certain table structure.
+When you use the standard implementations of `CrudRepository` that Spring Data JDBC provides, they expect a certain table structure.
 You can tweak that by providing a https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/model/NamingStrategy.java[`NamingStrategy`] in your application context.
 
 [[jdbc.entity-persistence.state-detection-strategies]]
-=== Entity state detection strategies
+=== Entity State Detection Strategies
 
-Spring Data JDBC offers the following strategies to detect whether an entity is new or not:
+The following table describes the strategies that Spring Data JDBC offers for detecting whether an entity is new:
 
 .Options for detection whether an entity is new in Spring Data JDBC
 [options = "autowidth"]
 |===============
-|Id-Property inspection (*default*)|By default Spring Data JDBC inspects the identifier property of the given entity.
-If the identifier property is `null`, then the entity will be assumed as new, otherwise as not new.
-|Implementing `Persistable`|If an entity implements `Persistable`, Spring Data JDBC will delegate the new detection to the `isNew(…)` method of the entity.
+|Id-Property inspection (the default)|By default, Spring Data JDBC inspects the identifier property of the given entity.
+If the identifier property is `null`, then the entity is assumed to be new. Otherwise, it is assumed to not be new.
+|Implementing `Persistable`|If an entity implements `Persistable`, Spring Data JDBC delegates the new detection to the `isNew(…)` method of the entity.
 See the link:$$http://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[JavaDoc] for details.
-|Implementing `EntityInformation`|You can customize the `EntityInformation` abstraction used in the `SimpleJdbcRepository` implementation by creating a subclass of `JdbcRepositoryFactory` and overriding the `getEntityInformation(…)` method accordingly.
+|Implementing `EntityInformation`|You can customize the `EntityInformation` abstraction used in the `SimpleJdbcRepository` implementation by creating a subclass of `JdbcRepositoryFactory` and overriding the `getEntityInformation(…)` method.
 You then have to register the custom implementation of `JdbcRepositoryFactory` as a Spring bean.
-Note that this should be rarely necessary. See the link:$$http://docs.spring.io/spring-data/data-jdbc/docs/current/api/index.html?org/springframework/data/jdbc/repository/support/JdbcRepositoryFactory.html$$[JavaDoc] for details.
+Note that this should rarely be necessary. See the link:$$http://docs.spring.io/spring-data/data-jdbc/docs/current/api/index.html?org/springframework/data/jdbc/repository/support/JdbcRepositoryFactory.html$$[JavaDoc] for details.
 |===============
 
 [[jdbc.entity-persistence.id-generation]]
-=== Id generation
+=== ID Generation
 
-Spring Data JDBC uses the id to identify entities.
-The id of an entity must be annotated with Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
+Spring Data JDBC uses the ID to identify entities.
+The ID of an entity must be annotated with Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
 
-When your data base has some autoincrement column for the id column the generated value will get set in the entity after inserting it into the database.
+When your data base has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
 
-One important constraint is that after saving an entity the entity must not be _new_ anymore.
-With autoincrement columns this happens automatically since the the id gets set by Spring Data with the value from the id column.
-If you are not using autoincrement columns you can use that using a `BeforeSave`-listener which sets the id of the entity (see below).
+One important constraint is that, after saving an entity, the entity must not be new any more.
+Note that whether an entity is new is part of the entity's state.
+With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
+If you are not using auto-increment columns, you can use a `BeforeSave` listener, which sets the ID of the entity (covered later in this document).
 
 [[jdbc.query-methods]]
-== Query methods
+== Query Methods
+
+This section offers some specific information about the implementation and use of Spring Data JDBC.
 
 [[jdbc.query-methods.strategies]]
-=== Query lookup strategies
+=== Query Lookup Strategies
 
-The JDBC module only supports defining a query manually as a String in a `@Query` annotation.
+The JDBC module supports defining a query manually only as a String in a `@Query` annotation.
 Deriving a query from the name of the method is currently not supported.
 
 [[jdbc.query-methods.at-query]]
-=== Using @Query
+=== Using `@Query`
 
-.Declare query at the query method using @Query
+The following example shows how to use `@Query` to declare a query method:
+
+.Declare a query method by using @Query
 ====
 [source, java]
 ----
@@ -199,22 +206,17 @@ public interface UserRepository extends CrudRepository<User, Long> {
 ----
 ====
 
-[NOTE]
-====
-Spring fully supports Java 8’s parameter name discovery based on the `-parameters` compiler flag. Using this flag in your build as an alternative to debug information, you can omit the `@Param` annotation for named parameters.
-====
+NOTE: Spring fully supports Java 8’s parameter name discovery based on the `-parameters` compiler flag. By using this flag in your build as an alternative to debug information, you can omit the `@Param` annotation for named parameters.
 
-[NOTE]
-====
-Spring Data JDBC only support named parameters.
-====
+NOTE: Spring Data JDBC supports only named parameters.
 
 
 [[jdbc.query-methods.at-query.custom-rowmapper]]
-==== Custom RowMapper
+==== Custom `RowMapper`
 
-You can configure the `RowMapper` to use, using either the `@Query(rowMapperClass = ....)` or you can register a `RowMapperMap` bean and register `RowMapper` per method return type.
+You can configure which `RowMapper` to use, either by using the `@Query(rowMapperClass = ....)` or by registering a `RowMapperMap` bean and registering a `RowMapper` per method return type. The following example shows how to register `RowMappers`:
 
+====
 [source,java]
 ----
 @Bean
@@ -224,120 +226,128 @@ RowMapperMap rowMappers() {
 		.register(Address.class, new AddressRowMapper());
 }
 ----
+====
 
-When determining the `RowMapper` to use for a method the following steps are followed based on the return type of the method:
+When determining which `RowMapper` to use for a method, the following steps are followed, based on the return type of the method:
 
-1. If the type is a simple type, no `RowMapper` is used.
-    Instead the query is expected to return a single row with a single column and a conversion to the return type is applied to that value.
+. If the type is a simple type, no `RowMapper` is used.
++
+Instead, the query is expected to return a single row with a single column, and a conversion to the return type is applied to that value.
+. The entity classes in the `RowMapperMap` are iterated until one is found that is a superclass or interface of the return type in question.
+The `RowMapper` registered for that class is used.
++
+Iterating happens in the order of registration, so make sure to register more general types after specific ones.
 
-2. The entity classes in the `RowMapperMap` are iterated until one is found that is a superclass or interface of the return type in question.
-    The `RowMapper` registered for that class is used.
-    Iterating happens in the order of registration, so make sure to register more general types after specific ones.
-
-If applicable, wrapper types like collections or `Optional` are unwrapped.
-Thus, a return type of `Optional<Person>` will use the type `Person` in the steps above.
+If applicable, wrapper types such as collections or `Optional` are unwrapped.
+Thus, a return type of `Optional<Person>` uses the `Person` type in the preceding process.
 
 
 [[jdbc.query-methods.at-query.modifying]]
-==== Modifying query
+==== Modifying Query
 
-You can mark as a modifying query using the `@Modifying` on query method.
+You can mark a query as being a modifying query by using the `@Modifying` on query method, as the following example shows:
 
+====
 [source,java]
 ----
 @Modifying
 @Query("UPDATE DUMMYENTITY SET name = :name WHERE id = :id")
 boolean updateName(@Param("id") Long id, @Param("name") String name);
 ----
+====
 
-The return types that can be specified are `void`, `int`(updated record count) and `boolean`(whether record was updated).
+You can specify the following return types:
+
+*`void`
+* `int` (updated record count)
+* `boolean`(whether a record was updated)
 
 
 [[jdbc.mybatis]]
 == MyBatis Integration
 
-For each operation in `CrudRepository` Spring Data Jdbc will execute multiple statements.
-If there is a https://github.com/mybatis/mybatis-3/blob/master/src/main/java/org/apache/ibatis/session/SqlSessionFactory.java[`SqlSessionFactory`] in the application context, Spring Data will check for each step if the `SessionFactory` offers a statement.
-If one is found that statement will be used (including its configured mapping to an entity).
+For each operation in `CrudRepository`, Spring Data JDBC runs multiple statements.
+If there is a https://github.com/mybatis/mybatis-3/blob/master/src/main/java/org/apache/ibatis/session/SqlSessionFactory.java[`SqlSessionFactory`] in the application context, Spring Data checks, for each step, whether the `SessionFactory` offers a statement.
+If one is found, that statement (including its configured mapping to an entity) is used.
 
-The name of the statement is constructed by concatenating the fully qualified name of the entity type  with `Mapper.` and a String determining the kind of statement.
-E.g. if an instance of `org.example.User` is to be inserted Spring Data Jdbc will look for a statement named `org.example.UserMapper.insert`.
+The name of the statement is constructed by concatenating the fully qualified name of the entity type with `Mapper.` and a `String` determining the kind of statement.
+For example, if an instance of `org.example.User` is to be inserted, Spring Data JDBC looks for a statement named `org.example.UserMapper.insert`.
 
-Upon execution of the statement an instance of [`MyBatisContext`] will get passed as an argument which makes various arguments available to the statement.
+When the statement is run, an instance of [`MyBatisContext`] gets passed as an argument, which makes various arguments available to the statement.
+
+The following table describes the available MyBatis statements:
 
 [cols="default,default,default,asciidoc"]
 |===
-| Name | Purpose | CrudRepository methods which might trigger this statement | Attributes available in the `MyBatisContext`
+| Name | Purpose | CrudRepository methods that might trigger this statement | Attributes available in the `MyBatisContext`
 
-| `insert` | Insert for a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`. |
-`getInstance`:
-        the instance to be saved
-
-`getDomainType`: the type of the entity to be saved.
-
-`get(<key>)`: id of the referencing entity, where `<key>` is the name of the back reference column as provided by the `NamingStrategy`.
-
-
-| `update` | Update for a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`.|
+| `insert` | Inserts a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`. |
 `getInstance`: the instance to be saved
 
-`getDomainType`: the type of the entity to be saved.
+`getDomainType`: The type of the entity to be saved.
 
-| `delete` | Delete  a single entity. | `delete`, `deleteById`.|
-`getId`: the id of the instance to be deleted
-
-`getDomainType`: the type of the entity to be deleted.
-
-| `deleteAll-<propertyPath>` | Delete all entities referenced by any aggregate root of the type used as prefix via the given property path.
-Note that the type used for prefixing the statement name is the name of the aggregate root not the one of the entity to be deleted. | `deleteAll`.|
-
-`getDomainType`: the type of the entities to be deleted.
-
-| `deleteAll` | Delete all aggregate roots of the type used as the prefix | `deleteAll`.|
-
-`getDomainType`: the type of the entities to be deleted.
-
-| `delete-<propertyPath>` | Delete all entities referenced by an aggregate root via the given propertyPath | `deleteById`.|
-
-`getId`: the id of the aggregate root for which referenced entities are to be deleted.
-
-`getDomainType`: the type of the entities to be deleted.
+`get(<key>)`: ID of the referencing entity, where `<key>` is the name of the back reference column provided by the `NamingStrategy`.
 
 
-| `findById` | Select an aggregate root by id | `findById`.|
+| `update` | Updates a single entity. This also applies for entities referenced by the aggregate root. | `save`, `saveAll`.|
+`getInstance`: The instance to be saved
 
-`getId`: the id of the entity to load.
+`getDomainType`: The type of the entity to be saved.
 
-`getDomainType`: the type of the entity to load.
+| `delete` | Deletes a single entity. | `delete`, `deleteById`.|
+`getId`: The ID of the instance to be deleted
+
+`getDomainType`: The type of the entity to be deleted.
+
+| `deleteAll-<propertyPath>` | Deletes all entities referenced by any aggregate root of the type used as prefix with the given property path.
+Note that the type used for prefixing the statement name is the name of the aggregate root, not the one of the entity to be deleted. | `deleteAll`.|
+
+`getDomainType`: The types of the entities to be deleted.
+
+| `deleteAll` | Deletes all aggregate roots of the type used as the prefix | `deleteAll`.|
+
+`getDomainType`: The type of the entities to be deleted.
+
+| `delete-<propertyPath>` | Deletes all entities referenced by an aggregate root with the given propertyPath | `deleteById`.|
+
+`getId`: The ID of the aggregate root for which referenced entities are to be deleted.
+
+`getDomainType`: The type of the entities to be deleted.
+
+| `findById` | Selects an aggregate root by ID | `findById`.|
+
+`getId`: The ID of the entity to load.
+
+`getDomainType`: The type of the entity to load.
 
 | `findAll` | Select all aggregate roots | `findAll`.|
 
-`getDomainType`: the type of the entity to load.
+`getDomainType`: The type of the entity to load.
 
-| `findAllById` | Select a set of aggregate roots by ids | `findAllById`.|
+| `findAllById` | Select a set of aggregate roots by ID values | `findAllById`.|
 
-`getId`: list of  ids of the entities to load.
+`getId`: A list of ID values of the entities to load.
 
-`getDomainType`: the type of the entity to load.
+`getDomainType`: The type of the entity to load.
 
+| `findAllByProperty-<propertyName>` | Select a set of entities that is referenced by another entity. The type of the referencing entity is used for the prefix. The referenced entities type is used as the suffix. | All `find*` methods.|
 
-| `findAllByProperty-<propertyName>` | Select a set of entities that is referenced by another entity. The type of the referencing entity is used for the prefix. The referenced entities type as the suffix. | All `find*` methods.|
+`getId`: The ID of the entity referencing the entities to be loaded.
 
-`getId`: the id of the entity referencing the entities to be loaded.
-
-`getDomainType`: the type of the entity to load.
+`getDomainType`: The type of the entity to load.
 
 | `count` | Count the number of aggregate root of the type used as prefix | `count` |
 
-`getDomainType` the type of aggregate roots to count.
+`getDomainType`: The type of aggregate roots to count.
 |===
 
 [[jdbc.events]]
 == Events
 
-Spring Data Jdbc triggers events which will get published to any matching `ApplicationListener` in the application context.
-For example the following listener will get invoked before an aggregate gets saved.
+Spring Data JDBC triggers events that get published to any matching `ApplicationListener` in the application context.
+For example, the following listener gets invoked before an aggregate gets saved:
 
+====
 [source,java]
 ----
 @Bean
@@ -353,41 +363,44 @@ public ApplicationListener<BeforeSave> timeStampingSaveTime() {
 	};
 }
 ----
+====
+
+The following table describes the available events:
 
 .Available events
 |===
-| Event | When It's Published
+| Event | When It Is Published
 
 | https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/BeforeDeleteEvent.java[`BeforeDeleteEvent`]
-| before an aggregate root gets deleted.
+| Before an aggregate root gets deleted.
 
 | https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/AfterDeleteEvent.java[`AfterDeleteEvent`]
-| after an aggregate root got deleted.
+| After an aggregate root gets deleted.
 
 | https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`BeforeDeleteEvent`]
-| before an aggregate root gets saved, i.e. inserted or updated but after the decision was made if it will get updated or deleted.
+| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
 The event has a reference to an https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/core/conversion/AggregateChange.java[`AggregateChange`] instance.
-The instance can be modified by adding or removing https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/core/conversion/DbAction.java[`DbAction`]s.
+The instance can be modified by adding or removing https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/core/conversion/DbAction.java[`DbAction`] instances.
 
 | https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/AfterSaveEvent.java[`AfterSaveEvent`]
-| after an aggregate root gets saved, i.e. inserted or updated.
+| After an aggregate root gets saved (that is, inserted or updated).
 
 | https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/AfterLoadEvent.java[`AfterLoadEvent`]
-| after an aggregate root got created from a database `ResultSet` and all it's property set
+| After an aggregate root gets created from a database `ResultSet` and all its property get set.
 |===
 
 [[jdbc.logging]]
 == Logging
 
-Spring Data JDBC does little to no logging of it's own.
-Instead the mechanics to issue SQL statements do provide logging.
-Thus if you want to inspect what SQL statements are executed activate logging for Springs https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] and/or http://www.mybatis.org/mybatis-3/logging.html[MyBatis].
+Spring Data JDBC does little to no logging of its own.
+Instead, the mechanics to issue SQL statements do provide logging.
+Thus, if you want to inspect what SQL statements are ru, activate logging for Spring's https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or http://www.mybatis.org/mybatis-3/logging.html[MyBatis].
 
 [[jdbc.transactions]]
 == Transactionality
 CRUD methods on repository instances are transactional by default.
-For reading operations the transaction configuration `readOnly` flag is set to `true`, all others are configured with a plain `@Transactional` so that default transaction configuration applies.
-For details see JavaDoc of link:$$http://docs.spring.io/spring-data/data-jdbc/docs/current/api/index.html?org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html$$[`SimpleJdbcRepository`]. If you need to tweak transaction configuration for one of the methods declared in a repository simply redeclare the method in your repository interface as follows:
+For reading operations, the transaction configuration `readOnly` flag is set to `true`. All others are configured with a plain `@Transactional` annotation so that default transaction configuration applies.
+For details, see the JavaDoc of link:$$http://docs.spring.io/spring-data/data-jdbc/docs/current/api/index.html?org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html$$[`SimpleJdbcRepository`]. If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
 
 .Custom transaction configuration for CRUD
 ====
@@ -402,10 +415,11 @@ public interface UserRepository extends CrudRepository<User, Long> {
   // Further query method declarations
 }
 ----
-This will cause the `findAll()` method to be executed with a timeout of 10 seconds and without the `readOnly` flag.
 ====
 
-Another possibility to alter transactional behaviour is using a facade or service implementation that typically covers more than one repository. Its purpose is to define transactional boundaries for non-CRUD operations:
+The preceding causes the `findAll()` method to be executed with a timeout of 10 seconds and without the `readOnly` flag.
+
+Another way to alter transactional behavior is by using a facade or service implementation that typically covers more than one repository. Its purpose is to define transactional boundaries for non-CRUD operations. The following example shows how to create such a facade:
 
 .Using a facade to define transactions for multiple repository calls
 ====
@@ -435,12 +449,13 @@ class UserManagementImpl implements UserManagement {
     }
 }
 ----
-This will cause call to `addRoleToAllUsers(…)` to run inside a transaction (participating in an existing one or create a new one if none already running). The transaction configuration at the repositories will be neglected then as the outer transaction configuration determines the actual one used. Note that you will have to activate `<tx:annotation-driven />` or use `@EnableTransactionManagement` explicitly to get annotation based configuration at facades working. The example above assumes you are using component scanning.
 ====
 
+The preceding example causes calls to `addRoleToAllUsers(…)` to run inside a transaction (participating in an existing one or creating a new one if none are already running). The transaction configuration for the repositories is neglected, as the outer transaction configuration determines the actual repository to be used. Note that you have to explicitly activate `<tx:annotation-driven />` or use `@EnableTransactionManagement` to get annotation-based configuration for facades working. Note that the preceding example assumes you use component scanning.
+
 [[jdbc.transaction.query-methods]]
-=== Transactional query methods
-To allow your query methods to be transactional simply use `@Transactional` at the repository interface you define.
+=== Transactional Query Methods
+To let your query methods be transactional, use `@Transactional` at the repository interface you define, as the following example shows:
 
 .Using @Transactional at query methods
 ====
@@ -457,23 +472,18 @@ public interface UserRepository extends CrudRepository<User, Long> {
   void deleteInactiveUsers();
 }
 ----
-Typically you will want the readOnly flag set to true as most of the query methods will only read data. In contrast to that `deleteInactiveUsers()` makes use of the `@Modifying` annotation and overrides the transaction configuration. Thus the method will be executed with `readOnly` flag set to `false`.
 ====
 
-[NOTE]
-====
-It's definitely reasonable to use transactions for read only queries and we can mark them as such by setting the `readOnly` flag. This will not, however, act as check that you do not trigger a manipulating query (although some databases reject `INSERT` and `UPDATE` statements inside a read only transaction). The `readOnly` flag instead is propagated as hint to the underlying JDBC driver for performance optimizations.
-====
+Typically, you want the `readOnly` flag to be set to true, because most of the query methods only read data. In contrast to that, `deleteInactiveUsers()` uses the `@Modifying` annotation and overrides the transaction configuration. Thus, the method is with the `readOnly` flag set to `false`.
 
+NOTE: It is definitely reasonable to use transactions for read-only queries, and we can mark them as such by setting the `readOnly` flag. This does not, however, act as a check that you do not trigger a manipulating query (although some databases reject `INSERT` and `UPDATE` statements inside a read-only transaction). Instead, the `readOnly` flag is propagated as a hint to the underlying JDBC driver for performance optimizations.
 
-:leveloffset: +1
-include::{spring-data-commons-docs}/auditing.adoc[]
-:leveloffset: -1
+include::{spring-data-commons-docs}/auditing.adoc[leveloffset=+1]
 
 [[jdbc.auditing]]
 == JDBC Auditing
 
-In order to activate auditing just add `@EnableJdbcAuditing` to your configuration.
+In order to activate auditing, add `@EnableJdbcAuditing` to your configuration, as the following example shows:
 
 .Activating auditing with Java configuration
 ====
