@@ -15,20 +15,33 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+
 /**
  * @author Jens Schauder
  */
 public interface Reference<T, ID> {
-	static <T, ID> Reference<T, ID> to(T aggregateRoot) {
-		return new MaterializedReference<>(aggregateRoot);
+	static <T, ID> Reference<T, ID> to(JdbcMappingContext context, T aggregateRoot) {
+		return new MaterializedReference<T, ID>(context, aggregateRoot);
 	}
 
+	ID getId();
+
+	@RequiredArgsConstructor
 	class MaterializedReference<T, ID> implements Reference<T, ID> {
 
-		private final T root;
+		@NonNull private final JdbcMappingContext context;
+		@NonNull private final T root;
 
-		MaterializedReference(T aggregateRoot) {
-			root = aggregateRoot;
+		@SuppressWarnings("unchecked")
+		@Override
+		public ID getId() {
+
+			return (ID) context //
+					.getRequiredPersistentEntity(root.getClass()) //
+					.getIdentifierAccessor(root) //
+					.getRequiredIdentifier();
 		}
 	}
 }

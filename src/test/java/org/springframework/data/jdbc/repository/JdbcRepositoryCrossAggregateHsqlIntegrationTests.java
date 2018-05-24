@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import lombok.Data;
 
 import org.junit.ClassRule;
@@ -25,14 +27,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.Reference;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -66,19 +71,28 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
-	@Autowired
-	Ones repository;
+	@Autowired Ones repository;
+	@Autowired JdbcMappingContext context;
 
 	@Test // DATAJDBC-221
 	public void savesAnEntity() {
 
+		long TWO_ID = 23L;
+
+		AggregateTwo two = new AggregateTwo();
+		two.id = TWO_ID; // we can't reference it without id.
+
 		AggregateOne one = new AggregateOne();
 		one.setName("Aggregate - 1");
-		one.setTwo(Reference.to(new AggregateTwo()));
+		one.setTwo(Reference.to(context, two));
 		AggregateOne entity = repository.save(one);
-//
-//		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-//				"id_Prop = " + entity.getId())).isEqualTo(1);
+
+		assertThat( //
+				JdbcTestUtils.countRowsInTableWhere( //
+						(JdbcTemplate) template.getJdbcOperations(), //
+						"aggregate_one", //
+				"two = " + TWO_ID) //
+		).isEqualTo(1);
 	}
 
 	// TODO read, update, delete

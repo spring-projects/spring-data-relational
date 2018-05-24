@@ -153,6 +153,8 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 		DefaultConversionService conversionService = new DefaultConversionService();
 		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
 
+		conversionService.addConverter(new ReferenceToIdConverter(conversionService));
+
 		return conversionService;
 	}
 }
