@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
@@ -81,6 +83,16 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean isEntity() {
+		return super.isEntity() && !isReference();
+	}
+
+	@Override
+	public boolean isReference() {
+		return AggregateReference.class.isAssignableFrom(getRawType());
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty#getColumnName()
@@ -99,9 +111,18 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 	@Override
 	public Class getColumnType() {
 
+		if (isReference()) {
+			return columnTypeForReference();
+		}
+
 		Class columnType = columnTypeIfEntity(getActualType());
 
 		return columnType == null ? columnTypeForNonEntity(getActualType()) : columnType;
+	}
+
+	@Override
+	public int getSqlType() {
+		return JdbcUtil.sqlTypeFor(getColumnType());
 	}
 
 	@Override
@@ -158,4 +179,13 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 				.findFirst() //
 				.orElseGet(() -> ClassUtils.resolvePrimitiveIfNecessary(type));
 	}
+
+	private Class columnTypeForReference() {
+
+		Class<?> componentType = getTypeInformation().getRequiredComponentType().getType();
+		RelationalPersistentEntity<?> referencedEntity = context.getRequiredPersistentEntity(componentType);
+
+		return referencedEntity.getRequiredIdProperty().getColumnType();
+	}
+
 }

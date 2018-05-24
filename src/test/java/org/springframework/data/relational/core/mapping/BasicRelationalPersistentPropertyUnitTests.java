@@ -22,10 +22,13 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.mapping.PropertyHandler;
 
 /**
@@ -37,13 +40,14 @@ import org.springframework.data.mapping.PropertyHandler;
 public class BasicRelationalPersistentPropertyUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
+	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
+		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
 			switch (p.getName()) {
 				case "someEnum":
 					assertThat(p.getColumnType()).isEqualTo(String.class);
@@ -84,6 +88,19 @@ public class BasicRelationalPersistentPropertyUnitTests {
 				.isEqualTo("dummy_last_updated_at");
 	}
 
+	@Test // DATAJDBC-221
+	public void referencesAreNotEntitiesAndGetStoredAsTheirId() {
+
+		SoftAssertions softly = new SoftAssertions();
+
+		RelationalPersistentProperty reference = entity.getRequiredPersistentProperty("reference");
+
+		softly.assertThat(reference.isEntity()).isFalse();
+		softly.assertThat(reference.getColumnType()).isEqualTo(Long.class);
+
+		softly.assertAll();
+	}
+
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Class<?> expected) {
 
@@ -93,11 +110,15 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	}
 
 	@Data
+	@SuppressWarnings("unused")
 	private static class DummyEntity {
 
+		@Id private final Long id;
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
+		private final AggregateReference<DummyEntity, Long> reference;
+		private final List<String> listField;
 		private final UUID uuid;
 
 		// DATACMNS-106
@@ -107,9 +128,18 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		public LocalDateTime getLocalDateTime() {
 			return localDateTime;
 		}
+
+		public void setListSetter(Integer integer) {
+
+		}
+
+		public List<Date> getListGetter() {
+			return null;
+		}
 	}
 
+	@SuppressWarnings("unused")
 	private enum SomeEnum {
-		ALPHA;
+		ALPHA
 	}
 }
