@@ -28,6 +28,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.jdbc.core.mapping.NamingStrategy;
+import org.springframework.data.jdbc.core.mapping.Reference;
 import org.springframework.data.mapping.PropertyPath;
 
 /**
@@ -59,6 +60,7 @@ public class SqlGeneratorUnitTests {
 				.startsWith("SELECT") //
 				.contains("dummy_entity.x_id AS x_id,") //
 				.contains("dummy_entity.x_name AS x_name,") //
+				.contains("dummy_entity.x_other AS x_other,") //
 				.contains("ref.x_l1id AS ref_x_l1id") //
 				.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
 				// 1-N relationships do not get loaded via join
@@ -159,6 +161,7 @@ public class SqlGeneratorUnitTests {
 		ReferencedEntity ref;
 		Set<Element> elements;
 		Map<Integer, Element> mappedElements;
+		Reference<OtherAggregate, Long> other;
 	}
 
 	@SuppressWarnings("unused")
@@ -179,6 +182,11 @@ public class SqlGeneratorUnitTests {
 	static class Element {
 		@Id Long id;
 		String content;
+	}
+
+	static class OtherAggregate {
+		@Id Long id;
+		String name;
 	}
 
 	private static class PrefixingNamingStrategy implements NamingStrategy {

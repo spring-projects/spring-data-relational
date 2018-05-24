@@ -81,6 +81,18 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean isEntity() {
+		return super.isEntity() && !isReference();
+	}
+
+
+	// TODO: this probably should be an association or something?
+	private boolean isReference() {
+
+		return Reference.class.isAssignableFrom(getRawType());
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty#getColumnName()
@@ -97,6 +109,13 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class getColumnType() {
+
+		if (isReference()) {
+
+			Class<?> componentType = getTypeInformation().getRequiredComponentType().getType();
+			JdbcPersistentEntity<?> referencedEntity = context.getRequiredPersistentEntity(componentType);
+			return referencedEntity.getRequiredIdProperty().getColumnType();
+		}
 
 		Class columnType = columnTypeIfEntity(getActualType());
 

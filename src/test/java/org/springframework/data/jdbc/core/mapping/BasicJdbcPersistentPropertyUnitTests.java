@@ -23,12 +23,9 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
-import org.springframework.data.jdbc.core.mapping.BasicJdbcPersistentProperty;
-import org.springframework.data.jdbc.core.mapping.Column;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PropertyHandler;
 
 /**
@@ -40,13 +37,12 @@ import org.springframework.data.mapping.PropertyHandler;
 public class BasicJdbcPersistentPropertyUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
+	JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {
 
-		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-
-		persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
+		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
 			switch (p.getName()) {
 				case "someEnum":
 					assertThat(p.getColumnType()).isEqualTo(String.class);
@@ -65,22 +61,34 @@ public class BasicJdbcPersistentPropertyUnitTests {
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
 
-		JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
-
 		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo("dummy_name");
 		assertThat(entity.getRequiredPersistentProperty("localDateTime").getColumnName())
 				.isEqualTo("dummy_last_updated_at");
 	}
 
+	@Test // DATAJDBC-221
+	public void references() {
+
+		SoftAssertions softly = new SoftAssertions();
+
+		JdbcPersistentProperty reference = entity.getRequiredPersistentProperty("reference");
+
+		softly.assertThat(reference.isEntity()).isFalse();
+		softly.assertThat(reference.getColumnType()).isEqualTo(Long.class);
+
+		softly.assertAll();
+	}
+
 	@Data
 	private static class DummyEntity {
 
+		@Id private final Long id;
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
+		private final Reference<DummyEntity, Long> reference;
 
 		// DATACMNS-106
-
 		private @Column("dummy_name") String name;
 
 		@Column("dummy_last_updated_at")
