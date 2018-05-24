@@ -1,8 +1,11 @@
 [[new-features]]
 = New & Noteworthy
 
+This section covers the significant changes for each version.
+
 [[new-features.1-0-0]]
-== What's new in Spring Data JPA 1.0
+== What's New in Spring Data JPA 1.0
+
 * Basic support for `CrudRepository`
 * `@Query` support.
 * MyBatis support.
