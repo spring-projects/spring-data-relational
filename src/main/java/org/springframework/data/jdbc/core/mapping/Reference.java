@@ -22,26 +22,54 @@ import lombok.RequiredArgsConstructor;
  * @author Jens Schauder
  */
 public interface Reference<T, ID> {
+
 	static <T, ID> Reference<T, ID> to(JdbcMappingContext context, T aggregateRoot) {
 		return new MaterializedReference<T, ID>(context, aggregateRoot);
 	}
 
+	static <T, ID> Reference<T, ID> to(ID	 id) {
+		return new IdOnlyReference<>(id);
+	}
+
 	ID getId();
+
+	T get();
 
 	@RequiredArgsConstructor
 	class MaterializedReference<T, ID> implements Reference<T, ID> {
 
 		@NonNull private final JdbcMappingContext context;
-		@NonNull private final T root;
+		@NonNull private final T aggregateRoot;
 
 		@SuppressWarnings("unchecked")
 		@Override
 		public ID getId() {
 
 			return (ID) context //
-					.getRequiredPersistentEntity(root.getClass()) //
-					.getIdentifierAccessor(root) //
+					.getRequiredPersistentEntity(aggregateRoot.getClass()) //
+					.getIdentifierAccessor(aggregateRoot) //
 					.getRequiredIdentifier();
+		}
+
+		@Override
+		public T get() {
+			return aggregateRoot;
+		}
+	}
+
+	@RequiredArgsConstructor
+	class IdOnlyReference<T, ID> implements Reference<T, ID> {
+
+		private final ID id;
+
+		@Override
+		public ID getId() {
+			return id;
+		}
+
+		@Override
+		public T get() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

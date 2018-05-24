@@ -74,7 +74,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 		// when I delete the entity
 		repository.delete(entity);
 
-		// it is still in the repository, but marked as deleted
+		// it is still in the ones, but marked as deleted
 		assertThat(repository.findById(entity.id)) //
 				.contains(new DummyEntity( //
 						entity.id, //
@@ -97,7 +97,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 		// when I delete the entities
 		repository.deleteAll(asList(one, two));
 
-		// they are still in the repository, but marked as deleted
+		// they are still in the ones, but marked as deleted
 		assertThat(repository.findById(one.id)) //
 				.contains(new DummyEntity( //
 						one.id, //
@@ -122,7 +122,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 		repository.save(one);
 		assertThat(one.id).isNotNull();
 
-		// they are still in the repository, but marked as deleted
+		// they are still in the ones, but marked as deleted
 		assertThat(logRepository.findById(Config.lastLogId)) //
 				.isNotEmpty() //
 				.map(Log::getText) //
@@ -139,7 +139,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 		repository.saveAll(asList(one, two));
 		assertThat(one.id).isNotNull();
 
-		// they are still in the repository, but marked as deleted
+		// they are still in the ones, but marked as deleted
 		assertThat(logRepository.findById(Config.lastLogId)) //
 				.isNotEmpty() //
 				.map(Log::getText) //

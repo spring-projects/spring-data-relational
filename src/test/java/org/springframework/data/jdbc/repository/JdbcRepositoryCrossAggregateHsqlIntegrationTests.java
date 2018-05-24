@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.Reference;
+import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
@@ -39,6 +40,8 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -51,6 +54,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
+	@EnableJdbcRepositories(considerNestedRepositories = true)
 	static class Config {
 
 		@Autowired JdbcRepositoryFactory factory;
@@ -59,19 +63,14 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 		Class<?> testClass() {
 			return JdbcRepositoryCrossAggregateHsqlIntegrationTests.class;
 		}
-
-		@Bean
-		Ones dummyEntityRepository() {
-			return factory.getRepository(Ones.class);
-		}
-
 	}
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
-	@Autowired Ones repository;
+	@Autowired Ones ones;
+	@Autowired Twos twos;
 	@Autowired JdbcMappingContext context;
 
 	@Test // DATAJDBC-221
@@ -83,9 +82,9 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 		two.id = TWO_ID; // we can't reference it without id.
 
 		AggregateOne one = new AggregateOne();
-		one.setName("Aggregate - 1");
-		one.setTwo(Reference.to(context, two));
-		AggregateOne entity = repository.save(one);
+		one.name ="Aggregate - 1";
+		one.two =Reference.to(context, two);
+		one = ones.save(one);
 
 		assertThat( //
 				JdbcTestUtils.countRowsInTableWhere( //
@@ -95,11 +94,30 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 		).isEqualTo(1);
 	}
 
-	// TODO read, update, delete
+	@SuppressWarnings("ConstantConditions")
+	@Test // DATAJDBC-221
+	public void savesAndRead() {
+
+		AggregateTwo two = new AggregateTwo();
+		two.name="the two";
+		twos.save(two);
+
+		AggregateOne one = new AggregateOne();
+		one.name="Aggregate - 1";
+		one.two = Reference.to(two.id);
+		one = ones.save(one);
+
+		AggregateOne reloaded = ones.findById(one.id).get();
+		assertThat(reloaded.two.getId()).isEqualTo(two.id);
+		assertThat(reloaded.two.get().id).isEqualTo(two.id);
+
+	}
+
 
 	interface Ones extends CrudRepository<AggregateOne, Long> {}
 
-	@Data
+	interface Twos extends CrudRepository<AggregateTwo, Long> {}
+
 	static class AggregateOne {
 
 		@Id Long id;
@@ -107,7 +125,6 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 		Reference<AggregateTwo, Long> two;
 	}
 
-	@Data
 	static class AggregateTwo {
 
 		@Id Long id;
