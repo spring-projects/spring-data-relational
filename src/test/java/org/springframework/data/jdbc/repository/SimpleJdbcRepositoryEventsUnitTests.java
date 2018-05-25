@@ -32,6 +32,7 @@ import org.assertj.core.groups.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;

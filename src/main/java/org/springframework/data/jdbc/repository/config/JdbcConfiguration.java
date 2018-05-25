@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.repository.config;
 
 import java.util.Optional;
 
+import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.core.mapping.ConversionCustomizer;
@@ -36,10 +38,12 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 public class JdbcConfiguration {
 
 	@Bean
-	JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
-			Optional<ConversionCustomizer> conversionCustomizer) {
+	JdbcMappingContext jdbcMappingContext(ApplicationContext applicationContext, Optional<NamingStrategy> namingStrategy,
+										  Optional<ConversionCustomizer> conversionCustomizer) {
 
-		return new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE),
+		final JdbcMappingContext jdbcMappingContext = new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE),
 				conversionCustomizer.orElse(ConversionCustomizer.NONE));
+		jdbcMappingContext.setApplicationContext(applicationContext);
+		return jdbcMappingContext;
 	}
 }

@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.convert.support.GenericConversionService;
@@ -36,6 +37,7 @@ import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
@@ -58,7 +60,9 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 	@Getter private final NamingStrategy namingStrategy;
 	@Getter private SimpleTypeHolder simpleTypeHolder;
-	private GenericConversionService conversions = getDefaultConversionService();
+	private final Lazy<GenericConversionService> conversions = Lazy.of(this::getDefaultConversionService);
+	private ApplicationContext applicationContext;
+	private final ConversionCustomizer customizer;
 
 	/**
 	 * Creates a new {@link JdbcMappingContext}.
@@ -84,7 +88,8 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 		this.namingStrategy = namingStrategy;
 
-		customizer.customize(conversions);
+		this.customizer = customizer;
+
 		setSimpleTypeHolder(new SimpleTypeHolder(CUSTOM_SIMPLE_TYPES, true));
 	}
 
@@ -92,6 +97,13 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	public void setSimpleTypeHolder(SimpleTypeHolder simpleTypes) {
 		super.setSimpleTypeHolder(simpleTypes);
 		this.simpleTypeHolder = simpleTypes;
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) {
+
+		super.setApplicationContext(applicationContext);
+		this.applicationContext = applicationContext;
 	}
 
 	/**
@@ -145,16 +157,23 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	}
 
 	public ConversionService getConversions() {
-		return conversions;
+		return conversions.get();
 	}
 
-	private static GenericConversionService getDefaultConversionService() {
+	private GenericConversionService getDefaultConversionService() {
 
 		DefaultConversionService conversionService = new DefaultConversionService();
 		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
 
 		conversionService.addConverter(new ReferenceToIdConverter(conversionService));
-		conversionService.addConverter(new IdToReferenceConverter(null));
+
+		if (applicationContext != null) { // TODO: what do we do if we don't have an application context?
+			conversionService.addConverter(new IdToReferenceConverter(applicationContext));
+		}
+
+		if (customizer != null) {
+			customizer.customize(conversionService);
+		}
 
 		return conversionService;
 	}
