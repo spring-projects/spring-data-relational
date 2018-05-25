@@ -18,6 +18,9 @@ package org.springframework.data.jdbc.core.mapping;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.Repository;
+
 /**
  * @author Jens Schauder
  */
@@ -27,8 +30,12 @@ public interface Reference<T, ID> {
 		return new MaterializedReference<T, ID>(context, aggregateRoot);
 	}
 
-	static <T, ID> Reference<T, ID> to(ID	 id) {
+	static <T, ID> Reference<T, ID> to(ID id) {
 		return new IdOnlyReference<>(id);
+	}
+
+	static <T, ID> Reference<T, ID> to(ID id, CrudRepository<T, ID> repository) {
+		return new LazyReference<>(id, repository);
 	}
 
 	ID getId();
@@ -70,6 +77,24 @@ public interface Reference<T, ID> {
 		@Override
 		public T get() {
 			throw new UnsupportedOperationException();
+		}
+	}
+
+	@RequiredArgsConstructor
+	class LazyReference<T, ID> implements Reference<T, ID> {
+
+		private final ID id;
+		@NonNull private final CrudRepository<T, ID> repository;
+
+		@Override
+		public ID getId() {
+			return id;
+		}
+
+		@Override
+		public T get() {
+
+			return (id == null) ? null : repository.findById(id).orElse(null);
 		}
 	}
 }

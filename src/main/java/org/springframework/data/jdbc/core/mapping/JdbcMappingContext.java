@@ -154,6 +154,7 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
 
 		conversionService.addConverter(new ReferenceToIdConverter(conversionService));
+		conversionService.addConverter(new IdToReferenceConverter(null));
 
 		return conversionService;
 	}
