@@ -160,6 +160,11 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 		return conversions.get();
 	}
 
+	@Override
+	protected boolean shouldCreatePersistentEntityFor(TypeInformation<?> type) {
+		return super.shouldCreatePersistentEntityFor(type) && !Reference.class.isAssignableFrom(type.getType());
+	}
+
 	private GenericConversionService getDefaultConversionService() {
 
 		DefaultConversionService conversionService = new DefaultConversionService();
