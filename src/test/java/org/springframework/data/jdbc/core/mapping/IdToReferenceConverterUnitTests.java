@@ -18,12 +18,12 @@ package org.springframework.data.jdbc.core.mapping;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.Proxy;
 
 import org.junit.Test;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
 
 /**
@@ -50,6 +50,26 @@ public class IdToReferenceConverterUnitTests {
 		assertThat(IdToReferenceConverter.getEntityClass(DummyEntityRepository.class)).isEqualTo(DummyEntity.class);
 	}
 
+	@Test
+	public void extractEntityTypeFromCrudRepositoryClass() {
+
+		assertThat(IdToReferenceConverter.getEntityClass(DummyEntityCrudRepository.class)).isEqualTo(DummyEntity.class);
+	}
+
+	@Test
+	public void extractEntityTypeFromCrudRepositoryWithIntermediateClass() {
+
+		assertThat(IdToReferenceConverter.getEntityClass(DummyEntityWithIntermediateRepository.class)).isEqualTo(DummyEntity.class);
+	}
+
+	@Test
+	public void extractEntityTypeFromRepositoryClassProxy() {
+
+		final Class<?> proxyClass = Proxy.getProxyClass(this.getClass().getClassLoader(), DummyEntityCrudRepository.class);
+
+		assertThat(IdToReferenceConverter.getEntityClass((Class<?>)proxyClass.getClass())).isEqualTo(DummyEntity.class);
+	}
+
 
 	@Test
 	public void extractTargetTypeFromReferenceTypeDefinition() throws NoSuchFieldException {
@@ -58,8 +78,11 @@ public class IdToReferenceConverterUnitTests {
 		assertThat(IdToReferenceConverter.getReferenceTarget(entityReferenceTypeDescriptor)).isEqualTo(DummyEntity.class);
 	}
 
-
+	private interface DummyEntityCrudRepository extends CrudRepository<DummyEntity, Long> {}
 	private interface DummyEntityRepository extends Repository<DummyEntity, Long> {}
+
+	private interface IntermediateRepInterface<X, T, ID> extends CrudRepository<T, ID>{}
+	private interface DummyEntityWithIntermediateRepository extends IntermediateRepInterface<String, DummyEntity, Long>{}
 
 	private static class DummyEntity {
 

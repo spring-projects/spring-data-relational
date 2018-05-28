@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.data.mapping.PersistentProperty;
 
 /**
@@ -25,6 +26,9 @@ import org.springframework.data.mapping.PersistentProperty;
  * @since 1.0
  */
 public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersistentProperty> {
+
+	// TODO: this probably should be an association or something?
+	boolean isReference();
 
 	/**
 	 * Returns the name of the column backing this property.
@@ -56,4 +60,6 @@ public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersisten
 	 * Returns whether this property is an ordered property.
 	 */
 	boolean isOrdered();
+
+	TypeDescriptor getTypeDefinition();
 }

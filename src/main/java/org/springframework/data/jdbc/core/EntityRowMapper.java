@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ClassGeneratingEntityInstantiator;
 import org.springframework.data.convert.EntityInstantiator;
@@ -89,7 +90,14 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 				Iterable<Object> allByProperty = accessStrategy.findAllByProperty(id, property);
 				propertyAccessor.setProperty(property, ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(allByProperty));
 			} else {
-				propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
+
+				final Object value = readFrom(resultSet, property, "");
+
+				if (property.isReference()){
+					propertyAccessor.setProperty(property, conversions.convert(value, TypeDescriptor.forObject(value), property.getTypeDefinition()));
+				}else {
+					propertyAccessor.setProperty(property, value);
+				}
 			}
 		}
 

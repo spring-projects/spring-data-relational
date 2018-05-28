@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Date;
@@ -23,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
@@ -88,7 +91,8 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 
 
 	// TODO: this probably should be an association or something?
-	private boolean isReference() {
+	@Override
+	public boolean isReference() {
 
 		return Reference.class.isAssignableFrom(getRawType());
 	}
@@ -150,6 +154,22 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	public boolean isOrdered() {
 		return isListLike();
 	}
+
+	@Override
+	public TypeDescriptor getTypeDefinition() {
+
+		final Optional<TypeDescriptor> fromField = getTypeDescriptorFromField();
+
+		return fromField.orElseGet(() -> TypeDescriptor.valueOf(getType()));
+	}
+
+	private Optional<TypeDescriptor> getTypeDescriptorFromField() {
+		final Optional<Field> field = getProperty().getField();
+
+		return field.map(f -> TypeDescriptor.nested(f, 0));
+
+	}
+
 
 	private Class columnTypeIfEntity(Class type) {
 

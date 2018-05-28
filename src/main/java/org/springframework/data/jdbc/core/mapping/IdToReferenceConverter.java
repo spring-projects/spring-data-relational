@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -78,13 +79,24 @@ public class IdToReferenceConverter implements GenericConverter {
 		return targetType.getResolvableType().getGeneric(0).getRawClass();
 	}
 
-	static Class<?> getEntityClass(Class<? extends Repository> repositoryClass) {
+	static Class<?> getEntityClass(Class<?> repositoryClass) {
 
 		Type[] interfaces = repositoryClass.getGenericInterfaces();
 
 		for (Type anInterface : interfaces) {
 
-			if (anInterface instanceof ParameterizedType) {
+			if (anInterface instanceof Class) {
+
+				final Class<?> interfaceAsClass = (Class<?>) anInterface;
+				if (Repository.class.isAssignableFrom(interfaceAsClass)) {
+					Class<?> entityClass = getEntityClass(interfaceAsClass);
+					if (entityClass != null) {
+						return entityClass;
+					}
+
+				}
+
+			} else if (anInterface instanceof ParameterizedType) {
 				ParameterizedType parameterizedInterfaceType = (ParameterizedType) anInterface;
 
 				if (parameterizedInterfaceType.getRawType() == Repository.class) {
@@ -97,10 +109,13 @@ public class IdToReferenceConverter implements GenericConverter {
 						return (Class<?>) ((ParameterizedType) entityType).getRawType();
 					}
 
+				} else if (Repository.class.isAssignableFrom((Class<?>) parameterizedInterfaceType.getRawType())){
+					final Type[] genericInterfaces = ((Class<?>) parameterizedInterfaceType.getRawType()).getGenericInterfaces();
+					System.out.println("Generic interfaces of " + parameterizedInterfaceType);
+					System.out.println(Arrays.toString(genericInterfaces));
 				}
-
 			}
 		}
-		throw new IllegalStateException("Can't determine entity type for repository interface type " + repositoryClass);
+		return null;
 	}
 }
