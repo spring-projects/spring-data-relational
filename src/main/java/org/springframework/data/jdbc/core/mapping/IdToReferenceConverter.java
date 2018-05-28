@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.data.repository.CrudRepository;
@@ -37,6 +38,7 @@ import org.springframework.data.util.TypeInformation;
 public class IdToReferenceConverter implements GenericConverter {
 
 	@NonNull final ListableBeanFactory beans;
+	@NonNull final ConversionService conversionService;
 
 	@Override
 	public Set<ConvertiblePair> getConvertibleTypes() {
@@ -49,7 +51,7 @@ public class IdToReferenceConverter implements GenericConverter {
 	@Override
 	public Object convert(Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
 
-		Class referenceTarget = getReferenceTarget(targetType);
+		Class<?> referenceTarget = getReferenceTarget(targetType);
 
 		if (referenceTarget == null) {
 			return null;
@@ -61,7 +63,7 @@ public class IdToReferenceConverter implements GenericConverter {
 			final Class<?> entityClass = getEntityClass(repository.getClass());
 
 			if (entityClass == referenceTarget) {
-				return Reference.to(source, repository);
+				return Reference.to(conversionService.convert(source, getIdClass(repository.getClass())), repository);
 			}
 		}
 
@@ -83,7 +85,15 @@ public class IdToReferenceConverter implements GenericConverter {
 
 		TypeInformation ti = classTypeInformation.getTypeArgument(Repository.class, 0);
 
-		return ti.getType();
+		return ti != null ? ti.getType() : null;
+	}
 
+	static Class<?> getIdClass(Class<?> repositoryClass) {
+
+		final ClassTypeInformation<?> classTypeInformation = ClassTypeInformation.from(repositoryClass);
+
+		TypeInformation ti = classTypeInformation.getTypeArgument(Repository.class, 1);
+
+		return ti != null ? ti.getType() : null;
 	}
 }

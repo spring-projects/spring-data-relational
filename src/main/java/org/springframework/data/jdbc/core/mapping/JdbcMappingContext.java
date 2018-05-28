@@ -168,7 +168,7 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 		conversionService.addConverter(new ReferenceToIdConverter(conversionService));
 
 		if (applicationContext != null) { // TODO: what do we do if we don't have an application context?
-			conversionService.addConverter(new IdToReferenceConverter(applicationContext));
+			conversionService.addConverter(new IdToReferenceConverter(applicationContext, conversionService));
 		}
 
 		if (customizer != null) {

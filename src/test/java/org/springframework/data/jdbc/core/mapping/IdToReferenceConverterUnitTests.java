@@ -23,6 +23,7 @@ import java.lang.reflect.Proxy;
 import org.junit.Test;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
 import org.springframework.util.ClassUtils;
@@ -41,7 +42,7 @@ public class IdToReferenceConverterUnitTests {
 	public void test() {
 
 		ListableBeanFactory beans = mock(ListableBeanFactory.class);
-		IdToReferenceConverter converter = new IdToReferenceConverter(beans);
+		IdToReferenceConverter converter = new IdToReferenceConverter(beans, new DefaultConversionService());
 
 	}
 
@@ -68,7 +69,7 @@ public class IdToReferenceConverterUnitTests {
 
 		final Class<?> proxyClass = Proxy.getProxyClass(this.getClass().getClassLoader(), DummyEntityCrudRepository.class);
 
-		assertThat(IdToReferenceConverter.getEntityClass(ClassUtils.getUserClass(proxyClass))).isEqualTo(DummyEntity.class);
+		assertThat(IdToReferenceConverter.getEntityClass(proxyClass)).isEqualTo(DummyEntity.class);
 	}
 
 	@Test
