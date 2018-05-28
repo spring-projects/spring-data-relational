@@ -21,7 +21,7 @@
 
 		<dist.key>DATAJDBC</dist.key>
 
-		<springdata.commons>2.1.0.BUILD-SNAPSHOT</springdata.commons>
+		<springdata.commons>2.1.0.DATAJDBC-221-SNAPSHOT</springdata.commons>
 		<java-module-name>spring.data.jdbc</java-module-name>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 

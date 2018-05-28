@@ -18,9 +18,6 @@ package org.springframework.data.jdbc.core.mapping;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +27,8 @@ import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.TypeInformation;
 
 /**
  * @author Jens Schauder
@@ -61,7 +60,6 @@ public class IdToReferenceConverter implements GenericConverter {
 		for (CrudRepository repository : beansOfType.values()) {
 			final Class<?> entityClass = getEntityClass(repository.getClass());
 
-
 			if (entityClass == referenceTarget) {
 				return Reference.to(source, repository);
 			}
@@ -81,41 +79,11 @@ public class IdToReferenceConverter implements GenericConverter {
 
 	static Class<?> getEntityClass(Class<?> repositoryClass) {
 
-		Type[] interfaces = repositoryClass.getGenericInterfaces();
+		final ClassTypeInformation<?> classTypeInformation = ClassTypeInformation.from(repositoryClass);
 
-		for (Type anInterface : interfaces) {
+		TypeInformation ti = classTypeInformation.getTypeArgument(Repository.class, 0);
 
-			if (anInterface instanceof Class) {
+		return ti.getType();
 
-				final Class<?> interfaceAsClass = (Class<?>) anInterface;
-				if (Repository.class.isAssignableFrom(interfaceAsClass)) {
-					Class<?> entityClass = getEntityClass(interfaceAsClass);
-					if (entityClass != null) {
-						return entityClass;
-					}
-
-				}
-
-			} else if (anInterface instanceof ParameterizedType) {
-				ParameterizedType parameterizedInterfaceType = (ParameterizedType) anInterface;
-
-				if (parameterizedInterfaceType.getRawType() == Repository.class) {
-					Type entityType = parameterizedInterfaceType.getActualTypeArguments()[0];
-
-					if (entityType instanceof Class) {
-						return (Class<?>) entityType;
-					}
-					if (entityType instanceof ParameterizedType) {
-						return (Class<?>) ((ParameterizedType) entityType).getRawType();
-					}
-
-				} else if (Repository.class.isAssignableFrom((Class<?>) parameterizedInterfaceType.getRawType())){
-					final Type[] genericInterfaces = ((Class<?>) parameterizedInterfaceType.getRawType()).getGenericInterfaces();
-					System.out.println("Generic interfaces of " + parameterizedInterfaceType);
-					System.out.println(Arrays.toString(genericInterfaces));
-				}
-			}
-		}
-		return null;
 	}
 }

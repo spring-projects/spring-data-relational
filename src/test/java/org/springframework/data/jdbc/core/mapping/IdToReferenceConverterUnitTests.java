@@ -25,6 +25,7 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
+import org.springframework.util.ClassUtils;
 
 /**
  * @author Jens Schauder
@@ -67,9 +68,8 @@ public class IdToReferenceConverterUnitTests {
 
 		final Class<?> proxyClass = Proxy.getProxyClass(this.getClass().getClassLoader(), DummyEntityCrudRepository.class);
 
-		assertThat(IdToReferenceConverter.getEntityClass((Class<?>)proxyClass.getClass())).isEqualTo(DummyEntity.class);
+		assertThat(IdToReferenceConverter.getEntityClass(ClassUtils.getUserClass(proxyClass))).isEqualTo(DummyEntity.class);
 	}
-
 
 	@Test
 	public void extractTargetTypeFromReferenceTypeDefinition() throws NoSuchFieldException {
