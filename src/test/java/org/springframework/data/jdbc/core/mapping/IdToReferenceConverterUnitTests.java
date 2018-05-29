@@ -35,9 +35,6 @@ public class IdToReferenceConverterUnitTests {
 
 	private Reference<DummyEntity, Long> entityReference;
 
-	// TODO: interesting question: what should happen when there are specific Reference Types inherited from Reference<x,y> like `interface DummyReference extends Reference<DummyEntity, Long>
-	// TODO: similar but not with an interface, but with a class.
-
 	@Test
 	public void test() {
 

@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Date;
@@ -116,9 +115,7 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 
 		if (isReference()) {
 
-			Class<?> componentType = getTypeInformation().getRequiredComponentType().getType();
-			JdbcPersistentEntity<?> referencedEntity = context.getRequiredPersistentEntity(componentType);
-			return referencedEntity.getRequiredIdProperty().getColumnType();
+			return columnTypeForReference();
 		}
 
 		Class columnType = columnTypeIfEntity(getActualType());
@@ -164,6 +161,7 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	}
 
 	private Optional<TypeDescriptor> getTypeDescriptorFromField() {
+
 		final Optional<Field> field = getProperty().getField();
 
 		return field.map(f -> TypeDescriptor.nested(f, 0));
@@ -195,4 +193,13 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 				.findFirst() //
 				.orElseGet(() -> ClassUtils.resolvePrimitiveIfNecessary(type));
 	}
+
+	private Class columnTypeForReference() {
+
+		Class<?> componentType = getTypeInformation().getRequiredComponentType().getType();
+		JdbcPersistentEntity<?> referencedEntity = context.getRequiredPersistentEntity(componentType);
+
+		return referencedEntity.getRequiredIdProperty().getColumnType();
+	}
+
 }

@@ -47,7 +47,7 @@ public class ReferenceToIdConverter implements GenericConverter {
 		if (source == null || !(source instanceof Reference)) {
 			return null;
 		}
-		// TODO add recursive conversion
+
 		return ((Reference) source).getId();
 	}
 }
