@@ -37,17 +37,17 @@ public class ReferenceToIdConverter implements GenericConverter {
 	public Set<ConvertiblePair> getConvertibleTypes() {
 
 		HashSet<ConvertiblePair> convertiblePairs = new HashSet<>();
-		convertiblePairs.add(new ConvertiblePair(Reference.class, Object.class));
+		convertiblePairs.add(new ConvertiblePair(AggregateReference.class, Object.class));
 		return convertiblePairs;
 	}
 
 	@Override
 	public Object convert(Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
 
-		if (source == null || !(source instanceof Reference)) {
+		if (source == null || !(source instanceof AggregateReference)) {
 			return null;
 		}
 
-		return ((Reference) source).getId();
+		return ((AggregateReference) source).getId();
 	}
 }

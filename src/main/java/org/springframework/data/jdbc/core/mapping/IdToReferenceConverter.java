@@ -16,15 +16,12 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.GenericConverter;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.support.DefaultRepositoryInvokerFactory;
 import org.springframework.data.repository.support.Repositories;
@@ -52,7 +49,7 @@ public class IdToReferenceConverter implements GenericConverter {
 	public Set<ConvertiblePair> getConvertibleTypes() {
 
 		HashSet<ConvertiblePair> convertiblePairs = new HashSet<>();
-		convertiblePairs.add(new ConvertiblePair(Object.class, Reference.class));
+		convertiblePairs.add(new ConvertiblePair(Object.class, AggregateReference.class));
 		return convertiblePairs;
 	}
 
@@ -70,13 +67,13 @@ public class IdToReferenceConverter implements GenericConverter {
 
 		final RepositoryInvoker invoker = repositoryInvokerFactory.getInvokerFor(referenceTarget);
 
-		return Reference.to(conversionService.convert(source, idType), invoker);
+		return new LazyAggregateReference<>(conversionService.convert(source, idType), invoker);
 
 	}
 
 	static Class<?> getReferenceTarget(TypeDescriptor targetType) {
 
-		if (!Reference.class.isAssignableFrom(targetType.getType())) {
+		if (!AggregateReference.class.isAssignableFrom(targetType.getType())) {
 			return null;
 		}
 

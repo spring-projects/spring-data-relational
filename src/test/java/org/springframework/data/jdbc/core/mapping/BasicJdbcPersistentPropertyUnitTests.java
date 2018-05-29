@@ -86,7 +86,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
-		private final Reference<DummyEntity, Long> reference;
+		private final AggregateReference<DummyEntity, Long> reference;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;

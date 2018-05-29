@@ -17,20 +17,17 @@ package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Data;
-
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.Reference;
+import org.springframework.data.jdbc.core.mapping.MaterializedAggregateReference;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -42,8 +39,6 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -85,7 +80,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 		AggregateOne one = new AggregateOne();
 		one.name ="Aggregate - 1";
-		one.two =Reference.to(context, two);
+		one.two = new MaterializedAggregateReference<AggregateTwo, Long>(two, context);
 		one = ones.save(one);
 
 		assertThat( //
@@ -106,7 +101,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 		AggregateOne one = new AggregateOne();
 		one.name="Aggregate - 1";
-		one.two = Reference.to(two.id);
+		one.two = AggregateReference.to(two.id);
 		one = ones.save(one);
 
 		AggregateOne reloaded = ones.findById(one.id).get();
@@ -125,7 +120,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 		AggregateOne one = new AggregateOne();
 		one.name ="Aggregate - 1";
-		one.two =Reference.to(context, two);
+		one.two = new MaterializedAggregateReference<AggregateTwo, Long>(two, context);
 		one = ones.save(one);
 
 
@@ -151,7 +146,7 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 		@Id Long id;
 		String name;
-		Reference<AggregateTwo, Long> two;
+		AggregateReference<AggregateTwo, Long> two;
 	}
 
 	static class AggregateTwo {

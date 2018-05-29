@@ -24,11 +24,11 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.jdbc.core.mapping.NamingStrategy;
-import org.springframework.data.jdbc.core.mapping.Reference;
 import org.springframework.data.mapping.PropertyPath;
 
 /**
@@ -164,7 +164,7 @@ public class SqlGeneratorUnitTests {
 		ReferencedEntity ref;
 		Set<Element> elements;
 		Map<Integer, Element> mappedElements;
-		Reference<OtherAggregate, Long> other;
+		AggregateReference<OtherAggregate, Long> other;
 	}
 
 	@SuppressWarnings("unused")

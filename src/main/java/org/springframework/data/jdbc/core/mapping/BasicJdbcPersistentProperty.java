@@ -93,7 +93,7 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	@Override
 	public boolean isReference() {
 
-		return Reference.class.isAssignableFrom(getRawType());
+		return AggregateReference.class.isAssignableFrom(getRawType());
 	}
 
 	/*

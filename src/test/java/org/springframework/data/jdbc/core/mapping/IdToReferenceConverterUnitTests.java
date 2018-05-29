@@ -16,24 +16,20 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Proxy;
 
 import org.junit.Test;
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.core.convert.TypeDescriptor;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
-import org.springframework.util.ClassUtils;
 
 /**
  * @author Jens Schauder
  */
 public class IdToReferenceConverterUnitTests {
 
-	private Reference<DummyEntity, Long> entityReference;
+	private AggregateReference<DummyEntity, Long> aggregateReference;
 
 	@Test
 	public void extractEntityTypeFromRepositoryClass() {
@@ -64,7 +60,7 @@ public class IdToReferenceConverterUnitTests {
 	@Test
 	public void extractTargetTypeFromReferenceTypeDefinition() throws NoSuchFieldException {
 
-		final TypeDescriptor entityReferenceTypeDescriptor = new TypeDescriptor(IdToReferenceConverterUnitTests.class.getDeclaredField("entityReference"));
+		final TypeDescriptor entityReferenceTypeDescriptor = new TypeDescriptor(IdToReferenceConverterUnitTests.class.getDeclaredField("aggregateReference"));
 		assertThat(IdToReferenceConverter.getReferenceTarget(entityReferenceTypeDescriptor)).isEqualTo(DummyEntity.class);
 	}
 
