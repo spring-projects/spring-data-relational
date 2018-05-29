@@ -143,9 +143,6 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 		).isEqualTo(1);
 	}
 
-
-
-
 	interface Ones extends CrudRepository<AggregateOne, Long> {}
 
 	interface Twos extends CrudRepository<AggregateTwo, Long> {}

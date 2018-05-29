@@ -36,14 +36,6 @@ public class IdToReferenceConverterUnitTests {
 	private Reference<DummyEntity, Long> entityReference;
 
 	@Test
-	public void test() {
-
-		ListableBeanFactory beans = mock(ListableBeanFactory.class);
-		IdToReferenceConverter converter = new IdToReferenceConverter(beans, new DefaultConversionService());
-
-	}
-
-	@Test
 	public void extractEntityTypeFromRepositoryClass() {
 
 		assertThat(IdToReferenceConverter.getEntityClass(DummyEntityRepository.class)).isEqualTo(DummyEntity.class);

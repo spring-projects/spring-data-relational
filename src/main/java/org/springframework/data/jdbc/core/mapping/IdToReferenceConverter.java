@@ -15,11 +15,9 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -28,17 +26,27 @@ import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.support.DefaultRepositoryInvokerFactory;
+import org.springframework.data.repository.support.Repositories;
+import org.springframework.data.repository.support.RepositoryInvoker;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 
 /**
  * @author Jens Schauder
  */
-@RequiredArgsConstructor
 public class IdToReferenceConverter implements GenericConverter {
 
-	@NonNull final ListableBeanFactory beans;
-	@NonNull final ConversionService conversionService;
+	private final ConversionService conversionService;
+	private final Repositories repositories;
+	private final DefaultRepositoryInvokerFactory repositoryInvokerFactory;
+
+	@java.beans.ConstructorProperties({ "beans", "conversionService" })
+	public IdToReferenceConverter(ListableBeanFactory beans, ConversionService conversionService) {
+		this.repositories = new Repositories(beans);
+		repositoryInvokerFactory = new DefaultRepositoryInvokerFactory(repositories);
+		this.conversionService = conversionService;
+	}
 
 	@Override
 	public Set<ConvertiblePair> getConvertibleTypes() {
@@ -57,17 +65,13 @@ public class IdToReferenceConverter implements GenericConverter {
 			return null;
 		}
 
-		Map<String, CrudRepository> beansOfType = beans.getBeansOfType(CrudRepository.class);
 
-		for (CrudRepository repository : beansOfType.values()) {
-			final Class<?> entityClass = getEntityClass(repository.getClass());
+		final Class<Object> idType = repositories.getEntityInformationFor(referenceTarget).getIdType();
 
-			if (entityClass == referenceTarget) {
-				return Reference.to(conversionService.convert(source, getIdClass(repository.getClass())), repository);
-			}
-		}
+		final RepositoryInvoker invoker = repositoryInvokerFactory.getInvokerFor(referenceTarget);
 
-		return null;
+		return Reference.to(conversionService.convert(source, idType), invoker);
+
 	}
 
 	static Class<?> getReferenceTarget(TypeDescriptor targetType) {

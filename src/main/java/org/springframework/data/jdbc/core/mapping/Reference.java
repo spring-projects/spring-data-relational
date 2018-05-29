@@ -18,8 +18,7 @@ package org.springframework.data.jdbc.core.mapping;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.support.RepositoryInvoker;
 
 /**
  * @author Jens Schauder
@@ -34,8 +33,8 @@ public interface Reference<T, ID> {
 		return new IdOnlyReference<>(id);
 	}
 
-	static <T, ID> Reference<T, ID> to(ID id, CrudRepository<T, ID> repository) {
-		return new LazyReference<>(id, repository);
+	static <T, ID> Reference<T, ID> to(ID id, RepositoryInvoker repositoryInvoker) {
+		return new LazyReference<>(id, repositoryInvoker);
 	}
 
 	ID getId();
@@ -84,7 +83,7 @@ public interface Reference<T, ID> {
 	class LazyReference<T, ID> implements Reference<T, ID> {
 
 		private final ID id;
-		@NonNull private final CrudRepository<T, ID> repository;
+		@NonNull private final RepositoryInvoker repositoryInvoker;
 
 		@Override
 		public ID getId() {
@@ -94,7 +93,7 @@ public interface Reference<T, ID> {
 		@Override
 		public T get() {
 
-			return (id == null) ? null : repository.findById(id).orElse(null);
+			return (id == null) ? null : (T) repositoryInvoker.invokeFindById(id).orElse(null);
 		}
 	}
 }
