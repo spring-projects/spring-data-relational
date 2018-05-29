@@ -115,6 +115,36 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 	}
 
+	@Test // DATAJDBC-221
+	public void savesAndUpdate() {
+
+		long TWO_ID = 23L;
+
+		AggregateTwo two = new AggregateTwo();
+		two.id = 42L; // we can't reference it without id.
+
+		AggregateOne one = new AggregateOne();
+		one.name ="Aggregate - 1";
+		one.two =Reference.to(context, two);
+		one = ones.save(one);
+
+
+		two.id = TWO_ID;
+
+		assertThat(one.two.getId()).isEqualTo(TWO_ID);
+
+		ones.save(one);
+
+		assertThat( //
+				JdbcTestUtils.countRowsInTableWhere( //
+						(JdbcTemplate) template.getJdbcOperations(), //
+						"aggregate_one", //
+						"two = " + TWO_ID) //
+		).isEqualTo(1);
+	}
+
+
+
 
 	interface Ones extends CrudRepository<AggregateOne, Long> {}
 
