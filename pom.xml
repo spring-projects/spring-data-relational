@@ -33,6 +33,8 @@
 		<mysql-connector-java.version>5.1.41</mysql-connector-java.version>
 		<postgresql.version>42.0.0</postgresql.version>
 		<mariadb-java-client.version>2.2.3</mariadb-java-client.version>
+		<r2dbc-core.version>1.0.0.M3</r2dbc-core.version>
+		<r2dbc-postgresql-java-client.version>1.0.0.M3</r2dbc-postgresql-java-client.version>
 		<testcontainers.version>1.7.3</testcontainers.version>
 
 	</properties>
@@ -181,6 +183,19 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.nebhale.r2dbc</groupId>
+			<artifactId>r2dbc-core</artifactId>
+			<version>${r2dbc-core.version}</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis-spring</artifactId>
 			<version>${mybatis-spring.version}</version>
@@ -209,6 +224,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${mysql-connector-java.version}</version>
@@ -227,6 +248,13 @@
 		    <artifactId>mariadb-java-client</artifactId>
 		    <version>${mariadb-java-client.version}</version>
 		    <scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.nebhale.r2dbc</groupId>
+			<artifactId>r2dbc-postgresql</artifactId>
+			<version>${r2dbc-postgresql-java-client.version}</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
@@ -331,6 +359,20 @@
 		<repository>
 			<id>spring-libs-snapshot</id>
 			<url>https://repo.spring.io/libs-snapshot</url>
+		</repository>
+		<repository>
+			<id>nebhale-snapshots</id>
+			<url>https://raw.githubusercontent.com/nebhale/r2dbc/maven/snapshot</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>nebhale-milestones</id>
+			<url>https://raw.githubusercontent.com/nebhale/r2dbc/maven/milestone</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
 
