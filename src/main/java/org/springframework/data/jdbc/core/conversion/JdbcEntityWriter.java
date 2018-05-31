@@ -27,12 +27,12 @@ import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.mapping.IdentifierAccessor;
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.util.StreamUtils;
-import org.springframework.util.ClassUtils;
 
 /**
  * Converts an entity that is about to be saved into {@link DbAction}s inside a {@link AggregateChange} that need to be
@@ -43,8 +43,13 @@ import org.springframework.util.ClassUtils;
  */
 public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
+	private final JdbcMappingContext context;
+
 	public JdbcEntityWriter(JdbcMappingContext context) {
+
 		super(context);
+
+		this.context = context;
 	}
 
 	@Override
@@ -54,11 +59,12 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
 	private void write(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
 
-		Class<Object> type = (Class<Object>) o.getClass();
-		JdbcPersistentEntityInformation<Object, ?> entityInformation = context.getRequiredPersistentEntityInformation(type);
+		Class<?> type = o.getClass();
 		JdbcPropertyPath propertyPath = JdbcPropertyPath.from("", type);
 
-		if (entityInformation.isNew(o)) {
+		PersistentEntity<?, JdbcPersistentProperty> persistentEntity = context.getRequiredPersistentEntity(type);
+
+		if (persistentEntity.isNew(o)) {
 
 			Insert<Object> insert = DbAction.insert(o, propertyPath, dependingOn);
 			aggregateChange.addAction(insert);
@@ -71,10 +77,13 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 									aggregateChange, //
 									propertyPath.nested(propertyAndValue.property.getName()), //
 									insert) //
-			);
+					);
 		} else {
 
-			deleteReferencedEntities(entityInformation.getRequiredId(o), aggregateChange);
+			JdbcPersistentEntity<?> entity = context.getPersistentEntity(type);
+			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(o);
+
+			deleteReferencedEntities(identifierAccessor.getRequiredIdentifier(), aggregateChange);
 
 			Update<Object> update = DbAction.update(o, propertyPath, dependingOn);
 			aggregateChange.addAction(update);
@@ -104,7 +113,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 						aggregateChange, //
 						propertyPath.nested(pav.property.getName()), //
 						dependingOn) //
-		);
+				);
 	}
 
 	private Stream<PropertyAndValue> referencedEntities(Object o) {
@@ -116,7 +125,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 				.flatMap( //
 						p -> referencedEntity(p, persistentEntity.getPropertyAccessor(o)) //
 								.map(e -> new PropertyAndValue(p, e)) //
-		);
+				);
 	}
 
 	private Stream<Object> referencedEntity(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {

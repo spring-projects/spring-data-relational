@@ -80,7 +80,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context);
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, context,
-				cascadingDataAccessStrategy, operations);
+				operations, cascadingDataAccessStrategy);
 
 		delegatingDataAccessStrategy.setDelegate(defaultDataAccessStrategy);
 

@@ -139,11 +139,6 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 		return new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder, this);
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> JdbcPersistentEntityInformation<T, ?> getRequiredPersistentEntityInformation(Class<T> type) {
-		return new BasicJdbcPersistentEntityInformation<>((JdbcPersistentEntity<T>) getRequiredPersistentEntity(type));
-	}
-
 	public ConversionService getConversions() {
 		return conversions;
 	}

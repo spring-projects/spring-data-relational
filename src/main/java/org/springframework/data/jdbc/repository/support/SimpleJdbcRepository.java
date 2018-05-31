@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.CrudRepository;
 
 /**
@@ -35,7 +35,7 @@ import org.springframework.data.repository.CrudRepository;
 public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 
 	private final @NonNull JdbcAggregateOperations entityOperations;
-	private final @NonNull JdbcPersistentEntityInformation<T, ID> entityInformation;
+	private final @NonNull PersistentEntity<T, ?> entity;
 
 	/*
 	 * (non-Javadoc)
@@ -67,7 +67,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public Optional<T> findById(ID id) {
-		return Optional.ofNullable(entityOperations.findById(id, entityInformation.getJavaType()));
+		return Optional.ofNullable(entityOperations.findById(id, entity.getType()));
 	}
 
 	/*
@@ -76,7 +76,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public boolean existsById(ID id) {
-		return entityOperations.existsById(id, entityInformation.getJavaType());
+		return entityOperations.existsById(id, entity.getType());
 	}
 
 	/*
@@ -85,7 +85,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public Iterable<T> findAll() {
-		return entityOperations.findAll(entityInformation.getJavaType());
+		return entityOperations.findAll(entity.getType());
 	}
 
 	/*
@@ -94,7 +94,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public Iterable<T> findAllById(Iterable<ID> ids) {
-		return entityOperations.findAllById(ids, entityInformation.getJavaType());
+		return entityOperations.findAllById(ids, entity.getType());
 	}
 
 	/*
@@ -103,7 +103,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public long count() {
-		return entityOperations.count(entityInformation.getJavaType());
+		return entityOperations.count(entity.getType());
 	}
 
 	/*
@@ -112,7 +112,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public void deleteById(ID id) {
-		entityOperations.deleteById(id, entityInformation.getJavaType());
+		entityOperations.deleteById(id, entity.getType());
 	}
 
 	/*
@@ -121,7 +121,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public void delete(T instance) {
-		entityOperations.delete(instance, entityInformation.getJavaType());
+		entityOperations.delete(instance, entity.getType());
 	}
 
 	/*
@@ -136,6 +136,6 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 
 	@Override
 	public void deleteAll() {
-		entityOperations.deleteAll(entityInformation.getJavaType());
+		entityOperations.deleteAll(entity.getType());
 	}
 }

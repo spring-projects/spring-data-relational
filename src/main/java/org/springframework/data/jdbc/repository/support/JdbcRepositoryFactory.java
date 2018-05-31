@@ -21,11 +21,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.core.support.PersistentEntityInformation;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
@@ -84,7 +85,10 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
-		return (EntityInformation<T, ID>) context.getRequiredPersistentEntityInformation(aClass);
+
+		JdbcPersistentEntity<?> entity = context.getPersistentEntity(aClass);
+
+		return (EntityInformation<T, ID>) new PersistentEntityInformation<>(entity);
 	}
 
 	/*
@@ -94,12 +98,9 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcPersistentEntityInformation<?, ?> persistentEntityInformation = context
-				.getRequiredPersistentEntityInformation(repositoryInformation.getDomainType());
-
 		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, accessStrategy);
 
-		return new SimpleJdbcRepository<>(template, persistentEntityInformation);
+		return new SimpleJdbcRepository<>(template, context.getPersistentEntity(repositoryInformation.getDomainType()));
 	}
 
 	/*

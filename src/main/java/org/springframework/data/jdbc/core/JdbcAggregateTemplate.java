@@ -24,7 +24,7 @@ import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityDeleteWriter;
 import org.springframework.data.jdbc.core.conversion.JdbcEntityWriter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.event.AfterDeleteEvent;
 import org.springframework.data.jdbc.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.jdbc.core.mapping.event.AfterSaveEvent;
@@ -32,6 +32,8 @@ import org.springframework.data.jdbc.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.jdbc.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.jdbc.core.mapping.event.Identifier;
 import org.springframework.data.jdbc.core.mapping.event.Identifier.Specified;
+import org.springframework.data.mapping.IdentifierAccessor;
+import org.springframework.util.Assert;
 
 /**
  * {@link JdbcAggregateOperations} implementation, storing aggregates in and obtaining them from a JDBC data store.
@@ -52,7 +54,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	private final DataAccessStrategy accessStrategy;
 
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, JdbcMappingContext context,
-								 DataAccessStrategy dataAccessStrategy) {
+			DataAccessStrategy dataAccessStrategy) {
 
 		this.publisher = publisher;
 		this.context = context;
@@ -66,13 +68,15 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> void save(T instance) {
 
-		JdbcPersistentEntityInformation<T, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation((Class<T>) instance.getClass());
+		Assert.notNull(instance, "Agggregate instance must not be null!");
+
+		JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(instance.getClass());
+		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(instance);
 
 		AggregateChange change = createChange(instance);
 
 		publisher.publishEvent(new BeforeSaveEvent( //
-				Identifier.ofNullable(entityInformation.getId(instance)), //
+				Identifier.ofNullable(identifierAccessor.getIdentifier()), //
 				instance, //
 				change //
 		));
@@ -80,7 +84,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		change.executeWith(interpreter);
 
 		publisher.publishEvent(new AfterSaveEvent( //
-				Identifier.of(entityInformation.getId(instance)), //
+				Identifier.of(identifierAccessor.getIdentifier()), //
 				instance, //
 				change //
 		));
@@ -125,9 +129,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <S> void delete(S entity, Class<S> domainType) {
 
-		JdbcPersistentEntityInformation<S, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation(domainType);
-		deleteTree(entityInformation.getRequiredId(entity), entity, domainType);
+		IdentifierAccessor identifierAccessor = context.getRequiredPersistentEntity(domainType)
+				.getIdentifierAccessor(entity);
+
+		deleteTree(identifierAccessor.getRequiredIdentifier(), entity, domainType);
 	}
 
 	@Override
@@ -178,11 +183,14 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return aggregateChange;
 	}
 
-	@SuppressWarnings("unchecked")
 	private <T> void publishAfterLoad(Iterable<T> all) {
 
 		for (T e : all) {
-			publishAfterLoad(context.getRequiredPersistentEntityInformation((Class<T>) e.getClass()).getRequiredId(e), e);
+
+			JdbcPersistentEntity<?> entity = context.getPersistentEntity(e.getClass());
+			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(e);
+
+			publishAfterLoad(identifierAccessor.getRequiredIdentifier(), e);
 		}
 	}
 

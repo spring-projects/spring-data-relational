@@ -21,9 +21,11 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport;
 import org.springframework.data.auditing.config.AuditingConfiguration;
 import org.springframework.data.jdbc.domain.support.JdbcAuditingEventListener;
+import org.springframework.util.Assert;
 
 /**
  * {@link ImportBeanDefinitionRegistrar} which registers additional beans in order to enable auditing via the
@@ -68,7 +70,10 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	@Override
 	protected BeanDefinitionBuilder getAuditHandlerBeanDefinitionBuilder(AuditingConfiguration configuration) {
 
-		BeanDefinitionBuilder builder = super.getAuditHandlerBeanDefinitionBuilder(configuration);
+		Assert.notNull(configuration, "AuditingConfiguration must not be null!");
+
+		BeanDefinitionBuilder builder = configureDefaultAuditHandlerAttributes(configuration,
+				BeanDefinitionBuilder.rootBeanDefinition(IsNewAwareAuditingHandler.class));
 		return builder.addConstructorArgReference(JDBC_MAPPING_CONTEXT_BEAN_NAME);
 	}
 
@@ -84,8 +89,7 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 
 		Class<?> listenerClass = JdbcAuditingEventListener.class;
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(listenerClass) //
-				.addConstructorArgReference(AUDITING_HANDLER_BEAN_NAME) //
-				.addConstructorArgReference(JDBC_MAPPING_CONTEXT_BEAN_NAME);
+				.addConstructorArgReference(AUDITING_HANDLER_BEAN_NAME);
 
 		registerInfrastructureBeanWithId(builder.getRawBeanDefinition(), listenerClass.getName(), registry);
 	}

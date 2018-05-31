@@ -18,9 +18,7 @@ package org.springframework.data.jdbc.domain.support;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.ApplicationListener;
-import org.springframework.data.auditing.AuditingHandler;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
+import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.jdbc.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
 
@@ -31,14 +29,14 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
  *
  * @author Kazuki Shimizu
  * @author Jens Schauder
+ * @author Oliver Gierke
  * @see EnableJdbcAuditing
  * @since 1.0
  */
 @RequiredArgsConstructor
 public class JdbcAuditingEventListener implements ApplicationListener<BeforeSaveEvent> {
 
-	private final AuditingHandler handler;
-	private final JdbcMappingContext context;
+	private final IsNewAwareAuditingHandler handler;
 
 	/**
 	 * {@inheritDoc}
@@ -47,23 +45,6 @@ public class JdbcAuditingEventListener implements ApplicationListener<BeforeSave
 	 */
 	@Override
 	public void onApplicationEvent(BeforeSaveEvent event) {
-
-		Object entity = event.getEntity();
-
-		@SuppressWarnings("unchecked")
-		Class<Object> entityType = event.getChange().getEntityType();
-		JdbcPersistentEntityInformation<Object, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation(entityType);
-
-		invokeHandler(entity, entityInformation);
-	}
-
-	private <T> void invokeHandler(T entity, JdbcPersistentEntityInformation<T, ?> entityInformation) {
-
-		if (entityInformation.isNew(entity)) {
-			handler.markCreated(entity);
-		} else {
-			handler.markModified(entity);
-		}
+		handler.markAudited(event.getEntity());
 	}
 }

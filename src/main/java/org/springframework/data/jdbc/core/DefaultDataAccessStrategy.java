@@ -27,15 +27,14 @@ import java.util.stream.StreamSupport;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
-import org.springframework.data.jdbc.core.mapping.BasicJdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntityInformation;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.jdbc.support.JdbcUtil;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.repository.core.EntityInformation;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -58,8 +57,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private final @NonNull SqlGeneratorSource sqlGeneratorSource;
 	private final @NonNull JdbcMappingContext context;
-	private final @NonNull DataAccessStrategy accessStrategy;
 	private final @NonNull NamedParameterJdbcOperations operations;
+	private final @NonNull DataAccessStrategy accessStrategy;
 
 	/**
 	 * Creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
@@ -79,8 +78,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 		JdbcPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
-		JdbcPersistentEntityInformation<T, ?> entityInformation = context
-				.getRequiredPersistentEntityInformation(domainType);
 
 		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity);
 
@@ -103,7 +100,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		// if there is an id property and it was null before the save
 		// The database should have created an id and provided it.
-		if (idProperty != null && idValue == null && entityInformation.isNew(instance)) {
+
+		if (idProperty != null && idValue == null && persistentEntity.isNew(instance)) {
 			throw new IllegalStateException(String.format(ENTITY_NEW_AFTER_INSERT, persistentEntity));
 		}
 	}
@@ -278,15 +276,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@SuppressWarnings("unchecked")
 	private <S, ID> ID getIdValueOrNull(S instance, JdbcPersistentEntity<S> persistentEntity) {
 
-		EntityInformation<S, ID> entityInformation = (EntityInformation<S, ID>) context
-				.getRequiredPersistentEntityInformation(persistentEntity.getType());
-
-		ID idValue = entityInformation.getId(instance);
+		ID idValue = (ID) persistentEntity.getIdentifierAccessor(instance).getIdentifier();
 
 		return isIdPropertyNullOrScalarZero(idValue, persistentEntity) ? null : idValue;
 	}
 
-	private <S, ID> boolean isIdPropertyNullOrScalarZero(ID idValue, JdbcPersistentEntity<S> persistentEntity) {
+	private static <S, ID> boolean isIdPropertyNullOrScalarZero(ID idValue, JdbcPersistentEntity<S> persistentEntity) {
 
 		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
 		return idValue == null //
@@ -297,16 +292,16 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private <S> void setIdFromJdbc(S instance, KeyHolder holder, JdbcPersistentEntity<S> persistentEntity) {
 
-		JdbcPersistentEntityInformation<S, ?> entityInformation = new BasicJdbcPersistentEntityInformation<>(
-				persistentEntity);
-
 		try {
 
 			getIdFromHolder(holder, persistentEntity).ifPresent(it -> {
 
-				Class<?> targetType = persistentEntity.getRequiredIdProperty().getType();
-				Object converted = convert(it, targetType);
-				entityInformation.setId(instance, converted);
+				PersistentPropertyAccessor accessor = persistentEntity.getPropertyAccessor(instance);
+				ConvertingPropertyAccessor convertingPropertyAccessor = new ConvertingPropertyAccessor(accessor,
+						context.getConversions());
+				JdbcPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
+
+				convertingPropertyAccessor.setProperty(idProperty, it);
 			});
 
 		} catch (NonTransientDataAccessException e) {
