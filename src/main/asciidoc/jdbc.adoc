@@ -20,7 +20,7 @@ Just take a look at a basic JPA tutorial.
 But it often gets really confusing as to why JPA does a certain thing.
 Also, things that are really simple conceptually get rather difficult with JPA.
 
-Spring Data JDBC aims to be much simpler conceptually, by supporting the following features:
+Spring Data JDBC aims to be much simpler conceptually, by embracing the following design decisions:
 
 * If you load an entity, SQL statements get executed.
 Once this is done, you have a completely loaded entity.
@@ -43,7 +43,7 @@ These are possibly even more important for Spring Data JDBC, because they are, t
 
 An aggregate is a group of entities that is guaranteed to be consistent between atomic changes to it.
 A classic example is an `Order` with `OrderItems`.
-A property on `Order` (for example, `numberOfItems`) is consistent with the actual number of `OrderItems`.
+A property on `Order` (for example, `numberOfItems` is consistent with the actual number of `OrderItems`) remains consistent as changes are made.
 
 References across aggregates are not guaranteed to be consistent at all times.
 They are guaranteed to become consistent eventually.
@@ -95,6 +95,7 @@ Saving an aggregate can be performed with the `CrudRepository.save(…)` method.
 If the aggregate is new, this results in an insert for the aggregate root, followed by insert statements for all directly or indirectly referenced entities.
 
 If the aggregate root is not new, all referenced entities get deleted, the aggregate root gets updated, and all referenced entities get inserted again.
+Note that whether an instance is new is part of the instance's state.
 
 NOTE: This approach has some obvious downsides.
 If only few of the referenced entities have been actually changed, the deletion and insertion is wasteful.
@@ -173,8 +174,9 @@ The ID of an entity must be annotated with Spring Data's https://docs.spring.io/
 When your data base has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
 
 One important constraint is that, after saving an entity, the entity must not be new any more.
-With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the `id` column.
-If you are not using auto-increment columns, you can use a `BeforeSave` listener, which sets the `id` of the entity (covered later in this document).
+Note that whether an entity is new is part of the entity's state.
+With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
+If you are not using auto-increment columns, you can use a `BeforeSave` listener, which sets the ID of the entity (covered later in this document).
 
 [[jdbc.query-methods]]
 == Query Methods
