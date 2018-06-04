@@ -17,7 +17,9 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import junit.framework.AssertionFailedError;
@@ -34,6 +36,7 @@ import org.junit.Test;
 import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -73,7 +76,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context);
 
-		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, operations));
+		this.dataAccessStrategy = spy(
+				new DefaultDataAccessStrategy(generatorSource, context, operations, new EntityInstantiators()));
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, publisher, operations);
 
@@ -93,7 +97,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-99
@@ -112,7 +116,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 						AfterSaveEvent.class, //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-99
@@ -143,7 +147,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						BeforeDeleteEvent.class, //
 						AfterDeleteEvent.class //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-197
@@ -162,7 +166,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						AfterLoadEvent.class, //
 						AfterLoadEvent.class //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-197
@@ -181,7 +185,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						AfterLoadEvent.class, //
 						AfterLoadEvent.class //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-197
@@ -198,7 +202,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
 						AfterLoadEvent.class //
-				);
+		);
 	}
 
 	private static NamedParameterJdbcOperations createIdGeneratingOperations() {

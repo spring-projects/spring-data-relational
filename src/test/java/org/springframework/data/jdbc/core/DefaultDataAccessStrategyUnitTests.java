@@ -16,7 +16,8 @@
 package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import lombok.RequiredArgsConstructor;
@@ -26,8 +27,8 @@ import java.util.HashMap;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
@@ -47,8 +48,12 @@ public class DefaultDataAccessStrategyUnitTests {
 	HashMap<String, Object> additionalParameters = new HashMap<>();
 	ArgumentCaptor<SqlParameterSource> paramSourceCaptor = ArgumentCaptor.forClass(SqlParameterSource.class);
 
-	DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context,
-			jdbcOperations);
+	DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
+			new SqlGeneratorSource(context), //
+			context, //
+			jdbcOperations, //
+			new EntityInstantiators() //
+	);
 
 	@Test // DATAJDBC-146
 	public void additionalParameterForIdDoesNotLeadToDuplicateParameters() {

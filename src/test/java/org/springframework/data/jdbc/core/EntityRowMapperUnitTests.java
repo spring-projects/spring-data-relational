@@ -17,7 +17,8 @@ package org.springframework.data.jdbc.core;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import lombok.RequiredArgsConstructor;
@@ -40,12 +41,12 @@ import org.mockito.stubbing.Answer;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.convert.Jsr310Converters;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.jdbc.core.mapping.NamingStrategy;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
 /**
@@ -199,8 +200,12 @@ public class EntityRowMapperUnitTests {
 		DefaultConversionService.addDefaultConverters(conversionService);
 		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
 
-		return new EntityRowMapper<>((JdbcPersistentEntity<T>) context.getRequiredPersistentEntity(type), context,
-				accessStrategy);
+		return new EntityRowMapper<>( //
+				(JdbcPersistentEntity<T>) context.getRequiredPersistentEntity(type), //
+				context, //
+				new EntityInstantiators(), //
+				accessStrategy //
+		);
 	}
 
 	private static ResultSet mockResultSet(List<String> columns, Object... values) {
@@ -212,7 +217,7 @@ public class EntityRowMapperUnitTests {
 								"Number of values [%d] must be a multiple of the number of columns [%d]", //
 								values.length, //
 								columns.size() //
-						) //
+				) //
 		);
 
 		List<Map<String, Object>> result = convertValues(columns, values);
