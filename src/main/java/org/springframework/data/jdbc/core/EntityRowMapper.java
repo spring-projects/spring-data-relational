@@ -41,6 +41,7 @@ import org.springframework.jdbc.core.RowMapper;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Mark Paluch
  * @since 1.0
  */
 public class EntityRowMapper<T> implements RowMapper<T> {
@@ -63,8 +64,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		this.context = context;
 		this.instantiators = instantiators;
 		this.accessStrategy = accessStrategy;
-
-		idProperty = entity.getIdProperty();
+		this.idProperty = entity.getIdProperty();
 	}
 
 	/*
@@ -74,7 +74,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	@Override
 	public T mapRow(ResultSet resultSet, int rowNumber) throws SQLException {
 
-		T result = createInstance(resultSet);
+		T result = createInstance(entity, resultSet, "");
 
 		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(entity.getPropertyAccessor(result),
 				conversions);
@@ -95,12 +95,6 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		}
 
 		return result;
-	}
-
-	private T createInstance(ResultSet rs) {
-
-		return instantiators.getInstantiatorFor(entity) //
-				.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, ""));
 	}
 
 	/**
@@ -138,8 +132,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return null;
 		}
 
-		S instance = instantiators.getInstantiatorFor(entity) //
-				.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
+		S instance =
+				createInstance(entity, rs, prefix);
 
 		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(instance);
 		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
@@ -149,6 +143,12 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		}
 
 		return instance;
+	}
+
+	private <S> S createInstance(JdbcPersistentEntity<S> entity, ResultSet rs, String prefix) {
+
+		return instantiators.getInstantiatorFor(entity) //
+				.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
 	}
 
 	@RequiredArgsConstructor
