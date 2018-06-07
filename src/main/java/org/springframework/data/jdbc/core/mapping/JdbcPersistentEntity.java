@@ -18,6 +18,9 @@ package org.springframework.data.jdbc.core.mapping;
 import org.springframework.data.mapping.model.MutablePersistentEntity;
 
 /**
+ * A {@link org.springframework.data.mapping.PersistentEntity} interface with additional methods for JDBC/RDBMS related
+ * metadata.
+ *
  * @author Jens Schauder
  * @author Oliver Gierke
  * @since 1.0

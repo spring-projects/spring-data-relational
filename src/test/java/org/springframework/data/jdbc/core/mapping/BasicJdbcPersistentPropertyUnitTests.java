@@ -24,11 +24,6 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 
 import org.junit.Test;
-import org.springframework.data.jdbc.core.mapping.BasicJdbcPersistentProperty;
-import org.springframework.data.jdbc.core.mapping.Column;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
 
 /**

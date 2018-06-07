@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.Nullable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
@@ -289,6 +290,7 @@ public class QueryAnnotationHsqlIntegrationTests {
 		Optional<DummyEntity> findByNameAsOptional(@Param("name") String name);
 
 		// DATAJDBC-172
+		@Nullable
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE name = :name")
 		DummyEntity findByNameAsEntity(@Param("name") String name);
 

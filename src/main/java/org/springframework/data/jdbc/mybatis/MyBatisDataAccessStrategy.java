@@ -161,7 +161,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void deleteAll(PropertyPath propertyPath) {
+	public void deleteAll(PropertyPath propertyPath) {
 
 		Class<?> baseType = propertyPath.getOwningType().getType();
 		Class<?> leafType = propertyPath.getLeafProperty().getTypeInformation().getType();

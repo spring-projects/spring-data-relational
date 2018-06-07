@@ -20,6 +20,8 @@ import java.util.Map;
 
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * A {@link RowMapperMap} that allows for registration of {@link RowMapper}s via a fluent Api.
@@ -42,8 +44,20 @@ public class ConfigurableRowMapperMap implements RowMapperMap {
 		return this;
 	}
 
+	/**
+	 * Returs a {@link RowMapper} for the given type if such a {@link RowMapper} is present. If an exact match is found
+	 * that is returned. If not a {@link RowMapper} is returned that produces subtypes of the requested type. If no such
+	 * {@link RowMapper} is found the method returns {@code null}.
+	 *
+	 * @param type the type to be produced by the returned {@link RowMapper}. Must not be {@code null}.
+	 * @param <T> the type to be produced by the returned {@link RowMapper}.
+	 * @return Guaranteed to be not {@code null}.
+	 */
 	@SuppressWarnings("unchecked")
+	@Nullable
 	public <T> RowMapper<? extends T> rowMapperFor(Class<T> type) {
+
+		Assert.notNull(type, "Type must not be null");
 
 		RowMapper<? extends T> candidate = (RowMapper<? extends T>) rowMappers.get(type);
 

@@ -18,7 +18,8 @@ package org.springframework.data.jdbc.core.mapping.event;
 import org.springframework.data.jdbc.core.conversion.AggregateChange;
 
 /**
- * Subclasses of this get published before an entity gets saved to the database.
+ * Gets published before an entity gets saved to the database. The contained {@link AggregateChange} is mutable and may
+ * be changed in order to change the actions that get performed on the database as part of the save operation.
  *
  * @author Jens Schauder
  * @since 1.0
@@ -30,7 +31,7 @@ public class BeforeSaveEvent extends JdbcEventWithEntity {
 	/**
 	 * @param id of the entity to be saved.
 	 * @param instance the entity about to get saved.
-	 * @param change
+	 * @param change the {@link AggregateChange} that is going to get applied to the database.
 	 */
 	public BeforeSaveEvent(Identifier id, Object instance, AggregateChange change) {
 		super(id, instance, change);

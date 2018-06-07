@@ -16,10 +16,11 @@
 package org.springframework.data.jdbc.core.conversion;
 
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.lang.Nullable;
 
 /**
- * Converts an entity that is about to be deleted into {@link DbAction}s inside a {@link AggregateChange} that need to be
- * executed against the database to recreate the appropriate state in the database.
+ * Converts an entity that is about to be deleted into {@link DbAction}s inside a {@link AggregateChange} that need to
+ * be executed against the database to recreate the appropriate state in the database.
  *
  * @author Jens Schauder
  * @since 1.0
@@ -30,8 +31,16 @@ public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 		super(context);
 	}
 
+	/**
+	 * Fills the provided {@link AggregateChange} with the necessary {@link DbAction}s to delete the aggregate root
+	 * identified by {@code id}. If {@code id} is {@code null} it is interpreted as "Delete all aggregates of the type
+	 * indicated by the aggregateChange".
+	 * 
+	 * @param id May be {@code null}.
+	 * @param aggregateChange Must not be {@code null}.
+	 */
 	@Override
-	public void write(Object id, AggregateChange aggregateChange) {
+	public void write(@Nullable Object id, AggregateChange<?> aggregateChange) {
 
 		if (id == null) {
 			deleteAll(aggregateChange);
@@ -40,7 +49,7 @@ public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 		}
 	}
 
-	private void deleteAll(AggregateChange aggregateChange) {
+	private void deleteAll(AggregateChange<?> aggregateChange) {
 
 		context.referencedEntities(aggregateChange.getEntityType(), null)
 				.forEach(p -> aggregateChange.addAction(DbAction.deleteAll(p.getLeafType(), new JdbcPropertyPath(p), null)));
@@ -48,10 +57,16 @@ public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 		aggregateChange.addAction(DbAction.deleteAll(aggregateChange.getEntityType(), null, null));
 	}
 
-	private void deleteById(Object id, AggregateChange aggregateChange) {
+	private <T> void deleteById(Object id, AggregateChange<T> aggregateChange) {
 
 		deleteReferencedEntities(id, aggregateChange);
 
-		aggregateChange.addAction(DbAction.delete(id, aggregateChange.getEntityType(), aggregateChange.getEntity(), null, null));
+		aggregateChange.addAction(DbAction.delete( //
+				id, //
+				aggregateChange.getEntityType(), //
+				aggregateChange.getEntity(), //
+				null, //
+				null //
+		));
 	}
 }

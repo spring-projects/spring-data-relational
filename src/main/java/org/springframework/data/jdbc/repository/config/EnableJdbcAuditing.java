@@ -43,22 +43,17 @@ public @interface EnableJdbcAuditing {
 	/**
 	 * Configures the {@link AuditorAware} bean to be used to lookup the current principal.
 	 *
-	 * @return
 	 * @see AuditorAware
 	 */
 	String auditorAwareRef() default "";
 
 	/**
 	 * Configures whether the creation and modification dates are set.
-	 *
-	 * @return
 	 */
 	boolean setDates() default true;
 
 	/**
 	 * Configures whether the entity shall be marked as modified on creation.
-	 *
-	 * @return
 	 */
 	boolean modifyOnCreate() default true;
 
@@ -66,7 +61,6 @@ public @interface EnableJdbcAuditing {
 	 * Configures a {@link DateTimeProvider} bean name that allows customizing the {@link java.time.LocalDateTime} to be
 	 * used for setting creation and modification dates.
 	 *
-	 * @return
 	 * @see DateTimeProvider
 	 */
 	String dateTimeProviderRef() default "";

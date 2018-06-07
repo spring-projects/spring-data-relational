@@ -15,16 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
-import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
-import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.util.Lazy;
-import org.springframework.data.util.StreamUtils;
-import org.springframework.util.Assert;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -33,6 +23,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
+import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.util.Lazy;
+import org.springframework.data.util.StreamUtils;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
@@ -81,10 +82,21 @@ class SqlGenerator {
 		});
 	}
 
+	/**
+	 * Returns a query for selecting all simple properties of an entitty, including those for one-to-one relationhships.
+	 * Results are filtered using an {@code IN}-clause on the id column.
+	 *
+	 * @return a SQL statement. Guaranteed to be not {@code null}.
+	 */
 	String getFindAllInList() {
 		return findAllInListSql.get();
 	}
 
+	/**
+	 * Returns a query for selecting all simple properties of an entitty, including those for one-to-one relationhships.
+	 *
+	 * @return a SQL statement. Guaranteed to be not {@code null}.
+	 */
 	String getFindAll() {
 		return findAllSql.get();
 	}
@@ -96,17 +108,19 @@ class SqlGenerator {
 	 * a referencing entity.
 	 *
 	 * @param columnName name of the column of the FK back to the referencing entity.
-	 * @param keyColumn  if the property is of type {@link Map} this column contains the map key.
-	 * @param ordered    whether the SQL statement should include an ORDER BY for the keyColumn. If this is {@literal true}, the keyColumn must not be {@literal null}.
+	 * @param keyColumn if the property is of type {@link Map} this column contains the map key.
+	 * @param ordered whether the SQL statement should include an ORDER BY for the keyColumn. If this is {@code true},
+	 *          the keyColumn must not be {@code null}.
 	 * @return a SQL String.
 	 */
-	String getFindAllByProperty(String columnName, String keyColumn, boolean ordered) {
+	String getFindAllByProperty(String columnName, @Nullable String keyColumn, boolean ordered) {
 
-		Assert.isTrue(keyColumn != null || !ordered, "If the SQL statement should be ordered a keyColumn to order by must be provided.");
+		Assert.isTrue(keyColumn != null || !ordered,
+				"If the SQL statement should be ordered a keyColumn to order by must be provided.");
 
 		String baseSelect = (keyColumn != null) //
 				? createSelectBuilder().column(cb -> cb.tableAlias(entity.getTableName()).column(keyColumn).as(keyColumn))
-				.build()
+						.build()
 				: getFindAll();
 
 		String orderBy = ordered ? " ORDER BY " + keyColumn : "";
@@ -170,7 +184,7 @@ class SqlGenerator {
 			if (!property.isEntity() //
 					|| Collection.class.isAssignableFrom(property.getType()) //
 					|| Map.class.isAssignableFrom(property.getType()) //
-					) {
+			) {
 				continue;
 			}
 
@@ -266,7 +280,7 @@ class SqlGenerator {
 		return String.format("DELETE FROM %s WHERE %s = :id", entity.getTableName(), entity.getIdColumn());
 	}
 
-	String createDeleteAllSql(PropertyPath path) {
+	String createDeleteAllSql(@Nullable PropertyPath path) {
 
 		if (path == null) {
 			return String.format("DELETE FROM %s", entity.getTableName());
@@ -301,7 +315,7 @@ class SqlGenerator {
 		return String.format("DELETE FROM %s WHERE %s", entityToDelete.getTableName(), condition);
 	}
 
-	private String cascadeConditions(String innerCondition, PropertyPath path) {
+	private String cascadeConditions(String innerCondition, @Nullable PropertyPath path) {
 
 		if (path == null) {
 			return innerCondition;

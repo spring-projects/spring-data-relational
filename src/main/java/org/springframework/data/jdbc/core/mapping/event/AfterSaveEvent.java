@@ -19,7 +19,7 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.core.mapping.event.Identifier.Specified;
 
 /**
- * Subclasses of this get published after a new instance or a changed instance was saved in the database.
+ * Gets published after a new instance or a changed instance was saved in the database.
  *
  * @author Jens Schauder
  * @since 1.0
@@ -29,9 +29,9 @@ public class AfterSaveEvent extends JdbcEventWithIdAndEntity {
 	private static final long serialVersionUID = 8982085767296982848L;
 
 	/**
-	 * @param id identifier of
-	 * @param instance the newly saved entity.
-	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
+	 * @param id identifier of the saved entity.
+	 * @param instance the saved entity.
+	 * @param change the {@link AggregateChange} encoding the actions performed on the database as part of the delete.
 	 */
 	public AfterSaveEvent(Specified id, Object instance, AggregateChange change) {
 		super(id, instance, change);

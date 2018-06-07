@@ -36,29 +36,60 @@ class SelectBuilder {
 	private final List<Join> joins = new ArrayList<>();
 	private final List<WhereCondition> conditions = new ArrayList<>();
 
+	/**
+	 * Creates a {@link SelectBuilder} using the given table name.
+	 * 
+	 * @param tableName the table name. Must not be {@code null}.
+	 */
 	SelectBuilder(String tableName) {
 
 		this.tableName = tableName;
 	}
 
+	/**
+	 * Adds a column to the select list.
+	 *
+	 * @param columnSpec a function that specifies the column to add. The passed in {@link Column.ColumnBuilder} allows to
+	 *          specify details like alias and the source table. Must not be {@code null}.
+	 * @return {@code this}.
+	 */
 	SelectBuilder column(Function<Column.ColumnBuilder, Column.ColumnBuilder> columnSpec) {
 
 		columns.add(columnSpec.apply(Column.builder()).build());
 		return this;
 	}
 
+	/**
+	 * Adds a where clause to the select
+	 *
+	 * @param whereSpec a function specifying the details of the where clause by manipulating the passed in
+	 *          {@link WhereConditionBuilder}. Must not be {@code null}.
+	 * @return {@code this}.
+	 */
 	SelectBuilder where(Function<WhereConditionBuilder, WhereConditionBuilder> whereSpec) {
 
-		conditions.add(whereSpec.apply(new WhereConditionBuilder(this)).build());
+		conditions.add(whereSpec.apply(new WhereConditionBuilder()).build());
 		return this;
 	}
 
+	/**
+	 * Adds a join to the select.
+	 *
+	 * @param joinSpec a function specifying the details of the join by manipulating the passed in
+	 *          {@link Join.JoinBuilder}. Must not be {@code null}.
+	 * @return {@code this}.
+	 */
 	SelectBuilder join(Function<Join.JoinBuilder, Join.JoinBuilder> joinSpec) {
 
 		joins.add(joinSpec.apply(Join.builder()).build());
 		return this;
 	}
 
+	/**
+	 * Builds the actual SQL statement.
+	 *
+	 * @return a SQL statement. Guaranteed to be not {@code null}.
+	 */
 	String build() {
 
 		return selectFrom() + joinClause() + whereClause();
@@ -73,7 +104,7 @@ class SelectBuilder {
 		return conditions.stream() //
 				.map(WhereCondition::toSql) //
 				.collect(Collectors.joining("AND", " WHERE ", "") //
-				);
+		);
 	}
 
 	private String joinClause() {
@@ -102,14 +133,11 @@ class SelectBuilder {
 
 		private String fromTable;
 		private String fromColumn;
-		private final SelectBuilder selectBuilder;
 
 		private String operation = "=";
 		private String expression;
 
-		WhereConditionBuilder(SelectBuilder selectBuilder) {
-			this.selectBuilder = selectBuilder;
-		}
+		WhereConditionBuilder() {}
 
 		WhereConditionBuilder eq() {
 

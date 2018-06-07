@@ -32,6 +32,7 @@ import org.springframework.data.repository.core.support.RepositoryFactorySupport
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -102,6 +103,10 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 		JdbcPersistentEntity<?> entity = context.getPersistentEntity(aClass);
 
+		if (entity == null) {
+			return null;
+		}
+
 		return (EntityInformation<T, ID>) new PersistentEntityInformation<>(entity);
 	}
 
@@ -131,7 +136,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 * @see org.springframework.data.repository.core.support.RepositoryFactorySupport#getQueryLookupStrategy(org.springframework.data.repository.query.QueryLookupStrategy.Key, org.springframework.data.repository.query.EvaluationContextProvider)
 	 */
 	@Override
-	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key,
+	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable QueryLookupStrategy.Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		if (key != null //

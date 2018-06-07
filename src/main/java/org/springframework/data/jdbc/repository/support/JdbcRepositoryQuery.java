@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -51,7 +52,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
 	JdbcRepositoryQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapper<?> defaultRowMapper) {
+			@Nullable RowMapper<?> defaultRowMapper) {
 
 		Assert.notNull(queryMethod, "Query method must not be null!");
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null!");
@@ -127,7 +128,8 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		return parameters;
 	}
 
-	private static RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod, RowMapper<?> defaultRowMapper) {
+	@Nullable
+	private static RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod, @Nullable RowMapper<?> defaultRowMapper) {
 
 		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
 

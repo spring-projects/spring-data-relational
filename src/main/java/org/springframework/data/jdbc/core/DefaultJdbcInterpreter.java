@@ -27,6 +27,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -103,6 +104,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 		additionalColumnValues.put(columnName, identifier);
 	}
 
+	@Nullable
 	private Object getIdFromEntityDependingOn(DbAction dependingOn, JdbcPersistentEntity<?> persistentEntity) {
 		return persistentEntity.getIdentifierAccessor(dependingOn.getEntity()).getIdentifier();
 	}

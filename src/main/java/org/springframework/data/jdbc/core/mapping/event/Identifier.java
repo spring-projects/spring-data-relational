@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.mapping.event;
 
 import java.util.Optional;
 
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -40,29 +41,22 @@ public interface Identifier {
 		return SpecifiedIdentifier.of(identifier);
 	}
 
-	static Identifier ofNullable(Object identifier) {
-		return identifier == null ? Unset.UNSET : of(identifier);
-	}
-
 	/**
-	 * Creates a new {@link Identifier} for the given optional source value.
+	 * Produces an {@link Identifier} of appropriate type depending the argument being {@code null} or not.
 	 *
-	 * @param identifier must not be {@literal null}.
-	 * @return
+	 * @param identifier May be {@code null}.
+	 * @return an {@link Identifier}.
 	 */
-	static Identifier of(Optional<? extends Object> identifier) {
-
-		Assert.notNull(identifier, "Identifier must not be null!");
-
-		return identifier.map(it -> (Identifier) Identifier.of(it)).orElse(Unset.UNSET);
+	static Identifier ofNullable(@Nullable Object identifier) {
+		return identifier == null ? Unset.UNSET : of(identifier);
 	}
 
 	/**
 	 * Returns the identifier value.
 	 *
-	 * @return will never be {@literal null}.
+	 * @return will never be {@code null}.
 	 */
-	Optional<? extends Object> getOptionalValue();
+	Optional<?> getOptionalValue();
 
 	/**
 	 * A specified identifier that exposes a definitely present identifier value.

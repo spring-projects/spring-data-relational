@@ -75,8 +75,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 	/**
 	 * Creates the actual {@link RepositoryFactorySupport} instance.
-	 *
-	 * @return
 	 */
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {

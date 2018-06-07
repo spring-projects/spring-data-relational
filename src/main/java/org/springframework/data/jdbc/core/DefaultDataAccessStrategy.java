@@ -41,6 +41,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -88,6 +89,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
 
 		if (idValue != null) {
+
+			Assert.notNull(idProperty, "Since we have a non-null idValue, we must have an idProperty as well.");
+
 			additionalParameters.put(idProperty.getColumnName(), convert(idValue, idProperty.getColumnType()));
 		}
 
@@ -167,7 +171,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(org.springframework.data.mapping.PropertyPath)
 	 */
 	@Override
-	public <T> void deleteAll(PropertyPath propertyPath) {
+	public void deleteAll(PropertyPath propertyPath) {
 		operations.getJdbcOperations().update(sql(propertyPath.getOwningType().getType()).createDeleteAllSql(propertyPath));
 	}
 
@@ -177,13 +181,19 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public long count(Class<?> domainType) {
-		return operations.getJdbcOperations().queryForObject(sql(domainType).getCount(), Long.class);
+
+		Long result = operations.getJdbcOperations().queryForObject(sql(domainType).getCount(), Long.class);
+
+		Assert.notNull(result, "The result of a count query must not be null.");
+
+		return result;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, java.lang.Class)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
@@ -191,7 +201,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
 
 		try {
-			return operations.queryForObject(findOneSql, parameter, getEntityRowMapper(domainType));
+			return operations.queryForObject(findOneSql, parameter, (RowMapper<T>) getEntityRowMapper(domainType));
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -201,15 +211,17 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAll(java.lang.Class)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
-		return operations.query(sql(domainType).getFindAll(), getEntityRowMapper(domainType));
+		return operations.query(sql(domainType).getFindAll(), (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllById(java.lang.Iterable, java.lang.Class)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
@@ -223,7 +235,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 						.collect(Collectors.toList()) //
 		);
 
-		return operations.query(findAllInListSql, parameter, getEntityRowMapper(domainType));
+		return operations.query(findAllInListSql, parameter, (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
 	/*
@@ -242,9 +254,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		MapSqlParameterSource parameter = new MapSqlParameterSource(property.getReverseColumnName(), rootId);
 
-		return (Iterable<T>) operations.query(findAllByProperty, parameter, property.isMap() //
-				? getMapEntityRowMapper(property) //
-				: getEntityRowMapper(actualType));
+		return operations.query(findAllByProperty, parameter, //
+				(RowMapper<T>) (property.isMap() //
+						? this.getMapEntityRowMapper(property) //
+						: this.getEntityRowMapper(actualType)));
 	}
 
 	/*
@@ -257,7 +270,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String existsSql = sql(domainType).getExists();
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
 
-		return operations.queryForObject(existsSql, parameter, Boolean.class);
+		Boolean result = operations.queryForObject(existsSql, parameter, Boolean.class);
+
+		Assert.notNull(result, "The result of an exists query must not be null");
+
+		return result;
 	}
 
 	private <S> MapSqlParameterSource getPropertyMap(final S instance, JdbcPersistentEntity<S> persistentEntity) {
@@ -277,6 +294,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@SuppressWarnings("unchecked")
+	@Nullable
 	private <S, ID> ID getIdValueOrNull(S instance, JdbcPersistentEntity<S> persistentEntity) {
 
 		ID idValue = (ID) persistentEntity.getIdentifierAccessor(instance).getIdentifier();
@@ -284,7 +302,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return isIdPropertyNullOrScalarZero(idValue, persistentEntity) ? null : idValue;
 	}
 
-	private static <S, ID> boolean isIdPropertyNullOrScalarZero(ID idValue, JdbcPersistentEntity<S> persistentEntity) {
+	private static <S, ID> boolean isIdPropertyNullOrScalarZero(@Nullable ID idValue,
+			JdbcPersistentEntity<S> persistentEntity) {
 
 		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
 		return idValue == null //
@@ -319,22 +338,29 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			return Optional.ofNullable(holder.getKey());
 		} catch (InvalidDataAccessApiUsageException e) {
 			// Postgres returns a value for each column
-			return Optional.ofNullable(holder.getKeys().get(persistentEntity.getIdColumn()));
+			Map<String, Object> keys = holder.getKeys();
+			return Optional.ofNullable(keys == null ? null : keys.get(persistentEntity.getIdColumn()));
 		}
 	}
 
-	public <T> EntityRowMapper<T> getEntityRowMapper(Class<T> domainType) {
+	public EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, instantiators, accessStrategy);
 	}
 
-	private RowMapper getMapEntityRowMapper(JdbcPersistentProperty property) {
-		return new MapEntityRowMapper(getEntityRowMapper(property.getActualType()), property.getKeyColumn());
+	@SuppressWarnings("unchecked")
+	private RowMapper<?> getMapEntityRowMapper(JdbcPersistentProperty property) {
+
+		String keyColumn = property.getKeyColumn();
+
+		Assert.notNull(keyColumn, () -> "keyColumn must not be null for " + property);
+
+		return new MapEntityRowMapper<>(getEntityRowMapper(property.getActualType()), keyColumn);
 	}
 
 	private <T> MapSqlParameterSource createIdParameterSource(Object id, Class<T> domainType) {
 
-		return new MapSqlParameterSource("id",
-				convert(id, getRequiredPersistentEntity(domainType).getRequiredIdProperty().getColumnType()));
+		Class<?> columnType = getRequiredPersistentEntity(domainType).getRequiredIdProperty().getColumnType();
+		return new MapSqlParameterSource("id", convert(id, columnType));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -342,7 +368,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return (JdbcPersistentEntity<S>) context.getRequiredPersistentEntity(domainType);
 	}
 
-	private <V> V convert(Object from, Class<V> to) {
+	@Nullable
+	private <V> V convert(@Nullable Object from, Class<V> to) {
 
 		if (from == null) {
 			return null;

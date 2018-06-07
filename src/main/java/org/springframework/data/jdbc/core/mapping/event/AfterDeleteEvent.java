@@ -34,7 +34,8 @@ public class AfterDeleteEvent extends JdbcEventWithId {
 	/**
 	 * @param id of the entity.
 	 * @param instance the deleted entity if it is available.
-	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
+	 * @param change the {@link AggregateChange} encoding the actions that were performed on the database as part of the
+	 *          delete operation.
 	 */
 	public AfterDeleteEvent(Specified id, Optional<Object> instance, AggregateChange change) {
 		super(id, instance, change);

@@ -35,9 +35,13 @@ import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
- * Maps a ResultSet to an entity of type {@code T}, including entities referenced.
+ * Maps a {@link ResultSet} to an entity of type {@code T}, including entities referenced.
+ *
+ * This {@link RowMapper} might trigger additional SQL statements in order to load other members of the same aggregate.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
@@ -72,7 +76,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	 * @see org.springframework.jdbc.core.RowMapper#mapRow(java.sql.ResultSet, int)
 	 */
 	@Override
-	public T mapRow(ResultSet resultSet, int rowNumber) throws SQLException {
+	public T mapRow(ResultSet resultSet, int rowNumber) {
 
 		T result = createInstance(entity, resultSet, "");
 
@@ -83,9 +87,9 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 		for (JdbcPersistentProperty property : entity) {
 
-			if (property.isCollectionLike()) {
+			if (property.isCollectionLike() && id != null) {
 				propertyAccessor.setProperty(property, accessStrategy.findAllByProperty(id, property));
-			} else if (property.isMap()) {
+			} else if (property.isMap() && id != null) {
 
 				Iterable<Object> allByProperty = accessStrategy.findAllByProperty(id, property);
 				propertyAccessor.setProperty(property, ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(allByProperty));
@@ -105,6 +109,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	 * @param prefix to be used for all column names accessed by this method. Must not be {@code null}.
 	 * @return the value read from the {@link ResultSet}. May be {@code null}.
 	 */
+	@Nullable
 	private Object readFrom(ResultSet resultSet, JdbcPersistentProperty property, String prefix) {
 
 		try {
@@ -120,6 +125,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		}
 	}
 
+	@Nullable
 	private <S> S readEntityFrom(ResultSet rs, PersistentProperty<?> property) {
 
 		String prefix = property.getName() + "_";
@@ -166,7 +172,9 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		@Override
 		public <T> T getParameterValue(Parameter<T, JdbcPersistentProperty> parameter) {
 
-			String column = prefix + entity.getRequiredPersistentProperty(parameter.getName()).getColumnName();
+			String parameterName = parameter.getName();
+			Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
+			String column = prefix + entity.getRequiredPersistentProperty(parameterName).getColumnName();
 
 			try {
 				return conversionService.convert(resultSet.getObject(column), parameter.getType().getType());

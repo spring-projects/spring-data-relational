@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository;
 
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.Nullable;
 
 /**
  * A map from a type to a {@link RowMapper} to be used for extracting that type from {@link java.sql.ResultSet}s.
@@ -39,5 +40,6 @@ public interface RowMapperMap {
 		}
 	};
 
+	@Nullable
 	<T> RowMapper<? extends T> rowMapperFor(Class<T> type);
 }

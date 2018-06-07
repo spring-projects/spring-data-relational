@@ -52,24 +52,27 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 		this.context = context;
 	}
 
+	/**
+	 * Converts an aggregate represented by its aggregate root into a list of {@link DbAction}s and adds them to the
+	 * {@link AggregateChange} passed in as an argument.
+	 * 
+	 * @param aggregateRoot the aggregate root to be written to the {@link AggregateChange} Must not be {@code null}.
+	 * @param aggregateChange the {@link AggregateChange} to which the {@link DbAction}s get written.
+	 */
 	@Override
-	public void write(Object o, AggregateChange aggregateChange) {
-		write(o, aggregateChange, null);
-	}
+	public void write(Object aggregateRoot, AggregateChange aggregateChange) {
 
-	private void write(Object o, AggregateChange aggregateChange, DbAction dependingOn) {
-
-		Class<?> type = o.getClass();
+		Class<?> type = aggregateRoot.getClass();
 		JdbcPropertyPath propertyPath = JdbcPropertyPath.from("", type);
 
 		PersistentEntity<?, JdbcPersistentProperty> persistentEntity = context.getRequiredPersistentEntity(type);
 
-		if (persistentEntity.isNew(o)) {
+		if (persistentEntity.isNew(aggregateRoot)) {
 
-			Insert<Object> insert = DbAction.insert(o, propertyPath, dependingOn);
+			Insert<Object> insert = DbAction.insert(aggregateRoot, propertyPath, null);
 			aggregateChange.addAction(insert);
 
-			referencedEntities(o) //
+			referencedEntities(aggregateRoot) //
 					.forEach( //
 							propertyAndValue -> //
 							insertReferencedEntities( //
@@ -77,19 +80,19 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 									aggregateChange, //
 									propertyPath.nested(propertyAndValue.property.getName()), //
 									insert) //
-					);
+			);
 		} else {
 
-			JdbcPersistentEntity<?> entity = context.getPersistentEntity(type);
-			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(o);
+			JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(type);
+			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(aggregateRoot);
 
 			deleteReferencedEntities(identifierAccessor.getRequiredIdentifier(), aggregateChange);
 
-			Update<Object> update = DbAction.update(o, propertyPath, dependingOn);
+			Update<Object> update = DbAction.update(aggregateRoot, propertyPath, null);
 			aggregateChange.addAction(update);
 
-			referencedEntities(o).forEach(propertyAndValue -> insertReferencedEntities(propertyAndValue, aggregateChange,
-					propertyPath.nested(propertyAndValue.property.getName()), update));
+			referencedEntities(aggregateRoot).forEach(propertyAndValue -> insertReferencedEntities(propertyAndValue,
+					aggregateChange, propertyPath.nested(propertyAndValue.property.getName()), update));
 		}
 	}
 
@@ -113,7 +116,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 						aggregateChange, //
 						propertyPath.nested(pav.property.getName()), //
 						dependingOn) //
-				);
+		);
 	}
 
 	private Stream<PropertyAndValue> referencedEntities(Object o) {
@@ -125,7 +128,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 				.flatMap( //
 						p -> referencedEntity(p, persistentEntity.getPropertyAccessor(o)) //
 								.map(e -> new PropertyAndValue(p, e)) //
-				);
+		);
 	}
 
 	private Stream<Object> referencedEntity(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
@@ -155,6 +158,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 		return singlePropertyAsStream(p, propertyAccessor);
 	}
 
+	@SuppressWarnings("unchecked")
 	private Stream<Object> collectionPropertyAsStream(JdbcPersistentProperty p,
 			PersistentPropertyAccessor propertyAccessor) {
 
@@ -165,6 +169,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 				: ((Collection<Object>) property).stream();
 	}
 
+	@SuppressWarnings("unchecked")
 	private Stream<Object> listPropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
@@ -180,6 +185,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 		return listProperty.stream().map(e -> new KeyValue(index.getAndIncrement(), e));
 	}
 
+	@SuppressWarnings("unchecked")
 	private Stream<Object> mapPropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);

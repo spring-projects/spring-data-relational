@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core.mapping.event;
 
+import lombok.NonNull;
 import lombok.Value;
 
 import java.util.Optional;
@@ -31,14 +32,14 @@ import org.springframework.data.jdbc.core.mapping.event.Identifier.Specified;
 @Value(staticConstructor = "of")
 class SpecifiedIdentifier implements Specified {
 
-	Object value;
+	@NonNull Object value;
 
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.mapping.event.Identifier#getOptionalValue()
 	 */
 	@Override
-	public Optional<? extends Object> getOptionalValue() {
+	public Optional<?> getOptionalValue() {
 		return Optional.of(value);
 	}
 }

@@ -65,7 +65,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void deleteAll(PropertyPath propertyPath) {
+	public void deleteAll(PropertyPath propertyPath) {
 		collectVoid(das -> das.deleteAll(propertyPath));
 	}
 
@@ -100,7 +100,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private <T> T collect(Function<DataAccessStrategy, T> function) {
-		return strategies.stream().collect(new FunctionCollector<T>(function));
+		return strategies.stream().collect(new FunctionCollector<>(function));
 	}
 
 	private void collectVoid(Consumer<DataAccessStrategy> consumer) {

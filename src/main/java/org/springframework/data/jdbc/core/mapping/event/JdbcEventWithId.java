@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.core.mapping.event.Identifier.Specified;
+import org.springframework.lang.Nullable;
 
 /**
  * A {@link SimpleJdbcEvent} guaranteed to have an identifier.
@@ -32,7 +33,7 @@ public class JdbcEventWithId extends SimpleJdbcEvent implements WithId {
 
 	private final Specified id;
 
-	public JdbcEventWithId(Specified id, Optional<Object> entity, AggregateChange change) {
+	public JdbcEventWithId(Specified id, Optional<Object> entity, @Nullable AggregateChange change) {
 
 		super(id, entity, change);
 

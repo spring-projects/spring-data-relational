@@ -29,6 +29,7 @@ import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.Lazy;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -43,15 +44,15 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 		implements JdbcPersistentProperty {
 
 	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
-	private final JdbcMappingContext context;
-
-	private final Lazy<Optional<String>> columnName;
 
 	static {
 		javaToDbType.put(Enum.class, String.class);
 		javaToDbType.put(ZonedDateTime.class, String.class);
 		javaToDbType.put(Temporal.class, Date.class);
 	}
+
+	private final JdbcMappingContext context;
+	private final Lazy<Optional<String>> columnName;
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
@@ -85,6 +86,7 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty#getColumnName()
 	 */
+	@Override
 	public String getColumnName() {
 		return columnName.get().orElseGet(() -> context.getNamingStrategy().getColumnName(this));
 	}
@@ -123,15 +125,16 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 		return isMap() || isListLike();
 	}
 
-	private boolean isListLike() {
-		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
-	}
-
 	@Override
 	public boolean isOrdered() {
 		return isListLike();
 	}
 
+	private boolean isListLike() {
+		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
+	}
+
+	@Nullable
 	private Class columnTypeIfEntity(Class type) {
 
 		JdbcPersistentEntity<?> persistentEntity = context.getPersistentEntity(type);

@@ -33,6 +33,7 @@ import org.springframework.util.Assert;
  */
 class IterableOfEntryToMapConverter implements ConditionalConverter, Converter<Iterable<?>, Map<?, ?>> {
 
+	@SuppressWarnings("unchecked")
 	@Nullable
 	@Override
 	public Map<?, ?> convert(Iterable<?> source) {
@@ -58,7 +59,7 @@ class IterableOfEntryToMapConverter implements ConditionalConverter, Converter<I
 	 *
 	 * @param sourceType {@link TypeDescriptor} to convert from.
 	 * @param targetType {@link TypeDescriptor} to convert to.
-	 * @return
+	 * @return if the sourceType can be converted to a Map.
 	 */
 	@Override
 	public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {

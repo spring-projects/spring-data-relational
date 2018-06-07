@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.core.mapping.event;
 import java.util.Optional;
 
 /**
+ * an event signalling JDBC processing. It offers access to an {@link Identifier} of the aggregate root affected by the
+ * event.
  *
  * @author Oliver Gierke
  * @since 1.0
@@ -25,16 +27,16 @@ import java.util.Optional;
 public interface JdbcEvent {
 
 	/**
-	 * The identifier of the entity, triggering this event. Also available via {@link #getSource()}.
+	 * The identifier of the aggregate root, triggering this event.
 	 *
-	 * @return the source of the event as an {@link Identifier}.
+	 * @return the source of the event as an {@link Identifier}. Guaranteed to be not {@code null}.
 	 */
 	Identifier getId();
 
 	/**
-	 * Returns the entity the event was triggered for.
+	 * Returns the aggregate root the event was triggered for.
 	 *
-	 * @return will never be {@literal null}.
+	 * @return will never be {@code null}.
 	 */
 	Optional<Object> getOptionalEntity();
 

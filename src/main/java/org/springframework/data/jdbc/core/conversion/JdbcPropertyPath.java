@@ -16,13 +16,12 @@
 package org.springframework.data.jdbc.core.conversion;
 
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
  * A replacement for {@link org.springframework.data.mapping.PropertyPath} as long as it doesn't support objects with
- * empty path.
- *
- * See https://jira.spring.io/browse/DATACMNS-1204.
+ * empty path. See https://jira.spring.io/browse/DATACMNS-1204.
  *
  * @author Jens Schauder
  * @since 1.0
@@ -34,11 +33,15 @@ public class JdbcPropertyPath {
 
 	JdbcPropertyPath(PropertyPath path) {
 
+		Assert.notNull(path, "path must not be null if rootType is not set");
+
 		this.path = path;
 		this.rootType = null;
 	}
 
 	private JdbcPropertyPath(Class<?> type) {
+
+		Assert.notNull(type, "type must not be null if path is not set");
 
 		this.path = null;
 		this.rootType = type;
@@ -54,7 +57,10 @@ public class JdbcPropertyPath {
 	}
 
 	public JdbcPropertyPath nested(String name) {
-		return path == null ? new JdbcPropertyPath(PropertyPath.from(name, rootType)) : new JdbcPropertyPath(path.nested(name));
+
+		return path == null ? //
+				new JdbcPropertyPath(PropertyPath.from(name, rootType)) //
+				: new JdbcPropertyPath(path.nested(name));
 	}
 
 	public PropertyPath getPath() {

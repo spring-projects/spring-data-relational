@@ -49,7 +49,19 @@ public class AggregateChange<T> {
 		actions.add(action);
 	}
 
+	/**
+	 * The kind of action to be performed on an aggregate.
+	 */
 	public enum Kind {
-		SAVE, DELETE
+		/**
+		 * A {@code SAVE} of an aggregate typically involves an {@code insert} or {@code update} on the aggregate root plus
+		 * {@code insert}s, {@code update}s, and {@code delete}s on the other elements of an aggregate.
+		 */
+		SAVE,
+
+		/**
+		 * A {@code DELETE} of an aggregate typically involves a {@code delete} on all contained entities.
+		 */
+		DELETE
 	}
 }

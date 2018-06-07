@@ -37,6 +37,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -57,8 +58,8 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	));
 
 	@Getter private final NamingStrategy namingStrategy;
+	private final GenericConversionService conversions = getDefaultConversionService();
 	@Getter private SimpleTypeHolder simpleTypeHolder;
-	private GenericConversionService conversions = getDefaultConversionService();
 
 	/**
 	 * Creates a new {@link JdbcMappingContext}.
@@ -88,6 +89,14 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 		setSimpleTypeHolder(new SimpleTypeHolder(CUSTOM_SIMPLE_TYPES, true));
 	}
 
+	private static GenericConversionService getDefaultConversionService() {
+
+		DefaultConversionService conversionService = new DefaultConversionService();
+		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
+
+		return conversionService;
+	}
+
 	@Override
 	public void setSimpleTypeHolder(SimpleTypeHolder simpleTypes) {
 		super.setSimpleTypeHolder(simpleTypes);
@@ -98,7 +107,7 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	 * returns all {@link PropertyPath}s reachable from the root type in the order needed for deleting, i.e. the deepest
 	 * reference first.
 	 */
-	public List<PropertyPath> referencedEntities(Class<?> rootType, PropertyPath path) {
+	public List<PropertyPath> referencedEntities(Class<?> rootType, @Nullable PropertyPath path) {
 
 		List<PropertyPath> paths = new ArrayList<>();
 
@@ -141,13 +150,5 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 
 	public ConversionService getConversions() {
 		return conversions;
-	}
-
-	private static GenericConversionService getDefaultConversionService() {
-
-		DefaultConversionService conversionService = new DefaultConversionService();
-		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
-
-		return conversionService;
 	}
 }

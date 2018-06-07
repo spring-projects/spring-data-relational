@@ -16,9 +16,10 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.lang.Nullable;
 
 /**
- * A {@link PersistentProperty} for JDBC.
+ * A {@link PersistentProperty} with methods for additional JDBC/RDBMS related meta data.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
@@ -36,7 +37,7 @@ public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersisten
 	/**
 	 * The type to be used to store this property in the database.
 	 *
-	 * @return a {@link Class} that is suitable for usage with JDBC drivers
+	 * @return a {@link Class} that is suitable for usage with JDBC drivers.
 	 */
 	Class<?> getColumnType();
 
@@ -45,10 +46,12 @@ public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersisten
 
 	String getReverseColumnName();
 
+	@Nullable
 	String getKeyColumn();
 
 	/**
-	 * Returns if this property is a qualified property, i.e. a property referencing multiple elements that can get picked by a key or an index.
+	 * Returns if this property is a qualified property, i.e. a property referencing multiple elements that can get picked
+	 * by a key or an index.
 	 */
 	boolean isQualified();
 

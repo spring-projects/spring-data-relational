@@ -18,12 +18,23 @@ package org.springframework.data.jdbc.core.mapping;
 import org.springframework.core.convert.support.GenericConversionService;
 
 /**
+ * Interface to register custom conversions.
+ *
  * @author Jens Schauder
  * @since 1.0
  */
 public interface ConversionCustomizer {
 
-	public static ConversionCustomizer NONE = __ -> {};
+	/**
+	 * Noop instance to be used as a default.
+	 */
+	ConversionCustomizer NONE = __ -> {};
 
+	/**
+	 * Gets called in order to allow the customization of the {@link org.springframework.core.convert.ConversionService}.
+	 * Typically used by registering additional conversions.
+	 * 
+	 * @param conversions the conversions that get customized.
+	 */
 	void customize(GenericConversionService conversions);
 }

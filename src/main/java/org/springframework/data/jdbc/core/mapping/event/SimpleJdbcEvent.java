@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.springframework.context.ApplicationEvent;
 import org.springframework.data.jdbc.core.conversion.AggregateChange;
+import org.springframework.lang.Nullable;
 
 /**
  * The common superclass for all events published by JDBC repositories. {@link #getSource} contains the
@@ -35,7 +36,7 @@ class SimpleJdbcEvent extends ApplicationEvent implements JdbcEvent {
 	private final Object entity;
 	private final AggregateChange change;
 
-	SimpleJdbcEvent(Identifier id, Optional<Object> entity, AggregateChange change) {
+	SimpleJdbcEvent(Identifier id, Optional<Object> entity, @Nullable AggregateChange change) {
 
 		super(id);
 

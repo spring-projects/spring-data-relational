@@ -58,7 +58,7 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void deleteAll(PropertyPath propertyPath) {
+	public void deleteAll(PropertyPath propertyPath) {
 		delegate.deleteAll(propertyPath);
 	}
 

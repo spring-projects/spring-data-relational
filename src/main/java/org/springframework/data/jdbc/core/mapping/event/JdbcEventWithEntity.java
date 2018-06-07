@@ -29,7 +29,7 @@ public class JdbcEventWithEntity extends SimpleJdbcEvent implements WithEntity {
 
 	private static final long serialVersionUID = 4891455396602090638L;
 
-	public JdbcEventWithEntity(Identifier id, Object entity, AggregateChange change) {
+	JdbcEventWithEntity(Identifier id, Object entity, AggregateChange change) {
 		super(id, Optional.of(entity), change);
 	}
 }

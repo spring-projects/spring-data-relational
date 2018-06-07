@@ -60,6 +60,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 *
 	 * @return May be {@code null}.
 	 */
+	@Nullable
 	public Class<?> getRowMapperClass() {
 		return getMergedAnnotationAttribute("rowMapperClass");
 	}
@@ -75,6 +76,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	}
 
 	@SuppressWarnings("unchecked")
+	@Nullable
 	private <T> T getMergedAnnotationAttribute(String attribute) {
 
 		Query queryAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);

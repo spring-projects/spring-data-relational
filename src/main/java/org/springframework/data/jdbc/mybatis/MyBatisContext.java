@@ -17,10 +17,12 @@ package org.springframework.data.jdbc.mybatis;
 
 import java.util.Map;
 
+import org.springframework.lang.Nullable;
+
 /**
- * {@link MyBatisContext} instances get passed to MyBatis mapped statements as arguments, making Ids, instances, domainType and other attributes available to the statements.
- *
- * All methods might return {@literal null} depending on the kind of values available on invocation.
+ * {@link MyBatisContext} instances get passed to MyBatis mapped statements as arguments, making Ids, instances,
+ * domainType and other attributes available to the statements. All methods might return {@literal null} depending on
+ * the kind of values available on invocation.
  *
  * @author Jens Schauder
  * @since 1.0
@@ -32,7 +34,7 @@ public class MyBatisContext {
 	private final Class domainType;
 	private final Map<String, Object> additonalValues;
 
-	public MyBatisContext(Object id, Object instance, Class domainType, Map<String, Object> additonalValues) {
+	public MyBatisContext(@Nullable Object id, @Nullable Object instance, Class domainType, Map<String, Object> additonalValues) {
 
 		this.id = id;
 		this.instance = instance;
@@ -40,18 +42,43 @@ public class MyBatisContext {
 		this.additonalValues = additonalValues;
 	}
 
+	/**
+	 * The ID of the entity to query/act upon.
+	 *
+	 * @return Might return {@code null}.
+	 */
+	@Nullable
 	public Object getId() {
 		return id;
 	}
 
+	/**
+	 * The entity to act upon. This is {@code null} for queries, since the object doesn't exist before the query.
+	 * 
+	 * @return Might return {@code null}.
+	 */
+	@Nullable
 	public Object getInstance() {
 		return instance;
 	}
 
+	/**
+	 * The domain type of the entity to query or act upon.
+	 *
+	 * @return Might return {@code null}.
+	 */
+	@Nullable
 	public Class getDomainType() {
 		return domainType;
 	}
 
+	/**
+	 * Returns a value for the given key. Used to communicate ids of parent entities.
+	 *
+	 * @param key Must not be {@code null}.
+	 * @return Might return {@code null}.
+	 */
+	@Nullable
 	public Object get(String key) {
 		return additonalValues.get(key);
 	}

@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.conversion;
 
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.util.Assert;
 
 /**
  * Common infrastructure needed by different implementations of {@link EntityWriter}<Object, AggregateChange>.
@@ -24,23 +25,26 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
  * @author Jens Schauder
  * @since 1.0
  */
-abstract class JdbcEntityWriterSupport implements EntityWriter<Object, AggregateChange> {
+abstract class JdbcEntityWriterSupport implements EntityWriter<Object, AggregateChange<?>> {
 	protected final JdbcMappingContext context;
 
 	JdbcEntityWriterSupport(JdbcMappingContext context) {
+
+		Assert.notNull(context, "Context must not be null");
+
 		this.context = context;
 	}
 
 	/**
-	 * add {@link org.springframework.data.jdbc.core.conversion.DbAction.Delete} actions to the {@link AggregateChange} for
-	 * deleting all referenced entities.
+	 * add {@link org.springframework.data.jdbc.core.conversion.DbAction.Delete} actions to the {@link AggregateChange}
+	 * for deleting all referenced entities.
 	 *
 	 * @param id id of the aggregate root, of which the referenced entities get deleted.
-	 * @param aggregateChange the change object to which the actions should get added. Must not be {@literal null}
+	 * @param aggregateChange the change object to which the actions should get added. Must not be {@code null}
 	 */
-	void deleteReferencedEntities(Object id, AggregateChange aggregateChange) {
+	void deleteReferencedEntities(Object id, AggregateChange<?> aggregateChange) {
 
-		context.referencedEntities(aggregateChange.getEntityType(), null)
-				.forEach(p -> aggregateChange.addAction(DbAction.delete(id, p.getLeafType(), null, new JdbcPropertyPath(p), null)));
+		context.referencedEntities(aggregateChange.getEntityType(), null).forEach(
+				p -> aggregateChange.addAction(DbAction.delete(id, p.getLeafType(), null, new JdbcPropertyPath(p), null)));
 	}
 }

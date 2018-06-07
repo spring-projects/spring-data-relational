@@ -33,6 +33,7 @@ import org.springframework.data.jdbc.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.jdbc.core.mapping.event.Identifier;
 import org.springframework.data.jdbc.core.mapping.event.Identifier.Specified;
 import org.springframework.data.mapping.IdentifierAccessor;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -68,7 +69,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <T> void save(T instance) {
 
-		Assert.notNull(instance, "Agggregate instance must not be null!");
+		Assert.notNull(instance, "Aggregate instance must not be null!");
 
 		JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(instance.getClass());
 		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(instance);
@@ -83,8 +84,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		change.executeWith(interpreter);
 
+		Object identifier = identifierAccessor.getIdentifier();
+
+		Assert.notNull(identifier, "After saving the identifier must not be null");
+
 		publisher.publishEvent(new AfterSaveEvent( //
-				Identifier.of(identifierAccessor.getIdentifier()), //
+				Identifier.of(identifier), //
 				instance, //
 				change //
 		));
@@ -127,12 +132,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <S> void delete(S entity, Class<S> domainType) {
+	public <S> void delete(S aggregateRoot, Class<S> domainType) {
 
 		IdentifierAccessor identifierAccessor = context.getRequiredPersistentEntity(domainType)
-				.getIdentifierAccessor(entity);
+				.getIdentifierAccessor(aggregateRoot);
 
-		deleteTree(identifierAccessor.getRequiredIdentifier(), entity, domainType);
+		deleteTree(identifierAccessor.getRequiredIdentifier(), aggregateRoot, domainType);
 	}
 
 	@Override
@@ -147,7 +152,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		change.executeWith(interpreter);
 	}
 
-	private void deleteTree(Object id, Object entity, Class<?> domainType) {
+	private void deleteTree(Object id, @Nullable Object entity, Class<?> domainType) {
 
 		AggregateChange change = createDeletingChange(id, entity, domainType);
 
@@ -169,7 +174,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@SuppressWarnings("unchecked")
-	private AggregateChange createDeletingChange(Object id, Object entity, Class<?> domainType) {
+	private AggregateChange createDeletingChange(Object id, @Nullable Object entity, Class<?> domainType) {
 
 		AggregateChange<?> aggregateChange = new AggregateChange(Kind.DELETE, domainType, entity);
 		jdbcEntityDeleteWriter.write(id, aggregateChange);
@@ -187,7 +192,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		for (T e : all) {
 
-			JdbcPersistentEntity<?> entity = context.getPersistentEntity(e.getClass());
+			JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(e.getClass());
 			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(e);
 
 			publishAfterLoad(identifierAccessor.getRequiredIdentifier(), e);

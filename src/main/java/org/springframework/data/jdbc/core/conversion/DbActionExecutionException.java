@@ -23,6 +23,11 @@ package org.springframework.data.jdbc.core.conversion;
  * @since 1.0
  */
 public class DbActionExecutionException extends RuntimeException {
+
+	/**
+	 * @param action the {@link DbAction} which triggered the exception. Must not be {@code null}.
+	 * @param cause the underlying exception. May not be {@code null}.
+	 */
 	public DbActionExecutionException(DbAction<?> action, Throwable cause) {
 		super( //
 				String.format("Failed to execute %s for instance %s of type %s with path %s", //

@@ -62,7 +62,8 @@ public interface NamingStrategy {
 	}
 
 	/**
-	 * Defaults to return the given {@link JdbcPersistentProperty}'s name with the parts of a camel case name separated by '_';
+	 * Defaults to return the given {@link JdbcPersistentProperty}'s name with the parts of a camel case name separated by
+	 * '_';
 	 */
 	default String getColumnName(JdbcPersistentProperty property) {
 
@@ -83,7 +84,7 @@ public interface NamingStrategy {
 	 */
 	default String getReverseColumnName(JdbcPersistentProperty property) {
 
-		Assert.notNull(property,"Property must not be null.");
+		Assert.notNull(property, "Property must not be null.");
 
 		return property.getOwner().getTableName();
 	}

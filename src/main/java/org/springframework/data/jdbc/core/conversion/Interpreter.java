@@ -21,11 +21,22 @@ import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
 import org.springframework.data.jdbc.core.conversion.DbAction.Update;
 
 /**
+ * An {@link Interpreter} gets called by a {@link AggregateChange} for each {@link DbAction} and is tasked with
+ * executing that action against a database. While the {@link DbAction} is just an abstract representation of a database
+ * action it's the task of an interpreter to actually execute it. This typically involves creating some SQL and running
+ * it using JDBC, but it may also use some third party technology like MyBatis or jOOQ to do this.
+ *
  * @author Jens Schauder
  * @since 1.0
  */
 public interface Interpreter {
 
+	/**
+	 * Interpret an {@link Update}. Interpreting normally means "executing".
+	 *
+	 * @param update the {@link Update} to be executed
+	 * @param <T> the type of entity to work on.
+	 */
 	<T> void interpret(Update<T> update);
 
 	<T> void interpret(Insert<T> insert);

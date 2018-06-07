@@ -21,7 +21,8 @@ import org.springframework.data.jdbc.core.conversion.AggregateChange;
 import org.springframework.data.jdbc.core.mapping.event.Identifier.Specified;
 
 /**
- * Gets published when an entity is about to get deleted.
+ * Gets published when an entity is about to get deleted. The contained {@link AggregateChange} is mutable and may be
+ * changed in order to change the actions that get performed on the database as part of the delete operation.
  *
  * @author Jens Schauder
  * @since 1.0
