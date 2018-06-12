@@ -17,7 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.Map;
 
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
 
@@ -38,12 +38,12 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <S> void update(S instance, Class<S> domainType) {
-		delegate.update(instance, domainType);
+	public <S> boolean update(S instance, Class<S> domainType) {
+		return delegate.update(instance, domainType);
 	}
 
 	@Override
-	public void delete(Object rootId, PropertyPath propertyPath) {
+	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		delegate.delete(rootId, propertyPath);
 	}
 
@@ -58,7 +58,7 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public void deleteAll(PropertyPath propertyPath) {
+	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		delegate.deleteAll(propertyPath);
 	}
 

@@ -23,17 +23,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
-import org.springframework.data.relational.core.conversion.RelationalPropertyPath;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteRoot;
+import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
- * Unit tests for the {@link RelationalEntityDeleteWriter}
+ * Unit tests for the {@link org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter}
  *
  * @author Jens Schauder
  */
@@ -43,9 +42,12 @@ public class RelationalEntityDeleteWriterUnitTests {
 	RelationalEntityDeleteWriter converter = new RelationalEntityDeleteWriter(new RelationalMappingContext());
 
 	private static Object dotPath(DbAction dba) {
-
-		RelationalPropertyPath propertyPath = dba.getPropertyPath();
-		return propertyPath == null ? null : propertyPath.toDotPath();
+		if (dba instanceof DbAction.WithPropertyPath) {
+			PersistentPropertyPath propertyPath = ((DbAction.WithPropertyPath<?>) dba).getPropertyPath();
+			return propertyPath == null ? null : propertyPath.toDotPath();
+		} else {
+			return null;
+		}
 	}
 
 	@Test // DATAJDBC-112
@@ -62,16 +64,14 @@ public class RelationalEntityDeleteWriterUnitTests {
 				.containsExactly( //
 						Tuple.tuple(Delete.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(Delete.class, OtherEntity.class, "other"), //
-						Tuple.tuple(Delete.class, SomeEntity.class, null) //
+						Tuple.tuple(DeleteRoot.class, SomeEntity.class, null) //
 		);
 	}
 
 	@Test // DATAJDBC-188
 	public void deleteAllDeletesAllEntitiesAndReferencedEntities() {
 
-		SomeEntity entity = new SomeEntity(23L);
-
-		AggregateChange<SomeEntity> aggregateChange = new AggregateChange(Kind.DELETE, SomeEntity.class, null);
+		AggregateChange<SomeEntity> aggregateChange = new AggregateChange<>(Kind.DELETE, SomeEntity.class, null);
 
 		converter.write(null, aggregateChange);
 
@@ -80,7 +80,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 				.containsExactly( //
 						Tuple.tuple(DeleteAll.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(DeleteAll.class, OtherEntity.class, "other"), //
-						Tuple.tuple(DeleteAll.class, SomeEntity.class, null) //
+						Tuple.tuple(DeleteAllRoot.class, SomeEntity.class, null) //
 		);
 	}
 

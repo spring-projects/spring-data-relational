@@ -27,6 +27,7 @@ import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -130,10 +131,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <S> void update(S instance, Class<S> domainType) {
+	public <S> boolean update(S instance, Class<S> domainType) {
 
-		sqlSession().update(namespace(domainType) + ".update",
-				new MyBatisContext(null, instance, domainType, Collections.emptyMap()));
+		return sqlSession().update(namespace(domainType) + ".update",
+				new MyBatisContext(null, instance, domainType, Collections.emptyMap())) != 0;
 	}
 
 	@Override
@@ -144,10 +145,11 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public void delete(Object rootId, PropertyPath propertyPath) {
+	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		sqlSession().delete(namespace(propertyPath.getOwningType().getType()) + ".delete-" + toDashPath(propertyPath),
-				new MyBatisContext(rootId, null, propertyPath.getLeafProperty().getTypeInformation().getType(),
+		sqlSession().delete(
+				namespace(propertyPath.getBaseProperty().getOwner().getType()) + ".delete-" + toDashPath(propertyPath),
+				new MyBatisContext(rootId, null, propertyPath.getRequiredLeafProperty().getTypeInformation().getType(),
 						Collections.emptyMap()));
 	}
 
@@ -161,10 +163,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public void deleteAll(PropertyPath propertyPath) {
+	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		Class<?> baseType = propertyPath.getOwningType().getType();
-		Class<?> leafType = propertyPath.getLeafProperty().getTypeInformation().getType();
+		Class<?> baseType = propertyPath.getBaseProperty().getOwner().getType();
+		Class<?> leafType = propertyPath.getRequiredLeafProperty().getTypeInformation().getType();
 
 		sqlSession().delete( //
 				namespace(baseType) + ".deleteAll-" + toDashPath(propertyPath), //
@@ -217,7 +219,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return this.sqlSession;
 	}
 
-	private String toDashPath(PropertyPath propertyPath) {
+	private String toDashPath(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		return propertyPath.toDotPath().replaceAll("\\.", "-");
 	}
 }

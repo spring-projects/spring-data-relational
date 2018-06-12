@@ -17,7 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.Map;
 
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
@@ -48,8 +48,9 @@ public interface DataAccessStrategy {
 	 * @param instance the instance to save. Must not be {@code null}.
 	 * @param domainType the type of the instance to save. Must not be {@code null}.
 	 * @param <T> the type of the instance to save.
+	 * @return wether the update actually updated a row.
 	 */
-	<T> void update(T instance, Class<T> domainType);
+	<T> boolean update(T instance, Class<T> domainType);
 
 	/**
 	 * deletes a single row identified by the id, from the table identified by the domainType. Does not handle cascading
@@ -63,11 +64,11 @@ public interface DataAccessStrategy {
 
 	/**
 	 * Deletes all entities reachable via {@literal propertyPath} from the instance identified by {@literal rootId}.
-	 *
+	 * 
 	 * @param rootId Id of the root object on which the {@literal propertyPath} is based. Must not be {@code null}.
 	 * @param propertyPath Leading from the root object to the entities to be deleted. Must not be {@code null}.
 	 */
-	void delete(Object rootId, PropertyPath propertyPath);
+	void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
 
 	/**
 	 * Deletes all entities of the given domain type.
@@ -82,7 +83,7 @@ public interface DataAccessStrategy {
 	 *
 	 * @param propertyPath Leading from the root object to the entities to be deleted. Must not be {@code null}.
 	 */
-	void deleteAll(PropertyPath propertyPath);
+	void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
 
 	/**
 	 * Counts the rows in the table representing the given domain type.

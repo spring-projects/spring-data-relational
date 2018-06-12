@@ -17,8 +17,13 @@ package org.springframework.data.relational.core.conversion;
 
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteRoot;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
+import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
+import org.springframework.data.relational.core.conversion.DbAction.Merge;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
+import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 
 /**
  * An {@link Interpreter} gets called by a {@link AggregateChange} for each {@link DbAction} and is tasked with
@@ -31,6 +36,10 @@ import org.springframework.data.relational.core.conversion.DbAction.Update;
  */
 public interface Interpreter {
 
+	<T> void interpret(Insert<T> insert);
+
+	<T> void interpret(InsertRoot<T> insert);
+
 	/**
 	 * Interpret an {@link Update}. Interpreting normally means "executing".
 	 *
@@ -39,9 +48,15 @@ public interface Interpreter {
 	 */
 	<T> void interpret(Update<T> update);
 
-	<T> void interpret(Insert<T> insert);
+	<T> void interpret(UpdateRoot<T> update);
+
+	<T> void interpret(Merge<T> update);
 
 	<T> void interpret(Delete<T> delete);
 
+	<T> void interpret(DeleteRoot<T> deleteRoot);
+
 	<T> void interpret(DeleteAll<T> delete);
+
+	<T> void interpret(DeleteAllRoot<T> DeleteAllRoot);
 }

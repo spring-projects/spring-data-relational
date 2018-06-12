@@ -15,16 +15,12 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import org.junit.Test;
-import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.DbActionExecutionException;
-import org.springframework.data.relational.core.conversion.Interpreter;
-import org.springframework.data.relational.core.conversion.RelationalPropertyPath;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
  * Unit tests for {@link DbAction}s
@@ -33,20 +29,21 @@ import org.springframework.data.relational.core.conversion.RelationalPropertyPat
  */
 public class DbActionUnitTests {
 
+	RelationalMappingContext context = new RelationalMappingContext();
+
 	@Test // DATAJDBC-150
 	public void exceptionFromActionContainsUsefulInformationWhenInterpreterFails() {
 
 		DummyEntity entity = new DummyEntity();
-		DbAction.Insert<DummyEntity> insert = DbAction.insert(entity, RelationalPropertyPath.from("someName", DummyEntity.class),
-				null);
+		DbAction.InsertRoot<DummyEntity> insert = new DbAction.InsertRoot<>(entity);
 
 		Interpreter failingInterpreter = mock(Interpreter.class);
-		doThrow(new RuntimeException()).when(failingInterpreter).interpret(any(DbAction.Insert.class));
+		doThrow(new RuntimeException()).when(failingInterpreter).interpret(any(DbAction.InsertRoot.class));
 
 		assertThatExceptionOfType(DbActionExecutionException.class) //
-                .isThrownBy(() -> insert.executeWith(failingInterpreter)) //
+				.isThrownBy(() -> insert.executeWith(failingInterpreter)) //
 				.withMessageContaining("Insert") //
-                .withMessageContaining(entity.toString());
+				.withMessageContaining(entity.toString());
 
 	}
 

@@ -15,209 +15,240 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import lombok.Data;
+import lombok.NonNull;
+import lombok.Value;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
-import org.springframework.data.mapping.IdentifierAccessor;
-import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.relational.core.conversion.DbAction.Insert;
-import org.springframework.data.relational.core.conversion.DbAction.Update;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.StreamUtils;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
- * Converts an entity that is about to be saved into {@link DbAction}s inside a {@link AggregateChange} that need to be
- * executed against the database to recreate the appropriate state in the database.
+ * Converts an aggregate represented by its root into an {@link AggregateChange}.
  *
  * @author Jens Schauder
  * @since 1.0
  */
-public class RelationalEntityWriter extends RelationalEntityWriterSupport {
+public class RelationalEntityWriter implements EntityWriter<Object, AggregateChange<?>> {
 
 	private final RelationalMappingContext context;
 
 	public RelationalEntityWriter(RelationalMappingContext context) {
-
-		super(context);
-
 		this.context = context;
 	}
 
-	/**
-	 * Converts an aggregate represented by its aggregate root into a list of {@link DbAction}s and adds them to the
-	 * {@link AggregateChange} passed in as an argument.
-	 * 
-	 * @param aggregateRoot the aggregate root to be written to the {@link AggregateChange} Must not be {@code null}.
-	 * @param aggregateChange the {@link AggregateChange} to which the {@link DbAction}s get written.
-	 */
 	@Override
-	public void write(Object aggregateRoot, AggregateChange aggregateChange) {
+	public void write(Object root, AggregateChange<?> aggregateChange) {
 
-		Class<?> type = aggregateRoot.getClass();
-		RelationalPropertyPath propertyPath = RelationalPropertyPath.from("", type);
+		new WritingContext(root, aggregateChange).write();
+	}
 
-		PersistentEntity<?, RelationalPersistentProperty> persistentEntity = context.getRequiredPersistentEntity(type);
+	/**
+	 * Holds context information for the current write operation.
+	 */
+	private class WritingContext {
 
-		if (persistentEntity.isNew(aggregateRoot)) {
+		private final Object root;
+		private final AggregateChange<?> aggregateChange;
+		private final PersistentPropertyPaths<?, RelationalPersistentProperty> paths;
+		private final Map<PathNode, DbAction> previousActions = new HashMap<>();
+		private Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
 
-			Insert<Object> insert = DbAction.insert(aggregateRoot, propertyPath, null);
+		WritingContext(Object root, AggregateChange<?> aggregateChange) {
+
+			this.root = root;
+			this.aggregateChange = aggregateChange;
+
+			paths = context.findPersistentPropertyPaths(aggregateChange.getEntityType(), PersistentProperty::isEntity);
+
+		}
+
+		private void write() {
+
+			if (isNew(root)) {
+
+				setRootAction(new DbAction.InsertRoot<>(aggregateChange.getEntity()));
+				insertReferenced();
+			} else {
+				deleteReferenced();
+
+				setRootAction(new DbAction.UpdateRoot<>(aggregateChange.getEntity()));
+				insertReferenced();
+			}
+		}
+
+		//// Operations on all paths
+
+		private void insertReferenced() {
+
+			paths.forEach(this::insertAll);
+
+		}
+
+		private void insertAll(PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+			from(path).forEach(node -> {
+
+				DbAction.Insert<Object> insert;
+				if (node.path.getRequiredLeafProperty().isQualified()) {
+
+					KeyValue value = (KeyValue) node.getValue();
+					insert = new DbAction.Insert<>(value.value, path, getAction(node.parent));
+					insert.getAdditionalValues().put(node.path.getRequiredLeafProperty().getKeyColumn(), value.key);
+
+				} else {
+					insert = new DbAction.Insert<>(node.getValue(), path, getAction(node.parent));
+				}
+
+				previousActions.put(node, insert);
+				aggregateChange.addAction(insert);
+			});
+		}
+
+		private void deleteReferenced() {
+
+			ArrayList<DbAction> deletes = new ArrayList<>();
+			paths.forEach(path -> deletes.add(0, deleteReferenced(path)));
+
+			deletes.forEach(aggregateChange::addAction);
+		}
+
+		/// Operations on a single path
+
+		private DbAction.Delete<?> deleteReferenced(PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+			Object id = context.getRequiredPersistentEntity(aggregateChange.getEntityType())
+					.getIdentifierAccessor(aggregateChange.getEntity()).getIdentifier();
+
+			return new DbAction.Delete<>(id, path);
+		}
+
+		//// methods not directly related to the creation of DbActions
+
+		private void setRootAction(DbAction<?> insert) {
+
+			previousActions.put(null, insert);
 			aggregateChange.addAction(insert);
-
-			referencedEntities(aggregateRoot) //
-					.forEach( //
-							propertyAndValue -> //
-							insertReferencedEntities( //
-									propertyAndValue, //
-									aggregateChange, //
-									propertyPath.nested(propertyAndValue.property.getName()), //
-									insert) //
-			);
-		} else {
-
-			RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(type);
-			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(aggregateRoot);
-
-			deleteReferencedEntities(identifierAccessor.getRequiredIdentifier(), aggregateChange);
-
-			Update<Object> update = DbAction.update(aggregateRoot, propertyPath, null);
-			aggregateChange.addAction(update);
-
-			referencedEntities(aggregateRoot).forEach(propertyAndValue -> insertReferencedEntities(propertyAndValue,
-					aggregateChange, propertyPath.nested(propertyAndValue.property.getName()), update));
-		}
-	}
-
-	private void insertReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange,
-			RelationalPropertyPath propertyPath, DbAction dependingOn) {
-
-		Insert<Object> insert;
-		if (propertyAndValue.property.isQualified()) {
-
-			KeyValue valueAsEntry = (KeyValue) propertyAndValue.value;
-			insert = DbAction.insert(valueAsEntry.getValue(), propertyPath, dependingOn);
-			insert.getAdditionalValues().put(propertyAndValue.property.getKeyColumn(), valueAsEntry.getKey());
-		} else {
-			insert = DbAction.insert(propertyAndValue.value, propertyPath, dependingOn);
 		}
 
-		aggregateChange.addAction(insert);
-		referencedEntities(insert.getEntity()) //
-				.forEach(pav -> insertReferencedEntities( //
-						pav, //
-						aggregateChange, //
-						propertyPath.nested(pav.property.getName()), //
-						dependingOn) //
-		);
-	}
+		@Nullable
+		private DbAction.WithEntity<?> getAction(@Nullable PathNode parent) {
 
-	private Stream<PropertyAndValue> referencedEntities(Object o) {
-
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(o.getClass());
-
-		return StreamUtils.createStreamFromIterator(persistentEntity.iterator()) //
-				.filter(PersistentProperty::isEntity) //
-				.flatMap( //
-						p -> referencedEntity(p, persistentEntity.getPropertyAccessor(o)) //
-								.map(e -> new PropertyAndValue(p, e)) //
-		);
-	}
-
-	private Stream<Object> referencedEntity(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
-
-		Class<?> actualType = p.getActualType();
-		RelationalPersistentEntity<?> persistentEntity = context //
-				.getPersistentEntity(actualType);
-
-		if (persistentEntity == null) {
-			return Stream.empty();
+			DbAction action = previousActions.get(parent);
+			if (action != null) {
+				Assert.isInstanceOf(DbAction.WithEntity.class, action,
+						"dependsOn action is not a WithEntity, but " + action.getClass().getSimpleName());
+				return (DbAction.WithEntity<?>) action;
+			}
+			return null;
 		}
 
-		Class<?> type = p.getType();
-
-		if (List.class.isAssignableFrom(type)) {
-			return listPropertyAsStream(p, propertyAccessor);
+		private boolean isNew(Object o) {
+			return context.getRequiredPersistentEntity(o.getClass()).isNew(o);
 		}
 
-		if (Collection.class.isAssignableFrom(type)) {
-			return collectionPropertyAsStream(p, propertyAccessor);
+		private List<WritingContext.PathNode> from(PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+			List<WritingContext.PathNode> nodes = new ArrayList<>();
+			if (path.getLength() == 1) {
+
+				Object value = context //
+						.getRequiredPersistentEntity(aggregateChange.getEntityType()) //
+						.getPropertyAccessor(aggregateChange.getEntity()) //
+						.getProperty(path.getRequiredLeafProperty());
+
+				nodes.addAll(createNodes(path, null, value));
+
+			} else {
+
+				List<PathNode> pathNodes = nodesCache.get(path.getParentPath());
+				pathNodes.forEach(parentNode -> {
+
+					Object value = path.getRequiredLeafProperty().getOwner().getPropertyAccessor(parentNode.value)
+							.getProperty(path.getRequiredLeafProperty());
+
+					nodes.addAll(createNodes(path, parentNode, value));
+				});
+			}
+
+			nodesCache.put(path, nodes);
+
+			return nodes;
+
 		}
 
-		if (Map.class.isAssignableFrom(type)) {
-			return mapPropertyAsStream(p, propertyAccessor);
+		private List<PathNode> createNodes(PersistentPropertyPath<RelationalPersistentProperty> path,
+				@Nullable PathNode parentNode, @Nullable Object value) {
+
+			if (value == null) {
+				return Collections.emptyList();
+			}
+
+			List<WritingContext.PathNode> nodes = new ArrayList<>();
+
+			if (path.getRequiredLeafProperty().isQualified()) {
+
+				if (path.getRequiredLeafProperty().isMap()) {
+					((Map<?, ?>) value).forEach((k, v) -> nodes.add(new PathNode(path, parentNode, new KeyValue(k, v))));
+				} else {
+
+					List listValue = (List) value;
+					for (int k = 0; k < listValue.size(); k++) {
+						nodes.add(new PathNode(path, parentNode, new KeyValue(k, listValue.get(k))));
+					}
+				}
+			} else if (path.getRequiredLeafProperty().isCollectionLike()) { // collection value
+				((Collection<?>) value).forEach(v -> nodes.add(new PathNode(path, parentNode, v)));
+			} else { // single entity value
+				nodes.add(new PathNode(path, parentNode, value));
+			}
+
+			return nodes;
 		}
 
-		return singlePropertyAsStream(p, propertyAccessor);
-	}
+		/**
+		 * represents a single entity in an aggregate along with its property path from the root entity and the chain of
+		 * objects to traverse a long this path.
+		 */
+		private class PathNode {
 
-	@SuppressWarnings("unchecked")
-	private Stream<Object> collectionPropertyAsStream(RelationalPersistentProperty p,
-			PersistentPropertyAccessor propertyAccessor) {
+			private final PersistentPropertyPath<RelationalPersistentProperty> path;
+			@Nullable private final PathNode parent;
+			private final Object value;
 
-		Object property = propertyAccessor.getProperty(p);
+			private PathNode(PersistentPropertyPath<RelationalPersistentProperty> path, @Nullable PathNode parent,
+					Object value) {
 
-		return property == null //
-				? Stream.empty() //
-				: ((Collection<Object>) property).stream();
-	}
+				this.path = path;
+				this.parent = parent;
+				this.value = value;
+			}
 
-	@SuppressWarnings("unchecked")
-	private Stream<Object> listPropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+			public Object getValue() {
+				return value;
+			}
 
-		Object property = propertyAccessor.getProperty(p);
-
-		if (property == null) {
-			return Stream.empty();
 		}
-
-		// ugly hackery since Java streams don't have a zip method.
-		AtomicInteger index = new AtomicInteger();
-		List<Object> listProperty = (List<Object>) property;
-
-		return listProperty.stream().map(e -> new KeyValue(index.getAndIncrement(), e));
-	}
-
-	@SuppressWarnings("unchecked")
-	private Stream<Object> mapPropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
-
-		Object property = propertyAccessor.getProperty(p);
-
-		return property == null //
-				? Stream.empty() //
-				: ((Map<Object, Object>) property).entrySet().stream().map(e -> new KeyValue(e.getKey(), e.getValue()));
-	}
-
-	private Stream<Object> singlePropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
-
-		Object property = propertyAccessor.getProperty(p);
-		if (property == null) {
-			return Stream.empty();
-		}
-
-		return Stream.of(property);
 	}
 
 	/**
 	 * Holds key and value of a {@link Map.Entry} but without any ties to {@link Map} implementations.
 	 */
-	@Data
+	@Value
 	private static class KeyValue {
-		private final Object key;
-		private final Object value;
+		@NonNull Object key;
+		@NonNull Object value;
 	}
 
-	@Data
-	private static class PropertyAndValue {
-
-		private final RelationalPersistentProperty property;
-		private final Object value;
-	}
 }
