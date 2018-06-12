@@ -22,14 +22,14 @@ import static org.mockito.Mockito.*;
 import java.util.Collections;
 
 import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.data.jdbc.mybatis.MyBatisContext;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
@@ -39,10 +39,19 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  */
 public class MyBatisDataAccessStrategyUnitTests {
 
+	RelationalMappingContext context = new RelationalMappingContext();
+
 	SqlSession session = mock(SqlSession.class);
 	ArgumentCaptor<MyBatisContext> captor = ArgumentCaptor.forClass(MyBatisContext.class);
 
 	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session);
+
+	PersistentPropertyPath<RelationalPersistentProperty> path(String path, Class source) {
+
+		RelationalMappingContext context = this.context;
+		return PropertyPathUtils.toPath(path, source, context);
+
+	}
 
 	@Before
 	public void before() {
@@ -119,9 +128,11 @@ public class MyBatisDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void deleteAllByPath() {
 
-		accessStrategy.deleteAll(PropertyPath.from("class.name.bytes", String.class));
+		accessStrategy.deleteAll(path("one.two", DummyEntity.class));
 
-		verify(session).delete(eq("java.lang.StringMapper.deleteAll-class-name-bytes"), captor.capture());
+		verify(session).delete(
+				eq("org.springframework.data.jdbc.core.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.deleteAll-one-two"),
+				captor.capture());
 
 		assertThat(captor.getValue()) //
 				.isNotNull() //
@@ -133,7 +144,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 				).containsExactly( //
 						null, //
 						null, //
-						byte[].class, //
+						ChildTwo.class, //
 						null //
 		);
 	}
@@ -163,9 +174,11 @@ public class MyBatisDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void deleteByPath() {
 
-		accessStrategy.delete("rootid", PropertyPath.from("class.name.bytes", String.class));
+		accessStrategy.delete("rootid", path("one.two", DummyEntity.class));
 
-		verify(session).delete(eq("java.lang.StringMapper.delete-class-name-bytes"), captor.capture());
+		verify(session).delete(
+				eq("org.springframework.data.jdbc.core.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.delete-one-two"),
+				captor.capture());
 
 		assertThat(captor.getValue()) //
 				.isNotNull() //
@@ -176,7 +189,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						c -> c.get("key") //
 				).containsExactly( //
 						null, "rootid", //
-						byte[].class, //
+						ChildTwo.class, //
 						null //
 		);
 	}
@@ -304,7 +317,6 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 		accessStrategy.count(String.class);
 
-
 		verify(session).selectOne(eq("java.lang.StringMapper.count"), captor.capture());
 
 		assertThat(captor.getValue()) //
@@ -315,11 +327,20 @@ public class MyBatisDataAccessStrategyUnitTests {
 						MyBatisContext::getDomainType, //
 						c -> c.get("key") //
 				).containsExactly( //
-				null, //
-				null, //
-				String.class, //
-				null //
+						null, //
+						null, //
+						String.class, //
+						null //
 		);
 	}
 
+	private static class DummyEntity {
+		ChildOne one;
+	}
+
+	private static class ChildOne {
+		ChildTwo two;
+	}
+
+	private static class ChildTwo {}
 }

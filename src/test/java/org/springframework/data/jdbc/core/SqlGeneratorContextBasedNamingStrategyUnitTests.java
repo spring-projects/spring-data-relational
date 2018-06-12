@@ -25,10 +25,12 @@ import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * Unit tests to verify a contextual {@link NamingStrategy} implementation that customizes using a user-centric
@@ -39,7 +41,8 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
  */
 public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
-	private final ThreadLocal<String> userHandler = new ThreadLocal<>();
+	RelationalMappingContext context = new RelationalMappingContext();
+	ThreadLocal<String> userHandler = new ThreadLocal<>();
 
 	/**
 	 * Use a {@link NamingStrategy}, but override the schema with a {@link ThreadLocal}-based setting.
@@ -80,9 +83,9 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
-			String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref", DummyEntity.class));
+			String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
 
-			assertThat(sql).isEqualTo("DELETE FROM " + user + ".referenced_entity WHERE " + user + ".dummy_entity = :rootId");
+			assertThat(sql).isEqualTo("DELETE FROM " + user + ".referenced_entity WHERE " + "dummy_entity = :rootId");
 		});
 	}
 
@@ -93,13 +96,13 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
-			String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref.further", DummyEntity.class));
+			String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
 
 			assertThat(sql).isEqualTo( //
 					"DELETE FROM " + user + ".second_level_referenced_entity " //
-							+ "WHERE " + user + ".referenced_entity IN " //
+							+ "WHERE " + "referenced_entity IN " //
 							+ "(SELECT l1id FROM " + user + ".referenced_entity " //
-							+ "WHERE " + user + ".dummy_entity = :rootId)");
+							+ "WHERE " + "dummy_entity = :rootId)");
 		});
 	}
 
@@ -123,10 +126,10 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
-			String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref", DummyEntity.class));
+			String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
 
 			assertThat(sql).isEqualTo( //
-					"DELETE FROM " + user + ".referenced_entity WHERE " + user + ".dummy_entity IS NOT NULL");
+					"DELETE FROM " + user + ".referenced_entity WHERE " + "dummy_entity IS NOT NULL");
 		});
 	}
 
@@ -137,14 +140,18 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
-			String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref.further", DummyEntity.class));
+			String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
 
 			assertThat(sql).isEqualTo( //
 					"DELETE FROM " + user + ".second_level_referenced_entity " //
-							+ "WHERE " + user + ".referenced_entity IN " //
+							+ "WHERE " + "referenced_entity IN " //
 							+ "(SELECT l1id FROM " + user + ".referenced_entity " //
-							+ "WHERE " + user + ".dummy_entity IS NOT NULL)");
+							+ "WHERE " + "dummy_entity IS NOT NULL)");
 		});
+	}
+
+	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<DummyEntity> baseType) {
+		return PersistentPropertyPathTestUtils.getPath(this.context, path, baseType);
 	}
 
 	/**

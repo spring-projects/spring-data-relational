@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -61,7 +61,8 @@ class SqlGenerator {
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 	private final SqlGeneratorSource sqlGeneratorSource;
 
-	SqlGenerator(RelationalMappingContext context, RelationalPersistentEntity<?> entity, SqlGeneratorSource sqlGeneratorSource) {
+	SqlGenerator(RelationalMappingContext context, RelationalPersistentEntity<?> entity,
+			SqlGeneratorSource sqlGeneratorSource) {
 
 		this.context = context;
 		this.entity = entity;
@@ -109,8 +110,8 @@ class SqlGenerator {
 	 *
 	 * @param columnName name of the column of the FK back to the referencing entity.
 	 * @param keyColumn if the property is of type {@link Map} this column contains the map key.
-	 * @param ordered whether the SQL statement should include an ORDER BY for the keyColumn. If this is {@code true},
-	 *          the keyColumn must not be {@code null}.
+	 * @param ordered whether the SQL statement should include an ORDER BY for the keyColumn. If this is {@code true}, the
+	 *          keyColumn must not be {@code null}.
 	 * @return a SQL String.
 	 */
 	String getFindAllByProperty(String columnName, @Nullable String keyColumn, boolean ordered) {
@@ -280,20 +281,20 @@ class SqlGenerator {
 		return String.format("DELETE FROM %s WHERE %s = :id", entity.getTableName(), entity.getIdColumn());
 	}
 
-	String createDeleteAllSql(@Nullable PropertyPath path) {
+	String createDeleteAllSql(@Nullable PersistentPropertyPath<RelationalPersistentProperty> path) {
 
 		if (path == null) {
 			return String.format("DELETE FROM %s", entity.getTableName());
 		}
 
-		RelationalPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(path.getLeafType());
+		RelationalPersistentEntity<?> entityToDelete = context
+				.getRequiredPersistentEntity(path.getRequiredLeafProperty().getActualType());
 
-		RelationalPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
-		RelationalPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
+		RelationalPersistentProperty property = path.getBaseProperty();
 
 		String innerMostCondition = String.format("%s IS NOT NULL", property.getReverseColumnName());
 
-		String condition = cascadeConditions(innerMostCondition, path.next());
+		String condition = cascadeConditions(innerMostCondition, getSubPath(path));
 
 		return String.format("DELETE FROM %s WHERE %s", entityToDelete.getTableName(), condition);
 	}
@@ -302,29 +303,42 @@ class SqlGenerator {
 		return String.format("DELETE FROM %s WHERE %s IN (:ids)", entity.getTableName(), entity.getIdColumn());
 	}
 
-	String createDeleteByPath(PropertyPath path) {
+	String createDeleteByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-		RelationalPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(path.getLeafType());
-		RelationalPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
-		RelationalPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
+		RelationalPersistentEntity<?> entityToDelete = context
+				.getRequiredPersistentEntity(path.getRequiredLeafProperty().getActualType());
+		RelationalPersistentProperty property = path.getBaseProperty();
 
 		String innerMostCondition = String.format("%s = :rootId", property.getReverseColumnName());
 
-		String condition = cascadeConditions(innerMostCondition, path.next());
+		String condition = cascadeConditions(innerMostCondition, getSubPath(path));
 
 		return String.format("DELETE FROM %s WHERE %s", entityToDelete.getTableName(), condition);
 	}
 
-	private String cascadeConditions(String innerCondition, @Nullable PropertyPath path) {
+	private PersistentPropertyPath<RelationalPersistentProperty> getSubPath(
+			PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-		if (path == null) {
+		int pathLength = path.getLength();
+
+		PersistentPropertyPath<RelationalPersistentProperty> ancestor = path;
+
+		for (int i = pathLength - 1; i > 0; i--) {
+			ancestor = path.getParentPath();
+		}
+
+		return path.getExtensionForBaseOf(ancestor);
+	}
+
+	private String cascadeConditions(String innerCondition, PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+		if (path.getLength() == 0) {
 			return innerCondition;
 		}
 
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(path.getOwningType());
-		RelationalPersistentProperty property = entity.getPersistentProperty(path.getSegment());
-
-		Assert.notNull(property, "could not find property for path " + path.getSegment() + " in " + entity);
+		RelationalPersistentEntity<?> entity = context
+				.getRequiredPersistentEntity(path.getBaseProperty().getOwner().getTypeInformation());
+		RelationalPersistentProperty property = path.getRequiredLeafProperty();
 
 		return String.format("%s IN (SELECT %s FROM %s WHERE %s)", //
 				property.getReverseColumnName(), //

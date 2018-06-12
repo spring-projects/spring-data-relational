@@ -24,6 +24,8 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -39,6 +41,7 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 public class SqlGeneratorUnitTests {
 
 	private SqlGenerator sqlGenerator;
+	private RelationalMappingContext context = new RelationalMappingContext();
 
 	@Before
 	public void setUp() {
@@ -69,7 +72,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteFirstLevel() {
 
-		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE dummy_entity = :rootId");
 	}
@@ -77,7 +80,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteAllSecondLevel() {
 
-		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref.further", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo(
 				"DELETE FROM second_level_referenced_entity WHERE referenced_entity IN (SELECT x_l1id FROM referenced_entity WHERE dummy_entity = :rootId)");
@@ -94,7 +97,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteAllFirstLevel() {
 
-		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE dummy_entity IS NOT NULL");
 	}
@@ -102,10 +105,26 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteSecondLevel() {
 
-		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref.further", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo(
 				"DELETE FROM second_level_referenced_entity WHERE referenced_entity IN (SELECT x_l1id FROM referenced_entity WHERE dummy_entity IS NOT NULL)");
+	}
+
+	@Test // DATAJDBC-227
+	public void deleteAllMap() {
+
+		String sql = sqlGenerator.createDeleteAllSql(getPath("mappedElements", DummyEntity.class));
+
+		assertThat(sql).isEqualTo("DELETE FROM element WHERE dummy_entity IS NOT NULL");
+	}
+
+	@Test // DATAJDBC-227
+	public void deleteMapByPath() {
+
+		String sql = sqlGenerator.createDeleteByPath(getPath("mappedElements", DummyEntity.class));
+
+		assertThat(sql).isEqualTo("DELETE FROM element WHERE dummy_entity = :rootId");
 	}
 
 	@Test // DATAJDBC-131
@@ -151,6 +170,10 @@ public class SqlGeneratorUnitTests {
 				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
 	}
 
+
+	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> base) {
+		return PersistentPropertyPathTestUtils.getPath(context, path, base);
+	}
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 

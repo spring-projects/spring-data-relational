@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
@@ -45,8 +45,8 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <S> void update(S instance, Class<S> domainType) {
-		collectVoid(das -> das.update(instance, domainType));
+	public <S> boolean update(S instance, Class<S> domainType) {
+		return collect(das -> das.update(instance, domainType));
 	}
 
 	@Override
@@ -55,7 +55,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public void delete(Object rootId, PropertyPath propertyPath) {
+	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		collectVoid(das -> das.delete(rootId, propertyPath));
 	}
 
@@ -65,7 +65,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public void deleteAll(PropertyPath propertyPath) {
+	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		collectVoid(das -> das.deleteAll(propertyPath));
 	}
 

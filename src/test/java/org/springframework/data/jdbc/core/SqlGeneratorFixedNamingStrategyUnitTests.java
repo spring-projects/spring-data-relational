@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.*;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -65,6 +67,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		}
 	};
 
+	private RelationalMappingContext context = new RelationalMappingContext();
+
 	@Test // DATAJDBC-107
 	public void findOneWithOverriddenFixedTableName() {
 
@@ -108,10 +112,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
-		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity = :rootId");
+				+ "WHERE dummy_entity = :rootId");
 	}
 
 	@Test // DATAJDBC-107
@@ -119,12 +123,12 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
-		String sql = sqlGenerator.createDeleteByPath(PropertyPath.from("ref.further", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity IN "
+				+ "WHERE referenced_entity IN "
 				+ "(SELECT FixedCustomPropertyPrefix_l1id " + "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity = :rootId)");
+				+ "WHERE dummy_entity = :rootId)");
 	}
 
 	@Test // DATAJDBC-107
@@ -142,10 +146,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
-		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity IS NOT NULL");
+				+ "WHERE dummy_entity IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-107
@@ -153,12 +157,12 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
-		String sql = sqlGenerator.createDeleteAllSql(PropertyPath.from("ref.further", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity IN "
+				+ "WHERE referenced_entity IN "
 				+ "(SELECT FixedCustomPropertyPrefix_l1id " + "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity IS NOT NULL)");
+				+ "WHERE dummy_entity IS NOT NULL)");
 	}
 
 	@Test // DATAJDBC-113
@@ -170,6 +174,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		assertThat(sql).isEqualTo(
 				"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_DummyEntity WHERE FixedCustomPropertyPrefix_id IN (:ids)");
+	}
+
+	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> baseType) {
+		return PersistentPropertyPathTestUtils.getPath(context, path, baseType);
 	}
 
 	/**

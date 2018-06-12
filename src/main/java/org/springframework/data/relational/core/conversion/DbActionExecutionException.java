@@ -29,13 +29,6 @@ public class DbActionExecutionException extends RuntimeException {
 	 * @param cause the underlying exception. May not be {@code null}.
 	 */
 	public DbActionExecutionException(DbAction<?> action, Throwable cause) {
-		super( //
-				String.format("Failed to execute %s for instance %s of type %s with path %s", //
-						action.getClass().getSimpleName(), //
-						action.getEntity(), //
-						action.getEntityType(), //
-						action.getPropertyPath() == null ? "" : action.getPropertyPath().toDotPath() //
-				), //
-				cause);
+		super("Failed to execute " + action, cause);
 	}
 }

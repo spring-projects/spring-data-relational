@@ -65,32 +65,6 @@ public class RelationalMappingContext extends AbstractMappingContext<RelationalP
 		setSimpleTypeHolder(new SimpleTypeHolder(Collections.emptySet(), true));
 	}
 
-	/**
-	 * returns all {@link PropertyPath}s reachable from the root type in the order needed for deleting, i.e. the deepest
-	 * reference first.
-	 */
-	public List<PropertyPath> referencedEntities(Class<?> rootType, @Nullable PropertyPath path) {
-
-		List<PropertyPath> paths = new ArrayList<>();
-
-		Class<?> currentType = path == null ? rootType : path.getLeafType();
-		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(currentType);
-
-		for (RelationalPersistentProperty property : persistentEntity) {
-			if (property.isEntity()) {
-
-				PropertyPath nextPath = path == null ? PropertyPath.from(property.getName(), rootType)
-						: path.nested(property.getName());
-				paths.add(nextPath);
-				paths.addAll(referencedEntities(rootType, nextPath));
-			}
-		}
-
-		Collections.reverse(paths);
-
-		return paths;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.mapping.context.AbstractMappingContext#createPersistentEntity(org.springframework.data.util.TypeInformation)

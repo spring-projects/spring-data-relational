@@ -80,7 +80,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 						entity.id, //
 						entity.name, //
 						true) //
-				);
+		);
 
 	}
 
@@ -103,14 +103,14 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 						one.id, //
 						one.name, //
 						true) //
-				);
+		);
 
 		assertThat(repository.findById(two.id)) //
 				.contains(new DummyEntity( //
 						two.id, //
 						two.name, //
 						true) //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-120
@@ -205,7 +205,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 
 				List<DbAction<?>> actions = event.getChange().getActions();
 				actions.clear();
-				actions.add(DbAction.update(entity, null, null));
+				actions.add(new DbAction.UpdateRoot<>(entity));
 			};
 		}
 
@@ -223,7 +223,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 				log.text = entity.name + " saved";
 
 				List<DbAction<?>> actions = event.getChange().getActions();
-				actions.add(DbAction.insert(log, null, null));
+				actions.add(new DbAction.InsertRoot<>(log));
 			};
 		}
 	}

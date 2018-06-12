@@ -30,14 +30,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.RelationalEntityWriter;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
-import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
-import org.springframework.data.relational.core.conversion.DbAction.Update;
+import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
+import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
+import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
@@ -61,31 +58,54 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
+						this::isWithDependsOn) //
 				.containsExactly( //
-						tuple(Insert.class, SingleReferenceEntity.class, "") //
-				);
+						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
+		);
 	}
 
 	@Test // DATAJDBC-112
-	public void existingEntityGetsConvertedToUpdate() {
+	public void newEntityWithReferenceGetsConvertedToTwoInserts() {
 
-		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
+		SingleReferenceEntity entity = new SingleReferenceEntity(null);
+		entity.other = new Element(null);
+
 		AggregateChange<SingleReferenceEntity> aggregateChange = //
 				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
+						this::isWithDependsOn) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class, "other"), //
-						tuple(Update.class, SingleReferenceEntity.class, "") //
-				);
+						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
+						tuple(Insert.class, Element.class, "other", Element.class, true) //
+		);
 	}
 
 	@Test // DATAJDBC-112
-	public void referenceTriggersDeletePlusInsert() {
+	public void existingEntityGetsConvertedToDeletePlusUpdate() {
+
+		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
+
+		AggregateChange<SingleReferenceEntity> aggregateChange = //
+				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
+						this::isWithDependsOn) //
+				.containsExactly( //
+						tuple(Delete.class, Element.class, "other", null, false), //
+						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
+		);
+	}
+
+	@Test // DATAJDBC-112
+	public void newReferenceTriggersDeletePlusInsert() {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 		entity.other = new Element(null);
@@ -96,26 +116,29 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
+						this::isWithDependsOn) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class, "other"), //
-						tuple(Update.class, SingleReferenceEntity.class, ""), //
-						tuple(Insert.class, Element.class, "other") //
-				);
+						tuple(Delete.class, Element.class, "other", null, false), //
+						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
+						tuple(Insert.class, Element.class, "other", Element.class, true) //
+		);
 	}
 
 	@Test // DATAJDBC-113
 	public void newEntityWithEmptySetResultsInSingleInsert() {
 
 		SetContainer entity = new SetContainer(null);
-		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
+		AggregateChange<RelationalEntityWriterUnitTests.SingleReferenceEntity> aggregateChange = new AggregateChange(
+				Kind.SAVE, SetContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
+						this::isWithDependsOn) //
 				.containsExactly( //
-						tuple(Insert.class, SetContainer.class, ""));
+						tuple(InsertRoot.class, SetContainer.class, "", SetContainer.class, false));
 	}
 
 	@Test // DATAJDBC-113
@@ -128,12 +151,14 @@ public class RelationalEntityWriterUnitTests {
 		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+		assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
+						this::isWithDependsOn) //
 				.containsExactly( //
-						tuple(Insert.class, SetContainer.class, ""), //
-						tuple(Insert.class, Element.class, "elements"), //
-						tuple(Insert.class, Element.class, "elements") //
-				);
+						tuple(InsertRoot.class, SetContainer.class, "", SetContainer.class, false), //
+						tuple(Insert.class, Element.class, "elements", Element.class, true), //
+						tuple(Insert.class, Element.class, "elements", Element.class, true) //
+		);
 	}
 
 	@Test // DATAJDBC-113
@@ -151,20 +176,25 @@ public class RelationalEntityWriterUnitTests {
 				new Element(null)) //
 		);
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, SetContainer.class, entity);
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE,
+				CascadingReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+		assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
+						this::isWithDependsOn) //
 				.containsExactly( //
-						tuple(Insert.class, CascadingReferenceEntity.class, ""), //
-						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
-						tuple(Insert.class, Element.class, "other.element"), //
-						tuple(Insert.class, Element.class, "other.element"), //
-						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
-						tuple(Insert.class, Element.class, "other.element"), //
-						tuple(Insert.class, Element.class, "other.element") //
-				);
+						tuple(InsertRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
+								true), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
+								true), //
+						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
+						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
+						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
+						tuple(Insert.class, Element.class, "other.element", Element.class, true) //
+		);
 	}
 
 	@Test // DATAJDBC-188
@@ -182,21 +212,26 @@ public class RelationalEntityWriterUnitTests {
 				new Element(null)) //
 		);
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE, CascadingReferenceEntity.class, entity);
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange(Kind.SAVE,
+				CascadingReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
+		assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
+						this::isWithDependsOn) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class, "other.element"),
-						tuple(Delete.class, CascadingReferenceMiddleElement.class, "other"),
-						tuple(Update.class, CascadingReferenceEntity.class, ""), //
-						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
-						tuple(Insert.class, Element.class, "other.element"), //
-						tuple(Insert.class, Element.class, "other.element"), //
-						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other"), //
-						tuple(Insert.class, Element.class, "other.element"), //
-						tuple(Insert.class, Element.class, "other.element") //
+						tuple(Delete.class, Element.class, "other.element", null, false),
+						tuple(Delete.class, CascadingReferenceMiddleElement.class, "other", null, false),
+						tuple(UpdateRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
+								true), //
+						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
+								true), //
+						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
+						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
+						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
+						tuple(Insert.class, Element.class, "other.element", Element.class, true) //
 		);
 	}
 
@@ -210,7 +245,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Insert.class, MapContainer.class, ""));
+						tuple(InsertRoot.class, MapContainer.class, ""));
 	}
 
 	@Test // DATAJDBC-131
@@ -226,16 +261,16 @@ public class RelationalEntityWriterUnitTests {
 		assertThat(aggregateChange.getActions())
 				.extracting(DbAction::getClass, DbAction::getEntityType, this::getMapKey, this::extractPath) //
 				.containsExactlyInAnyOrder( //
-						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(InsertRoot.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "one", "elements"), //
 						tuple(Insert.class, Element.class, "two", "elements") //
 				).containsSubsequence( // container comes before the elements
-						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(InsertRoot.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "two", "elements") //
 				).containsSubsequence( // container comes before the elements
-						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(InsertRoot.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "one", "elements") //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-183
@@ -261,7 +296,7 @@ public class RelationalEntityWriterUnitTests {
 		assertThat(aggregateChange.getActions())
 				.extracting(DbAction::getClass, DbAction::getEntityType, this::getMapKey, this::extractPath) //
 				.containsExactlyInAnyOrder( //
-						tuple(Insert.class, MapContainer.class, null, ""), //
+						tuple(InsertRoot.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "1", "elements"), //
 						tuple(Insert.class, Element.class, "2", "elements"), //
 						tuple(Insert.class, Element.class, "3", "elements"), //
@@ -287,7 +322,7 @@ public class RelationalEntityWriterUnitTests {
 
 		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath) //
 				.containsExactly( //
-						tuple(Insert.class, ListContainer.class, ""));
+						tuple(InsertRoot.class, ListContainer.class, ""));
 	}
 
 	@Test // DATAJDBC-130
@@ -303,16 +338,16 @@ public class RelationalEntityWriterUnitTests {
 		assertThat(aggregateChange.getActions())
 				.extracting(DbAction::getClass, DbAction::getEntityType, this::getListKey, this::extractPath) //
 				.containsExactlyInAnyOrder( //
-						tuple(Insert.class, ListContainer.class, null, ""), //
+						tuple(InsertRoot.class, ListContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, 0, "elements"), //
 						tuple(Insert.class, Element.class, 1, "elements") //
 				).containsSubsequence( // container comes before the elements
-						tuple(Insert.class, ListContainer.class, null, ""), //
+						tuple(InsertRoot.class, ListContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, 1, "elements") //
 				).containsSubsequence( // container comes before the elements
-						tuple(Insert.class, ListContainer.class, null, ""), //
+						tuple(InsertRoot.class, ListContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, 0, "elements") //
-				);
+		);
 	}
 
 	@Test // DATAJDBC-131
@@ -329,7 +364,7 @@ public class RelationalEntityWriterUnitTests {
 				.extracting(DbAction::getClass, DbAction::getEntityType, this::getMapKey, this::extractPath) //
 				.containsExactly( //
 						tuple(Delete.class, Element.class, null, "elements"), //
-						tuple(Update.class, MapContainer.class, null, ""), //
+						tuple(UpdateRoot.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "one", "elements") //
 		);
 	}
@@ -348,7 +383,7 @@ public class RelationalEntityWriterUnitTests {
 				.extracting(DbAction::getClass, DbAction::getEntityType, this::getListKey, this::extractPath) //
 				.containsExactly( //
 						tuple(Delete.class, Element.class, null, "elements"), //
-						tuple(Update.class, ListContainer.class, null, ""), //
+						tuple(UpdateRoot.class, ListContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, 0, "elements") //
 		);
 	}
@@ -362,15 +397,32 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	private Object getMapKey(DbAction a) {
-		return a.getAdditionalValues().get("map_container_key");
+		return a instanceof DbAction.WithDependingOn ? ((DbAction.WithDependingOn) a).getAdditionalValues().get("map_container_key") : null;
 	}
 
 	private Object getListKey(DbAction a) {
-		return a.getAdditionalValues().get("list_container_key");
+		return a instanceof DbAction.WithDependingOn ? ((DbAction.WithDependingOn) a).getAdditionalValues().get("list_container_key") : null;
 	}
 
 	private String extractPath(DbAction action) {
-		return action.getPropertyPath().toDotPath();
+
+		if (action instanceof DbAction.WithPropertyPath) {
+			return ((DbAction.WithPropertyPath<?>) action).getPropertyPath().toDotPath();
+		}
+
+		return "";
+	}
+
+	private boolean isWithDependsOn(DbAction dbAction) {
+		return dbAction instanceof DbAction.WithDependingOn;
+	}
+
+	private Class<?> actualEntityType(DbAction a) {
+
+		if (a instanceof DbAction.WithEntity) {
+			return ((DbAction.WithEntity) a).getEntity().getClass();
+		}
+		return null;
 	}
 
 	@RequiredArgsConstructor
@@ -378,6 +430,15 @@ public class RelationalEntityWriterUnitTests {
 
 		@Id final Long id;
 		Element other;
+		// should not trigger own Dbaction
+		String name;
+	}
+
+	@RequiredArgsConstructor
+	static class ReferenceWoIdEntity {
+
+		@Id final Long id;
+		NoIdElement other;
 		// should not trigger own Dbaction
 		String name;
 	}
@@ -420,6 +481,12 @@ public class RelationalEntityWriterUnitTests {
 	@RequiredArgsConstructor
 	private static class Element {
 		@Id final Long id;
+	}
+
+	@RequiredArgsConstructor
+	private static class NoIdElement {
+		// empty classes feel weird.
+		String name;
 	}
 
 }

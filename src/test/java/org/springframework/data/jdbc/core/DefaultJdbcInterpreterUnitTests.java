@@ -16,7 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -25,13 +25,11 @@ import java.util.Map;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.RelationalPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
+import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for {@link DefaultJdbcInterpreter}
@@ -61,8 +59,8 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		Element element = new Element();
 
-		Insert<?> containerInsert = DbAction.insert(container, RelationalPropertyPath.from("", Container.class), null);
-		Insert<?> insert = DbAction.insert(element, RelationalPropertyPath.from("element", Container.class), containerInsert);
+		InsertRoot<Container> containerInsert = new InsertRoot<>(container);
+		Insert<?> insert = new Insert<>(element, PropertyPathUtils.toPath("element", Container.class, context), containerInsert);
 
 		interpreter.interpret(insert);
 

@@ -18,17 +18,22 @@ package org.springframework.data.jdbc.core;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteRoot;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
+import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
+import org.springframework.data.relational.core.conversion.DbAction.Merge;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
+import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
+import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * {@link Interpreter} for {@link DbAction}s using a {@link DataAccessStrategy} for performing actual database
@@ -54,50 +59,65 @@ class DefaultJdbcInterpreter implements Interpreter {
 	}
 
 	@Override
+	public <T> void interpret(InsertRoot<T> insert) {
+		accessStrategy.insert(insert.getEntity(), insert.getEntityType(), new HashMap<>());
+	}
+
+	@Override
 	public <T> void interpret(Update<T> update) {
 		accessStrategy.update(update.getEntity(), update.getEntityType());
 	}
 
 	@Override
-	public <T> void interpret(Delete<T> delete) {
+	public <T> void interpret(UpdateRoot<T> update) {
+		accessStrategy.update(update.getEntity(), update.getEntityType());
+	}
 
-		if (delete.getPropertyPath() == null) {
-			accessStrategy.delete(delete.getRootId(), delete.getEntityType());
-		} else {
-			accessStrategy.delete(delete.getRootId(), delete.getPropertyPath().getPath());
+	@Override
+	public <T> void interpret(Merge<T> merge) {
+
+		// temporary implementation
+		if (!accessStrategy.update(merge.getEntity(), merge.getEntityType())) {
+			accessStrategy.insert(merge.getEntity(), merge.getEntityType(), createAdditionalColumnValues(merge));
 		}
 	}
 
 	@Override
-	public <T> void interpret(DeleteAll<T> delete) {
-
-		if (delete.getEntityType() == null) {
-			accessStrategy.deleteAll(delete.getPropertyPath().getPath());
-		} else {
-			accessStrategy.deleteAll(delete.getEntityType());
-		}
+	public <T> void interpret(Delete<T> delete) {
+		accessStrategy.delete(delete.getRootId(), delete.getPropertyPath());
 	}
 
-	private <T> Map<String, Object> createAdditionalColumnValues(Insert<T> insert) {
+	@Override
+	public <T> void interpret(DeleteRoot<T> delete) {
+		accessStrategy.delete(delete.getRootId(), delete.getEntityType());
+	}
+
+	@Override
+	public <T> void interpret(DeleteAll<T> delete) {
+		accessStrategy.deleteAll(delete.getPropertyPath());
+	}
+
+	@Override
+	public <T> void interpret(DeleteAllRoot<T> deleteAllRoot) {
+		accessStrategy.deleteAll(deleteAllRoot.getEntityType());
+	}
+
+	private <T> Map<String, Object> createAdditionalColumnValues(DbAction.WithDependingOn<T> action) {
 
 		Map<String, Object> additionalColumnValues = new HashMap<>();
-		addDependingOnInformation(insert, additionalColumnValues);
-		additionalColumnValues.putAll(insert.getAdditionalValues());
+		addDependingOnInformation(action, additionalColumnValues);
+		additionalColumnValues.putAll(action.getAdditionalValues());
 
 		return additionalColumnValues;
 	}
 
-	private <T> void addDependingOnInformation(Insert<T> insert, Map<String, Object> additionalColumnValues) {
+	private <T> void addDependingOnInformation(DbAction.WithDependingOn<T> action, Map<String, Object> additionalColumnValues) {
 
-		DbAction dependingOn = insert.getDependingOn();
-
-		if (dependingOn == null) {
-			return;
-		}
+		DbAction.WithEntity<?> dependingOn = action.getDependingOn();
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
 
-		String columnName = getColumnNameForReverseColumn(insert, persistentEntity);
+		String columnName = getColumnNameForReverseColumn(action);
 
 		Object identifier = getIdFromEntityDependingOn(dependingOn, persistentEntity);
 
@@ -105,16 +125,13 @@ class DefaultJdbcInterpreter implements Interpreter {
 	}
 
 	@Nullable
-	private Object getIdFromEntityDependingOn(DbAction dependingOn, RelationalPersistentEntity<?> persistentEntity) {
+	private Object getIdFromEntityDependingOn(DbAction.WithEntity<?> dependingOn, RelationalPersistentEntity<?> persistentEntity) {
 		return persistentEntity.getIdentifierAccessor(dependingOn.getEntity()).getIdentifier();
 	}
 
-	private <T> String getColumnNameForReverseColumn(Insert<T> insert, RelationalPersistentEntity<?> persistentEntity) {
+	private String getColumnNameForReverseColumn(DbAction.WithPropertyPath<?> action) {
 
-		PropertyPath path = insert.getPropertyPath().getPath();
-
-		Assert.notNull(path, "There shouldn't be an insert depending on another insert without having a PropertyPath.");
-
-		return persistentEntity.getRequiredPersistentProperty(path.getSegment()).getReverseColumnName();
+		PersistentPropertyPath<RelationalPersistentProperty> path = action.getPropertyPath();
+		return path.getRequiredLeafProperty().getReverseColumnName();
 	}
 }

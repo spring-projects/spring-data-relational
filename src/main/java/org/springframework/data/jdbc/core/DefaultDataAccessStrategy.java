@@ -29,8 +29,8 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -120,11 +120,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
 	 */
 	@Override
-	public <S> void update(S instance, Class<S> domainType) {
+	public <S> boolean update(S instance, Class<S> domainType) {
 
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity));
+		return operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity)) != 0;
 	}
 
 	/*
@@ -145,11 +145,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PropertyPath)
 	 */
 	@Override
-	public void delete(Object rootId, PropertyPath propertyPath) {
+	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(propertyPath.getOwningType());
+		RelationalPersistentEntity<?> rootEntity = context
+				.getRequiredPersistentEntity(propertyPath.getBaseProperty().getOwner().getType());
 
-		RelationalPersistentProperty referencingProperty = rootEntity.getRequiredPersistentProperty(propertyPath.getSegment());
+		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
 		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
 
 		String format = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
@@ -173,8 +174,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(org.springframework.data.mapping.PropertyPath)
 	 */
 	@Override
-	public void deleteAll(PropertyPath propertyPath) {
-		operations.getJdbcOperations().update(sql(propertyPath.getOwningType().getType()).createDeleteAllSql(propertyPath));
+	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+		operations.getJdbcOperations()
+				.update(sql(propertyPath.getBaseProperty().getOwner().getType()).createDeleteAllSql(propertyPath));
 	}
 
 	/*
@@ -343,7 +345,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		} catch (InvalidDataAccessApiUsageException e) {
 			// Postgres returns a value for each column
 			Map<String, Object> keys = holder.getKeys();
-			return Optional.ofNullable(keys == null ? null : keys.get(persistentEntity.getIdColumn()));
+			return Optional.ofNullable( //
+					keys == null || persistentEntity.getIdProperty() == null //
+							? null //
+							: keys.get(persistentEntity.getIdColumn()));
 		}
 	}
 

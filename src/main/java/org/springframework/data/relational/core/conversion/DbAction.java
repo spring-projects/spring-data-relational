@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,131 +15,36 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import lombok.Getter;
-import lombok.ToString;
+import lombok.NonNull;
+import lombok.Value;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
- * Abstracts over a single interaction with a database.
+ * An instance of this interface represents a (conceptual) single interaction with a database, e.g. a single update,
+ * used as a step when synchronizing the state of an aggregate with the database.
  *
+ * @param <T> the type of the entity that is affected by this action.
  * @author Jens Schauder
  * @since 1.0
  */
-@ToString
-@Getter
-public abstract class DbAction<T> {
+public interface DbAction<T> {
 
-	/**
-	 * {@link Class} of the entity of which the database representation is affected by this action.
-	 */
-	final Class<T> entityType;
-
-	/**
-	 * The entity of which the database representation is affected by this action. Might be {@literal null}.
-	 */
-	private final T entity;
-
-	/**
-	 * The path from the Aggregate Root to the entity affected by this {@link DbAction}.
-	 */
-	private final RelationalPropertyPath propertyPath;
-
-	/**
-	 * Key-value-pairs to specify additional values to be used with the statement which can't be obtained from the entity,
-	 * nor from {@link DbAction}s {@literal this} depends on. A used case are map keys, which need to be persisted with
-	 * the map value but aren't part of the value.
-	 */
-	private final Map<String, Object> additionalValues = new HashMap<>();
-
-	/**
-	 * Another action, this action depends on. For example the insert for one entity might need the id of another entity,
-	 * which gets insert before this one. That action would be referenced by this property, so that the id becomes
-	 * available at execution time. Might be {@literal null}.
-	 */
-	private final DbAction dependingOn;
-
-	private DbAction(Class<T> entityType, @Nullable T entity, @Nullable RelationalPropertyPath propertyPath,
-			@Nullable DbAction dependingOn) {
-
-		Assert.notNull(entityType, "entityType must not be null");
-
-		this.entityType = entityType;
-		this.entity = entity;
-		this.propertyPath = propertyPath;
-		this.dependingOn = dependingOn;
-	}
-
-	/**
-	 * Creates an {@link Insert} action for the given parameters.
-	 *
-	 * @param entity the entity to insert into the database. Must not be {@code null}.
-	 * @param propertyPath property path from the aggregate root to the entity to be saved. Must not be {@code null}.
-	 * @param dependingOn a {@link DbAction} the to be created insert may depend on. Especially the insert of a parent
-	 *          entity. May be {@code null}.
-	 * @param <T> the type of the entity to be inserted.
-	 * @return a {@link DbAction} representing the insert.
-	 */
-	public static <T> Insert<T> insert(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-		return new Insert<>(entity, propertyPath, dependingOn);
-	}
-
-	/**
-	 * Creates an {@link Update} action for the given parameters.
-	 *
-	 * @param entity the entity to update in the database. Must not be {@code null}.
-	 * @param propertyPath property path from the aggregate root to the entity to be saved. Must not be {@code null}.
-	 * @param dependingOn a {@link DbAction} the to be created update may depend on. Especially the insert of a parent
-	 *          entity. May be {@code null}.
-	 * @param <T> the type of the entity to be updated.
-	 * @return a {@link DbAction} representing the update.
-	 */
-	public static <T> Update<T> update(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-		return new Update<>(entity, propertyPath, dependingOn);
-	}
-
-	/**
-	 * Creates a {@link Delete} action for the given parameters.
-	 *
-	 * @param id the id of the aggregate root for which referenced entities to be deleted. May not be {@code null}.
-	 * @param type the type of the entity to be deleted. Must not be {@code null}.
-	 * @param entity the aggregate roo to be deleted. May be {@code null}.
-	 * @param propertyPath the property path from the aggregate root to the entity to be deleted.
-	 * @param dependingOn an action this action might depend on.
-	 * @param <T> the type of the entity to be deleted.
-	 * @return a {@link DbAction} representing the deletion of the entity with given type and id.
-	 */
-	public static <T> Delete<T> delete(Object id, Class<T> type, @Nullable T entity,
-			@Nullable RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-		return new Delete<>(id, type, entity, propertyPath, dependingOn);
-	}
-
-	/**
-	 * Creates a {@link DeleteAll} action for the given parameters.
-	 *
-	 * @param type the type of entities to be deleted. May be {@code null}.
-	 * @param propertyPath the property path describing the relation of the entity to be deleted to the aggregate it
-	 *          belongs to. May be {@code null} for the aggregate root.
-	 * @param dependingOn an action this action might depend on. May be {@code null}.
-	 * @param <T> the type of the entity to be deleted.
-	 * @return a {@link DbAction} representing the deletion of all entities of a given type belonging to a specific type
-	 *         of aggregate root.
-	 */
-	public static <T> DeleteAll<T> deleteAll(Class<T> type, @Nullable RelationalPropertyPath propertyPath,
-			@Nullable DbAction dependingOn) {
-		return new DeleteAll<>(type, propertyPath, dependingOn);
-	}
+	Class<T> getEntityType();
 
 	/**
 	 * Executing this DbAction with the given {@link Interpreter}.
+	 * <p>
+	 * The default implementation just performs exception handling and delegates to {@link #doExecuteWith(Interpreter)}.
 	 *
-	 * @param interpreter the {@link Interpreter} responsible for actually executing the {@link DbAction}.
+	 * @param interpreter the {@link Interpreter} responsible for actually executing the {@link DbAction}.Must not be
+	 *          {@code null}.
 	 */
-	void executeWith(Interpreter interpreter) {
+	default void executeWith(Interpreter interpreter) {
 
 		try {
 			doExecuteWith(interpreter);
@@ -153,99 +58,240 @@ public abstract class DbAction<T> {
 	 *
 	 * @param interpreter the {@link Interpreter} responsible for actually executing the {@link DbAction}.
 	 */
-	protected abstract void doExecuteWith(Interpreter interpreter);
+	void doExecuteWith(Interpreter interpreter);
 
 	/**
-	 * {@link InsertOrUpdate} must reference an entity.
+	 * Represents an insert statement for a single entity that is not the root of an aggregate.
 	 *
-	 * @param <T> type o the entity for which this represents a database interaction
+	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	abstract static class InsertOrUpdate<T> extends DbAction<T> {
+	@Value
+	class Insert<T> implements WithDependingOn<T>, WithEntity<T> {
 
-		@SuppressWarnings("unchecked")
-		InsertOrUpdate(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-			super((Class<T>) entity.getClass(), entity, propertyPath, dependingOn);
+		@NonNull T entity;
+		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
+		@NonNull WithEntity<?> dependingOn;
+
+		Map<String, Object> additionalValues = new HashMap<>();
+
+		@Override
+		public void doExecuteWith(Interpreter interpreter) {
+			interpreter.interpret(this);
+		}
+
+		@Override
+		public Class<T> getEntityType() {
+			return WithDependingOn.super.getEntityType();
 		}
 	}
 
 	/**
-	 * Represents an insert statement.
+	 * Represents an insert statement for the root of an aggregate.
 	 *
-	 * @param <T> type o the entity for which this represents a database interaction
+	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	public static class Insert<T> extends InsertOrUpdate<T> {
+	@Value
+	class InsertRoot<T> implements WithEntity<T> {
 
-		private Insert(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-			super(entity, propertyPath, dependingOn);
-		}
+		@NonNull T entity;
 
 		@Override
-		protected void doExecuteWith(Interpreter interpreter) {
+		public void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
 		}
 	}
 
 	/**
-	 * Represents an update statement.
+	 * Represents an update statement for a single entity that is not the root of an aggregate.
 	 *
-	 * @param <T> type o the entity for which this represents a database interaction
+	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	public static class Update<T> extends InsertOrUpdate<T> {
+	@Value
+	class Update<T> implements WithEntity<T> {
 
-		private Update(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-			super(entity, propertyPath, dependingOn);
-		}
+		@NonNull T entity;
+		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
 
 		@Override
-		protected void doExecuteWith(Interpreter interpreter) {
+		public void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
 		}
 	}
 
 	/**
-	 * Represents an delete statement, possibly a cascading delete statement, i.e. the delete necessary because one
-	 * aggregate root gets deleted.
+	 * Represents an insert statement for the root of an aggregate.
 	 *
-	 * @param <T> type o the entity for which this represents a database interaction
+	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Getter
-	public static class Delete<T> extends DbAction<T> {
+	@Value
+	class UpdateRoot<T> implements WithEntity<T> {
+
+		@NonNull private final T entity;
+
+		@Override
+		public void doExecuteWith(Interpreter interpreter) {
+			interpreter.interpret(this);
+		}
+	}
+
+	/**
+	 * Represents a merge statement for a single entity that is not the root of an aggregate.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 */
+	@Value
+	class Merge<T> implements WithDependingOn<T>, WithPropertyPath<T> {
+
+		@NonNull T entity;
+		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
+		@NonNull WithEntity<?> dependingOn;
+
+		Map<String, Object> additionalValues = new HashMap<>();
+
+		@Override
+		public void doExecuteWith(Interpreter interpreter) {
+			interpreter.interpret(this);
+		}
+	}
+
+	/**
+	 * Represents a delete statement for all entities that that a reachable via a give path from the aggregate root.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 */
+	@Value
+	class Delete<T> implements WithPropertyPath<T> {
+
+		@NonNull Object rootId;
+		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
+
+		@Override
+		public void doExecuteWith(Interpreter interpreter) {
+			interpreter.interpret(this);
+		}
+	}
+
+	/**
+	 * Represents a delete statement for a aggregate root.
+	 * <p>
+	 * Note that deletes for contained entities that reference the root are to be represented by separate
+	 * {@link DbAction}s.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 */
+	@Value
+	class DeleteRoot<T> implements DbAction<T> {
+
+		@NonNull Class<T> entityType;
+		@NonNull Object rootId;
+
+		@Override
+		public void doExecuteWith(Interpreter interpreter) {
+			interpreter.interpret(this);
+		}
+	}
+
+	/**
+	 * Represents an delete statement for all entities that that a reachable via a give path from any aggregate root of a
+	 * given type.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 */
+	@Value
+	class DeleteAll<T> implements WithPropertyPath<T> {
+
+		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
+
+		@Override
+		public void doExecuteWith(Interpreter interpreter) {
+			interpreter.interpret(this);
+		}
+	}
+
+	/**
+	 * Represents a delete statement for all aggregate roots of a given type.
+	 * <p>
+	 * Note that deletes for contained entities that reference the root are to be represented by separate
+	 * {@link DbAction}s.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 */
+	@Value
+	class DeleteAllRoot<T> implements DbAction<T> {
+
+		@NonNull private final Class<T> entityType;
+
+		@Override
+		public void doExecuteWith(Interpreter interpreter) {
+			interpreter.interpret(this);
+		}
+	}
+
+	/**
+	 * An action depending on another action for providing additional information like the id of a parent entity.
+	 *
+	 * @author Jens Schauder
+	 * @since 1.0
+	 */
+	interface WithDependingOn<T> extends WithPropertyPath<T> {
 
 		/**
-		 * Id of the root for which all via {@link #propertyPath} referenced entities shall get deleted
+		 * The {@link DbAction} of a parent entity, possibly the aggregate root. This is used to obtain values needed to
+		 * persist the entity, that are not part of the current entity, especially the id of the parent, which might only
+		 * become available once the parent entity got persisted.
+		 *
+		 * @return Guaranteed to be not {@code null}.
+		 * @see #getAdditionalValues()
 		 */
-		private final Object rootId;
+		WithEntity<?> getDependingOn();
 
-		private Delete(@Nullable Object rootId, Class<T> type, @Nullable T entity, @Nullable RelationalPropertyPath propertyPath,
-				@Nullable DbAction dependingOn) {
+		/**
+		 * Additional values to be set during insert or update statements.
+		 * <p>
+		 * Values come from parent entities but one might also add values manually.
+		 *
+		 * @return Guaranteed to be not {@code null}.
+		 */
+		Map<String, Object> getAdditionalValues();
+	}
 
-			super(type, entity, propertyPath, dependingOn);
+	/**
+	 * A {@link DbAction} that stores the information of a single entity in the database.
+	 *
+	 * @author Jens Schauder
+	 * @since 1.0
+	 */
+	interface WithEntity<T> extends DbAction<T> {
 
-			Assert.notNull(rootId, "rootId must not be null.");
+		/**
+		 * @return the entity to persist. Guaranteed to be not {@code null}.
+		 */
+		T getEntity();
 
-			this.rootId = rootId;
-		}
-
+		@SuppressWarnings("unchecked")
 		@Override
-		protected void doExecuteWith(Interpreter interpreter) {
-			interpreter.interpret(this);
+		default Class<T> getEntityType() {
+			return (Class<T>) getEntity().getClass();
 		}
 	}
 
 	/**
-	 * Represents an delete statement.
+	 * A {@link DbAction} not operation on the root of an aggregate but on its contained entities.
 	 *
-	 * @param <T> type o the entity for which this represents a database interaction
+	 * @author Jens Schauder
+	 * @since 1.0
 	 */
-	public static class DeleteAll<T> extends DbAction<T> {
+	interface WithPropertyPath<T> extends DbAction<T> {
 
-		private DeleteAll(Class<T> entityType, @Nullable RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-			super(entityType, null, propertyPath, dependingOn);
-		}
+		/**
+		 * @return the path from the aggregate root to the affected entity
+		 */
+		PersistentPropertyPath<RelationalPersistentProperty> getPropertyPath();
 
+		@SuppressWarnings("unchecked")
 		@Override
-		protected void doExecuteWith(Interpreter interpreter) {
-			interpreter.interpret(this);
+		default Class<T> getEntityType() {
+			return (Class<T>) getPropertyPath().getRequiredLeafProperty().getActualType();
 		}
 	}
 }
