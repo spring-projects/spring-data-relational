@@ -19,8 +19,8 @@ import java.util.function.BiFunction;
 
 import org.springframework.lang.Nullable;
 
-import com.nebhale.r2dbc.spi.Row;
-import com.nebhale.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 
 /**
  * An interface used by {@link R2dbcTemplate} for mapping rows of a {@link Result} on a per-row basis. Implementations
@@ -44,7 +44,7 @@ public interface RowMapper<T> extends BiFunction<Row, RowMetadata, T> {
 	}
 
 	/**
-	 * Implementations must implement this method to map each row of data in the {@link com.nebhale.r2dbc.spi.Result}.
+	 * Implementations must implement this method to map each row of data in the {@link io.r2dbc.spi.Result}.
 	 *
 	 * @param row the {@link Row} to map.
 	 * @return the result object for the current row (may be {@code null})

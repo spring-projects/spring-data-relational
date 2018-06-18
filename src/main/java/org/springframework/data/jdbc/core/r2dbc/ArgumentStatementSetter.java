@@ -19,7 +19,7 @@ import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.core.SqlTypeValue;
 import org.springframework.lang.Nullable;
 
-import com.nebhale.r2dbc.spi.Statement;
+import io.r2dbc.spi.Statement;
 
 /**
  * Simple adapter for {@link StatementSetter} that applies a given array of arguments.

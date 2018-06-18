@@ -25,16 +25,16 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.NumberUtils;
 
-import com.nebhale.r2dbc.spi.ColumnMetadata;
-import com.nebhale.r2dbc.spi.Row;
-import com.nebhale.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.ColumnMetadata;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 
 /**
  * {@link RowMapper} implementation that converts a single column into a single result value per row. Expects to operate
  * on a {@link Row} that just contains a single column.
  * <p>
  * The type of the result value for each row can be specified. The value for the single column will be extracted from
- * the {@link com.nebhale.r2dbc.spi.Result} and converted into the specified target type.
+ * the {@link io.r2dbc.spi.Result} and converted into the specified target type.
  *
  * @author Mark Paluch
  * @see R2dbcTemplate#queryForFlux(String, Class)

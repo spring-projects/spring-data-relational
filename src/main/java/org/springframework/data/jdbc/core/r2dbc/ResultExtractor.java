@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.core.r2dbc;
 import org.reactivestreams.Publisher;
 import org.springframework.dao.DataAccessException;
 
-import com.nebhale.r2dbc.spi.Result;
+import io.r2dbc.spi.Result;
 
 /**
  * Callback interface used by {@link R2dbcTemplate}'s query methods. Implementations of this interface perform the

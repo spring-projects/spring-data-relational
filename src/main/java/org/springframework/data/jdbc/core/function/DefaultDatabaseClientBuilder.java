@@ -24,7 +24,7 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
-import com.nebhale.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ConnectionFactory;
 
 /**
  * Default implementation of {@link DatabaseClient.Builder}.

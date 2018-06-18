@@ -17,7 +17,7 @@ package org.springframework.data.jdbc.core.r2dbc;
 
 import reactor.core.publisher.Mono;
 
-import com.nebhale.r2dbc.spi.Result;
+import io.r2dbc.spi.Result;
 
 /**
  * An interface used by {@link R2dbcTemplate} for processing rows of a {@link Row} on a per-row basis. Implementations

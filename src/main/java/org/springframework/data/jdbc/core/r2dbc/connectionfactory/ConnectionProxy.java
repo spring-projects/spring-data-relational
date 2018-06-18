@@ -17,7 +17,7 @@ package org.springframework.data.jdbc.core.r2dbc.connectionfactory;
 
 import java.sql.Wrapper;
 
-import com.nebhale.r2dbc.spi.Connection;
+import io.r2dbc.spi.Connection;
 
 /**
  * Subinterface of {@link Connection} to be implemented by Connection proxies. Allows access to the underlying target

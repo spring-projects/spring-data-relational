@@ -43,7 +43,7 @@ import org.springframework.lang.Nullable;
 public interface R2dbcOperations {
 
 	// -------------------------------------------------------------------------
-	// Methods dealing with a plain com.nebhale.r2dbc.spi.Connection
+	// Methods dealing with a plain io.r2dbc.spi.Connection
 	// -------------------------------------------------------------------------
 
 	/**
@@ -61,7 +61,7 @@ public interface R2dbcOperations {
 	<T> Flux<T> execute(ConnectionCallback<T> action) throws DataAccessException;
 
 	// -------------------------------------------------------------------------
-	// Methods dealing with static SQL (com.nebhale.r2dbc.spi.Statement)
+	// Methods dealing with static SQL (io.r2dbc.spi.Statement)
 	// -------------------------------------------------------------------------
 
 	/**

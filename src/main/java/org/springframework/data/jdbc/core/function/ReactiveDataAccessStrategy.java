@@ -20,8 +20,8 @@ import java.util.function.BiFunction;
 
 import org.springframework.data.util.Pair;
 
-import com.nebhale.r2dbc.spi.Row;
-import com.nebhale.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 
 /**
  * @author Mark Paluch

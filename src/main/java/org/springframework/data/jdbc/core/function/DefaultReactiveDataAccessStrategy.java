@@ -27,8 +27,8 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.util.Pair;
 import org.springframework.util.ClassUtils;
 
-import com.nebhale.r2dbc.spi.Row;
-import com.nebhale.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 
 /**
  * @author Mark Paluch

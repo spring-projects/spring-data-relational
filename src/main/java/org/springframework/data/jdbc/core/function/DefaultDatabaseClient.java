@@ -15,6 +15,12 @@
  */
 package org.springframework.data.jdbc.core.function;
 
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Statement;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -48,14 +54,6 @@ import org.springframework.jdbc.core.SqlProvider;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-
-import com.nebhale.r2dbc.core.util.ReactiveUtils;
-import com.nebhale.r2dbc.spi.Connection;
-import com.nebhale.r2dbc.spi.ConnectionFactory;
-import com.nebhale.r2dbc.spi.Result;
-import com.nebhale.r2dbc.spi.Row;
-import com.nebhale.r2dbc.spi.RowMetadata;
-import com.nebhale.r2dbc.spi.Statement;
 
 /**
  * Default implementation of {@link DatabaseClient}.
@@ -115,9 +113,8 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 			Connection connectionToUse = createConnectionProxy(connection);
 
-			return doInConnection(action, connectionToUse) //
-					.concatWith(ReactiveUtils.typeSafe(connection::close)) //
-					.onErrorResume(ReactiveUtils.appendError(connection::close));
+			// TODO: Release connection
+			return doInConnection(action, connectionToUse);
 
 		}).onErrorMap(SQLException.class, ex -> {
 

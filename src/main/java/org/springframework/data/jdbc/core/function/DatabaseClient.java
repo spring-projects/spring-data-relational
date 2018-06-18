@@ -28,9 +28,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 
-import com.nebhale.r2dbc.spi.ConnectionFactory;
-import com.nebhale.r2dbc.spi.Row;
-import com.nebhale.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 
 /**
  * A non-blocking, reactive client for performing database calls requests with Reactive Streams back pressure. Provides
@@ -66,7 +66,7 @@ public interface DatabaseClient {
 	// Static, factory methods
 
 	/**
-	 * A variant of {@link #create()} that accepts a {@link com.nebhale.r2dbc.spi.ConnectionFactory}
+	 * A variant of {@link #create()} that accepts a {@link io.r2dbc.spi.ConnectionFactory}
 	 */
 	static DatabaseClient create(ConnectionFactory factory) {
 		return new DefaultDatabaseClientBuilder().connectionFactory(factory).build();

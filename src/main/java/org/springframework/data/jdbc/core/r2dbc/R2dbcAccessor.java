@@ -24,7 +24,7 @@ import org.springframework.jdbc.support.SQLStateSQLExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
-import com.nebhale.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ConnectionFactory;
 
 /**
  * Base class for {@link R2dbcTemplate} and other R2DBC-accessing DAO helpers, defining common properties such as

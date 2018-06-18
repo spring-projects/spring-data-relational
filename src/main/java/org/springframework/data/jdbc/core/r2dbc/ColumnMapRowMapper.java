@@ -21,9 +21,9 @@ import java.util.Map;
 import org.springframework.lang.Nullable;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 
-import com.nebhale.r2dbc.spi.ColumnMetadata;
-import com.nebhale.r2dbc.spi.Row;
-import com.nebhale.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.ColumnMetadata;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 
 /**
  * {@link RowMapper} implementation that creates a {@link java.util.Map} for each row, representing all columns as

@@ -27,9 +27,9 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.data.jdbc.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import com.nebhale.r2dbc.postgresql.PostgresqlConnectionConfiguration;
-import com.nebhale.r2dbc.postgresql.PostgresqlConnectionFactory;
-import com.nebhale.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.spi.ConnectionFactory;
 
 /**
  * @author Mark Paluch

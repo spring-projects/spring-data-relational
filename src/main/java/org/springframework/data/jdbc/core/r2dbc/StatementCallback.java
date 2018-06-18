@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.core.r2dbc;
 import org.reactivestreams.Publisher;
 import org.springframework.dao.DataAccessException;
 
-import com.nebhale.r2dbc.spi.Statement;
+import io.r2dbc.spi.Statement;
 
 /**
  * Generic callback interface for code that operates on a R2DBC Statement. Allows to execute any number of operations on

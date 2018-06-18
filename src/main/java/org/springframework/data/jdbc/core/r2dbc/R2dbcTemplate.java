@@ -36,11 +36,11 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import com.nebhale.r2dbc.spi.Batch;
-import com.nebhale.r2dbc.spi.Connection;
-import com.nebhale.r2dbc.spi.ConnectionFactory;
-import com.nebhale.r2dbc.spi.Result;
-import com.nebhale.r2dbc.spi.Statement;
+import io.r2dbc.spi.Batch;
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Statement;
 
 /**
  * @author Mark Paluch
@@ -83,7 +83,7 @@ public class R2dbcTemplate extends R2dbcAccessor implements R2dbcOperations {
 	}
 
 	// -------------------------------------------------------------------------
-	// Methods dealing with a plain com.nebhale.r2dbc.spi.Connection
+	// Methods dealing with a plain io.r2dbc.spi.Connection
 	// -------------------------------------------------------------------------
 
 	@Override
@@ -143,7 +143,7 @@ public class R2dbcTemplate extends R2dbcAccessor implements R2dbcOperations {
 	}
 
 	// -------------------------------------------------------------------------
-	// Methods dealing with static SQL (com.nebhale.r2dbc.spi.Statement)
+	// Methods dealing with static SQL (io.r2dbc.spi.Statement)
 	// -------------------------------------------------------------------------
 
 	public <T> Flux<T> execute(String sql, StatementCallback<T> action) throws DataAccessException {

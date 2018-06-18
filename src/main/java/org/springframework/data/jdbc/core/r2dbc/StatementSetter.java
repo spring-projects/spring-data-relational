@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.core.r2dbc;
 
-import com.nebhale.r2dbc.spi.Statement;
+import io.r2dbc.spi.Statement;
 
 /**
  * General callback interface used by the {@link R2dbcTemplate} class.

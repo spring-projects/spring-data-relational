@@ -19,7 +19,7 @@ import org.reactivestreams.Publisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.util.Assert;
 
-import com.nebhale.r2dbc.spi.Result;
+import io.r2dbc.spi.Result;
 
 /**
  * Adapter implementation of the {@link ResultExtractor} interface that delegates to a {@link RowMapper} which is

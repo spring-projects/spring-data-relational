@@ -35,11 +35,11 @@ import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.util.ClassUtils;
 
-import com.nebhale.r2dbc.spi.Row;
-import com.nebhale.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 
 /**
- * Maps a {@link com.nebhale.r2dbc.spi.Row} to an entity of type {@code T}, including entities referenced.
+ * Maps a {@link io.r2dbc.spi.Row} to an entity of type {@code T}, including entities referenced.
  *
  * @author Mark Paluch
  * @since 1.0
