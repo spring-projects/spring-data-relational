@@ -82,7 +82,7 @@ public class DatabaseClientIntegrationTests {
 		databaseClient.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull("$3") // TODO Driver
+				.bindNull("$3") //
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectNext(1) //
@@ -119,7 +119,7 @@ public class DatabaseClientIntegrationTests {
 		databaseClient.insert().into("legoset")//
 				.value("id", 42055) //
 				.value("name", "SCHAUFELRADBAGGER") //
-				.nullValue("manual") // TODO Driver
+				.nullValue("manual") //
 				.exchange() //
 				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all()).as(StepVerifier::create) //
 				.expectNext(42055).verifyComplete();
