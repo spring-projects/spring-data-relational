@@ -49,6 +49,7 @@ import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+import com.nebhale.r2dbc.core.util.ReactiveUtils;
 import com.nebhale.r2dbc.spi.Connection;
 import com.nebhale.r2dbc.spi.ConnectionFactory;
 import com.nebhale.r2dbc.spi.Result;
@@ -114,13 +115,9 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 			Connection connectionToUse = createConnectionProxy(connection);
 
-			// TODO: Close connections properly.
-			/*     This happens on materialize/flatMap(isComplete)
-			java.lang.IllegalStateException: Cannot exchange messages because the connection is closed
-			at com.nebhale.r2dbc.postgresql.client.ReactorNettyClient.lambda$exchange$12(ReactorNettyClient.java:170)
-			at reacto
-			*/
-			return doInConnection(action, connectionToUse);
+			return doInConnection(action, connectionToUse) //
+					.concatWith(ReactiveUtils.typeSafe(connection::close)) //
+					.onErrorResume(ReactiveUtils.appendError(connection::close));
 
 		}).onErrorMap(SQLException.class, ex -> {
 

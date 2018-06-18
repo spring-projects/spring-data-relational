@@ -63,7 +63,8 @@ public class R2dbcTemplateIntegrationTests {
 		dataSource.setPortNumber(5432);
 
 		String tableToCreate = "CREATE TABLE IF NOT EXISTS legoset (\n"
-				+ "    id          integer CONSTRAINT id PRIMARY KEY,\n" + "    name        varchar(255) NOT NULL,\n"
+				+ "    id          integer CONSTRAINT id PRIMARY KEY,\n"
+				+ "    name        varchar(255) NOT NULL,\n"
 				+ "    manual      integer NULL\n" + ");";
 
 		jdbc = new JdbcTemplate(dataSource);
