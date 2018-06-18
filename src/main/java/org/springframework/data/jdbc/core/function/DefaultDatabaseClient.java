@@ -48,7 +48,7 @@ import org.reactivestreams.Publisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.dao.UncategorizedDataAccessException;
-import org.springframework.data.jdbc.core.r2dbc.connectionfactory.ConnectionProxy;
+import org.springframework.data.jdbc.core.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.SqlProvider;
 import org.springframework.jdbc.support.SQLExceptionTranslator;

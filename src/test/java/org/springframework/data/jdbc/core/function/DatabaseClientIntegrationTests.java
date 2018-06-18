@@ -25,8 +25,10 @@ import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
 
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.postgresql.ds.PGSimpleDataSource;
+import org.springframework.data.jdbc.core.function.ExternalDatabase.ProvidedDatabase;
 import org.springframework.data.jdbc.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -37,6 +39,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class DatabaseClientIntegrationTests {
 
+	/**
+	 * Local test database at {@code postgres:@localhost:5432/postgres}.
+	 */
+	@ClassRule public static final ExternalDatabase database = ProvidedDatabase.builder().hostname("localhost").port(5432)
+			.database("postgres").username("postgres").password("").build();
+
 	private ConnectionFactory connectionFactory;
 
 	private JdbcTemplate jdbc;
@@ -46,15 +54,16 @@ public class DatabaseClientIntegrationTests {
 
 		Hooks.onOperatorDebug();
 
-		connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder().host("localhost")
-				.database("postgres").username("postgres").password("").build());
+		connectionFactory = new PostgresqlConnectionFactory(
+				PostgresqlConnectionConfiguration.builder().host(database.getHostname()).database(database.getDatabase())
+						.username(database.getUsername()).password(database.getPassword()).build());
 
 		PGSimpleDataSource dataSource = new PGSimpleDataSource();
-		dataSource.setUser("postgres");
-		dataSource.setPassword("");
-		dataSource.setDatabaseName("postgres");
-		dataSource.setServerName("localhost");
-		dataSource.setPortNumber(5432);
+		dataSource.setUser(database.getUsername());
+		dataSource.setPassword(database.getPassword());
+		dataSource.setDatabaseName(database.getDatabase());
+		dataSource.setServerName(database.getHostname());
+		dataSource.setPortNumber(database.getPort());
 
 		String tableToCreate = "CREATE TABLE IF NOT EXISTS legoset (\n"
 				+ "    id          integer CONSTRAINT id PRIMARY KEY,\n" + "    name        varchar(255) NOT NULL,\n"
