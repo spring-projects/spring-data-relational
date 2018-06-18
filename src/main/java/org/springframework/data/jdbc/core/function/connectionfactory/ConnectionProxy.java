@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.r2dbc.connectionfactory;
-
-import java.sql.Wrapper;
+package org.springframework.data.jdbc.core.function.connectionfactory;
 
 import io.r2dbc.spi.Connection;
+
+import java.sql.Wrapper;
 
 /**
  * Subinterface of {@link Connection} to be implemented by Connection proxies. Allows access to the underlying target

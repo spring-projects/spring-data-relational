@@ -15,17 +15,16 @@
  */
 package org.springframework.data.jdbc.core.function;
 
+import io.r2dbc.spi.ColumnMetadata;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-import org.springframework.data.jdbc.core.r2dbc.RowMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.util.LinkedCaseInsensitiveMap;
-
-import io.r2dbc.spi.ColumnMetadata;
-import io.r2dbc.spi.Row;
-import io.r2dbc.spi.RowMetadata;
 
 /**
  * {@link RowMapper} implementation that creates a {@link Map} for each row, representing all columns as key-value

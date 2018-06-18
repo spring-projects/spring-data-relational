@@ -17,6 +17,9 @@ package org.springframework.data.jdbc.core.function;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.spi.ConnectionFactory;
 import lombok.Data;
 import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
@@ -27,11 +30,9 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.data.jdbc.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
-import io.r2dbc.postgresql.PostgresqlConnectionFactory;
-import io.r2dbc.spi.ConnectionFactory;
-
 /**
+ * Integration tests for {@link DatabaseClient} against PostgreSQL.
+ *
  * @author Mark Paluch
  */
 public class DatabaseClientIntegrationTests {
