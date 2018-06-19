@@ -22,9 +22,8 @@ import java.sql.Wrapper;
 /**
  * Subinterface of {@link Connection} to be implemented by Connection proxies. Allows access to the underlying target
  * Connection.
- * <p>
- * This interface can be checked when there is a need to cast to a native R2DBC {@link Connection}. Alternatively, all
- * such connections also support JDBC 4.0's {@link Connection#unwrap}.
+ * <p/>
+ * This interface can be checked when there is a need to cast to a native R2DBC {@link Connection}.
  *
  * @author Mark Paluch
  */
@@ -32,7 +31,7 @@ public interface ConnectionProxy extends Connection, Wrapper {
 
 	/**
 	 * Return the target Connection of this proxy.
-	 * <p>
+	 * <p/>
 	 * This will typically be the native driver Connection or a wrapper from a connection pool.
 	 *
 	 * @return the underlying Connection (never {@code null})

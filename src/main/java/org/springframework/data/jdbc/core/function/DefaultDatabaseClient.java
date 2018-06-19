@@ -46,7 +46,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.dao.UncategorizedDataAccessException;
 import org.springframework.data.jdbc.core.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.util.Pair;
@@ -60,7 +59,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  */
-class DefaultDatabaseClient implements DatabaseClient {
+class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	/** Logger available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
@@ -104,32 +103,6 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 	/**
 	 * Execute a callback {@link Function} within a {@link Connection} scope. The function is responsible for creating a
-	 * {@link Flux}. The connection is released after the {@link Flux} terminates (or the subscription is cancelled).
-	 * Connection resources must not be passed outside of the {@link Function} closure, otherwise resources may get
-	 * defunct.
-	 *
-	 * @param action must not be {@literal null}.
-	 * @return the resulting {@link Flux}.
-	 * @throws DataAccessException
-	 */
-	public <T> Flux<T> executeMany(Function<Connection, Flux<T>> action) throws DataAccessException {
-
-		Assert.notNull(action, "Callback object must not be null");
-
-		Mono<Connection> connectionMono = getConnection();
-		// Create close-suppressing Connection proxy, also preparing returned Statements.
-
-		return Flux.usingWhen(connectionMono, it -> {
-
-			Connection connectionToUse = createConnectionProxy(it);
-
-			return doInConnectionMany(connectionToUse, action);
-		}, this::closeConnection, this::closeConnection, this::closeConnection) //
-				.onErrorMap(SQLException.class, ex -> translateException("executeMany", getSql(action), ex));
-	}
-
-	/**
-	 * Execute a callback {@link Function} within a {@link Connection} scope. The function is responsible for creating a
 	 * {@link Mono}. The connection is released after the {@link Mono} terminates (or the subscription is cancelled).
 	 * Connection resources must not be passed outside of the {@link Function} closure, otherwise resources may get
 	 * defunct.
@@ -138,7 +111,8 @@ class DefaultDatabaseClient implements DatabaseClient {
 	 * @return the resulting {@link Mono}.
 	 * @throws DataAccessException
 	 */
-	public <T> Mono<T> execute(Function<Connection, Mono<T>> action) throws DataAccessException {
+	@Override
+	public <T> Mono<T> inConnection(Function<Connection, Mono<T>> action) throws DataAccessException {
 
 		Assert.notNull(action, "Callback object must not be null");
 
@@ -152,6 +126,33 @@ class DefaultDatabaseClient implements DatabaseClient {
 			return doInConnection(connectionToUse, action);
 		}, this::closeConnection, this::closeConnection, this::closeConnection) //
 				.onErrorMap(SQLException.class, ex -> translateException("execute", getSql(action), ex));
+	}
+
+	/**
+	 * Execute a callback {@link Function} within a {@link Connection} scope. The function is responsible for creating a
+	 * {@link Flux}. The connection is released after the {@link Flux} terminates (or the subscription is cancelled).
+	 * Connection resources must not be passed outside of the {@link Function} closure, otherwise resources may get
+	 * defunct.
+	 *
+	 * @param action must not be {@literal null}.
+	 * @return the resulting {@link Flux}.
+	 * @throws DataAccessException
+	 */
+	@Override
+	public <T> Flux<T> inConnectionMany(Function<Connection, Flux<T>> action) throws DataAccessException {
+
+		Assert.notNull(action, "Callback object must not be null");
+
+		Mono<Connection> connectionMono = getConnection();
+		// Create close-suppressing Connection proxy, also preparing returned Statements.
+
+		return Flux.usingWhen(connectionMono, it -> {
+
+			Connection connectionToUse = createConnectionProxy(it);
+
+			return doInConnectionMany(connectionToUse, action);
+		}, this::closeConnection, this::closeConnection, this::closeConnection) //
+				.onErrorMap(SQLException.class, ex -> translateException("executeMany", getSql(action), ex));
 	}
 
 	/**
@@ -292,7 +293,8 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(executeFunction.apply(it).execute());
 
-			return new DefaultSqlResultFunctions<>(sql, //
+			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
+					sql, //
 					resultFunction, //
 					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
 					mappingFunction);
@@ -564,7 +566,8 @@ class DefaultDatabaseClient implements DatabaseClient {
 			Function<Connection, Flux<Result>> resultFunction = it -> Flux
 					.from(insertFunction.apply(it).executeReturningGeneratedKeys());
 
-			return new DefaultSqlResultFunctions<>(sql, //
+			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
+					sql, //
 					resultFunction, //
 					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
 					mappingFunction);
@@ -680,99 +683,11 @@ class DefaultDatabaseClient implements DatabaseClient {
 			Function<Connection, Flux<Result>> resultFunction = it -> Flux
 					.from(insertFunction.apply(it).executeReturningGeneratedKeys());
 
-			return new DefaultSqlResultFunctions<>(sql, //
+			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
+					sql, //
 					resultFunction, //
 					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
 					mappingFunction);
-		}
-	}
-
-	/**
-	 * Default {@link org.springframework.data.jdbc.core.function.SqlResult} implementation.
-	 */
-	class DefaultSqlResultFunctions<T> implements SqlResult<T> {
-
-		private final String sql;
-		private final Function<Connection, Flux<Result>> resultFunction;
-		private final Function<Connection, Mono<Integer>> updatedRowsFunction;
-		private final FetchSpec<T> fetchSpec;
-
-		DefaultSqlResultFunctions(String sql, Function<Connection, Flux<Result>> resultFunction,
-				Function<Connection, Mono<Integer>> updatedRowsFunction, BiFunction<Row, RowMetadata, T> mappingFunction) {
-
-			this.sql = sql;
-			this.resultFunction = resultFunction;
-			this.updatedRowsFunction = updatedRowsFunction;
-
-			this.fetchSpec = new DefaultFetchFunctions<>(sql,
-					it -> resultFunction.apply(it).flatMap(result -> result.map(mappingFunction)), updatedRowsFunction);
-		}
-
-		@Override
-		public <R> SqlResult<R> extract(BiFunction<Row, RowMetadata, R> mappingFunction) {
-			return new DefaultSqlResultFunctions<>(sql, resultFunction, updatedRowsFunction, mappingFunction);
-		}
-
-		@Override
-		public Mono<T> one() {
-			return fetchSpec.one();
-		}
-
-		@Override
-		public Mono<T> first() {
-			return fetchSpec.first();
-		}
-
-		@Override
-		public Flux<T> all() {
-			return fetchSpec.all();
-		}
-
-		@Override
-		public Mono<Integer> rowsUpdated() {
-			return fetchSpec.rowsUpdated();
-		}
-	}
-
-	@RequiredArgsConstructor
-	class DefaultFetchFunctions<T> implements FetchSpec<T> {
-
-		private final String sql;
-		private final Function<Connection, Flux<T>> resultFunction;
-		private final Function<Connection, Mono<Integer>> updatedRowsFunction;
-
-		@Override
-		public Mono<T> one() {
-
-			return all().buffer(2) //
-					.flatMap(it -> {
-
-						if (it.isEmpty()) {
-							return Mono.empty();
-						}
-
-						if (it.size() > 1) {
-							return Mono.error(new IncorrectResultSizeDataAccessException(
-									String.format("Query [%s] returned non unique result.", this.sql), 1));
-						}
-
-						return Mono.just(it.get(0));
-					}).next();
-		}
-
-		@Override
-		public Mono<T> first() {
-			return all().next();
-		}
-
-		@Override
-		public Flux<T> all() {
-			return executeMany(resultFunction);
-		}
-
-		@Override
-		public Mono<Integer> rowsUpdated() {
-			return execute(updatedRowsFunction);
 		}
 	}
 

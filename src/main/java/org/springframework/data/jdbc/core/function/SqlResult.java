@@ -15,17 +15,24 @@
  */
 package org.springframework.data.jdbc.core.function;
 
-import java.util.function.BiFunction;
-
-import org.springframework.data.jdbc.core.function.DatabaseClient.FetchSpec;
-
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
+import java.util.function.BiFunction;
+
 /**
+ * Mappable {@link FetchSpec} that accepts a {@link BiFunction mapping function} to map SQL {@link Row}s.
+ *
  * @author Mark Paluch
  */
 public interface SqlResult<T> extends FetchSpec<T> {
 
+	/**
+	 * Apply a {@link BiFunction mapping function} to the result that emits {@link Row}s.
+	 *
+	 * @param mappingFunction must not be {@literal null}.
+	 * @param <R>
+	 * @return a new {@link SqlResult} with {@link BiFunction mapping function} applied.
+	 */
 	<R> SqlResult<R> extract(BiFunction<Row, RowMetadata, R> mappingFunction);
 }
