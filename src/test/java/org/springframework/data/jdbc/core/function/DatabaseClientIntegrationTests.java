@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.function;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.domain.Sort.Order.*;
 
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
@@ -28,6 +29,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.postgresql.ds.PGSimpleDataSource;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.function.ExternalDatabase.ProvidedDatabase;
 import org.springframework.data.jdbc.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -160,6 +163,80 @@ public class DatabaseClientIntegrationTests {
 				.expectNext(42055).verifyComplete();
 
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+	}
+
+	@Test
+	public void select() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.select().from(LegoSet.class) //
+				.project("id", "name", "manual") //
+				.orderBy(Sort.by("id")) //
+				.fetch().all() //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getId()).isEqualTo(42055);
+					assertThat(actual.getName()).isEqualTo("SCHAUFELRADBAGGER");
+					assertThat(actual.getManual()).isEqualTo(12);
+				}).verifyComplete();
+	}
+
+	@Test
+	public void selectOrderByIdDesc() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42064, 'FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42068, 'FLUGHAFEN-LÖSCHFAHRZEUG', 13)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.select().from(LegoSet.class) //
+				.orderBy(Sort.by(desc("id"))) //
+				.fetch().all() //
+				.map(LegoSet::getId) //
+				.as(StepVerifier::create) //
+				.expectNext(42068, 42064, 42055) //
+				.verifyComplete();
+	}
+
+	@Test
+	public void selectOrderPaged() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42064, 'FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42068, 'FLUGHAFEN-LÖSCHFAHRZEUG', 13)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.select().from(LegoSet.class) //
+				.orderBy(Sort.by(desc("id"))) //
+				.page(PageRequest.of(1, 1)).fetch().all() //
+				.map(LegoSet::getId) //
+				.as(StepVerifier::create) //
+				.expectNext(42064) //
+				.verifyComplete();
+	}
+
+	@Test
+	public void selectTypedLater() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42064, 'FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42068, 'FLUGHAFEN-LÖSCHFAHRZEUG', 13)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.select().from("legoset") //
+				.orderBy(Sort.by(desc("id"))) //
+				.as(LegoSet.class) //
+				.fetch().all() //
+				.map(LegoSet::getId) //
+				.as(StepVerifier::create) //
+				.expectNext(42068, 42064, 42055) //
+				.verifyComplete();
 	}
 
 	@Data
