@@ -30,6 +30,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,12 +49,17 @@ import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.UncategorizedDataAccessException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.NullHandling;
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jdbc.core.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.SqlProvider;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Default implementation of {@link DatabaseClient}.
@@ -93,7 +100,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	@Override
 	public SelectFromSpec select() {
-		throw new UnsupportedOperationException("Implement me");
+		return new DefaultSelectFromSpec();
 	}
 
 	@Override
@@ -254,7 +261,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	}
 
 	/**
-	 * Default {@link org.springframework.data.jdbc.core.function.DatabaseClient.GenericExecuteSpec} implementation.
+	 * Base class for {@link org.springframework.data.jdbc.core.function.DatabaseClient.GenericExecuteSpec}
+	 * implementations.
 	 */
 	@RequiredArgsConstructor
 	private class GenericExecuteSpecSupport {
@@ -478,6 +486,295 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		protected DefaultTypedGenericExecuteSpec<T> createInstance(Map<Integer, Optional<Object>> byIndex,
 				Map<String, Optional<Object>> byName, Supplier<String> sqlSupplier) {
 			return new DefaultTypedGenericExecuteSpec<>(byIndex, byName, sqlSupplier, typeToRead);
+		}
+	}
+
+	/**
+	 * Default {@link org.springframework.data.jdbc.core.function.DatabaseClient.SelectFromSpec} implementation.
+	 */
+	class DefaultSelectFromSpec implements SelectFromSpec {
+
+		@Override
+		public GenericSelectSpec from(String table) {
+			return new DefaultGenericSelectSpec(table);
+		}
+
+		@Override
+		public <T> TypedSelectSpec<T> from(Class<T> table) {
+			return new DefaultTypedSelectSpec<>(table);
+		}
+	}
+
+	/**
+	 * Base class for {@link org.springframework.data.jdbc.core.function.DatabaseClient.GenericExecuteSpec}
+	 * implementations.
+	 */
+	@RequiredArgsConstructor
+	private abstract class DefaultSelectSpecSupport {
+
+		final String table;
+		final List<String> projectedFields;
+		final Sort sort;
+		final Pageable page;
+
+		DefaultSelectSpecSupport(String table) {
+
+			Assert.hasText(table, "Table name must not be null!");
+
+			this.table = table;
+			this.projectedFields = Collections.emptyList();
+			this.sort = Sort.unsorted();
+			this.page = Pageable.unpaged();
+		}
+
+		public DefaultSelectSpecSupport project(String... selectedFields) {
+			Assert.notNull(selectedFields, "Projection fields must not be null!");
+
+			List<String> projectedFields = new ArrayList<>(this.projectedFields.size() + selectedFields.length);
+			projectedFields.addAll(this.projectedFields);
+			projectedFields.addAll(Arrays.asList(selectedFields));
+
+			return createInstance(table, projectedFields, sort, page);
+		}
+
+		public DefaultSelectSpecSupport orderBy(Sort sort) {
+
+			Assert.notNull(sort, "Sort must not be null!");
+
+			return createInstance(table, projectedFields, sort, page);
+		}
+
+		public DefaultSelectSpecSupport page(Pageable page) {
+
+			Assert.notNull(page, "Pageable must not be null!");
+
+			return createInstance(table, projectedFields, sort, page);
+		}
+
+		StringBuilder getLimitOffset(Pageable pageable) {
+			return new StringBuilder().append("LIMIT").append(' ').append(page.getPageSize()) //
+					.append(' ').append("OFFSET").append(' ').append(page.getOffset());
+		}
+
+		StringBuilder getSortClause(Sort sort) {
+
+			StringBuilder sortClause = new StringBuilder();
+
+			for (Order order : sort) {
+
+				if (sortClause.length() != 0) {
+					sortClause.append(',').append(' ');
+				}
+
+				sortClause.append(order.getProperty()).append(' ').append(order.getDirection().isAscending() ? "ASC" : "DESC");
+
+				if (order.getNullHandling() == NullHandling.NULLS_FIRST) {
+					sortClause.append(' ').append("NULLS FIRST");
+				}
+
+				if (order.getNullHandling() == NullHandling.NULLS_LAST) {
+					sortClause.append(' ').append("NULLS LAST");
+				}
+			}
+			return sortClause;
+		}
+
+		<R> SqlResult<R> execute(String sql, BiFunction<Row, RowMetadata, R> mappingFunction) {
+
+			Function<Connection, Statement> selectFunction = it -> {
+
+				if (logger.isDebugEnabled()) {
+					logger.debug("Executing SQL statement [" + sql + "]");
+				}
+
+				return it.createStatement(sql);
+			};
+
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(selectFunction.apply(it).execute());
+
+			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
+					sql, //
+					resultFunction, //
+					it -> Mono.error(new UnsupportedOperationException("Not available for SELECT")), //
+					mappingFunction);
+		}
+
+		protected abstract DefaultSelectSpecSupport createInstance(String table, List<String> projectedFields, Sort sort,
+				Pageable page);
+	}
+
+	private class DefaultGenericSelectSpec extends DefaultSelectSpecSupport implements GenericSelectSpec {
+
+		public DefaultGenericSelectSpec(String table, List<String> projectedFields, Sort sort, Pageable page) {
+			super(table, projectedFields, sort, page);
+		}
+
+		DefaultGenericSelectSpec(String table) {
+			super(table);
+		}
+
+		@Override
+		public <R> TypedSelectSpec<R> as(Class<R> resultType) {
+			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, resultType,
+					dataAccessStrategy.getRowMapper(resultType));
+		}
+
+		@Override
+		public DefaultGenericSelectSpec project(String... selectedFields) {
+			return (DefaultGenericSelectSpec) super.project(selectedFields);
+		}
+
+		@Override
+		public DefaultGenericSelectSpec orderBy(Sort sort) {
+			return (DefaultGenericSelectSpec) super.orderBy(sort);
+		}
+
+		@Override
+		public DefaultGenericSelectSpec page(Pageable page) {
+			return (DefaultGenericSelectSpec) super.page(page);
+		}
+
+		@Override
+		public FetchSpec<Map<String, Object>> fetch() {
+			return exchange(ColumnMapRowMapper.INSTANCE);
+		}
+
+		@Override
+		public Mono<SqlResult<Map<String, Object>>> exchange() {
+			return Mono.just(exchange(ColumnMapRowMapper.INSTANCE));
+		}
+
+		private <R> SqlResult<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
+
+			List<String> projectedFields;
+
+			if (this.projectedFields.isEmpty()) {
+				projectedFields = Collections.singletonList("*");
+			} else {
+				projectedFields = this.projectedFields;
+			}
+
+			StringBuilder selectBuilder = new StringBuilder();
+			selectBuilder.append("SELECT").append(' ') //
+					.append(StringUtils.collectionToDelimitedString(projectedFields, ", ")).append(' ') //
+					.append("FROM").append(' ').append(table);
+
+			if (sort.isSorted()) {
+				selectBuilder.append(' ').append("ORDER BY").append(' ').append(getSortClause(sort));
+			}
+
+			if (page.isPaged()) {
+				selectBuilder.append(' ').append(getLimitOffset(page));
+			}
+
+			return execute(selectBuilder.toString(), mappingFunction);
+		}
+
+		@Override
+		protected DefaultGenericSelectSpec createInstance(String table, List<String> projectedFields, Sort sort,
+				Pageable page) {
+			return new DefaultGenericSelectSpec(table, projectedFields, sort, page);
+		}
+	}
+
+	/**
+	 * Default implementation of {@link org.springframework.data.jdbc.core.function.DatabaseClient.TypedInsertSpec}.
+	 */
+	@SuppressWarnings("unchecked")
+	private class DefaultTypedSelectSpec<T> extends DefaultSelectSpecSupport implements TypedSelectSpec<T> {
+
+		private final Class<?> typeToRead;
+		private final BiFunction<Row, RowMetadata, T> mappingFunction;
+
+		DefaultTypedSelectSpec(Class<T> typeToRead) {
+
+			super(dataAccessStrategy.getTableName(typeToRead));
+
+			this.typeToRead = typeToRead;
+			this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
+		}
+
+		DefaultTypedSelectSpec(String table, List<String> projectedFields, Sort sort, Pageable page, Class<?> typeToRead,
+				BiFunction<Row, RowMetadata, T> mappingFunction) {
+			super(table, projectedFields, sort, page);
+			this.typeToRead = typeToRead;
+			this.mappingFunction = mappingFunction;
+		}
+
+		@Override
+		public <R> TypedSelectSpec<R> as(Class<R> resultType) {
+
+			Assert.notNull(resultType, "Result type must not be null!");
+
+			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, typeToRead,
+					dataAccessStrategy.getRowMapper(resultType));
+		}
+
+		@Override
+		public <R> TypedSelectSpec<R> extract(BiFunction<Row, RowMetadata, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, typeToRead, mappingFunction);
+		}
+
+		@Override
+		public DefaultTypedSelectSpec<T> project(String... selectedFields) {
+			return (DefaultTypedSelectSpec<T>) super.project(selectedFields);
+		}
+
+		@Override
+		public DefaultTypedSelectSpec<T> orderBy(Sort sort) {
+			return (DefaultTypedSelectSpec<T>) super.orderBy(sort);
+		}
+
+		@Override
+		public DefaultTypedSelectSpec<T> page(Pageable page) {
+			return (DefaultTypedSelectSpec<T>) super.page(page);
+		}
+
+		@Override
+		public FetchSpec<T> fetch() {
+			return exchange(mappingFunction);
+		}
+
+		@Override
+		public Mono<SqlResult<T>> exchange() {
+			return Mono.just(exchange(mappingFunction));
+		}
+
+		private <R> SqlResult<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
+
+			List<String> projectedFields;
+
+			if (this.projectedFields.isEmpty()) {
+				projectedFields = dataAccessStrategy.getAllFields(typeToRead);
+			} else {
+				projectedFields = this.projectedFields;
+			}
+
+			StringBuilder selectBuilder = new StringBuilder();
+			selectBuilder.append("SELECT").append(' ') //
+					.append(StringUtils.collectionToDelimitedString(projectedFields, ", ")).append(' ') //
+					.append("FROM").append(' ').append(table);
+
+			if (sort.isSorted()) {
+
+				Sort mappedSort = dataAccessStrategy.getMappedSort(typeToRead, sort);
+				selectBuilder.append(' ').append("ORDER BY").append(' ').append(getSortClause(mappedSort));
+			}
+
+			if (page.isPaged()) {
+				selectBuilder.append(' ').append(getLimitOffset(page));
+			}
+
+			return execute(selectBuilder.toString(), mappingFunction);
+		}
+
+		@Override
+		protected DefaultTypedSelectSpec<T> createInstance(String table, List<String> projectedFields, Sort sort,
+				Pageable page) {
+			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, typeToRead, mappingFunction);
 		}
 	}
 

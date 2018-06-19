@@ -15,20 +15,25 @@
  */
 package org.springframework.data.jdbc.core.function;
 
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import org.springframework.data.convert.EntityInstantiators;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.util.Pair;
+import org.springframework.data.util.StreamUtils;
 import org.springframework.util.ClassUtils;
-
-import io.r2dbc.spi.Row;
-import io.r2dbc.spi.RowMetadata;
 
 /**
  * @author Mark Paluch
@@ -37,6 +42,20 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	private final EntityInstantiators instantiators = new EntityInstantiators();
 	private final JdbcMappingContext mappingContext = new JdbcMappingContext();
+
+	@Override
+	public List<String> getAllFields(Class<?> typeToRead) {
+
+		JdbcPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(typeToRead);
+
+		if (persistentEntity == null) {
+			return Collections.singletonList("*");
+		}
+
+		return StreamUtils.createStreamFromIterator(persistentEntity.iterator()) //
+				.map(JdbcPersistentProperty::getColumnName) //
+				.collect(Collectors.toList());
+	}
 
 	@Override
 	public List<Pair<String, Object>> getInsert(Object object) {
@@ -60,6 +79,30 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		}
 
 		return values;
+	}
+
+	@Override
+	public Sort getMappedSort(Class<?> typeToRead, Sort sort) {
+
+		JdbcPersistentEntity<?> entity = mappingContext.getPersistentEntity(typeToRead);
+		if (entity == null) {
+			return sort;
+		}
+
+		List<Order> mappedOrder = new ArrayList<>();
+
+		for (Order order : sort) {
+
+			JdbcPersistentProperty persistentProperty = entity.getPersistentProperty(order.getProperty());
+			if (persistentProperty == null) {
+				mappedOrder.add(order);
+			} else {
+				mappedOrder
+						.add(Order.by(persistentProperty.getColumnName()).with(order.getNullHandling()).with(order.getDirection()));
+			}
+		}
+
+		return Sort.by(mappedOrder);
 	}
 
 	@Override

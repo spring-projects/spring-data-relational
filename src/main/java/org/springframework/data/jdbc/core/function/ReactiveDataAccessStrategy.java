@@ -15,20 +15,25 @@
  */
 package org.springframework.data.jdbc.core.function;
 
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
+
 import java.util.List;
 import java.util.function.BiFunction;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
-
-import io.r2dbc.spi.Row;
-import io.r2dbc.spi.RowMetadata;
 
 /**
  * @author Mark Paluch
  */
 public interface ReactiveDataAccessStrategy {
 
+	List<String> getAllFields(Class<?> typeToRead);
+
 	List<Pair<String, Object>> getInsert(Object object);
+
+	Sort getMappedSort(Class<?> typeToRead, Sort sort);
 
 	// TODO: Broaden T to Mono<T>/Flux<T> for reactive relational data access?
 	<T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead);

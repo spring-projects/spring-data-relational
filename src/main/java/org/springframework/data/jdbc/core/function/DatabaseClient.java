@@ -201,8 +201,20 @@ public interface DatabaseClient {
 	 */
 	interface SelectFromSpec {
 
+		/**
+		 * Specify the source {@literal table} to select from.
+		 *
+		 * @param table must not be {@literal null} or empty.
+		 * @return
+		 */
 		GenericSelectSpec from(String table);
 
+		/**
+		 * Specify the source table to select from to using the {@link Class entity class}.
+		 *
+		 * @param table must not be {@literal null}.
+		 * @return
+		 */
 		<T> TypedSelectSpec<T> from(Class<T> table);
 	}
 
@@ -220,7 +232,7 @@ public interface DatabaseClient {
 		GenericInsertSpec into(String table);
 
 		/**
-		 * Specify the target {@link Class} table to insert to using the {@link Class entity class}.
+		 * Specify the target table to insert to using the {@link Class entity class}.
 		 *
 		 * @param table must not be {@literal null}.
 		 * @return
@@ -296,12 +308,26 @@ public interface DatabaseClient {
 	 */
 	interface SelectSpec<S extends SelectSpec<S>> {
 
+		/**
+		 * Configure projected fields.
+		 *
+		 * @param selectedFields must not be {@literal null}.
+		 */
 		S project(String... selectedFields);
 
-		S where(Object criteriaDefinition);
 
+		/**
+		 * Configure {@link Sort}.
+		 *
+		 * @param sort must not be {@literal null}.
+		 */
 		S orderBy(Sort sort);
 
+		/**
+		 * Configure pagination. Overrides {@link Sort} if the {@link Pageable} contains a {@link Sort} object.
+		 *
+		 * @param page must not be {@literal null}.
+		 */
 		S page(Pageable page);
 	}
 
