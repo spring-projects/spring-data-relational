@@ -102,25 +102,75 @@ class DefaultDatabaseClient implements DatabaseClient {
 		return new DefaultInsertIntoSpec();
 	}
 
-	public <T> Flux<T> execute(Function<Connection, Flux<T>> action) throws DataAccessException {
+	/**
+	 * Execute a callback {@link Function} within a {@link Connection} scope. The function is responsible for creating a
+	 * {@link Flux}. The connection is released after the {@link Flux} terminates (or the subscription is cancelled).
+	 * Connection resources must not be passed outside of the {@link Function} closure, otherwise resources may get
+	 * defunct.
+	 *
+	 * @param action must not be {@literal null}.
+	 * @return the resulting {@link Flux}.
+	 * @throws DataAccessException
+	 */
+	public <T> Flux<T> executeMany(Function<Connection, Flux<T>> action) throws DataAccessException {
 
 		Assert.notNull(action, "Callback object must not be null");
 
-		Mono<Connection> connectionMono = Mono.from(obtainConnectionFactory().create());
+		Mono<Connection> connectionMono = getConnection();
 		// Create close-suppressing Connection proxy, also preparing returned Statements.
 
-		return connectionMono.flatMapMany(connection -> {
+		return Flux.usingWhen(connectionMono, it -> {
 
-			Connection connectionToUse = createConnectionProxy(connection);
+			Connection connectionToUse = createConnectionProxy(it);
 
-			// TODO: Release connection
-			return doInConnection(action, connectionToUse);
+			return doInConnectionMany(connectionToUse, action);
+		}, this::closeConnection, this::closeConnection, this::closeConnection) //
+				.onErrorMap(SQLException.class, ex -> translateException("executeMany", getSql(action), ex));
+	}
 
-		}).onErrorMap(SQLException.class, ex -> {
+	/**
+	 * Execute a callback {@link Function} within a {@link Connection} scope. The function is responsible for creating a
+	 * {@link Mono}. The connection is released after the {@link Mono} terminates (or the subscription is cancelled).
+	 * Connection resources must not be passed outside of the {@link Function} closure, otherwise resources may get
+	 * defunct.
+	 *
+	 * @param action must not be {@literal null}.
+	 * @return the resulting {@link Mono}.
+	 * @throws DataAccessException
+	 */
+	public <T> Mono<T> execute(Function<Connection, Mono<T>> action) throws DataAccessException {
 
-			String sql = getSql(action);
-			return translateException("ConnectionCallback", sql, ex);
-		});
+		Assert.notNull(action, "Callback object must not be null");
+
+		Mono<Connection> connectionMono = getConnection();
+		// Create close-suppressing Connection proxy, also preparing returned Statements.
+
+		return Mono.usingWhen(connectionMono, it -> {
+
+			Connection connectionToUse = createConnectionProxy(it);
+
+			return doInConnection(connectionToUse, action);
+		}, this::closeConnection, this::closeConnection, this::closeConnection) //
+				.onErrorMap(SQLException.class, ex -> translateException("execute", getSql(action), ex));
+	}
+
+	/**
+	 * Obtain a {@link Connection}.
+	 *
+	 * @return
+	 */
+	protected Mono<Connection> getConnection() {
+		return Mono.from(obtainConnectionFactory().create());
+	}
+
+	/**
+	 * Release the {@link Connection}.
+	 *
+	 * @param connection
+	 * @return
+	 */
+	protected Publisher<Void> closeConnection(Connection connection) {
+		return connection.close();
 	}
 
 	/**
@@ -153,11 +203,12 @@ class DefaultDatabaseClient implements DatabaseClient {
 	 * @return a DataAccessException wrapping the {@code SQLException} (never {@code null})
 	 */
 	protected DataAccessException translateException(String task, @Nullable String sql, SQLException ex) {
+
 		DataAccessException dae = exceptionTranslator.translate(task, sql, ex);
 		return (dae != null ? dae : new UncategorizedSQLException(task, sql, ex));
 	}
 
-	static void doBind(Statement statement, Map<String, Optional<Object>> byName,
+	private static void doBind(Statement statement, Map<String, Optional<Object>> byName,
 			Map<Integer, Optional<Object>> byIndex) {
 
 		byIndex.forEach((i, o) -> {
@@ -225,16 +276,26 @@ class DefaultDatabaseClient implements DatabaseClient {
 			return sql;
 		}
 
-		<T> Mono<SqlResult<T>> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
+		protected <T> SqlResult<T> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
-			return execute(it -> {
+			Function<Connection, Statement> executeFunction = it -> {
+
+				if (logger.isDebugEnabled()) {
+					logger.debug("Executing SQL statement [" + sql + "]");
+				}
 
 				Statement statement = it.createStatement(sql);
 				doBind(statement, byName, byIndex);
 
-				return Flux
-						.just((SqlResult<T>) new DefaultSqlResult<>(sql, Flux.from(statement.add().execute()), mappingFunction));
-			}).next();
+				return statement;
+			};
+
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(executeFunction.apply(it).execute());
+
+			return new DefaultSqlResultFunctions<>(sql, //
+					resultFunction, //
+					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
+					mappingFunction);
 		}
 
 		public GenericExecuteSpecSupport bind(int index, Object value) {
@@ -310,15 +371,12 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 		@Override
 		public FetchSpec<Map<String, Object>> fetch() {
-
-			String sql = getSql();
-			return new DefaultFetchSpec<>(sql, exchange(sql, ColumnMapRowMapper.INSTANCE).flatMapMany(SqlResult::all),
-					exchange(sql, ColumnMapRowMapper.INSTANCE).flatMap(FetchSpec::rowsUpdated));
+			return exchange(getSql(), ColumnMapRowMapper.INSTANCE);
 		}
 
 		@Override
 		public Mono<SqlResult<Map<String, Object>>> exchange() {
-			return exchange(getSql(), ColumnMapRowMapper.INSTANCE);
+			return Mono.just(exchange(getSql(), ColumnMapRowMapper.INSTANCE));
 		}
 
 		@Override
@@ -381,14 +439,12 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 		@Override
 		public FetchSpec<T> fetch() {
-			String sql = getSql();
-			return new DefaultFetchSpec<>(sql, exchange(sql, mappingFunction).flatMapMany(SqlResult::all),
-					exchange(sql, mappingFunction).flatMap(FetchSpec::rowsUpdated));
+			return exchange(getSql(), mappingFunction);
 		}
 
 		@Override
 		public Mono<SqlResult<T>> exchange() {
-			return exchange(getSql(), mappingFunction);
+			return Mono.just(exchange(getSql(), mappingFunction));
 		}
 
 		@Override
@@ -472,11 +528,15 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 		@Override
 		public Mono<Void> then() {
-			return exchange().flatMapMany(FetchSpec::all).then();
+			return exchange((row, md) -> row).all().then();
 		}
 
 		@Override
 		public Mono<SqlResult<Map<String, Object>>> exchange() {
+			return Mono.just(exchange(ColumnMapRowMapper.INSTANCE));
+		}
+
+		private <T> SqlResult<T> exchange(BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			if (byName.isEmpty()) {
 				throw new IllegalStateException("Insert fields is empty!");
@@ -490,26 +550,43 @@ class DefaultDatabaseClient implements DatabaseClient {
 			builder.append("INSERT INTO ").append(table).append(" (").append(fieldNames).append(") ").append(" VALUES(")
 					.append(placeholders).append(")");
 
-			return execute(it -> {
+			String sql = builder.toString();
+			Function<Connection, Statement> insertFunction = it -> {
 
-				String sql = builder.toString();
-				Statement statement = it.createStatement(sql);
-
-				AtomicInteger index = new AtomicInteger();
-				for (Optional<Object> o : byName.values()) {
-
-					if (o.isPresent()) {
-						o.ifPresent(v -> statement.bind(index.getAndIncrement(), v));
-					} else {
-						statement.bindNull("$" + (index.getAndIncrement() + 1), 0); // TODO: What is type?
-					}
+				if (logger.isDebugEnabled()) {
+					logger.debug("Executing SQL statement [" + sql + "]");
 				}
+				Statement statement = it.createStatement(sql);
+				doBind(statement);
+				return statement;
+			};
 
-				SqlResult<Map<String, Object>> result = new DefaultSqlResult<>(sql,
-						Flux.from(statement.executeReturningGeneratedKeys()), ColumnMapRowMapper.INSTANCE);
-				return Flux.just(result);
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux
+					.from(insertFunction.apply(it).executeReturningGeneratedKeys());
 
-			}).next();
+			return new DefaultSqlResultFunctions<>(sql, //
+					resultFunction, //
+					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
+					mappingFunction);
+		}
+
+		/**
+		 * PostgreSQL-specific bind.
+		 *
+		 * @param statement
+		 */
+		private void doBind(Statement statement) {
+
+			AtomicInteger index = new AtomicInteger();
+
+			for (Optional<Object> o : byName.values()) {
+
+				if (o.isPresent()) {
+					o.ifPresent(v -> statement.bind(index.getAndIncrement(), v));
+				} else {
+					statement.bindNull("$" + (index.getAndIncrement() + 1), 0); // TODO: What is type?
+				}
+			}
 		}
 	}
 
@@ -523,7 +600,7 @@ class DefaultDatabaseClient implements DatabaseClient {
 		private final String table;
 		private final Publisher<T> objectToInsert;
 
-		public DefaultTypedInsertSpec(Class<?> typeToInsert) {
+		DefaultTypedInsertSpec(Class<?> typeToInsert) {
 
 			this.typeToInsert = typeToInsert;
 			this.table = dataAccessStrategy.getTableName(typeToInsert);
@@ -556,69 +633,84 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 		@Override
 		public Mono<Void> then() {
-			return exchange().flatMapMany(FetchSpec::all).then();
+			return Mono.from(objectToInsert).map(toInsert -> exchange(toInsert, (row, md) -> row).all()).then();
 		}
 
 		@Override
 		public Mono<SqlResult<Map<String, Object>>> exchange() {
+			return Mono.from(objectToInsert).map(toInsert -> exchange(toInsert, ColumnMapRowMapper.INSTANCE));
+		}
 
-			return Mono.from(objectToInsert).flatMap(toInsert -> {
+		private <R> SqlResult<R> exchange(Object toInsert, BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-				StringBuilder builder = new StringBuilder();
+			StringBuilder builder = new StringBuilder();
 
-				List<Pair<String, Object>> insertValues = dataAccessStrategy.getInsert(toInsert);
-				String fieldNames = insertValues.stream().map(Pair::getFirst).collect(Collectors.joining(","));
-				String placeholders = IntStream.range(0, insertValues.size()).mapToObj(i -> "$" + (i + 1))
-						.collect(Collectors.joining(","));
+			List<Pair<String, Object>> insertValues = dataAccessStrategy.getInsert(toInsert);
+			String fieldNames = insertValues.stream().map(Pair::getFirst).collect(Collectors.joining(","));
+			String placeholders = IntStream.range(0, insertValues.size()).mapToObj(i -> "$" + (i + 1))
+					.collect(Collectors.joining(","));
 
-				builder.append("INSERT INTO ").append(table).append(" (").append(fieldNames).append(") ").append(" VALUES(")
-						.append(placeholders).append(")");
+			builder.append("INSERT INTO ").append(table).append(" (").append(fieldNames).append(") ").append(" VALUES(")
+					.append(placeholders).append(")");
 
-				return execute(it -> {
+			String sql = builder.toString();
 
-					String sql = builder.toString();
-					Statement statement = it.createStatement(sql);
+			Function<Connection, Statement> insertFunction = it -> {
 
-					AtomicInteger index = new AtomicInteger();
+				if (logger.isDebugEnabled()) {
+					logger.debug("Executing SQL statement [" + sql + "]");
+				}
 
-					for (Pair<String, Object> pair : insertValues) {
+				Statement statement = it.createStatement(sql);
 
-						if (pair.getSecond() != null) { // TODO: Better type to transport null values.
-							statement.bind(index.getAndIncrement(), pair.getSecond());
-						} else {
-							statement.bindNull("$" + (index.getAndIncrement() + 1), 0); // TODO: What is type?
-						}
+				AtomicInteger index = new AtomicInteger();
+
+				for (Pair<String, Object> pair : insertValues) {
+
+					if (pair.getSecond() != null) { // TODO: Better type to transport null values.
+						statement.bind(index.getAndIncrement(), pair.getSecond());
+					} else {
+						statement.bindNull("$" + (index.getAndIncrement() + 1), 0); // TODO: What is type?
 					}
+				}
 
-					SqlResult<Map<String, Object>> result = new DefaultSqlResult<>(sql,
-							Flux.from(statement.executeReturningGeneratedKeys()), ColumnMapRowMapper.INSTANCE);
-					return Flux.just(result);
+				return statement;
+			};
 
-				}).next();
-			});
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux
+					.from(insertFunction.apply(it).executeReturningGeneratedKeys());
+
+			return new DefaultSqlResultFunctions<>(sql, //
+					resultFunction, //
+					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
+					mappingFunction);
 		}
 	}
 
 	/**
-	 * Default {@link org.springframework.data.jdbc.core.function.DatabaseClient.SqlResult} implementation.
+	 * Default {@link org.springframework.data.jdbc.core.function.SqlResult} implementation.
 	 */
-	static class DefaultSqlResult<T> implements SqlResult<T> {
+	class DefaultSqlResultFunctions<T> implements SqlResult<T> {
 
 		private final String sql;
-		private final Flux<Result> result;
+		private final Function<Connection, Flux<Result>> resultFunction;
+		private final Function<Connection, Mono<Integer>> updatedRowsFunction;
 		private final FetchSpec<T> fetchSpec;
 
-		DefaultSqlResult(String sql, Flux<Result> result, BiFunction<Row, RowMetadata, T> mappingFunction) {
+		DefaultSqlResultFunctions(String sql, Function<Connection, Flux<Result>> resultFunction,
+				Function<Connection, Mono<Integer>> updatedRowsFunction, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			this.sql = sql;
-			this.result = result;
-			this.fetchSpec = new DefaultFetchSpec<>(sql, result.flatMap(it -> it.map(mappingFunction)),
-					result.flatMap(Result::getRowsUpdated).next());
+			this.resultFunction = resultFunction;
+			this.updatedRowsFunction = updatedRowsFunction;
+
+			this.fetchSpec = new DefaultFetchFunctions<>(sql,
+					it -> resultFunction.apply(it).flatMap(result -> result.map(mappingFunction)), updatedRowsFunction);
 		}
 
 		@Override
 		public <R> SqlResult<R> extract(BiFunction<Row, RowMetadata, R> mappingFunction) {
-			return new DefaultSqlResult<>(sql, result, mappingFunction);
+			return new DefaultSqlResultFunctions<>(sql, resultFunction, updatedRowsFunction, mappingFunction);
 		}
 
 		@Override
@@ -643,11 +735,11 @@ class DefaultDatabaseClient implements DatabaseClient {
 	}
 
 	@RequiredArgsConstructor
-	static class DefaultFetchSpec<T> implements FetchSpec<T> {
+	class DefaultFetchFunctions<T> implements FetchSpec<T> {
 
 		private final String sql;
-		private final Flux<T> result;
-		private final Mono<Integer> updatedRows;
+		private final Function<Connection, Flux<T>> resultFunction;
+		private final Function<Connection, Mono<Integer>> updatedRowsFunction;
 
 		@Override
 		public Mono<T> one() {
@@ -675,23 +767,34 @@ class DefaultDatabaseClient implements DatabaseClient {
 
 		@Override
 		public Flux<T> all() {
-			return result;
+			return executeMany(resultFunction);
 		}
 
 		@Override
 		public Mono<Integer> rowsUpdated() {
-			return updatedRows;
+			return execute(updatedRowsFunction);
 		}
 	}
 
-	private static <T> Flux<T> doInConnection(Function<Connection, Flux<T>> action, Connection it) {
+	private static <T> Flux<T> doInConnectionMany(Connection connection, Function<Connection, Flux<T>> action) {
 
 		try {
-			return action.apply(it);
+			return action.apply(connection);
 		} catch (RuntimeException e) {
 
 			String sql = getSql(action);
 			return Flux.error(new DefaultDatabaseClient.UncategorizedSQLException("ConnectionCallback", sql, e) {});
+		}
+	}
+
+	private static <T> Mono<T> doInConnection(Connection connection, Function<Connection, Mono<T>> action) {
+
+		try {
+			return action.apply(connection);
+		} catch (RuntimeException e) {
+
+			String sql = getSql(action);
+			return Mono.error(new DefaultDatabaseClient.UncategorizedSQLException("ConnectionCallback", sql, e) {});
 		}
 	}
 
@@ -764,7 +867,7 @@ class DefaultDatabaseClient implements DatabaseClient {
 		}
 	}
 
-	private static class UncategorizedSQLException extends UncategorizedDataAccessException {
+	private static class UncategorizedSQLException extends UncategorizedDataAccessException implements SqlProvider {
 
 		/** SQL that led to the problem */
 		@Nullable private final String sql;

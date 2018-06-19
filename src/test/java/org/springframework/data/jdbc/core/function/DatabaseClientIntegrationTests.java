@@ -121,8 +121,25 @@ public class DatabaseClientIntegrationTests {
 				.value("name", "SCHAUFELRADBAGGER") //
 				.nullValue("manual") //
 				.exchange() //
-				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all()).as(StepVerifier::create) //
+				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all()) //
+				.as(StepVerifier::create) //
 				.expectNext(42055).verifyComplete();
+
+		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+	}
+
+	@Test
+	public void insertWithoutResult() {
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.insert().into("legoset")//
+				.value("id", 42055) //
+				.value("name", "SCHAUFELRADBAGGER") //
+				.nullValue("manual") //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
 
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
