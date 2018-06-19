@@ -36,6 +36,7 @@
 		<r2dbc-spi.version>1.0.0.BUILD-SNAPSHOT</r2dbc-spi.version>
 		<r2dbc-postgresql.version>1.0.0.BUILD-SNAPSHOT</r2dbc-postgresql.version>
 		<testcontainers.version>1.7.3</testcontainers.version>
+		<reactor>Californium-BUILD-SNAPSHOT</reactor>
 
 	</properties>
 
