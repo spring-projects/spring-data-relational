@@ -62,7 +62,7 @@ import org.springframework.util.Assert;
 class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	/** Logger available to subclasses */
-	protected final Log logger = LogFactory.getLog(getClass());
+	private final Log logger = LogFactory.getLog(getClass());
 
 	private final ConnectionFactory connector;
 
@@ -72,7 +72,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	private final DefaultDatabaseClientBuilder builder;
 
-	public DefaultDatabaseClient(ConnectionFactory connector, SQLExceptionTranslator exceptionTranslator,
+	DefaultDatabaseClient(ConnectionFactory connector, SQLExceptionTranslator exceptionTranslator,
 			ReactiveDataAccessStrategy dataAccessStrategy, DefaultDatabaseClientBuilder builder) {
 
 		this.connector = connector;

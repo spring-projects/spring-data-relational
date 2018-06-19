@@ -71,7 +71,7 @@ public interface DatabaseClient {
 	}
 
 	/**
-	 * Obtain a {@code WebClient} builder.
+	 * Obtain a {@code DatabaseClient} builder.
 	 */
 	static DatabaseClient.Builder builder() {
 		return new DefaultDatabaseClientBuilder();
@@ -219,6 +219,12 @@ public interface DatabaseClient {
 		 */
 		GenericInsertSpec into(String table);
 
+		/**
+		 * Specify the target {@link Class} table to insert to using the {@link Class entity class}.
+		 *
+		 * @param table must not be {@literal null}.
+		 * @return
+		 */
 		<T> TypedInsertSpec<T> into(Class<T> table);
 	}
 
