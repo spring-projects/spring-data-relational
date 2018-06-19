@@ -15,7 +15,9 @@
  */
 package org.springframework.data.jdbc.core.function;
 
-import reactor.core.publisher.Flux;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -27,10 +29,6 @@ import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
-
-import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.Row;
-import io.r2dbc.spi.RowMetadata;
 
 /**
  * A non-blocking, reactive client for performing database calls requests with Reactive Streams back pressure. Provides
@@ -412,40 +410,4 @@ public interface DatabaseClient {
 		 */
 		S bind(Object bean);
 	}
-
-	/**
-	 * Contract for fetching results.
-	 */
-	interface FetchSpec<T> {
-
-		/**
-		 * Get exactly zero or one result.
-		 *
-		 * @return {@link Mono#empty()} if no match found. Never {@literal null}.
-		 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
-		 */
-		Mono<T> one();
-
-		/**
-		 * Get the first or no result.
-		 *
-		 * @return {@link Mono#empty()} if no match found. Never {@literal null}.
-		 */
-		Mono<T> first();
-
-		/**
-		 * Get all matching elements.
-		 *
-		 * @return never {@literal null}.
-		 */
-		Flux<T> all();
-
-		/**
-		 * Get the number of updated rows.
-		 *
-		 * @return {@link Mono} emitting the number of updated rows. Never {@literal null}.
-		 */
-		Mono<Integer> rowsUpdated();
-	}
-
 }
