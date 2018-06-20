@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,8 +32,7 @@ import org.springframework.data.jdbc.core.function.DatabaseClient.BindSpec;
 import org.springframework.data.jdbc.core.function.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.jdbc.core.function.FetchSpec;
 import org.springframework.data.jdbc.core.function.MappingR2dbcConverter;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.mapping.IdentifierAccessor;
+import org.springframework.data.jdbc.repository.query.JdbcEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.util.Assert;
 
@@ -40,30 +41,12 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  */
+@RequiredArgsConstructor
 public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, ID> {
 
-	private final DatabaseClient databaseClient;
-	private final MappingR2dbcConverter converter;
-	private final JdbcPersistentEntity<T> entity;
-
-	/**
-	 * Create a new {@link SimpleR2dbcRepository} given {@link DatabaseClient} and {@link JdbcPersistentEntity}.
-	 *
-	 * @param databaseClient must not be {@literal null}.
-	 * @param converter must not be {@literal null}.
-	 * @param entity must not be {@literal null}.
-	 */
-	public SimpleR2dbcRepository(DatabaseClient databaseClient, MappingR2dbcConverter converter,
-			JdbcPersistentEntity<T> entity) {
-		this.converter = converter;
-
-		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
-		Assert.notNull(converter, "MappingR2dbcConverter must not be null!");
-		Assert.notNull(entity, "PersistentEntity must not be null!");
-
-		this.databaseClient = databaseClient;
-		this.entity = entity;
-	}
+	private final @NonNull JdbcEntityInformation<T, ID> entity;
+	private final @NonNull DatabaseClient databaseClient;
+	private final @NonNull MappingR2dbcConverter converter;
 
 	/* (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#save(S)
@@ -76,15 +59,14 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		if (entity.isNew(objectToSave)) {
 
 			return databaseClient.insert() //
-					.into(entity.getType()) //
+					.into(entity.getJavaType()) //
 					.using(objectToSave) //
 					.exchange() //
 					.flatMap(it -> it.extract(converter.populateIdIfNecessary(objectToSave)).one());
 		}
 
 		// TODO: Extract in some kind of SQL generator
-		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(objectToSave);
-		Object id = identifierAccessor.getRequiredIdentifier();
+		Object id = entity.getRequiredId(objectToSave);
 
 		Map<String, Optional<Object>> fields = converter.getFieldsToUpdate(objectToSave);
 
@@ -105,7 +87,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			}
 		}
 
-		return exec.as(entity.getType()) //
+		return exec.as(entity.getJavaType()) //
 				.exchange() //
 				.flatMap(FetchSpec::rowsUpdated) //
 				.thenReturn(objectToSave);
@@ -162,7 +144,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		return databaseClient.execute()
 				.sql(String.format("SELECT * FROM %s WHERE %s = $1", entity.getTableName(), getIdColumnName())) //
 				.bind("$1", id) //
-				.as(entity.getType()) //
+				.as(entity.getJavaType()) //
 				.fetch() //
 				.one();
 
@@ -206,7 +188,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 */
 	@Override
 	public Flux<T> findAll() {
-		return databaseClient.select().from(entity.getType()).fetch().all();
+		return databaseClient.select().from(entity.getJavaType()).fetch().all();
 	}
 
 	/* (non-Javadoc)
@@ -235,7 +217,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			GenericExecuteSpec exec = databaseClient.execute()
 					.sql(String.format("SELECT * FROM %s WHERE %s IN (%s)", entity.getTableName(), getIdColumnName(), bindings));
 
-			return bind(ids, exec).as(entity.getType()).fetch().all();
+			return bind(ids, exec).as(entity.getJavaType()).fetch().all();
 		});
 	}
 
@@ -284,7 +266,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			GenericExecuteSpec exec = databaseClient.execute()
 					.sql(String.format("DELETE FROM %s WHERE %s IN (%s)", entity.getTableName(), getIdColumnName(), bindings));
 
-			return bind(ids, exec).as(entity.getType()).fetch().rowsUpdated();
+			return bind(ids, exec).as(entity.getJavaType()).fetch().rowsUpdated();
 		}).then();
 	}
 
@@ -297,9 +279,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(objectToDelete, "Object to delete must not be null!");
 
-		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(objectToDelete);
-
-		return deleteById((ID) identifierAccessor.getRequiredIdentifier());
+		return deleteById(entity.getRequiredId(objectToDelete));
 	}
 
 	/* (non-Javadoc)
@@ -323,8 +303,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		Assert.notNull(objectPublisher, "The Object Publisher must not be null!");
 
 		Flux<ID> idPublisher = Flux.from(objectPublisher) //
-				.map(entity::getIdentifierAccessor) //
-				.map(identifierAccessor -> (ID) identifierAccessor.getRequiredIdentifier());
+				.map(entity::getRequiredId);
 
 		return deleteById(idPublisher);
 	}
@@ -355,6 +334,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	}
 
 	private String getIdColumnName() {
-		return entity.getRequiredIdProperty().getColumnName();
+		return converter.getMappingContext().getRequiredPersistentEntity(entity.getJavaType()).getRequiredIdProperty()
+				.getColumnName();
 	}
 }

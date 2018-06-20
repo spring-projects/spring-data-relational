@@ -40,6 +40,7 @@ import org.springframework.data.jdbc.core.function.MappingR2dbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.Table;
+import org.springframework.data.jdbc.repository.query.JdbcEntityInformation;
 import org.springframework.data.jdbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -65,9 +66,12 @@ public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestS
 		this.connectionFactory = createConnectionFactory();
 		this.databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory)
 				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(mappingContext, new EntityInstantiators())).build();
-		this.repository = new SimpleR2dbcRepository<>(databaseClient,
-				new MappingR2dbcConverter(mappingContext),
+
+		JdbcEntityInformation<LegoSet, Integer> entityInformation = new MappingJdbcEntityInformation<>(
 				(JdbcPersistentEntity<LegoSet>) mappingContext.getRequiredPersistentEntity(LegoSet.class));
+
+		this.repository = new SimpleR2dbcRepository<>(entityInformation, databaseClient,
+				new MappingR2dbcConverter(mappingContext));
 
 		this.jdbc = createJdbcTemplate(createDataSource());
 
