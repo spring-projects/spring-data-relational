@@ -19,6 +19,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -26,6 +28,8 @@ import org.reactivestreams.Publisher;
 import org.springframework.data.jdbc.core.function.DatabaseClient;
 import org.springframework.data.jdbc.core.function.DatabaseClient.BindSpec;
 import org.springframework.data.jdbc.core.function.DatabaseClient.GenericExecuteSpec;
+import org.springframework.data.jdbc.core.function.FetchSpec;
+import org.springframework.data.jdbc.core.function.MappingR2dbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -39,17 +43,22 @@ import org.springframework.util.Assert;
 public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, ID> {
 
 	private final DatabaseClient databaseClient;
+	private final MappingR2dbcConverter converter;
 	private final JdbcPersistentEntity<T> entity;
 
 	/**
 	 * Create a new {@link SimpleR2dbcRepository} given {@link DatabaseClient} and {@link JdbcPersistentEntity}.
 	 *
 	 * @param databaseClient must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
 	 * @param entity must not be {@literal null}.
 	 */
-	public SimpleR2dbcRepository(DatabaseClient databaseClient, JdbcPersistentEntity<T> entity) {
+	public SimpleR2dbcRepository(DatabaseClient databaseClient, MappingR2dbcConverter converter,
+			JdbcPersistentEntity<T> entity) {
+		this.converter = converter;
 
 		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
+		Assert.notNull(converter, "MappingR2dbcConverter must not be null!");
 		Assert.notNull(entity, "PersistentEntity must not be null!");
 
 		this.databaseClient = databaseClient;
@@ -66,13 +75,57 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		if (entity.isNew(objectToSave)) {
 
-			// TODO populate Id back to model
-			return databaseClient.insert().into(entity.getType()).using(objectToSave).then().thenReturn(objectToSave);
+			return databaseClient.insert() //
+					.into(entity.getType()) //
+					.using(objectToSave) //
+					.exchange() //
+					.flatMap(it -> it.extract(converter.populateIdIfNecessary(objectToSave)).one());
 		}
 
-		// TODO update
+		// TODO: Extract in some kind of SQL generator
+		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(objectToSave);
+		Object id = identifierAccessor.getRequiredIdentifier();
 
-		return null;
+		Map<String, Optional<Object>> fields = converter.getFieldsToUpdate(objectToSave);
+
+		String setClause = getSetClause(fields);
+
+		GenericExecuteSpec exec = databaseClient.execute()
+				.sql(String.format("UPDATE %s SET %s WHERE %s = $1", entity.getTableName(), setClause, getIdColumnName())) //
+				.bind(0, id);
+
+		int index = 1;
+		for (Optional<Object> setValue : fields.values()) {
+
+			Object value = setValue.orElse(null);
+			if (value != null) {
+				exec = exec.bind(index++, value);
+			} else {
+				exec = exec.bindNull(index++);
+			}
+		}
+
+		return exec.as(entity.getType()) //
+				.exchange() //
+				.flatMap(FetchSpec::rowsUpdated) //
+				.thenReturn(objectToSave);
+	}
+
+	private static String getSetClause(Map<String, Optional<Object>> fields) {
+
+		StringBuilder setClause = new StringBuilder();
+
+		int index = 2;
+		for (String field : fields.keySet()) {
+
+			if (setClause.length() != 0) {
+				setClause.append(", ");
+			}
+
+			setClause.append(field).append('=').append('$').append(index++);
+		}
+
+		return setClause.toString();
 	}
 
 	/* (non-Javadoc)
