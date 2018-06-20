@@ -18,21 +18,17 @@ package org.springframework.data.jdbc.core.function;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
-import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
-import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Data;
 import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.function.ExternalDatabase.ProvidedDatabase;
 import org.springframework.data.jdbc.core.mapping.Table;
+import org.springframework.data.jdbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -40,13 +36,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author Mark Paluch
  */
-public class DatabaseClientIntegrationTests {
-
-	/**
-	 * Local test database at {@code postgres:@localhost:5432/postgres}.
-	 */
-	@ClassRule public static final ExternalDatabase database = ProvidedDatabase.builder().hostname("localhost").port(5432)
-			.database("postgres").username("postgres").password("").build();
+public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	private ConnectionFactory connectionFactory;
 
@@ -57,22 +47,13 @@ public class DatabaseClientIntegrationTests {
 
 		Hooks.onOperatorDebug();
 
-		connectionFactory = new PostgresqlConnectionFactory(
-				PostgresqlConnectionConfiguration.builder().host(database.getHostname()).database(database.getDatabase())
-						.username(database.getUsername()).password(database.getPassword()).build());
-
-		PGSimpleDataSource dataSource = new PGSimpleDataSource();
-		dataSource.setUser(database.getUsername());
-		dataSource.setPassword(database.getPassword());
-		dataSource.setDatabaseName(database.getDatabase());
-		dataSource.setServerName(database.getHostname());
-		dataSource.setPortNumber(database.getPort());
+		connectionFactory = createConnectionFactory();
 
 		String tableToCreate = "CREATE TABLE IF NOT EXISTS legoset (\n"
 				+ "    id          integer CONSTRAINT id PRIMARY KEY,\n" + "    name        varchar(255) NOT NULL,\n"
 				+ "    manual      integer NULL\n" + ");";
 
-		jdbc = new JdbcTemplate(dataSource);
+		jdbc = createJdbcTemplate(createDataSource());
 		jdbc.execute(tableToCreate);
 		jdbc.execute("DELETE FROM legoset");
 	}

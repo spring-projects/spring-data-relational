@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.function;
+package org.springframework.data.jdbc.testing;
 
 import lombok.Builder;
 
@@ -75,7 +75,7 @@ public abstract class ExternalDatabase extends ExternalResource {
 	 * Provided (unmanaged resource) database connection coordinates.
 	 */
 	@Builder
-	static class ProvidedDatabase extends ExternalDatabase {
+	public static class ProvidedDatabase extends ExternalDatabase {
 
 		private final int port;
 		private final String hostname;
