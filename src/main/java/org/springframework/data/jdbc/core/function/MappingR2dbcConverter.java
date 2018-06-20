@@ -37,9 +37,10 @@ import org.springframework.util.ClassUtils;
  */
 public class MappingR2dbcConverter {
 
-	private final MappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext;
+	private final MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext;
 
-	public MappingR2dbcConverter(MappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext) {
+	public MappingR2dbcConverter(
+			MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext) {
 		this.mappingContext = mappingContext;
 	}
 
@@ -96,5 +97,9 @@ public class MappingR2dbcConverter {
 
 			return object;
 		};
+	}
+
+	public MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> getMappingContext() {
+		return mappingContext;
 	}
 }
