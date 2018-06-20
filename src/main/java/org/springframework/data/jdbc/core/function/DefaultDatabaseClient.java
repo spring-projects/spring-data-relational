@@ -933,7 +933,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public Mono<Void> then() {
-			return Mono.from(objectToInsert).map(toInsert -> exchange(toInsert, (row, md) -> row).all()).then();
+			return Mono.from(objectToInsert).flatMapMany(toInsert -> exchange(toInsert, (row, md) -> row).all()).then();
 		}
 
 		@Override
@@ -977,8 +977,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				return statement;
 			};
 
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux
-					.from(insertFunction.apply(it).executeReturningGeneratedKeys());
+			Function<Connection, Flux<Result>> resultFunction = it -> {
+				return Flux.from(insertFunction.apply(it).executeReturningGeneratedKeys());
+			};
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
