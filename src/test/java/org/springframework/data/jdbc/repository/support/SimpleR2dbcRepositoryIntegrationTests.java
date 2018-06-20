@@ -31,12 +31,12 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.function.DatabaseClient;
 import org.springframework.data.jdbc.core.function.DefaultReactiveDataAccessStrategy;
+import org.springframework.data.jdbc.core.function.MappingR2dbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.jdbc.core.mapping.Table;
@@ -66,6 +66,7 @@ public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestS
 		this.databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory)
 				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(mappingContext, new EntityInstantiators())).build();
 		this.repository = new SimpleR2dbcRepository<>(databaseClient,
+				new MappingR2dbcConverter(mappingContext),
 				(JdbcPersistentEntity<LegoSet>) mappingContext.getRequiredPersistentEntity(LegoSet.class));
 
 		this.jdbc = createJdbcTemplate(createDataSource());
@@ -84,7 +85,10 @@ public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestS
 
 		repository.save(legoSet) //
 				.as(StepVerifier::create) //
-				.expectNextCount(1) //
+				.consumeNextWith(actual -> {
+
+					assertThat(actual.getId()).isNotNull();
+				})
 				.verifyComplete();
 
 		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM repo_legoset");
@@ -92,16 +96,11 @@ public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestS
 	}
 
 	@Test
-	@Ignore("Implement me")
 	public void shouldUpdateObject() {
 
-		LegoSet legoSet = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
+		jdbc.execute("INSERT INTO repo_legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
 
-		repository.save(legoSet) //
-				.as(StepVerifier::create) //
-				.expectNextCount(1) //
-				.verifyComplete();
-
+		LegoSet legoSet = new LegoSet(42055, "SCHAUFELRADBAGGER", 12);
 		legoSet.setManual(14);
 
 		repository.save(legoSet) //
