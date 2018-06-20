@@ -40,8 +40,17 @@ import org.springframework.util.ClassUtils;
  */
 public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStrategy {
 
-	private final EntityInstantiators instantiators = new EntityInstantiators();
-	private final JdbcMappingContext mappingContext = new JdbcMappingContext();
+	private final JdbcMappingContext mappingContext;
+	private final EntityInstantiators instantiators;
+
+	public DefaultReactiveDataAccessStrategy() {
+		this(new JdbcMappingContext(), new EntityInstantiators());
+	}
+
+	public DefaultReactiveDataAccessStrategy(JdbcMappingContext mappingContext, EntityInstantiators instantiators) {
+		this.mappingContext = mappingContext;
+		this.instantiators = instantiators;
+	}
 
 	@Override
 	public List<String> getAllFields(Class<?> typeToRead) {
