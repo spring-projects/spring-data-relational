@@ -19,12 +19,14 @@ import java.util.Locale;
 
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
+import org.springframework.data.repository.core.RepositoryMetadata;
 
 /**
  * {@link org.springframework.data.repository.config.RepositoryConfigurationExtension} extending the repository
  * registration process by registering JDBC repositories.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 1.0
  */
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
@@ -56,4 +58,12 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 		return getModuleName().toLowerCase(Locale.US);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#useRepositoryConfiguration(org.springframework.data.repository.core.RepositoryMetadata)
+	 */
+	@Override
+	protected boolean useRepositoryConfiguration(RepositoryMetadata metadata) {
+		return !metadata.isReactiveRepository();
+	}
 }
