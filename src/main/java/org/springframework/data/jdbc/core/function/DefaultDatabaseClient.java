@@ -996,7 +996,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		} catch (RuntimeException e) {
 
 			String sql = getSql(action);
-			return Flux.error(new DefaultDatabaseClient.UncategorizedSQLException("ConnectionCallback", sql, e) {});
+			return Flux.error(new DefaultDatabaseClient.UncategorizedSQLException("doInConnectionMany", sql, e) {});
 		}
 	}
 
@@ -1007,7 +1007,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		} catch (RuntimeException e) {
 
 			String sql = getSql(action);
-			return Mono.error(new DefaultDatabaseClient.UncategorizedSQLException("ConnectionCallback", sql, e) {});
+			return Mono.error(new DefaultDatabaseClient.UncategorizedSQLException("doInConnection", sql, e) {});
 		}
 	}
 
