@@ -69,6 +69,10 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 
 		for (JdbcPersistentProperty property : entity) {
 
+			if (entity.isConstructorArgument(property)) {
+				continue;
+			}
+
 			if (property.isCollectionLike()) {
 				throw new UnsupportedOperationException();
 			} else if (property.isMap()) {
@@ -105,7 +109,7 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 		}
 	}
 
-	private Class<?> getType(JdbcPersistentProperty property) {
+	private static Class<?> getType(JdbcPersistentProperty property) {
 		return ClassUtils.resolvePrimitiveIfNecessary(property.getActualType());
 	}
 
@@ -127,7 +131,9 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
 
 		for (JdbcPersistentProperty p : entity) {
-			propertyAccessor.setProperty(p, readFrom(row, p, prefix));
+			if (!entity.isConstructorArgument(property)) {
+				propertyAccessor.setProperty(p, readFrom(row, p, prefix));
+			}
 		}
 
 		return instance;
@@ -142,10 +148,10 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 	@RequiredArgsConstructor
 	private static class RowParameterValueProvider implements ParameterValueProvider<JdbcPersistentProperty> {
 
-		@NonNull private final Row resultSet;
-		@NonNull private final JdbcPersistentEntity<?> entity;
-		@NonNull private final ConversionService conversionService;
-		@NonNull private final String prefix;
+		private final @NonNull Row resultSet;
+		private final @NonNull JdbcPersistentEntity<?> entity;
+		private final @NonNull ConversionService conversionService;
+		private final @NonNull String prefix;
 
 		/*
 		 * (non-Javadoc)
