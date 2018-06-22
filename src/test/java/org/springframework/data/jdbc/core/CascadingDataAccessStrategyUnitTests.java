@@ -25,7 +25,7 @@ import java.util.Collections;
 
 import org.junit.Test;
 import org.springframework.data.jdbc.core.FunctionCollector.CombinedDataAccessException;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
 
 /**
  * Unit tests for {@link CascadingDataAccessStrategy}.

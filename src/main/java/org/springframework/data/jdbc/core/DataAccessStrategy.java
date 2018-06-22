@@ -17,8 +17,8 @@ package org.springframework.data.jdbc.core;
 
 import java.util.Map;
 
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
 import org.springframework.lang.Nullable;
 
 /**

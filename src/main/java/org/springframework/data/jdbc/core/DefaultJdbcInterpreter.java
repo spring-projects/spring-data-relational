@@ -18,15 +18,15 @@ package org.springframework.data.jdbc.core;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.data.jdbc.core.conversion.DbAction;
-import org.springframework.data.jdbc.core.conversion.DbAction.Delete;
-import org.springframework.data.jdbc.core.conversion.DbAction.DeleteAll;
-import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
-import org.springframework.data.jdbc.core.conversion.DbAction.Update;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.conversion.Interpreter;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.Interpreter;
+import org.springframework.data.relational.core.conversion.DbAction.Delete;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
+import org.springframework.data.relational.core.conversion.DbAction.Insert;
+import org.springframework.data.relational.core.conversion.DbAction.Update;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 

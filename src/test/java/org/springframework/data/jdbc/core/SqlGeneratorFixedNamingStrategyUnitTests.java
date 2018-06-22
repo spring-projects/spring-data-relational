@@ -20,11 +20,11 @@ import static org.assertj.core.api.Assertions.*;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 
 /**
  * Unit tests the {@link SqlGenerator} with a fixed {@link NamingStrategy} implementation containing a hard wired

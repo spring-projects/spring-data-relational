@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
 
 /**
  * Provides {@link SqlGenerator}s per domain type. Instances get cached, so when asked multiple times for the same domain

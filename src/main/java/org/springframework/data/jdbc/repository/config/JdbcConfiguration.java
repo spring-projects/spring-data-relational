@@ -19,9 +19,9 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jdbc.core.mapping.ConversionCustomizer;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.ConversionCustomizer;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 
 /**
  * Beans that must be registered for Spring Data JDBC to work.

@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
 
 /**
  * Delegates each methods to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
@@ -100,7 +100,9 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private <T> T collect(Function<DataAccessStrategy, T> function) {
-		return strategies.stream().collect(new FunctionCollector<>(function));
+
+		// Keep <T> as Eclipse fails to compile if <> is used.
+		return strategies.stream().collect(new FunctionCollector<T>(function));
 	}
 
 	private void collectVoid(Consumer<DataAccessStrategy> consumer) {

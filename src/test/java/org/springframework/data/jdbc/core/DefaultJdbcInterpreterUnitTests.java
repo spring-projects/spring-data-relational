@@ -25,12 +25,12 @@ import java.util.Map;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.conversion.DbAction;
-import org.springframework.data.jdbc.core.conversion.DbAction.Insert;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
-import org.springframework.data.jdbc.core.conversion.JdbcPropertyPath;
+import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.JdbcPropertyPath;
+import org.springframework.data.relational.core.conversion.DbAction.Insert;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**

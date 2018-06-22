@@ -25,10 +25,10 @@ import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 
 /**
  * Unit tests to verify a contextual {@link NamingStrategy} implementation that customizes using a user-centric

@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
 
 /**
  * @author Jens Schauder

@@ -25,10 +25,10 @@ import java.util.List;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.mapping.ConversionCustomizer;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.ConversionCustomizer;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 
 /**
  * Unit tests for the default {@link NamingStrategy}.

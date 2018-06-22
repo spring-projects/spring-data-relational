@@ -43,10 +43,10 @@ import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.convert.Jsr310Converters;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.util.Assert;
 
 /**

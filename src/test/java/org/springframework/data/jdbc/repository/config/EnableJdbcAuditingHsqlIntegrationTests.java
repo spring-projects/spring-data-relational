@@ -41,7 +41,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.jdbc.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.ActiveProfiles;
 
