@@ -31,7 +31,7 @@ import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.jdbc.repository.config.ConfigurableRowMapperMap;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.RepositoryQuery;
@@ -47,7 +47,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
-	JdbcMappingContext mappingContext = mock(JdbcMappingContext.class, RETURNS_DEEP_STUBS);
+	RelationalMappingContext mappingContext = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
 	RepositoryMetadata metadata;

@@ -21,9 +21,9 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 
 /**
@@ -47,7 +47,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		}
 
 		@Override
-		public String getColumnName(JdbcPersistentProperty property) {
+		public String getColumnName(RelationalPersistentProperty property) {
 			return "FixedCustomPropertyPrefix_" + property.getName();
 		}
 	};
@@ -60,7 +60,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		}
 
 		@Override
-		public String getColumnName(JdbcPersistentProperty property) {
+		public String getColumnName(RelationalPersistentProperty property) {
 			return property.getName().toLowerCase();
 		}
 	};
@@ -179,8 +179,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	 */
 	private SqlGenerator configureSqlGenerator(NamingStrategy namingStrategy) {
 
-		JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
-		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+		RelationalMappingContext context = new RelationalMappingContext(namingStrategy);
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}
 

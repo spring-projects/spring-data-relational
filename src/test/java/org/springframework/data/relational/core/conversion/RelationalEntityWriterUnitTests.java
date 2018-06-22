@@ -32,24 +32,24 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.JdbcEntityWriter;
+import org.springframework.data.relational.core.conversion.RelationalEntityWriter;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
- * Unit tests for the {@link JdbcEntityWriter}
+ * Unit tests for the {@link RelationalEntityWriter}
  *
  * @author Jens Schauder
  */
 @RunWith(MockitoJUnitRunner.class)
-public class JdbcEntityWriterUnitTests {
+public class RelationalEntityWriterUnitTests {
 
 	public static final long SOME_ENTITY_ID = 23L;
-	JdbcEntityWriter converter = new JdbcEntityWriter(new JdbcMappingContext());
+	RelationalEntityWriter converter = new RelationalEntityWriter(new RelationalMappingContext());
 
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {

@@ -15,26 +15,21 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import lombok.Getter;
-
 import java.util.Optional;
 
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
-import org.springframework.lang.Nullable;
 
 /**
- * A {@link SimpleJdbcEvent} which is guaranteed to have an identifier and an entity.
+ * A {@link SimpleRelationalEvent} which is guaranteed to have an entity.
  *
  * @author Jens Schauder
  * @since 1.0
  */
-@Getter
-public class JdbcEventWithIdAndEntity extends JdbcEventWithId implements WithEntity {
+public class RelationalEventWithEntity extends SimpleRelationalEvent implements WithEntity {
 
-	private static final long serialVersionUID = -3194462549552515519L;
+	private static final long serialVersionUID = 4891455396602090638L;
 
-	public JdbcEventWithIdAndEntity(Specified id, Object entity, @Nullable AggregateChange change) {
+	RelationalEventWithEntity(Identifier id, Object entity, AggregateChange change) {
 		super(id, Optional.of(entity), change);
 	}
 }

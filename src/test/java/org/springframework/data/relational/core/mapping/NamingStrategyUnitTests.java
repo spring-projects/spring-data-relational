@@ -22,10 +22,10 @@ import java.util.List;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntityImplUnitTests.DummySubEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntityImplUnitTests.DummySubEntity;
 
 /**
  * Unit tests for the {@link NamingStrategy}.
@@ -37,8 +37,8 @@ import org.springframework.data.relational.core.mapping.JdbcPersistentEntityImpl
 public class NamingStrategyUnitTests {
 
 	private final NamingStrategy target = NamingStrategy.INSTANCE;
-	private final JdbcMappingContext context = new JdbcMappingContext(target);
-	private final JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+	private final RelationalMappingContext context = new RelationalMappingContext(target);
+	private final RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test
 	public void getTableName() {

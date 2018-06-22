@@ -41,14 +41,14 @@ import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
-import org.springframework.data.relational.core.mapping.event.JdbcEvent;
+import org.springframework.data.relational.core.mapping.event.RelationalEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -71,7 +71,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	@Before
 	public void before() {
 
-		JdbcMappingContext context = new JdbcMappingContext();
+		RelationalMappingContext context = new RelationalMappingContext();
 
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context);
@@ -127,9 +127,9 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		repository.delete(entity);
 
 		assertThat(publisher.events).extracting( //
-				JdbcEvent::getClass, //
+				RelationalEvent::getClass, //
 				e -> e.getOptionalEntity().orElseGet(AssertionFailedError::new), //
-				JdbcEvent::getId //
+				RelationalEvent::getId //
 		).containsExactly( //
 				Tuple.tuple(BeforeDeleteEvent.class, entity, Identifier.of(23L)), //
 				Tuple.tuple(AfterDeleteEvent.class, entity, Identifier.of(23L)) //
@@ -233,11 +233,11 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	static class CollectingEventPublisher implements ApplicationEventPublisher {
 
-		List<JdbcEvent> events = new ArrayList<>();
+		List<RelationalEvent> events = new ArrayList<>();
 
 		@Override
 		public void publishEvent(Object o) {
-			events.add((JdbcEvent) o);
+			events.add((RelationalEvent) o);
 		}
 	}
 }

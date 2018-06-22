@@ -25,7 +25,7 @@ import java.util.Collections;
 
 import org.junit.Test;
 import org.springframework.data.jdbc.core.FunctionCollector.CombinedDataAccessException;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * Unit tests for {@link CascadingDataAccessStrategy}.
@@ -75,10 +75,10 @@ public class CascadingDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void findByPropertyReturnsFirstSuccess() {
 
-		doReturn(Collections.singletonList("success")).when(succeeds).findAllByProperty(eq(23L), any(JdbcPersistentProperty.class));
+		doReturn(Collections.singletonList("success")).when(succeeds).findAllByProperty(eq(23L), any(RelationalPersistentProperty.class));
 		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, succeeds, mayNotCall));
 
-		Iterable<Object> findAll = access.findAllByProperty(23L, mock(JdbcPersistentProperty.class));
+		Iterable<Object> findAll = access.findAllByProperty(23L, mock(RelationalPersistentProperty.class));
 
 		assertThat(findAll).containsExactly("success");
 	}

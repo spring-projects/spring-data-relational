@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.lang.Nullable;
 
 /**
@@ -25,9 +25,9 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @since 1.0
  */
-public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
+public class RelationalEntityDeleteWriter extends RelationalEntityWriterSupport {
 
-	public JdbcEntityDeleteWriter(JdbcMappingContext context) {
+	public RelationalEntityDeleteWriter(RelationalMappingContext context) {
 		super(context);
 	}
 
@@ -52,7 +52,7 @@ public class JdbcEntityDeleteWriter extends JdbcEntityWriterSupport {
 	private void deleteAll(AggregateChange<?> aggregateChange) {
 
 		context.referencedEntities(aggregateChange.getEntityType(), null)
-				.forEach(p -> aggregateChange.addAction(DbAction.deleteAll(p.getLeafType(), new JdbcPropertyPath(p), null)));
+				.forEach(p -> aggregateChange.addAction(DbAction.deleteAll(p.getLeafType(), new RelationalPropertyPath(p), null)));
 
 		aggregateChange.addAction(DbAction.deleteAll(aggregateChange.getEntityType(), null, null));
 	}

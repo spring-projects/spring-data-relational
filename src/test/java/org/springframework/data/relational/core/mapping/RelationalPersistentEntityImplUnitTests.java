@@ -18,25 +18,25 @@ package org.springframework.data.relational.core.mapping;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntityImpl;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntityImpl;
 import org.springframework.data.relational.core.mapping.Table;
 
 /**
- * Unit tests for {@link JdbcPersistentEntityImpl}.
+ * Unit tests for {@link RelationalPersistentEntityImpl}.
  * 
  * @author Oliver Gierke
  * @author Kazuki Shimizu
  */
-public class JdbcPersistentEntityImplUnitTests {
+public class RelationalPersistentEntityImplUnitTests {
 
-	JdbcMappingContext mappingContext = new JdbcMappingContext();
+	RelationalMappingContext mappingContext = new RelationalMappingContext();
 
 	@Test // DATAJDBC-106
 	public void discoversAnnotatedTableName() {
 
-		JdbcPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummySubEntity.class);
+		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummySubEntity.class);
 
 		assertThat(entity.getTableName()).isEqualTo("dummy_sub_entity");
 	}

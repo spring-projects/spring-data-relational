@@ -40,8 +40,8 @@ import org.springframework.util.ClassUtils;
  * @author Greg Turnquist
  * @since 1.0
  */
-class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<JdbcPersistentProperty>
-		implements JdbcPersistentProperty {
+class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
+		implements RelationalPersistentProperty {
 
 	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
 
@@ -51,7 +51,7 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 		javaToDbType.put(Temporal.class, Date.class);
 	}
 
-	private final JdbcMappingContext context;
+	private final RelationalMappingContext context;
 	private final Lazy<Optional<String>> columnName;
 
 	/**
@@ -62,8 +62,8 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	 * @param simpleTypeHolder must not be {@literal null}.
 	 * @param context must not be {@literal null}
 	 */
-	public BasicJdbcPersistentProperty(Property property, PersistentEntity<?, JdbcPersistentProperty> owner,
-			SimpleTypeHolder simpleTypeHolder, JdbcMappingContext context) {
+	public BasicRelationalPersistentProperty(Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
+			SimpleTypeHolder simpleTypeHolder, RelationalMappingContext context) {
 
 		super(property, owner, simpleTypeHolder);
 
@@ -78,7 +78,7 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	 * @see org.springframework.data.mapping.model.AbstractPersistentProperty#createAssociation()
 	 */
 	@Override
-	protected Association<JdbcPersistentProperty> createAssociation() {
+	protected Association<RelationalPersistentProperty> createAssociation() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -106,8 +106,8 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	}
 
 	@Override
-	public JdbcPersistentEntity<?> getOwner() {
-		return (JdbcPersistentEntity<?>) super.getOwner();
+	public RelationalPersistentEntity<?> getOwner() {
+		return (RelationalPersistentEntity<?>) super.getOwner();
 	}
 
 	@Override
@@ -137,13 +137,13 @@ class BasicJdbcPersistentProperty extends AnnotationBasedPersistentProperty<Jdbc
 	@Nullable
 	private Class columnTypeIfEntity(Class type) {
 
-		JdbcPersistentEntity<?> persistentEntity = context.getPersistentEntity(type);
+		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(type);
 
 		if (persistentEntity == null) {
 			return null;
 		}
 
-		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
 
 		if (idProperty == null) {
 			return null;

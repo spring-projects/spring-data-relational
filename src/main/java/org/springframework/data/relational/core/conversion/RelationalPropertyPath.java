@@ -26,12 +26,12 @@ import org.springframework.util.StringUtils;
  * @author Jens Schauder
  * @since 1.0
  */
-public class JdbcPropertyPath {
+public class RelationalPropertyPath {
 
 	private final PropertyPath path;
 	private final Class<?> rootType;
 
-	JdbcPropertyPath(PropertyPath path) {
+	RelationalPropertyPath(PropertyPath path) {
 
 		Assert.notNull(path, "path must not be null if rootType is not set");
 
@@ -39,7 +39,7 @@ public class JdbcPropertyPath {
 		this.rootType = null;
 	}
 
-	private JdbcPropertyPath(Class<?> type) {
+	private RelationalPropertyPath(Class<?> type) {
 
 		Assert.notNull(type, "type must not be null if path is not set");
 
@@ -47,20 +47,20 @@ public class JdbcPropertyPath {
 		this.rootType = type;
 	}
 
-	public static JdbcPropertyPath from(String source, Class<?> type) {
+	public static RelationalPropertyPath from(String source, Class<?> type) {
 
 		if (StringUtils.isEmpty(source)) {
-			return new JdbcPropertyPath(type);
+			return new RelationalPropertyPath(type);
 		} else {
-			return new JdbcPropertyPath(PropertyPath.from(source, type));
+			return new RelationalPropertyPath(PropertyPath.from(source, type));
 		}
 	}
 
-	public JdbcPropertyPath nested(String name) {
+	public RelationalPropertyPath nested(String name) {
 
 		return path == null ? //
-				new JdbcPropertyPath(PropertyPath.from(name, rootType)) //
-				: new JdbcPropertyPath(path.nested(name));
+				new RelationalPropertyPath(PropertyPath.from(name, rootType)) //
+				: new RelationalPropertyPath(path.nested(name));
 	}
 
 	public PropertyPath getPath() {

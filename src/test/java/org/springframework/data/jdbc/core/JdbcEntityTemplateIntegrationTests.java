@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -251,7 +251,7 @@ public class JdbcEntityTemplateIntegrationTests {
 		}
 
 		@Bean
-		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, JdbcMappingContext context, DataAccessStrategy dataAccessStrategy) {
+		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context, DataAccessStrategy dataAccessStrategy) {
 			return new JdbcAggregateTemplate(publisher, context, dataAccessStrategy);
 		}
 	}

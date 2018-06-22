@@ -25,7 +25,7 @@ import org.springframework.lang.Nullable;
  * @author Oliver Gierke
  * @since 1.0
  */
-public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersistentProperty> {
+public interface RelationalPersistentProperty extends PersistentProperty<RelationalPersistentProperty> {
 
 	/**
 	 * Returns the name of the column backing this property.
@@ -42,7 +42,7 @@ public interface JdbcPersistentProperty extends PersistentProperty<JdbcPersisten
 	Class<?> getColumnType();
 
 	@Override
-	JdbcPersistentEntity<?> getOwner();
+	RelationalPersistentEntity<?> getOwner();
 
 	String getReverseColumnName();
 

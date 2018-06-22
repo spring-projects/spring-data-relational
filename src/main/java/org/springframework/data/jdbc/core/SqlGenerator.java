@@ -27,9 +27,9 @@ import java.util.stream.Stream;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.lang.Nullable;
@@ -43,8 +43,8 @@ import org.springframework.util.Assert;
  */
 class SqlGenerator {
 
-	private final JdbcPersistentEntity<?> entity;
-	private final JdbcMappingContext context;
+	private final RelationalPersistentEntity<?> entity;
+	private final RelationalMappingContext context;
 	private final List<String> columnNames = new ArrayList<>();
 	private final List<String> nonIdColumnNames = new ArrayList<>();
 
@@ -61,7 +61,7 @@ class SqlGenerator {
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 	private final SqlGeneratorSource sqlGeneratorSource;
 
-	SqlGenerator(JdbcMappingContext context, JdbcPersistentEntity<?> entity, SqlGeneratorSource sqlGeneratorSource) {
+	SqlGenerator(RelationalMappingContext context, RelationalPersistentEntity<?> entity, SqlGeneratorSource sqlGeneratorSource) {
 
 		this.context = context;
 		this.entity = entity;
@@ -71,7 +71,7 @@ class SqlGenerator {
 
 	private void initColumnNames() {
 
-		entity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
+		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
 			// the referencing column of referenced entity is expected to be on the other side of the relation
 			if (!p.isEntity()) {
 				columnNames.add(p.getColumnName());
@@ -180,7 +180,7 @@ class SqlGenerator {
 	 */
 	private void addColumnsAndJoinsForOneToOneReferences(SelectBuilder builder) {
 
-		for (JdbcPersistentProperty property : entity) {
+		for (RelationalPersistentProperty property : entity) {
 			if (!property.isEntity() //
 					|| Collection.class.isAssignableFrom(property.getType()) //
 					|| Map.class.isAssignableFrom(property.getType()) //
@@ -188,12 +188,12 @@ class SqlGenerator {
 				continue;
 			}
 
-			JdbcPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getActualType());
+			RelationalPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getActualType());
 			String joinAlias = property.getName();
 			builder.join(jb -> jb.leftOuter().table(refEntity.getTableName()).as(joinAlias) //
 					.where(property.getReverseColumnName()).eq().column(entity.getTableName(), entity.getIdColumn()));
 
-			for (JdbcPersistentProperty refProperty : refEntity) {
+			for (RelationalPersistentProperty refProperty : refEntity) {
 				builder.column( //
 						cb -> cb.tableAlias(joinAlias) //
 								.column(refProperty.getColumnName()) //
@@ -205,7 +205,7 @@ class SqlGenerator {
 
 	private void addColumnsForSimpleProperties(SelectBuilder builder) {
 
-		for (JdbcPersistentProperty property : entity) {
+		for (RelationalPersistentProperty property : entity) {
 
 			if (property.isEntity()) {
 				continue;
@@ -224,7 +224,7 @@ class SqlGenerator {
 				.flatMap(p -> getColumnNameStream(p, prefix));
 	}
 
-	private Stream<String> getColumnNameStream(JdbcPersistentProperty p, String prefix) {
+	private Stream<String> getColumnNameStream(RelationalPersistentProperty p, String prefix) {
 
 		if (p.isEntity()) {
 			return sqlGeneratorSource.getSqlGenerator(p.getType()).getColumnNameStream(prefix + p.getColumnName() + "_");
@@ -286,10 +286,10 @@ class SqlGenerator {
 			return String.format("DELETE FROM %s", entity.getTableName());
 		}
 
-		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(path.getLeafType());
+		RelationalPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(path.getLeafType());
 
-		JdbcPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
-		JdbcPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
+		RelationalPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
+		RelationalPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
 
 		String innerMostCondition = String.format("%s IS NOT NULL", property.getReverseColumnName());
 
@@ -304,9 +304,9 @@ class SqlGenerator {
 
 	String createDeleteByPath(PropertyPath path) {
 
-		JdbcPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(path.getLeafType());
-		JdbcPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
-		JdbcPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
+		RelationalPersistentEntity<?> entityToDelete = context.getRequiredPersistentEntity(path.getLeafType());
+		RelationalPersistentEntity<?> owningEntity = context.getRequiredPersistentEntity(path.getOwningType());
+		RelationalPersistentProperty property = owningEntity.getRequiredPersistentProperty(path.getSegment());
 
 		String innerMostCondition = String.format("%s = :rootId", property.getReverseColumnName());
 
@@ -321,8 +321,8 @@ class SqlGenerator {
 			return innerCondition;
 		}
 
-		JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(path.getOwningType());
-		JdbcPersistentProperty property = entity.getPersistentProperty(path.getSegment());
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(path.getOwningType());
+		RelationalPersistentProperty property = entity.getPersistentProperty(path.getSegment());
 
 		Assert.notNull(property, "could not find property for path " + path.getSegment() + " in " + entity);
 

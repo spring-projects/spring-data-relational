@@ -15,29 +15,26 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import lombok.Getter;
+
 import java.util.Optional;
 
+import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
+import org.springframework.lang.Nullable;
+
 /**
- * an event signalling JDBC processing. It offers access to an {@link Identifier} of the aggregate root affected by the
- * event.
+ * A {@link SimpleRelationalEvent} which is guaranteed to have an identifier and an entity.
  *
- * @author Oliver Gierke
+ * @author Jens Schauder
  * @since 1.0
  */
-public interface JdbcEvent {
+@Getter
+public class RelationalEventWithIdAndEntity extends RelationalEventWithId implements WithEntity {
 
-	/**
-	 * The identifier of the aggregate root, triggering this event.
-	 *
-	 * @return the source of the event as an {@link Identifier}. Guaranteed to be not {@code null}.
-	 */
-	Identifier getId();
+	private static final long serialVersionUID = -3194462549552515519L;
 
-	/**
-	 * Returns the aggregate root the event was triggered for.
-	 *
-	 * @return will never be {@code null}.
-	 */
-	Optional<Object> getOptionalEntity();
-
+	public RelationalEventWithIdAndEntity(Specified id, Object entity, @Nullable AggregateChange change) {
+		super(id, Optional.of(entity), change);
+	}
 }

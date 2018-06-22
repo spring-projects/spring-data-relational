@@ -49,7 +49,7 @@ import org.springframework.util.Assert;
  * @author Oliver Gierke
  * @since 1.0
  */
-public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEntity<?>, JdbcPersistentProperty> {
+public class RelationalMappingContext extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
 
 	private static final HashSet<Class<?>> CUSTOM_SIMPLE_TYPES = new HashSet<>(asList( //
 			BigDecimal.class, //
@@ -62,23 +62,23 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	@Getter private SimpleTypeHolder simpleTypeHolder;
 
 	/**
-	 * Creates a new {@link JdbcMappingContext}.
+	 * Creates a new {@link RelationalMappingContext}.
 	 */
-	public JdbcMappingContext() {
+	public RelationalMappingContext() {
 		this(NamingStrategy.INSTANCE, ConversionCustomizer.NONE);
 	}
 
-	public JdbcMappingContext(NamingStrategy namingStrategy) {
+	public RelationalMappingContext(NamingStrategy namingStrategy) {
 		this(namingStrategy, ConversionCustomizer.NONE);
 	}
 
 	/**
-	 * Creates a new {@link JdbcMappingContext} using the given {@link NamingStrategy} and {@link ConversionCustomizer}.
+	 * Creates a new {@link RelationalMappingContext} using the given {@link NamingStrategy} and {@link ConversionCustomizer}.
 	 * 
 	 * @param namingStrategy must not be {@literal null}.
 	 * @param customizer must not be {@literal null}.
 	 */
-	public JdbcMappingContext(NamingStrategy namingStrategy, ConversionCustomizer customizer) {
+	public RelationalMappingContext(NamingStrategy namingStrategy, ConversionCustomizer customizer) {
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
 		Assert.notNull(customizer, "ConversionCustomizer must not be null!");
@@ -112,9 +112,9 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 		List<PropertyPath> paths = new ArrayList<>();
 
 		Class<?> currentType = path == null ? rootType : path.getLeafType();
-		JdbcPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(currentType);
+		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(currentType);
 
-		for (JdbcPersistentProperty property : persistentEntity) {
+		for (RelationalPersistentProperty property : persistentEntity) {
 			if (property.isEntity()) {
 
 				PropertyPath nextPath = path == null ? PropertyPath.from(property.getName(), rootType)
@@ -134,8 +134,8 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	 * @see org.springframework.data.mapping.context.AbstractMappingContext#createPersistentEntity(org.springframework.data.util.TypeInformation)
 	 */
 	@Override
-	protected <T> JdbcPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
-		return new JdbcPersistentEntityImpl<>(typeInformation, this.namingStrategy);
+	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
+		return new RelationalPersistentEntityImpl<>(typeInformation, this.namingStrategy);
 	}
 
 	/*
@@ -143,9 +143,9 @@ public class JdbcMappingContext extends AbstractMappingContext<JdbcPersistentEnt
 	 * @see org.springframework.data.mapping.context.AbstractMappingContext#createPersistentProperty(org.springframework.data.mapping.model.Property, org.springframework.data.mapping.model.MutablePersistentEntity, org.springframework.data.mapping.model.SimpleTypeHolder)
 	 */
 	@Override
-	protected JdbcPersistentProperty createPersistentProperty(Property property, JdbcPersistentEntity<?> owner,
+	protected RelationalPersistentProperty createPersistentProperty(Property property, RelationalPersistentEntity<?> owner,
 			SimpleTypeHolder simpleTypeHolder) {
-		return new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder, this);
+		return new BasicRelationalPersistentProperty(property, owner, simpleTypeHolder, this);
 	}
 
 	public ConversionService getConversions() {

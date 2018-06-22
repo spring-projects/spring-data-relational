@@ -25,8 +25,8 @@ import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -39,10 +39,10 @@ import org.springframework.util.Assert;
  */
 class DefaultJdbcInterpreter implements Interpreter {
 
-	private final JdbcMappingContext context;
+	private final RelationalMappingContext context;
 	private final DataAccessStrategy accessStrategy;
 
-	DefaultJdbcInterpreter(JdbcMappingContext context, DataAccessStrategy accessStrategy) {
+	DefaultJdbcInterpreter(RelationalMappingContext context, DataAccessStrategy accessStrategy) {
 
 		this.context = context;
 		this.accessStrategy = accessStrategy;
@@ -95,7 +95,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 			return;
 		}
 
-		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
 
 		String columnName = getColumnNameForReverseColumn(insert, persistentEntity);
 
@@ -105,11 +105,11 @@ class DefaultJdbcInterpreter implements Interpreter {
 	}
 
 	@Nullable
-	private Object getIdFromEntityDependingOn(DbAction dependingOn, JdbcPersistentEntity<?> persistentEntity) {
+	private Object getIdFromEntityDependingOn(DbAction dependingOn, RelationalPersistentEntity<?> persistentEntity) {
 		return persistentEntity.getIdentifierAccessor(dependingOn.getEntity()).getIdentifier();
 	}
 
-	private <T> String getColumnNameForReverseColumn(Insert<T> insert, JdbcPersistentEntity<?> persistentEntity) {
+	private <T> String getColumnNameForReverseColumn(Insert<T> insert, RelationalPersistentEntity<?> persistentEntity) {
 
 		PropertyPath path = insert.getPropertyPath().getPath();
 

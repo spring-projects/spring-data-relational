@@ -25,26 +25,26 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.JdbcEntityDeleteWriter;
-import org.springframework.data.relational.core.conversion.JdbcPropertyPath;
+import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
+import org.springframework.data.relational.core.conversion.RelationalPropertyPath;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
- * Unit tests for the {@link JdbcEntityDeleteWriter}
+ * Unit tests for the {@link RelationalEntityDeleteWriter}
  *
  * @author Jens Schauder
  */
 @RunWith(MockitoJUnitRunner.class)
-public class JdbcEntityDeleteWriterUnitTests {
+public class RelationalEntityDeleteWriterUnitTests {
 
-	JdbcEntityDeleteWriter converter = new JdbcEntityDeleteWriter(new JdbcMappingContext());
+	RelationalEntityDeleteWriter converter = new RelationalEntityDeleteWriter(new RelationalMappingContext());
 
 	private static Object dotPath(DbAction dba) {
 
-		JdbcPropertyPath propertyPath = dba.getPropertyPath();
+		RelationalPropertyPath propertyPath = dba.getPropertyPath();
 		return propertyPath == null ? null : propertyPath.toDotPath();
 	}
 
@@ -58,7 +58,7 @@ public class JdbcEntityDeleteWriterUnitTests {
 		converter.write(entity.id, aggregateChange);
 
 		Assertions.assertThat(aggregateChange.getActions())
-				.extracting(DbAction::getClass, DbAction::getEntityType, JdbcEntityDeleteWriterUnitTests::dotPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, RelationalEntityDeleteWriterUnitTests::dotPath) //
 				.containsExactly( //
 						Tuple.tuple(Delete.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(Delete.class, OtherEntity.class, "other"), //
@@ -76,7 +76,7 @@ public class JdbcEntityDeleteWriterUnitTests {
 		converter.write(null, aggregateChange);
 
 		Assertions.assertThat(aggregateChange.getActions())
-				.extracting(DbAction::getClass, DbAction::getEntityType, JdbcEntityDeleteWriterUnitTests::dotPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, RelationalEntityDeleteWriterUnitTests::dotPath) //
 				.containsExactly( //
 						Tuple.tuple(DeleteAll.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(DeleteAll.class, OtherEntity.class, "other"), //

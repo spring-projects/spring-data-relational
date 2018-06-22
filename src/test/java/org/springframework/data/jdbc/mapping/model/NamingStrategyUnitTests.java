@@ -26,8 +26,8 @@ import java.util.List;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.ConversionCustomizer;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 
 /**
@@ -40,8 +40,8 @@ public class NamingStrategyUnitTests {
 
 	private final NamingStrategy target = NamingStrategy.INSTANCE;
 
-	private final JdbcPersistentEntity<?> persistentEntity = //
-			new JdbcMappingContext(target, mock(ConversionCustomizer.class)).getRequiredPersistentEntity(DummyEntity.class);
+	private final RelationalPersistentEntity<?> persistentEntity = //
+			new RelationalMappingContext(target, mock(ConversionCustomizer.class)).getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-184
 	public void getTableName() {

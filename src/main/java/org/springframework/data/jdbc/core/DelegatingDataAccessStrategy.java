@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.core;
 import java.util.Map;
 
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
 
 /**
@@ -86,7 +86,7 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
+	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
 
 		Assert.notNull(delegate, "Delegate is null");
 

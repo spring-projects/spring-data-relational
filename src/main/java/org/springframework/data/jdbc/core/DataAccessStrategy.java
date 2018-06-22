@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.core;
 import java.util.Map;
 
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
 /**
@@ -129,7 +129,7 @@ public interface DataAccessStrategy {
 	 * @param rootId Id of the root object on which the {@literal propertyPath} is based.
 	 * @param property Leading from the root object to the entities to be found.
 	 */
-	<T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property);
+	<T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property);
 
 	/**
 	 * returns if a row with the given id exists for the given type.

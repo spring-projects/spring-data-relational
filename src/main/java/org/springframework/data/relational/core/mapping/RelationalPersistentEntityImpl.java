@@ -28,18 +28,18 @@ import org.springframework.data.util.TypeInformation;
  * @author Greg Turnquist
  * @since 1.0
  */
-class JdbcPersistentEntityImpl<T> extends BasicPersistentEntity<T, JdbcPersistentProperty>
-		implements JdbcPersistentEntity<T> {
+class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
+		implements RelationalPersistentEntity<T> {
 
 	private final NamingStrategy namingStrategy;
 	private final Lazy<Optional<String>> tableName;
 
 	/**
-	 * Creates a new {@link JdbcPersistentEntityImpl} for the given {@link TypeInformation}.
+	 * Creates a new {@link RelationalPersistentEntityImpl} for the given {@link TypeInformation}.
 	 *
 	 * @param information must not be {@literal null}.
 	 */
-	JdbcPersistentEntityImpl(TypeInformation<T> information, NamingStrategy namingStrategy) {
+	RelationalPersistentEntityImpl(TypeInformation<T> information, NamingStrategy namingStrategy) {
 
 		super(information);
 

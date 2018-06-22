@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * Delegates each methods to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
@@ -90,7 +90,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
+	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
 		return collect(das -> das.findAllByProperty(rootId, property));
 	}
 

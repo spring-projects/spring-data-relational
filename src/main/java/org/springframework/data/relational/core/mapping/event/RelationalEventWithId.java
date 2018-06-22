@@ -22,18 +22,18 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
 import org.springframework.lang.Nullable;
 
 /**
- * A {@link SimpleJdbcEvent} guaranteed to have an identifier.
+ * A {@link SimpleRelationalEvent} guaranteed to have an identifier.
  *
  * @author Jens Schauder
  * @since 1.0
  */
-public class JdbcEventWithId extends SimpleJdbcEvent implements WithId {
+public class RelationalEventWithId extends SimpleRelationalEvent implements WithId {
 
 	private static final long serialVersionUID = -8071323168471611098L;
 
 	private final Specified id;
 
-	public JdbcEventWithId(Specified id, Optional<Object> entity, @Nullable AggregateChange change) {
+	public RelationalEventWithId(Specified id, Optional<Object> entity, @Nullable AggregateChange change) {
 
 		super(id, entity, change);
 

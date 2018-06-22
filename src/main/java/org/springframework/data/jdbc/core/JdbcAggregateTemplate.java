@@ -21,11 +21,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.Interpreter;
-import org.springframework.data.relational.core.conversion.JdbcEntityDeleteWriter;
-import org.springframework.data.relational.core.conversion.JdbcEntityWriter;
+import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
+import org.springframework.data.relational.core.conversion.RelationalEntityWriter;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
@@ -46,22 +46,22 @@ import org.springframework.util.Assert;
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final ApplicationEventPublisher publisher;
-	private final JdbcMappingContext context;
+	private final RelationalMappingContext context;
 	private final Interpreter interpreter;
 
-	private final JdbcEntityWriter jdbcEntityWriter;
-	private final JdbcEntityDeleteWriter jdbcEntityDeleteWriter;
+	private final RelationalEntityWriter jdbcEntityWriter;
+	private final RelationalEntityDeleteWriter jdbcEntityDeleteWriter;
 
 	private final DataAccessStrategy accessStrategy;
 
-	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, JdbcMappingContext context,
+	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
 			DataAccessStrategy dataAccessStrategy) {
 
 		this.publisher = publisher;
 		this.context = context;
 
-		this.jdbcEntityWriter = new JdbcEntityWriter(context);
-		this.jdbcEntityDeleteWriter = new JdbcEntityDeleteWriter(context);
+		this.jdbcEntityWriter = new RelationalEntityWriter(context);
+		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 		this.accessStrategy = dataAccessStrategy;
 		this.interpreter = new DefaultJdbcInterpreter(context, accessStrategy);
 	}
@@ -71,7 +71,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(instance.getClass());
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(instance.getClass());
 		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(instance);
 
 		AggregateChange change = createChange(instance);
@@ -192,7 +192,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		for (T e : all) {
 
-			JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(e.getClass());
+			RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(e.getClass());
 			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(e);
 
 			publishAfterLoad(identifierAccessor.getRequiredIdentifier(), e);

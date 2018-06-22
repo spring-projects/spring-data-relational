@@ -43,9 +43,9 @@ import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.convert.Jsr310Converters;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.util.Assert;
 
@@ -61,7 +61,7 @@ public class EntityRowMapperUnitTests {
 	public static final long ID_FOR_ENTITY_NOT_REFERENCING_MAP = 23L;
 	public static final NamingStrategy X_APPENDING_NAMINGSTRATEGY = new NamingStrategy() {
 		@Override
-		public String getColumnName(JdbcPersistentProperty property) {
+		public String getColumnName(RelationalPersistentProperty property) {
 			return NamingStrategy.super.getColumnName(property) + "x";
 		}
 	};
@@ -177,23 +177,23 @@ public class EntityRowMapperUnitTests {
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type, NamingStrategy namingStrategy) {
 
-		JdbcMappingContext context = new JdbcMappingContext(namingStrategy);
+		RelationalMappingContext context = new RelationalMappingContext(namingStrategy);
 
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determine what kind of ResultSet is needed for subsequent selects.
 		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(accessStrategy)
-				.findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP), any(JdbcPersistentProperty.class));
+				.findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP), any(RelationalPersistentProperty.class));
 
 		doReturn(new HashSet<>(asList( //
 				new SimpleEntry<>("one", new Trivial()), //
 				new SimpleEntry<>("two", new Trivial()) //
-		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP), any(JdbcPersistentProperty.class));
+		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP), any(RelationalPersistentProperty.class));
 
 		doReturn(new HashSet<>(asList( //
 				new SimpleEntry<>(1, new Trivial()), //
 				new SimpleEntry<>(2, new Trivial()) //
-		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST), any(JdbcPersistentProperty.class));
+		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST), any(RelationalPersistentProperty.class));
 
 		GenericConversionService conversionService = new GenericConversionService();
 		conversionService.addConverter(new IterableOfEntryToMapConverter());
@@ -201,7 +201,7 @@ public class EntityRowMapperUnitTests {
 		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
 
 		return new EntityRowMapper<>( //
-				(JdbcPersistentEntity<T>) context.getRequiredPersistentEntity(type), //
+				(RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type), //
 				context, //
 				new EntityInstantiators(), //
 				accessStrategy //

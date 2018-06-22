@@ -17,7 +17,7 @@ package org.springframework.data.jdbc.repository.support;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -44,7 +44,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private final RowMapper<?> rowMapper;
 
 	/**
-	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link JdbcMappingContext} and
+	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext} and
 	 * {@link RowMapper}.
 	 * 
 	 * @param queryMethod must not be {@literal null}.

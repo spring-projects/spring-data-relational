@@ -20,7 +20,7 @@ import org.springframework.util.Assert;
 
 /**
  * Interface and default implementation of a naming strategy. Defaults to no schema, table name based on {@link Class}
- * and column name based on {@link JdbcPersistentProperty} with name parts of both separated by '_'.
+ * and column name based on {@link RelationalPersistentProperty} with name parts of both separated by '_'.
  * <p>
  * NOTE: Can also be used as an adapter. Create a lambda or an anonymous subclass and override any settings to implement
  * a different strategy on the fly.
@@ -62,10 +62,10 @@ public interface NamingStrategy {
 	}
 
 	/**
-	 * Defaults to return the given {@link JdbcPersistentProperty}'s name with the parts of a camel case name separated by
+	 * Defaults to return the given {@link RelationalPersistentProperty}'s name with the parts of a camel case name separated by
 	 * '_';
 	 */
-	default String getColumnName(JdbcPersistentProperty property) {
+	default String getColumnName(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 
@@ -82,7 +82,7 @@ public interface NamingStrategy {
 	 * @param property The property who's column name in the owner table is required
 	 * @return a column name. Must not be {@code null}.
 	 */
-	default String getReverseColumnName(JdbcPersistentProperty property) {
+	default String getReverseColumnName(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 
@@ -95,7 +95,7 @@ public interface NamingStrategy {
 	 * 
 	 * @return name of the key column. Must not be {@code null}.
 	 */
-	default String getKeyColumn(JdbcPersistentProperty property) {
+	default String getKeyColumn(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 

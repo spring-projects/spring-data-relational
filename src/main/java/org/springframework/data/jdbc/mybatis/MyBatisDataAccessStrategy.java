@@ -29,8 +29,8 @@ import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -57,7 +57,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * Create a {@link DataAccessStrategy} that first checks for queries defined by MyBatis and if it doesn't find one
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
-	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context,
+	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
 			NamedParameterJdbcOperations operations, SqlSession sqlSession) {
 		return createCombinedAccessStrategy(context, new EntityInstantiators(), operations, sqlSession,
 				NamespaceStrategy.DEFAULT_INSTANCE);
@@ -67,7 +67,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * Create a {@link DataAccessStrategy} that first checks for queries defined by MyBatis and if it doesn't find one
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
-	public static DataAccessStrategy createCombinedAccessStrategy(JdbcMappingContext context,
+	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
 			EntityInstantiators instantiators, NamedParameterJdbcOperations operations, SqlSession sqlSession,
 			NamespaceStrategy namespaceStrategy) {
 
@@ -102,7 +102,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * transaction. Note that the resulting {@link DataAccessStrategy} only handles MyBatis. It does not include the
 	 * functionality of the {@link org.springframework.data.jdbc.core.DefaultDataAccessStrategy} which one normally still
 	 * wants. Use
-	 * {@link #createCombinedAccessStrategy(JdbcMappingContext, EntityInstantiators, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy)}
+	 * {@link #createCombinedAccessStrategy(RelationalMappingContext, EntityInstantiators, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy)}
 	 * to create such a {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.
@@ -191,7 +191,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
+	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
 		return sqlSession().selectList(
 				namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
 				new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap()));

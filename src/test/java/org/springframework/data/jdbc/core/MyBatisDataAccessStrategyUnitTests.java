@@ -30,7 +30,7 @@ import org.mockito.Mockito;
 import org.springframework.data.jdbc.mybatis.MyBatisContext;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * Unit tests for the {@link MyBatisDataAccessStrategy}, mainly ensuring that the correct statements get's looked up.
@@ -250,7 +250,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void findAllByProperty() {
 
-		JdbcPersistentProperty property = mock(JdbcPersistentProperty.class, Mockito.RETURNS_DEEP_STUBS);
+		RelationalPersistentProperty property = mock(RelationalPersistentProperty.class, Mockito.RETURNS_DEEP_STUBS);
 
 		when(property.getOwner().getType()).thenReturn((Class) String.class);
 		doReturn(Number.class).when(property).getType();

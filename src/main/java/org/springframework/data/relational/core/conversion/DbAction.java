@@ -47,7 +47,7 @@ public abstract class DbAction<T> {
 	/**
 	 * The path from the Aggregate Root to the entity affected by this {@link DbAction}.
 	 */
-	private final JdbcPropertyPath propertyPath;
+	private final RelationalPropertyPath propertyPath;
 
 	/**
 	 * Key-value-pairs to specify additional values to be used with the statement which can't be obtained from the entity,
@@ -63,7 +63,7 @@ public abstract class DbAction<T> {
 	 */
 	private final DbAction dependingOn;
 
-	private DbAction(Class<T> entityType, @Nullable T entity, @Nullable JdbcPropertyPath propertyPath,
+	private DbAction(Class<T> entityType, @Nullable T entity, @Nullable RelationalPropertyPath propertyPath,
 			@Nullable DbAction dependingOn) {
 
 		Assert.notNull(entityType, "entityType must not be null");
@@ -84,7 +84,7 @@ public abstract class DbAction<T> {
 	 * @param <T> the type of the entity to be inserted.
 	 * @return a {@link DbAction} representing the insert.
 	 */
-	public static <T> Insert<T> insert(T entity, JdbcPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+	public static <T> Insert<T> insert(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 		return new Insert<>(entity, propertyPath, dependingOn);
 	}
 
@@ -98,7 +98,7 @@ public abstract class DbAction<T> {
 	 * @param <T> the type of the entity to be updated.
 	 * @return a {@link DbAction} representing the update.
 	 */
-	public static <T> Update<T> update(T entity, JdbcPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+	public static <T> Update<T> update(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 		return new Update<>(entity, propertyPath, dependingOn);
 	}
 
@@ -114,7 +114,7 @@ public abstract class DbAction<T> {
 	 * @return a {@link DbAction} representing the deletion of the entity with given type and id.
 	 */
 	public static <T> Delete<T> delete(Object id, Class<T> type, @Nullable T entity,
-			@Nullable JdbcPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+			@Nullable RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 		return new Delete<>(id, type, entity, propertyPath, dependingOn);
 	}
 
@@ -129,7 +129,7 @@ public abstract class DbAction<T> {
 	 * @return a {@link DbAction} representing the deletion of all entities of a given type belonging to a specific type
 	 *         of aggregate root.
 	 */
-	public static <T> DeleteAll<T> deleteAll(Class<T> type, @Nullable JdbcPropertyPath propertyPath,
+	public static <T> DeleteAll<T> deleteAll(Class<T> type, @Nullable RelationalPropertyPath propertyPath,
 			@Nullable DbAction dependingOn) {
 		return new DeleteAll<>(type, propertyPath, dependingOn);
 	}
@@ -163,7 +163,7 @@ public abstract class DbAction<T> {
 	abstract static class InsertOrUpdate<T> extends DbAction<T> {
 
 		@SuppressWarnings("unchecked")
-		InsertOrUpdate(T entity, JdbcPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+		InsertOrUpdate(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 			super((Class<T>) entity.getClass(), entity, propertyPath, dependingOn);
 		}
 	}
@@ -175,7 +175,7 @@ public abstract class DbAction<T> {
 	 */
 	public static class Insert<T> extends InsertOrUpdate<T> {
 
-		private Insert(T entity, JdbcPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+		private Insert(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 			super(entity, propertyPath, dependingOn);
 		}
 
@@ -192,7 +192,7 @@ public abstract class DbAction<T> {
 	 */
 	public static class Update<T> extends InsertOrUpdate<T> {
 
-		private Update(T entity, JdbcPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+		private Update(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 			super(entity, propertyPath, dependingOn);
 		}
 
@@ -216,7 +216,7 @@ public abstract class DbAction<T> {
 		 */
 		private final Object rootId;
 
-		private Delete(@Nullable Object rootId, Class<T> type, @Nullable T entity, @Nullable JdbcPropertyPath propertyPath,
+		private Delete(@Nullable Object rootId, Class<T> type, @Nullable T entity, @Nullable RelationalPropertyPath propertyPath,
 				@Nullable DbAction dependingOn) {
 
 			super(type, entity, propertyPath, dependingOn);
@@ -239,7 +239,7 @@ public abstract class DbAction<T> {
 	 */
 	public static class DeleteAll<T> extends DbAction<T> {
 
-		private DeleteAll(Class<T> entityType, @Nullable JdbcPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+		private DeleteAll(Class<T> entityType, @Nullable RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 			super(entityType, null, propertyPath, dependingOn);
 		}
 

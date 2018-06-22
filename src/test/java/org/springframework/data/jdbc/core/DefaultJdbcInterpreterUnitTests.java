@@ -26,10 +26,10 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.JdbcPropertyPath;
+import org.springframework.data.relational.core.conversion.RelationalPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
@@ -43,9 +43,9 @@ public class DefaultJdbcInterpreterUnitTests {
 	static final long CONTAINER_ID = 23L;
 	static final String BACK_REFERENCE = "back-reference";
 
-	JdbcMappingContext context = new JdbcMappingContext(new NamingStrategy() {
+	RelationalMappingContext context = new RelationalMappingContext(new NamingStrategy() {
 		@Override
-		public String getReverseColumnName(JdbcPersistentProperty property) {
+		public String getReverseColumnName(RelationalPersistentProperty property) {
 			return BACK_REFERENCE;
 		}
 	});
@@ -61,8 +61,8 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		Element element = new Element();
 
-		Insert<?> containerInsert = DbAction.insert(container, JdbcPropertyPath.from("", Container.class), null);
-		Insert<?> insert = DbAction.insert(element, JdbcPropertyPath.from("element", Container.class), containerInsert);
+		Insert<?> containerInsert = DbAction.insert(container, RelationalPropertyPath.from("", Container.class), null);
+		Insert<?> insert = DbAction.insert(element, RelationalPropertyPath.from("element", Container.class), containerInsert);
 
 		interpreter.interpret(insert);
 

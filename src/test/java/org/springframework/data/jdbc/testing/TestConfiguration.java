@@ -31,7 +31,7 @@ import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.relational.core.mapping.ConversionCustomizer;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -55,7 +55,7 @@ public class TestConfiguration {
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy) {
 
-		JdbcMappingContext context = new JdbcMappingContext(NamingStrategy.INSTANCE);
+		RelationalMappingContext context = new RelationalMappingContext(NamingStrategy.INSTANCE);
 
 		return new JdbcRepositoryFactory(dataAccessStrategy, context, publisher, namedParameterJdbcTemplate());
 	}
@@ -71,15 +71,15 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	DataAccessStrategy defaultDataAccessStrategy(JdbcMappingContext context) {
+	DataAccessStrategy defaultDataAccessStrategy(RelationalMappingContext context) {
 		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, namedParameterJdbcTemplate(), new EntityInstantiators());
 	}
 
 	@Bean
-	JdbcMappingContext jdbcMappingContext(NamedParameterJdbcOperations template, Optional<NamingStrategy> namingStrategy,
+	RelationalMappingContext jdbcMappingContext(NamedParameterJdbcOperations template, Optional<NamingStrategy> namingStrategy,
 			Optional<ConversionCustomizer> conversionCustomizer) {
 
-		return new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE),
+		return new RelationalMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE),
 				conversionCustomizer.orElse(conversionService -> {}));
 	}
 }

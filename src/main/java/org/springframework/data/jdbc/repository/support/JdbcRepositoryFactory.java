@@ -22,8 +22,8 @@ import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.repository.RowMapperMap;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -45,7 +45,7 @@ import org.springframework.util.Assert;
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
-	private final JdbcMappingContext context;
+	private final RelationalMappingContext context;
 	private final ApplicationEventPublisher publisher;
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
@@ -54,7 +54,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private EntityInstantiators instantiators = new EntityInstantiators();
 
 	/**
-	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy}, {@link JdbcMappingContext}
+	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy}, {@link RelationalMappingContext}
 	 * and {@link ApplicationEventPublisher}.
 	 * 
 	 * @param dataAccessStrategy must not be {@literal null}.
@@ -62,7 +62,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 * @param publisher must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 */
-	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, JdbcMappingContext context,
+	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
@@ -101,7 +101,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
 
-		JdbcPersistentEntity<?> entity = context.getPersistentEntity(aClass);
+		RelationalPersistentEntity<?> entity = context.getPersistentEntity(aClass);
 
 		if (entity == null) {
 			return null;

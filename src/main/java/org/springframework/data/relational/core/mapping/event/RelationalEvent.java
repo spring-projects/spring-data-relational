@@ -17,19 +17,27 @@ package org.springframework.data.relational.core.mapping.event;
 
 import java.util.Optional;
 
-import org.springframework.data.relational.core.conversion.AggregateChange;
-
 /**
- * A {@link SimpleJdbcEvent} which is guaranteed to have an entity.
+ * an event signalling JDBC processing. It offers access to an {@link Identifier} of the aggregate root affected by the
+ * event.
  *
- * @author Jens Schauder
+ * @author Oliver Gierke
  * @since 1.0
  */
-public class JdbcEventWithEntity extends SimpleJdbcEvent implements WithEntity {
+public interface RelationalEvent {
 
-	private static final long serialVersionUID = 4891455396602090638L;
+	/**
+	 * The identifier of the aggregate root, triggering this event.
+	 *
+	 * @return the source of the event as an {@link Identifier}. Guaranteed to be not {@code null}.
+	 */
+	Identifier getId();
 
-	JdbcEventWithEntity(Identifier id, Object entity, AggregateChange change) {
-		super(id, Optional.of(entity), change);
-	}
+	/**
+	 * Returns the aggregate root the event was triggered for.
+	 *
+	 * @return will never be {@code null}.
+	 */
+	Optional<Object> getOptionalEntity();
+
 }

@@ -34,7 +34,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
  * @since 1.0
  */
 @RequiredArgsConstructor
-public class JdbcAuditingEventListener implements ApplicationListener<BeforeSaveEvent> {
+public class RelationalAuditingEventListener implements ApplicationListener<BeforeSaveEvent> {
 
 	private final IsNewAwareAuditingHandler handler;
 

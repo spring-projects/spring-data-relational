@@ -16,7 +16,7 @@
 package org.springframework.data.relational.core.conversion;
 
 import org.springframework.data.convert.EntityWriter;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.util.Assert;
 
 /**
@@ -25,10 +25,10 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @since 1.0
  */
-abstract class JdbcEntityWriterSupport implements EntityWriter<Object, AggregateChange<?>> {
-	protected final JdbcMappingContext context;
+abstract class RelationalEntityWriterSupport implements EntityWriter<Object, AggregateChange<?>> {
+	protected final RelationalMappingContext context;
 
-	JdbcEntityWriterSupport(JdbcMappingContext context) {
+	RelationalEntityWriterSupport(RelationalMappingContext context) {
 
 		Assert.notNull(context, "Context must not be null");
 
@@ -45,6 +45,6 @@ abstract class JdbcEntityWriterSupport implements EntityWriter<Object, Aggregate
 	void deleteReferencedEntities(Object id, AggregateChange<?> aggregateChange) {
 
 		context.referencedEntities(aggregateChange.getEntityType(), null).forEach(
-				p -> aggregateChange.addAction(DbAction.delete(id, p.getLeafType(), null, new JdbcPropertyPath(p), null)));
+				p -> aggregateChange.addAction(DbAction.delete(id, p.getLeafType(), null, new RelationalPropertyPath(p), null)));
 	}
 }

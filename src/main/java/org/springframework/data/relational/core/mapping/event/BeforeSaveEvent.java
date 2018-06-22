@@ -24,7 +24,7 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
  * @author Jens Schauder
  * @since 1.0
  */
-public class BeforeSaveEvent extends JdbcEventWithEntity {
+public class BeforeSaveEvent extends RelationalEventWithEntity {
 
 	private static final long serialVersionUID = -6996874391990315443L;
 

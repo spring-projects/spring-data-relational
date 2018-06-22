@@ -18,13 +18,13 @@ package org.springframework.data.relational.core.mapping.event;
 import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
 
 /**
- * Interface for {@link SimpleJdbcEvent}s which are guaranteed to have a {@link Specified} identifier. Offers direct
+ * Interface for {@link SimpleRelationalEvent}s which are guaranteed to have a {@link Specified} identifier. Offers direct
  * access to the {@link Specified} identifier.
  *
  * @author Jens Schauder
  * @since 1.0
  */
-public interface WithId extends JdbcEvent {
+public interface WithId extends RelationalEvent {
 
 	/**
 	 * Events with an identifier will always return a {@link Specified} one.

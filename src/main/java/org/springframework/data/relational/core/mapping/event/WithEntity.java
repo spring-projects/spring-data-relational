@@ -16,13 +16,13 @@
 package org.springframework.data.relational.core.mapping.event;
 
 /**
- * Interface for {@link SimpleJdbcEvent}s which are guaranteed to have an entity. Allows direct access to that entity,
+ * Interface for {@link SimpleRelationalEvent}s which are guaranteed to have an entity. Allows direct access to that entity,
  * without going through an {@link java.util.Optional}
  *
  * @author Jens Schauder
  * @since 1.0
  */
-public interface WithEntity extends JdbcEvent {
+public interface WithEntity extends RelationalEvent {
 
 	/**
 	 * @return will never be {@literal null}.

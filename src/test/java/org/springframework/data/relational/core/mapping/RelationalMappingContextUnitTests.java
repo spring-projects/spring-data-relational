@@ -21,20 +21,20 @@ import java.util.List;
 
 import org.junit.Test;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
- * Unit tests for {@link JdbcMappingContext}.
+ * Unit tests for {@link RelationalMappingContext}.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
  */
-public class JdbcMappingContextUnitTests {
+public class RelationalMappingContextUnitTests {
 
 	@Test // DATAJDBC-142
 	public void referencedEntitiesGetFound() {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext();
+		RelationalMappingContext mappingContext = new RelationalMappingContext();
 
 		List<PropertyPath> propertyPaths = mappingContext.referencedEntities(DummyEntity.class, null);
 
@@ -46,7 +46,7 @@ public class JdbcMappingContextUnitTests {
 	@Test // DATAJDBC-142
 	public void propertyPathDoesNotDependOnNamingStrategy() {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext();
+		RelationalMappingContext mappingContext = new RelationalMappingContext();
 
 		List<PropertyPath> propertyPaths = mappingContext.referencedEntities(DummyEntity.class, null);
 

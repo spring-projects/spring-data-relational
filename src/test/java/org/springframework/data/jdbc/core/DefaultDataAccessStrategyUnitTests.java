@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.EntityInstantiators;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
@@ -44,7 +44,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	public static final long ORIGINAL_ID = 4711L;
 
 	NamedParameterJdbcOperations jdbcOperations = mock(NamedParameterJdbcOperations.class);
-	JdbcMappingContext context = new JdbcMappingContext();
+	RelationalMappingContext context = new RelationalMappingContext();
 	HashMap<String, Object> additionalParameters = new HashMap<>();
 	ArgumentCaptor<SqlParameterSource> paramSourceCaptor = ArgumentCaptor.forClass(SqlParameterSource.class);
 

@@ -25,28 +25,28 @@ import java.util.Date;
 
 import org.junit.Test;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.relational.core.mapping.BasicJdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
- * Unit tests for the {@link BasicJdbcPersistentProperty}.
+ * Unit tests for the {@link BasicRelationalPersistentProperty}.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
  */
-public class BasicJdbcPersistentPropertyUnitTests {
+public class BasicRelationalPersistentPropertyUnitTests {
 
-	JdbcMappingContext context = new JdbcMappingContext();
+	RelationalMappingContext context = new RelationalMappingContext();
 
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {
 
-		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) p -> {
+		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
 			switch (p.getName()) {
 				case "someEnum":
 					assertThat(p.getColumnType()).isEqualTo(String.class);
@@ -65,7 +65,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
 
-		JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo("dummy_name");
 		assertThat(entity.getRequiredPersistentProperty("localDateTime").getColumnName())

@@ -29,14 +29,14 @@ import org.springframework.lang.Nullable;
  * @author Oliver Gierke
  * @since 1.0
  */
-class SimpleJdbcEvent extends ApplicationEvent implements JdbcEvent {
+class SimpleRelationalEvent extends ApplicationEvent implements RelationalEvent {
 
 	private static final long serialVersionUID = -1798807778668751659L;
 
 	private final Object entity;
 	private final AggregateChange change;
 
-	SimpleJdbcEvent(Identifier id, Optional<Object> entity, @Nullable AggregateChange change) {
+	SimpleRelationalEvent(Identifier id, Optional<Object> entity, @Nullable AggregateChange change) {
 
 		super(id);
 

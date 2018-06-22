@@ -25,7 +25,7 @@ import org.springframework.data.mapping.model.MutablePersistentEntity;
  * @author Oliver Gierke
  * @since 1.0
  */
-public interface JdbcPersistentEntity<T> extends MutablePersistentEntity<T, JdbcPersistentProperty> {
+public interface RelationalPersistentEntity<T> extends MutablePersistentEntity<T, RelationalPersistentProperty> {
 
 	/**
 	 * Returns the name of the table backing the given entity.

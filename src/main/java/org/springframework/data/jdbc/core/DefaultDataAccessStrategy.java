@@ -33,9 +33,9 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -58,7 +58,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			+ "JDBC driver returns it.";
 
 	private final @NonNull SqlGeneratorSource sqlGeneratorSource;
-	private final @NonNull JdbcMappingContext context;
+	private final @NonNull RelationalMappingContext context;
 	private final @NonNull NamedParameterJdbcOperations operations;
 	private final @NonNull EntityInstantiators instantiators;
 	private final @NonNull DataAccessStrategy accessStrategy;
@@ -67,7 +67,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * Creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
 	 * Only suitable if this is the only access strategy in use.
 	 */
-	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, JdbcMappingContext context,
+	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
 			NamedParameterJdbcOperations operations, EntityInstantiators instantiators) {
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
@@ -81,12 +81,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
-		JdbcPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
 		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity);
 
 		Object idValue = getIdValueOrNull(instance, persistentEntity);
-		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
 
 		if (idValue != null) {
 
@@ -120,7 +120,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <S> void update(S instance, Class<S> domainType) {
 
-		JdbcPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
+		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
 		operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity));
 	}
@@ -145,9 +145,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void delete(Object rootId, PropertyPath propertyPath) {
 
-		JdbcPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(propertyPath.getOwningType());
+		RelationalPersistentEntity<?> rootEntity = context.getRequiredPersistentEntity(propertyPath.getOwningType());
 
-		JdbcPersistentProperty referencingProperty = rootEntity.getRequiredPersistentProperty(propertyPath.getSegment());
+		RelationalPersistentProperty referencingProperty = rootEntity.getRequiredPersistentProperty(propertyPath.getSegment());
 		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
 
 		String format = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
@@ -244,7 +244,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> Iterable<T> findAllByProperty(Object rootId, JdbcPersistentProperty property) {
+	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
 
 		Assert.notNull(rootId, "rootId must not be null.");
 
@@ -277,11 +277,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	private <S> MapSqlParameterSource getPropertyMap(final S instance, JdbcPersistentEntity<S> persistentEntity) {
+	private <S> MapSqlParameterSource getPropertyMap(final S instance, RelationalPersistentEntity<S> persistentEntity) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
-		persistentEntity.doWithProperties((PropertyHandler<JdbcPersistentProperty>) property -> {
+		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 			if (!property.isEntity()) {
 				Object value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
 
@@ -295,7 +295,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	@SuppressWarnings("unchecked")
 	@Nullable
-	private <S, ID> ID getIdValueOrNull(S instance, JdbcPersistentEntity<S> persistentEntity) {
+	private <S, ID> ID getIdValueOrNull(S instance, RelationalPersistentEntity<S> persistentEntity) {
 
 		ID idValue = (ID) persistentEntity.getIdentifierAccessor(instance).getIdentifier();
 
@@ -303,16 +303,16 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private static <S, ID> boolean isIdPropertyNullOrScalarZero(@Nullable ID idValue,
-			JdbcPersistentEntity<S> persistentEntity) {
+			RelationalPersistentEntity<S> persistentEntity) {
 
-		JdbcPersistentProperty idProperty = persistentEntity.getIdProperty();
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
 		return idValue == null //
 				|| idProperty == null //
 				|| (idProperty.getType() == int.class && idValue.equals(0)) //
 				|| (idProperty.getType() == long.class && idValue.equals(0L));
 	}
 
-	private <S> void setIdFromJdbc(S instance, KeyHolder holder, JdbcPersistentEntity<S> persistentEntity) {
+	private <S> void setIdFromJdbc(S instance, KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
 
 		try {
 
@@ -321,7 +321,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				PersistentPropertyAccessor accessor = persistentEntity.getPropertyAccessor(instance);
 				ConvertingPropertyAccessor convertingPropertyAccessor = new ConvertingPropertyAccessor(accessor,
 						context.getConversions());
-				JdbcPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
+				RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 
 				convertingPropertyAccessor.setProperty(idProperty, it);
 			});
@@ -331,7 +331,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 	}
 
-	private <S> Optional<Object> getIdFromHolder(KeyHolder holder, JdbcPersistentEntity<S> persistentEntity) {
+	private <S> Optional<Object> getIdFromHolder(KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
 
 		try {
 			// MySQL just returns one value with a special name
@@ -348,7 +348,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@SuppressWarnings("unchecked")
-	private RowMapper<?> getMapEntityRowMapper(JdbcPersistentProperty property) {
+	private RowMapper<?> getMapEntityRowMapper(RelationalPersistentProperty property) {
 
 		String keyColumn = property.getKeyColumn();
 
@@ -364,8 +364,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <S> JdbcPersistentEntity<S> getRequiredPersistentEntity(Class<S> domainType) {
-		return (JdbcPersistentEntity<S>) context.getRequiredPersistentEntity(domainType);
+	private <S> RelationalPersistentEntity<S> getRequiredPersistentEntity(Class<S> domainType) {
+		return (RelationalPersistentEntity<S>) context.getRequiredPersistentEntity(domainType);
 	}
 
 	@Nullable
@@ -375,7 +375,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			return null;
 		}
 
-		JdbcPersistentEntity<?> persistentEntity = context.getPersistentEntity(from.getClass());
+		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(from.getClass());
 
 		Object id = persistentEntity == null ? null : persistentEntity.getIdentifierAccessor(from).getIdentifier();
 

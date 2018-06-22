@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
  * Provides {@link SqlGenerator}s per domain type. Instances get cached, so when asked multiple times for the same domain
@@ -33,7 +33,7 @@ import org.springframework.data.relational.core.mapping.JdbcMappingContext;
 public class SqlGeneratorSource {
 
 	private final Map<Class, SqlGenerator> sqlGeneratorCache = new HashMap<>();
-	private final JdbcMappingContext context;
+	private final RelationalMappingContext context;
 
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
 

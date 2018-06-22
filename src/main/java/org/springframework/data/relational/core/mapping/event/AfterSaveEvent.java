@@ -24,7 +24,7 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  * @author Jens Schauder
  * @since 1.0
  */
-public class AfterSaveEvent extends JdbcEventWithIdAndEntity {
+public class AfterSaveEvent extends RelationalEventWithIdAndEntity {
 
 	private static final long serialVersionUID = 8982085767296982848L;
 

@@ -27,7 +27,7 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  * @author Jens Schauder
  * @since 1.0
  */
-public class BeforeDeleteEvent extends JdbcEventWithId {
+public class BeforeDeleteEvent extends RelationalEventWithId {
 
 	private static final long serialVersionUID = -5483432053368496651L;
 

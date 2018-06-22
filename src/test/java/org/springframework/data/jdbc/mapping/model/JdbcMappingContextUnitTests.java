@@ -23,14 +23,14 @@ import java.util.Set;
 
 import org.junit.Test;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
  * @author Jens Schauder
  */
 public class JdbcMappingContextUnitTests {
 
-	JdbcMappingContext context = new JdbcMappingContext();
+	RelationalMappingContext context = new RelationalMappingContext();
 
 	// DATAJDBC-188
 	@Test

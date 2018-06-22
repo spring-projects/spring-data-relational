@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.Interpreter;
-import org.springframework.data.relational.core.conversion.JdbcPropertyPath;
+import org.springframework.data.relational.core.conversion.RelationalPropertyPath;
 
 /**
  * Unit tests for {@link DbAction}s
@@ -37,7 +37,7 @@ public class DbActionUnitTests {
 	public void exceptionFromActionContainsUsefulInformationWhenInterpreterFails() {
 
 		DummyEntity entity = new DummyEntity();
-		DbAction.Insert<DummyEntity> insert = DbAction.insert(entity, JdbcPropertyPath.from("someName", DummyEntity.class),
+		DbAction.Insert<DummyEntity> insert = DbAction.insert(entity, RelationalPropertyPath.from("someName", DummyEntity.class),
 				null);
 
 		Interpreter failingInterpreter = mock(Interpreter.class);

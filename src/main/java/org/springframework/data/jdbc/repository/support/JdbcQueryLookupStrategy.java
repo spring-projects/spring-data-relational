@@ -23,7 +23,7 @@ import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
@@ -43,7 +43,7 @@ import org.springframework.util.Assert;
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
-	private final JdbcMappingContext context;
+	private final RelationalMappingContext context;
 	private final EntityInstantiators instantiators;
 	private final DataAccessStrategy accessStrategy;
 	private final RowMapperMap rowMapperMap;
@@ -52,14 +52,14 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final ConversionService conversionService;
 
 	/**
-	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link JdbcMappingContext}, {@link DataAccessStrategy}
+	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext}, {@link DataAccessStrategy}
 	 * and {@link RowMapperMap}.
 	 *
 	 * @param context must not be {@literal null}.
 	 * @param accessStrategy must not be {@literal null}.
 	 * @param rowMapperMap must not be {@literal null}.
 	 */
-	JdbcQueryLookupStrategy(JdbcMappingContext context, EntityInstantiators instantiators,
+	JdbcQueryLookupStrategy(RelationalMappingContext context, EntityInstantiators instantiators,
 			DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(context, "JdbcMappingContext must not be null!");

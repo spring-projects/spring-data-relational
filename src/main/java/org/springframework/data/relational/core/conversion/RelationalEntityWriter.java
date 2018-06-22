@@ -29,9 +29,9 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
-import org.springframework.data.relational.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.relational.core.mapping.JdbcPersistentProperty;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.StreamUtils;
 
 /**
@@ -41,11 +41,11 @@ import org.springframework.data.util.StreamUtils;
  * @author Jens Schauder
  * @since 1.0
  */
-public class JdbcEntityWriter extends JdbcEntityWriterSupport {
+public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 
-	private final JdbcMappingContext context;
+	private final RelationalMappingContext context;
 
-	public JdbcEntityWriter(JdbcMappingContext context) {
+	public RelationalEntityWriter(RelationalMappingContext context) {
 
 		super(context);
 
@@ -63,9 +63,9 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	public void write(Object aggregateRoot, AggregateChange aggregateChange) {
 
 		Class<?> type = aggregateRoot.getClass();
-		JdbcPropertyPath propertyPath = JdbcPropertyPath.from("", type);
+		RelationalPropertyPath propertyPath = RelationalPropertyPath.from("", type);
 
-		PersistentEntity<?, JdbcPersistentProperty> persistentEntity = context.getRequiredPersistentEntity(type);
+		PersistentEntity<?, RelationalPersistentProperty> persistentEntity = context.getRequiredPersistentEntity(type);
 
 		if (persistentEntity.isNew(aggregateRoot)) {
 
@@ -83,7 +83,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 			);
 		} else {
 
-			JdbcPersistentEntity<?> entity = context.getRequiredPersistentEntity(type);
+			RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(type);
 			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(aggregateRoot);
 
 			deleteReferencedEntities(identifierAccessor.getRequiredIdentifier(), aggregateChange);
@@ -97,7 +97,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	private void insertReferencedEntities(PropertyAndValue propertyAndValue, AggregateChange aggregateChange,
-			JdbcPropertyPath propertyPath, DbAction dependingOn) {
+			RelationalPropertyPath propertyPath, DbAction dependingOn) {
 
 		Insert<Object> insert;
 		if (propertyAndValue.property.isQualified()) {
@@ -121,7 +121,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 
 	private Stream<PropertyAndValue> referencedEntities(Object o) {
 
-		JdbcPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(o.getClass());
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(o.getClass());
 
 		return StreamUtils.createStreamFromIterator(persistentEntity.iterator()) //
 				.filter(PersistentProperty::isEntity) //
@@ -131,10 +131,10 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 		);
 	}
 
-	private Stream<Object> referencedEntity(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+	private Stream<Object> referencedEntity(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
 
 		Class<?> actualType = p.getActualType();
-		JdbcPersistentEntity<?> persistentEntity = context //
+		RelationalPersistentEntity<?> persistentEntity = context //
 				.getPersistentEntity(actualType);
 
 		if (persistentEntity == null) {
@@ -159,7 +159,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Stream<Object> collectionPropertyAsStream(JdbcPersistentProperty p,
+	private Stream<Object> collectionPropertyAsStream(RelationalPersistentProperty p,
 			PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
@@ -170,7 +170,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Stream<Object> listPropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+	private Stream<Object> listPropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 
@@ -186,7 +186,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Stream<Object> mapPropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+	private Stream<Object> mapPropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 
@@ -195,7 +195,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 				: ((Map<Object, Object>) property).entrySet().stream().map(e -> new KeyValue(e.getKey(), e.getValue()));
 	}
 
-	private Stream<Object> singlePropertyAsStream(JdbcPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+	private Stream<Object> singlePropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 		if (property == null) {
@@ -217,7 +217,7 @@ public class JdbcEntityWriter extends JdbcEntityWriterSupport {
 	@Data
 	private static class PropertyAndValue {
 
-		private final JdbcPersistentProperty property;
+		private final RelationalPersistentProperty property;
 		private final Object value;
 	}
 }
