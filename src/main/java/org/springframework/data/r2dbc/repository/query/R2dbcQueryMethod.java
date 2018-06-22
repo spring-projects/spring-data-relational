@@ -26,11 +26,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.SimpleRelationalEntityMetadata;
@@ -56,7 +56,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 	private static final ClassTypeInformation<Slice> SLICE_TYPE = ClassTypeInformation.from(Slice.class);
 
 	private final Method method;
-	private final MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext;
+	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 	private final Optional<Query> query;
 
 	private @Nullable RelationalEntityMetadata<?> metadata;
@@ -70,7 +70,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 	 * @param mappingContext must not be {@literal null}.
 	 */
 	public R2dbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory projectionFactory,
-			MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext) {
+			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
 
 		super(method, metadata, projectionFactory);
 
@@ -162,11 +162,11 @@ public class R2dbcQueryMethod extends QueryMethod {
 
 			} else {
 
-				JdbcPersistentEntity<?> returnedEntity = mappingContext.getPersistentEntity(returnedObjectType);
-				JdbcPersistentEntity<?> managedEntity = mappingContext.getRequiredPersistentEntity(domainClass);
+				RelationalPersistentEntity<?> returnedEntity = mappingContext.getPersistentEntity(returnedObjectType);
+				RelationalPersistentEntity<?> managedEntity = mappingContext.getRequiredPersistentEntity(domainClass);
 				returnedEntity = returnedEntity == null || returnedEntity.getType().isInterface() ? managedEntity
 						: returnedEntity;
-				JdbcPersistentEntity<?> tableEntity = domainClass.isAssignableFrom(returnedObjectType) ? returnedEntity
+				RelationalPersistentEntity<?> tableEntity = domainClass.isAssignableFrom(returnedObjectType) ? returnedEntity
 						: managedEntity;
 
 				this.metadata = new SimpleRelationalEntityMetadata<>((Class<Object>) returnedEntity.getType(), tableEntity);

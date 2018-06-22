@@ -32,13 +32,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.EntityInstantiators;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.Table;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -49,7 +49,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
-	private static JdbcMappingContext mappingContext = new JdbcMappingContext();
+	private static RelationalMappingContext mappingContext = new RelationalMappingContext();
 
 	private ConnectionFactory connectionFactory;
 	private DatabaseClient databaseClient;

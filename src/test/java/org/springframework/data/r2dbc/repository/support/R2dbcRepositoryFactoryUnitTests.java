@@ -23,9 +23,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.function.DatabaseClient;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.Repository;
@@ -40,7 +40,7 @@ public class R2dbcRepositoryFactoryUnitTests {
 
 	@Mock DatabaseClient databaseClient;
 	@Mock @SuppressWarnings("rawtypes") MappingContext mappingContext;
-	@Mock @SuppressWarnings("rawtypes") JdbcPersistentEntity entity;
+	@Mock @SuppressWarnings("rawtypes") RelationalPersistentEntity entity;
 
 	@Before
 	@SuppressWarnings("unchecked")
@@ -50,7 +50,7 @@ public class R2dbcRepositoryFactoryUnitTests {
 
 	@Test
 	@SuppressWarnings("unchecked")
-	public void usesMappingJdbcEntityInformationIfMappingContextSet() {
+	public void usesMappingRelationalEntityInformationIfMappingContextSet() {
 
 		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, mappingContext);
 		RelationalEntityInformation<Person, Long> entityInformation = factory.getEntityInformation(Person.class);

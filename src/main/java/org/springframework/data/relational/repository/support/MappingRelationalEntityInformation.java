@@ -15,13 +15,13 @@
  */
 package org.springframework.data.relational.repository.support;
 
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.core.support.PersistentEntityInformation;
 import org.springframework.lang.Nullable;
 
 /**
- * {@link RelationalEntityInformation} implementation using a {@link JdbcPersistentEntity} instance to lookup the
+ * {@link RelationalEntityInformation} implementation using a {@link RelationalPersistentEntity} instance to lookup the
  * necessary information. Can be configured with a custom table name.
  * <p>
  * Entity types that do not declare an explicit Id type fall back to {@link Long} as Id type.
@@ -31,51 +31,51 @@ import org.springframework.lang.Nullable;
 public class MappingRelationalEntityInformation<T, ID> extends PersistentEntityInformation<T, ID>
 		implements RelationalEntityInformation<T, ID> {
 
-	private final JdbcPersistentEntity<T> entityMetadata;
+	private final RelationalPersistentEntity<T> entityMetadata;
 	private final @Nullable String customTableName;
 	private final Class<ID> fallbackIdType;
 
 	/**
-	 * Creates a new {@link MappingRelationalEntityInformation} for the given {@link JdbcPersistentEntity}.
+	 * Creates a new {@link MappingRelationalEntityInformation} for the given {@link RelationalPersistentEntity}.
 	 *
 	 * @param entity must not be {@literal null}.
 	 */
-	public MappingRelationalEntityInformation(JdbcPersistentEntity<T> entity) {
+	public MappingRelationalEntityInformation(RelationalPersistentEntity<T> entity) {
 		this(entity, null, null);
 	}
 
 	/**
-	 * Creates a new {@link MappingRelationalEntityInformation} for the given {@link JdbcPersistentEntity} and fallback
-	 * identifier type.
+	 * Creates a new {@link MappingRelationalEntityInformation} for the given {@link RelationalPersistentEntity} and
+	 * fallback identifier type.
 	 *
 	 * @param entity must not be {@literal null}.
 	 * @param fallbackIdType can be {@literal null}.
 	 */
-	public MappingRelationalEntityInformation(JdbcPersistentEntity<T> entity, @Nullable Class<ID> fallbackIdType) {
+	public MappingRelationalEntityInformation(RelationalPersistentEntity<T> entity, @Nullable Class<ID> fallbackIdType) {
 		this(entity, null, fallbackIdType);
 	}
 
 	/**
-	 * Creates a new {@link MappingRelationalEntityInformation} for the given {@link JdbcPersistentEntity} and custom
-	 * table name.
+	 * Creates a new {@link MappingRelationalEntityInformation} for the given {@link RelationalPersistentEntity} and
+	 * custom table name.
 	 *
 	 * @param entity must not be {@literal null}.
 	 * @param customTableName can be {@literal null}.
 	 */
-	public MappingRelationalEntityInformation(JdbcPersistentEntity<T> entity, String customTableName) {
+	public MappingRelationalEntityInformation(RelationalPersistentEntity<T> entity, String customTableName) {
 		this(entity, customTableName, null);
 	}
 
 	/**
-	 * Creates a new {@link MappingRelationalEntityInformation} for the given {@link JdbcPersistentEntity}, collection
-	 * name and identifier type.
+	 * Creates a new {@link MappingRelationalEntityInformation} for the given {@link RelationalPersistentEntity},
+	 * collection name and identifier type.
 	 *
 	 * @param entity must not be {@literal null}.
 	 * @param customTableName can be {@literal null}.
 	 * @param idType can be {@literal null}.
 	 */
 	@SuppressWarnings("unchecked")
-	private MappingRelationalEntityInformation(JdbcPersistentEntity<T> entity, @Nullable String customTableName,
+	private MappingRelationalEntityInformation(RelationalPersistentEntity<T> entity, @Nullable String customTableName,
 			@Nullable Class<ID> idType) {
 
 		super(entity);

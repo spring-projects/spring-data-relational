@@ -18,8 +18,6 @@ package org.springframework.data.relational.repository.query;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.EntityInstantiator;
 import org.springframework.data.convert.EntityInstantiators;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -28,6 +26,8 @@ import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.SimplePropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
 
 /**
@@ -49,7 +49,7 @@ public class DtoInstantiatingConverter implements Converter<Object, Object> {
 	 * @param instantiators must not be {@literal null}.
 	 */
 	public DtoInstantiatingConverter(Class<?> dtoType,
-			MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> context,
+			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
 			EntityInstantiators instantiator) {
 
 		Assert.notNull(dtoType, "DTO type must not be null!");

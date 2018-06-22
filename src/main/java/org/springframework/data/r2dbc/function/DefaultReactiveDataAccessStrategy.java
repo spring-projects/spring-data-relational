@@ -27,11 +27,11 @@ import java.util.stream.Collectors;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.r2dbc.function.convert.EntityRowMapper;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.util.ClassUtils;
@@ -41,14 +41,14 @@ import org.springframework.util.ClassUtils;
  */
 public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStrategy {
 
-	private final JdbcMappingContext mappingContext;
+	private final RelationalMappingContext mappingContext;
 	private final EntityInstantiators instantiators;
 
 	public DefaultReactiveDataAccessStrategy() {
-		this(new JdbcMappingContext(), new EntityInstantiators());
+		this(new RelationalMappingContext(), new EntityInstantiators());
 	}
 
-	public DefaultReactiveDataAccessStrategy(JdbcMappingContext mappingContext, EntityInstantiators instantiators) {
+	public DefaultReactiveDataAccessStrategy(RelationalMappingContext mappingContext, EntityInstantiators instantiators) {
 		this.mappingContext = mappingContext;
 		this.instantiators = instantiators;
 	}
@@ -56,14 +56,14 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Override
 	public List<String> getAllFields(Class<?> typeToRead) {
 
-		JdbcPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(typeToRead);
+		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(typeToRead);
 
 		if (persistentEntity == null) {
 			return Collections.singletonList("*");
 		}
 
 		return StreamUtils.createStreamFromIterator(persistentEntity.iterator()) //
-				.map(JdbcPersistentProperty::getColumnName) //
+				.map(RelationalPersistentProperty::getColumnName) //
 				.collect(Collectors.toList());
 	}
 
@@ -72,12 +72,12 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		Class<?> userClass = ClassUtils.getUserClass(object);
 
-		JdbcPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
 		PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(object);
 
 		List<Pair<String, Object>> values = new ArrayList<>();
 
-		for (JdbcPersistentProperty property : entity) {
+		for (RelationalPersistentProperty property : entity) {
 
 			Object value = propertyAccessor.getProperty(property);
 
@@ -94,7 +94,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Override
 	public Sort getMappedSort(Class<?> typeToRead, Sort sort) {
 
-		JdbcPersistentEntity<?> entity = mappingContext.getPersistentEntity(typeToRead);
+		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(typeToRead);
 		if (entity == null) {
 			return sort;
 		}
@@ -103,7 +103,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		for (Order order : sort) {
 
-			JdbcPersistentProperty persistentProperty = entity.getPersistentProperty(order.getProperty());
+			RelationalPersistentProperty persistentProperty = entity.getPersistentProperty(order.getProperty());
 			if (persistentProperty == null) {
 				mappedOrder.add(order);
 			} else {
@@ -117,7 +117,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	@Override
 	public <T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead) {
-		return new EntityRowMapper<T>((JdbcPersistentEntity) mappingContext.getRequiredPersistentEntity(typeToRead),
+		return new EntityRowMapper<T>((RelationalPersistentEntity) mappingContext.getRequiredPersistentEntity(typeToRead),
 				instantiators, mappingContext);
 	}
 

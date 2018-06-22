@@ -34,13 +34,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.EntityInstantiators;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.Table;
 import org.springframework.data.jdbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -52,7 +52,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
-	private static JdbcMappingContext mappingContext = new JdbcMappingContext();
+	private static RelationalMappingContext mappingContext = new RelationalMappingContext();
 
 	private ConnectionFactory connectionFactory;
 	private DatabaseClient databaseClient;
@@ -69,7 +69,7 @@ public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestS
 				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(mappingContext, new EntityInstantiators())).build();
 
 		RelationalEntityInformation<LegoSet, Integer> entityInformation = new MappingRelationalEntityInformation<>(
-				(JdbcPersistentEntity<LegoSet>) mappingContext.getRequiredPersistentEntity(LegoSet.class));
+				(RelationalPersistentEntity<LegoSet>) mappingContext.getRequiredPersistentEntity(LegoSet.class));
 
 		this.repository = new SimpleR2dbcRepository<>(entityInformation, databaseClient,
 				new MappingR2dbcConverter(mappingContext));
@@ -93,8 +93,7 @@ public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestS
 				.consumeNextWith(actual -> {
 
 					assertThat(actual.getId()).isNotNull();
-				})
-				.verifyComplete();
+				}).verifyComplete();
 
 		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM repo_legoset");
 		assertThat(map).containsEntry("name", "SCHAUFELRADBAGGER").containsEntry("manual", 12).containsKey("id");

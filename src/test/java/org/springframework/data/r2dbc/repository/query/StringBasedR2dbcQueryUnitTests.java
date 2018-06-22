@@ -16,6 +16,7 @@
 package org.springframework.data.r2dbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
@@ -25,13 +26,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
@@ -52,7 +53,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	@Mock private DatabaseClient databaseClient;
 	@Mock private GenericExecuteSpec bindSpec;
 
-	private JdbcMappingContext mappingContext;
+	private RelationalMappingContext mappingContext;
 	private MappingR2dbcConverter converter;
 	private ProjectionFactory factory;
 	private RepositoryMetadata metadata;
@@ -61,7 +62,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	@SuppressWarnings("unchecked")
 	public void setUp() {
 
-		this.mappingContext = new JdbcMappingContext();
+		this.mappingContext = new RelationalMappingContext();
 		this.converter = new MappingR2dbcConverter(this.mappingContext);
 		this.metadata = AbstractRepositoryMetadata.getMetadata(SampleRepository.class);
 		this.factory = new SpelAwareProxyProjectionFactory();

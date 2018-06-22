@@ -17,7 +17,7 @@ package org.springframework.data.relational.repository.query;
 
 import lombok.Getter;
 
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.util.Assert;
 
 /**
@@ -28,16 +28,16 @@ import org.springframework.util.Assert;
 public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetadata<T> {
 
 	private final Class<T> type;
-	private final @Getter JdbcPersistentEntity<?> tableEntity;
+	private final @Getter RelationalPersistentEntity<?> tableEntity;
 
 	/**
-	 * Creates a new {@link SimpleRelationalEntityMetadata} using the given type and {@link JdbcPersistentEntity} to use
-	 * for table lookups.
+	 * Creates a new {@link SimpleRelationalEntityMetadata} using the given type and {@link RelationalPersistentEntity} to
+	 * use for table lookups.
 	 *
 	 * @param type must not be {@literal null}.
 	 * @param tableEntity must not be {@literal null}.
 	 */
-	public SimpleRelationalEntityMetadata(Class<T> type, JdbcPersistentEntity<?> tableEntity) {
+	public SimpleRelationalEntityMetadata(Class<T> type, RelationalPersistentEntity<?> tableEntity) {
 
 		Assert.notNull(type, "Type must not be null!");
 		Assert.notNull(tableEntity, "Table entity must not be null!");
@@ -54,7 +54,7 @@ public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetada
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.repository.query.JdbcEntityMetadata#getTableName()
+	 * @see org.springframework.data.jdbc.repository.query.RelationalEntityMetadata#getTableName()
 	 */
 	public String getTableName() {
 		return tableEntity.getTableName();

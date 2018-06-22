@@ -21,8 +21,6 @@ import lombok.RequiredArgsConstructor;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.function.DatabaseClient;
@@ -30,6 +28,8 @@ import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
 import org.springframework.data.r2dbc.repository.query.StringBasedR2dbcQuery;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.core.NamedQueries;
@@ -54,7 +54,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private static final SpelExpressionParser EXPRESSION_PARSER = new SpelExpressionParser();
 
 	private final DatabaseClient databaseClient;
-	private final MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext;
+	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 	private final MappingR2dbcConverter converter;
 
 	/**
@@ -64,7 +64,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	 * @param mappingContext must not be {@literal null}.
 	 */
 	public R2dbcRepositoryFactory(DatabaseClient databaseClient,
-			MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext) {
+			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
 
 		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
 		Assert.notNull(mappingContext, "MappingContext must not be null!");
@@ -118,9 +118,9 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private <T, ID> RelationalEntityInformation<T, ID> getEntityInformation(Class<T> domainClass,
 			@Nullable RepositoryInformation information) {
 
-		JdbcPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(domainClass);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(domainClass);
 
-		return new MappingRelationalEntityInformation<>((JdbcPersistentEntity<T>) entity);
+		return new MappingRelationalEntityInformation<>((RelationalPersistentEntity<T>) entity);
 	}
 
 	/**

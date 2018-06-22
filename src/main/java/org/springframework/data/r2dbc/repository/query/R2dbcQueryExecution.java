@@ -20,10 +20,10 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.EntityInstantiators;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.function.FetchSpec;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.query.DtoInstantiatingConverter;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
@@ -64,7 +64,7 @@ interface R2dbcQueryExecution {
 	final class ResultProcessingConverter implements Converter<Object, Object> {
 
 		private final @NonNull ResultProcessor processor;
-		private final @NonNull MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext;
+		private final @NonNull MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 		private final @NonNull EntityInstantiators instantiators;
 
 		/* (non-Javadoc)

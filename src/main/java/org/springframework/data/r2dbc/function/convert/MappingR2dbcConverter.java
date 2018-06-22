@@ -23,10 +23,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -37,10 +37,10 @@ import org.springframework.util.ClassUtils;
  */
 public class MappingR2dbcConverter {
 
-	private final MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext;
+	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 
 	public MappingR2dbcConverter(
-			MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> mappingContext) {
+			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
 		this.mappingContext = mappingContext;
 	}
 
@@ -56,13 +56,13 @@ public class MappingR2dbcConverter {
 		Assert.notNull(object, "Entity object must not be null!");
 
 		Class<?> userClass = ClassUtils.getUserClass(object);
-		JdbcPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
 
 		Map<String, Optional<Object>> update = new LinkedHashMap<>();
 
 		PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(object);
 
-		for (JdbcPersistentProperty property : entity) {
+		for (RelationalPersistentProperty property : entity) {
 			update.put(property.getColumnName(), Optional.ofNullable(propertyAccessor.getProperty(property)));
 		}
 
@@ -82,12 +82,12 @@ public class MappingR2dbcConverter {
 		Assert.notNull(object, "Entity object must not be null!");
 
 		Class<?> userClass = ClassUtils.getUserClass(object);
-		JdbcPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
+		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
 
 		return (row, metadata) -> {
 
 			PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(object);
-			JdbcPersistentProperty idProperty = entity.getRequiredIdProperty();
+			RelationalPersistentProperty idProperty = entity.getRequiredIdProperty();
 
 			if (propertyAccessor.getProperty(idProperty) == null) {
 
@@ -99,7 +99,7 @@ public class MappingR2dbcConverter {
 		};
 	}
 
-	public MappingContext<? extends JdbcPersistentEntity<?>, JdbcPersistentProperty> getMappingContext() {
+	public MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> getMappingContext() {
 		return mappingContext;
 	}
 }

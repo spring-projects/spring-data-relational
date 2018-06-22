@@ -28,9 +28,9 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
@@ -42,11 +42,11 @@ import org.springframework.data.repository.core.support.DefaultRepositoryMetadat
  */
 public class R2dbcQueryMethodUnitTests {
 
-	JdbcMappingContext context;
+	RelationalMappingContext context;
 
 	@Before
 	public void setUp() {
-		context = new JdbcMappingContext();
+		this.context = new RelationalMappingContext();
 	}
 
 	@Test

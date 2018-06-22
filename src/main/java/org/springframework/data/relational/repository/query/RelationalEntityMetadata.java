@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.repository.query;
 
-import org.springframework.data.jdbc.core.mapping.JdbcPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.repository.core.EntityMetadata;
 
 /**
@@ -33,9 +33,9 @@ public interface RelationalEntityMetadata<T> extends EntityMetadata<T> {
 	String getTableName();
 
 	/**
-	 * Returns the {@link JdbcPersistentEntity} that supposed to determine the table to be queried.
+	 * Returns the {@link RelationalPersistentEntity} that supposed to determine the table to be queried.
 	 *
 	 * @return
 	 */
-	JdbcPersistentEntity<?> getTableEntity();
+	RelationalPersistentEntity<?> getTableEntity();
 }
