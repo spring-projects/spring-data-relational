@@ -386,20 +386,6 @@
 			<id>spring-libs-snapshot</id>
 			<url>https://repo.spring.io/libs-snapshot</url>
 		</repository>
-		<repository>
-			<id>nebhale-snapshots</id>
-			<url>https://raw.githubusercontent.com/nebhale/r2dbc/maven/snapshot</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>nebhale-milestones</id>
-			<url>https://raw.githubusercontent.com/nebhale/r2dbc/maven/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
 	</repositories>
 
 	<pluginRepositories>
