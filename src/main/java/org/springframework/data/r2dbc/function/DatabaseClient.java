@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.support.SQLExceptionTranslator;
+import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 
 /**
  * A non-blocking, reactive client for performing database calls requests with Reactive Streams back pressure. Provides
@@ -91,12 +91,12 @@ public interface DatabaseClient {
 		Builder connectionFactory(ConnectionFactory factory);
 
 		/**
-		 * Configures a {@link SQLExceptionTranslator}.
+		 * Configures a {@link R2dbcExceptionTranslator}.
 		 *
 		 * @param exceptionTranslator must not be {@literal null}.
 		 * @return {@code this} {@link Builder}.
 		 */
-		Builder exceptionTranslator(SQLExceptionTranslator exceptionTranslator);
+		Builder exceptionTranslator(R2dbcExceptionTranslator exceptionTranslator);
 
 		/**
 		 * Configures a {@link ReactiveDataAccessStrategy}.

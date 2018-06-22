@@ -25,6 +25,8 @@ import reactor.core.publisher.Mono;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.springframework.jdbc.core.SqlProvider;
+
 /**
  * Default {@link SqlResult} implementation.
  *
@@ -47,7 +49,27 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 		this.updatedRowsFunction = updatedRowsFunction;
 
 		this.fetchSpec = new DefaultFetchSpec<>(connectionAccessor, sql,
-				it -> resultFunction.apply(it).flatMap(result -> result.map(mappingFunction)), updatedRowsFunction);
+				new SqlFunction<Connection, Flux<T>>() {
+					@Override
+					public Flux<T> apply(Connection connection) {
+						return resultFunction.apply(connection).flatMap(result -> result.map(mappingFunction));
+					}
+
+					@Override
+					public String getSql() {
+						return sql;
+					}
+				}, new SqlFunction<Connection, Mono<Integer>>() {
+					@Override
+					public Mono<Integer> apply(Connection connection) {
+						return updatedRowsFunction.apply(connection);
+					}
+
+					@Override
+					public String getSql() {
+						return sql;
+					}
+				});
 	}
 
 	/* (non-Javadoc)
@@ -89,4 +111,13 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 	public Mono<Integer> rowsUpdated() {
 		return fetchSpec.rowsUpdated();
 	}
+
+	/**
+	 * Union type combining {@link Function} and {@link SqlProvider} to expose the SQL that is related to the underlying
+	 * action.
+	 *
+	 * @param <T> the type of the input to the function.
+	 * @param <R> the type of the result of the function.
+	 */
+	interface SqlFunction<T, R> extends Function<T, R>, SqlProvider {}
 }

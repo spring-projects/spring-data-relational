@@ -25,6 +25,7 @@ import reactor.test.StepVerifier;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.Table;
@@ -73,6 +74,27 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 				.verifyComplete();
 
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+	}
+
+	@Test
+	public void shouldTranslateDuplicateKeyException() {
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		executeInsert();
+
+		databaseClient.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
+				.bind(0, 42055) //
+				.bind(1, "SCHAUFELRADBAGGER") //
+				.bindNull("$3") //
+				.fetch().rowsUpdated() //
+				.as(StepVerifier::create) //
+				.expectErrorSatisfies(exception -> {
+
+					assertThat(exception).isInstanceOf(DuplicateKeyException.class)
+							.hasMessageContaining("execute; SQL [INSERT INTO legoset");
+				}) //
+				.verify();
 	}
 
 	@Test
