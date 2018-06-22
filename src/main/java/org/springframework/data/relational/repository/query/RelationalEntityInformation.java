@@ -18,7 +18,7 @@ package org.springframework.data.relational.repository.query;
 import org.springframework.data.repository.core.EntityInformation;
 
 /**
- * JDBC specific {@link EntityInformation}.
+ * Relational database-specific {@link EntityInformation}.
  *
  * @author Mark Paluch
  */
