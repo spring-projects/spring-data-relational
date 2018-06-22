@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.repository.query;
+package org.springframework.data.r2dbc.repository.reactive.query;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,8 +25,8 @@ import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.function.FetchSpec;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
-import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingConverter;
-import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingExecution;
+import org.springframework.data.r2dbc.repository.reactive.query.R2dbcQueryExecution.ResultProcessingConverter;
+import org.springframework.data.r2dbc.repository.reactive.query.R2dbcQueryExecution.ResultProcessingExecution;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.ParameterAccessor;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.repository;
+package org.springframework.data.r2dbc.repository.reactive;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -38,7 +38,7 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
+import org.springframework.data.r2dbc.repository.reactive.support.R2dbcRepositoryFactory;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 

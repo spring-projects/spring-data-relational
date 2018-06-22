@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.repository.support;
+package org.springframework.data.r2dbc.repository.reactive.support;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +27,9 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
-import org.springframework.data.r2dbc.repository.R2dbcRepository;
-import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
-import org.springframework.data.r2dbc.repository.query.StringBasedR2dbcQuery;
+import org.springframework.data.r2dbc.repository.reactive.R2dbcRepository;
+import org.springframework.data.r2dbc.repository.reactive.query.R2dbcQueryMethod;
+import org.springframework.data.r2dbc.repository.reactive.query.StringBasedR2dbcQuery;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.core.NamedQueries;
