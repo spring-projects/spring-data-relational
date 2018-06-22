@@ -20,11 +20,11 @@ import org.springframework.data.relational.repository.query.RelationalEntityInfo
 import org.springframework.data.repository.core.support.PersistentEntityInformation;
 import org.springframework.lang.Nullable;
 
-import com.sun.corba.se.spi.ior.ObjectId;
-
 /**
  * {@link RelationalEntityInformation} implementation using a {@link JdbcPersistentEntity} instance to lookup the
  * necessary information. Can be configured with a custom table name.
+ * <p>
+ * Entity types that do not declare an explicit Id type fall back to {@link Long} as Id type.
  *
  * @author Mark Paluch
  */
@@ -82,11 +82,11 @@ public class MappingRelationalEntityInformation<T, ID> extends PersistentEntityI
 
 		this.entityMetadata = entity;
 		this.customTableName = customTableName;
-		this.fallbackIdType = idType != null ? idType : (Class<ID>) ObjectId.class;
+		this.fallbackIdType = idType != null ? idType : (Class<ID>) Long.class;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.repository.query.JdbcEntityInformation#getTableName()
+	 * @see org.springframework.data.relational.repository.query.RelationalEntityInformation#getTableName()
 	 */
 	public String getTableName() {
 		return customTableName == null ? entityMetadata.getTableName() : customTableName;
