@@ -34,7 +34,7 @@ public interface ConnectionProxy extends Connection, Wrapper {
 	 * <p/>
 	 * This will typically be the native driver Connection or a wrapper from a connection pool.
 	 *
-	 * @return the underlying Connection (never {@code null})
+	 * @return the underlying Connection (never {@literal null})
 	 */
 	Connection getTargetConnection();
 }

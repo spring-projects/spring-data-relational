@@ -89,10 +89,10 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 	/**
 	 * Read a single value or a complete Entity from the {@link ResultSet} passed as an argument.
 	 *
-	 * @param row the {@link Row} to extract the value from. Must not be {@code null}.
-	 * @param property the {@link JdbcPersistentProperty} for which the value is intended. Must not be {@code null}.
-	 * @param prefix to be used for all column names accessed by this method. Must not be {@code null}.
-	 * @return the value read from the {@link ResultSet}. May be {@code null}.
+	 * @param row the {@link Row} to extract the value from. Must not be {@literal null}.
+	 * @param property the {@link JdbcPersistentProperty} for which the value is intended. Must not be {@literal null}.
+	 * @param prefix to be used for all column names accessed by this method. Must not be {@literal null}.
+	 * @return the value read from the {@link ResultSet}. May be {@literal null}.
 	 */
 	private Object readFrom(Row row, JdbcPersistentProperty property, String prefix) {
 
