@@ -19,9 +19,9 @@ import static de.schauderhaft.degraph.check.JCheck.*;
 import static org.junit.Assert.*;
 
 import de.schauderhaft.degraph.check.JCheck;
+import de.schauderhaft.degraph.configuration.NamedPattern;
 import scala.runtime.AbstractFunction1;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -38,13 +38,14 @@ public class DependencyTests {
 				classpath() //
 						.noJars() //
 						.including("org.springframework.data.jdbc.**") //
+						.including("org.springframework.data.relational.**") //
+						.including("org.springframework.data.r2dbc.**") //
 						.filterClasspath("*target/classes") // exclude test code
-						.printOnFailure("degraph.graphml"),
+						.withSlicing("modules", "org.springframework.data.(*).**").printOnFailure("degraph.graphml"),
 				JCheck.violationFree());
 	}
 
 	@Test // DATAJDBC-220
-	@Ignore("I don't understand why this fails after adding reactive repos - mp911de")
 	public void acrossModules() {
 
 		assertThat( //
@@ -60,8 +61,11 @@ public class DependencyTests {
 						}) // exclude test code
 						.withSlicing("sub-modules", // sub-modules are defined by any of the following pattern.
 								"org.springframework.data.jdbc.(**).*", //
+								"org.springframework.data.relational.(**).*", //
+								new NamedPattern("org.springframework.data.r2dbc.**", "repository.reactive"), //
 								"org.springframework.data.(**).*") //
 						.printTo("degraph-across-modules.graphml"), // writes a graphml to this location
 				JCheck.violationFree());
 	}
+
 }
