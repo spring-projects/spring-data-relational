@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.repository.query;
+package org.springframework.data.r2dbc.repository.reactive;
 
-import java.util.function.Supplier;
-
-import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
+import org.springframework.data.repository.NoRepositoryBean;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
 /**
- * Interface declaring a query that supplies SQL and can bind parameters to a {@link BindSpec}.
+ * R2DBC specific {@link org.springframework.data.repository.Repository} interface with reactive support.
  *
  * @author Mark Paluch
  */
-public interface BindableQuery extends Supplier<String> {
-
-	/**
-	 * Bind parameters to the {@link BindSpec query}.
-	 *
-	 * @param bindSpec must not be {@literal null}.
-	 * @return the bound query object.
-	 */
-	<T extends BindSpec<T>> T bind(T bindSpec);
-}
+@NoRepositoryBean
+public interface R2dbcRepository<T, ID> extends ReactiveCrudRepository<T, ID> {}

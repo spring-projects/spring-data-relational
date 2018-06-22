@@ -3,7 +3,7 @@
  */
 @NonNullApi
 @NonNullFields
-package org.springframework.data.r2dbc.repository.query;
+package org.springframework.data.r2dbc.repository.reactive.query;
 
 import org.springframework.lang.NonNullApi;
 import org.springframework.lang.NonNullFields;

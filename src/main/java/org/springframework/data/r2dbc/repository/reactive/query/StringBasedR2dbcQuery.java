@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.repository.query;
+package org.springframework.data.r2dbc.repository.reactive.query;
 
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.r2dbc.function.DatabaseClient;
