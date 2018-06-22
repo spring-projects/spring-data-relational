@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.function;
 
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
@@ -29,7 +30,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,16 +48,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.UncategorizedDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.NullHandling;
 import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.r2dbc.UncategorizedR2dbcException;
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
+import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.SqlProvider;
-import org.springframework.jdbc.support.SQLExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -74,13 +74,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	private final ConnectionFactory connector;
 
-	private final SQLExceptionTranslator exceptionTranslator;
+	private final R2dbcExceptionTranslator exceptionTranslator;
 
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 
 	private final DefaultDatabaseClientBuilder builder;
 
-	DefaultDatabaseClient(ConnectionFactory connector, SQLExceptionTranslator exceptionTranslator,
+	DefaultDatabaseClient(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
 			ReactiveDataAccessStrategy dataAccessStrategy, DefaultDatabaseClientBuilder builder) {
 
 		this.connector = connector;
@@ -133,7 +133,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			return doInConnection(connectionToUse, action);
 		}, this::closeConnection, this::closeConnection, this::closeConnection) //
-				.onErrorMap(SQLException.class, ex -> translateException("execute", getSql(action), ex));
+				.onErrorMap(R2dbcException.class, ex -> translateException("execute", getSql(action), ex));
 	}
 
 	/**
@@ -160,7 +160,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			return doInConnectionMany(connectionToUse, action);
 		}, this::closeConnection, this::closeConnection, this::closeConnection) //
-				.onErrorMap(SQLException.class, ex -> translateException("executeMany", getSql(action), ex));
+				.onErrorMap(R2dbcException.class, ex -> translateException("executeMany", getSql(action), ex));
 	}
 
 	/**
@@ -185,7 +185,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Obtain the {@link ConnectionFactory} for actual use.
 	 *
-	 * @return the ConnectionFactory (never {@code null})
+	 * @return the ConnectionFactory (never {@literal null})
 	 * @throws IllegalStateException in case of no DataSource set
 	 */
 	protected ConnectionFactory obtainConnectionFactory() {
@@ -204,17 +204,17 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	}
 
 	/**
-	 * Translate the given {@link SQLException} into a generic {@link DataAccessException}.
+	 * Translate the given {@link R2dbcException} into a generic {@link DataAccessException}.
 	 *
-	 * @param task readable text describing the task being attempted
-	 * @param sql SQL query or update that caused the problem (may be {@code null})
-	 * @param ex the offending {@code SQLException}
-	 * @return a DataAccessException wrapping the {@code SQLException} (never {@code null})
+	 * @param task readable text describing the task being attempted.
+	 * @param sql SQL query or update that caused the problem (may be {@literal null}).
+	 * @param ex the offending {@link R2dbcException}.
+	 * @return a DataAccessException wrapping the {@link R2dbcException} (never {@literal null}).
 	 */
-	protected DataAccessException translateException(String task, @Nullable String sql, SQLException ex) {
+	protected DataAccessException translateException(String task, @Nullable String sql, R2dbcException ex) {
 
 		DataAccessException dae = exceptionTranslator.translate(task, sql, ex);
-		return (dae != null ? dae : new UncategorizedSQLException(task, sql, ex));
+		return (dae != null ? dae : new UncategorizedR2dbcException(task, sql, ex));
 	}
 
 	private static void doBind(Statement statement, Map<String, Optional<Object>> byName,
@@ -992,10 +992,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		try {
 			return action.apply(connection);
-		} catch (RuntimeException e) {
+		} catch (R2dbcException e) {
 
 			String sql = getSql(action);
-			return Flux.error(new DefaultDatabaseClient.UncategorizedSQLException("doInConnectionMany", sql, e) {});
+			return Flux.error(new UncategorizedR2dbcException("doInConnectionMany", sql, e) {});
 		}
 	}
 
@@ -1003,10 +1003,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		try {
 			return action.apply(connection);
-		} catch (RuntimeException e) {
+		} catch (R2dbcException e) {
 
 			String sql = getSql(action);
-			return Mono.error(new DefaultDatabaseClient.UncategorizedSQLException("doInConnection", sql, e) {});
+			return Mono.error(new UncategorizedR2dbcException("doInConnection", sql, e) {});
 		}
 	}
 
@@ -1014,7 +1014,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * Determine SQL from potential provider object.
 	 *
 	 * @param sqlProvider object that's potentially a SqlProvider
-	 * @return the SQL string, or {@code null}
+	 * @return the SQL string, or {@literal null}
 	 * @see SqlProvider
 	 */
 	@Nullable
@@ -1076,33 +1076,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			} catch (InvocationTargetException ex) {
 				throw ex.getTargetException();
 			}
-		}
-	}
-
-	private static class UncategorizedSQLException extends UncategorizedDataAccessException implements SqlProvider {
-
-		/** SQL that led to the problem */
-		@Nullable private final String sql;
-
-		/**
-		 * Constructor for UncategorizedSQLException.
-		 *
-		 * @param task name of current task
-		 * @param sql the offending SQL statement
-		 * @param ex the root cause
-		 */
-		public UncategorizedSQLException(String task, @Nullable String sql, Exception ex) {
-			super(String.format("%s; uncategorized SQLException%s; %s", task, sql != null ? " for SQL [" + sql + "]" : "",
-					ex.getMessage()), ex);
-			this.sql = sql;
-		}
-
-		/**
-		 * Return the SQL that led to the problem (if known).
-		 */
-		@Nullable
-		public String getSql() {
-			return this.sql;
 		}
 	}
 }

@@ -21,8 +21,8 @@ import io.r2dbc.spi.ConnectionFactory;
 import java.util.function.Consumer;
 
 import org.springframework.data.r2dbc.function.DatabaseClient.Builder;
-import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
-import org.springframework.jdbc.support.SQLExceptionTranslator;
+import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.data.r2dbc.support.SqlErrorCodeR2dbcExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -34,7 +34,7 @@ import org.springframework.util.Assert;
 class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 	private @Nullable ConnectionFactory connector;
-	private SQLExceptionTranslator exceptionTranslator = new SQLErrorCodeSQLExceptionTranslator();
+	private @Nullable R2dbcExceptionTranslator exceptionTranslator;
 	private ReactiveDataAccessStrategy accessStrategy = new DefaultReactiveDataAccessStrategy();
 
 	DefaultDatabaseClientBuilder() {}
@@ -57,9 +57,9 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 	}
 
 	@Override
-	public Builder exceptionTranslator(SQLExceptionTranslator exceptionTranslator) {
+	public Builder exceptionTranslator(R2dbcExceptionTranslator exceptionTranslator) {
 
-		Assert.notNull(exceptionTranslator, "SQLExceptionTranslator must not be null!");
+		Assert.notNull(exceptionTranslator, "R2dbcExceptionTranslator must not be null!");
 
 		this.exceptionTranslator = exceptionTranslator;
 		return this;
@@ -76,6 +76,12 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 	@Override
 	public DatabaseClient build() {
+
+		R2dbcExceptionTranslator exceptionTranslator = this.exceptionTranslator;
+
+		if (exceptionTranslator == null) {
+			exceptionTranslator = new SqlErrorCodeR2dbcExceptionTranslator(connector);
+		}
 
 		return new DefaultDatabaseClient(this.connector, exceptionTranslator, accessStrategy,
 				new DefaultDatabaseClientBuilder(this));
