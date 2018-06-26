@@ -33,9 +33,9 @@ import org.springframework.util.Assert;
  */
 class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
-	private @Nullable ConnectionFactory connector;
-	private @Nullable R2dbcExceptionTranslator exceptionTranslator;
-	private ReactiveDataAccessStrategy accessStrategy = new DefaultReactiveDataAccessStrategy();
+	@Nullable ConnectionFactory connector;
+	@Nullable R2dbcExceptionTranslator exceptionTranslator;
+	ReactiveDataAccessStrategy accessStrategy = new DefaultReactiveDataAccessStrategy();
 
 	DefaultDatabaseClientBuilder() {}
 
@@ -44,7 +44,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		Assert.notNull(other, "DefaultDatabaseClientBuilder must not be null!");
 
 		this.connector = other.connector;
-		this.exceptionTranslator = exceptionTranslator;
+		this.exceptionTranslator = other.exceptionTranslator;
 	}
 
 	@Override
@@ -83,8 +83,12 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 			exceptionTranslator = new SqlErrorCodeR2dbcExceptionTranslator(connector);
 		}
 
-		return new DefaultDatabaseClient(this.connector, exceptionTranslator, accessStrategy,
-				new DefaultDatabaseClientBuilder(this));
+		return doBuild(this.connector, exceptionTranslator, this.accessStrategy, new DefaultDatabaseClientBuilder(this));
+	}
+
+	protected DatabaseClient doBuild(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
+			ReactiveDataAccessStrategy accessStrategy, DefaultDatabaseClientBuilder builder) {
+		return new DefaultDatabaseClient(connector, exceptionTranslator, accessStrategy, builder);
 	}
 
 	@Override

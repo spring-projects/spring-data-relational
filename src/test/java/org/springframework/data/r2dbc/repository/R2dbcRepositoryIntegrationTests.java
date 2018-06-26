@@ -27,6 +27,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +38,7 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.function.TransactionalDatabaseClient;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
@@ -127,6 +130,34 @@ public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport
 				.consumeNextWith(actual -> {
 					assertThat(actual).contains("SCHAUFELRADBAGGER", "FORSCHUNGSSCHIFF");
 				}).verifyComplete();
+	}
+
+	@Test
+	public void shouldInsertItemsTransactional() {
+
+		TransactionalDatabaseClient client = TransactionalDatabaseClient.builder().connectionFactory(connectionFactory)
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(mappingContext, new EntityInstantiators())).build();
+
+		LegoSetRepository transactionalRepository = new R2dbcRepositoryFactory(client, mappingContext)
+				.getRepository(LegoSetRepository.class);
+
+		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
+		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
+
+		Flux<Map<String, Object>> transactional = client.inTransaction(db -> {
+
+			return transactionalRepository.save(legoSet1) //
+					.map(it -> jdbc.queryForMap("SELECT count(*) FROM repo_legoset"));
+		});
+
+		Mono<Map<String, Object>> nonTransactional = transactionalRepository.save(legoSet2) //
+				.map(it -> jdbc.queryForMap("SELECT count(*) FROM repo_legoset"));
+
+		transactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 0L)).verifyComplete();
+		nonTransactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 2L)).verifyComplete();
+
+		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) FROM repo_legoset");
+		assertThat(count).containsEntry("count", 2L);
 	}
 
 	interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
