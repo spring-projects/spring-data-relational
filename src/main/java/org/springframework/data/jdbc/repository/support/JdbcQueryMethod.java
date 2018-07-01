@@ -43,12 +43,14 @@ import java.nio.charset.Charset;
 public class JdbcQueryMethod extends QueryMethod {
 
 	private final Method method;
+	private final SqlFileCache sqlFileCache;
 
-	public JdbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory) {
+	public JdbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory, SqlFileCache sqlFileCache) {
 
 		super(method, metadata, factory);
 
 		this.method = method;
+		this.sqlFileCache = sqlFileCache;
 	}
 
 	/**
@@ -77,14 +79,16 @@ public class JdbcQueryMethod extends QueryMethod {
 
 	private String loadFromSqlFile() {
 		String resourcePath = ClassUtils.convertClassNameToResourcePath(method.getDeclaringClass().getName()) + "/" + method.getName() + ".sql";
-		ClassPathResource resource = new ClassPathResource(resourcePath);
-		try {
-			String fileEncoding = getMergedAnnotationAttribute("fileEncoding");
-			// TODO caching the content of the sql file
-			return StreamUtils.copyToString(resource.getInputStream(), Charset.forName(fileEncoding));
-		} catch (IOException e) {
-			throw new IllegalStateException(String.format("Failed to read the given sql file (%s)", resourcePath));
-		}
+		return sqlFileCache.getSql(resourcePath).orElseGet(() -> {
+			ClassPathResource resource = new ClassPathResource(resourcePath);
+			try {
+				String fileEncoding = getMergedAnnotationAttribute("fileEncoding");
+				String sql = StreamUtils.copyToString(resource.getInputStream(), Charset.forName(fileEncoding));
+				return sqlFileCache.putSqlIfAbsent(resourcePath, sql);
+			} catch (IOException e) {
+				throw new IllegalStateException(String.format("Failed to read the given sql file (%s)", resourcePath));
+			}
+		});
 	}
 
 	/**

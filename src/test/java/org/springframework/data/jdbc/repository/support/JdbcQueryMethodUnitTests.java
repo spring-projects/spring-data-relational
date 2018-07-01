@@ -48,7 +48,7 @@ public class JdbcQueryMethodUnitTests {
 		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethod"),
-				metadata, mock(ProjectionFactory.class));
+				metadata, mock(ProjectionFactory.class), new SqlFileCache());
 
 		assertThat(queryMethod.getAnnotatedQuery()).isEqualTo(DUMMY_SELECT);
 	}
@@ -61,7 +61,7 @@ public class JdbcQueryMethodUnitTests {
 		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethod"),
-				metadata, mock(ProjectionFactory.class));
+				metadata, mock(ProjectionFactory.class), new SqlFileCache());
 
 		assertThat(queryMethod.getRowMapperClass()).isEqualTo(CustomRowMapper.class);
 	}
@@ -73,7 +73,7 @@ public class JdbcQueryMethodUnitTests {
 		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryFromFile"),
-				metadata, mock(ProjectionFactory.class));
+				metadata, mock(ProjectionFactory.class), new SqlFileCache());
 
 		assertThat(queryMethod.getQueryFromSqlFile()).isEqualTo("SELECT now()");
 	}
@@ -85,7 +85,7 @@ public class JdbcQueryMethodUnitTests {
 		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(JdbcQueryMethodUnitTests.class.getDeclaredMethod("fileNotFound"),
-				metadata, mock(ProjectionFactory.class));
+				metadata, mock(ProjectionFactory.class), new SqlFileCache());
 
 		queryMethod.getQueryFromSqlFile();
 	}
