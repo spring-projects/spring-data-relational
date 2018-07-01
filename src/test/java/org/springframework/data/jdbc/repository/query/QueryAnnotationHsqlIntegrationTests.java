@@ -49,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @author Toshiaki Maki
  */
 @ContextConfiguration
 @ActiveProfiles("hsql")
@@ -251,6 +252,13 @@ public class QueryAnnotationHsqlIntegrationTests {
 		assertThat(repository.findByNameAsEntity("Spring Data JDBC")).isNotNull();
 	}
 
+
+	@Test // DATAJDBC-230
+	public void executeCustomQueryFromFile() {
+		repository.insertFromFile("from sql file");
+		assertThat(repository.findFromFile("from sql file")).isNotNull();
+	}
+
 	private DummyEntity dummyEntity(String name) {
 
 		DummyEntity entity = new DummyEntity();
@@ -329,5 +337,13 @@ public class QueryAnnotationHsqlIntegrationTests {
 		@Query("INSERT INTO DUMMY_ENTITY (name) VALUES(:name)")
 		void insert(@Param("name") String name);
 
+		// DATAJDBC-230
+		@Query(file = true)
+		DummyEntity findFromFile(@Param("name") String name);
+
+		// DATAJDBC-230
+		@Modifying
+		@Query(file = true)
+		void insertFromFile(@Param("name") String name);
 	}
 }

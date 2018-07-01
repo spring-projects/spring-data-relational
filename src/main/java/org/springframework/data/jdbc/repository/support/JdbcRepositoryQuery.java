@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
  * @author Jens Schauder
  * @author Kazuki Shimizu
  * @author Oliver Gierke
+ * @author Toshiaki Maki
  * @since 1.0
  */
 class JdbcRepositoryQuery implements RepositoryQuery {
@@ -105,11 +106,14 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	}
 
 	private String determineQuery() {
-
 		String query = queryMethod.getAnnotatedQuery();
 
 		if (StringUtils.isEmpty(query)) {
-			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
+			String queryFromSqlFile = queryMethod.getQueryFromSqlFile();
+			if (StringUtils.isEmpty(queryFromSqlFile)) {
+				throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
+			}
+			return queryFromSqlFile;
 		}
 
 		return query;

@@ -15,16 +15,21 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import java.lang.reflect.Method;
-
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.StreamUtils;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 
 /**
  * {@link QueryMethod} implementation that implements a method by executing the query from a {@link Query} annotation on
@@ -32,6 +37,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @author Toshiaki Maki
  * @since 1.0
  */
 public class JdbcQueryMethod extends QueryMethod {
@@ -53,6 +59,32 @@ public class JdbcQueryMethod extends QueryMethod {
 	@Nullable
 	public String getAnnotatedQuery() {
 		return getMergedAnnotationAttribute("value");
+	}
+
+	/**
+	 * Returns the query from sql file if it exists.
+	 *
+	 * @return May be {@code null}.
+	 */
+	@Nullable
+	public String getQueryFromSqlFile() {
+		Boolean useFile = getMergedAnnotationAttribute("file");
+		if (useFile == null || !useFile) {
+			return null;
+		}
+		return loadFromSqlFile();
+	}
+
+	private String loadFromSqlFile() {
+		String resourcePath = ClassUtils.convertClassNameToResourcePath(method.getDeclaringClass().getName()) + "/" + method.getName() + ".sql";
+		ClassPathResource resource = new ClassPathResource(resourcePath);
+		try {
+			String fileEncoding = getMergedAnnotationAttribute("fileEncoding");
+			// TODO caching the content of the sql file
+			return StreamUtils.copyToString(resource.getInputStream(), Charset.forName(fileEncoding));
+		} catch (IOException e) {
+			throw new IllegalStateException(String.format("Failed to read the given sql file (%s)", resourcePath));
+		}
 	}
 
 	/**

@@ -15,24 +15,26 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import java.lang.reflect.Method;
-import java.sql.ResultSet;
-
 import org.junit.Test;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.lang.reflect.Method;
+import java.sql.ResultSet;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+
 /**
  * Unit tests for {@link JdbcQueryMethod}.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Toshiaki Maki
  */
 public class JdbcQueryMethodUnitTests {
 
@@ -64,8 +66,38 @@ public class JdbcQueryMethodUnitTests {
 		assertThat(queryMethod.getRowMapperClass()).isEqualTo(CustomRowMapper.class);
 	}
 
+	@Test // DATAJDBC-230
+	public void returnSqlFile() throws NoSuchMethodException {
+		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
+
+		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
+
+		JdbcQueryMethod queryMethod = new JdbcQueryMethod(JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryFromFile"),
+				metadata, mock(ProjectionFactory.class));
+
+		assertThat(queryMethod.getQueryFromSqlFile()).isEqualTo("SELECT now()");
+	}
+
+	@Test(expected = IllegalStateException.class) // DATAJDBC-230
+	public void returnSqlFileNotFound() throws NoSuchMethodException {
+		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
+
+		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
+
+		JdbcQueryMethod queryMethod = new JdbcQueryMethod(JdbcQueryMethodUnitTests.class.getDeclaredMethod("fileNotFound"),
+				metadata, mock(ProjectionFactory.class));
+
+		queryMethod.getQueryFromSqlFile();
+	}
+
 	@Query(value = DUMMY_SELECT, rowMapperClass = CustomRowMapper.class)
 	private void queryMethod() {}
+
+	@Query(file = true)
+	private void queryFromFile() {}
+
+	@Query(file = true)
+	private void fileNotFound() {}
 
 	private class CustomRowMapper implements RowMapper<Object> {
 
