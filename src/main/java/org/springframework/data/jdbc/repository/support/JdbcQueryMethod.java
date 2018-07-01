@@ -28,6 +28,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 
@@ -81,9 +82,9 @@ public class JdbcQueryMethod extends QueryMethod {
 		String resourcePath = ClassUtils.convertClassNameToResourcePath(method.getDeclaringClass().getName()) + "/" + method.getName() + ".sql";
 		return sqlFileCache.getSql(resourcePath).orElseGet(() -> {
 			ClassPathResource resource = new ClassPathResource(resourcePath);
-			try {
+			try(InputStream inputStream = resource.getInputStream()) {
 				String fileEncoding = getMergedAnnotationAttribute("fileEncoding");
-				String sql = StreamUtils.copyToString(resource.getInputStream(), Charset.forName(fileEncoding));
+				String sql = StreamUtils.copyToString(inputStream, Charset.forName(fileEncoding));
 				return sqlFileCache.putSqlIfAbsent(resourcePath, sql);
 			} catch (IOException e) {
 				throw new IllegalStateException(String.format("Failed to read the given sql file (%s)", resourcePath));
