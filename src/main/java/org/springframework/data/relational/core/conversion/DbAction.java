@@ -21,6 +21,7 @@ import lombok.ToString;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -42,7 +43,7 @@ public abstract class DbAction<T> {
 	/**
 	 * The entity of which the database representation is affected by this action. Might be {@literal null}.
 	 */
-	private final T entity;
+	private final PersistentPropertyAccessor<T> entity;
 
 	/**
 	 * The path from the Aggregate Root to the entity affected by this {@link DbAction}.
@@ -63,8 +64,8 @@ public abstract class DbAction<T> {
 	 */
 	private final DbAction dependingOn;
 
-	private DbAction(Class<T> entityType, @Nullable T entity, @Nullable RelationalPropertyPath propertyPath,
-			@Nullable DbAction dependingOn) {
+	private DbAction(Class<T> entityType, @Nullable PersistentPropertyAccessor<T> entity,
+			@Nullable RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 
 		Assert.notNull(entityType, "entityType must not be null");
 
@@ -72,6 +73,12 @@ public abstract class DbAction<T> {
 		this.entity = entity;
 		this.propertyPath = propertyPath;
 		this.dependingOn = dependingOn;
+	}
+
+	private DbAction(PersistentPropertyAccessor<T> accessor, @Nullable RelationalPropertyPath propertyPath,
+			@Nullable DbAction dependingOn) {
+
+		this((Class<T>) accessor.getBean().getClass(), accessor, propertyPath, dependingOn);
 	}
 
 	/**
@@ -84,7 +91,8 @@ public abstract class DbAction<T> {
 	 * @param <T> the type of the entity to be inserted.
 	 * @return a {@link DbAction} representing the insert.
 	 */
-	public static <T> Insert<T> insert(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+	public static <T> Insert<T> insert(PersistentPropertyAccessor<T> entity, RelationalPropertyPath propertyPath,
+			@Nullable DbAction dependingOn) {
 		return new Insert<>(entity, propertyPath, dependingOn);
 	}
 
@@ -98,7 +106,8 @@ public abstract class DbAction<T> {
 	 * @param <T> the type of the entity to be updated.
 	 * @return a {@link DbAction} representing the update.
 	 */
-	public static <T> Update<T> update(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+	public static <T> Update<T> update(PersistentPropertyAccessor<T> entity, RelationalPropertyPath propertyPath,
+			@Nullable DbAction dependingOn) {
 		return new Update<>(entity, propertyPath, dependingOn);
 	}
 
@@ -113,7 +122,7 @@ public abstract class DbAction<T> {
 	 * @param <T> the type of the entity to be deleted.
 	 * @return a {@link DbAction} representing the deletion of the entity with given type and id.
 	 */
-	public static <T> Delete<T> delete(Object id, Class<T> type, @Nullable T entity,
+	public static <T> Delete<T> delete(Object id, Class<T> type, @Nullable PersistentPropertyAccessor<T> entity,
 			@Nullable RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 		return new Delete<>(id, type, entity, propertyPath, dependingOn);
 	}
@@ -163,8 +172,9 @@ public abstract class DbAction<T> {
 	abstract static class InsertOrUpdate<T> extends DbAction<T> {
 
 		@SuppressWarnings("unchecked")
-		InsertOrUpdate(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-			super((Class<T>) entity.getClass(), entity, propertyPath, dependingOn);
+		InsertOrUpdate(PersistentPropertyAccessor<T> accessor, RelationalPropertyPath propertyPath,
+				@Nullable DbAction dependingOn) {
+			super(accessor, propertyPath, dependingOn);
 		}
 	}
 
@@ -175,8 +185,9 @@ public abstract class DbAction<T> {
 	 */
 	public static class Insert<T> extends InsertOrUpdate<T> {
 
-		private Insert(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
-			super(entity, propertyPath, dependingOn);
+		private Insert(PersistentPropertyAccessor<T> accessor, RelationalPropertyPath propertyPath,
+				@Nullable DbAction dependingOn) {
+			super(accessor, propertyPath, dependingOn);
 		}
 
 		@Override
@@ -192,7 +203,8 @@ public abstract class DbAction<T> {
 	 */
 	public static class Update<T> extends InsertOrUpdate<T> {
 
-		private Update(T entity, RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+		private Update(PersistentPropertyAccessor<T> entity, RelationalPropertyPath propertyPath,
+				@Nullable DbAction dependingOn) {
 			super(entity, propertyPath, dependingOn);
 		}
 
@@ -216,8 +228,8 @@ public abstract class DbAction<T> {
 		 */
 		private final Object rootId;
 
-		private Delete(@Nullable Object rootId, Class<T> type, @Nullable T entity, @Nullable RelationalPropertyPath propertyPath,
-				@Nullable DbAction dependingOn) {
+		private Delete(@Nullable Object rootId, Class<T> type, @Nullable PersistentPropertyAccessor<T> entity,
+				@Nullable RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
 
 			super(type, entity, propertyPath, dependingOn);
 
@@ -239,7 +251,8 @@ public abstract class DbAction<T> {
 	 */
 	public static class DeleteAll<T> extends DbAction<T> {
 
-		private DeleteAll(Class<T> entityType, @Nullable RelationalPropertyPath propertyPath, @Nullable DbAction dependingOn) {
+		private DeleteAll(Class<T> entityType, @Nullable RelationalPropertyPath propertyPath,
+				@Nullable DbAction dependingOn) {
 			super(entityType, null, propertyPath, dependingOn);
 		}
 

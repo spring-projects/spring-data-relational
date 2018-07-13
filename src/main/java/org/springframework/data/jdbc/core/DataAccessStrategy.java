@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.Map;
 
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
@@ -40,7 +41,8 @@ public interface DataAccessStrategy {
 	 *          to get referenced are contained in this map. Must not be {@code null}.
 	 * @param <T> the type of the instance.
 	 */
-	<T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters);
+	<T> void insert(PersistentPropertyAccessor<T> instance, Class<T> domainType,
+			Map<String, Object> additionalParameters);
 
 	/**
 	 * Updates the data of a single entity in the database. Referenced entities don't get handled.
@@ -49,7 +51,7 @@ public interface DataAccessStrategy {
 	 * @param domainType the type of the instance to save. Must not be {@code null}.
 	 * @param <T> the type of the instance to save.
 	 */
-	<T> void update(T instance, Class<T> domainType);
+	<T> void update(PersistentPropertyAccessor<T> instance, Class<T> domainType);
 
 	/**
 	 * deletes a single row identified by the id, from the table identified by the domainType. Does not handle cascading

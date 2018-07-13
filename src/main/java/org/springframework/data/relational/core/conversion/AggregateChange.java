@@ -21,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.mapping.PersistentPropertyAccessor;
+
 /**
  * Represents the change happening to the aggregate (as used in the context of Domain Driven Design) as a whole.
  *
@@ -37,7 +39,7 @@ public class AggregateChange<T> {
 	private final Class<T> entityType;
 
 	/** Aggregate root, to which the change applies, if available */
-	private final T entity;
+	private final PersistentPropertyAccessor<T> entity;
 
 	private final List<DbAction> actions = new ArrayList<>();
 

@@ -19,11 +19,12 @@ import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mapping.IdentifierAccessor;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityWriter;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
@@ -67,14 +68,15 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> void save(T instance) {
+	public <T> T save(T instance) {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(instance.getClass());
 		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(instance);
 
-		AggregateChange change = createChange(instance);
+		PersistentPropertyAccessor<T> accessor = entity.getPropertyAccessor(instance);
+		AggregateChange change = createChange(accessor);
 
 		publisher.publishEvent(new BeforeSaveEvent( //
 				Identifier.ofNullable(identifierAccessor.getIdentifier()), //
@@ -93,6 +95,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 				instance, //
 				change //
 		));
+
+		return accessor.getBean();
 	}
 
 	@Override
@@ -134,10 +138,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Override
 	public <S> void delete(S aggregateRoot, Class<S> domainType) {
 
-		IdentifierAccessor identifierAccessor = context.getRequiredPersistentEntity(domainType)
-				.getIdentifierAccessor(aggregateRoot);
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(domainType);
+		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(aggregateRoot);
 
-		deleteTree(identifierAccessor.getRequiredIdentifier(), aggregateRoot, domainType);
+		PersistentPropertyAccessor<S> accessor = entity.getPropertyAccessor(aggregateRoot);
+
+		deleteTree(identifierAccessor.getRequiredIdentifier(), accessor, domainType);
 	}
 
 	@Override
@@ -152,7 +158,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		change.executeWith(interpreter);
 	}
 
-	private void deleteTree(Object id, @Nullable Object entity, Class<?> domainType) {
+	private void deleteTree(Object id, @Nullable PersistentPropertyAccessor<?> entity, Class<?> domainType) {
 
 		AggregateChange change = createDeletingChange(id, entity, domainType);
 
@@ -166,15 +172,16 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> AggregateChange createChange(T instance) {
+	private <T> AggregateChange createChange(PersistentPropertyAccessor<T> instance) {
 
-		AggregateChange<?> aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
+		AggregateChange<?> aggregateChange = new AggregateChange(Kind.SAVE, instance.getBean().getClass(), instance);
 		jdbcEntityWriter.write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
 	@SuppressWarnings("unchecked")
-	private AggregateChange createDeletingChange(Object id, @Nullable Object entity, Class<?> domainType) {
+	private AggregateChange createDeletingChange(Object id, @Nullable PersistentPropertyAccessor<?> entity,
+			Class<?> domainType) {
 
 		AggregateChange<?> aggregateChange = new AggregateChange(Kind.DELETE, domainType, entity);
 		jdbcEntityDeleteWriter.write(id, aggregateChange);

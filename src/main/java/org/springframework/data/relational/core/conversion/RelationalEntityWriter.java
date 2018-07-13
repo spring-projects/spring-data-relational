@@ -66,10 +66,11 @@ public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 		RelationalPropertyPath propertyPath = RelationalPropertyPath.from("", type);
 
 		PersistentEntity<?, RelationalPersistentProperty> persistentEntity = context.getRequiredPersistentEntity(type);
+		PersistentPropertyAccessor<Object> accessor = aggregateChange.getEntity();
 
 		if (persistentEntity.isNew(aggregateRoot)) {
 
-			Insert<Object> insert = DbAction.insert(aggregateRoot, propertyPath, null);
+			Insert<Object> insert = DbAction.insert(accessor, propertyPath, null);
 			aggregateChange.addAction(insert);
 
 			referencedEntities(aggregateRoot) //
@@ -80,7 +81,7 @@ public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 									aggregateChange, //
 									propertyPath.nested(propertyAndValue.property.getName()), //
 									insert) //
-			);
+					);
 		} else {
 
 			RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(type);
@@ -88,7 +89,7 @@ public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 
 			deleteReferencedEntities(identifierAccessor.getRequiredIdentifier(), aggregateChange);
 
-			Update<Object> update = DbAction.update(aggregateRoot, propertyPath, null);
+			Update<Object> update = DbAction.update(accessor, propertyPath, null);
 			aggregateChange.addAction(update);
 
 			referencedEntities(aggregateRoot).forEach(propertyAndValue -> insertReferencedEntities(propertyAndValue,
@@ -116,7 +117,7 @@ public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 						aggregateChange, //
 						propertyPath.nested(pav.property.getName()), //
 						dependingOn) //
-		);
+				);
 	}
 
 	private Stream<PropertyAndValue> referencedEntities(Object o) {
@@ -128,7 +129,7 @@ public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 				.flatMap( //
 						p -> referencedEntity(p, persistentEntity.getPropertyAccessor(o)) //
 								.map(e -> new PropertyAndValue(p, e)) //
-		);
+				);
 	}
 
 	private Stream<Object> referencedEntity(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
@@ -170,7 +171,8 @@ public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Stream<Object> listPropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+	private Stream<Object> listPropertyAsStream(RelationalPersistentProperty p,
+			PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 
@@ -186,7 +188,8 @@ public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Stream<Object> mapPropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+	private Stream<Object> mapPropertyAsStream(RelationalPersistentProperty p,
+			PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 
@@ -195,7 +198,8 @@ public class RelationalEntityWriter extends RelationalEntityWriterSupport {
 				: ((Map<Object, Object>) property).entrySet().stream().map(e -> new KeyValue(e.getKey(), e.getValue()));
 	}
 
-	private Stream<Object> singlePropertyAsStream(RelationalPersistentProperty p, PersistentPropertyAccessor propertyAccessor) {
+	private Stream<Object> singlePropertyAsStream(RelationalPersistentProperty p,
+			PersistentPropertyAccessor propertyAccessor) {
 
 		Object property = propertyAccessor.getProperty(p);
 		if (property == null) {

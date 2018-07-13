@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
@@ -40,12 +41,13 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	public <T> void insert(PersistentPropertyAccessor<T> instance, Class<T> domainType,
+			Map<String, Object> additionalParameters) {
 		collectVoid(das -> das.insert(instance, domainType, additionalParameters));
 	}
 
 	@Override
-	public <S> void update(S instance, Class<S> domainType) {
+	public <S> void update(PersistentPropertyAccessor<S> instance, Class<S> domainType) {
 		collectVoid(das -> das.update(instance, domainType));
 	}
 

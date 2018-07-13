@@ -31,7 +31,7 @@ public interface JdbcAggregateOperations {
 	 * @param instance the aggregate root of the aggregate to be saved. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 */
-	<T> void save(T instance);
+	<T> T save(T instance);
 
 	/**
 	 * Deletes a single Aggregate including all entities contained in that aggregate.
