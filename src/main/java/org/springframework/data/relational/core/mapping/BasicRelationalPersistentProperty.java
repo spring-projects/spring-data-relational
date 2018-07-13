@@ -130,6 +130,15 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 		return isListLike();
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.mapping.model.AbstractPersistentProperty#isImmutable()
+	 */
+	@Override
+	public boolean isImmutable() {
+		return false;
+	}
+
 	private boolean isListLike() {
 		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
 	}

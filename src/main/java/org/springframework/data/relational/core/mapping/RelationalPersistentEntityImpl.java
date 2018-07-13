@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.mapping;
 import java.util.Optional;
 
 import org.springframework.data.mapping.model.BasicPersistentEntity;
+import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 
@@ -72,5 +73,14 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	@Override
 	public String toString() {
 		return String.format("JdbcPersistentEntityImpl<%s>", getType());
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.mapping.model.BasicPersistentEntity#setPersistentPropertyAccessorFactory(org.springframework.data.mapping.model.PersistentPropertyAccessorFactory)
+	 */
+	@Override
+	public void setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory factory) {
+
 	}
 }
