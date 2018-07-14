@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -47,6 +48,7 @@ import org.springframework.util.Assert;
  * @author Greg Turnquist
  * @author Kazuki Shimizu
  * @author Oliver Gierke
+ * @author Toshiaki Maki
  * @since 1.0
  */
 public class RelationalMappingContext extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
@@ -54,7 +56,8 @@ public class RelationalMappingContext extends AbstractMappingContext<RelationalP
 	private static final HashSet<Class<?>> CUSTOM_SIMPLE_TYPES = new HashSet<>(asList( //
 			BigDecimal.class, //
 			BigInteger.class, //
-			Temporal.class //
+			Temporal.class, //
+			UUID.class
 	));
 
 	@Getter private final NamingStrategy namingStrategy;
