@@ -1,0 +1,1 @@
+INSERT INTO DUMMY_ENTITY (name) VALUES(:name)

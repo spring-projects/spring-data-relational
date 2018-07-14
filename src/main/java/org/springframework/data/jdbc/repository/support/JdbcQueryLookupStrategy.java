@@ -50,6 +50,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final NamedParameterJdbcOperations operations;
 
 	private final ConversionService conversionService;
+	private final SqlFileCache sqlFileCache = new SqlFileCache();
 
 	/**
 	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext}, {@link DataAccessStrategy}
@@ -82,7 +83,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	public RepositoryQuery resolveQuery(Method method, RepositoryMetadata repositoryMetadata,
 			ProjectionFactory projectionFactory, NamedQueries namedQueries) {
 
-		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
+		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory, sqlFileCache);
 
 		RowMapper<?> rowMapper = queryMethod.isModifyingQuery() ? null : createRowMapper(queryMethod);
 
