@@ -25,14 +25,16 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.convert.EntityInstantiators;
+import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.relational.core.mapping.ConversionCustomizer;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -43,6 +45,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  *
  * @author Oliver Gierke
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -53,11 +56,9 @@ public class TestConfiguration {
 	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
 	@Bean
-	JdbcRepositoryFactory jdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy) {
-
-		RelationalMappingContext context = new RelationalMappingContext(NamingStrategy.INSTANCE);
-
-		return new JdbcRepositoryFactory(dataAccessStrategy, context, publisher, namedParameterJdbcTemplate());
+	JdbcRepositoryFactory jdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
+			RelationalConverter converter) {
+		return new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher, namedParameterJdbcTemplate());
 	}
 
 	@Bean
@@ -71,15 +72,28 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	DataAccessStrategy defaultDataAccessStrategy(RelationalMappingContext context) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, namedParameterJdbcTemplate(), new EntityInstantiators());
+	DataAccessStrategy defaultDataAccessStrategy(RelationalMappingContext context, RelationalConverter converter) {
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter,
+				namedParameterJdbcTemplate());
 	}
 
 	@Bean
-	RelationalMappingContext jdbcMappingContext(NamedParameterJdbcOperations template, Optional<NamingStrategy> namingStrategy,
-			Optional<ConversionCustomizer> conversionCustomizer) {
+	RelationalMappingContext jdbcMappingContext(NamedParameterJdbcOperations template,
+			Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
 
-		return new RelationalMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE),
-				conversionCustomizer.orElse(conversionService -> {}));
+		RelationalMappingContext mappingContext = new RelationalMappingContext(
+				namingStrategy.orElse(NamingStrategy.INSTANCE));
+		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+		return mappingContext;
+	}
+
+	@Bean
+	CustomConversions jdbcCustomConversions() {
+		return new JdbcCustomConversions();
+	}
+
+	@Bean
+	RelationalConverter relationalConverter(RelationalMappingContext mappingContext, CustomConversions conversions) {
+		return new BasicRelationalConverter(mappingContext, conversions);
 	}
 }

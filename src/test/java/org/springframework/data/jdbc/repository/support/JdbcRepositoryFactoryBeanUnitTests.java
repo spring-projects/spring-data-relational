@@ -29,6 +29,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -40,6 +41,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author Greg Turnquist
  * @author Christoph Strobl
  * @author Oliver Gierke
+ * @author Mark Paluch
  */
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcRepositoryFactoryBeanUnitTests {
@@ -65,6 +67,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		factoryBean.setDataAccessStrategy(dataAccessStrategy);
 		factoryBean.setMappingContext(mappingContext);
+		factoryBean.setConverter(new BasicRelationalConverter(mappingContext));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.afterPropertiesSet();
 
@@ -89,6 +92,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	public void afterPropertiesSetDefaultsNullablePropertiesCorrectly() {
 
 		factoryBean.setMappingContext(mappingContext);
+		factoryBean.setConverter(new BasicRelationalConverter(mappingContext));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.afterPropertiesSet();
 
