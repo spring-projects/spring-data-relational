@@ -20,11 +20,11 @@ import java.io.Serializable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
@@ -47,14 +47,14 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 	private ApplicationEventPublisher publisher;
 	private RelationalMappingContext mappingContext;
+	private RelationalConverter converter;
 	private DataAccessStrategy dataAccessStrategy;
 	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
 	private NamedParameterJdbcOperations operations;
-	private EntityInstantiators instantiators = new EntityInstantiators();
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
-	 * 
+	 *
 	 * @param repositoryInterface must not be {@literal null}.
 	 */
 	JdbcRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
@@ -80,7 +80,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
 
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
-				publisher, operations);
+				converter, publisher, operations);
 		jdbcRepositoryFactory.setRowMapperMap(rowMapperMap);
 
 		return jdbcRepositoryFactory;
@@ -115,9 +115,9 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.operations = operations;
 	}
 
-	@Autowired(required = false)
-	public void setInstantiators(EntityInstantiators instantiators) {
-		this.instantiators = instantiators;
+	@Autowired
+	public void setConverter(RelationalConverter converter) {
+		this.converter = converter;
 	}
 
 	/*
@@ -128,20 +128,17 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	public void afterPropertiesSet() {
 
 		Assert.state(this.mappingContext != null, "MappingContext is required and must not be null!");
+		Assert.state(this.converter != null, "RelationalConverter is required and must not be null!");
 
 		if (dataAccessStrategy == null) {
 
 			SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
-			this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, operations,
-					instantiators);
+			this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, converter,
+					operations);
 		}
 
 		if (rowMapperMap == null) {
 			this.rowMapperMap = RowMapperMap.EMPTY;
-		}
-
-		if (instantiators == null) {
-			this.instantiators = new EntityInstantiators();
 		}
 
 		super.afterPropertiesSet();

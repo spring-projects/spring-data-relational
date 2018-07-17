@@ -15,22 +15,12 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import static java.util.Arrays.*;
-
 import lombok.Getter;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.support.DefaultConversionService;
-import org.springframework.core.convert.support.GenericConversionService;
-import org.springframework.data.convert.Jsr310Converters;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
@@ -47,60 +37,33 @@ import org.springframework.util.Assert;
  * @author Greg Turnquist
  * @author Kazuki Shimizu
  * @author Oliver Gierke
+ * @author Mark Paluch
  * @since 1.0
  */
 public class RelationalMappingContext extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
 
-	private static final HashSet<Class<?>> CUSTOM_SIMPLE_TYPES = new HashSet<>(asList( //
-			BigDecimal.class, //
-			BigInteger.class, //
-			Temporal.class //
-	));
-
 	@Getter private final NamingStrategy namingStrategy;
-	private final GenericConversionService conversions = getDefaultConversionService();
-	@Getter private SimpleTypeHolder simpleTypeHolder;
 
 	/**
 	 * Creates a new {@link RelationalMappingContext}.
 	 */
 	public RelationalMappingContext() {
-		this(NamingStrategy.INSTANCE, ConversionCustomizer.NONE);
-	}
-
-	public RelationalMappingContext(NamingStrategy namingStrategy) {
-		this(namingStrategy, ConversionCustomizer.NONE);
+		this(NamingStrategy.INSTANCE);
 	}
 
 	/**
-	 * Creates a new {@link RelationalMappingContext} using the given {@link NamingStrategy} and {@link ConversionCustomizer}.
-	 * 
+	 * Creates a new {@link RelationalMappingContext} using the given {@link NamingStrategy}.
+	 *
 	 * @param namingStrategy must not be {@literal null}.
 	 * @param customizer must not be {@literal null}.
 	 */
-	public RelationalMappingContext(NamingStrategy namingStrategy, ConversionCustomizer customizer) {
+	public RelationalMappingContext(NamingStrategy namingStrategy) {
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
-		Assert.notNull(customizer, "ConversionCustomizer must not be null!");
 
 		this.namingStrategy = namingStrategy;
 
-		customizer.customize(conversions);
-		setSimpleTypeHolder(new SimpleTypeHolder(CUSTOM_SIMPLE_TYPES, true));
-	}
-
-	private static GenericConversionService getDefaultConversionService() {
-
-		DefaultConversionService conversionService = new DefaultConversionService();
-		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
-
-		return conversionService;
-	}
-
-	@Override
-	public void setSimpleTypeHolder(SimpleTypeHolder simpleTypes) {
-		super.setSimpleTypeHolder(simpleTypes);
-		this.simpleTypeHolder = simpleTypes;
+		setSimpleTypeHolder(new SimpleTypeHolder(Collections.emptySet(), true));
 	}
 
 	/**
@@ -146,9 +109,5 @@ public class RelationalMappingContext extends AbstractMappingContext<RelationalP
 	protected RelationalPersistentProperty createPersistentProperty(Property property, RelationalPersistentEntity<?> owner,
 			SimpleTypeHolder simpleTypeHolder) {
 		return new BasicRelationalPersistentProperty(property, owner, simpleTypeHolder, this);
-	}
-
-	public ConversionService getConversions() {
-		return conversions;
 	}
 }

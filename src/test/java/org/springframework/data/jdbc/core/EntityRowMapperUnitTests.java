@@ -38,21 +38,21 @@ import javax.naming.OperationNotSupportedException;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.springframework.core.convert.support.DefaultConversionService;
-import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.convert.EntityInstantiators;
-import org.springframework.data.convert.Jsr310Converters;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.util.Assert;
 
 /**
  * Tests the extraction of entities from a {@link ResultSet} by the {@link EntityRowMapper}.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class EntityRowMapperUnitTests {
 
@@ -195,15 +195,12 @@ public class EntityRowMapperUnitTests {
 				new SimpleEntry<>(2, new Trivial()) //
 		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST), any(RelationalPersistentProperty.class));
 
-		GenericConversionService conversionService = new GenericConversionService();
-		conversionService.addConverter(new IterableOfEntryToMapConverter());
-		DefaultConversionService.addDefaultConverters(conversionService);
-		Jsr310Converters.getConvertersToRegister().forEach(conversionService::addConverter);
+		RelationalConverter converter = new BasicRelationalConverter(context, new JdbcCustomConversions());
 
 		return new EntityRowMapper<>( //
 				(RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type), //
 				context, //
-				new EntityInstantiators(), //
+				converter, //
 				accessStrategy //
 		);
 	}

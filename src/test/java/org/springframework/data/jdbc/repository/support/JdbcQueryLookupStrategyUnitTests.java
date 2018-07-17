@@ -25,12 +25,13 @@ import java.text.NumberFormat;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.jdbc.repository.config.ConfigurableRowMapperMap;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -44,10 +45,12 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Mark Paluch
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
 	RelationalMappingContext mappingContext = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
+	RelationalConverter converter = mock(BasicRelationalConverter.class);
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
 	RepositoryMetadata metadata;
@@ -79,8 +82,8 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 	private RepositoryQuery getRepositoryQuery(String name, RowMapperMap rowMapperMap) {
 
-		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(mappingContext, new EntityInstantiators(),
-				accessStrategy, rowMapperMap, operations);
+		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(mappingContext, converter, accessStrategy,
+				rowMapperMap, operations);
 
 		return queryLookupStrategy.resolveQuery(getMethod(name), metadata, projectionFactory, namedQueries);
 	}

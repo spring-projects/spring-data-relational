@@ -36,11 +36,13 @@ import org.junit.Test;
 import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
@@ -72,14 +74,16 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	public void before() {
 
 		RelationalMappingContext context = new RelationalMappingContext();
+		RelationalConverter converter = new BasicRelationalConverter(context, new JdbcCustomConversions());
 
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context);
 
 		this.dataAccessStrategy = spy(
-				new DefaultDataAccessStrategy(generatorSource, context, operations, new EntityInstantiators()));
+				new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
 
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, publisher, operations);
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher,
+				operations);
 
 		this.repository = factory.getRepository(DummyEntityRepository.class);
 	}

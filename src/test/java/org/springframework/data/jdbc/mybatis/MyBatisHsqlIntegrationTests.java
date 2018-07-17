@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -48,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Mark Paluch
  */
 @ContextConfiguration
 @ActiveProfiles("hsql")
@@ -86,8 +88,10 @@ public class MyBatisHsqlIntegrationTests {
 		}
 
 		@Bean
-		DataAccessStrategy dataAccessStrategy(RelationalMappingContext context, SqlSession sqlSession, EmbeddedDatabase db) {
-			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, new NamedParameterJdbcTemplate(db),
+		DataAccessStrategy dataAccessStrategy(RelationalMappingContext context, RelationalConverter converter,
+				SqlSession sqlSession, EmbeddedDatabase db) {
+			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, converter,
+					new NamedParameterJdbcTemplate(db),
 					sqlSession);
 		}
 	}
