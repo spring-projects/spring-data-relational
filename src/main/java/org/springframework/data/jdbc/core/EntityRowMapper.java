@@ -15,9 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
@@ -26,8 +23,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PreferredConstructor.Parameter;
-import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -144,33 +139,18 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	}
 
 	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, String prefix) {
-		return converter.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, prefix));
-	}
 
-	@RequiredArgsConstructor
-	private static class ResultSetParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
-
-		@NonNull private final ResultSet resultSet;
-		@NonNull private final RelationalPersistentEntity<?> entity;
-		@NonNull private final String prefix;
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
-		 */
-		@SuppressWarnings("unchecked")
-		@Override
-		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
+		return converter.createInstance(entity, parameter -> {
 
 			String parameterName = parameter.getName();
 			Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
 			String column = prefix + entity.getRequiredPersistentProperty(parameterName).getColumnName();
 
 			try {
-				return (T) resultSet.getObject(column);
+				return rs.getObject(column);
 			} catch (SQLException o_O) {
 				throw new MappingException(String.format("Couldn't read column %s from ResultSet.", column), o_O);
 			}
-		}
+		});
 	}
 }

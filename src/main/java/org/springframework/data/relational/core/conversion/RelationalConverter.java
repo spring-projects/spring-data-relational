@@ -15,9 +15,12 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import java.util.function.Function;
+
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -57,7 +60,7 @@ public interface RelationalConverter {
 	 * @return
 	 */
 	<T> T createInstance(PersistentEntity<T, RelationalPersistentProperty> entity,
-			ParameterValueProvider<RelationalPersistentProperty> parameterValueProvider);
+			Function<Parameter<?, RelationalPersistentProperty>, Object> parameterValueProvider);
 
 	/**
 	 * Return a {@link PersistentPropertyAccessor} to access property values of the {@code instance}.
