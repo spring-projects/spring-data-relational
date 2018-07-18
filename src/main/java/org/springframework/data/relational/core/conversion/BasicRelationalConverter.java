@@ -192,9 +192,10 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple JDBC type.
 	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.
 	 *
-	 * @param value
-	 * @return
+	 * @param value to be converted. Must not be {@code null}.
+	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
 	 */
+	@Nullable
 	private Object getPotentiallyConvertedSimpleWrite(Object value) {
 
 		Optional<Class<?>> customTarget = conversions.getCustomWriteTarget(value.getClass());
@@ -210,9 +211,9 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * Checks whether we have a custom conversion for the given simple object. Converts the given value if so, applies
 	 * {@link Enum} handling or returns the value as is.
 	 *
-	 * @param value
-	 * @param target must not be {@literal null}.
-	 * @return
+	 * @param value to be converted. May be {@code null}..
+	 * @param target May be {@code null}..
+	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
 	 */
 	@Nullable
 	@SuppressWarnings({ "rawtypes", "unchecked" })

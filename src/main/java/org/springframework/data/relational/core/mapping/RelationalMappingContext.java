@@ -55,7 +55,6 @@ public class RelationalMappingContext extends AbstractMappingContext<RelationalP
 	 * Creates a new {@link RelationalMappingContext} using the given {@link NamingStrategy}.
 	 *
 	 * @param namingStrategy must not be {@literal null}.
-	 * @param customizer must not be {@literal null}.
 	 */
 	public RelationalMappingContext(NamingStrategy namingStrategy) {
 

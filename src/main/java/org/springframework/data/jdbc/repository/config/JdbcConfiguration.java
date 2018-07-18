@@ -57,7 +57,8 @@ public class JdbcConfiguration {
 
 	/**
 	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
-	 * {@link CustomConversions} will be registered with the {@link #jdbcMappingContext()}. Returns an empty
+	 * {@link CustomConversions} will be registered with the
+	 * {@link #relationalConverter(RelationalMappingContext, CustomConversions)}. Returns an empty
 	 * {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return must not be {@literal null}.
