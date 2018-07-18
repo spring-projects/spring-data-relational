@@ -111,8 +111,6 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
-		assertThat(sqlCaptor.getValue()) //
-				.contains("INSERT INTO entity_with_boolean (flag, id) VALUES (:flag, :id)");
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");
 	}

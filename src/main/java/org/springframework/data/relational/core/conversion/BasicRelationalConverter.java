@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
@@ -130,11 +131,11 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.RelationalConverter#createInstance(org.springframework.data.mapping.PersistentEntity, org.springframework.data.mapping.model.ParameterValueProvider)
+	 * @see org.springframework.data.relational.core.conversion.RelationalConverter#createInstance(org.springframework.data.mapping.PersistentEntity, java.util.function.Function)
 	 */
 	@Override
 	public <T> T createInstance(PersistentEntity<T, RelationalPersistentProperty> entity,
-			ParameterValueProvider<RelationalPersistentProperty> parameterValueProvider) {
+			Function<Parameter<?, RelationalPersistentProperty>, Object> parameterValueProvider) {
 
 		return entityInstantiators.getInstantiatorFor(entity) //
 				.createInstance(entity, new ConvertingParameterValueProvider<>(parameterValueProvider));
@@ -154,9 +155,9 @@ public class BasicRelationalConverter implements RelationalConverter {
 
 		if (conversions.hasCustomReadTarget(value.getClass(), type.getType())) {
 			return conversionService.convert(value, type.getType());
-		} else {
-			return getPotentiallyConvertedSimpleRead(value, type.getType());
 		}
+
+		return getPotentiallyConvertedSimpleRead(value, type.getType());
 	}
 
 	/*
@@ -221,10 +222,6 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return value;
 		}
 
-		if (conversions.hasCustomReadTarget(value.getClass(), target)) {
-			return conversionService.convert(value, target);
-		}
-
 		if (Enum.class.isAssignableFrom(target)) {
 			return Enum.valueOf((Class<Enum>) target, value.toString());
 		}
@@ -241,7 +238,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	@RequiredArgsConstructor
 	class ConvertingParameterValueProvider<P extends PersistentProperty<P>> implements ParameterValueProvider<P> {
 
-		private final ParameterValueProvider<P> delegate;
+		private final Function<Parameter<?, P>, Object> delegate;
 
 		/*
 		 * (non-Javadoc)
@@ -250,7 +247,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 		@Override
 		@SuppressWarnings("unchecked")
 		public <T> T getParameterValue(Parameter<T, P> parameter) {
-			return (T) readValue(delegate.getParameterValue(parameter), parameter.getType());
+			return (T) readValue(delegate.apply(parameter), parameter.getType());
 		}
 	}
 }

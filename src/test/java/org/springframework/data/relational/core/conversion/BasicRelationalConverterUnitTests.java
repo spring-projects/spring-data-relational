@@ -22,8 +22,6 @@ import lombok.Value;
 
 import org.junit.Test;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PreferredConstructor.Parameter;
-import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -78,12 +76,7 @@ public class BasicRelationalConverterUnitTests {
 		RelationalPersistentEntity<MyValue> entity = (RelationalPersistentEntity) context
 				.getRequiredPersistentEntity(MyValue.class);
 
-		MyValue result = converter.createInstance(entity, new ParameterValueProvider<RelationalPersistentProperty>() {
-			@Override
-			public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
-				return (T) "bar";
-			}
-		});
+		MyValue result = converter.createInstance(entity, it -> "bar");
 
 		assertThat(result.getFoo()).isEqualTo("bar");
 	}
