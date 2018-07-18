@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.mapping.model;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import lombok.Data;
 
@@ -25,23 +24,23 @@ import java.util.List;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.ConversionCustomizer;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
 
 /**
  * Unit tests for the default {@link NamingStrategy}.
  *
  * @author Kazuki Shimizu
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class NamingStrategyUnitTests {
 
 	private final NamingStrategy target = NamingStrategy.INSTANCE;
 
 	private final RelationalPersistentEntity<?> persistentEntity = //
-			new RelationalMappingContext(target, mock(ConversionCustomizer.class)).getRequiredPersistentEntity(DummyEntity.class);
+			new RelationalMappingContext(target).getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test // DATAJDBC-184
 	public void getTableName() {

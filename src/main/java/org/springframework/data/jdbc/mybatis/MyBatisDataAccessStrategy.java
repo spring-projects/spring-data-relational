@@ -29,6 +29,7 @@ import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -40,12 +41,13 @@ import org.springframework.util.Assert;
  * "Mapper". This is then followed by the method name separated by a dot. For methods taking a {@link PropertyPath} as
  * argument, the relevant entity is that of the root of the path, and the path itself gets as dot separated String
  * appended to the statement name. Each statement gets an instance of {@link MyBatisContext}, which at least has the
- * entityType set. For methods taking a {@link PropertyPath} the entityTyoe if the context is set to the class of the
+ * entityType set. For methods taking a {@link PropertyPath} the entityType if the context is set to the class of the
  * leaf type.
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
  * @author Oliver Gierke
+ * @author Mark Paluch
  * @since 1.0
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
@@ -58,8 +60,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
 	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
+			RelationalConverter converter,
 			NamedParameterJdbcOperations operations, SqlSession sqlSession) {
-		return createCombinedAccessStrategy(context, new EntityInstantiators(), operations, sqlSession,
+		return createCombinedAccessStrategy(context, converter, operations, sqlSession,
 				NamespaceStrategy.DEFAULT_INSTANCE);
 	}
 
@@ -68,7 +71,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
 	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
-			EntityInstantiators instantiators, NamedParameterJdbcOperations operations, SqlSession sqlSession,
+			RelationalConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession,
 			NamespaceStrategy namespaceStrategy) {
 
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
@@ -85,8 +88,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
 				sqlGeneratorSource, //
 				context, //
+				converter, //
 				operations, //
-				instantiators, //
 				cascadingDataAccessStrategy //
 		);
 
@@ -113,7 +116,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	/**
 	 * Set a NamespaceStrategy to be used.
-	 * 
+	 *
 	 * @param namespaceStrategy Must be non {@literal null}
 	 */
 	public void setNamespaceStrategy(NamespaceStrategy namespaceStrategy) {

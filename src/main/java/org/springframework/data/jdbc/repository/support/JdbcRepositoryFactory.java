@@ -18,10 +18,10 @@ package org.springframework.data.jdbc.repository.support;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.repository.core.EntityInformation;
@@ -41,36 +41,39 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Christoph Strobl
- * @since 1.0
+ * @author Mark Paluch
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 	private final RelationalMappingContext context;
+	private final RelationalConverter converter;
 	private final ApplicationEventPublisher publisher;
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
 
 	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
-	private EntityInstantiators instantiators = new EntityInstantiators();
 
 	/**
-	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy}, {@link RelationalMappingContext}
-	 * and {@link ApplicationEventPublisher}.
-	 * 
+	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
+	 * {@link RelationalMappingContext} and {@link ApplicationEventPublisher}.
+	 *
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @param context must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
 	 * @param publisher must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 */
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
+			RelationalConverter converter, ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
-		Assert.notNull(context, "JdbcMappingContext must not be null!");
+		Assert.notNull(context, "RelationalMappingContext must not be null!");
+		Assert.notNull(converter, "RelationalConverter must not be null!");
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
 
 		this.publisher = publisher;
 		this.context = context;
+		this.converter = converter;
 		this.accessStrategy = dataAccessStrategy;
 		this.operations = operations;
 	}
@@ -83,18 +86,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
 
 		this.rowMapperMap = rowMapperMap;
-	}
-
-	/**
-	 * Set the {@link EntityInstantiators} used for instantiating entity instances.
-	 * 
-	 * @param instantiators Must not be {@code null}.
-	 */
-	public void setEntityInstantiators(EntityInstantiators instantiators) {
-
-		Assert.notNull(instantiators, "EntityInstantiators must not be null.");
-
-		this.instantiators = instantiators;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -146,6 +137,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(context, instantiators, accessStrategy, rowMapperMap, operations));
+		return Optional.of(new JdbcQueryLookupStrategy(context, converter, accessStrategy, rowMapperMap, operations));
 	}
 }

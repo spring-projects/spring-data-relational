@@ -19,15 +19,20 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.relational.core.mapping.ConversionCustomizer;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
  * Beans that must be registered for Spring Data JDBC to work.
  *
  * @author Greg Turnquist
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 1.0
  */
 @Configuration
@@ -35,9 +40,30 @@ public class JdbcConfiguration {
 
 	@Bean
 	RelationalMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
-			Optional<ConversionCustomizer> conversionCustomizer) {
+			CustomConversions customConversions) {
 
-		return new RelationalMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE),
-				conversionCustomizer.orElse(ConversionCustomizer.NONE));
+		RelationalMappingContext mappingContext = new RelationalMappingContext(
+				namingStrategy.orElse(NamingStrategy.INSTANCE));
+		mappingContext.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
+
+		return mappingContext;
+	}
+
+	@Bean
+	RelationalConverter relationalConverter(RelationalMappingContext mappingContext,
+			CustomConversions customConversions) {
+		return new BasicRelationalConverter(mappingContext, customConversions);
+	}
+
+	/**
+	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
+	 * {@link CustomConversions} will be registered with the {@link #jdbcMappingContext()}. Returns an empty
+	 * {@link JdbcCustomConversions} instance by default.
+	 *
+	 * @return must not be {@literal null}.
+	 */
+	@Bean
+	CustomConversions jdbcCustomConversions() {
+		return new JdbcCustomConversions();
 	}
 }

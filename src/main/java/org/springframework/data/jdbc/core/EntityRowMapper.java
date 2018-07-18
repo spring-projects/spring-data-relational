@@ -15,22 +15,15 @@
  */
 package org.springframework.data.jdbc.core;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PreferredConstructor.Parameter;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -39,9 +32,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Maps a {@link ResultSet} to an entity of type {@code T}, including entities referenced.
- *
- * This {@link RowMapper} might trigger additional SQL statements in order to load other members of the same aggregate.
+ * Maps a {@link ResultSet} to an entity of type {@code T}, including entities referenced. This {@link RowMapper} might
+ * trigger additional SQL statements in order to load other members of the same aggregate.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
@@ -54,19 +46,17 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 	private final RelationalPersistentEntity<T> entity;
 
-	private final ConversionService conversions;
+	private final RelationalConverter converter;
 	private final RelationalMappingContext context;
 	private final DataAccessStrategy accessStrategy;
 	private final RelationalPersistentProperty idProperty;
-	private final EntityInstantiators instantiators;
 
-	public EntityRowMapper(RelationalPersistentEntity<T> entity, RelationalMappingContext context, EntityInstantiators instantiators,
-			DataAccessStrategy accessStrategy) {
+	public EntityRowMapper(RelationalPersistentEntity<T> entity, RelationalMappingContext context,
+			RelationalConverter converter, DataAccessStrategy accessStrategy) {
 
 		this.entity = entity;
-		this.conversions = context.getConversions();
+		this.converter = converter;
 		this.context = context;
-		this.instantiators = instantiators;
 		this.accessStrategy = accessStrategy;
 		this.idProperty = entity.getIdProperty();
 	}
@@ -80,8 +70,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 		T result = createInstance(entity, resultSet, "");
 
-		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(entity.getPropertyAccessor(result),
-				conversions);
+		PersistentPropertyAccessor<T> propertyAccessor = converter.getPropertyAccessor(entity, result);
 
 		Object id = idProperty == null ? null : readFrom(resultSet, idProperty, "");
 
@@ -118,7 +107,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 				return readEntityFrom(resultSet, property);
 			}
 
-			return resultSet.getObject(prefix + property.getColumnName());
+			return converter.readValue(resultSet.getObject(prefix + property.getColumnName()), property.getTypeInformation());
 
 		} catch (SQLException o_O) {
 			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
@@ -138,14 +127,12 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return null;
 		}
 
-		S instance =
-				createInstance(entity, rs, prefix);
+		S instance = createInstance(entity, rs, prefix);
 
-		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(instance);
-		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor, conversions);
+		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
 
 		for (RelationalPersistentProperty p : entity) {
-			propertyAccessor.setProperty(p, readFrom(rs, p, prefix));
+			accessor.setProperty(p, readFrom(rs, p, prefix));
 		}
 
 		return instance;
@@ -153,34 +140,17 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, String prefix) {
 
-		return instantiators.getInstantiatorFor(entity) //
-				.createInstance(entity, new ResultSetParameterValueProvider(rs, entity, conversions, prefix));
-	}
-
-	@RequiredArgsConstructor
-	private static class ResultSetParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
-
-		@NonNull private final ResultSet resultSet;
-		@NonNull private final RelationalPersistentEntity<?> entity;
-		@NonNull private final ConversionService conversionService;
-		@NonNull private final String prefix;
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
-		 */
-		@Override
-		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
+		return converter.createInstance(entity, parameter -> {
 
 			String parameterName = parameter.getName();
 			Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
 			String column = prefix + entity.getRequiredPersistentProperty(parameterName).getColumnName();
 
 			try {
-				return conversionService.convert(resultSet.getObject(column), parameter.getType().getType());
+				return rs.getObject(column);
 			} catch (SQLException o_O) {
 				throw new MappingException(String.format("Couldn't read column %s from ResultSet.", column), o_O);
 			}
-		}
+		});
 	}
 }

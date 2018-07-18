@@ -17,13 +17,13 @@ package org.springframework.data.jdbc.repository.support;
 
 import java.lang.reflect.Method;
 
-import org.springframework.core.convert.ConversionService;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
@@ -44,33 +44,32 @@ import org.springframework.util.Assert;
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 	private final RelationalMappingContext context;
-	private final EntityInstantiators instantiators;
+	private final RelationalConverter converter;
 	private final DataAccessStrategy accessStrategy;
 	private final RowMapperMap rowMapperMap;
 	private final NamedParameterJdbcOperations operations;
 
-	private final ConversionService conversionService;
-
 	/**
-	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext}, {@link DataAccessStrategy}
-	 * and {@link RowMapperMap}.
+	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext},
+	 * {@link DataAccessStrategy} and {@link RowMapperMap}.
 	 *
 	 * @param context must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
 	 * @param accessStrategy must not be {@literal null}.
 	 * @param rowMapperMap must not be {@literal null}.
 	 */
-	JdbcQueryLookupStrategy(RelationalMappingContext context, EntityInstantiators instantiators,
+	JdbcQueryLookupStrategy(RelationalMappingContext context, RelationalConverter converter,
 			DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap, NamedParameterJdbcOperations operations) {
 
-		Assert.notNull(context, "JdbcMappingContext must not be null!");
+		Assert.notNull(context, "RelationalMappingContext must not be null!");
+		Assert.notNull(converter, "RelationalConverter must not be null!");
 		Assert.notNull(accessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
 
 		this.context = context;
-		this.instantiators = instantiators;
+		this.converter = converter;
 		this.accessStrategy = accessStrategy;
 		this.rowMapperMap = rowMapperMap;
-		this.conversionService = context.getConversions();
 		this.operations = operations;
 	}
 
@@ -93,9 +92,13 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
-		return context.getSimpleTypeHolder().isSimpleType(returnedObjectType)
-				? SingleColumnRowMapper.newInstance(returnedObjectType, conversionService)
-				: determineDefaultRowMapper(queryMethod);
+		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
+
+		if (persistentEntity == null) {
+			return SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService());
+		}
+
+		return determineDefaultRowMapper(queryMethod);
 	}
 
 	private RowMapper<?> determineDefaultRowMapper(JdbcQueryMethod queryMethod) {
@@ -108,7 +111,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 				? new EntityRowMapper<>( //
 						context.getRequiredPersistentEntity(domainType), //
 						context, //
-						instantiators, //
+						converter, //
 						accessStrategy) //
 				: typeMappedRowMapper;
 	}

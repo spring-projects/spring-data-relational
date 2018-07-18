@@ -27,15 +27,15 @@ import java.util.stream.StreamSupport;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.NonTransientDataAccessException;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -48,7 +48,7 @@ import org.springframework.util.Assert;
  * The default {@link DataAccessStrategy} is to generate SQL statements based on meta data from the entity.
  *
  * @author Jens Schauder
- * @since 1.0
+ * @author Mark Paluch
  */
 @RequiredArgsConstructor
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -59,8 +59,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private final @NonNull SqlGeneratorSource sqlGeneratorSource;
 	private final @NonNull RelationalMappingContext context;
+	private final @NonNull RelationalConverter converter;
 	private final @NonNull NamedParameterJdbcOperations operations;
-	private final @NonNull EntityInstantiators instantiators;
 	private final @NonNull DataAccessStrategy accessStrategy;
 
 	/**
@@ -68,12 +68,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * Only suitable if this is the only access strategy in use.
 	 */
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
-			NamedParameterJdbcOperations operations, EntityInstantiators instantiators) {
+			RelationalConverter converter, NamedParameterJdbcOperations operations) {
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
 		this.operations = operations;
 		this.context = context;
-		this.instantiators = instantiators;
+		this.converter = converter;
 		this.accessStrategy = this;
 	}
 
@@ -92,7 +92,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 			Assert.notNull(idProperty, "Since we have a non-null idValue, we must have an idProperty as well.");
 
-			additionalParameters.put(idProperty.getColumnName(), convert(idValue, idProperty.getColumnType()));
+			additionalParameters.put(idProperty.getColumnName(),
+					converter.writeValue(idValue, ClassTypeInformation.from(idProperty.getColumnType())));
 		}
 
 		additionalParameters.forEach(parameterSource::addValue);
@@ -231,7 +232,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameter = new MapSqlParameterSource( //
 				"ids", //
 				StreamSupport.stream(ids.spliterator(), false) //
-						.map(id -> convert(id, targetType)) //
+						.map(id -> converter.writeValue(id, ClassTypeInformation.from(targetType))) //
 						.collect(Collectors.toList()) //
 		);
 
@@ -281,11 +282,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
-		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
-			if (!property.isEntity()) {
-				Object value = persistentEntity.getPropertyAccessor(instance).getProperty(property);
+		PersistentPropertyAccessor<S> propertyAccessor = persistentEntity.getPropertyAccessor(instance);
 
-				Object convertedValue = convert(value, property.getColumnType());
+		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+
+			if (!property.isEntity()) {
+
+				Object value = propertyAccessor.getProperty(property);
+
+				Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
 				parameters.addValue(property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
 			}
 		});
@@ -318,12 +323,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 			getIdFromHolder(holder, persistentEntity).ifPresent(it -> {
 
-				PersistentPropertyAccessor accessor = persistentEntity.getPropertyAccessor(instance);
-				ConvertingPropertyAccessor convertingPropertyAccessor = new ConvertingPropertyAccessor(accessor,
-						context.getConversions());
+				PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(persistentEntity, instance);
 				RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 
-				convertingPropertyAccessor.setProperty(idProperty, it);
+				accessor.setProperty(idProperty, it);
 			});
 
 		} catch (NonTransientDataAccessException e) {
@@ -344,7 +347,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	public EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {
-		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, instantiators, accessStrategy);
+		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, converter, accessStrategy);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -360,26 +363,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private <T> MapSqlParameterSource createIdParameterSource(Object id, Class<T> domainType) {
 
 		Class<?> columnType = getRequiredPersistentEntity(domainType).getRequiredIdProperty().getColumnType();
-		return new MapSqlParameterSource("id", convert(id, columnType));
+		return new MapSqlParameterSource("id", converter.writeValue(id, ClassTypeInformation.from(columnType)));
 	}
 
 	@SuppressWarnings("unchecked")
 	private <S> RelationalPersistentEntity<S> getRequiredPersistentEntity(Class<S> domainType) {
 		return (RelationalPersistentEntity<S>) context.getRequiredPersistentEntity(domainType);
-	}
-
-	@Nullable
-	private <V> V convert(@Nullable Object from, Class<V> to) {
-
-		if (from == null) {
-			return null;
-		}
-
-		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(from.getClass());
-
-		Object id = persistentEntity == null ? null : persistentEntity.getIdentifierAccessor(from).getIdentifier();
-
-		return context.getConversions().convert(id == null ? from : id, to);
 	}
 
 	private SqlGenerator sql(Class<?> domainType) {
