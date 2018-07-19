@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.core;
 
+import lombok.RequiredArgsConstructor;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,39 +43,55 @@ import org.springframework.lang.Nullable;
  * interactions.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 1.0
  */
+@RequiredArgsConstructor
 class DefaultJdbcInterpreter implements Interpreter {
 
 	private final RelationalMappingContext context;
 	private final DataAccessStrategy accessStrategy;
 
-	DefaultJdbcInterpreter(RelationalMappingContext context, DataAccessStrategy accessStrategy) {
-
-		this.context = context;
-		this.accessStrategy = accessStrategy;
-	}
-
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.Insert)
+	 */
 	@Override
 	public <T> void interpret(Insert<T> insert) {
 		accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.InsertRoot)
+	 */
 	@Override
 	public <T> void interpret(InsertRoot<T> insert) {
-		accessStrategy.insert(insert.getEntity(), insert.getEntityType(), new HashMap<>());
+		accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Collections.emptyMap());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.Update)
+	 */
 	@Override
 	public <T> void interpret(Update<T> update) {
 		accessStrategy.update(update.getEntity(), update.getEntityType());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.UpdateRoot)
+	 */
 	@Override
 	public <T> void interpret(UpdateRoot<T> update) {
 		accessStrategy.update(update.getEntity(), update.getEntityType());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.Merge)
+	 */
 	@Override
 	public <T> void interpret(Merge<T> merge) {
 
@@ -82,21 +101,37 @@ class DefaultJdbcInterpreter implements Interpreter {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.Delete)
+	 */
 	@Override
 	public <T> void interpret(Delete<T> delete) {
 		accessStrategy.delete(delete.getRootId(), delete.getPropertyPath());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.DeleteRoot)
+	 */
 	@Override
 	public <T> void interpret(DeleteRoot<T> delete) {
 		accessStrategy.delete(delete.getRootId(), delete.getEntityType());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.DeleteAll)
+	 */
 	@Override
 	public <T> void interpret(DeleteAll<T> delete) {
 		accessStrategy.deleteAll(delete.getPropertyPath());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot)
+	 */
 	@Override
 	public <T> void interpret(DeleteAllRoot<T> deleteAllRoot) {
 		accessStrategy.deleteAll(deleteAllRoot.getEntityType());
@@ -111,7 +146,8 @@ class DefaultJdbcInterpreter implements Interpreter {
 		return additionalColumnValues;
 	}
 
-	private <T> void addDependingOnInformation(DbAction.WithDependingOn<T> action, Map<String, Object> additionalColumnValues) {
+	private <T> void addDependingOnInformation(DbAction.WithDependingOn<T> action,
+			Map<String, Object> additionalColumnValues) {
 
 		DbAction.WithEntity<?> dependingOn = action.getDependingOn();
 
@@ -125,7 +161,8 @@ class DefaultJdbcInterpreter implements Interpreter {
 	}
 
 	@Nullable
-	private Object getIdFromEntityDependingOn(DbAction.WithEntity<?> dependingOn, RelationalPersistentEntity<?> persistentEntity) {
+	private Object getIdFromEntityDependingOn(DbAction.WithEntity<?> dependingOn,
+			RelationalPersistentEntity<?> persistentEntity) {
 		return persistentEntity.getIdentifierAccessor(dependingOn.getEntity()).getIdentifier();
 	}
 

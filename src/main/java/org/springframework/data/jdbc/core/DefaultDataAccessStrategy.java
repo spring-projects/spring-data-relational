@@ -19,6 +19,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -83,6 +84,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
+		Map<String, Object> parameters = new LinkedHashMap<>(additionalParameters);
 
 		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity);
 
@@ -93,14 +95,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 			Assert.notNull(idProperty, "Since we have a non-null idValue, we must have an idProperty as well.");
 
-			additionalParameters.put(idProperty.getColumnName(),
+			parameters.put(idProperty.getColumnName(),
 					converter.writeValue(idValue, ClassTypeInformation.from(idProperty.getColumnType())));
 		}
 
-		additionalParameters.forEach(parameterSource::addValue);
+		parameters.forEach(parameterSource::addValue);
 
 		operations.update( //
-				sql(domainType).getInsert(additionalParameters.keySet()), //
+				sql(domainType).getInsert(parameters.keySet()), //
 				parameterSource, //
 				holder //
 		);
@@ -345,23 +347,23 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		} catch (InvalidDataAccessApiUsageException e) {
 			// Postgres returns a value for each column
 			Map<String, Object> keys = holder.getKeys();
-			return Optional.ofNullable( //
-					keys == null || persistentEntity.getIdProperty() == null //
-							? null //
-							: keys.get(persistentEntity.getIdColumn()));
+
+			if (keys == null || persistentEntity.getIdProperty() == null) {
+				return Optional.empty();
+			}
+
+			return Optional.ofNullable(keys.get(persistentEntity.getIdColumn()));
 		}
 	}
 
-	public EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {
+	private EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, converter, accessStrategy);
 	}
 
-	@SuppressWarnings("unchecked")
 	private RowMapper<?> getMapEntityRowMapper(RelationalPersistentProperty property) {
 
 		String keyColumn = property.getKeyColumn();
-
-		Assert.notNull(keyColumn, () -> "keyColumn must not be null for " + property);
+		Assert.notNull(keyColumn, () -> "KeyColumn must not be null for " + property);
 
 		return new MapEntityRowMapper<>(getEntityRowMapper(property.getActualType()), keyColumn);
 	}

@@ -25,6 +25,7 @@ import java.util.List;
  * Represents the change happening to the aggregate (as used in the context of Domain Driven Design) as a whole.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 1.0
  */
 @RequiredArgsConstructor
@@ -39,13 +40,13 @@ public class AggregateChange<T> {
 	/** Aggregate root, to which the change applies, if available */
 	private final T entity;
 
-	private final List<DbAction> actions = new ArrayList<>();
+	private final List<DbAction<?>> actions = new ArrayList<>();
 
 	public void executeWith(Interpreter interpreter) {
 		actions.forEach(a -> a.executeWith(interpreter));
 	}
 
-	public void addAction(DbAction action) {
+	public void addAction(DbAction<?> action) {
 		actions.add(action);
 	}
 
