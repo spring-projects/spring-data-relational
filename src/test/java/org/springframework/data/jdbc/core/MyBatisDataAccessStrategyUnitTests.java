@@ -50,7 +50,6 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 		RelationalMappingContext context = this.context;
 		return PropertyPathUtils.toPath(path, source, context);
-
 	}
 
 	@Before

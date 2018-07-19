@@ -33,7 +33,7 @@ public interface DataAccessStrategy {
 
 	/**
 	 * Inserts a the data of a single entity. Referenced entities don't get handled.
-	 * 
+	 *
 	 * @param instance the instance to be stored. Must not be {@code null}.
 	 * @param domainType the type of the instance. Must not be {@code null}.
 	 * @param additionalParameters name-value pairs of additional parameters. Especially ids of parent entities that need
@@ -48,7 +48,7 @@ public interface DataAccessStrategy {
 	 * @param instance the instance to save. Must not be {@code null}.
 	 * @param domainType the type of the instance to save. Must not be {@code null}.
 	 * @param <T> the type of the instance to save.
-	 * @return wether the update actually updated a row.
+	 * @return whether the update actually updated a row.
 	 */
 	<T> boolean update(T instance, Class<T> domainType);
 
@@ -64,7 +64,7 @@ public interface DataAccessStrategy {
 
 	/**
 	 * Deletes all entities reachable via {@literal propertyPath} from the instance identified by {@literal rootId}.
-	 * 
+	 *
 	 * @param rootId Id of the root object on which the {@literal propertyPath} is based. Must not be {@code null}.
 	 * @param propertyPath Leading from the root object to the entities to be deleted. Must not be {@code null}.
 	 */
@@ -72,7 +72,7 @@ public interface DataAccessStrategy {
 
 	/**
 	 * Deletes all entities of the given domain type.
-	 * 
+	 *
 	 * @param domainType the domain type for which to delete all entries. Must not be {@code null}.
 	 * @param <T> type of the domain type.
 	 */
@@ -105,7 +105,7 @@ public interface DataAccessStrategy {
 	<T> T findById(Object id, Class<T> domainType);
 
 	/**
-	 * Loads alls entities of the given type.
+	 * Loads all entities of the given type.
 	 *
 	 * @param domainType the type of entities to load. Must not be {@code null}.
 	 * @param <T> the type of entities to load.
@@ -116,7 +116,7 @@ public interface DataAccessStrategy {
 	/**
 	 * Loads all entities that match one of the ids passed as an argument. It is not guaranteed that the number of ids
 	 * passed in matches the number of entities returned.
-	 * 
+	 *
 	 * @param ids the Ids of the entities to load. Must not be {@code null}.
 	 * @param domainType the type of entities to laod. Must not be {@code null}.
 	 * @param <T> type of entities to load.
@@ -134,7 +134,7 @@ public interface DataAccessStrategy {
 
 	/**
 	 * returns if a row with the given id exists for the given type.
-	 * 
+	 *
 	 * @param id the id of the entity for which to check. Must not be {@code null}.
 	 * @param domainType the type of the entity to check for. Must not be {@code null}.
 	 * @param <T> the type of the entity.

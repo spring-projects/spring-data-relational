@@ -36,7 +36,7 @@ import org.springframework.dao.DataAccessException;
  * @author Jens Schauder
  * @since 1.0
  */
-class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionCollector<T>.ResultOrException, T> {
+class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionCollector.ResultOrException<T>, T> {
 
 	private final Function<DataAccessStrategy, T> method;
 
@@ -44,13 +44,21 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		this.method = method;
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see java.util.stream.Collector#supplier()
+	 */
 	@Override
-	public Supplier<ResultOrException> supplier() {
+	public Supplier<ResultOrException<T>> supplier() {
 		return ResultOrException::new;
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see java.util.stream.Collector#accumulator()
+	 */
 	@Override
-	public BiConsumer<ResultOrException, DataAccessStrategy> accumulator() {
+	public BiConsumer<ResultOrException<T>, DataAccessStrategy> accumulator() {
 
 		return (roe, das) -> {
 
@@ -65,16 +73,24 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		};
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see java.util.stream.Collector#combiner()
+	 */
 	@Override
-	public BinaryOperator<ResultOrException> combiner() {
+	public BinaryOperator<ResultOrException<T>> combiner() {
 
 		return (roe1, roe2) -> {
 			throw new UnsupportedOperationException("Can't combine method calls");
 		};
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see java.util.stream.Collector#finisher()
+	 */
 	@Override
-	public Function<ResultOrException, T> finisher() {
+	public Function<ResultOrException<T>, T> finisher() {
 
 		return roe -> {
 
@@ -86,6 +102,10 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		};
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see java.util.stream.Collector#characteristics()
+	 */
 	@Override
 	public Set<Characteristics> characteristics() {
 		return Collections.emptySet();
@@ -95,7 +115,7 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 	 * Stores intermediate results. I.e. a list of exceptions caught so far, any actual result and the fact, if there
 	 * actually is an result.
 	 */
-	class ResultOrException {
+	static class ResultOrException<T> {
 
 		private T result;
 		private final List<Exception> exceptions = new LinkedList<>();
