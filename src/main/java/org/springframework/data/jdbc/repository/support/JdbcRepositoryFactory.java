@@ -42,7 +42,6 @@ import org.springframework.util.Assert;
  * @author Greg Turnquist
  * @author Christoph Strobl
  * @author Mark Paluch
- * @since 1.0
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 

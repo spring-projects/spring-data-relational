@@ -25,7 +25,6 @@ import java.lang.annotation.Target;
  * The annotation to configure the mapping from an attribute to a database column.
  *
  * @author Kazuki Shimizu
- * @since 1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })

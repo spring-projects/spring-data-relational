@@ -22,7 +22,6 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
  * be changed in order to change the actions that get performed on the database as part of the save operation.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class BeforeSaveEvent extends RelationalEventWithEntity {
 

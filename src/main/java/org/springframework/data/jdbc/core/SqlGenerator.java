@@ -39,7 +39,6 @@ import org.springframework.util.Assert;
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
  *
  * @author Jens Schauder
- * @since 1.0
  */
 class SqlGenerator {
 

@@ -22,7 +22,6 @@ import java.util.Optional;
  * event.
  *
  * @author Oliver Gierke
- * @since 1.0
  */
 public interface RelationalEvent {
 

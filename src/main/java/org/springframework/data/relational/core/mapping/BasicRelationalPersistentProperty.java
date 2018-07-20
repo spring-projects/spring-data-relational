@@ -38,7 +38,6 @@ import org.springframework.util.ClassUtils;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
- * @since 1.0
  */
 class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {

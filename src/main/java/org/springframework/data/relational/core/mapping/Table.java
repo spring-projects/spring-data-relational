@@ -26,7 +26,6 @@ import java.lang.annotation.Target;
  * The annotation to configure the mapping from a class to a database table.
  *
  * @author Kazuki Shimizu
- * @since 1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

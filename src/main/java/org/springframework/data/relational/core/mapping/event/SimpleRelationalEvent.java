@@ -27,7 +27,6 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
- * @since 1.0
  */
 class SimpleRelationalEvent extends ApplicationEvent implements RelationalEvent {
 

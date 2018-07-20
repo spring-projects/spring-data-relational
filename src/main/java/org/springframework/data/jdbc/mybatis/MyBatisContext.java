@@ -25,7 +25,6 @@ import org.springframework.lang.Nullable;
  * the kind of values available on invocation.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class MyBatisContext {
 

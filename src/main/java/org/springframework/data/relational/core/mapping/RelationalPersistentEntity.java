@@ -23,7 +23,6 @@ import org.springframework.data.mapping.model.MutablePersistentEntity;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
- * @since 1.0
  */
 public interface RelationalPersistentEntity<T> extends MutablePersistentEntity<T, RelationalPersistentProperty> {
 

@@ -25,7 +25,6 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  * changed in order to change the actions that get performed on the database as part of the delete operation.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class BeforeDeleteEvent extends RelationalEventWithId {
 

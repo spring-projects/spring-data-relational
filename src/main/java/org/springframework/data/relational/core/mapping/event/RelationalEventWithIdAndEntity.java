@@ -27,7 +27,6 @@ import org.springframework.lang.Nullable;
  * A {@link SimpleRelationalEvent} which is guaranteed to have an identifier and an entity.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 @Getter
 public class RelationalEventWithIdAndEntity extends RelationalEventWithId implements WithEntity {

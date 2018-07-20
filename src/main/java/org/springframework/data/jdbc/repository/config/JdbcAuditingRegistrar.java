@@ -34,7 +34,6 @@ import org.springframework.util.Assert;
  * @see EnableJdbcAuditing
  * @author Kazuki Shimizu
  * @author Jens Schauder
- * @since 1.0
  */
 class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 

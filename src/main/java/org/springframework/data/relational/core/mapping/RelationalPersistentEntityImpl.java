@@ -27,7 +27,6 @@ import org.springframework.data.util.TypeInformation;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
- * @since 1.0
  */
 class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
 		implements RelationalPersistentEntity<T> {

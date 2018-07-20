@@ -20,7 +20,6 @@ package org.springframework.data.relational.core.mapping.event;
  * without going through an {@link java.util.Optional}
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public interface WithEntity extends RelationalEvent {
 

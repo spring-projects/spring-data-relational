@@ -27,7 +27,6 @@ import org.springframework.lang.Nullable;
  * complete aggregates.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public interface DataAccessStrategy {
 

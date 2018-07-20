@@ -29,7 +29,6 @@ import org.springframework.data.repository.CrudRepository;
 /**
  * @author Jens Schauder
  * @author Oliver Gierke
- * @since 1.0
  */
 @RequiredArgsConstructor
 public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {

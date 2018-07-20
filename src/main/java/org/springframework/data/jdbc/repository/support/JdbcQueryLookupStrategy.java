@@ -40,7 +40,6 @@ import org.springframework.util.Assert;
  * @author Kazuki Shimizu
  * @author Oliver Gierke
  * @author Mark Paluch
- * @since 1.0
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 

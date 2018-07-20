@@ -20,7 +20,6 @@ package org.springframework.data.relational.core.conversion;
  * context information about the action and the entity.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class DbActionExecutionException extends RuntimeException {
 

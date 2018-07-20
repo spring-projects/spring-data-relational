@@ -25,7 +25,6 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  * not depends on the delete method used.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class AfterDeleteEvent extends RelationalEventWithId {
 

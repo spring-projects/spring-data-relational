@@ -33,7 +33,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * @author Greg Turnquist
  * @author Jens Schauder
  * @author Mark Paluch
- * @since 1.0
  */
 @Configuration
 public class JdbcConfiguration {

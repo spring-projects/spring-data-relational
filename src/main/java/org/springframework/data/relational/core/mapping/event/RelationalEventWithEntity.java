@@ -23,7 +23,6 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
  * A {@link SimpleRelationalEvent} which is guaranteed to have an entity.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class RelationalEventWithEntity extends SimpleRelationalEvent implements WithEntity {
 

@@ -29,7 +29,6 @@ import org.springframework.lang.NonNull;
  * {@link Map.Entry} is delegated to a {@link RowMapper} provided in the constructor.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 

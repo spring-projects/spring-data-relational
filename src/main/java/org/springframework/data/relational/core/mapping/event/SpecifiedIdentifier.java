@@ -27,7 +27,6 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  *
  * @author Jens Schauder
  * @author Oliver Gierke
- * @since 1.0
  */
 @Value(staticConstructor = "of")
 class SpecifiedIdentifier implements Specified {

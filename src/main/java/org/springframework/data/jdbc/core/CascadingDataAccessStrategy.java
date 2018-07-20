@@ -29,7 +29,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * not throw an exception.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
 

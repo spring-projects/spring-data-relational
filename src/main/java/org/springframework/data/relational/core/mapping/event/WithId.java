@@ -22,7 +22,6 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  * access to the {@link Specified} identifier.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public interface WithId extends RelationalEvent {
 

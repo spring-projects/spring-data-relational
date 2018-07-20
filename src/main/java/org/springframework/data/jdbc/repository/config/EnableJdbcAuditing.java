@@ -31,7 +31,6 @@ import org.springframework.data.domain.AuditorAware;
  *
  * @see EnableJdbcRepositories
  * @author Kazuki Shimizu
- * @since 1.0
  */
 @Inherited
 @Documented

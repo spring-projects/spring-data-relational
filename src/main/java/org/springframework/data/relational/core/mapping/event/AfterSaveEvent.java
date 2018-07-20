@@ -22,7 +22,6 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  * Gets published after a new instance or a changed instance was saved in the database.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class AfterSaveEvent extends RelationalEventWithIdAndEntity {
 

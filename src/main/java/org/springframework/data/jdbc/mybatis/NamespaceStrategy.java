@@ -20,7 +20,6 @@ package org.springframework.data.jdbc.mybatis;
  *
  * @author Kazuki Shimizu
  * @author Jens Schauder
- * @since 1.0
  */
 public interface NamespaceStrategy {
 

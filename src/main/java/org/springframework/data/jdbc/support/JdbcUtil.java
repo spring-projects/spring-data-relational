@@ -32,7 +32,6 @@ import org.springframework.jdbc.support.JdbcUtils;
  * Contains methods dealing with the quirks of JDBC, independent of any Entity, Aggregate or Repository abstraction.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 @UtilityClass
 public class JdbcUtil {

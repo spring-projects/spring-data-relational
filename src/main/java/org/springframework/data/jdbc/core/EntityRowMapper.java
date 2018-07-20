@@ -38,7 +38,6 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Mark Paluch
- * @since 1.0
  */
 public class EntityRowMapper<T> implements RowMapper<T> {
 

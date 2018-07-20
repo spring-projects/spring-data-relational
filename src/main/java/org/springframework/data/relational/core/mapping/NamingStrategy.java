@@ -30,7 +30,6 @@ import org.springframework.util.Assert;
  * @author Kazuki Shimizu
  * @author Jens Schauder
  * @author Oliver Gierke
- * @since 1.0
  */
 public interface NamingStrategy {
 

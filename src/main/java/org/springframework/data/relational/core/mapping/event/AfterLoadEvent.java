@@ -22,7 +22,6 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  * postprocessing of entities.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public class AfterLoadEvent extends RelationalEventWithIdAndEntity {
 

@@ -29,7 +29,6 @@ import org.springframework.util.Assert;
  * A converter for creating a {@link Map} from an {@link Iterable<Map.Entry>}.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 class IterableOfEntryToMapConverter implements ConditionalConverter, Converter<Iterable<?>, Map<?, ?>> {
 

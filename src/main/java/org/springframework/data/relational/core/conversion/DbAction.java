@@ -30,7 +30,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  *
  * @param <T> the type of the entity that is affected by this action.
  * @author Jens Schauder
- * @since 1.0
  */
 public interface DbAction<T> {
 
@@ -231,7 +230,6 @@ public interface DbAction<T> {
 	 * An action depending on another action for providing additional information like the id of a parent entity.
 	 *
 	 * @author Jens Schauder
-	 * @since 1.0
 	 */
 	interface WithDependingOn<T> extends WithPropertyPath<T> {
 
@@ -259,7 +257,6 @@ public interface DbAction<T> {
 	 * A {@link DbAction} that stores the information of a single entity in the database.
 	 *
 	 * @author Jens Schauder
-	 * @since 1.0
 	 */
 	interface WithEntity<T> extends DbAction<T> {
 
@@ -279,7 +276,6 @@ public interface DbAction<T> {
 	 * A {@link DbAction} not operation on the root of an aggregate but on its contained entities.
 	 *
 	 * @author Jens Schauder
-	 * @since 1.0
 	 */
 	interface WithPropertyPath<T> extends DbAction<T> {
 

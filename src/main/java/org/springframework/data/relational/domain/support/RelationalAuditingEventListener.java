@@ -31,7 +31,6 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @see EnableJdbcAuditing
- * @since 1.0
  */
 @RequiredArgsConstructor
 public class RelationalAuditingEventListener implements ApplicationListener<BeforeSaveEvent> {

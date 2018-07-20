@@ -27,7 +27,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * type, the same generator will get returned.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 @RequiredArgsConstructor
 public class SqlGeneratorSource {

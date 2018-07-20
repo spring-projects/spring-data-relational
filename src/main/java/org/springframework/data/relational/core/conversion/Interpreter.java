@@ -32,7 +32,6 @@ import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
  * it using JDBC, but it may also use some third party technology like MyBatis or jOOQ to do this.
  *
  * @author Jens Schauder
- * @since 1.0
  */
 public interface Interpreter {
 
