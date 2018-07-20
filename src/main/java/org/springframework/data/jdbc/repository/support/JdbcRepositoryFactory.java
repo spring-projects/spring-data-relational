@@ -92,11 +92,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> aClass) {
 
-		RelationalPersistentEntity<?> entity = context.getPersistentEntity(aClass);
-
-		if (entity == null) {
-			return null;
-		}
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(aClass);
 
 		return (EntityInformation<T, ID>) new PersistentEntityInformation<>(entity);
 	}
