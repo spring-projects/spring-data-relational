@@ -38,7 +38,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 public class JdbcConfiguration {
 
 	@Bean
-	RelationalMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
+	protected RelationalMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
 			CustomConversions customConversions) {
 
 		RelationalMappingContext mappingContext = new RelationalMappingContext(
@@ -49,7 +49,7 @@ public class JdbcConfiguration {
 	}
 
 	@Bean
-	RelationalConverter relationalConverter(RelationalMappingContext mappingContext,
+	protected RelationalConverter relationalConverter(RelationalMappingContext mappingContext,
 			CustomConversions customConversions) {
 		return new BasicRelationalConverter(mappingContext, customConversions);
 	}
@@ -63,7 +63,7 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	CustomConversions jdbcCustomConversions() {
+	protected CustomConversions jdbcCustomConversions() {
 		return new JdbcCustomConversions();
 	}
 }
