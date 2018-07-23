@@ -22,6 +22,7 @@ import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.Interpreter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityWriter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -46,6 +47,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final ApplicationEventPublisher publisher;
 	private final RelationalMappingContext context;
+	private final RelationalConverter converter;
 	private final Interpreter interpreter;
 
 	private final RelationalEntityWriter jdbcEntityWriter;
@@ -62,14 +64,16 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 */
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			DataAccessStrategy dataAccessStrategy) {
+			RelationalConverter converter, DataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
+		Assert.notNull(converter, "RelationalConverter must not be null!");
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
 
 		this.publisher = publisher;
 		this.context = context;
+		this.converter = converter;
 		this.accessStrategy = dataAccessStrategy;
 
 		this.jdbcEntityWriter = new RelationalEntityWriter(context);
@@ -86,8 +90,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(instance.getClass());
-		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(instance);
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
+		IdentifierAccessor identifierAccessor = persistentEntity.getIdentifierAccessor(instance);
 
 		AggregateChange<T> change = createChange(instance);
 
@@ -97,9 +101,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 				change //
 		));
 
-		change.executeWith(interpreter);
+		change.executeWith(interpreter, context, converter);
 
-		Object identifier = entity.getIdentifierAccessor(change.getEntity()).getIdentifier();
+		Object identifier = persistentEntity.getIdentifierAccessor(change.getEntity()).getIdentifier();
 
 		Assert.notNull(identifier, "After saving the identifier must not be null");
 
@@ -198,7 +202,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	public void deleteAll(Class<?> domainType) {
 
 		AggregateChange<?> change = createDeletingChange(domainType);
-		change.executeWith(interpreter);
+		change.executeWith(interpreter, context, converter);
 	}
 
 	private void deleteTree(Object id, @Nullable Object entity, Class<?> domainType) {
@@ -209,7 +213,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Optional<Object> optionalEntity = Optional.ofNullable(entity);
 		publisher.publishEvent(new BeforeDeleteEvent(specifiedId, optionalEntity, change));
 
-		change.executeWith(interpreter);
+		change.executeWith(interpreter, context, converter);
 
 		publisher.publishEvent(new AfterDeleteEvent(specifiedId, optionalEntity, change));
 	}

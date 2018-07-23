@@ -43,7 +43,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
-	public <T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 		return collect(das -> das.insert(instance, domainType, additionalParameters));
 	}
 

@@ -58,8 +58,9 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(Insert<T> insert) {
 
-		T entity = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
-		insert.setResultingEntity(entity);
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
+
+		insert.setGeneratedId(id);
 	}
 
 	/*
@@ -69,8 +70,8 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(InsertRoot<T> insert) {
 
-		T entity = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Collections.emptyMap());
-		insert.setResultingEntity(entity);
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Collections.emptyMap());
+		insert.setGeneratedId(id);
 	}
 
 	/*
@@ -78,7 +79,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.Update)
 	 */
 	@Override
-	public <T> void interpret(Update<T> update) {
+	public <T> void interpret(Update<T> update ) {
 		accessStrategy.update(update.getEntity(), update.getEntityType());
 	}
 
@@ -169,8 +170,8 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 		Object entity = dependingOn.getEntity();
 
-		if (dependingOn instanceof DbAction.WithResultEntity) {
-			entity = ((DbAction.WithResultEntity<?>) dependingOn).getResultingEntity();
+		if (dependingOn instanceof DbAction.WithGeneratedId) {
+			return  ((DbAction.WithGeneratedId<?>) dependingOn).getGeneratedId();
 		}
 
 		return persistentEntity.getIdentifierAccessor(entity).getIdentifier();
