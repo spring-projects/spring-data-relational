@@ -27,7 +27,6 @@ import java.util.List;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-@RequiredArgsConstructor
 @Getter
 public class AggregateChange<T> {
 
@@ -37,12 +36,28 @@ public class AggregateChange<T> {
 	private final Class<T> entityType;
 
 	/** Aggregate root, to which the change applies, if available */
-	private final T entity;
+	private T entity;
 
 	private final List<DbAction<?>> actions = new ArrayList<>();
 
+	public AggregateChange(Kind kind, Class<T> entityType, T entity) {
+
+		this.kind = kind;
+		this.entityType = entityType;
+		this.entity = entity;
+	}
+
+	@SuppressWarnings("unchecked")
 	public void executeWith(Interpreter interpreter) {
-		actions.forEach(a -> a.executeWith(interpreter));
+
+		actions.forEach(a -> {
+
+			a.executeWith(interpreter);
+
+			if (a instanceof DbAction.InsertRoot && a.getEntityType().equals(entityType)) {
+				entity = (T) ((DbAction.InsertRoot<?>) a).getResultingEntity();
+			}
+		});
 	}
 
 	public void addAction(DbAction<?> action) {

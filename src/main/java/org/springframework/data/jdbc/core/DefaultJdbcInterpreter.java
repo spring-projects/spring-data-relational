@@ -57,7 +57,9 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(Insert<T> insert) {
-		accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
+
+		T entity = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
+		insert.setResultingEntity(entity);
 	}
 
 	/*
@@ -66,7 +68,9 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(InsertRoot<T> insert) {
-		accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Collections.emptyMap());
+
+		T entity = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Collections.emptyMap());
+		insert.setResultingEntity(entity);
 	}
 
 	/*
@@ -162,7 +166,14 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Nullable
 	private Object getIdFromEntityDependingOn(DbAction.WithEntity<?> dependingOn,
 			RelationalPersistentEntity<?> persistentEntity) {
-		return persistentEntity.getIdentifierAccessor(dependingOn.getEntity()).getIdentifier();
+
+		Object entity = dependingOn.getEntity();
+
+		if (dependingOn instanceof DbAction.WithResultEntity) {
+			entity = ((DbAction.WithResultEntity<?>) dependingOn).getResultingEntity();
+		}
+
+		return persistentEntity.getIdentifierAccessor(entity).getIdentifier();
 	}
 
 	private String getColumnNameForReverseColumn(DbAction.WithPropertyPath<?> action) {

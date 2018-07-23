@@ -35,6 +35,7 @@ import java.util.Set;
 
 import javax.naming.OperationNotSupportedException;
 
+import lombok.experimental.Wither;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -304,6 +305,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@RequiredArgsConstructor
+	@Wither
 	static class TrivialImmutable {
 
 		@Id private final Long id;

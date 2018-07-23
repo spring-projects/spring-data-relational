@@ -66,7 +66,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Override
-	public <T> void save(T instance) {
+	public <T> T save(T instance) {
 
 		Assert.notNull(instance, "Aggregate instance must not be null!");
 
@@ -83,15 +83,17 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		change.executeWith(interpreter);
 
-		Object identifier = identifierAccessor.getIdentifier();
+		Object identifier = entity.getIdentifierAccessor(change.getEntity()).getIdentifier();
 
 		Assert.notNull(identifier, "After saving the identifier must not be null");
 
 		publisher.publishEvent(new AfterSaveEvent( //
 				Identifier.of(identifier), //
-				instance, //
+				change.getEntity(), //
 				change //
 		));
+
+		return (T) change.getEntity();
 	}
 
 	@Override

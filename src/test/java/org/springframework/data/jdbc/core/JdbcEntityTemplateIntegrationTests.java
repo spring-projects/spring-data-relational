@@ -145,7 +145,8 @@ public class JdbcEntityTemplateIntegrationTests {
 		legoSet.setManual(null);
 		template.save(legoSet);
 
-		Manual manual = new Manual(23L);
+		Manual manual = new Manual();
+		manual.setId(23L);
 		manual.setContent("Some content");
 		legoSet.setManual(manual);
 
@@ -180,7 +181,7 @@ public class JdbcEntityTemplateIntegrationTests {
 
 		template.save(legoSet);
 
-		Manual manual = new Manual(null);
+		Manual manual = new Manual();
 		manual.setContent("other content");
 		legoSet.setManual(manual);
 
@@ -191,7 +192,7 @@ public class JdbcEntityTemplateIntegrationTests {
 		SoftAssertions softly = new SoftAssertions();
 
 		softly.assertThat(reloadedLegoSet.manual.content).isEqualTo("other content");
-		softly.assertThat(template.findAll(Manual.class)).describedAs("The should be only one manual").hasSize(1);
+		softly.assertThat(template.findAll(Manual.class)).describedAs("There should be only one manual").hasSize(1);
 
 		softly.assertAll();
 	}
@@ -215,7 +216,7 @@ public class JdbcEntityTemplateIntegrationTests {
 		LegoSet entity = new LegoSet();
 		entity.setName("Star Destroyer");
 
-		Manual manual = new Manual(null);
+		Manual manual = new Manual();
 		manual.setContent("Accelerates to 99% of light speed. Destroys almost everything. See https://what-if.xkcd.com/1/");
 		entity.setManual(manual);
 
@@ -236,7 +237,7 @@ public class JdbcEntityTemplateIntegrationTests {
 	@Data
 	static class Manual {
 
-		@Id private final Long id;
+		@Id private Long id;
 		private String content;
 
 	}

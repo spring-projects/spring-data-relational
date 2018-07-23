@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 import lombok.Value;
 
+import lombok.experimental.FieldDefaults;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -84,7 +85,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	@Test // DATAJDBC-98
 	public void primitiveIdGetsSet() {
 
-		PrimitiveIdEntity entity = new PrimitiveIdEntity(0);
+		PrimitiveIdEntity entity = new PrimitiveIdEntity();
 		entity.setName("Entity Name");
 
 		PrimitiveIdEntity saved = primitiveIdRepository.save(entity);
@@ -103,6 +104,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	public interface ReadOnlyIdEntityRepository extends CrudRepository<ReadOnlyIdEntity, Long> {}
 
 	@Value
+	@FieldDefaults(makeFinal = false)
 	static class ReadOnlyIdEntity {
 
 		@Id Long id;
@@ -112,7 +114,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	@Data
 	static class PrimitiveIdEntity {
 
-		@Id private final long id;
+		@Id private long id;
 		String name;
 	}
 
