@@ -15,9 +15,8 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
@@ -32,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
@@ -45,12 +45,11 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
-public class JdbcEntityTemplateIntegrationTests {
+public class AggregateTemplateIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
-	@Autowired
-	JdbcAggregateOperations template;
+	@Autowired JdbcAggregateOperations template;
 
 	LegoSet legoSet = createLegoSet();
 
@@ -248,12 +247,13 @@ public class JdbcEntityTemplateIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return JdbcEntityTemplateIntegrationTests.class;
+			return AggregateTemplateIntegrationTests.class;
 		}
 
 		@Bean
-		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context, DataAccessStrategy dataAccessStrategy) {
-			return new JdbcAggregateTemplate(publisher, context, dataAccessStrategy);
+		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context,
+				DataAccessStrategy dataAccessStrategy, RelationalConverter converter) {
+			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 		}
 	}
 }

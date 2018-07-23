@@ -60,9 +60,10 @@ public class DefaultJdbcInterpreterUnitTests {
 		Element element = new Element();
 
 		InsertRoot<Container> containerInsert = new InsertRoot<>(container);
-		containerInsert.setResultingEntity(container);
+		containerInsert.setGeneratedId(CONTAINER_ID);
 
-		Insert<?> insert = new Insert<>(element, PropertyPathUtils.toPath("element", Container.class, context), containerInsert);
+		Insert<?> insert = new Insert<>(element, PropertyPathUtils.toPath("element", Container.class, context),
+				containerInsert);
 
 		interpreter.interpret(insert);
 

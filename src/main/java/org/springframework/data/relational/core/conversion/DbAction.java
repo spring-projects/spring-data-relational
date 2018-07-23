@@ -25,6 +25,9 @@ import java.util.Map;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.Pair;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * An instance of this interface represents a (conceptual) single interaction with a database, e.g. a single update,
@@ -68,16 +71,15 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Data
-	@RequiredArgsConstructor
-	class Insert<T> implements WithDependingOn<T>, WithEntity<T>, WithResultEntity<T> {
+	class Insert<T> implements WithGeneratedId<T>, WithDependingOn<T> {
 
-		@NonNull private final T entity;
-		@NonNull private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-		@NonNull private final WithEntity<?> dependingOn;
+		@NonNull final T entity;
+		@NonNull final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
+		@NonNull final WithEntity<?> dependingOn;
 
 		Map<String, Object> additionalValues = new HashMap<>();
 
-		private T resultingEntity;
+		private Object generatedId;
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -97,11 +99,11 @@ public interface DbAction<T> {
 	 */
 	@Data
 	@RequiredArgsConstructor
-	class InsertRoot<T> implements WithEntity<T>, WithResultEntity<T> {
+	class InsertRoot<T> implements WithEntity<T>, WithGeneratedId<T> {
 
 		@NonNull private final T entity;
 
-		private T resultingEntity;
+		private Object generatedId;
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -240,7 +242,7 @@ public interface DbAction<T> {
 	 *
 	 * @author Jens Schauder
 	 */
-	interface WithDependingOn<T> extends WithPropertyPath<T> {
+	interface WithDependingOn<T> extends WithPropertyPath<T>, WithEntity<T>{
 
 		/**
 		 * The {@link DbAction} of a parent entity, possibly the aggregate root. This is used to obtain values needed to
@@ -260,6 +262,11 @@ public interface DbAction<T> {
 		 * @return Guaranteed to be not {@code null}.
 		 */
 		Map<String, Object> getAdditionalValues();
+
+		@Override
+		default Class<T> getEntityType() {
+			return WithEntity.super.getEntityType();
+		}
 	}
 
 	/**
@@ -287,12 +294,13 @@ public interface DbAction<T> {
 	 *
 	 * @author Jens Schauder
 	 */
-	interface WithResultEntity<T> extends WithEntity<T> {
+	interface WithGeneratedId<T> extends WithEntity<T> {
 
 		/**
 		 * @return the entity to persist. Guaranteed to be not {@code null}.
 		 */
-		T getResultingEntity();
+		@Nullable
+		Object getGeneratedId();
 
 		@SuppressWarnings("unchecked")
 		@Override

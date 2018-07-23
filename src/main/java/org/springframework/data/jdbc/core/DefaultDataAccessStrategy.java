@@ -21,13 +21,11 @@ import lombok.RequiredArgsConstructor;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -83,7 +81,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
-	public <T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
@@ -110,16 +108,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				holder //
 		);
 
-		instance = setIdFromJdbc(instance, holder, persistentEntity);
-
-		// if there is an id property and it was null before the save
-		// The database should have created an id and provided it.
-
-		if (idProperty != null && idValue == null && persistentEntity.isNew(instance)) {
-			throw new IllegalStateException(String.format(ENTITY_NEW_AFTER_INSERT, persistentEntity));
-		}
-
-		return instance;
+		return getIdFromHolder(holder, persistentEntity);
 	}
 
 	/*
@@ -327,41 +316,20 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				|| (idProperty.getType() == long.class && idValue.equals(0L));
 	}
 
-	private <S> S setIdFromJdbc(S instance, KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
-
-		try {
-
-			PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(persistentEntity, instance);
-
-			getIdFromHolder(holder, persistentEntity).ifPresent(it -> {
-
-				RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-
-				accessor.setProperty(idProperty, it);
-
-			});
-
-			return accessor.getBean();
-
-		} catch (NonTransientDataAccessException e) {
-			throw new UnableToSetId("Unable to set id of " + instance, e);
-		}
-	}
-
-	private <S> Optional<Object> getIdFromHolder(KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
+	private <S> Object getIdFromHolder(KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
 
 		try {
 			// MySQL just returns one value with a special name
-			return Optional.ofNullable(holder.getKey());
+			return holder.getKey();
 		} catch (InvalidDataAccessApiUsageException e) {
 			// Postgres returns a value for each column
 			Map<String, Object> keys = holder.getKeys();
 
 			if (keys == null || persistentEntity.getIdProperty() == null) {
-				return Optional.empty();
+				return null;
 			}
 
-			return Optional.ofNullable(keys.get(persistentEntity.getIdColumn()));
+			return keys.get(persistentEntity.getIdColumn());
 		}
 	}
 

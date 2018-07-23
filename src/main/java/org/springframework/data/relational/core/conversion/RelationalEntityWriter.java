@@ -15,9 +15,6 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Value;
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -164,8 +162,13 @@ public class RelationalEntityWriter implements EntityWriter<Object, AggregateCha
 			DbAction action = previousActions.get(parent);
 
 			if (action != null) {
-				Assert.isInstanceOf(DbAction.WithEntity.class, action,
-						"dependsOn action is not a WithEntity, but " + action.getClass().getSimpleName());
+
+				Assert.isInstanceOf( //
+						DbAction.WithEntity.class, //
+						action, //
+						"dependsOn action is not a WithEntity, but " + action.getClass().getSimpleName() //
+				);
+
 				return (DbAction.WithEntity<?>) action;
 			}
 
@@ -176,9 +179,9 @@ public class RelationalEntityWriter implements EntityWriter<Object, AggregateCha
 			return context.getRequiredPersistentEntity(o.getClass()).isNew(o);
 		}
 
-		private List<WritingContext.PathNode> from(PersistentPropertyPath<RelationalPersistentProperty> path) {
+		private List<PathNode> from(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-			List<WritingContext.PathNode> nodes = new ArrayList<>();
+			List<PathNode> nodes = new ArrayList<>();
 
 			if (path.getLength() == 1) {
 
@@ -194,7 +197,7 @@ public class RelationalEntityWriter implements EntityWriter<Object, AggregateCha
 				List<PathNode> pathNodes = nodesCache.get(path.getParentPath());
 				pathNodes.forEach(parentNode -> {
 
-					Object value = path.getRequiredLeafProperty().getOwner().getPropertyAccessor(parentNode.value)
+					Object value = path.getRequiredLeafProperty().getOwner().getPropertyAccessor(parentNode.getValue())
 							.getProperty(path.getRequiredLeafProperty());
 
 					nodes.addAll(createNodes(path, parentNode, value));
@@ -213,7 +216,7 @@ public class RelationalEntityWriter implements EntityWriter<Object, AggregateCha
 				return Collections.emptyList();
 			}
 
-			List<WritingContext.PathNode> nodes = new ArrayList<>();
+			List<PathNode> nodes = new ArrayList<>();
 
 			if (path.getRequiredLeafProperty().isQualified()) {
 
@@ -235,17 +238,26 @@ public class RelationalEntityWriter implements EntityWriter<Object, AggregateCha
 			return nodes;
 		}
 
-		/**
-		 * Represents a single entity in an aggregate along with its property path from the root entity and the chain of
-		 * objects to traverse a long this path.
-		 */
-		@RequiredArgsConstructor
-		@Getter
-		private class PathNode {
+	}
 
-			private final PersistentPropertyPath<RelationalPersistentProperty> path;
-			private final @Nullable PathNode parent;
-			private final Object value;
-		}
+	/**
+	 * Represents a single entity in an aggregate along with its property path from the root entity and the chain of objects
+	 * to traverse a long this path.
+	 */
+	@Value
+	static class PathNode {
+
+		/** The path to this entity */
+		PersistentPropertyPath<RelationalPersistentProperty> path;
+
+		/**
+		 * The parent {@link PathNode}. This is {@code null} if this is
+		 * the root entity.
+		 */
+		@Nullable
+		PathNode parent;
+
+		/** The value of the entity. */
+		Object value;
 	}
 }

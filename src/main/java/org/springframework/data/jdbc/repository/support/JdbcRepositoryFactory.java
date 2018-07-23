@@ -104,7 +104,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, accessStrategy);
+		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, converter, accessStrategy);
 
 		return new SimpleJdbcRepository<>(template, context.getPersistentEntity(repositoryInformation.getDomainType()));
 	}

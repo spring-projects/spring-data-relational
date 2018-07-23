@@ -42,8 +42,8 @@ public interface Interpreter {
 	/**
 	 * Interpret an {@link Update}. Interpreting normally means "executing".
 	 *
-	 * @param update the {@link Update} to be executed
 	 * @param <T> the type of entity to work on.
+	 * @param update the {@link Update} to be executed
 	 */
 	<T> void interpret(Update<T> update);
 
