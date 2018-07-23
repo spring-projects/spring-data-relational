@@ -15,7 +15,11 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.Value;
 
 import java.util.HashMap;
@@ -64,14 +68,19 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Value
-	class Insert<T> implements WithDependingOn<T>, WithEntity<T> {
+	@Getter
+	@Setter
+	@ToString
+	@RequiredArgsConstructor
+	class Insert<T> implements WithDependingOn<T>, WithEntity<T>, WithResultEntity<T> {
 
-		@NonNull T entity;
-		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-		@NonNull WithEntity<?> dependingOn;
+		@NonNull private final T entity;
+		@NonNull private final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
+		@NonNull private final WithEntity<?> dependingOn;
 
 		Map<String, Object> additionalValues = new HashMap<>();
+
+		private T resultingEntity;
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -89,10 +98,15 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Value
-	class InsertRoot<T> implements WithEntity<T> {
+	@Getter
+	@Setter
+	@ToString
+	@RequiredArgsConstructor
+	class InsertRoot<T> implements WithEntity<T>, WithResultEntity<T> {
 
-		@NonNull T entity;
+		@NonNull private final T entity;
+
+		private T resultingEntity;
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -264,6 +278,26 @@ public interface DbAction<T> {
 		 * @return the entity to persist. Guaranteed to be not {@code null}.
 		 */
 		T getEntity();
+
+		@SuppressWarnings("unchecked")
+		@Override
+		default Class<T> getEntityType() {
+			return (Class<T>) getEntity().getClass();
+		}
+	}
+
+	/**
+	 * A {@link DbAction} that may "update" its entity. In order to support immutable entities this requires at least
+	 * potentially creating a new instance, which this interface makes available.
+	 *
+	 * @author Jens Schauder
+	 */
+	interface WithResultEntity<T> extends WithEntity<T> {
+
+		/**
+		 * @return the entity to persist. Guaranteed to be not {@code null}.
+		 */
+		T getResultingEntity();
 
 		@SuppressWarnings("unchecked")
 		@Override

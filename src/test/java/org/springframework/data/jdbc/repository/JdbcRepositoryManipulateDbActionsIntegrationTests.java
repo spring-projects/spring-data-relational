@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,7 +150,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 	@Data
 	private static class DummyEntity {
 
-		final @Id Long id;
+		@Id Long id;
 		String name;
 		boolean deleted;
 
@@ -176,7 +177,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 	@RequiredArgsConstructor
 	private static class Log {
 
-		@Id final Long id;
+		@Id Long id;
 		DummyEntity entity;
 		String text;
 	}
@@ -218,7 +219,8 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 
 				DummyEntity entity = (DummyEntity) event.getOptionalEntity().orElseThrow(AssertionFailedError::new);
 				lastLogId = new Random().nextLong();
-				Log log = new Log(lastLogId);
+				Log log = new Log();
+				log.setId(lastLogId);
 				log.entity = entity;
 				log.text = entity.name + " saved";
 

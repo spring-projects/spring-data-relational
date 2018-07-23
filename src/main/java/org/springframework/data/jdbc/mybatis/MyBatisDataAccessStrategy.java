@@ -128,9 +128,12 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
-	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	public <T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+		
 		sqlSession().insert(namespace(domainType) + ".insert",
 				new MyBatisContext(null, instance, domainType, additionalParameters));
+
+		return instance;
 	}
 
 	/* 

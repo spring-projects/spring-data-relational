@@ -142,14 +142,11 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		return converter.createInstance(entity, parameter -> {
 
 			String parameterName = parameter.getName();
-			Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
-			String column = prefix + entity.getRequiredPersistentProperty(parameterName).getColumnName();
 
-			try {
-				return rs.getObject(column);
-			} catch (SQLException o_O) {
-				throw new MappingException(String.format("Couldn't read column %s from ResultSet.", column), o_O);
-			}
+			Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
+
+			RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
+			return readFrom(rs, property, prefix);
 		});
 	}
 }

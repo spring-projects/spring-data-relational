@@ -32,8 +32,8 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	private DataAccessStrategy delegate;
 
 	@Override
-	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
-		delegate.insert(instance, domainType, additionalParameters);
+	public <T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+		return delegate.insert(instance, domainType, additionalParameters);
 	}
 
 	@Override

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import lombok.experimental.Wither;
 import org.assertj.core.groups.Tuple;
 import org.junit.Before;
 import org.junit.Test;
@@ -230,6 +231,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
 	@Value
+	@Wither
 	@RequiredArgsConstructor
 	static class DummyEntity {
 		@Id Long id;

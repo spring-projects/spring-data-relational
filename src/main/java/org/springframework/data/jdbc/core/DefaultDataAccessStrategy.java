@@ -79,7 +79,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	public <T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
@@ -106,7 +106,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				holder //
 		);
 
-		setIdFromJdbc(instance, holder, persistentEntity);
+		instance = setIdFromJdbc(instance, holder, persistentEntity);
 
 		// if there is an id property and it was null before the save
 		// The database should have created an id and provided it.
@@ -114,6 +114,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		if (idProperty != null && idValue == null && persistentEntity.isNew(instance)) {
 			throw new IllegalStateException(String.format(ENTITY_NEW_AFTER_INSERT, persistentEntity));
 		}
+
+		return instance;
 	}
 
 	/*
@@ -321,17 +323,21 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				|| (idProperty.getType() == long.class && idValue.equals(0L));
 	}
 
-	private <S> void setIdFromJdbc(S instance, KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
+	private <S> S setIdFromJdbc(S instance, KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
 
 		try {
 
+			PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(persistentEntity, instance);
+
 			getIdFromHolder(holder, persistentEntity).ifPresent(it -> {
 
-				PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(persistentEntity, instance);
 				RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 
 				accessor.setProperty(idProperty, it);
+
 			});
+
+			return accessor.getBean();
 
 		} catch (NonTransientDataAccessException e) {
 			throw new UnableToSetId("Unable to set id of " + instance, e);

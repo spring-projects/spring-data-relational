@@ -39,7 +39,7 @@ public interface DataAccessStrategy {
 	 *          to get referenced are contained in this map. Must not be {@code null}.
 	 * @param <T> the type of the instance.
 	 */
-	<T> void insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters);
+	<T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters);
 
 	/**
 	 * Updates the data of a single entity in the database. Referenced entities don't get handled.
