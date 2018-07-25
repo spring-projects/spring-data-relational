@@ -22,8 +22,8 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.util.Assert;
 
 /**
- * delegates all method calls to an instance set after construction. This is useful for {@link DataAccessStrategy}s with
- * cyclical dependencies.
+ * Delegates all method calls to an instance set after construction. This is useful for {@link DataAccessStrategy}s with
+ * cyclic dependencies.
  *
  * @author Jens Schauder
  */
@@ -31,41 +31,73 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	private DataAccessStrategy delegate;
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
+	 */
 	@Override
 	public <T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 		return delegate.insert(instance, domainType, additionalParameters);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 		return delegate.update(instance, domainType);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PersistentPropertyPath)
+	 */
 	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		delegate.delete(rootId, propertyPath);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 		delegate.delete(id, domainType);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(java.lang.Class)
+	 */
 	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 		delegate.deleteAll(domainType);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(org.springframework.data.mapping.PersistentPropertyPath)
+	 */
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		delegate.deleteAll(propertyPath);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
+	 */
 	@Override
 	public long count(Class<?> domainType) {
 		return delegate.count(domainType);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
@@ -74,16 +106,28 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		return delegate.findById(id, domainType);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAll(java.lang.Class)
+	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 		return delegate.findAll(domainType);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllById(java.lang.Iterable, java.lang.Class)
+	 */
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return delegate.findAllById(ids, domainType);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllByProperty(java.lang.Object, org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
+	 */
 	@Override
 	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
 
@@ -92,6 +136,10 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		return delegate.findAllByProperty(rootId, property);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#existsById(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 		return delegate.existsById(id, domainType);

@@ -38,6 +38,8 @@ public interface DataAccessStrategy {
 	 * @param additionalParameters name-value pairs of additional parameters. Especially ids of parent entities that need
 	 *          to get referenced are contained in this map. Must not be {@code null}.
 	 * @param <T> the type of the instance.
+	 * @return the instance after insert into. The returned instance may be different to the given {@code instance} as
+	 *         this method can apply changes to the return object.
 	 */
 	<T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters);
 
@@ -56,7 +58,7 @@ public interface DataAccessStrategy {
 	 * deletes.
 	 *
 	 * @param id the id of the row to be deleted. Must not be {@code null}.
-	 * @param domainType the type of entity to be deleted. Implicitely determines the table to operate on. Must not be
+	 * @param domainType the type of entity to be deleted. Implicitly determines the table to operate on. Must not be
 	 *          {@code null}.
 	 */
 	void delete(Object id, Class<?> domainType);

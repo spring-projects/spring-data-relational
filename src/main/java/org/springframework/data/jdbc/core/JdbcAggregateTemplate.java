@@ -20,10 +20,10 @@ import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityWriter;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
@@ -53,18 +53,34 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final DataAccessStrategy accessStrategy;
 
+	/**
+	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationEventPublisher},
+	 * {@link RelationalMappingContext} and {@link DataAccessStrategy}.
+	 *
+	 * @param publisher must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 */
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
 			DataAccessStrategy dataAccessStrategy) {
 
+		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
+		Assert.notNull(context, "RelationalMappingContext must not be null!");
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
+
 		this.publisher = publisher;
 		this.context = context;
+		this.accessStrategy = dataAccessStrategy;
 
 		this.jdbcEntityWriter = new RelationalEntityWriter(context);
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
-		this.accessStrategy = dataAccessStrategy;
 		this.interpreter = new DefaultJdbcInterpreter(context, accessStrategy);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#save(java.lang.Object)
+	 */
 	@Override
 	public <T> T save(T instance) {
 
@@ -73,7 +89,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(instance.getClass());
 		IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(instance);
 
-		AggregateChange change = createChange(instance);
+		AggregateChange<T> change = createChange(instance);
 
 		publisher.publishEvent(new BeforeSaveEvent( //
 				Identifier.ofNullable(identifierAccessor.getIdentifier()), //
@@ -96,11 +112,19 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return (T) change.getEntity();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#count(java.lang.Class)
+	 */
 	@Override
 	public long count(Class<?> domainType) {
 		return accessStrategy.count(domainType);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findById(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
@@ -111,11 +135,19 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return entity;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#existsById(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 		return accessStrategy.existsById(id, domainType);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class)
+	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 
@@ -124,6 +156,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return all;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAllById(java.lang.Iterable, java.lang.Class)
+	 */
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
@@ -132,6 +168,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return allById;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#delete(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <S> void delete(S aggregateRoot, Class<S> domainType) {
 
@@ -141,21 +181,29 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		deleteTree(identifierAccessor.getRequiredIdentifier(), aggregateRoot, domainType);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#deleteById(java.lang.Object, java.lang.Class)
+	 */
 	@Override
 	public <S> void deleteById(Object id, Class<S> domainType) {
 		deleteTree(id, null, domainType);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#deleteAll(java.lang.Class)
+	 */
 	@Override
 	public void deleteAll(Class<?> domainType) {
 
-		AggregateChange change = createDeletingChange(domainType);
+		AggregateChange<?> change = createDeletingChange(domainType);
 		change.executeWith(interpreter);
 	}
 
 	private void deleteTree(Object id, @Nullable Object entity, Class<?> domainType) {
 
-		AggregateChange change = createDeletingChange(id, entity, domainType);
+		AggregateChange<?> change = createDeletingChange(id, entity, domainType);
 
 		Specified specifiedId = Identifier.of(id);
 		Optional<Object> optionalEntity = Optional.ofNullable(entity);
@@ -166,23 +214,23 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		publisher.publishEvent(new AfterDeleteEvent(specifiedId, optionalEntity, change));
 	}
 
-	@SuppressWarnings("unchecked")
-	private <T> AggregateChange createChange(T instance) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private <T> AggregateChange<T> createChange(T instance) {
 
-		AggregateChange<?> aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
+		AggregateChange<T> aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
 		jdbcEntityWriter.write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
-	@SuppressWarnings("unchecked")
-	private AggregateChange createDeletingChange(Object id, @Nullable Object entity, Class<?> domainType) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private AggregateChange<?> createDeletingChange(Object id, @Nullable Object entity, Class<?> domainType) {
 
 		AggregateChange<?> aggregateChange = new AggregateChange(Kind.DELETE, domainType, entity);
 		jdbcEntityDeleteWriter.write(id, aggregateChange);
 		return aggregateChange;
 	}
 
-	private AggregateChange createDeletingChange(Class<?> domainType) {
+	private AggregateChange<?> createDeletingChange(Class<?> domainType) {
 
 		AggregateChange<?> aggregateChange = new AggregateChange<>(Kind.DELETE, domainType, null);
 		jdbcEntityDeleteWriter.write(null, aggregateChange);

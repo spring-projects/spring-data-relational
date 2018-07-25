@@ -15,11 +15,9 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 import lombok.Value;
 
 import java.util.HashMap;
@@ -34,6 +32,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  *
  * @param <T> the type of the entity that is affected by this action.
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public interface DbAction<T> {
 
@@ -68,9 +67,7 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Getter
-	@Setter
-	@ToString
+	@Data
 	@RequiredArgsConstructor
 	class Insert<T> implements WithDependingOn<T>, WithEntity<T>, WithResultEntity<T> {
 
@@ -98,9 +95,7 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Getter
-	@Setter
-	@ToString
+	@Data
 	@RequiredArgsConstructor
 	class InsertRoot<T> implements WithEntity<T>, WithResultEntity<T> {
 

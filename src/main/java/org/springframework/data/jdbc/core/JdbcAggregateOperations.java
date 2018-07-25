@@ -26,9 +26,10 @@ public interface JdbcAggregateOperations {
 
 	/**
 	 * Saves an instance of an aggregate, including all the members of the aggregate.
-	 * 
+	 *
 	 * @param instance the aggregate root of the aggregate to be saved. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
+	 * @return the saved instance.
 	 */
 	<T> T save(T instance);
 
@@ -43,7 +44,7 @@ public interface JdbcAggregateOperations {
 
 	/**
 	 * Delete an aggregate identified by it's aggregate root.
-	 * 
+	 *
 	 * @param aggregateRoot to delete. Must not be {@code null}.
 	 * @param domainType the type of the aggregate root. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
@@ -52,7 +53,7 @@ public interface JdbcAggregateOperations {
 
 	/**
 	 * Delete all aggregates of a given type.
-	 * 
+	 *
 	 * @param domainType type of the aggregate roots to be deleted. Must not be {@code null}.
 	 */
 	void deleteAll(Class<?> domainType);
@@ -97,7 +98,7 @@ public interface JdbcAggregateOperations {
 
 	/**
 	 * Checks if an aggregate identified by type and id exists in the database.
-	 * 
+	 *
 	 * @param id the id of the aggregate root.
 	 * @param domainType the type of the aggregate root.
 	 * @param <T> the type of the aggregate root.
