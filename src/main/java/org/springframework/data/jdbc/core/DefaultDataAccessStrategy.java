@@ -78,6 +78,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		this.accessStrategy = this;
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
+	 */
 	@Override
 	public <T> T insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
