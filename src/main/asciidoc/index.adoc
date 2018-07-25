@@ -2,6 +2,7 @@
 Jens Schauder, Jay Bryant
 :revnumber: {version}
 :revdate: {localdate}
+:javadoc-base: https://docs.spring.io/spring-data/jdbc/docs/{revnumber}/api/
 :linkcss:
 :doctype: book
 :docinfo: shared
