@@ -33,12 +33,14 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBea
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Mark Paluch
+ * @see JdbcConfiguration
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-@Import({JdbcRepositoriesRegistrar.class, JdbcConfiguration.class})
+@Import(JdbcRepositoriesRegistrar.class)
 public @interface EnableJdbcRepositories {
 
 	/**
