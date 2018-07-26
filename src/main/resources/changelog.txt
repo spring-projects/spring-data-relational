@@ -1,6 +1,31 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.0.RC1 (2018-07-26)
+-----------------------------------------
+* DATAJDBC-243 - Using @EnableJdbcRepositories and extending JdbcConfiguration causes duplicate bean registrations.
+* DATAJDBC-238 - JdbcRepositoryFactory.getEntityInformation must not return null.
+* DATAJDBC-237 - Remove @since annotations.
+* DATAJDBC-235 - Introduce CustomConversions.
+* DATAJDBC-233 - API changes for future proper support for immutable entities.
+* DATAJDBC-232 - Adapt to changes to support immutable entities.
+* DATAJDBC-227 - Refactorings and API improvements in preparation for DATAJDBC-224.
+* DATAJDBC-226 - Extract packages not directly tied to JDBC into relational package.
+* DATAJDBC-222 - Review of Reference Documentation.
+* DATAJDBC-220 - improve degraph test to detect cycles across modules.
+* DATAJDBC-216 - Cannot set createdDate and createdAt on primitive @Id.
+* DATAJDBC-215 - Release 1.0 RC1 (Lovelace).
+* DATAJDBC-214 - Update TestContainers version to one not requiring commons-lang as separate dependency.
+* DATAJDBC-207 - Make Snake Case the default NamingStrategy.
+* DATAJDBC-188 - Add better test for delete logic with multi level references.
+* DATAJDBC-174 - Initial Reference Documentation.
+* DATAJDBC-143 - Methods in JdbcEntityOperations take Domainclasses that are (possibly) superfluous.
+* DATAJDBC-138 - Improve package structure.
+* DATAJDBC-137 - Code Clean Up.
+* DATAJDBC-106 - Support for naming columns using @Column annotation.
+* DATAJDBC-102 - Make EntityInstantiator configurable.
+
+
 Changes in version 1.0.0.M3 (2018-05-17)
 ----------------------------------------
 * DATAJDBC-213 - Fix Travis build.
