@@ -22,14 +22,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.UUID;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * Unit tests for the {@link BasicRelationalPersistentProperty}.
@@ -62,6 +59,21 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		});
 	}
 
+	@Test // DATAJDBC-104, DATAJDBC-1384
+	public void testTargetTypesForPropertyType() {
+
+		SoftAssertions softly = new SoftAssertions();
+
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+
+		checkTargetType(softly, persistentEntity, "someEnum", String.class);
+		checkTargetType(softly, persistentEntity, "localDateTime", Date.class);
+		checkTargetType(softly, persistentEntity, "zonedDateTime", String.class);
+		checkTargetType(softly, persistentEntity, "uuid", UUID.class);
+
+		softly.assertAll();
+	}
+
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
 
@@ -72,15 +84,23 @@ public class BasicRelationalPersistentPropertyUnitTests {
 				.isEqualTo("dummy_last_updated_at");
 	}
 
+	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
+			String propertyName, Class<?> expected) {
+
+		RelationalPersistentProperty property = persistentEntity.getRequiredPersistentProperty(propertyName);
+
+		softly.assertThat(property.getColumnType()).describedAs(propertyName).isEqualTo(expected);
+	}
+
 	@Data
 	private static class DummyEntity {
 
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
+		private final UUID uuid;
 
 		// DATACMNS-106
-
 		private @Column("dummy_name") String name;
 
 		@Column("dummy_last_updated_at")

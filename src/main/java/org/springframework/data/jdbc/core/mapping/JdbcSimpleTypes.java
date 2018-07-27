@@ -66,6 +66,7 @@ public abstract class JdbcSimpleTypes {
 		simpleTypes.add(Struct.class);
 		simpleTypes.add(Time.class);
 		simpleTypes.add(Timestamp.class);
+		simpleTypes.add(UUID.class);
 
 		JDBC_SIMPLE_TYPES = Collections.unmodifiableSet(simpleTypes);
 	}

@@ -35,6 +35,7 @@ public class RelationalMappingContextUnitTests {
 		RelationalMappingContext mappingContext = new RelationalMappingContext();
 		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(EntityWithUuid.class);
 		RelationalPersistentProperty uuidProperty = entity.getRequiredPersistentProperty("uuid");
+
 		assertThat(uuidProperty.isEntity()).isFalse();
 	}
 

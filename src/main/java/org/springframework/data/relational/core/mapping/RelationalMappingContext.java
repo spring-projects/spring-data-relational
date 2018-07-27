@@ -17,17 +17,12 @@ package org.springframework.data.relational.core.mapping;
 
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -39,7 +34,8 @@ import org.springframework.util.Assert;
  * @author Oliver Gierke
  * @author Mark Paluch
  */
-public class RelationalMappingContext extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
+public class RelationalMappingContext
+		extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
 
 	@Getter private final NamingStrategy namingStrategy;
 
@@ -61,7 +57,7 @@ public class RelationalMappingContext extends AbstractMappingContext<RelationalP
 
 		this.namingStrategy = namingStrategy;
 
-		setSimpleTypeHolder(new SimpleTypeHolder(Collections.emptySet(), true));
+		setSimpleTypeHolder(JdbcSimpleTypes.HOLDER);
 	}
 
 	/*
@@ -78,8 +74,8 @@ public class RelationalMappingContext extends AbstractMappingContext<RelationalP
 	 * @see org.springframework.data.mapping.context.AbstractMappingContext#createPersistentProperty(org.springframework.data.mapping.model.Property, org.springframework.data.mapping.model.MutablePersistentEntity, org.springframework.data.mapping.model.SimpleTypeHolder)
 	 */
 	@Override
-	protected RelationalPersistentProperty createPersistentProperty(Property property, RelationalPersistentEntity<?> owner,
-			SimpleTypeHolder simpleTypeHolder) {
+	protected RelationalPersistentProperty createPersistentProperty(Property property,
+			RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
 		return new BasicRelationalPersistentProperty(property, owner, simpleTypeHolder, this);
 	}
 }
