@@ -38,7 +38,7 @@ Spring Data JDBC offers only very limited support for customizing the strategy w
 [[jdbc.domain-driven-design]]
 === Domain Driven Design and Relational Databases.
 
-All Spring Data modules are inspired by the concepts of "`repository`", "`aggregate`", and "`aggregate`" root from Domain Driven Design.
+All Spring Data modules are inspired by the concepts of "`repository`", "`aggregate`", and "`aggregate root`" from Domain Driven Design.
 These are possibly even more important for Spring Data JDBC, because they are, to some extent, contrary to normal practice when working with relational databases.
 
 An aggregate is a group of entities that is guaranteed to be consistent between atomic changes to it.
@@ -55,7 +55,7 @@ These are the atomic changes mentioned earlier.
 A repository is an abstraction over a persistent store that looks like a collection of all the aggregates of a certain type.
 For Spring Data in general, this means you want to have one `Repository` per aggregate root.
 In addition, for Spring Data JDBC this means that all entities reachable from an aggregate root are considered to be part of that aggregate root.
-It is expected that no table outside that aggregate has a foreign key to that table.
+It is expected that no table outside that aggregate has a foreign key to a table storing non root entities of the aggregate.
 
 WARNING: In the current implementation, entities referenced from an aggregate root get deleted and recreated by Spring Data JDBC.
 
@@ -99,7 +99,7 @@ Note that whether an instance is new is part of the instance's state.
 
 NOTE: This approach has some obvious downsides.
 If only few of the referenced entities have been actually changed, the deletion and insertion is wasteful.
-While this process could and probably will be improved, there are certain limitations to what Spring Data can offer.
+While this process could and probably will be improved, there are certain limitations to what Spring Data JDBC can offer.
 It does not know the previous state of an aggregate.
 So any update process always has to take whatever it finds in the database and make sure it converts it to whatever is the state of the entity passed to the save method.
 
@@ -121,15 +121,15 @@ The properties of the following types are currently supported:
 * References to other entities. They are considered a one-to-one relationship.
 It is optional for such entities to have an `id` attribute.
 The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
-You can change this name by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)`.
+You can change this name by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)`.
 
 * `Set<some entity>` is considered a one-to-many relationship.
 The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
-You can change this name by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)`.
+You can change this name by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)`.
 
 * `Map<simple type, some entity>` is considered a qualified one-to-many relationship.
 The table of the referenced entity is expected to have two additional columns: One named the same as the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
-You can change this name by implementing `NamingStrategy.getReverseColumnName(JdbcPersistentProperty property)` and `NamingStrategy.getKeyColumn(JdbcPersistentProperty property)`, respectively.
+You can change this name by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
 
 * `List<some entity>` is mapped as a  `Map<Integer, some entity>`.
 
@@ -146,7 +146,7 @@ References between those should be encoded as simple `id` values, which should m
 === `NamingStrategy`
 
 When you use the standard implementations of `CrudRepository` that Spring Data JDBC provides, they expect a certain table structure.
-You can tweak that by providing a https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mapping/model/NamingStrategy.java[`NamingStrategy`] in your application context.
+You can tweak that by providing a {javadoc-base}org/springframework/data/relational/core/mapping/NamingStrategy.java[`NamingStrategy`] in your application context.
 
 [[jdbc.entity-persistence.state-detection-strategies]]
 === Entity State Detection Strategies
@@ -162,7 +162,7 @@ If the identifier property is `null`, then the entity is assumed to be new. Othe
 See the link:$$http://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[JavaDoc] for details.
 |Implementing `EntityInformation`|You can customize the `EntityInformation` abstraction used in the `SimpleJdbcRepository` implementation by creating a subclass of `JdbcRepositoryFactory` and overriding the `getEntityInformation(…)` method.
 You then have to register the custom implementation of `JdbcRepositoryFactory` as a Spring bean.
-Note that this should rarely be necessary. See the link:$$http://docs.spring.io/spring-data/data-jdbc/docs/current/api/index.html?org/springframework/data/jdbc/repository/support/JdbcRepositoryFactory.html$$[JavaDoc] for details.
+Note that this should rarely be necessary. See the link:{javadoc-base}org/springframework/data/jdbc/repository/support/JdbcRepositoryFactory.html[JavaDoc] for details.
 |===============
 
 [[jdbc.entity-persistence.id-generation]]
@@ -258,7 +258,7 @@ boolean updateName(@Param("id") Long id, @Param("name") String name);
 
 You can specify the following return types:
 
-*`void`
+* `void`
 * `int` (updated record count)
 * `boolean`(whether a record was updated)
 
@@ -371,21 +371,21 @@ The following table describes the available events:
 |===
 | Event | When It Is Published
 
-| https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/BeforeDeleteEvent.java[`BeforeDeleteEvent`]
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/BeforeDeleteEvent.java[`BeforeDeleteEvent`]
 | Before an aggregate root gets deleted.
 
-| https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/AfterDeleteEvent.java[`AfterDeleteEvent`]
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterDeleteEvent.java[`AfterDeleteEvent`]
 | After an aggregate root gets deleted.
 
-| https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/AfterDelete.java[`BeforeDeleteEvent`]
+| {javadoc-base}/org/springframework/data/relational/core/mapping/event/AfterDelete.java[`BeforeDeleteEvent`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
-The event has a reference to an https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/core/conversion/AggregateChange.java[`AggregateChange`] instance.
-The instance can be modified by adding or removing https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/core/conversion/DbAction.java[`DbAction`] instances.
+The event has a reference to an {javadoc-base}/org/springframework/data/relational/core/conversion/AggregateChange.java[`AggregateChange`] instance.
+The instance can be modified by adding or removing {javadoc-base}/org/springframework/data/relational/core/conversion/DbAction.java[`DbAction`] instances.
 
-| https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/AfterSaveEvent.java[`AfterSaveEvent`]
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveEvent.java[`AfterSaveEvent`]
 | After an aggregate root gets saved (that is, inserted or updated).
 
-| https://docs.spring.io/spring-data/jdbc/docs/1.0.0.M1/api/org/springframework/data/jdbc/mapping/event/AfterLoadEvent.java[`AfterLoadEvent`]
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadEvent.java[`AfterLoadEvent`]
 | After an aggregate root gets created from a database `ResultSet` and all its property get set.
 |===
 
@@ -394,13 +394,13 @@ The instance can be modified by adding or removing https://docs.spring.io/spring
 
 Spring Data JDBC does little to no logging of its own.
 Instead, the mechanics to issue SQL statements do provide logging.
-Thus, if you want to inspect what SQL statements are ru, activate logging for Spring's https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or http://www.mybatis.org/mybatis-3/logging.html[MyBatis].
+Thus, if you want to inspect what SQL statements are you, activate logging for Spring's https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or http://www.mybatis.org/mybatis-3/logging.html[MyBatis].
 
 [[jdbc.transactions]]
 == Transactionality
 CRUD methods on repository instances are transactional by default.
 For reading operations, the transaction configuration `readOnly` flag is set to `true`. All others are configured with a plain `@Transactional` annotation so that default transaction configuration applies.
-For details, see the JavaDoc of link:$$http://docs.spring.io/spring-data/data-jdbc/docs/current/api/index.html?org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html$$[`SimpleJdbcRepository`]. If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
+For details, see the JavaDoc of link:{javadoc-base}org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html[`SimpleJdbcRepository`]. If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
 
 .Custom transaction configuration for CRUD
 ====
