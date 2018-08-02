@@ -55,9 +55,9 @@ These are the atomic changes mentioned earlier.
 A repository is an abstraction over a persistent store that looks like a collection of all the aggregates of a certain type.
 For Spring Data in general, this means you want to have one `Repository` per aggregate root.
 In addition, for Spring Data JDBC this means that all entities reachable from an aggregate root are considered to be part of that aggregate root.
-It is expected that no table outside that aggregate has a foreign key to a table storing non root entities of the aggregate.
+Spring Data JDBC assumes that only the aggregate has a foreign key to a table storing non-root entities of the aggregate and no other entity points toward non-root entities.
 
-WARNING: In the current implementation, entities referenced from an aggregate root get deleted and recreated by Spring Data JDBC.
+WARNING: In the current implementation, entities referenced from an aggregate root are deleted and recreated by Spring Data JDBC.
 
 You can overwrite the repository methods with implementations that match your style of working and designing your database.
 
@@ -159,10 +159,10 @@ The following table describes the strategies that Spring Data JDBC offers for de
 |Id-Property inspection (the default)|By default, Spring Data JDBC inspects the identifier property of the given entity.
 If the identifier property is `null`, then the entity is assumed to be new. Otherwise, it is assumed to not be new.
 |Implementing `Persistable`|If an entity implements `Persistable`, Spring Data JDBC delegates the new detection to the `isNew(…)` method of the entity.
-See the link:$$http://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[JavaDoc] for details.
+See the link:$$http://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[Javadoc] for details.
 |Implementing `EntityInformation`|You can customize the `EntityInformation` abstraction used in the `SimpleJdbcRepository` implementation by creating a subclass of `JdbcRepositoryFactory` and overriding the `getEntityInformation(…)` method.
 You then have to register the custom implementation of `JdbcRepositoryFactory` as a Spring bean.
-Note that this should rarely be necessary. See the link:{javadoc-base}org/springframework/data/jdbc/repository/support/JdbcRepositoryFactory.html[JavaDoc] for details.
+Note that this should rarely be necessary. See the link:{javadoc-base}org/springframework/data/jdbc/repository/support/JdbcRepositoryFactory.html[Javadoc] for details.
 |===============
 
 [[jdbc.entity-persistence.id-generation]]
@@ -392,15 +392,15 @@ The instance can be modified by adding or removing {javadoc-base}/org/springfram
 [[jdbc.logging]]
 == Logging
 
-Spring Data JDBC does little to no logging of its own.
-Instead, the mechanics to issue SQL statements do provide logging.
-Thus, if you want to inspect what SQL statements are you, activate logging for Spring's https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or http://www.mybatis.org/mybatis-3/logging.html[MyBatis].
+Spring Data JDBC does little to no logging on its own.
+Instead, the mechanics of `JdbcTemplate` to issue SQL statements provide logging.
+Thus, if you want to inspect what SQL statements are executed, activate logging for Spring's {spring-framework-docs}/spring-framework-reference/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or http://www.mybatis.org/mybatis-3/logging.html[MyBatis].
 
 [[jdbc.transactions]]
 == Transactionality
 CRUD methods on repository instances are transactional by default.
 For reading operations, the transaction configuration `readOnly` flag is set to `true`. All others are configured with a plain `@Transactional` annotation so that default transaction configuration applies.
-For details, see the JavaDoc of link:{javadoc-base}org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html[`SimpleJdbcRepository`]. If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
+For details, see the Javadoc of link:{javadoc-base}org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html[`SimpleJdbcRepository`]. If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
 
 .Custom transaction configuration for CRUD
 ====

@@ -1,5 +1,5 @@
 = Spring Data JDBC - Reference Documentation
-Jens Schauder, Jay Bryant
+Jens Schauder, Jay Bryant, Mark Paluch
 :revnumber: {version}
 :revdate: {localdate}
 :javadoc-base: https://docs.spring.io/spring-data/jdbc/docs/{revnumber}/api/
@@ -13,7 +13,7 @@ Jens Schauder, Jay Bryant
 :imagesdir: images
 ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1600]]
 :spring-data-commons-docs: https://raw.githubusercontent.com/spring-projects/spring-data-commons/master/src/main/asciidoc
-:spring-framework-docs: http://docs.spring.io/spring-framework/docs/{springVersion}/spring-framework-reference/
+:spring-framework-docs: http://docs.spring.io/spring-framework/docs/{springVersion}/
 
 (C) 2018 The original authors.
 
@@ -37,3 +37,7 @@ include::jdbc.adoc[leveloffset=+1]
 :numbered!:
 include::faq.adoc[leveloffset=+1]
 include::glossary.adoc[leveloffset=+1]
+include::{spring-data-commons-docs}/repository-namespace-reference.adoc[leveloffset=+1]
+include::{spring-data-commons-docs}/repository-populator-namespace-reference.adoc[leveloffset=+1]
+include::repository-query-keywords-reference.adoc[leveloffset=+1]
+include::{spring-data-commons-docs}/repository-query-return-types-reference.adoc[leveloffset=+1]

@@ -1,0 +1,7 @@
+[[repository-query-keywords]]
+[appendix]
+= Repository query keywords
+
+== Supported query keywords
+
+Spring Data JDBC does not support query derivation yet.
