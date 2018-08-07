@@ -22,6 +22,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
@@ -33,6 +34,7 @@ import org.springframework.data.mapping.PropertyHandler;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Florian Lüdiger
  */
 public class BasicRelationalPersistentPropertyUnitTests {
 
@@ -84,6 +86,17 @@ public class BasicRelationalPersistentPropertyUnitTests {
 				.isEqualTo("dummy_last_updated_at");
 	}
 
+	@Test // DATAJDBC-218
+	public void detectsAnnotatedColumnAndKeyName() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+
+		assertThat(entity.getRequiredPersistentProperty("someList").getColumnName())
+				.isEqualTo("dummy_column_name");
+		assertThat(entity.getRequiredPersistentProperty("someList").getKeyColumn())
+				.isEqualTo("dummy_key_column_name");
+	}
+
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Class<?> expected) {
 
@@ -99,6 +112,9 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
 		private final UUID uuid;
+
+		@Column(value="dummy_column_name", keyColumn="dummy_key_column_name")
+		private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;

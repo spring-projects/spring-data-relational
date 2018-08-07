@@ -25,6 +25,7 @@ import java.lang.annotation.Target;
  * The annotation to configure the mapping from an attribute to a database column.
  *
  * @author Kazuki Shimizu
+ * @author Florian Lüdiger
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
@@ -35,4 +36,9 @@ public @interface Column {
 	 * The mapping column name.
 	 */
 	String value();
+
+	/**
+	 * The column name for key columns of List or Map collections.
+	 */
+	String keyColumn() default "";
 }

@@ -38,6 +38,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Florian Lüdiger
  */
 class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
@@ -52,6 +53,7 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 
 	private final RelationalMappingContext context;
 	private final Lazy<Optional<String>> columnName;
+	private final Lazy<Optional<String>> keyColumnName;
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
@@ -70,6 +72,7 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 
 		this.context = context;
 		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)).map(Column::value));
+		this.keyColumnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)).map(Column::keyColumn));
 	}
 
 	/*
@@ -116,7 +119,10 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 
 	@Override
 	public String getKeyColumn() {
-		return isQualified() ? context.getNamingStrategy().getKeyColumn(this) : null;
+		if (isQualified())
+			return keyColumnName.get().orElseGet(() -> context.getNamingStrategy().getKeyColumn(this));
+		else
+			return null;
 	}
 
 	@Override
