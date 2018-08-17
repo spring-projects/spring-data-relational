@@ -36,7 +36,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -53,10 +52,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.NullHandling;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.r2dbc.UncategorizedR2dbcException;
+import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy.SettableValue;
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
-import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.SqlProvider;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -217,24 +216,24 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		return (dae != null ? dae : new UncategorizedR2dbcException(task, sql, ex));
 	}
 
-	private static void doBind(Statement statement, Map<String, Optional<Object>> byName,
-			Map<Integer, Optional<Object>> byIndex) {
+	private static void doBind(Statement statement, Map<String, SettableValue> byName,
+			Map<Integer, SettableValue> byIndex) {
 
 		byIndex.forEach((i, o) -> {
 
-			if (o.isPresent()) {
-				o.ifPresent(v -> statement.bind(i, v));
+			if (o.getValue() != null) {
+				statement.bind(i, o.getValue());
 			} else {
-				statement.bindNull(i, 0); // TODO: What is type?
+				statement.bindNull(i, o.getType());
 			}
 		});
 
 		byName.forEach((name, o) -> {
 
-			if (o.isPresent()) {
-				o.ifPresent(v -> statement.bind(name, v));
+			if (o.getValue() != null) {
+				statement.bind(name, o.getValue());
 			} else {
-				statement.bindNull(name, 0); // TODO: What is type?
+				statement.bindNull(name, o.getType());
 			}
 		});
 
@@ -267,8 +266,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	@RequiredArgsConstructor
 	private class GenericExecuteSpecSupport {
 
-		final Map<Integer, Optional<Object>> byIndex;
-		final Map<String, Optional<Object>> byName;
+		final Map<Integer, SettableValue> byIndex;
+		final Map<String, SettableValue> byName;
 		final Supplier<String> sqlSupplier;
 
 		GenericExecuteSpecSupport(Supplier<String> sqlSupplier) {
@@ -310,16 +309,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		public GenericExecuteSpecSupport bind(int index, Object value) {
 
-			Map<Integer, Optional<Object>> byIndex = new LinkedHashMap<>(this.byIndex);
-			byIndex.put(index, Optional.of(value));
+			Map<Integer, SettableValue> byIndex = new LinkedHashMap<>(this.byIndex);
+			byIndex.put(index, new SettableValue(index, value, null));
 
 			return createInstance(byIndex, this.byName, this.sqlSupplier);
 		}
 
-		public GenericExecuteSpecSupport bindNull(int index) {
+		public GenericExecuteSpecSupport bindNull(int index, Class<?> type) {
 
-			Map<Integer, Optional<Object>> byIndex = new LinkedHashMap<>(this.byIndex);
-			byIndex.put(index, Optional.empty());
+			Map<Integer, SettableValue> byIndex = new LinkedHashMap<>(this.byIndex);
+			byIndex.put(index, new SettableValue(index, null, type));
 
 			return createInstance(byIndex, this.byName, this.sqlSupplier);
 		}
@@ -328,24 +327,24 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.hasText(name, "Parameter name must not be null or empty!");
 
-			Map<String, Optional<Object>> byName = new LinkedHashMap<>(this.byName);
-			byName.put(name, Optional.of(value));
+			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
+			byName.put(name, new SettableValue(name, value, null));
 
 			return createInstance(this.byIndex, byName, this.sqlSupplier);
 		}
 
-		public GenericExecuteSpecSupport bindNull(String name) {
+		public GenericExecuteSpecSupport bindNull(String name, Class<?> type) {
 
 			Assert.hasText(name, "Parameter name must not be null or empty!");
 
-			Map<String, Optional<Object>> byName = new LinkedHashMap<>(this.byName);
-			byName.put(name, Optional.empty());
+			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
+			byName.put(name, new SettableValue(name, null, type));
 
 			return createInstance(this.byIndex, byName, this.sqlSupplier);
 		}
 
-		protected GenericExecuteSpecSupport createInstance(Map<Integer, Optional<Object>> byIndex,
-				Map<String, Optional<Object>> byName, Supplier<String> sqlSupplier) {
+		protected GenericExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex,
+				Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
 			return new GenericExecuteSpecSupport(byIndex, byName, sqlSupplier);
 		}
 
@@ -362,7 +361,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 */
 	private class DefaultGenericExecuteSpec extends GenericExecuteSpecSupport implements GenericExecuteSpec {
 
-		DefaultGenericExecuteSpec(Map<Integer, Optional<Object>> byIndex, Map<String, Optional<Object>> byName,
+		DefaultGenericExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
 				Supplier<String> sqlSupplier) {
 			super(byIndex, byName, sqlSupplier);
 		}
@@ -395,8 +394,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultGenericExecuteSpec bindNull(int index) {
-			return (DefaultGenericExecuteSpec) super.bindNull(index);
+		public DefaultGenericExecuteSpec bindNull(int index, Class<?> type) {
+			return (DefaultGenericExecuteSpec) super.bindNull(index, type);
 		}
 
 		@Override
@@ -405,8 +404,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultGenericExecuteSpec bindNull(String name) {
-			return (DefaultGenericExecuteSpec) super.bindNull(name);
+		public DefaultGenericExecuteSpec bindNull(String name, Class<?> type) {
+			return (DefaultGenericExecuteSpec) super.bindNull(name, type);
 		}
 
 		@Override
@@ -415,8 +414,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		protected GenericExecuteSpecSupport createInstance(Map<Integer, Optional<Object>> byIndex,
-				Map<String, Optional<Object>> byName, Supplier<String> sqlSupplier) {
+		protected GenericExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex,
+				Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
 			return new DefaultGenericExecuteSpec(byIndex, byName, sqlSupplier);
 		}
 	}
@@ -430,7 +429,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		private final Class<T> typeToRead;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
-		DefaultTypedGenericExecuteSpec(Map<Integer, Optional<Object>> byIndex, Map<String, Optional<Object>> byName,
+		DefaultTypedGenericExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
 				Supplier<String> sqlSupplier, Class<T> typeToRead) {
 
 			super(byIndex, byName, sqlSupplier);
@@ -463,8 +462,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultTypedGenericExecuteSpec<T> bindNull(int index) {
-			return (DefaultTypedGenericExecuteSpec<T>) super.bindNull(index);
+		public DefaultTypedGenericExecuteSpec<T> bindNull(int index, Class<?> type) {
+			return (DefaultTypedGenericExecuteSpec<T>) super.bindNull(index, type);
 		}
 
 		@Override
@@ -473,8 +472,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultTypedGenericExecuteSpec<T> bindNull(String name) {
-			return (DefaultTypedGenericExecuteSpec<T>) super.bindNull(name);
+		public DefaultTypedGenericExecuteSpec<T> bindNull(String name, Class<?> type) {
+			return (DefaultTypedGenericExecuteSpec<T>) super.bindNull(name, type);
 		}
 
 		@Override
@@ -483,8 +482,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		protected DefaultTypedGenericExecuteSpec<T> createInstance(Map<Integer, Optional<Object>> byIndex,
-				Map<String, Optional<Object>> byName, Supplier<String> sqlSupplier) {
+		protected DefaultTypedGenericExecuteSpec<T> createInstance(Map<Integer, SettableValue> byIndex,
+				Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
 			return new DefaultTypedGenericExecuteSpec<>(byIndex, byName, sqlSupplier, typeToRead);
 		}
 	}
@@ -800,26 +799,26 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultGenericInsertSpec implements GenericInsertSpec {
 
 		private final String table;
-		private final Map<String, Optional<Object>> byName;
+		private final Map<String, SettableValue> byName;
 
 		@Override
 		public GenericInsertSpec value(String field, Object value) {
 
 			Assert.notNull(field, "Field must not be null!");
 
-			Map<String, Optional<Object>> byName = new LinkedHashMap<>(this.byName);
-			byName.put(field, Optional.of(value));
+			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
+			byName.put(field, new SettableValue(field, value, null));
 
 			return new DefaultGenericInsertSpec(this.table, byName);
 		}
 
 		@Override
-		public GenericInsertSpec nullValue(String field) {
+		public GenericInsertSpec nullValue(String field, Class<?> type) {
 
 			Assert.notNull(field, "Field must not be null!");
 
-			Map<String, Optional<Object>> byName = new LinkedHashMap<>(this.byName);
-			byName.put(field, Optional.empty());
+			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
+			byName.put(field, new SettableValue(field, null, type));
 
 			return new DefaultGenericInsertSpec(this.table, byName);
 		}
@@ -878,12 +877,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			AtomicInteger index = new AtomicInteger();
 
-			for (Optional<Object> o : byName.values()) {
+			for (SettableValue value : byName.values()) {
 
-				if (o.isPresent()) {
-					o.ifPresent(v -> statement.bind(index.getAndIncrement(), v));
+				if (value.getValue() != null) {
+					statement.bind(index.getAndIncrement(), value.getValue());
 				} else {
-					statement.bindNull("$" + (index.getAndIncrement() + 1), 0); // TODO: What is type?
+					statement.bindNull("$" + (index.getAndIncrement() + 1), value.getType());
 				}
 			}
 		}
@@ -944,8 +943,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			StringBuilder builder = new StringBuilder();
 
-			List<Pair<String, Object>> insertValues = dataAccessStrategy.getInsert(toInsert);
-			String fieldNames = insertValues.stream().map(Pair::getFirst).collect(Collectors.joining(","));
+			List<SettableValue> insertValues = dataAccessStrategy.getInsert(toInsert);
+			String fieldNames = insertValues.stream().map(SettableValue::getIdentifier).map(Object::toString)
+					.collect(Collectors.joining(","));
 			String placeholders = IntStream.range(0, insertValues.size()).mapToObj(i -> "$" + (i + 1))
 					.collect(Collectors.joining(","));
 
@@ -964,12 +964,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 				AtomicInteger index = new AtomicInteger();
 
-				for (Pair<String, Object> pair : insertValues) {
+				for (SettableValue settable : insertValues) {
 
-					if (pair.getSecond() != null) { // TODO: Better type to transport null values.
-						statement.bind(index.getAndIncrement(), pair.getSecond());
+					if (settable.getValue() != null) {
+						statement.bind(index.getAndIncrement(), settable.getValue());
 					} else {
-						statement.bindNull("$" + (index.getAndIncrement() + 1), 0); // TODO: What is type?
+						statement.bindNull("$" + (index.getAndIncrement() + 1), settable.getType());
 					}
 				}
 

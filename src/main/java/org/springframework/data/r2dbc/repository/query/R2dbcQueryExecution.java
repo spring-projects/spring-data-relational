@@ -64,7 +64,7 @@ interface R2dbcQueryExecution {
 	final class ResultProcessingConverter implements Converter<Object, Object> {
 
 		private final @NonNull ResultProcessor processor;
-		private final @NonNull MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+		private final @NonNull MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 		private final @NonNull EntityInstantiators instantiators;
 
 		/* (non-Javadoc)

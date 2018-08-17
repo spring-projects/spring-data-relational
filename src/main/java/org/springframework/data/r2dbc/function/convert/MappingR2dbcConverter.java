@@ -23,8 +23,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
+import org.springframework.core.convert.ConversionService;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy.SettableValue;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
@@ -37,11 +40,10 @@ import org.springframework.util.ClassUtils;
  */
 public class MappingR2dbcConverter {
 
-	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private final RelationalConverter relationalConverter;
 
-	public MappingR2dbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
-		this.mappingContext = mappingContext;
+	public MappingR2dbcConverter(RelationalConverter converter) {
+		this.relationalConverter = converter;
 	}
 
 	/**
@@ -51,19 +53,20 @@ public class MappingR2dbcConverter {
 	 * @param object must not be {@literal null}.
 	 * @return
 	 */
-	public Map<String, Optional<Object>> getFieldsToUpdate(Object object) {
+	public Map<String, SettableValue> getFieldsToUpdate(Object object) {
 
 		Assert.notNull(object, "Entity object must not be null!");
 
 		Class<?> userClass = ClassUtils.getUserClass(object);
-		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
+		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(userClass);
 
-		Map<String, Optional<Object>> update = new LinkedHashMap<>();
+		Map<String, SettableValue> update = new LinkedHashMap<>();
 
 		PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(object);
 
 		for (RelationalPersistentProperty property : entity) {
-			update.put(property.getColumnName(), Optional.ofNullable(propertyAccessor.getProperty(property)));
+			update.put(property.getColumnName(),
+					new SettableValue(property.getColumnName(), propertyAccessor.getProperty(property), property.getType()));
 		}
 
 		return update;
@@ -82,7 +85,7 @@ public class MappingR2dbcConverter {
 		Assert.notNull(object, "Entity object must not be null!");
 
 		Class<?> userClass = ClassUtils.getUserClass(object);
-		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
+		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(userClass);
 
 		return (row, metadata) -> {
 
@@ -91,7 +94,11 @@ public class MappingR2dbcConverter {
 
 			if (propertyAccessor.getProperty(idProperty) == null) {
 
-				propertyAccessor.setProperty(idProperty, row.get(idProperty.getColumnName(), idProperty.getColumnType()));
+				ConversionService conversionService = relationalConverter.getConversionService();
+				Object value = row.get(idProperty.getColumnName());
+
+				propertyAccessor.setProperty(idProperty, conversionService.convert(value, idProperty.getType()));
+
 				return (T) propertyAccessor.getBean();
 			}
 
@@ -99,7 +106,8 @@ public class MappingR2dbcConverter {
 		};
 	}
 
-	public MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> getMappingContext() {
-		return mappingContext;
+	public MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getMappingContext() {
+		return relationalConverter.getMappingContext();
 	}
 }
+

@@ -56,7 +56,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 	private static final ClassTypeInformation<Slice> SLICE_TYPE = ClassTypeInformation.from(Slice.class);
 
 	private final Method method;
-	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final Optional<Query> query;
 
 	private @Nullable RelationalEntityMetadata<?> metadata;
@@ -70,7 +70,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 	 * @param mappingContext must not be {@literal null}.
 	 */
 	public R2dbcQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory projectionFactory,
-			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
 
 		super(method, metadata, projectionFactory);
 

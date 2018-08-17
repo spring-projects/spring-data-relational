@@ -348,8 +348,9 @@ public interface DatabaseClient {
 		 * Specify a {@literal null} value to insert.
 		 *
 		 * @param field must not be {@literal null} or empty.
+		 * @param type must not be {@literal null}.
 		 */
-		GenericInsertSpec nullValue(String field);
+		GenericInsertSpec nullValue(String field, Class<?> type);
 	}
 
 	/**
@@ -417,8 +418,9 @@ public interface DatabaseClient {
 		 * Bind a {@literal null} value to a parameter identified by its {@code index}.
 		 *
 		 * @param index
+		 * @param type must not be {@literal null}.
 		 */
-		S bindNull(int index);
+		S bindNull(int index, Class<?> type);
 
 		/**
 		 * Bind a non-{@literal null} value to a parameter identified by its {@code name}.
@@ -432,8 +434,9 @@ public interface DatabaseClient {
 		 * Bind a {@literal null} value to a parameter identified by its {@code name}.
 		 *
 		 * @param name must not be {@literal null} or empty.
+		 * @param type must not be {@literal null}.
 		 */
-		S bindNull(String name);
+		S bindNull(String name, Class<?> type);
 
 		/**
 		 * Bind a bean according to Java {@link java.beans.BeanInfo Beans} using property names.

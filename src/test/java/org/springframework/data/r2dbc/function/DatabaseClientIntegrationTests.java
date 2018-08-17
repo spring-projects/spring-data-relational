@@ -67,7 +67,7 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 		databaseClient.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull("$3") //
+				.bindNull("$3", Integer.class) //
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectNext(1) //
@@ -86,7 +86,7 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 		databaseClient.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull("$3") //
+				.bindNull("$3", Integer.class) //
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectErrorSatisfies(exception -> {
@@ -125,7 +125,7 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 		databaseClient.insert().into("legoset")//
 				.value("id", 42055) //
 				.value("name", "SCHAUFELRADBAGGER") //
-				.nullValue("manual") //
+				.nullValue("manual", Integer.class) //
 				.exchange() //
 				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all()) //
 				.as(StepVerifier::create) //
@@ -142,7 +142,7 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 		databaseClient.insert().into("legoset")//
 				.value("id", 42055) //
 				.value("name", "SCHAUFELRADBAGGER") //
-				.nullValue("manual") //
+				.nullValue("manual", Integer.class) //
 				.then() //
 				.as(StepVerifier::create) //
 				.verifyComplete();

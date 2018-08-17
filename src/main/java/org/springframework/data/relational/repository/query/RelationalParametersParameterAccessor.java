@@ -18,6 +18,7 @@ package org.springframework.data.relational.repository.query;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
 import org.springframework.data.repository.query.QueryMethod;
 
@@ -49,5 +50,13 @@ public class RelationalParametersParameterAccessor extends ParametersParameterAc
 	@Override
 	public Object[] getValues() {
 		return values.toArray();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.springframework.data.jdbc.repository.query.RelationalParameterAccessor#getBindableParameters()
+	 */
+	@Override
+	public Parameters<?, ?> getBindableParameters() {
+		return getParameters().getBindableParameters();
 	}
 }

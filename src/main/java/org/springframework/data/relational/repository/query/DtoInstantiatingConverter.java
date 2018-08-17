@@ -49,7 +49,7 @@ public class DtoInstantiatingConverter implements Converter<Object, Object> {
 	 * @param instantiators must not be {@literal null}.
 	 */
 	public DtoInstantiatingConverter(Class<?> dtoType,
-			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			EntityInstantiators instantiator) {
 
 		Assert.notNull(dtoType, "DTO type must not be null!");

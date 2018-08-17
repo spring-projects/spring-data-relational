@@ -20,6 +20,8 @@ import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
+import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
@@ -88,12 +90,17 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 				T bindSpecToUse = bindSpec;
 
 				// TODO: Encapsulate PostgreSQL-specific bindings
+
+				Parameters<?, ?> bindableParameters = accessor.getBindableParameters();
+
 				int index = 1;
 				for (Object value : accessor.getValues()) {
 
+					Parameter bindableParameter = bindableParameters.getBindableParameter(index - 1);
+
 					if (value == null) {
 						if (accessor.hasBindableNullValue()) {
-							bindSpecToUse = bindSpecToUse.bindNull("$" + (index++));
+							bindSpecToUse = bindSpecToUse.bindNull("$" + (index++), bindableParameter.getType());
 						}
 					} else {
 						bindSpecToUse = bindSpecToUse.bind("$" + (index++), value);

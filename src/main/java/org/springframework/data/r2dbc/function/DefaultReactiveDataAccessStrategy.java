@@ -24,16 +24,17 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.r2dbc.function.convert.EntityRowMapper;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.Pair;
 import org.springframework.data.util.StreamUtils;
+import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -41,22 +42,20 @@ import org.springframework.util.ClassUtils;
  */
 public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStrategy {
 
-	private final RelationalMappingContext mappingContext;
-	private final EntityInstantiators instantiators;
+	private final RelationalConverter relationalConverter;
 
 	public DefaultReactiveDataAccessStrategy() {
-		this(new RelationalMappingContext(), new EntityInstantiators());
+		this(new BasicRelationalConverter(new RelationalMappingContext()));
 	}
 
-	public DefaultReactiveDataAccessStrategy(RelationalMappingContext mappingContext, EntityInstantiators instantiators) {
-		this.mappingContext = mappingContext;
-		this.instantiators = instantiators;
+	public DefaultReactiveDataAccessStrategy(RelationalConverter converter) {
+		this.relationalConverter = converter;
 	}
 
 	@Override
 	public List<String> getAllFields(Class<?> typeToRead) {
 
-		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(typeToRead);
+		RelationalPersistentEntity<?> persistentEntity = getPersistentEntity(typeToRead);
 
 		if (persistentEntity == null) {
 			return Collections.singletonList("*");
@@ -68,14 +67,14 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	}
 
 	@Override
-	public List<Pair<String, Object>> getInsert(Object object) {
+	public List<SettableValue> getInsert(Object object) {
 
 		Class<?> userClass = ClassUtils.getUserClass(object);
 
-		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(userClass);
+		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(userClass);
 		PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(object);
 
-		List<Pair<String, Object>> values = new ArrayList<>();
+		List<SettableValue> values = new ArrayList<>();
 
 		for (RelationalPersistentProperty property : entity) {
 
@@ -85,7 +84,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 				continue;
 			}
 
-			values.add(Pair.of(property.getColumnName(), value));
+			values.add(new SettableValue(property.getColumnName(), value, property.getType()));
 		}
 
 		return values;
@@ -94,7 +93,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Override
 	public Sort getMappedSort(Class<?> typeToRead, Sort sort) {
 
-		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(typeToRead);
+		RelationalPersistentEntity<?> entity = getPersistentEntity(typeToRead);
 		if (entity == null) {
 			return sort;
 		}
@@ -117,12 +116,21 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	@Override
 	public <T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead) {
-		return new EntityRowMapper<T>((RelationalPersistentEntity) mappingContext.getRequiredPersistentEntity(typeToRead),
-				instantiators, mappingContext);
+		return new EntityRowMapper<T>((RelationalPersistentEntity) getRequiredPersistentEntity(typeToRead),
+				relationalConverter);
 	}
 
 	@Override
 	public String getTableName(Class<?> type) {
-		return mappingContext.getRequiredPersistentEntity(type).getTableName();
+		return getRequiredPersistentEntity(type).getTableName();
+	}
+
+	private RelationalPersistentEntity<?> getRequiredPersistentEntity(Class<?> typeToRead) {
+		return relationalConverter.getMappingContext().getRequiredPersistentEntity(typeToRead);
+	}
+
+	@Nullable
+	private RelationalPersistentEntity<?> getPersistentEntity(Class<?> typeToRead) {
+		return relationalConverter.getMappingContext().getPersistentEntity(typeToRead);
 	}
 }

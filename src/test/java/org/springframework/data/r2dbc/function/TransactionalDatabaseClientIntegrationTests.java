@@ -71,7 +71,7 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 			return db.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
 					.bind(0, 42055) //
 					.bind(1, "SCHAUFELRADBAGGER") //
-					.bindNull("$3") //
+					.bindNull("$3", Integer.class) //
 					.fetch().rowsUpdated();
 		});
 
@@ -91,7 +91,7 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 				.sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull("$3") //
+				.bindNull("$3", Integer.class) //
 				.fetch().rowsUpdated();
 
 		integerFlux.as(StepVerifier::create) //
@@ -147,7 +147,7 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 			return db.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
 					.bind(0, 42055) //
 					.bind(1, "SCHAUFELRADBAGGER") //
-					.bindNull("$3") //
+					.bindNull("$3", Integer.class) //
 					.fetch().rowsUpdated().then(Mono.error(new IllegalStateException("failed")));
 		});
 

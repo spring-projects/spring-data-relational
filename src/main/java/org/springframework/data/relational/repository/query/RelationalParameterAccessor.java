@@ -16,6 +16,7 @@
 package org.springframework.data.relational.repository.query;
 
 import org.springframework.data.repository.query.ParameterAccessor;
+import org.springframework.data.repository.query.Parameters;
 
 /**
  * JDBC-specific {@link ParameterAccessor}.
@@ -28,4 +29,9 @@ public interface RelationalParameterAccessor extends ParameterAccessor {
 	 * Returns the raw parameter values of the underlying query method.
 	 */
 	Object[] getValues();
+
+	/**
+	 * @return the bindable parameters.
+	 */
+	Parameters<?, ?> getBindableParameters();
 }

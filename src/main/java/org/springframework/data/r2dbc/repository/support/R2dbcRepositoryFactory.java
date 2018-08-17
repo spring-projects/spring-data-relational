@@ -28,6 +28,7 @@ import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
 import org.springframework.data.r2dbc.repository.query.StringBasedR2dbcQuery;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
@@ -71,7 +72,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 
 		this.databaseClient = databaseClient;
 		this.mappingContext = mappingContext;
-		this.converter = new MappingR2dbcConverter(mappingContext);
+		this.converter = new MappingR2dbcConverter(new BasicRelationalConverter(mappingContext));
 	}
 
 	/*

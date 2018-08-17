@@ -22,7 +22,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -31,6 +30,7 @@ import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
 import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.function.FetchSpec;
+import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy.SettableValue;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -68,7 +68,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		// TODO: Extract in some kind of SQL generator
 		Object id = entity.getRequiredId(objectToSave);
 
-		Map<String, Optional<Object>> fields = converter.getFieldsToUpdate(objectToSave);
+		Map<String, SettableValue> fields = converter.getFieldsToUpdate(objectToSave);
 
 		String setClause = getSetClause(fields);
 
@@ -77,13 +77,13 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				.bind(0, id);
 
 		int index = 1;
-		for (Optional<Object> setValue : fields.values()) {
+		for (SettableValue setValue : fields.values()) {
 
-			Object value = setValue.orElse(null);
+			Object value = setValue.getValue();
 			if (value != null) {
 				exec = exec.bind(index++, value);
 			} else {
-				exec = exec.bindNull(index++);
+				exec = exec.bindNull(index++, setValue.getType());
 			}
 		}
 
@@ -93,7 +93,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				.thenReturn(objectToSave);
 	}
 
-	private static String getSetClause(Map<String, Optional<Object>> fields) {
+	private static String getSetClause(Map<String, ?> fields) {
 
 		StringBuilder setClause = new StringBuilder();
 
