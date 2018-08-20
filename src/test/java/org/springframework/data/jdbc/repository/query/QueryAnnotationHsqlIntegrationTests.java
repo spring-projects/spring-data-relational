@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import lombok.Value;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -251,6 +252,12 @@ public class QueryAnnotationHsqlIntegrationTests {
 		assertThat(repository.findByNameAsEntity("Spring Data JDBC")).isNotNull();
 	}
 
+	@Test // DATAJDBC-175
+	public void executeCustomQueryWithImmutableResultType() {
+
+		assertThat(repository.immutableTuple()).isEqualTo(new DummyEntityRepository.ImmutableTuple("one", "two", 3));
+	}
+
 	private DummyEntity dummyEntity(String name) {
 
 		DummyEntity entity = new DummyEntity();
@@ -329,5 +336,16 @@ public class QueryAnnotationHsqlIntegrationTests {
 		@Query("INSERT INTO DUMMY_ENTITY (name) VALUES(:name)")
 		void insert(@Param("name") String name);
 
+		// DATAJDBC-252
+		@Query("SELECT 'one' one, 'two' two, 3 three FROM (VALUES (0))")
+		ImmutableTuple immutableTuple();
+
+
+		@Value
+		class ImmutableTuple {
+			String one;
+			String two;
+			int three;
+		}
 	}
 }
