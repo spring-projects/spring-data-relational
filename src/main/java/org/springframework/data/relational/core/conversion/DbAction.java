@@ -23,11 +23,12 @@ import lombok.Value;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * An instance of this interface represents a (conceptual) single interaction with a database, e.g. a single update,
@@ -65,6 +66,8 @@ public interface DbAction<T> {
 	 */
 	void doExecuteWith(Interpreter interpreter);
 
+	default void postExecute(RelationalConverter converter, PersistentPropertyAccessor<T> accessor) {}
+
 	/**
 	 * Represents an insert statement for a single entity that is not the root of an aggregate.
 	 *
@@ -101,13 +104,33 @@ public interface DbAction<T> {
 	@RequiredArgsConstructor
 	class InsertRoot<T> implements WithEntity<T>, WithGeneratedId<T> {
 
-		@NonNull private final T entity;
-
+		private final @NonNull T entity;
 		private Object generatedId;
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.conversion.DbAction#doExecuteWith(org.springframework.data.relational.core.conversion.Interpreter)
+		 */
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
+		}
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.conversion.DbAction#postExecute(org.springframework.data.relational.core.mapping.RelationalPersistentEntity, org.springframework.data.mapping.PersistentPropertyAccessor)
+		 */
+		@Override
+		public void postExecute(RelationalConverter converter, PersistentPropertyAccessor<T> accessor) {
+
+			if (entity == null) {
+				return;
+			}
+
+			MappingContext<? extends RelationalPersistentEntity<?>, ?> context = converter.getMappingContext();
+			RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(entity.getClass());
+
+			accessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
 		}
 	}
 
@@ -242,7 +265,7 @@ public interface DbAction<T> {
 	 *
 	 * @author Jens Schauder
 	 */
-	interface WithDependingOn<T> extends WithPropertyPath<T>, WithEntity<T>{
+	interface WithDependingOn<T> extends WithPropertyPath<T>, WithEntity<T> {
 
 		/**
 		 * The {@link DbAction} of a parent entity, possibly the aggregate root. This is used to obtain values needed to
@@ -266,6 +289,15 @@ public interface DbAction<T> {
 		@Override
 		default Class<T> getEntityType() {
 			return WithEntity.super.getEntityType();
+		}
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.conversion.DbAction#postExecute(org.springframework.data.relational.core.mapping.RelationalPersistentEntity, org.springframework.data.mapping.PersistentPropertyAccessor)
+		 */
+		@Override
+		default void postExecute(RelationalConverter converter, PersistentPropertyAccessor<T> accessor) {
+			AggregateChange.setId(converter, accessor, this, accessor);
 		}
 	}
 

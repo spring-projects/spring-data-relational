@@ -24,6 +24,10 @@ import java.util.Set;
 
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.conversion.DbAction.WithDependingOn;
+import org.springframework.data.relational.core.conversion.DbAction.WithGeneratedId;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -45,7 +49,7 @@ public class AggregateChange<T> {
 	private final Class<T> entityType;
 
 	/** Aggregate root, to which the change applies, if available */
-	@Nullable private T entity;
+	private @Nullable T entity;
 
 	private final List<DbAction<?>> actions = new ArrayList<>();
 
@@ -63,32 +67,32 @@ public class AggregateChange<T> {
 				? (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(entity.getClass())
 				: null;
 
-		PersistentPropertyAccessor<T> propertyAccessor = //
-				persistentEntity != null //
-						? converter.getPropertyAccessor(persistentEntity, entity) //
-						: null;
+		PersistentPropertyAccessor<T> propertyAccessor = persistentEntity != null //
+				? converter.getPropertyAccessor(persistentEntity, entity) //
+				: null;
 
-		actions.forEach(a -> {
+		actions.forEach(action -> {
 
-			a.executeWith(interpreter);
+			action.executeWith(interpreter);
 
-			if (a instanceof DbAction.WithGeneratedId) {
+			if (!WithGeneratedId.class.isInstance(action)) {
+				return;
+			}
 
-				Assert.notNull(persistentEntity,
-						"For statements triggering database side id generation a RelationalPersistentEntity must be provided.");
-				Assert.notNull(propertyAccessor, "propertyAccessor must not be null");
+			Assert.notNull(persistentEntity,
+					"For statements triggering database side id generation a RelationalPersistentEntity must be provided.");
+			Assert.notNull(propertyAccessor, "propertyAccessor must not be null");
 
-				Object generatedId = ((DbAction.WithGeneratedId<?>) a).getGeneratedId();
+			Object generatedId = WithGeneratedId.class.cast(action).getGeneratedId();
 
-				if (generatedId != null) {
+			if (generatedId == null) {
+				return;
+			}
 
-					if (a instanceof DbAction.InsertRoot && a.getEntityType().equals(entityType)) {
-						propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
-					} else if (a instanceof DbAction.WithDependingOn) {
+			action.postExecute(converter, (PersistentPropertyAccessor) propertyAccessor);
 
-						setId(context, converter, propertyAccessor, (DbAction.WithDependingOn<?>) a, generatedId);
-					}
-				}
+			if (action instanceof DbAction.WithDependingOn) {
+				setId(converter, propertyAccessor, WithDependingOn.class.cast(action), generatedId);
 			}
 		});
 
@@ -102,19 +106,12 @@ public class AggregateChange<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	static void setId(RelationalMappingContext context, RelationalConverter converter,
-			PersistentPropertyAccessor<?> propertyAccessor, DbAction.WithDependingOn<?> action, Object generatedId) {
+	static void setId(
+			/*MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,*/
+			RelationalConverter converter, PersistentPropertyAccessor<?> propertyAccessor, DbAction.WithDependingOn<?> action,
+			Object generatedId) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPathToEntity = action.getPropertyPath();
-
-		RelationalPersistentProperty requiredIdProperty = context
-				.getRequiredPersistentEntity(propertyPathToEntity.getRequiredLeafProperty().getActualType())
-				.getRequiredIdProperty();
-
-		PersistentPropertyPath<RelationalPersistentProperty> pathToId = context.getPersistentPropertyPath(
-				propertyPathToEntity.toDotPath() + '.' + requiredIdProperty.getName(),
-				propertyPathToEntity.getBaseProperty().getOwner().getType());
-
 		RelationalPersistentProperty leafProperty = propertyPathToEntity.getRequiredLeafProperty();
 
 		Object currentPropertyValue = propertyAccessor.getProperty(propertyPathToEntity);
@@ -126,21 +123,37 @@ public class AggregateChange<T> {
 			Object keyObject = action.getAdditionalValues().get(keyColumn);
 
 			if (List.class.isAssignableFrom(leafProperty.getType())) {
-				setIdInElementOfList(converter, action, generatedId, (List) currentPropertyValue, (int) keyObject);
+				setIdInElementOfList(converter, action, generatedId, (List<?>) currentPropertyValue, (int) keyObject);
 			} else if (Map.class.isAssignableFrom(leafProperty.getType())) {
-				setIdInElementOfMap(converter, action, generatedId, (Map) currentPropertyValue, keyObject);
+				setIdInElementOfMap(converter, action, generatedId, (Map<Object, Object>) currentPropertyValue, keyObject);
 			} else {
 				throw new IllegalStateException("Can't handle " + currentPropertyValue);
 			}
+
 		} else if (leafProperty.isCollectionLike()) {
 
 			if (Set.class.isAssignableFrom(leafProperty.getType())) {
-				setIdInElementOfSet(converter, action, generatedId, (Set) currentPropertyValue);
+				setIdInElementOfSet(converter, action, generatedId, (Set<?>) currentPropertyValue);
 			} else {
 				throw new IllegalStateException("Can't handle " + currentPropertyValue);
 			}
+
 		} else {
-			propertyAccessor.setProperty(pathToId, generatedId);
+
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context = converter
+					.getMappingContext();
+
+			RelationalPersistentProperty requiredIdProperty = context
+					.getRequiredPersistentEntity(propertyPathToEntity.getRequiredLeafProperty().getActualType())
+					.getRequiredIdProperty();
+
+			Class<?> rootType = propertyPathToEntity.getBaseProperty().getOwner().getType();
+			PropertyPath path = PropertyPath.from(propertyPathToEntity.toDotPath(), rootType);
+
+			PersistentPropertyPath<? extends RelationalPersistentProperty> idPropertyPath = context
+					.getPersistentPropertyPath(path.nested(requiredIdProperty.getName()));
+
+			propertyAccessor.setProperty(idPropertyPath, generatedId);
 		}
 	}
 
@@ -156,15 +169,14 @@ public class AggregateChange<T> {
 		set.add((T) intermediateAccessor.getBean());
 	}
 
-	@SuppressWarnings("unchecked")
-	private static <K, V> void setIdInElementOfMap(RelationalConverter converter, DbAction.WithDependingOn<?> action,
-			Object generatedId, Map<K, V> map, K keyObject) {
+	private static <K> void setIdInElementOfMap(RelationalConverter converter, DbAction.WithDependingOn<?> action,
+			Object generatedId, Map<K, Object> map, K keyObject) {
 
 		PersistentPropertyAccessor<?> intermediateAccessor = setId(converter, action, generatedId);
 
 		// this currently only works on the standard collections
 		// no support for immutable collections, nor specialized ones.
-		map.put(keyObject, (V) intermediateAccessor.getBean());
+		map.put(keyObject, intermediateAccessor.getBean());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -181,6 +193,7 @@ public class AggregateChange<T> {
 	/**
 	 * Sets the id of the entity referenced in the action and uses the {@link PersistentPropertyAccessor} used for that.
 	 */
+	@SuppressWarnings("unchecked")
 	private static <T> PersistentPropertyAccessor<T> setId(RelationalConverter converter,
 			DbAction.WithDependingOn<T> action, Object generatedId) {
 
