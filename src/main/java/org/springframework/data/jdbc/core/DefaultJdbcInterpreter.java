@@ -79,7 +79,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 * @see org.springframework.data.relational.core.conversion.Interpreter#interpret(org.springframework.data.relational.core.conversion.DbAction.Update)
 	 */
 	@Override
-	public <T> void interpret(Update<T> update ) {
+	public <T> void interpret(Update<T> update) {
 		accessStrategy.update(update.getEntity(), update.getEntityType());
 	}
 
