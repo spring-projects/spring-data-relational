@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.0.RC2 (2018-08-20)
+-----------------------------------------
+* DATAJDBC-245 - Release 1.0 RC2 (Lovelace).
+* DATAJDBC-242 - Reflect changes in documentation.
+* DATAJDBC-229 - Add java.util.UUID into simpleTypeHolder.
+
+
 Changes in version 1.0.0.RC1 (2018-07-26)
 -----------------------------------------
 * DATAJDBC-243 - Using @EnableJdbcRepositories and extending JdbcConfiguration causes duplicate bean registrations.
