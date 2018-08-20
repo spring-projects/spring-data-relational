@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Wither;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -35,7 +36,6 @@ import java.util.Set;
 
 import javax.naming.OperationNotSupportedException;
 
-import lombok.experimental.Wither;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -47,6 +47,7 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.repository.query.Param;
 import org.springframework.util.Assert;
 
 /**
@@ -172,6 +173,27 @@ public class EntityRowMapperUnitTests {
 				.containsExactly(ID_FOR_ENTITY_REFERENCING_LIST, "alpha", 2);
 	}
 
+	@Test // DATAJDBC-252
+	public void doesNotTryToSetPropertiesThatAreSetViaConstructor() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("value"), //
+				"value-from-resultSet");
+		rs.next();
+
+		DontUseSetter extracted = createRowMapper(DontUseSetter.class).mapRow(rs, 1);
+
+		assertThat(extracted.value) //
+				.isEqualTo("setThroughConstructor:value-from-resultSet");
+	}
+
+	private static class DontUseSetter {
+		String value;
+
+		DontUseSetter(@Param("value") String value) {
+			this.value = "setThroughConstructor:" + value;
+		}
+	}
+
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
 		return createRowMapper(type, NamingStrategy.INSTANCE);
 	}
@@ -189,12 +211,14 @@ public class EntityRowMapperUnitTests {
 		doReturn(new HashSet<>(asList( //
 				new SimpleEntry<>("one", new Trivial()), //
 				new SimpleEntry<>("two", new Trivial()) //
-		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP), any(RelationalPersistentProperty.class));
+		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP),
+				any(RelationalPersistentProperty.class));
 
 		doReturn(new HashSet<>(asList( //
 				new SimpleEntry<>(1, new Trivial()), //
 				new SimpleEntry<>(2, new Trivial()) //
-		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST), any(RelationalPersistentProperty.class));
+		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST),
+				any(RelationalPersistentProperty.class));
 
 		RelationalConverter converter = new BasicRelationalConverter(context, new JdbcCustomConversions());
 

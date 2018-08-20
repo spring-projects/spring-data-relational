@@ -23,6 +23,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -73,7 +74,13 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 		Object id = idProperty == null ? null : readFrom(resultSet, idProperty, "");
 
+		PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
+
 		for (RelationalPersistentProperty property : entity) {
+
+			if (persistenceConstructor != null && persistenceConstructor.isConstructorParameter(property)) {
+				continue;
+			}
 
 			if (property.isCollectionLike() && id != null) {
 				propertyAccessor.setProperty(property, accessStrategy.findAllByProperty(id, property));
