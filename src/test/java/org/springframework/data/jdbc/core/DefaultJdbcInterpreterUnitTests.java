@@ -51,19 +51,44 @@ public class DefaultJdbcInterpreterUnitTests {
 	DataAccessStrategy dataAccessStrategy = mock(DataAccessStrategy.class);
 	DefaultJdbcInterpreter interpreter = new DefaultJdbcInterpreter(context, dataAccessStrategy);
 
+	Container container = new Container();
+	Element element = new Element();
+
+	InsertRoot<Container> containerInsert = new InsertRoot<>(container);
+	Insert<?> insert = new Insert<>(element, PropertyPathUtils.toPath("element", Container.class, context),
+			containerInsert);
+
 	@Test // DATAJDBC-145
 	public void insertDoesHonourNamingStrategyForBackReference() {
 
-		Container container = new Container();
 		container.id = CONTAINER_ID;
-
-		Element element = new Element();
-
-		InsertRoot<Container> containerInsert = new InsertRoot<>(container);
 		containerInsert.setGeneratedId(CONTAINER_ID);
 
-		Insert<?> insert = new Insert<>(element, PropertyPathUtils.toPath("element", Container.class, context),
-				containerInsert);
+		interpreter.interpret(insert);
+
+		ArgumentCaptor<Map<String, Object>> argumentCaptor = ArgumentCaptor.forClass(Map.class);
+		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
+
+		assertThat(argumentCaptor.getValue()).containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
+	}
+
+	@Test // DATAJDBC-251
+	public void idOfParentGetsPassedOnAsAdditionalParameterIfNoIdGotGenerated() {
+
+		container.id = CONTAINER_ID;
+
+		interpreter.interpret(insert);
+
+		ArgumentCaptor<Map<String, Object>> argumentCaptor = ArgumentCaptor.forClass(Map.class);
+		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
+
+		assertThat(argumentCaptor.getValue()).containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
+	}
+
+	@Test // DATAJDBC-251
+	public void generatedIdOfParentGetsPassedOnAsAdditionalParameter() {
+
+		containerInsert.setGeneratedId(CONTAINER_ID);
 
 		interpreter.interpret(insert);
 

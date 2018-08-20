@@ -171,7 +171,12 @@ class DefaultJdbcInterpreter implements Interpreter {
 		Object entity = dependingOn.getEntity();
 
 		if (dependingOn instanceof DbAction.WithGeneratedId) {
-			return  ((DbAction.WithGeneratedId<?>) dependingOn).getGeneratedId();
+
+			Object generatedId = ((DbAction.WithGeneratedId<?>) dependingOn).getGeneratedId();
+
+			if (generatedId != null) {
+				return generatedId;
+			}
 		}
 
 		return persistentEntity.getIdentifierAccessor(entity).getIdentifier();
