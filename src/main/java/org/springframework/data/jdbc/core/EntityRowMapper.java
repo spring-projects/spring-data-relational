@@ -70,11 +70,9 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 		T result = createInstance(entity, resultSet, "");
 
-		if (entity.requiresPropertyPopulation()) {
-			return populateProperties(result, resultSet);
-		}
-
-		return result;
+		return entity.requiresPropertyPopulation() //
+				? populateProperties(result, resultSet) //
+				: result;
 	}
 
 	private T populateProperties(T result, ResultSet resultSet) {
@@ -92,12 +90,16 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			}
 
 			if (property.isCollectionLike() && id != null) {
+
 				propertyAccessor.setProperty(property, accessStrategy.findAllByProperty(id, property));
+
 			} else if (property.isMap() && id != null) {
 
 				Iterable<Object> allByProperty = accessStrategy.findAllByProperty(id, property);
 				propertyAccessor.setProperty(property, ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(allByProperty));
+
 			} else {
+
 				propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
 			}
 		}
