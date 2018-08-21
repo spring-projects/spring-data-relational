@@ -71,13 +71,13 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		T result = createInstance(entity, resultSet, "");
 
 		if (entity.requiresPropertyPopulation()) {
-			populateProperties(result, resultSet);
+			return populateProperties(result, resultSet);
 		}
 
 		return result;
 	}
 
-	private void populateProperties(T result, ResultSet resultSet) {
+	private T populateProperties(T result, ResultSet resultSet) {
 
 		PersistentPropertyAccessor<T> propertyAccessor = converter.getPropertyAccessor(entity, result);
 
@@ -101,6 +101,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 				propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
 			}
 		}
+
+		return propertyAccessor.getBean();
 	}
 
 	/**

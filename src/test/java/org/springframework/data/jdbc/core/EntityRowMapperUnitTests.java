@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -186,12 +187,18 @@ public class EntityRowMapperUnitTests {
 				.isEqualTo("setThroughConstructor:value-from-resultSet");
 	}
 
-	private static class DontUseSetter {
-		String value;
+	@Test // DATAJDBC-252
+	public void handlesMixedProperties() throws SQLException {
 
-		DontUseSetter(@Param("value") String value) {
-			this.value = "setThroughConstructor:" + value;
-		}
+		ResultSet rs = mockResultSet(asList("one", "two", "three"), //
+				"111", "222", "333");
+		rs.next();
+
+		MixedProperties extracted = createRowMapper(MixedProperties.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.extracting(e -> e.one, e -> e.two, e -> e.three) //
+				.isEqualTo(new String[] { "111", "222", "333" });
 	}
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
@@ -368,5 +375,37 @@ public class EntityRowMapperUnitTests {
 		@Id Long id;
 		String name;
 		List<Trivial> children;
+	}
+
+	private static class DontUseSetter {
+		String value;
+
+		DontUseSetter(@Param("value") String value) {
+			this.value = "setThroughConstructor:" + value;
+		}
+	}
+
+	static class MixedProperties {
+
+		final String one;
+		String two;
+		final String three;
+
+		@PersistenceConstructor
+		MixedProperties(String one) {
+			this.one = one;
+			this.three = "unset";
+		}
+
+		private MixedProperties(String one, String two, String three) {
+
+			this.one = one;
+			this.two = two;
+			this.three = three;
+		}
+
+		MixedProperties withThree(String three) {
+			return new MixedProperties(one, two, three);
+		}
 	}
 }
