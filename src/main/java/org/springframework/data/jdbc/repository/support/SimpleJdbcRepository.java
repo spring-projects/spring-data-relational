@@ -18,13 +18,13 @@ package org.springframework.data.jdbc.repository.support;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.util.Streamable;
 
 /**
  * @author Jens Schauder
@@ -42,10 +42,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	 */
 	@Override
 	public <S extends T> S save(S instance) {
-
-		entityOperations.save(instance);
-
-		return instance;
+		return entityOperations.save(instance);
 	}
 
 	/*
@@ -55,9 +52,9 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	@Override
 	public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
 
-		List<S> savedEntities = new ArrayList<>();
-		entities.forEach(e -> savedEntities.add(save(e)));
-		return savedEntities;
+		return Streamable.of(entities).stream() //
+				.map(this::save) //
+				.collect(Collectors.toList());
 	}
 
 	/*
