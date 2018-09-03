@@ -26,7 +26,6 @@ import java.util.function.BiFunction;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy.SettableValue;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;

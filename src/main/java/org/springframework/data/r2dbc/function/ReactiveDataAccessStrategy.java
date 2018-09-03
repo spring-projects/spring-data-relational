@@ -22,72 +22,40 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.lang.Nullable;
+import org.springframework.data.r2dbc.function.convert.SettableValue;
 
 /**
  * @author Mark Paluch
  */
 public interface ReactiveDataAccessStrategy {
 
+	/**
+	 * @param typeToRead
+	 * @return all field names for a specific type.
+	 */
 	List<String> getAllFields(Class<?> typeToRead);
 
+	/**
+	 * @param object
+	 * @return {@link SettableValue} that represent an {@code INSERT} of {@code object}.
+	 */
 	List<SettableValue> getInsert(Object object);
 
+	/**
+	 * Map the {@link Sort} object to apply field name mapping using {@link Class the type to read}.
+	 *
+	 * @param typeToRead
+	 * @param sort
+	 * @return
+	 */
 	Sort getMappedSort(Class<?> typeToRead, Sort sort);
 
 	// TODO: Broaden T to Mono<T>/Flux<T> for reactive relational data access?
 	<T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead);
 
-	String getTableName(Class<?> type);
-
 	/**
-	 * A database value that can be set in a statement.
+	 * @param type
+	 * @return the table name for the {@link Class entity type}.
 	 */
-	class SettableValue {
-
-		private final Object identifier;
-		private final @Nullable Object value;
-		private final Class<?> type;
-
-		/**
-		 * Create a {@link SettableValue} using an integer index.
-		 *
-		 * @param index
-		 * @param value
-		 * @param type
-		 */
-		public SettableValue(int index, @Nullable Object value, Class<?> type) {
-
-			this.identifier = index;
-			this.value = value;
-			this.type = type;
-		}
-
-		/**
-		 * Create a {@link SettableValue} using a {@link String} identifier.
-		 *
-		 * @param identifier
-		 * @param value
-		 * @param type
-		 */
-		public SettableValue(String identifier, @Nullable Object value, Class<?> type) {
-
-			this.identifier = identifier;
-			this.value = value;
-			this.type = type;
-		}
-
-		public Object getIdentifier() {
-			return identifier;
-		}
-
-		@Nullable
-		public Object getValue() {
-			return value;
-		}
-
-		public Class<?> getType() {
-			return type;
-		}
-	}
+	String getTableName(Class<?> type);
 }
