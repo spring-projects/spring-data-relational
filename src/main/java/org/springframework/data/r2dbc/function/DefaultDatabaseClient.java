@@ -216,6 +216,29 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		return (dae != null ? dae : new UncategorizedR2dbcException(task, sql, ex));
 	}
 
+	/**
+	 * Customization hook.
+	 */
+	protected <T> DefaultTypedExecuteSpec<T> createTypedExecuteSpec(Map<Integer, SettableValue> byIndex,
+			Map<String, SettableValue> byName, Supplier<String> sqlSupplier, Class<T> typeToRead) {
+		return new DefaultTypedExecuteSpec<>(byIndex, byName, sqlSupplier, typeToRead);
+	}
+
+	/**
+	 * Customization hook.
+	 */
+	protected ExecuteSpecSupport createGenericExecuteSpec(Map<Integer, SettableValue> byIndex,
+			Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
+		return new DefaultGenericExecuteSpec(byIndex, byName, sqlSupplier);
+	}
+
+	/**
+	 * Customization hook.
+	 */
+	protected DefaultGenericExecuteSpec createGenericExecuteSpec(Supplier<String> sqlSupplier) {
+		return new DefaultGenericExecuteSpec(sqlSupplier);
+	}
+
 	private static void doBind(Statement statement, Map<String, SettableValue> byName,
 			Map<Integer, SettableValue> byIndex) {
 
@@ -236,7 +259,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				statement.bindNull(name, o.getType());
 			}
 		});
-
 	}
 
 	/**
@@ -256,7 +278,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(sqlSupplier, "SQL Supplier must not be null!");
 
-			return new DefaultGenericExecuteSpec(sqlSupplier);
+			return createGenericExecuteSpec(sqlSupplier);
 		}
 	}
 
@@ -264,13 +286,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * Base class for {@link DatabaseClient.GenericExecuteSpec} implementations.
 	 */
 	@RequiredArgsConstructor
-	private class GenericExecuteSpecSupport {
+	class ExecuteSpecSupport {
 
 		final Map<Integer, SettableValue> byIndex;
 		final Map<String, SettableValue> byName;
 		final Supplier<String> sqlSupplier;
 
-		GenericExecuteSpecSupport(Supplier<String> sqlSupplier) {
+		ExecuteSpecSupport(Supplier<String> sqlSupplier) {
 
 			this.byIndex = Collections.emptyMap();
 			this.byName = Collections.emptyMap();
@@ -284,7 +306,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return sql;
 		}
 
-		protected <T> SqlResult<T> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
+		<T> SqlResult<T> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			Function<Connection, Statement> executeFunction = it -> {
 
@@ -307,7 +329,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					mappingFunction);
 		}
 
-		public GenericExecuteSpecSupport bind(int index, Object value) {
+		public ExecuteSpecSupport bind(int index, Object value) {
 
 			Map<Integer, SettableValue> byIndex = new LinkedHashMap<>(this.byIndex);
 			byIndex.put(index, new SettableValue(index, value, null));
@@ -315,7 +337,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return createInstance(byIndex, this.byName, this.sqlSupplier);
 		}
 
-		public GenericExecuteSpecSupport bindNull(int index, Class<?> type) {
+		public ExecuteSpecSupport bindNull(int index, Class<?> type) {
 
 			Map<Integer, SettableValue> byIndex = new LinkedHashMap<>(this.byIndex);
 			byIndex.put(index, new SettableValue(index, null, type));
@@ -323,7 +345,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return createInstance(byIndex, this.byName, this.sqlSupplier);
 		}
 
-		public GenericExecuteSpecSupport bind(String name, Object value) {
+		public ExecuteSpecSupport bind(String name, Object value) {
 
 			Assert.hasText(name, "Parameter name must not be null or empty!");
 
@@ -333,7 +355,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return createInstance(this.byIndex, byName, this.sqlSupplier);
 		}
 
-		public GenericExecuteSpecSupport bindNull(String name, Class<?> type) {
+		public ExecuteSpecSupport bindNull(String name, Class<?> type) {
 
 			Assert.hasText(name, "Parameter name must not be null or empty!");
 
@@ -343,12 +365,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return createInstance(this.byIndex, byName, this.sqlSupplier);
 		}
 
-		protected GenericExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex,
-				Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
-			return new GenericExecuteSpecSupport(byIndex, byName, sqlSupplier);
+		protected ExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
+				Supplier<String> sqlSupplier) {
+			return new ExecuteSpecSupport(byIndex, byName, sqlSupplier);
 		}
 
-		public GenericExecuteSpecSupport bind(Object bean) {
+		public ExecuteSpecSupport bind(Object bean) {
 
 			Assert.notNull(bean, "Bean must not be null!");
 
@@ -359,7 +381,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Default {@link DatabaseClient.GenericExecuteSpec} implementation.
 	 */
-	private class DefaultGenericExecuteSpec extends GenericExecuteSpecSupport implements GenericExecuteSpec {
+	protected class DefaultGenericExecuteSpec extends ExecuteSpecSupport implements GenericExecuteSpec {
 
 		DefaultGenericExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
 				Supplier<String> sqlSupplier) {
@@ -375,7 +397,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
-			return new DefaultTypedGenericExecuteSpec<>(this.byIndex, this.byName, this.sqlSupplier, resultType);
+			return createTypedExecuteSpec(this.byIndex, this.byName, this.sqlSupplier, resultType);
 		}
 
 		@Override
@@ -414,9 +436,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		protected GenericExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex,
-				Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
-			return new DefaultGenericExecuteSpec(byIndex, byName, sqlSupplier);
+		protected ExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
+				Supplier<String> sqlSupplier) {
+			return createGenericExecuteSpec(byIndex, byName, sqlSupplier);
 		}
 	}
 
@@ -424,12 +446,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * Default {@link DatabaseClient.GenericExecuteSpec} implementation.
 	 */
 	@SuppressWarnings("unchecked")
-	private class DefaultTypedGenericExecuteSpec<T> extends GenericExecuteSpecSupport implements TypedExecuteSpec<T> {
+	protected class DefaultTypedExecuteSpec<T> extends ExecuteSpecSupport implements TypedExecuteSpec<T> {
 
 		private final Class<T> typeToRead;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
-		DefaultTypedGenericExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
+		DefaultTypedExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
 				Supplier<String> sqlSupplier, Class<T> typeToRead) {
 
 			super(byIndex, byName, sqlSupplier);
@@ -443,7 +465,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
-			return new DefaultTypedGenericExecuteSpec<>(this.byIndex, this.byName, this.sqlSupplier, resultType);
+			return createTypedExecuteSpec(this.byIndex, this.byName, this.sqlSupplier, resultType);
 		}
 
 		@Override
@@ -457,34 +479,34 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultTypedGenericExecuteSpec<T> bind(int index, Object value) {
-			return (DefaultTypedGenericExecuteSpec<T>) super.bind(index, value);
+		public DefaultTypedExecuteSpec<T> bind(int index, Object value) {
+			return (DefaultTypedExecuteSpec<T>) super.bind(index, value);
 		}
 
 		@Override
-		public DefaultTypedGenericExecuteSpec<T> bindNull(int index, Class<?> type) {
-			return (DefaultTypedGenericExecuteSpec<T>) super.bindNull(index, type);
+		public DefaultTypedExecuteSpec<T> bindNull(int index, Class<?> type) {
+			return (DefaultTypedExecuteSpec<T>) super.bindNull(index, type);
 		}
 
 		@Override
-		public DefaultTypedGenericExecuteSpec<T> bind(String name, Object value) {
-			return (DefaultTypedGenericExecuteSpec) super.bind(name, value);
+		public DefaultTypedExecuteSpec<T> bind(String name, Object value) {
+			return (DefaultTypedExecuteSpec) super.bind(name, value);
 		}
 
 		@Override
-		public DefaultTypedGenericExecuteSpec<T> bindNull(String name, Class<?> type) {
-			return (DefaultTypedGenericExecuteSpec<T>) super.bindNull(name, type);
+		public DefaultTypedExecuteSpec<T> bindNull(String name, Class<?> type) {
+			return (DefaultTypedExecuteSpec<T>) super.bindNull(name, type);
 		}
 
 		@Override
-		public DefaultTypedGenericExecuteSpec<T> bind(Object bean) {
-			return (DefaultTypedGenericExecuteSpec<T>) super.bind(bean);
+		public DefaultTypedExecuteSpec<T> bind(Object bean) {
+			return (DefaultTypedExecuteSpec<T>) super.bind(bean);
 		}
 
 		@Override
-		protected DefaultTypedGenericExecuteSpec<T> createInstance(Map<Integer, SettableValue> byIndex,
+		protected DefaultTypedExecuteSpec<T> createInstance(Map<Integer, SettableValue> byIndex,
 				Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
-			return new DefaultTypedGenericExecuteSpec<>(byIndex, byName, sqlSupplier, typeToRead);
+			return createTypedExecuteSpec(byIndex, byName, sqlSupplier, typeToRead);
 		}
 	}
 
@@ -550,8 +572,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		StringBuilder getLimitOffset(Pageable pageable) {
-			return new StringBuilder().append("LIMIT").append(' ').append(page.getPageSize()) //
-					.append(' ').append("OFFSET").append(' ').append(page.getOffset());
+			return new StringBuilder().append("LIMIT").append(' ').append(pageable.getPageSize()) //
+					.append(' ').append("OFFSET").append(' ').append(pageable.getOffset());
 		}
 
 		StringBuilder getSortClause(Sort sort) {

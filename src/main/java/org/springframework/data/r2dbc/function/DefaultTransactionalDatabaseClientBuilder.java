@@ -33,10 +33,8 @@ class DefaultTransactionalDatabaseClientBuilder extends DefaultDatabaseClientBui
 
 	DefaultTransactionalDatabaseClientBuilder(DefaultDatabaseClientBuilder other) {
 
+		super(other);
 		Assert.notNull(other, "DefaultDatabaseClientBuilder must not be null!");
-
-		this.connector = other.connector;
-		this.exceptionTranslator = other.exceptionTranslator;
 	}
 
 	@Override

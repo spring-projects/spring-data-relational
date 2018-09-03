@@ -33,9 +33,9 @@ import org.springframework.util.Assert;
  */
 class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
-	@Nullable ConnectionFactory connector;
-	@Nullable R2dbcExceptionTranslator exceptionTranslator;
-	ReactiveDataAccessStrategy accessStrategy = new DefaultReactiveDataAccessStrategy();
+	private @Nullable ConnectionFactory connector;
+	private @Nullable R2dbcExceptionTranslator exceptionTranslator;
+	private ReactiveDataAccessStrategy accessStrategy = new DefaultReactiveDataAccessStrategy();
 
 	DefaultDatabaseClientBuilder() {}
 
@@ -45,6 +45,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 		this.connector = other.connector;
 		this.exceptionTranslator = other.exceptionTranslator;
+		this.accessStrategy = other.accessStrategy;
 	}
 
 	@Override
