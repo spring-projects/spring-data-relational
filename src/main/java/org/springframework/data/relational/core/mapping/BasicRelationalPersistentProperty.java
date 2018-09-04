@@ -72,7 +72,8 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 
 		this.context = context;
 		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)).map(Column::value));
-		this.keyColumnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)).map(Column::keyColumn));
+		this.keyColumnName = Lazy.of(() -> Optional.ofNullable(
+				findAnnotation(Column.class)).map(Column::keyColumn).filter(keyColumn -> !keyColumn.equals("")));
 	}
 
 	/*
