@@ -377,7 +377,7 @@ The following table describes the available events:
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterDeleteEvent.html[`AfterDeleteEvent`]
 | After an aggregate root gets deleted.
 
-| {javadoc-base}/org/springframework/data/relational/core/mapping/event/AfterDelete.html[`BeforeSaveEvent`]
+| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveEvent.html[`BeforeSaveEvent`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
 The event has a reference to an {javadoc-base}/org/springframework/data/relational/core/conversion/AggregateChange.html[`AggregateChange`] instance.
 The instance can be modified by adding or removing {javadoc-base}/org/springframework/data/relational/core/conversion/DbAction.html[`DbAction`] instances.
