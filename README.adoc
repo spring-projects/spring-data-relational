@@ -392,3 +392,7 @@ Here are some ways for you to get involved in the community:
 * Watch for upcoming articles on Spring by http://spring.io/blog[subscribing] to spring.io.
 
 Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement]. Signing the contributor’s agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. If you forget to do so, you'll be reminded when you submit a pull request. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
+
+== License
+
+link:src/main/resources/license.txt[The license und which Spring Data JDBC is published can be found here].
