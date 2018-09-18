@@ -32,6 +32,7 @@ import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Meta data about a property to be used by repository implementations.
@@ -46,6 +47,7 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
 
 	static {
+
 		javaToDbType.put(Enum.class, String.class);
 		javaToDbType.put(ZonedDateTime.class, String.class);
 		javaToDbType.put(Temporal.class, Date.class);
@@ -72,8 +74,11 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 
 		this.context = context;
 		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)).map(Column::value));
-		this.keyColumnName = Lazy.of(() -> Optional.ofNullable(
-				findAnnotation(Column.class)).map(Column::keyColumn).filter(keyColumn -> !keyColumn.equals("")));
+		this.keyColumnName = Lazy.of(() -> Optional.ofNullable( //
+				findAnnotation(Column.class)) //
+				.map(Column::keyColumn) //
+				.filter(StringUtils::hasText) //
+		);
 	}
 
 	/*
@@ -120,10 +125,12 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 
 	@Override
 	public String getKeyColumn() {
-		if (isQualified())
+
+		if (isQualified()) {
 			return keyColumnName.get().orElseGet(() -> context.getNamingStrategy().getKeyColumn(this));
-		else
+		} else {
 			return null;
+		}
 	}
 
 	@Override

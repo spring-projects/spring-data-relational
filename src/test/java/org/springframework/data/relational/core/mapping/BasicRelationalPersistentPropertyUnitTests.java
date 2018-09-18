@@ -89,12 +89,12 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	@Test // DATAJDBC-218
 	public void detectsAnnotatedColumnAndKeyName() {
 
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+		RelationalPersistentProperty listProperty = context //
+				.getRequiredPersistentEntity(DummyEntity.class) //
+				.getRequiredPersistentProperty("someList");
 
-		assertThat(entity.getRequiredPersistentProperty("someList").getColumnName())
-				.isEqualTo("dummy_column_name");
-		assertThat(entity.getRequiredPersistentProperty("someList").getKeyColumn())
-				.isEqualTo("dummy_key_column_name");
+		assertThat(listProperty.getColumnName()).isEqualTo("dummy_column_name");
+		assertThat(listProperty.getKeyColumn()).isEqualTo("dummy_key_column_name");
 	}
 
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
@@ -113,8 +113,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private final ZonedDateTime zonedDateTime;
 		private final UUID uuid;
 
-		@Column(value="dummy_column_name", keyColumn="dummy_key_column_name")
-		private List<Integer> someList;
+		@Column(value = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;
