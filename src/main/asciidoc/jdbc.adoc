@@ -103,6 +103,8 @@ While this process could and probably will be improved, there are certain limita
 It does not know the previous state of an aggregate.
 So any update process always has to take whatever it finds in the database and make sure it converts it to whatever is the state of the entity passed to the save method.
 
+include::{spring-data-commons-docs}/object-mapping.adoc[leveloffset=+2]
+
 [[jdbc.entity-persistence.types]]
 === Supported Types in Your Entity
 
