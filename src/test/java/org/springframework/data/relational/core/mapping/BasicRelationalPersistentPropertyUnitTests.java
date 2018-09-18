@@ -93,7 +93,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 				.getRequiredPersistentEntity(DummyEntity.class) //
 				.getRequiredPersistentProperty("someList");
 
-		assertThat(listProperty.getColumnName()).isEqualTo("dummy_column_name");
+		assertThat(listProperty.getReverseColumnName()).isEqualTo("dummy_column_name");
 		assertThat(listProperty.getKeyColumn()).isEqualTo("dummy_key_column_name");
 	}
 

@@ -73,7 +73,13 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 		Assert.notNull(context, "context must not be null.");
 
 		this.context = context;
-		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)).map(Column::value));
+
+		this.columnName = Lazy.of(() -> Optional.ofNullable( //
+				findAnnotation(Column.class)) //
+				.map(Column::value) //
+				.filter(StringUtils::hasText) //
+		);
+
 		this.keyColumnName = Lazy.of(() -> Optional.ofNullable( //
 				findAnnotation(Column.class)) //
 				.map(Column::keyColumn) //
@@ -120,7 +126,7 @@ class BasicRelationalPersistentProperty extends AnnotationBasedPersistentPropert
 
 	@Override
 	public String getReverseColumnName() {
-		return context.getNamingStrategy().getReverseColumnName(this);
+		return columnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(this));
 	}
 
 	@Override

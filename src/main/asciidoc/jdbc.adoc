@@ -131,7 +131,8 @@ You can change this name by implementing `NamingStrategy.getReverseColumnName(Re
 
 * `Map<simple type, some entity>` is considered a qualified one-to-many relationship.
 The table of the referenced entity is expected to have two additional columns: One named the same as the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
-You can change this name by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
+You can change this behavior by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
+Alternatively you may annotate the attribute with `@Column(value="your_column_name", keyColumn="your_key_column_name")`
 
 * `List<some entity>` is mapped as a  `Map<Integer, some entity>`.
 

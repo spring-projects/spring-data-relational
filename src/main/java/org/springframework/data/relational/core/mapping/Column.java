@@ -35,7 +35,7 @@ public @interface Column {
 	/**
 	 * The mapping column name.
 	 */
-	String value();
+	String value() default "";
 
 	/**
 	 * The column name for key columns of List or Map collections.
