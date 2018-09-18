@@ -260,7 +260,9 @@ class SqlGenerator {
 		columnNamesForInsert.addAll(additionalColumns);
 
 		String tableColumns = String.join(", ", columnNamesForInsert);
-		String parameterNames = columnNamesForInsert.stream().collect(Collectors.joining(", :", ":", ""));
+		String parameterNames = columnNamesForInsert.stream()//
+				.map(n -> String.format(":%s", n))//
+				.collect(Collectors.joining(", "));
 
 		return String.format(insertTemplate, entity.getTableName(), tableColumns, parameterNames);
 	}
