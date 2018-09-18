@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.mapping;
 
 import lombok.Getter;
 
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
@@ -77,5 +78,10 @@ public class RelationalMappingContext
 	protected RelationalPersistentProperty createPersistentProperty(Property property,
 			RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
 		return new BasicRelationalPersistentProperty(property, owner, simpleTypeHolder, this);
+	}
+
+	@Override
+	protected boolean shouldCreatePersistentEntityFor(TypeInformation<?> type) {
+		return super.shouldCreatePersistentEntityFor(type) && !AggregateReference.class.isAssignableFrom(type.getType());
 	}
 }

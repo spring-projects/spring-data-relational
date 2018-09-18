@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.lang.Nullable;
 
@@ -25,6 +26,8 @@ import org.springframework.lang.Nullable;
  * @author Oliver Gierke
  */
 public interface RelationalPersistentProperty extends PersistentProperty<RelationalPersistentProperty> {
+
+	boolean isReference();
 
 	/**
 	 * Returns the name of the column backing this property.
@@ -39,6 +42,14 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * @return a {@link Class} that is suitable for usage with JDBC drivers.
 	 */
 	Class<?> getColumnType();
+
+	/**
+	 * The SQL type constant used when using this property as a parameter for a SQL statement.
+	 * @return Must not be {@code null}.
+	 *
+	 * @see java.sql.Types
+	 */
+	int getSqlType();
 
 	@Override
 	RelationalPersistentEntity<?> getOwner();

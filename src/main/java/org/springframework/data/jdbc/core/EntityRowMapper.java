@@ -100,7 +100,9 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 			} else {
 
-				propertyAccessor.setProperty(property, readFrom(resultSet, property, ""));
+				final Object value = readFrom(resultSet, property, "");
+
+				propertyAccessor.setProperty(property, value);
 			}
 		}
 
