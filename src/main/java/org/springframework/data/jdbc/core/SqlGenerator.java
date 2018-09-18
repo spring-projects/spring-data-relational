@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
  *
  * @author Jens Schauder
+ * @author Yoichi Imai
  */
 class SqlGenerator {
 
@@ -260,6 +261,7 @@ class SqlGenerator {
 		columnNamesForInsert.addAll(additionalColumns);
 
 		String tableColumns = String.join(", ", columnNamesForInsert);
+
 		String parameterNames = columnNamesForInsert.stream()//
 				.map(n -> String.format(":%s", n))//
 				.collect(Collectors.joining(", "));

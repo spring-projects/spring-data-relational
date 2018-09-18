@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Map;
@@ -26,11 +27,10 @@ import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -46,10 +46,16 @@ public class SqlGeneratorUnitTests {
 	@Before
 	public void setUp() {
 
+		this.sqlGenerator = createSqlGenerator(DummyEntity.class);
+	}
+
+	SqlGenerator createSqlGenerator(Class<?> type) {
+
 		NamingStrategy namingStrategy = new PrefixingNamingStrategy();
 		RelationalMappingContext context = new RelationalMappingContext(namingStrategy);
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-		this.sqlGenerator = new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
+
+		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}
 
 	@Test // DATAJDBC-112
@@ -170,10 +176,20 @@ public class SqlGeneratorUnitTests {
 				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
 	}
 
+	@Test // DATAJDBC-264
+	public void getInsertForEmptyColumnList() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class);
+
+		String insert = sqlGenerator.getInsert(emptySet());
+
+		assertThat(insert).endsWith("()");
+	}
 
 	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> base) {
 		return PersistentPropertyPathTestUtils.getPath(context, path, base);
 	}
+
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
@@ -212,4 +228,11 @@ public class SqlGeneratorUnitTests {
 		}
 
 	}
+
+	@SuppressWarnings("unused")
+	static class IdOnlyEntity {
+
+		@Id Long id;
+	}
+
 }
