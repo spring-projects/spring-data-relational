@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
@@ -256,6 +257,39 @@ public class AggregateTemplateIntegrationTests {
 		assertThat(reloaded.child).isNotNull();
 	}
 
+	@Test // DATAJDBC-125
+	public void saveAndLoadAnEntityWithSecondaryReferenceNull() {
+
+		template.save(legoSet);
+
+		assertThat(legoSet.manual.id).describedAs("id of stored manual").isNotNull();
+
+		LegoSet reloadedLegoSet = template.findById(legoSet.getId(), LegoSet.class);
+
+		assertThat(reloadedLegoSet.alternativeInstructions).isNull();
+	}
+
+	@Test // DATAJDBC-125
+	public void saveAndLoadAnEntityWithSecondaryReferenceNotNull() {
+
+		legoSet.alternativeInstructions = new Manual();
+		legoSet.alternativeInstructions.content = "alternative content";
+		template.save(legoSet);
+
+		assertThat(legoSet.manual.id).describedAs("id of stored manual").isNotNull();
+
+		LegoSet reloadedLegoSet = template.findById(legoSet.getId(), LegoSet.class);
+
+		SoftAssertions softly = new SoftAssertions();
+		softly.assertThat(reloadedLegoSet.alternativeInstructions).isNotNull();
+		softly.assertThat(reloadedLegoSet.alternativeInstructions.id).isNotNull();
+		softly.assertThat(reloadedLegoSet.alternativeInstructions.id).isNotEqualTo(reloadedLegoSet.manual.id);
+		softly.assertThat(reloadedLegoSet.alternativeInstructions.content)
+				.isEqualTo(reloadedLegoSet.alternativeInstructions.content);
+
+		softly.assertAll();
+	}
+
 	private static LegoSet createLegoSet() {
 
 		LegoSet entity = new LegoSet();
@@ -276,7 +310,8 @@ public class AggregateTemplateIntegrationTests {
 		private String name;
 
 		private Manual manual;
-
+		@Column("alternative")
+		private Manual alternativeInstructions;
 	}
 
 	@Data
