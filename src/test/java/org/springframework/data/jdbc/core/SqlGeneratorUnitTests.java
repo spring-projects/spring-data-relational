@@ -186,6 +186,17 @@ public class SqlGeneratorUnitTests {
 		assertThat(insert).endsWith("()");
 	}
 
+	@Test // DATAJDBC-262
+	public void update() {
+
+		assertThat(sqlGenerator.getUpdate()).containsSequence( //
+				"UPDATE", //
+				"dummy_entity", //
+				"SET", //
+				"WHERE", //
+				"x_id = :x_id");
+	}
+
 	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> base) {
 		return PersistentPropertyPathTestUtils.getPath(context, path, base);
 	}
