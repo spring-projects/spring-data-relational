@@ -1,6 +1,19 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.0.RELEASE (2018-09-21)
+---------------------------------------------
+* DATAJDBC-267 - Fix Jdbc configuration to support multiple stores.
+* DATAJDBC-265 - Include documentation about Object Mapping Fundamentals.
+* DATAJDBC-264 - SqlGenerator.createInsertSql creates wrong SQL for empty column list.
+* DATAJDBC-261 - Clear license indication.
+* DATAJDBC-260 - Fehler in der Dokumentation.
+* DATAJDBC-252 - Entity instantiation via constructor doesn't seem to work.
+* DATAJDBC-251 - Manually generated ID doesn't get passed on to dependent entities.
+* DATAJDBC-250 - Release 1.0 GA (Lovelace).
+* DATAJDBC-218 - Add support for key column in @Column annotation.
+
+
 Changes in version 1.0.0.RC2 (2018-08-20)
 -----------------------------------------
 * DATAJDBC-245 - Release 1.0 RC2 (Lovelace).
