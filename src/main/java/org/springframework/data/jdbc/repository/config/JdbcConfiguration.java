@@ -33,31 +33,30 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * @author Greg Turnquist
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Michael Simons
  */
 @Configuration
 public class JdbcConfiguration {
 
 	@Bean
-	protected RelationalMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
-			CustomConversions customConversions) {
+	protected RelationalMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy) {
 
 		RelationalMappingContext mappingContext = new RelationalMappingContext(
 				namingStrategy.orElse(NamingStrategy.INSTANCE));
-		mappingContext.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
+		mappingContext.setSimpleTypeHolder(jdbcCustomConversions().getSimpleTypeHolder());
 
 		return mappingContext;
 	}
 
 	@Bean
-	protected RelationalConverter relationalConverter(RelationalMappingContext mappingContext,
-			CustomConversions customConversions) {
-		return new BasicRelationalConverter(mappingContext, customConversions);
+	protected RelationalConverter relationalConverter(RelationalMappingContext mappingContext) {
+		return new BasicRelationalConverter(mappingContext, jdbcCustomConversions());
 	}
 
 	/**
 	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
 	 * {@link CustomConversions} will be registered with the
-	 * {@link #relationalConverter(RelationalMappingContext, CustomConversions)}. Returns an empty
+	 * {@link #relationalConverter(RelationalMappingContext)}. Returns an empty
 	 * {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return must not be {@literal null}.
