@@ -56,7 +56,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 	SoftAssertions softly = new SoftAssertions();
 
-	@Test
+	@Test // DATAJDBC-204
 	public void auditForAnnotatedEntity() {
 
 		configureRepositoryWith( //
@@ -97,7 +97,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 						});
 	}
 
-	@Test
+	@Test // DATAJDBC-204
 	public void noAnnotatedEntity() {
 
 		configureRepositoryWith( //
@@ -119,7 +119,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 						});
 	}
 
-	@Test
+	@Test // DATAJDBC-204
 	public void customDateTimeProvider() {
 
 		configureRepositoryWith( //
@@ -141,7 +141,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 						});
 	}
 
-	@Test
+	@Test // DATAJDBC-204
 	public void customAuditorAware() {
 
 		configureRepositoryWith( //
