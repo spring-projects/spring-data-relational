@@ -62,7 +62,7 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	protected CustomConversions jdbcCustomConversions() {
+	protected JdbcCustomConversions jdbcCustomConversions() {
 		return new JdbcCustomConversions();
 	}
 }
