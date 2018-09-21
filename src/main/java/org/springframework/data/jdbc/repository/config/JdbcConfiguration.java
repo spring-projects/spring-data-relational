@@ -20,7 +20,6 @@ import java.util.Optional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -34,10 +33,17 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Michael Simons
+ * @author Christoph Strobl
  */
 @Configuration
 public class JdbcConfiguration {
 
+	/**
+	 * Register a {@link RelationalMappingContext} and apply an optional {@link NamingStrategy}.
+	 *
+	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
+	 * @return must not be {@literal null}.
+	 */
 	@Bean
 	protected RelationalMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy) {
 
@@ -48,16 +54,23 @@ public class JdbcConfiguration {
 		return mappingContext;
 	}
 
+	/**
+	 * Creates a {@link RelationalConverter} using the configured {@link #jdbcMappingContext(Optional)}. Will get
+	 * {@link #jdbcCustomConversions()} applied.
+	 *
+	 * @see #jdbcMappingContext(Optional)
+	 * @see #jdbcCustomConversions()
+	 * @return must not be {@literal null}.
+	 */
 	@Bean
 	protected RelationalConverter relationalConverter(RelationalMappingContext mappingContext) {
 		return new BasicRelationalConverter(mappingContext, jdbcCustomConversions());
 	}
 
 	/**
-	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
-	 * {@link CustomConversions} will be registered with the
-	 * {@link #relationalConverter(RelationalMappingContext)}. Returns an empty
-	 * {@link JdbcCustomConversions} instance by default.
+	 * Register custom {@link Converter}s in a {@link JdbcCustomConversions} object if required. These
+	 * {@link JdbcCustomConversions} will be registered with the {@link #relationalConverter(RelationalMappingContext)}.
+	 * Returns an empty {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return must not be {@literal null}.
 	 */
