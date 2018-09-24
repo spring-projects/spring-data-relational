@@ -34,10 +34,9 @@
 		<mysql-connector-java.version>5.1.41</mysql-connector-java.version>
 		<postgresql.version>42.0.0</postgresql.version>
 		<mariadb-java-client.version>2.2.3</mariadb-java-client.version>
-		<r2dbc-spi.version>1.0.0.BUILD-SNAPSHOT</r2dbc-spi.version>
-		<r2dbc-postgresql.version>1.0.0.BUILD-SNAPSHOT</r2dbc-postgresql.version>
+		<r2dbc-spi.version>1.0.0.M5</r2dbc-spi.version>
+		<r2dbc-postgresql.version>1.0.0.M5</r2dbc-postgresql.version>
 		<testcontainers.version>1.7.3</testcontainers.version>
-		<reactor>Californium-BUILD-SNAPSHOT</reactor>
 
 	</properties>
 
