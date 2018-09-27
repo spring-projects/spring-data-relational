@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.jdbc.support.JdbcUtil;
@@ -48,6 +49,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Thomas Lang
  */
 @RequiredArgsConstructor
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -319,20 +321,31 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private <S> Object getIdFromHolder(KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
 
-		try {
-			// MySQL just returns one value with a special name
-			return holder.getKey();
-		} catch (InvalidDataAccessApiUsageException e) {
-			// Postgres returns a value for each column
-			Map<String, Object> keys = holder.getKeys();
+        try {
+            // MySQL just returns one value with a special name
+            return holder.getKey();
+        } catch (InvalidDataAccessApiUsageException e) {
+            // Postgres returns a value for each column
+            Map<String, Object> keys = holder.getKeys();
 
-			if (keys == null || persistentEntity.getIdProperty() == null) {
-				return null;
-			}
+            if (keys == null || persistentEntity.getIdProperty() == null) {
+                return null;
+            }
 
-			return keys.get(persistentEntity.getIdColumn());
-		}
-	}
+            return keys.get(persistentEntity.getIdColumn());
+        } catch (DataRetrievalFailureException e) {
+            // thomas.lang@th-deg.de
+            // mssql causes org.springframework.dao.DataRetrievalFailureException:
+            // The generated key is not of a supported numeric type. Unable to cast [null] to [java.lang.Number]
+            // see what happens here
+
+            Map<String, Object> keys = holder.getKeys();
+            if (keys == null || persistentEntity.getIdProperty() == null) {
+                return null;
+            }
+            return null;
+        }
+    }
 
 	private EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, converter, accessStrategy);

@@ -32,6 +32,7 @@ import org.springframework.jdbc.support.JdbcUtils;
  * Contains methods dealing with the quirks of JDBC, independent of any Entity, Aggregate or Repository abstraction.
  *
  * @author Jens Schauder
+ * @author Thomas Lang
  */
 @UtilityClass
 public class JdbcUtil {
@@ -42,7 +43,7 @@ public class JdbcUtil {
 
 		sqlTypeMappings.put(String.class, Types.VARCHAR);
 		sqlTypeMappings.put(BigInteger.class, Types.BIGINT);
-		sqlTypeMappings.put(BigDecimal.class, Types.NUMERIC);
+		sqlTypeMappings.put(BigDecimal.class, Types.DECIMAL);
 		sqlTypeMappings.put(Byte.class, Types.TINYINT);
 		sqlTypeMappings.put(byte.class, Types.TINYINT);
 		sqlTypeMappings.put(Short.class, Types.SMALLINT);
