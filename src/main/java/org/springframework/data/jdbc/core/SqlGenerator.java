@@ -273,8 +273,9 @@ class SqlGenerator {
 
 		String updateTemplate = "UPDATE %s SET %s WHERE %s = :%s";
 
-		String setClause = columnNames.stream()//
-				.map(n -> String.format("%s = :%s", n, n))//
+		String setClause = columnNames.stream() //
+				.filter(s -> !s.equals(entity.getIdColumn())) //
+				.map(n -> String.format("%s = :%s", n, n)) //
 				.collect(Collectors.joining(", "));
 
 		return String.format(updateTemplate, entity.getTableName(), setClause, entity.getIdColumn(), entity.getIdColumn());
