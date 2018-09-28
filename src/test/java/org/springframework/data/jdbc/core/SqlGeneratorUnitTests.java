@@ -186,6 +186,19 @@ public class SqlGeneratorUnitTests {
 		assertThat(insert).endsWith("()");
 	}
 
+	@Test // DATAJDBC-266
+	public void joinForOneToOneWithoutIdIncludesTheBackReferenceOfTheOuterJoin() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(ParentOfNoIdChild.class);
+
+		String findAll = sqlGenerator.getFindAll();
+
+		assertThat(findAll).containsSequence(
+				"SELECT",
+				"child.parent_of_no_id_child AS child_parent_of_no_id_child",
+				"FROM");
+	}
+
 	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> base) {
 		return PersistentPropertyPathTestUtils.getPath(context, path, base);
 	}
@@ -218,6 +231,15 @@ public class SqlGeneratorUnitTests {
 	static class Element {
 		@Id Long id;
 		String content;
+	}
+
+	static class ParentOfNoIdChild {
+		@Id Long id;
+		NoIdChild child;
+	}
+
+	static class NoIdChild {
+
 	}
 
 	private static class PrefixingNamingStrategy implements NamingStrategy {

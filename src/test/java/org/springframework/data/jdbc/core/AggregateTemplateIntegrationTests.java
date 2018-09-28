@@ -210,6 +210,52 @@ public class AggregateTemplateIntegrationTests {
 		assertThat(reloadedLegoSet.manual.content).isEqualTo("new content");
 	}
 
+	@Test // DATAJDBC-266
+	public void oneToOneChildWithoutId() {
+
+		OneToOneParent parent = new OneToOneParent();
+
+		parent.content = "parent content";
+		parent.child = new OneToOneChildNoId();
+		parent.child.content = "child content";
+
+		template.save(parent);
+
+		OneToOneParent reloaded = template.findById(parent.id, OneToOneParent.class);
+
+		assertThat(reloaded.child.content).isEqualTo("child content");
+	}
+
+	@Test // DATAJDBC-266
+	public void oneToOneNullChildWithoutId() {
+
+		OneToOneParent parent = new OneToOneParent();
+
+		parent.content = "parent content";
+		parent.child = null;
+
+		template.save(parent);
+
+		OneToOneParent reloaded = template.findById(parent.id, OneToOneParent.class);
+
+		assertThat(reloaded.child).isNull();
+	}
+
+	@Test // DATAJDBC-266
+	public void oneToOneNullAttributes() {
+
+		OneToOneParent parent = new OneToOneParent();
+
+		parent.content = "parent content";
+		parent.child = new OneToOneChildNoId();
+
+		template.save(parent);
+
+		OneToOneParent reloaded = template.findById(parent.id, OneToOneParent.class);
+
+		assertThat(reloaded.child).isNotNull();
+	}
+
 	private static LegoSet createLegoSet() {
 
 		LegoSet entity = new LegoSet();
@@ -239,6 +285,18 @@ public class AggregateTemplateIntegrationTests {
 		@Id private Long id;
 		private String content;
 
+	}
+
+	static class OneToOneParent {
+
+		@Id private Long id;
+		private String content;
+
+		private OneToOneChildNoId child;
+	}
+
+	static class OneToOneChildNoId {
+		private String content;
 	}
 
 	@Configuration

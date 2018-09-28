@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -118,21 +117,17 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	@Nullable
 	private Object readFrom(ResultSet resultSet, RelationalPersistentProperty property, String prefix) {
 
-		try {
-
-			if (property.isEntity()) {
-				return readEntityFrom(resultSet, property);
-			}
-
-			return converter.readValue(resultSet.getObject(prefix + property.getColumnName()), property.getTypeInformation());
-
-		} catch (SQLException o_O) {
-			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
+		if (property.isEntity()) {
+			return readEntityFrom(resultSet, property);
 		}
+
+		Object value = getObjectFromResultSet(resultSet, prefix + property.getColumnName());
+		return converter.readValue(value, property.getTypeInformation());
+
 	}
 
 	@Nullable
-	private <S> S readEntityFrom(ResultSet rs, PersistentProperty<?> property) {
+	private <S> S readEntityFrom(ResultSet rs, RelationalPersistentProperty property) {
 
 		String prefix = property.getName() + "_";
 
@@ -140,7 +135,12 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) context
 				.getRequiredPersistentEntity(property.getActualType());
 
-		if (readFrom(rs, entity.getRequiredIdProperty(), prefix) == null) {
+		RelationalPersistentProperty idProperty = entity.getIdProperty();
+
+		if ((idProperty != null //
+				? readFrom(rs, idProperty, prefix) //
+				: getObjectFromResultSet(rs, prefix + property.getReverseColumnName()) //
+		) == null) {
 			return null;
 		}
 
@@ -153,6 +153,16 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		}
 
 		return instance;
+	}
+
+	@Nullable
+	private Object getObjectFromResultSet(ResultSet rs, String backreferenceName) {
+
+		try {
+			return rs.getObject(backreferenceName);
+		} catch (SQLException o_O) {
+			throw new MappingException(String.format("Could not read value %s from result set!", backreferenceName), o_O);
+		}
 	}
 
 	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, String prefix) {
