@@ -201,6 +201,17 @@ class SqlGenerator {
 								.as(joinAlias + "_" + refProperty.getColumnName()) //
 				);
 			}
+
+			// if the referenced property doesn't have an id, include the back reference in the select list.
+			// this enables determining if the referenced entity is present or null.
+			if (!refEntity.hasIdProperty()) {
+
+				builder.column( //
+						cb -> cb.tableAlias(joinAlias) //
+								.column(property.getReverseColumnName()) //
+								.as(joinAlias + "_" + property.getReverseColumnName()) //
+				);
+			}
 		}
 	}
 
