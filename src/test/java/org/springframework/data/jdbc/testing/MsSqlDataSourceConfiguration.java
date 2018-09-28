@@ -16,11 +16,10 @@
 package org.springframework.data.jdbc.testing;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
-import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 import javax.sql.DataSource;
 
@@ -34,9 +33,16 @@ import javax.sql.DataSource;
  * @see <a href="https://docs.microsoft.com/de-de/sql/linux/quickstart-install-connect-docker?view=sql-server-2017"></a>
  * <p>
  * (Docker installed and running is assumed)
+ * Prerequisites:
+ *
  * 1. docker pull mcr.microsoft.com/mssql/server:2017-latest
  * 2. docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=<YourStrong!Passw0rd>" -p 1433:1433 --name sql1 -d mcr.microsoft.com/mssql/server:2017-latest
- * 3. add mssql jdbc driver maven dependency from here https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc/7.1.0.jre10-preview
+ *
+ * Run tests:
+ * 1. add mssql jdbc driver maven dependency
+ * 2. add configuration profile
+ * 3. add configuration Bean
+ * 4. start docker image "docker start sql1"
  */
 @Configuration
 @Profile("mssql")
@@ -49,9 +55,9 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
     @Override
     protected DataSource createDataSource() {
         SQLServerDataSource sqlServerDataSource = new SQLServerDataSource();
-        sqlServerDataSource.setURL("");
-        sqlServerDataSource.setUser("");
-        sqlServerDataSource.setPassword("");
+        sqlServerDataSource.setURL("jdbc:sqlserver://localhost:1433");
+        sqlServerDataSource.setUser("sa");
+        sqlServerDataSource.setPassword("<YourStrong!Passw0rd>");
         return sqlServerDataSource;
     }
 
@@ -61,6 +67,7 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
      */
     @Override
     protected void customizePopulator(ResourceDatabasePopulator populator) {
+        populator.addScript(new ClassPathResource("schema-mssql.sql"));
         populator.setIgnoreFailedDrops(true);
     }
 }
