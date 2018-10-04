@@ -16,12 +16,16 @@
 package org.springframework.data.jdbc.testing;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.ClassRule;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.MSSQLServerContainer;
+import org.testcontainers.containers.MySQLContainer;
 
 import javax.sql.DataSource;
+
 
 /**
  * {@link DataSource} setup for PostgreSQL.
@@ -30,23 +34,18 @@ import javax.sql.DataSource;
  * As there is no testcontainer image to use we have to do it the following way:
  *
  * @author Thomas Lang
- * @see <a href="https://docs.microsoft.com/de-de/sql/linux/quickstart-install-connect-docker?view=sql-server-2017"></a>
- * <p>
- * (Docker installed and running is assumed)
- * Prerequisites:
- *
- * 1. docker pull mcr.microsoft.com/mssql/server:2017-latest
- * 2. docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=<YourStrong!Passw0rd>" -p 1433:1433 --name sql1 -d mcr.microsoft.com/mssql/server:2017-latest
- *
- * Run tests:
- * 1. add mssql jdbc driver maven dependency
- * 2. add configuration profile
- * 3. add configuration Bean
- * 4. start docker image "docker start sql1"
+ * @see <a href="https://github.com/testcontainers/testcontainers-java/tree/master/modules/mssqlserver"></a>
  */
 @Configuration
 @Profile("mssql")
 public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
+
+    private static final MSSQLServerContainer mssqlserver = new MSSQLServerContainer();
+
+    static {
+        mssqlserver.start();
+    }
+
 
     /*
      * (non-Javadoc)
@@ -55,19 +54,9 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
     @Override
     protected DataSource createDataSource() {
         SQLServerDataSource sqlServerDataSource = new SQLServerDataSource();
-        sqlServerDataSource.setURL("jdbc:sqlserver://localhost:1433");
-        sqlServerDataSource.setUser("sa");
-        sqlServerDataSource.setPassword("<YourStrong!Passw0rd>");
+        sqlServerDataSource.setURL(mssqlserver.getJdbcUrl());
+        sqlServerDataSource.setUser(mssqlserver.getUsername());
+        sqlServerDataSource.setPassword(mssqlserver.getPassword());
         return sqlServerDataSource;
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.jdbc.testing.DataSourceFactoryBean#customizePopulator(org.springframework.jdbc.datasource.init.ResourceDatabasePopulator)
-     */
-    @Override
-    protected void customizePopulator(ResourceDatabasePopulator populator) {
-        populator.addScript(new ClassPathResource("schema-mssql.sql"));
-        populator.setIgnoreFailedDrops(true);
     }
 }
