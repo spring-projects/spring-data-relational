@@ -16,13 +16,9 @@
 package org.springframework.data.jdbc.testing;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.ClassRule;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MSSQLServerContainer;
-import org.testcontainers.containers.MySQLContainer;
 
 import javax.sql.DataSource;
 
