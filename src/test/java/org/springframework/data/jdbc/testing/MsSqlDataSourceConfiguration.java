@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.testing;
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.MSSQLServerContainer;
 
 import javax.sql.DataSource;
@@ -33,7 +34,7 @@ import javax.sql.DataSource;
  * @see <a href="https://github.com/testcontainers/testcontainers-java/tree/master/modules/mssqlserver"></a>
  */
 @Configuration
-@Profile("mssql")
+@Profile({"mssql"})
 public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
     private static final MSSQLServerContainer mssqlserver = new MSSQLServerContainer();
