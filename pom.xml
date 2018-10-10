@@ -35,7 +35,8 @@
 		<mysql-connector-java.version>5.1.41</mysql-connector-java.version>
 		<postgresql.version>42.0.0</postgresql.version>
 		<mariadb-java-client.version>2.2.3</mariadb-java-client.version>
-		<testcontainers.version>1.7.3</testcontainers.version>
+		<testcontainers.version>1.9.1</testcontainers.version>
+
 	</properties>
 
 	<inceptionYear>2017</inceptionYear>

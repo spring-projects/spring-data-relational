@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.testing;
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.MSSQLServerContainer;
 
 import javax.sql.DataSource;
