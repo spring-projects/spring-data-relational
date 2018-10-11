@@ -133,6 +133,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(context, converter, accessStrategy, rowMapperMap, operations));
+		return Optional.of(new JdbcQueryLookupStrategy(publisher, context, converter, accessStrategy, rowMapperMap, operations));
 	}
 }

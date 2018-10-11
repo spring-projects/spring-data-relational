@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.support;
 
 import java.lang.reflect.Method;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
 import org.springframework.data.jdbc.repository.RowMapperMap;
@@ -43,6 +44,7 @@ import org.springframework.util.Assert;
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
+	private final ApplicationEventPublisher publisher;
 	private final RelationalMappingContext context;
 	private final RelationalConverter converter;
 	private final DataAccessStrategy accessStrategy;
@@ -53,19 +55,22 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext},
 	 * {@link DataAccessStrategy} and {@link RowMapperMap}.
 	 *
+	 * @param publisher must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param accessStrategy must not be {@literal null}.
 	 * @param rowMapperMap must not be {@literal null}.
 	 */
-	JdbcQueryLookupStrategy(RelationalMappingContext context, RelationalConverter converter,
+	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, RelationalMappingContext context, RelationalConverter converter,
 			DataAccessStrategy accessStrategy, RowMapperMap rowMapperMap, NamedParameterJdbcOperations operations) {
 
+		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
 		Assert.notNull(converter, "RelationalConverter must not be null!");
 		Assert.notNull(accessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
 
+		this.publisher = publisher;
 		this.context = context;
 		this.converter = converter;
 		this.accessStrategy = accessStrategy;
@@ -85,7 +90,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		RowMapper<?> rowMapper = queryMethod.isModifyingQuery() ? null : createRowMapper(queryMethod);
 
-		return new JdbcRepositoryQuery(queryMethod, operations, rowMapper);
+		return new JdbcRepositoryQuery(publisher, context, queryMethod, operations, rowMapper);
 	}
 
 	private RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod) {

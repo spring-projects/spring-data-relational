@@ -16,8 +16,12 @@
 package org.springframework.data.jdbc.repository.support;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
+import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -26,6 +30,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+
 /**
  * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
  * method.
@@ -33,11 +39,14 @@ import org.springframework.util.StringUtils;
  * @author Jens Schauder
  * @author Kazuki Shimizu
  * @author Oliver Gierke
+ * @author Maciej Walkowiak
  */
 class JdbcRepositoryQuery implements RepositoryQuery {
 
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters. Use @Param for query method parameters, or when on Java 8+ use the javac flag -parameters.";
 
+	private final ApplicationEventPublisher publisher;
+	private final RelationalMappingContext context;
 	private final JdbcQueryMethod queryMethod;
 	private final NamedParameterJdbcOperations operations;
 	private final RowMapper<?> rowMapper;
@@ -45,14 +54,18 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	/**
 	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext} and
 	 * {@link RowMapper}.
-	 * 
+	 *
+	 * @param publisher must not be {@literal null}.
+	 * @param context must not be {@literal null}.
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
-	JdbcRepositoryQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+	JdbcRepositoryQuery(ApplicationEventPublisher publisher, RelationalMappingContext context, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			@Nullable RowMapper<?> defaultRowMapper) {
 
+		Assert.notNull(publisher, "Publisher must not be null!");
+		Assert.notNull(context, "Context must not be null!");
 		Assert.notNull(queryMethod, "Query method must not be null!");
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null!");
 
@@ -60,6 +73,8 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 			Assert.notNull(defaultRowMapper, "RowMapper must not be null!");
 		}
 
+		this.publisher = publisher;
+		this.context = context;
 		this.queryMethod = queryMethod;
 		this.operations = operations;
 		this.rowMapper = createRowMapper(queryMethod, defaultRowMapper);
@@ -84,11 +99,15 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		}
 
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
-			return operations.query(query, parameters, rowMapper);
+			List<?> result = operations.query(query, parameters, rowMapper);
+			publishAfterLoad(result);
+			return result;
 		}
 
 		try {
-			return operations.queryForObject(query, parameters, rowMapper);
+			Object result = operations.queryForObject(query, parameters, rowMapper);
+			publishAfterLoad(result);
+			return result;
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -135,5 +154,26 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		return rowMapperClass == null || rowMapperClass == RowMapper.class //
 				? defaultRowMapper //
 				: (RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass);
+	}
+
+	private <T> void publishAfterLoad(Iterable<T> all) {
+
+		for (T e : all) {
+			publishAfterLoad(e);
+		}
+	}
+
+	private <T> void publishAfterLoad(@Nullable T entity) {
+
+		if (entity != null && context.hasPersistentEntityFor(entity.getClass())) {
+			RelationalPersistentEntity<?> e = context.getRequiredPersistentEntity(entity.getClass());
+			Object identifier = e.getIdentifierAccessor(entity)
+					     .getIdentifier();
+
+			if (identifier != null) {
+				publisher.publishEvent(new AfterLoadEvent(Identifier.of(identifier), entity));
+			}
+		}
+
 	}
 }
