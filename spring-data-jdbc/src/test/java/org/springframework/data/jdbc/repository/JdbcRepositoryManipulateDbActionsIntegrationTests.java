@@ -80,7 +80,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 						entity.id, //
 						entity.name, //
 						true) //
-		);
+				);
 
 	}
 
@@ -103,14 +103,14 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 						one.id, //
 						one.name, //
 						true) //
-		);
+				);
 
 		assertThat(repository.findById(two.id)) //
 				.contains(new DummyEntity( //
 						two.id, //
 						two.name, //
 						true) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-120

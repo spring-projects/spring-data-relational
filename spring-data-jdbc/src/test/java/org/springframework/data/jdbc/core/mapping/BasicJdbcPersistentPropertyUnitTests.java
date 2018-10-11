@@ -97,8 +97,8 @@ public class BasicJdbcPersistentPropertyUnitTests {
 	public void detectsAnnotatedColumnAndKeyName() {
 
 		RelationalPersistentProperty listProperty = context //
-			.getRequiredPersistentEntity(DummyEntity.class) //
-			.getRequiredPersistentProperty("someList");
+				.getRequiredPersistentEntity(DummyEntity.class) //
+				.getRequiredPersistentProperty("someList");
 
 		assertThat(listProperty.getReverseColumnName()).isEqualTo("dummy_column_name");
 		assertThat(listProperty.getKeyColumn()).isEqualTo("dummy_key_column_name");

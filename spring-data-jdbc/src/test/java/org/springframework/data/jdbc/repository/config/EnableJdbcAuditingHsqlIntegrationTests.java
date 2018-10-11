@@ -73,7 +73,8 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 							softly.assertThat(entity.getCreatedBy()).as("created by set").isEqualTo("user01");
 							softly.assertThat(entity.getCreatedDate()).as("created date set").isAfter(now);
 							softly.assertThat(entity.getLastModifiedBy()).as("modified by set").isEqualTo("user01");
-							softly.assertThat(entity.getLastModifiedDate()).as("modified date set").isAfterOrEqualTo(entity.getCreatedDate());
+							softly.assertThat(entity.getLastModifiedDate()).as("modified date set")
+									.isAfterOrEqualTo(entity.getCreatedDate());
 							softly.assertThat(entity.getLastModifiedDate()).as("modified date after instance creation").isAfter(now);
 
 							AuditingAnnotatedDummyEntity reloaded = repository.findById(entity.id).get();
@@ -97,7 +98,8 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 							softly.assertThat(entity.getCreatedBy()).as("created by unchanged").isEqualTo("user01");
 							softly.assertThat(entity.getCreatedDate()).as("created date unchanged").isEqualTo(beforeCreatedDate);
 							softly.assertThat(entity.getLastModifiedBy()).as("modified by updated").isEqualTo("user02");
-							softly.assertThat(entity.getLastModifiedDate()).as("modified date updated").isAfter(beforeLastModifiedDate);
+							softly.assertThat(entity.getLastModifiedDate()).as("modified date updated")
+									.isAfter(beforeLastModifiedDate);
 
 							reloaded = repository.findById(entity.id).get();
 

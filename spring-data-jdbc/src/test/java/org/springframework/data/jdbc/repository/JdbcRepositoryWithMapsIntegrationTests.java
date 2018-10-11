@@ -165,7 +165,7 @@ public class JdbcRepositoryWithMapsIntegrationTests {
 				.containsExactlyInAnyOrder( //
 						tuple("two", element2.id, "two changed"), //
 						tuple("three", element3.id, "three") //
-		);
+				);
 
 		Long count = template.queryForObject("select count(1) from Element", new HashMap<>(), Long.class);
 		assertThat(count).isEqualTo(2);

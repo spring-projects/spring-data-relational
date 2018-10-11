@@ -164,7 +164,7 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 				.containsExactlyInAnyOrder( //
 						tuple(element2.id, "two changed"), //
 						tuple(element3.id, "three") //
-		);
+				);
 
 		Long count = template.queryForObject("select count(1) from Element", new HashMap<>(), Long.class);
 		assertThat(count).isEqualTo(2);
@@ -189,9 +189,6 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 		Long count = template.queryForObject("select count(1) from Element", new HashMap<>(), Long.class);
 		assertThat(count).isEqualTo(0);
 	}
-
-
-
 
 	private Element createElement(String content) {
 

@@ -310,8 +310,7 @@ public class AggregateTemplateIntegrationTests {
 		private String name;
 
 		private Manual manual;
-		@Column("alternative")
-		private Manual alternativeInstructions;
+		@Column("alternative") private Manual alternativeInstructions;
 	}
 
 	@Data

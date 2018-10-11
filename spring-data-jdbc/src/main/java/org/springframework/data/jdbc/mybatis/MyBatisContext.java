@@ -33,7 +33,8 @@ public class MyBatisContext {
 	private final Class domainType;
 	private final Map<String, Object> additonalValues;
 
-	public MyBatisContext(@Nullable Object id, @Nullable Object instance, Class domainType, Map<String, Object> additonalValues) {
+	public MyBatisContext(@Nullable Object id, @Nullable Object instance, Class domainType,
+			Map<String, Object> additonalValues) {
 
 		this.id = id;
 		this.instance = instance;

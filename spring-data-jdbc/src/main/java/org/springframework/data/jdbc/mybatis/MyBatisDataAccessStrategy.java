@@ -131,8 +131,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
 		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType, additionalParameters);
-		sqlSession().insert(namespace(domainType) + ".insert",
-				myBatisContext);
+		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
 
 		return myBatisContext.getId();
 	}

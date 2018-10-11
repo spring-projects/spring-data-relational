@@ -24,9 +24,7 @@ import org.springframework.lang.Nullable;
  *
  * @param <T> the type of the referenced aggregate root.
  * @param <ID> the type of the id of the referenced aggregate root.
- *
  * @author Jens Schauder
- *
  * @since 1.0
  */
 public interface AggregateReference<T, ID> {
@@ -42,9 +40,8 @@ public interface AggregateReference<T, ID> {
 	ID getId();
 
 	/**
-	 * An {@link AggregateReference} that only holds the id of the referenced aggregate root.
-	 *
-	 * Note that there is no check that a matching aggregate for this id actually exists.
+	 * An {@link AggregateReference} that only holds the id of the referenced aggregate root. Note that there is no check
+	 * that a matching aggregate for this id actually exists.
 	 * 
 	 * @param <T>
 	 * @param <ID>

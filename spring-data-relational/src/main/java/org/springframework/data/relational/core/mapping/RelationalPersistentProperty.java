@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.lang.Nullable;
 
@@ -45,8 +44,8 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 
 	/**
 	 * The SQL type constant used when using this property as a parameter for a SQL statement.
+	 * 
 	 * @return Must not be {@code null}.
-	 *
 	 * @see java.sql.Types
 	 */
 	int getSqlType();

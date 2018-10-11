@@ -56,7 +56,8 @@ public interface RelationalConverter {
 	 * properties.
 	 *
 	 * @param entity the kind of entity to create. Must not be {@code null}.
-	 * @param parameterValueProvider a function that provides the value to pass to a constructor, given a {@link Parameter}. Must not be {@code null}.
+	 * @param parameterValueProvider a function that provides the value to pass to a constructor, given a
+	 *          {@link Parameter}. Must not be {@code null}.
 	 * @param <T> the type of entity to create.
 	 * @return the instantiated entity. Guaranteed to be not {@code null}.
 	 */

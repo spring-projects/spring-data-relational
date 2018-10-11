@@ -18,10 +18,6 @@ package org.springframework.data.relational.core.mapping;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntityImpl;
-import org.springframework.data.relational.core.mapping.Table;
 
 /**
  * Unit tests for {@link RelationalPersistentEntityImpl}.

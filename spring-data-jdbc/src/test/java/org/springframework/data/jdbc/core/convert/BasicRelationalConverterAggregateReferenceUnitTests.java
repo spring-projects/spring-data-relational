@@ -72,8 +72,7 @@ public class BasicRelationalConverterAggregateReferenceUnitTests {
 
 	private static class DummyEntity {
 
-		@Id
-		Long simple;
+		@Id Long simple;
 		AggregateReference<DummyEntity, Long> reference;
 	}
 }

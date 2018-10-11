@@ -36,10 +36,10 @@ public class RelationalMappingContextUnitTests {
 	public void uuidPropertyIsNotEntity() {
 
 		SimpleTypeHolder holder = new SimpleTypeHolder(new HashSet<>(Arrays.asList(UUID.class)), true);
-		
+
 		RelationalMappingContext mappingContext = new RelationalMappingContext();
 		mappingContext.setSimpleTypeHolder(holder);
-		
+
 		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(EntityWithUuid.class);
 		RelationalPersistentProperty uuidProperty = entity.getRequiredPersistentProperty("uuid");
 
@@ -49,6 +49,5 @@ public class RelationalMappingContextUnitTests {
 	static class EntityWithUuid {
 		@Id UUID uuid;
 	}
-	
-	
+
 }

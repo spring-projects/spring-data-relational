@@ -24,9 +24,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
- * {@link DataSource} setup for PostgreSQL.
- *
- * Starts a docker container with a Postgres database.
+ * {@link DataSource} setup for PostgreSQL. Starts a docker container with a Postgres database.
  *
  * @author Jens Schauder
  * @author Oliver Gierke

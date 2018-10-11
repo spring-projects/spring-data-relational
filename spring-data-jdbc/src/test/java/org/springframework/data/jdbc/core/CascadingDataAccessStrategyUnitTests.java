@@ -35,18 +35,17 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 public class CascadingDataAccessStrategyUnitTests {
 
 	int errorIndex = 1;
-	String[] errorMessages = {"Sorry I don't support this method. Please try again later", "Still no luck"};
+	String[] errorMessages = { "Sorry I don't support this method. Please try again later", "Still no luck" };
 
 	DataAccessStrategy alwaysFails = mock(DataAccessStrategy.class, i -> {
-		errorIndex ++;
-		errorIndex %=2;
+		errorIndex++;
+		errorIndex %= 2;
 		throw new UnsupportedOperationException(errorMessages[errorIndex]);
 	});
 	DataAccessStrategy succeeds = mock(DataAccessStrategy.class);
 	DataAccessStrategy mayNotCall = mock(DataAccessStrategy.class, i -> {
 		throw new AssertionFailedError("this shouldn't have get called");
 	});
-
 
 	@Test // DATAJDBC-123
 	public void findByReturnsFirstSuccess() {
@@ -75,7 +74,8 @@ public class CascadingDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void findByPropertyReturnsFirstSuccess() {
 
-		doReturn(Collections.singletonList("success")).when(succeeds).findAllByProperty(eq(23L), any(RelationalPersistentProperty.class));
+		doReturn(Collections.singletonList("success")).when(succeeds).findAllByProperty(eq(23L),
+				any(RelationalPersistentProperty.class));
 		CascadingDataAccessStrategy access = new CascadingDataAccessStrategy(asList(alwaysFails, succeeds, mayNotCall));
 
 		Iterable<Object> findAll = access.findAllByProperty(23L, mock(RelationalPersistentProperty.class));

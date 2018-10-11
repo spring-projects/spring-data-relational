@@ -61,8 +61,8 @@ public interface NamingStrategy {
 	}
 
 	/**
-	 * Defaults to return the given {@link RelationalPersistentProperty}'s name with the parts of a camel case name separated by
-	 * '_';
+	 * Defaults to return the given {@link RelationalPersistentProperty}'s name with the parts of a camel case name
+	 * separated by '_';
 	 */
 	default String getColumnName(RelationalPersistentProperty property) {
 

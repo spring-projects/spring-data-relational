@@ -18,8 +18,6 @@ package org.springframework.data.relational.core.conversion;
 import static org.mockito.Mockito.*;
 
 import org.junit.Test;
-import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 
 /**
  * @author Jens Schauder

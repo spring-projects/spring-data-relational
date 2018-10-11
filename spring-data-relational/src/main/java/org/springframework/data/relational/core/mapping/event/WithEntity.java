@@ -16,8 +16,8 @@
 package org.springframework.data.relational.core.mapping.event;
 
 /**
- * Interface for {@link SimpleRelationalEvent}s which are guaranteed to have an entity. Allows direct access to that entity,
- * without going through an {@link java.util.Optional}
+ * Interface for {@link SimpleRelationalEvent}s which are guaranteed to have an entity. Allows direct access to that
+ * entity, without going through an {@link java.util.Optional}
  *
  * @author Jens Schauder
  */

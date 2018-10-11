@@ -247,7 +247,7 @@ public class EntityRowMapperUnitTests {
 								"Number of values [%d] must be a multiple of the number of columns [%d]", //
 								values.length, //
 								columns.size() //
-				) //
+						) //
 		);
 
 		List<Map<String, Object>> result = convertValues(columns, values);

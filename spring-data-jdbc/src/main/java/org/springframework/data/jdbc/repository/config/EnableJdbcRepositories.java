@@ -45,7 +45,8 @@ public @interface EnableJdbcRepositories {
 
 	/**
 	 * Alias for the {@link #basePackages()} attribute. Allows for more concise annotation declarations e.g.:
-	 * {@code @EnableJdbcRepositories("org.my.pkg")} instead of {@code @EnableJdbcRepositories(basePackages="org.my.pkg")}.
+	 * {@code @EnableJdbcRepositories("org.my.pkg")} instead of
+	 * {@code @EnableJdbcRepositories(basePackages="org.my.pkg")}.
 	 */
 	String[] value() default {};
 

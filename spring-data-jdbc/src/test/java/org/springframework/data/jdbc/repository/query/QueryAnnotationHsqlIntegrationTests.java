@@ -341,7 +341,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 		@Query("SELECT 'one' one, 'two' two, 3 three FROM (VALUES (0))")
 		ImmutableTuple immutableTuple();
 
-
 		@Value
 		class ImmutableTuple {
 			String one;

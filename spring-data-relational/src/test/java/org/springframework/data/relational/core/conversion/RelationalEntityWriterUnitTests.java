@@ -30,11 +30,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
@@ -62,7 +62,7 @@ public class RelationalEntityWriterUnitTests {
 						this::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-112
@@ -82,7 +82,7 @@ public class RelationalEntityWriterUnitTests {
 				.containsExactly( //
 						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
 						tuple(Insert.class, Element.class, "other", Element.class, true) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-112
@@ -101,7 +101,7 @@ public class RelationalEntityWriterUnitTests {
 				.containsExactly( //
 						tuple(Delete.class, Element.class, "other", null, false), //
 						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-112
@@ -122,7 +122,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(Delete.class, Element.class, "other", null, false), //
 						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
 						tuple(Insert.class, Element.class, "other", Element.class, true) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-113
@@ -158,7 +158,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(InsertRoot.class, SetContainer.class, "", SetContainer.class, false), //
 						tuple(Insert.class, Element.class, "elements", Element.class, true), //
 						tuple(Insert.class, Element.class, "elements", Element.class, true) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-113
@@ -194,7 +194,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-188
@@ -232,7 +232,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true), //
 						tuple(Insert.class, Element.class, "other.element", Element.class, true) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-131
@@ -270,7 +270,7 @@ public class RelationalEntityWriterUnitTests {
 				).containsSubsequence( // container comes before the elements
 						tuple(InsertRoot.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "one", "elements") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-183
@@ -309,7 +309,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(Insert.class, Element.class, "0", "elements"), //
 						tuple(Insert.class, Element.class, "a", "elements"), //
 						tuple(Insert.class, Element.class, "b", "elements") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-130
@@ -347,7 +347,7 @@ public class RelationalEntityWriterUnitTests {
 				).containsSubsequence( // container comes before the elements
 						tuple(InsertRoot.class, ListContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, 0, "elements") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-131
@@ -366,7 +366,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(UpdateRoot.class, MapContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, "one", "elements") //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-130
@@ -385,7 +385,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(UpdateRoot.class, ListContainer.class, null, ""), //
 						tuple(Insert.class, Element.class, 0, "elements") //
-		);
+				);
 	}
 
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {
@@ -397,11 +397,15 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	private Object getMapKey(DbAction a) {
-		return a instanceof DbAction.WithDependingOn ? ((DbAction.WithDependingOn) a).getAdditionalValues().get("map_container_key") : null;
+		return a instanceof DbAction.WithDependingOn
+				? ((DbAction.WithDependingOn) a).getAdditionalValues().get("map_container_key")
+				: null;
 	}
 
 	private Object getListKey(DbAction a) {
-		return a instanceof DbAction.WithDependingOn ? ((DbAction.WithDependingOn) a).getAdditionalValues().get("list_container_key") : null;
+		return a instanceof DbAction.WithDependingOn
+				? ((DbAction.WithDependingOn) a).getAdditionalValues().get("list_container_key")
+				: null;
 	}
 
 	private String extractPath(DbAction action) {

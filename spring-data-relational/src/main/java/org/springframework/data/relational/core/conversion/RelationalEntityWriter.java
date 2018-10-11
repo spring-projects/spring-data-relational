@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import lombok.Value;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lombok.Value;
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -241,8 +242,8 @@ public class RelationalEntityWriter implements EntityWriter<Object, AggregateCha
 	}
 
 	/**
-	 * Represents a single entity in an aggregate along with its property path from the root entity and the chain of objects
-	 * to traverse a long this path.
+	 * Represents a single entity in an aggregate along with its property path from the root entity and the chain of
+	 * objects to traverse a long this path.
 	 */
 	@Value
 	static class PathNode {
@@ -251,11 +252,9 @@ public class RelationalEntityWriter implements EntityWriter<Object, AggregateCha
 		PersistentPropertyPath<RelationalPersistentProperty> path;
 
 		/**
-		 * The parent {@link PathNode}. This is {@code null} if this is
-		 * the root entity.
+		 * The parent {@link PathNode}. This is {@code null} if this is the root entity.
 		 */
-		@Nullable
-		PathNode parent;
+		@Nullable PathNode parent;
 
 		/** The value of the entity. */
 		Object value;

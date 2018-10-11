@@ -81,8 +81,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context);
 
-		this.dataAccessStrategy = spy(
-				new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
+		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher,
 				operations);
@@ -103,7 +102,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-99
@@ -122,7 +121,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 						AfterSaveEvent.class, //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-99
@@ -153,7 +152,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						BeforeDeleteEvent.class, //
 						AfterDeleteEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-197
@@ -172,7 +171,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						AfterLoadEvent.class, //
 						AfterLoadEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-197
@@ -191,7 +190,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.containsExactly( //
 						AfterLoadEvent.class, //
 						AfterLoadEvent.class //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-197
@@ -208,7 +207,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
 						AfterLoadEvent.class //
-		);
+				);
 	}
 
 	private static NamedParameterJdbcOperations createIdGeneratingOperations() {

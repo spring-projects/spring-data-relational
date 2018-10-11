@@ -25,10 +25,9 @@ import org.springframework.data.annotation.QueryAnnotation;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
- * Annotation to provide SQL statements that will get used for executing the method.
- *
- * The SQL statement may contain named parameters as supported by {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}.
- * Those parameters will get bound to the arguments of the annotated method.
+ * Annotation to provide SQL statements that will get used for executing the method. The SQL statement may contain named
+ * parameters as supported by {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate}. Those
+ * parameters will get bound to the arguments of the annotated method.
  *
  * @author Jens Schauder
  */

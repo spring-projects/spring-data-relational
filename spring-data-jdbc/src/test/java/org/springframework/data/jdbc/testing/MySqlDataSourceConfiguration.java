@@ -29,9 +29,8 @@ import org.testcontainers.jdbc.ext.ScriptUtils;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
 /**
- * {@link DataSource} setup for MySQL.
- *
- * Starts a docker container with a MySql database and sets up a database name "test" in it.
+ * {@link DataSource} setup for MySQL. Starts a docker container with a MySql database and sets up a database name
+ * "test" in it.
  *
  * @author Jens Schauder
  * @author Oliver Gierke

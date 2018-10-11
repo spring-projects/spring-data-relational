@@ -55,8 +55,7 @@ public class JdbcRepositoryWithListsIntegrationTests {
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired
-		JdbcRepositoryFactory factory;
+		@Autowired JdbcRepositoryFactory factory;
 
 		@Bean
 		Class<?> testClass() {
@@ -69,15 +68,11 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		}
 	}
 
-	@ClassRule
-	public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule
-	public SpringMethodRule methodRule = new SpringMethodRule();
+	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
-	@Autowired
-	NamedParameterJdbcTemplate template;
-	@Autowired
-	DummyEntityRepository repository;
+	@Autowired NamedParameterJdbcTemplate template;
+	@Autowired DummyEntityRepository repository;
 
 	@Test // DATAJDBC-130
 	public void saveAndLoadEmptyList() {
@@ -211,14 +206,12 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		return entity;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
-	}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
 	@Data
 	static class DummyEntity {
 
-		@Id
-		private Long id;
+		@Id private Long id;
 		String name;
 		List<Element> content = new ArrayList<>();
 
@@ -227,8 +220,7 @@ public class JdbcRepositoryWithListsIntegrationTests {
 	@RequiredArgsConstructor
 	static class Element {
 
-		@Id
-		private Long id;
+		@Id private Long id;
 		String content;
 	}
 

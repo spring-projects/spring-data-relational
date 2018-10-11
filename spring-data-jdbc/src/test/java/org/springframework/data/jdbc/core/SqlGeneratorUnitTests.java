@@ -199,9 +199,7 @@ public class SqlGeneratorUnitTests {
 
 		String findAll = sqlGenerator.getFindAll();
 
-		assertThat(findAll).containsSequence(
-				"SELECT",
-				"child.parent_of_no_id_child AS child_parent_of_no_id_child",
+		assertThat(findAll).containsSequence("SELECT", "child.parent_of_no_id_child AS child_parent_of_no_id_child",
 				"FROM");
 	}
 
@@ -256,8 +254,7 @@ public class SqlGeneratorUnitTests {
 		NoIdChild child;
 	}
 
-	static class NoIdChild {
-	}
+	static class NoIdChild {}
 
 	static class OtherAggregate {
 		@Id Long id;

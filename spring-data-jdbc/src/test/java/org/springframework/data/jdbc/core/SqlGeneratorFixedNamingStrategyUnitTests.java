@@ -114,8 +114,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE dummy_entity = :rootId");
+		assertThat(sql).isEqualTo(
+				"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " + "WHERE dummy_entity = :rootId");
 	}
 
 	@Test // DATAJDBC-107
@@ -126,9 +126,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
-				+ "WHERE referenced_entity IN "
-				+ "(SELECT FixedCustomPropertyPrefix_l1id " + "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE dummy_entity = :rootId)");
+				+ "WHERE referenced_entity IN " + "(SELECT FixedCustomPropertyPrefix_l1id "
+				+ "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " + "WHERE dummy_entity = :rootId)");
 	}
 
 	@Test // DATAJDBC-107
@@ -148,8 +147,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE dummy_entity IS NOT NULL");
+		assertThat(sql).isEqualTo(
+				"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " + "WHERE dummy_entity IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-107
@@ -160,9 +159,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
-				+ "WHERE referenced_entity IN "
-				+ "(SELECT FixedCustomPropertyPrefix_l1id " + "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE dummy_entity IS NOT NULL)");
+				+ "WHERE referenced_entity IN " + "(SELECT FixedCustomPropertyPrefix_l1id "
+				+ "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " + "WHERE dummy_entity IS NOT NULL)");
 	}
 
 	@Test // DATAJDBC-113

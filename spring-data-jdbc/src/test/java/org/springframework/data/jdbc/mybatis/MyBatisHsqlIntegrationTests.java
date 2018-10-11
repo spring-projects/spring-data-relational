@@ -91,8 +91,7 @@ public class MyBatisHsqlIntegrationTests {
 		DataAccessStrategy dataAccessStrategy(RelationalMappingContext context, RelationalConverter converter,
 				SqlSession sqlSession, EmbeddedDatabase db) {
 			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, converter,
-					new NamedParameterJdbcTemplate(db),
-					sqlSession);
+					new NamedParameterJdbcTemplate(db), sqlSession);
 		}
 	}
 

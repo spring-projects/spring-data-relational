@@ -23,8 +23,8 @@ import java.util.Map;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
- * Provides {@link SqlGenerator}s per domain type. Instances get cached, so when asked multiple times for the same domain
- * type, the same generator will get returned.
+ * Provides {@link SqlGenerator}s per domain type. Instances get cached, so when asked multiple times for the same
+ * domain type, the same generator will get returned.
  *
  * @author Jens Schauder
  */

@@ -90,7 +90,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	}
 
 	@ComponentScan("org.springframework.data.jdbc.testing")
-	@EnableJdbcRepositories(considerNestedRepositories = true, includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class))
+	@EnableJdbcRepositories(considerNestedRepositories = true,
+			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class))
 	static class TestConfiguration {
 
 		@Bean

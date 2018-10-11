@@ -78,7 +78,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, //
 						String.class, //
 						"value" //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -100,7 +100,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, //
 						String.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -122,7 +122,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						"an-id", //
 						String.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -146,7 +146,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, //
 						ChildTwo.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -168,7 +168,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, //
 						String.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -191,7 +191,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, "rootid", //
 						ChildTwo.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -212,7 +212,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, "an-id", //
 						String.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -234,7 +234,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, //
 						String.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -256,7 +256,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						asList("id1", "id2"), //
 						String.class, //
 						null //
-		);
+				);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -285,7 +285,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						"id", //
 						Number.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-123
@@ -307,7 +307,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						"id", //
 						String.class, //
 						null //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-157
@@ -331,7 +331,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, //
 						String.class, //
 						null //
-		);
+				);
 	}
 
 	private static class DummyEntity {

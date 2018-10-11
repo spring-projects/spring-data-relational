@@ -24,11 +24,11 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteRoot;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
@@ -65,7 +65,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 						Tuple.tuple(Delete.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(Delete.class, OtherEntity.class, "other"), //
 						Tuple.tuple(DeleteRoot.class, SomeEntity.class, null) //
-		);
+				);
 	}
 
 	@Test // DATAJDBC-188
@@ -81,7 +81,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 						Tuple.tuple(DeleteAll.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(DeleteAll.class, OtherEntity.class, "other"), //
 						Tuple.tuple(DeleteAllRoot.class, SomeEntity.class, null) //
-		);
+				);
 	}
 
 	@Data

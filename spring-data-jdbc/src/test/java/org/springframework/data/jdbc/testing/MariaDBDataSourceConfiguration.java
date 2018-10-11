@@ -28,10 +28,8 @@ import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.jdbc.ext.ScriptUtils;
 
 /**
- * {@link DataSource} setup for MariaDB.
- *
- * Starts a Docker-container with a MariaDB database, and sets up database "test".
-
+ * {@link DataSource} setup for MariaDB. Starts a Docker-container with a MariaDB database, and sets up database "test".
+ * 
  * @author Christoph Preißner
  */
 @Configuration
@@ -56,7 +54,7 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 			dataSource.setUser(MARIADB_CONTAINER.getUsername());
 			dataSource.setPassword(MARIADB_CONTAINER.getPassword());
 			return dataSource;
-		} catch(SQLException sqlex) {
+		} catch (SQLException sqlex) {
 			throw new RuntimeException(sqlex);
 		}
 	}

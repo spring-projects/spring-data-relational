@@ -15,12 +15,11 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import org.junit.Test;
-import org.springframework.data.relational.core.mapping.event.Identifier;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.Test;
 
 /**
  * Unit tests for {@link Identifier}
@@ -40,7 +39,7 @@ public class IdentifierTest {
 	}
 
 	@Test
-	public void indentifierOfNullHasEmptyValue(){
+	public void indentifierOfNullHasEmptyValue() {
 
 		Identifier identifier = Identifier.ofNullable(null);
 
@@ -49,7 +48,7 @@ public class IdentifierTest {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void indentifierOfXHasValueX(){
+	public void indentifierOfXHasValueX() {
 
 		Identifier identifier = Identifier.ofNullable("x");
 

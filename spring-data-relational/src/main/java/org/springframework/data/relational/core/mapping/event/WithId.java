@@ -18,8 +18,8 @@ package org.springframework.data.relational.core.mapping.event;
 import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
 
 /**
- * Interface for {@link SimpleRelationalEvent}s which are guaranteed to have a {@link Specified} identifier. Offers direct
- * access to the {@link Specified} identifier.
+ * Interface for {@link SimpleRelationalEvent}s which are guaranteed to have a {@link Specified} identifier. Offers
+ * direct access to the {@link Specified} identifier.
  *
  * @author Jens Schauder
  */

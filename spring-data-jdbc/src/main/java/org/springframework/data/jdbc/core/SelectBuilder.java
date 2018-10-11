@@ -103,7 +103,7 @@ class SelectBuilder {
 		return conditions.stream() //
 				.map(WhereCondition::toSql) //
 				.collect(Collectors.joining("AND", " WHERE ", "") //
-		);
+				);
 	}
 
 	private String joinClause() {

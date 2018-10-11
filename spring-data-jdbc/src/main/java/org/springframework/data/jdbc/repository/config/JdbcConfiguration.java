@@ -23,7 +23,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -49,8 +48,7 @@ public class JdbcConfiguration {
 	@Bean
 	protected JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy) {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext(
-				namingStrategy.orElse(NamingStrategy.INSTANCE));
+		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(jdbcCustomConversions().getSimpleTypeHolder());
 
 		return mappingContext;

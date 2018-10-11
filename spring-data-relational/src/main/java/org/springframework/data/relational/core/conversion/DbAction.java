@@ -25,9 +25,7 @@ import java.util.Map;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * An instance of this interface represents a (conceptual) single interaction with a database, e.g. a single update,
@@ -242,7 +240,7 @@ public interface DbAction<T> {
 	 *
 	 * @author Jens Schauder
 	 */
-	interface WithDependingOn<T> extends WithPropertyPath<T>, WithEntity<T>{
+	interface WithDependingOn<T> extends WithPropertyPath<T>, WithEntity<T> {
 
 		/**
 		 * The {@link DbAction} of a parent entity, possibly the aggregate root. This is used to obtain values needed to
