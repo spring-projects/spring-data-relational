@@ -55,6 +55,8 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext} and
 	 * {@link RowMapper}.
 	 *
+	 * @param publisher must not be {@literal null}.
+	 * @param context must not be {@literal null}.
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).

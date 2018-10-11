@@ -55,6 +55,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext},
 	 * {@link DataAccessStrategy} and {@link RowMapperMap}.
 	 *
+	 * @param publisher must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param accessStrategy must not be {@literal null}.
