@@ -25,6 +25,7 @@ import java.text.NumberFormat;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.jdbc.repository.config.ConfigurableRowMapperMap;
@@ -49,6 +50,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
+	ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
 	RelationalMappingContext mappingContext = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 	RelationalConverter converter = mock(BasicRelationalConverter.class);
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
@@ -82,7 +84,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 	private RepositoryQuery getRepositoryQuery(String name, RowMapperMap rowMapperMap) {
 
-		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(mappingContext, converter, accessStrategy,
+		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, mappingContext, converter, accessStrategy,
 				rowMapperMap, operations);
 
 		return queryLookupStrategy.resolveQuery(getMethod(name), metadata, projectionFactory, namedQueries);

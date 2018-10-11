@@ -19,10 +19,14 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.ResultSet;
+import java.util.Arrays;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.query.DefaultParameters;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.jdbc.core.RowMapper;
@@ -42,6 +46,8 @@ public class JdbcRepositoryQueryUnitTests {
 	RowMapper<?> defaultRowMapper;
 	JdbcRepositoryQuery query;
 	NamedParameterJdbcOperations operations;
+	ApplicationEventPublisher publisher;
+	RelationalMappingContext context;
 
 	@Before
 	public void setup() throws NoSuchMethodException {
@@ -54,8 +60,10 @@ public class JdbcRepositoryQueryUnitTests {
 
 		this.defaultRowMapper = mock(RowMapper.class);
 		this.operations = mock(NamedParameterJdbcOperations.class);
+		this.publisher = mock(ApplicationEventPublisher.class);
+		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 
-		this.query = new JdbcRepositoryQuery(queryMethod, operations, defaultRowMapper);
+		this.query = new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper);
 	}
 
 	@Test // DATAJDBC-165
@@ -94,10 +102,38 @@ public class JdbcRepositoryQueryUnitTests {
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
-		new JdbcRepositoryQuery(queryMethod, operations, defaultRowMapper).execute(new Object[] {});
+		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
 
 		verify(operations) //
 				.queryForObject(anyString(), any(SqlParameterSource.class), isA(CustomRowMapper.class));
+	}
+
+	@Test
+	public void publishesSingleEventWhenQueryReturnsSingleElement() {
+
+		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn(false).when(queryMethod).isCollectionQuery();
+		doReturn(new DummyEntity(1L)).when(operations).queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
+		doReturn(true).when(context).hasPersistentEntityFor(DummyEntity.class);
+		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getRequiredIdentifier()).thenReturn("some identifier");
+
+		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
+
+		verify(publisher).publishEvent(any(AfterLoadEvent.class));
+	}
+
+	@Test
+	public void publishesAsManyEventsAsReturnedEntities() {
+
+		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn(true).when(queryMethod).isCollectionQuery();
+		doReturn(Arrays.asList(new DummyEntity(1L), new DummyEntity(1L))).when(operations).query(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
+		doReturn(true).when(context).hasPersistentEntityFor(DummyEntity.class);
+		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getRequiredIdentifier()).thenReturn("some identifier");
+
+		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
+
+		verify(publisher, times(2)).publishEvent(any(AfterLoadEvent.class));
 	}
 
 	/**
@@ -111,6 +147,18 @@ public class JdbcRepositoryQueryUnitTests {
 		@Override
 		public Object mapRow(ResultSet rs, int rowNum) {
 			return null;
+		}
+	}
+
+	private static class DummyEntity {
+		private Long id;
+
+		public DummyEntity(Long id) {
+			this.id = id;
+		}
+
+		Long getId() {
+			return id;
 		}
 	}
 }
