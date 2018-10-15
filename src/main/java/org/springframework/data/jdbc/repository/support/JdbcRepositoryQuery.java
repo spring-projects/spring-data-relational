@@ -99,12 +99,14 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		}
 
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
+
 			List<?> result = operations.query(query, parameters, rowMapper);
 			publishAfterLoad(result);
 			return result;
 		}
 
 		try {
+
 			Object result = operations.queryForObject(query, parameters, rowMapper);
 			publishAfterLoad(result);
 			return result;
@@ -166,6 +168,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private <T> void publishAfterLoad(@Nullable T entity) {
 
 		if (entity != null && context.hasPersistentEntityFor(entity.getClass())) {
+
 			RelationalPersistentEntity<?> e = context.getRequiredPersistentEntity(entity.getClass());
 			Object identifier = e.getIdentifierAccessor(entity)
 					     .getIdentifier();
