@@ -38,6 +38,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Maciej Walkowiak
  */
 public class JdbcRepositoryQueryUnitTests {
 
@@ -108,8 +109,8 @@ public class JdbcRepositoryQueryUnitTests {
 				.queryForObject(anyString(), any(SqlParameterSource.class), isA(CustomRowMapper.class));
 	}
 
-	@Test
-	public void publishesSingleEventWhenQueryReturnsSingleElement() {
+	@Test // DATAJDBC-263
+	public void publishesSingleEventWhenQueryReturnsSingleAggregate() {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(false).when(queryMethod).isCollectionQuery();
@@ -122,8 +123,8 @@ public class JdbcRepositoryQueryUnitTests {
 		verify(publisher).publishEvent(any(AfterLoadEvent.class));
 	}
 
-	@Test
-	public void publishesAsManyEventsAsReturnedEntities() {
+	@Test // DATAJDBC-263
+	public void publishesAsManyEventsAsReturnedAggregates() {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(true).when(queryMethod).isCollectionQuery();

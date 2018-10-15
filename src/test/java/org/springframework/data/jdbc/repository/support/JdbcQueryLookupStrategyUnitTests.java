@@ -47,6 +47,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Mark Paluch
+ * @author Maciej Walkowiak
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
