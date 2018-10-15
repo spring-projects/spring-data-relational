@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Wither;
 
@@ -202,6 +203,18 @@ public class EntityRowMapperUnitTests {
 				.isEqualTo(new String[] { "111", "222", "333" });
 	}
 
+	@Test // DATAJDBC-273
+	public void handlesNonSimplePropertyInConstructor() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("id"), //
+				ID_FOR_ENTITY_REFERENCING_LIST);
+		rs.next();
+
+		EntityWithListInConstructor extracted = createRowMapper(EntityWithListInConstructor.class).mapRow(rs, 1);
+
+		assertThat(extracted.content).hasSize(2);
+	}
+
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
 		return createRowMapper(type, NamingStrategy.INSTANCE);
 	}
@@ -319,12 +332,13 @@ public class EntityRowMapperUnitTests {
 			return index < 0 && !values.isEmpty();
 		}
 
-		private Object getObject(String column) {
+		private Object getObject(String column) throws SQLException {
 
 			Map<String, Object> rowMap = values.get(index);
 
-			Assert.isTrue(rowMap.containsKey(column),
-					String.format("Trying to access a column (%s) that does not exist", column));
+			if (!rowMap.containsKey(column)) {
+				throw new SQLException(String.format("Trying to access a column (%s) that does not exist", column));
+			}
 
 			return rowMap.get(column);
 		}
@@ -408,5 +422,13 @@ public class EntityRowMapperUnitTests {
 		MixedProperties withThree(String three) {
 			return new MixedProperties(one, two, three);
 		}
+	}
+
+	@AllArgsConstructor
+	static class EntityWithListInConstructor {
+
+		@Id final Long id;
+
+		final List<Trivial> content;
 	}
 }

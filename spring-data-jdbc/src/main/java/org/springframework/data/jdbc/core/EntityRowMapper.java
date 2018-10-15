@@ -67,7 +67,16 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	@Override
 	public T mapRow(ResultSet resultSet, int rowNumber) {
 
-		T result = createInstance(entity, resultSet, "");
+		String prefix = "";
+
+		RelationalPersistentProperty idProperty = entity.getIdProperty();
+
+		Object idValue = null;
+		if (idProperty != null) {
+			idValue = readFrom(resultSet, idProperty, prefix);
+		}
+
+		T result = createInstance(entity, resultSet, idValue);
 
 		return entity.requiresPropertyPopulation() //
 				? populateProperties(result, resultSet) //
@@ -88,24 +97,22 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 				continue;
 			}
 
-			if (property.isCollectionLike() && id != null) {
-
-				propertyAccessor.setProperty(property, accessStrategy.findAllByProperty(id, property));
-
-			} else if (property.isMap() && id != null) {
-
-				Iterable<Object> allByProperty = accessStrategy.findAllByProperty(id, property);
-				propertyAccessor.setProperty(property, ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(allByProperty));
-
-			} else {
-
-				final Object value = readFrom(resultSet, property, "");
-
-				propertyAccessor.setProperty(property, value);
-			}
+			propertyAccessor.setProperty(property, readOrLoadProperty(resultSet, id, property));
 		}
 
 		return propertyAccessor.getBean();
+	}
+
+	@Nullable
+	private Object readOrLoadProperty(ResultSet resultSet, @Nullable Object id, RelationalPersistentProperty property) {
+
+		if (property.isCollectionLike() && id != null) {
+			return accessStrategy.findAllByProperty(id, property);
+		} else if (property.isMap() && id != null) {
+			return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(accessStrategy.findAllByProperty(id, property));
+		} else {
+			return readFrom(resultSet, property, "");
+		}
 	}
 
 	/**
@@ -139,14 +146,20 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 		RelationalPersistentProperty idProperty = entity.getIdProperty();
 
+		Object idValue = null;
+
+		if (idProperty != null) {
+			idValue = readFrom(rs, idProperty, prefix);
+		}
+
 		if ((idProperty != null //
-				? readFrom(rs, idProperty, prefix) //
+				? idValue //
 				: getObjectFromResultSet(rs, prefix + property.getReverseColumnName()) //
 		) == null) {
 			return null;
 		}
 
-		S instance = createInstance(entity, rs, prefix);
+		S instance = createInstance(entity, rs, idValue);
 
 		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
 
@@ -167,7 +180,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		}
 	}
 
-	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, String prefix) {
+	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, @Nullable Object idValue) {
 
 		return converter.createInstance(entity, parameter -> {
 
@@ -176,7 +189,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
 
 			RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
-			return readFrom(rs, property, prefix);
+
+			return readOrLoadProperty(rs, idValue, property);
 		});
 	}
 }
