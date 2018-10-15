@@ -138,7 +138,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-131
 	public void findAllByProperty() {
 
-		// this would get called when DummyEntity is the element type of a Set
+		// this would get called when ListParent is the element type of a Set
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, false);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, " //
@@ -151,7 +151,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-131
 	public void findAllByPropertyWithKey() {
 
-		// this would get called when DummyEntity is th element type of a Map
+		// this would get called when ListParent is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", false);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, " //
@@ -170,7 +170,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-131
 	public void findAllByPropertyWithKeyOrdered() {
 
-		// this would get called when DummyEntity is th element type of a Map
+		// this would get called when ListParent is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", true);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, " //
