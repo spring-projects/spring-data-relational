@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.1.RELEASE (2018-10-15)
+---------------------------------------------
+* DATAJDBC-268 - Release 1.0.1 (Lovelace SR1).
+* DATAJDBC-263 - When entities get created via a method with @Query annotation no AfterLoadEvent gets triggered.
+
+
 Changes in version 1.0.0.RELEASE (2018-09-21)
 ---------------------------------------------
 * DATAJDBC-267 - Fix Jdbc configuration to support multiple stores.
