@@ -107,14 +107,6 @@ public class AggregateChange<T> {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPathToEntity = action.getPropertyPath();
 
-		RelationalPersistentProperty requiredIdProperty = context
-				.getRequiredPersistentEntity(propertyPathToEntity.getRequiredLeafProperty().getActualType())
-				.getRequiredIdProperty();
-
-		PersistentPropertyPath<RelationalPersistentProperty> pathToId = context.getPersistentPropertyPath(
-				propertyPathToEntity.toDotPath() + '.' + requiredIdProperty.getName(),
-				propertyPathToEntity.getBaseProperty().getOwner().getType());
-
 		RelationalPersistentProperty leafProperty = propertyPathToEntity.getRequiredLeafProperty();
 
 		Object currentPropertyValue = propertyAccessor.getProperty(propertyPathToEntity);
@@ -140,6 +132,15 @@ public class AggregateChange<T> {
 				throw new IllegalStateException("Can't handle " + currentPropertyValue);
 			}
 		} else {
+
+			RelationalPersistentProperty requiredIdProperty = context
+					.getRequiredPersistentEntity(propertyPathToEntity.getRequiredLeafProperty().getActualType())
+					.getRequiredIdProperty();
+
+			PersistentPropertyPath<RelationalPersistentProperty> pathToId = context.getPersistentPropertyPath(
+					propertyPathToEntity.toDotPath() + '.' + requiredIdProperty.getName(),
+					propertyPathToEntity.getBaseProperty().getOwner().getType());
+
 			propertyAccessor.setProperty(pathToId, generatedId);
 		}
 	}
@@ -191,7 +192,11 @@ public class AggregateChange<T> {
 		PersistentPropertyAccessor<T> intermediateAccessor = converter.getPropertyAccessor(persistentEntity,
 				(T) originalElement);
 
-		intermediateAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
+		if (idProperty != null) {
+			intermediateAccessor.setProperty(idProperty, generatedId);
+		}
+
 		return intermediateAccessor;
 	}
 

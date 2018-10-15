@@ -39,6 +39,9 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
  *
@@ -217,7 +220,7 @@ public class AggregateTemplateIntegrationTests {
 		OneToOneParent parent = new OneToOneParent();
 
 		parent.content = "parent content";
-		parent.child = new OneToOneChildNoId();
+		parent.child = new ChildNoId();
 		parent.child.content = "child content";
 
 		template.save(parent);
@@ -248,7 +251,7 @@ public class AggregateTemplateIntegrationTests {
 		OneToOneParent parent = new OneToOneParent();
 
 		parent.content = "parent content";
-		parent.child = new OneToOneChildNoId();
+		parent.child = new ChildNoId();
 
 		template.save(parent);
 
@@ -289,6 +292,23 @@ public class AggregateTemplateIntegrationTests {
 
 		softly.assertAll();
 	}
+	@Test // DATAJDBC-276
+	public void saveAndLoadAnEntityWithListOfElementsWithoutId() {
+
+		ListParent entity = new ListParent();
+		entity.name = "name";
+
+		ElementNoId element = new ElementNoId();
+		element.content = "content";
+
+		entity.content.add(element);
+
+		template.save(entity);
+
+		ListParent reloaded = template.findById(entity.id, ListParent.class);
+
+		assertThat(reloaded.content).extracting(e -> e.content).containsExactly("content");
+	}
 
 	private static LegoSet createLegoSet() {
 
@@ -326,12 +346,24 @@ public class AggregateTemplateIntegrationTests {
 		@Id private Long id;
 		private String content;
 
-		private OneToOneChildNoId child;
+		private ChildNoId child;
 	}
 
-	static class OneToOneChildNoId {
+	static class ChildNoId {
 		private String content;
 	}
+
+	static class ListParent {
+
+		@Id private Long id;
+		String name;
+		List<ElementNoId> content = new ArrayList<>();
+	}
+
+	static class ElementNoId {
+		private String content;
+	}
+
 
 	@Configuration
 	@Import(TestConfiguration.class)
