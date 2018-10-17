@@ -48,28 +48,27 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 		this.resultFunction = resultFunction;
 		this.updatedRowsFunction = updatedRowsFunction;
 
-		this.fetchSpec = new DefaultFetchSpec<>(connectionAccessor, sql,
-				new SqlFunction<Connection, Flux<T>>() {
-					@Override
-					public Flux<T> apply(Connection connection) {
-						return resultFunction.apply(connection).flatMap(result -> result.map(mappingFunction));
-					}
+		this.fetchSpec = new DefaultFetchSpec<>(connectionAccessor, sql, new SqlFunction<Connection, Flux<T>>() {
+			@Override
+			public Flux<T> apply(Connection connection) {
+				return resultFunction.apply(connection).flatMap(result -> result.map(mappingFunction));
+			}
 
-					@Override
-					public String getSql() {
-						return sql;
-					}
-				}, new SqlFunction<Connection, Mono<Integer>>() {
-					@Override
-					public Mono<Integer> apply(Connection connection) {
-						return updatedRowsFunction.apply(connection);
-					}
+			@Override
+			public String getSql() {
+				return sql;
+			}
+		}, new SqlFunction<Connection, Mono<Integer>>() {
+			@Override
+			public Mono<Integer> apply(Connection connection) {
+				return updatedRowsFunction.apply(connection);
+			}
 
-					@Override
-					public String getSql() {
-						return sql;
-					}
-				});
+			@Override
+			public String getSql() {
+				return sql;
+			}
+		});
 	}
 
 	/* (non-Javadoc)

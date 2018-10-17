@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.testing;
+package org.springframework.data.r2dbc.testing;
 
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
@@ -23,7 +23,7 @@ import javax.sql.DataSource;
 
 import org.junit.ClassRule;
 import org.postgresql.ds.PGSimpleDataSource;
-import org.springframework.data.jdbc.testing.ExternalDatabase.ProvidedDatabase;
+import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**

@@ -13,25 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.repository.query;
+package org.springframework.data.r2dbc.repository.query;
 
-import org.springframework.data.repository.query.ParameterAccessor;
-import org.springframework.data.repository.query.Parameters;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import org.springframework.data.annotation.QueryAnnotation;
 
 /**
- * JDBC-specific {@link ParameterAccessor}.
- *
+ * Annotation to provide SQL statements that will get used for executing the method.
+ * 
  * @author Mark Paluch
  */
-public interface RelationalParameterAccessor extends ParameterAccessor {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@QueryAnnotation
+@Documented
+public @interface Query {
 
 	/**
-	 * Returns the raw parameter values of the underlying query method.
+	 * The SQL statement to execute when the annotated method gets invoked.
 	 */
-	Object[] getValues();
-
-	/**
-	 * @return the bindable parameters.
-	 */
-	Parameters<?, ?> getBindableParameters();
+	String value();
 }

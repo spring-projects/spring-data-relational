@@ -315,7 +315,6 @@ public interface DatabaseClient {
 		 */
 		S project(String... selectedFields);
 
-
 		/**
 		 * Configure {@link Sort}.
 		 *

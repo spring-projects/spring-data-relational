@@ -5,12 +5,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
     <groupId>org.springframework.data</groupId>
-    <artifactId>spring-data-jdbc</artifactId>
-    <version>1.1.0.r2dbc-SNAPSHOT</version>
+	<artifactId>spring-data-r2dbc</artifactId>
+	<version>1.0.0.BUILD-SNAPSHOT</version>
 
-	<name>Spring Data JDBC</name>
-	<description>Spring Data module for JDBC repositories.</description>
-	<url>http://projects.spring.io/spring-data-jdbc</url>
+	<name>Spring Data R2DBC</name>
+	<description>Spring Data module for R2DBC.</description>
+	<url>http://projects.spring.io/spring-data-r2dbc</url>
 
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
@@ -20,33 +20,29 @@
 
 	<properties>
 
-		<dist.key>DATAJDBC</dist.key>
+		<dist.key>DATAR2DBC</dist.key>
 
 		<springdata.commons>2.2.0.BUILD-SNAPSHOT</springdata.commons>
-		<java-module-name>spring.data.jdbc</java-module-name>
+		<springdata.relational>1.1.0.BUILD-SNAPSHOT</springdata.relational>
+		<java-module-name>spring.data.r2dbc</java-module-name>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
-		<assertj-core.version>3.6.2</assertj-core.version>
 		<degraph-check.version>0.1.4</degraph-check.version>
 		<hsqldb.version>2.2.8</hsqldb.version>
-		<mybatis.version>3.4.6</mybatis.version>
-		<mybatis-spring.version>1.3.2</mybatis-spring.version>
-		<mysql-connector-java.version>5.1.41</mysql-connector-java.version>
 		<postgresql.version>42.0.0</postgresql.version>
-		<mariadb-java-client.version>2.2.3</mariadb-java-client.version>
 		<r2dbc-spi.version>1.0.0.M5</r2dbc-spi.version>
 		<r2dbc-postgresql.version>1.0.0.M5</r2dbc-postgresql.version>
 		<testcontainers.version>1.7.3</testcontainers.version>
 
 	</properties>
 
-	<inceptionYear>2017</inceptionYear>
+	<inceptionYear>2018</inceptionYear>
 
 	<developers>
 		<developer>
-			<id>schauder</id>
-			<name>Jens Schauder</name>
-			<email>jschauder(at)pivotal.io</email>
+			<id>mpaluch</id>
+			<name>Mark Paluch</name>
+			<email>mpaluch(at)pivotal.io</email>
 			<organization>Pivotal Software, Inc.</organization>
 			<organizationUrl>https://pivotal.io</organizationUrl>
 			<roles>
@@ -55,15 +51,15 @@
 			<timezone>+1</timezone>
 		</developer>
 		<developer>
-			<id>gregturn</id>
-			<name>Greg L. Turnquist</name>
-			<email>gturnquist(at)pivotal.io</email>
+			<id>ogierke</id>
+			<name>Oliver Gierke</name>
+			<email>ogierke(at)pivotal.io</email>
 			<organization>Pivotal Software, Inc.</organization>
 			<organizationUrl>https://pivotal.io</organizationUrl>
 			<roles>
-				<role>Project Contributor</role>
+				<role>Project Lead</role>
 			</roles>
-			<timezone>-6</timezone>
+			<timezone>+1</timezone>
 		</developer>
 	</developers>
 
@@ -178,6 +174,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>spring-data-relational</artifactId>
+			<version>${springdata.relational}</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-tx</artifactId>
 		</dependency>
@@ -206,40 +208,17 @@
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-spi</artifactId>
 			<version>${r2dbc-spi.version}</version>
-			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mybatis</groupId>
-			<artifactId>mybatis-spring</artifactId>
-			<version>${mybatis-spring.version}</version>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mybatis</groupId>
-			<artifactId>mybatis</artifactId>
-			<version>${mybatis.version}</version>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
-			<version>${hsqldb.version}</version>
-			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>${assertj-core.version}</version>
+			<version>${assertj}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -250,23 +229,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>${mysql-connector-java.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>${postgresql.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mariadb.jdbc</groupId>
-			<artifactId>mariadb-java-client</artifactId>
-			<version>${mariadb-java-client.version}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -300,13 +265,6 @@
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>${testcontainers.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>mariadb</artifactId>
 			<version>${testcontainers.version}</version>
 			<scope>test</scope>
 		</dependency>

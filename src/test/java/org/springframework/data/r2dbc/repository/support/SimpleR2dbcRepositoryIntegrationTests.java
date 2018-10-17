@@ -33,7 +33,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.testing.R2dbcIntegrationTestSupport;
+import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;

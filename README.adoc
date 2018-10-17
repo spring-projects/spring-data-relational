@@ -1,88 +1,196 @@
-image:https://spring.io/badges/spring-data-jdbc/ga.svg["Spring Data JDBC", link="https://spring.io/projects/spring-data-jdbc#learn"]
-image:https://spring.io/badges/spring-data-jdbc/snapshot.svg["Spring Data JDBC", link="https://spring.io/projects/spring-data-jdbc#learn"]
+= Spring Data R2DBC
 
-= Spring Data JDBC
+The primary goal of the http://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data R2DBC* offers the popular Repository abstraction based on https://r2dbc.io[R2DBC].
 
-The primary goal of the http://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data JDBC* offers the popular Repository abstraction based on JDBC.
+R2DBC is the abbreviation for https://github.com/r2dbc/[Reactive Relational Database Connectivity], an incubator to integrate relational databases using a reactive driver.
 
-It aims at being conceptually easy.
-In order to achieve this it does NOT offer caching, lazy loading, write behind or many other features of JPA.
-This makes Spring Data JDBC a simple, limited, opinionated ORM.
+The state of R2DBC is incubating to evaluate how an reactive integration could look like. To get started, you need a R2DBC driver first.
 
-== Features
+== This is NOT an ORM
 
-* Implementation of CRUD methods for Aggregates.
-* `@Query` annotation
-* Support for transparent auditing (created, last changed)
-* Events for persistence events
-* Possibility to integrate custom repository code
-* JavaConfig based repository configuration by introducing `EnableJdbcRepository`
-* Integration with MyBatis
+Spring Data R2DBC does not try to be an ORM. 
+Instead it is more of a construction kit for your personal reactive relational data access component that you can define the way you like or need it.
 
-== Getting Help
+== Maven Coordinates
 
-If you are new to Spring Data JDBC read the following two articles https://spring.io/blog/2018/09/17/introducing-spring-data-jdbc["Introducing Spring Data JDBC"] and https://spring.io/blog/2018/09/24/spring-data-jdbc-references-and-aggregates["Spring Data JDBC, References, and Aggregates"]
-
-There are also examples in the https://github.com/spring-projects/spring-data-examples/tree/master/jdbc[Spring Data Examples] project.
-
-A very good source of information is the source code in this repository.
-Especially the integration tests (if you are reading this on github, type `t` and then `IntegrationTests.java`)
-
-We are keeping an eye on the (soon to be created) https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on stackoverflow].
-
-If you think you found a bug, or have a feature request please https://jira.spring.io/browse/DATAJDBC/?selectedTab=com.atlassian.jira.jira-projects-plugin:summary-panel[create a ticket in our issue tracker].
-
-== Execute Tests
-
-=== Fast running tests
-
-Fast running tests can be executed with a simple
-
-[source]
+[source,xml]
 ----
-mvn test
+<dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-r2dbc</artifactId>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
+</dependency>
 ----
 
-This will execute unit tests and integration tests using an in-memory database.
 
-=== Running tests with a real database
+== DatabaseClient
 
-In order to run the integration tests against a specific database you need to have a local Docker installation available, and then execute.
+All functionality is encapsulated in `DatabaseClient` which is the entry point for applications that wish to integrate with relational databases using reactive drivers:
 
-[source]
+[source,java]
 ----
-mvn test -Dspring.profiles.active=<databasetype>
-----
+PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+		.host(…)
+		.database(…)
+		.username(…)
+		.password(…).build());
 
-This will also execute the unit tests.
-
-Currently the following _databasetypes_ are available:
-
-* hsql (default, does not require a running database)
-* mysql
-* postgres
-* mariadb
-
-=== Run tests with all databases
-
-[source]
-----
-mvn test -Pall-dbs
+DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 ----
 
-This will execute the unit tests, and all the integration tests with all the databases we currently support for testing. Running the integration-tests depends on Docker.
+The client API provides covers the following features:
 
-== Contributing to Spring Data JDBC
+* Execution of generic SQL and consumption of update count/row results.
+* Generic `SELECT` with paging and ordering.
+* `SELECT` of mapped objects with paging and ordering.
+* Generic `INSERT` with parameter binding.
+* `INSERT` of mapped objects.
+* Parameter binding using the native syntax.
+* Result consumption: Update count, unmapped (`Map<String, Object>`), mapped to entities, extraction function.
+* Reactive repositories using `@Query` annotated methods.
+* Transaction Management.
+
+=== Examples executing generic SQL statements
+
+[source,java]
+----
+Mono<Integer> count = databaseClient.execute()
+				.sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)")
+				.bind("$1", 42055)
+				.bind("$2", "Description")
+				.bindNull("$3", Integer.class)
+				.fetch()
+				.rowsUpdated();
+
+Flux<Map<String, Object>> rows = databaseClient.execute()
+				.sql("SELECT id, name, manual FROM legoset")
+				.fetch().all();
+
+Flux<Long> result = db.execute()
+				.sql("SELECT txid_current();")
+				.exchange()
+				.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
+----
+
+=== Examples selecting data
+
+[source,java]
+----
+
+Flux<Map<String, Object>> rows = databaseClient.select()
+				.from("legoset")
+				.orderBy(Sort.by(desc("id")))
+				.fetch()
+				.all();
+
+Flux<LegoSet> rows = databaseClient.select()
+				.from("legoset")
+				.orderBy(Sort.by(desc("id")))
+				.as(LegoSet.class)
+				.fetch()
+				.all();
+----
+
+=== Examples inserting data
+
+[source,java]
+----
+Flux<Integer> ids = databaseClient.insert()
+				.into("legoset")
+				.value("id", 42055)
+				.value("name", "Description")
+				.nullValue("manual", Integer.class)
+				.exchange() //
+				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all())
+
+Flux<Integer> ids = databaseClient.insert()
+				.into(LegoSet.class)
+				.using(legoSet)
+				.exchange()
+				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all())
+----
+
+=== Examples using reactive repositories
+
+[source,java]
+----
+interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
+
+		@Query("SELECT * FROM legoset WHERE name like $1")
+		Flux<LegoSet> findByNameContains(String name);
+
+		@Query("SELECT * FROM legoset WHERE manual = $1")
+		Mono<LegoSet> findByManual(int manual);
+}
+----
+
+=== Examples using transaction control
+
+All examples above run with auto-committed transactions. To get group multiple statements within the same transaction or
+control the transaction yourself, you need to use `TransactionalDatabaseClient`:
+
+[source,java]
+----
+TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
+----
+
+`TransactionalDatabaseClient` allows multiple flavors of transaction management:
+
+* Participate in ongoing transactions and fall-back to auto-commit mode if there's no active transaction (default).
+* Group multiple statements in a managed transaction using `TransactionalDatabaseClient.inTransaction(…)`.
+* Application-controlled transaction management using `TransactionalDatabaseClient.beginTransaction()`/`commitTransaction()`/`rollbackTransaction()`.
+
+Participating in ongoing transactions does not require changes to your application code. Instead, a managed transaction must be hosted by your application container. Transaction control needs to happen there, as well.
+
+**Statement grouping**
+
+[source,java]
+----
+Flux<Integer> rowsUpdated = databaseClient.inTransaction(db -> {
+
+	return db.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
+			.bind(0, 42055) //
+			.bind(1, "Description") //
+			.bindNull("$3", Integer.class) //
+			.fetch()
+			.rowsUpdated();
+});
+----
+
+**Application-controlled transaction management**
+
+[source,java]
+----
+Flux<Long> txId = databaseClient.execute().sql("SELECT txid_current();").exchange()
+				.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
+
+Mono<Void> then = databaseClient.enableTransactionSynchronization(databaseClient.beginTransaction() //
+				.thenMany(txId)) //
+				.then(databaseClient.rollbackTransaction()));
+----
+
+NOTE: Application-controlled transactions must be enabled with `enableTransactionSynchronization(…)`.
+
+== Building from Source
+
+You don't need to build from source to use Spring Data R2DBC (binaries in https://repo.spring.io[repo.spring.io]), but if you want to try out the latest and greatest, Spring Data R2DBC can be easily built with the https://github.com/takari/maven-wrapper[maven wrapper]. You also need JDK 1.8.
+
+[indent=0]
+----
+	$ ./mvnw clean install
+----
+
+If you want to build with the regular `mvn` command, you will need https://maven.apache.org/run-maven/index.html[Maven v3.5.0 or above].
+
+_Also see link:CONTRIBUTING.adoc[CONTRIBUTING.adoc] if you wish to submit pull requests, and in particular please fill out the https://cla.pivotal.io/[Contributor's Agreement] before your first change._
+
+== Contributing to Spring Data R2DBC
 
 Here are some ways for you to get involved in the community:
 
-* Get involved with the Spring community by helping out on http://stackoverflow.com/questions/tagged/spring-data-jdbc[stackoverflow] by responding to questions and joining the debate.
-* Create https://jira.spring.io/browse/DATAJDBC[JIRA] tickets for bugs and new features and comment and vote on the ones that you are interested in.
+* Get involved with the Spring community by helping out on http://stackoverflow.com/questions/tagged/spring-data-r2dbc[Stackoverflow] by responding to questions and joining the debate.
+* Create https://github.com/spring-data/spring-data-r2dbc[GitHub] tickets for bugs and new features and comment and vote on the ones that you are interested in.
 * Github is for social coding: if you want to write code, we encourage contributions through pull requests from http://help.github.com/forking/[forks of this repository]. If you want to contribute code this way, please reference a JIRA ticket as well, covering the specific issue you are addressing.
 * Watch for upcoming articles on Spring by http://spring.io/blog[subscribing] to spring.io.
 
 Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement]. Signing the contributor’s agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. If you forget to do so, you'll be reminded when you submit a pull request. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
-
-== License
-
-link:src/main/resources/license.txt[The license und which Spring Data JDBC is published can be found here].

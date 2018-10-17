@@ -30,7 +30,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.data.jdbc.testing.R2dbcIntegrationTestSupport;
+import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.NoTransactionException;
 

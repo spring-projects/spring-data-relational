@@ -155,8 +155,7 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 			String column = prefix + entity.getRequiredPersistentProperty(parameter.getName()).getColumnName();
 
 			try {
-				return conversionService.convert(resultSet.get(column),
-						parameter.getType().getType());
+				return conversionService.convert(resultSet.get(column), parameter.getType().getType());
 			} catch (Exception o_O) {
 				throw new MappingException(String.format("Couldn't read column %s from Row.", column), o_O);
 			}
