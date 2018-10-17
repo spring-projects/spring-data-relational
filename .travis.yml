@@ -1,0 +1,41 @@
+language: java
+
+matrix:
+  include:
+    - jdk: oraclejdk8
+      env: JDK='Oracle JDK 8'
+    - jdk: oraclejdk9
+      env: JDK='Oracle JDK 9'
+    - env:
+      - JDK='Oracle JDK 10'
+      - NO_JACOCO='true'
+      before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -F 10 -L BCL
+    - env:
+      - JDK='Oracle JDK 11'
+      - NO_JACOCO='true'
+      before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -F 11 -L BCL
+  allow_failures:
+    - env:
+      - JDK='Oracle JDK 11'
+      - NO_JACOCO='true'
+
+addons:
+  apt:
+    packages:
+    - oracle-java8-installer
+
+cache:
+  directories:
+    - $HOME/.m2
+
+sudo: false
+
+services:
+  - docker
+  - postgresql
+
+install: true
+
+script:
+  - "mvn -version"
+  - "mvn clean dependency:list test -Pall-dbs${NO_JACOCO:+',no-jacoco'} -Dsort -U"
