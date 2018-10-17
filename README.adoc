@@ -52,11 +52,13 @@ If you think you found a bug, or have a feature request please https://jira.spri
 
 == Building from Source
 
-You don't need to build from source to use Spring Data Relational (binaries in https://repo.spring.io[repo.spring.io]), but if you want to try out the latest and greatest, Spring Data Relational can be easily built with Maven. You also need JDK 1.8.
+You don't need to build from source to use Spring Data Relational (binaries in https://repo.spring.io[repo.spring.io]).
+If you want to try out the latest and greatest, Spring Data Relational can be easily built with Maven.
+You also need JDK 1.8.
 
-[indent=0]
+[source]
 ----
-	$ mvn clean install
+$ mvn clean install
 ----
 
 === Fast running tests
@@ -65,7 +67,7 @@ Fast running tests can be executed with a simple
 
 [source]
 ----
-	$ mvn test
+$ mvn test
 ----
 
 This will execute unit tests and integration tests using an in-memory database.
@@ -76,7 +78,7 @@ In order to run the integration tests against a specific database you need to ha
 
 [source]
 ----
-	$ mvn test -Dspring.profiles.active=<databasetype>
+$ mvn test -Dspring.profiles.active=<databasetype>
 ----
 
 This will also execute the unit tests.
@@ -92,7 +94,7 @@ Currently the following _databasetypes_ are available:
 
 [source]
 ----
-	$ mvn test -Pall-dbs
+$ mvn test -Pall-dbs
 ----
 
 This will execute the unit tests, and all the integration tests with all the databases we currently support for testing. Running the integration-tests depends on Docker.

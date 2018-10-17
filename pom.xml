@@ -9,8 +9,8 @@
     <version>1.1.0.BUILD-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>Spring Data Relational</name>
-	<description>Spring Data module for Relational repositories.</description>
+	<name>Spring Data Relational Parent</name>
+	<description>Parent module for Spring Data Relational repositories.</description>
 	<url>http://projects.spring.io/spring-data-jdbc</url>
 
 	<parent>
