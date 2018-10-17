@@ -17,7 +17,6 @@
 	</parent>
 
 	<properties>
-
 		<java-module-name>spring.data.relational</java-module-name>
 	</properties>
 
@@ -52,13 +51,7 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>${assertj-core.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>io.projectreactor</groupId>
-			<artifactId>reactor-test</artifactId>
+			<version>${assertj}</version>
 			<scope>test</scope>
 		</dependency>
 
