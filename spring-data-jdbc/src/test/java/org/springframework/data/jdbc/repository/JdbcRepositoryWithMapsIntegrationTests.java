@@ -36,6 +36,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.annotation.IfProfileValue;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -133,6 +134,7 @@ public class JdbcRepositoryWithMapsIntegrationTests {
 	}
 
 	@Test // DATAJDBC-131
+	@IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
 	public void updateMap() {
 
 		Element element1 = createElement("one");

@@ -43,6 +43,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.test.annotation.IfProfileValue;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -88,6 +89,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	@Autowired DummyEntityRepository repository;
 
 	@Test // DATAJDBC-95
+	@IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
 	public void saveAndLoadAnEntity() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
@@ -106,6 +108,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
 	public void existsById() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
@@ -114,6 +117,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
 	public void findAllById() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
@@ -122,6 +126,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
 	public void deleteAll() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
@@ -132,6 +137,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
 	public void deleteById() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());

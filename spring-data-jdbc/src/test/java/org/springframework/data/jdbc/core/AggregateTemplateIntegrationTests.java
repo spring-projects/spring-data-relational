@@ -34,6 +34,7 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.test.annotation.IfProfileValue;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -143,6 +144,7 @@ public class AggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+    @IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
 	public void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);
@@ -201,6 +203,7 @@ public class AggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+    @IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
 	public void changeReferencedEntity() {
 
 		template.save(legoSet);

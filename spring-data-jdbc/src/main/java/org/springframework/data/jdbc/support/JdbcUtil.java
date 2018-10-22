@@ -42,7 +42,7 @@ public class JdbcUtil {
 
 		sqlTypeMappings.put(String.class, Types.VARCHAR);
 		sqlTypeMappings.put(BigInteger.class, Types.BIGINT);
-		sqlTypeMappings.put(BigDecimal.class, Types.NUMERIC);
+		sqlTypeMappings.put(BigDecimal.class, Types.DECIMAL);
 		sqlTypeMappings.put(Byte.class, Types.TINYINT);
 		sqlTypeMappings.put(byte.class, Types.TINYINT);
 		sqlTypeMappings.put(Short.class, Types.SMALLINT);
