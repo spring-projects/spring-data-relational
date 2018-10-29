@@ -1,6 +1,11 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.2.RELEASE (2018-10-29)
+---------------------------------------------
+* DATAJDBC-277 - Release 1.0.2 (Lovelace SR2).
+
+
 Changes in version 1.0.1.RELEASE (2018-10-15)
 ---------------------------------------------
 * DATAJDBC-268 - Release 1.0.1 (Lovelace SR1).
