@@ -319,13 +319,16 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				|| (idProperty.getType() == long.class && idValue.equals(0L));
 	}
 
+	@Nullable
 	private <S> Object getIdFromHolder(KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
 
         try {
             // MySQL just returns one value with a special name
             return holder.getKey();
-        } catch (InvalidDataAccessApiUsageException e) {
+        } catch (DataRetrievalFailureException | InvalidDataAccessApiUsageException e) {
             // Postgres returns a value for each column
+			// MS SQL Server returns a value that might be null.
+
             Map<String, Object> keys = holder.getKeys();
 
             if (keys == null || persistentEntity.getIdProperty() == null) {
@@ -333,17 +336,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
             }
 
             return keys.get(persistentEntity.getIdColumn());
-        } catch (DataRetrievalFailureException e) {
-            // thomas.lang@th-deg.de
-            // mssql causes org.springframework.dao.DataRetrievalFailureException:
-            // The generated key is not of a supported numeric type. Unable to cast [null] to [java.lang.Number]
-            // see what happens here
-
-            Map<String, Object> keys = holder.getKeys();
-            if (keys == null || persistentEntity.getIdProperty() == null) {
-                return null;
-            }
-            return null;
         }
     }
 

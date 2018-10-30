@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -30,18 +33,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.test.annotation.IfProfileValue;
+import org.springframework.test.annotation.ProfileValueSourceConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
@@ -51,6 +53,7 @@ import java.util.List;
  */
 @ContextConfiguration
 @Transactional
+@ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)
 public class AggregateTemplateIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
@@ -145,7 +148,7 @@ public class AggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-    @IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
+	@IfProfileValue(name = "current.database.is.not.mssql", value = "true") // DATAJDBC-278
 	public void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);
@@ -204,7 +207,7 @@ public class AggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-    @IfProfileValue(name = "spring.profiles.active", values = {"mysql", "postgres", "mariadb", "default"}) // DATAJDBC-278
+	@IfProfileValue(name = "current.database.is.not.mssql", value = "true") // DATAJDBC-278
 	public void changeReferencedEntity() {
 
 		template.save(legoSet);
@@ -296,6 +299,7 @@ public class AggregateTemplateIntegrationTests {
 
 		softly.assertAll();
 	}
+
 	@Test // DATAJDBC-276
 	public void saveAndLoadAnEntityWithListOfElementsWithoutId() {
 
@@ -367,7 +371,6 @@ public class AggregateTemplateIntegrationTests {
 	static class ElementNoId {
 		private String content;
 	}
-
 
 	@Configuration
 	@Import(TestConfiguration.class)
