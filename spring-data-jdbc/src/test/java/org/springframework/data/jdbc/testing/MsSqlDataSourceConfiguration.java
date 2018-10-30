@@ -27,7 +27,6 @@ import javax.sql.DataSource;
  * {@link DataSource} setup for PostgreSQL.
  * <p>
  * Configuration for a MSSQL Datasource.
- * As there is no testcontainer image to use we have to do it the following way:
  *
  * @author Thomas Lang
  * @see <a href="https://github.com/testcontainers/testcontainers-java/tree/master/modules/mssqlserver"></a>
@@ -41,7 +40,6 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
     static {
         mssqlserver.start();
     }
-
 
     /*
      * (non-Javadoc)
