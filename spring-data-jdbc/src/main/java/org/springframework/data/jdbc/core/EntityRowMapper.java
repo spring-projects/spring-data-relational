@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Mark Paluch
+ * @author Maciej Walkowiak
  */
 public class EntityRowMapper<T> implements RowMapper<T> {
 
@@ -76,7 +77,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			idValue = readFrom(resultSet, idProperty, prefix);
 		}
 
-		T result = createInstance(entity, resultSet, idValue);
+		T result = createInstance(entity, resultSet, idValue, prefix);
 
 		return entity.requiresPropertyPopulation() //
 				? populateProperties(result, resultSet) //
@@ -97,21 +98,21 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 				continue;
 			}
 
-			propertyAccessor.setProperty(property, readOrLoadProperty(resultSet, id, property));
+			propertyAccessor.setProperty(property, readOrLoadProperty(resultSet, id, property, ""));
 		}
 
 		return propertyAccessor.getBean();
 	}
 
 	@Nullable
-	private Object readOrLoadProperty(ResultSet resultSet, @Nullable Object id, RelationalPersistentProperty property) {
+	private Object readOrLoadProperty(ResultSet resultSet, @Nullable Object id, RelationalPersistentProperty property, String prefix) {
 
 		if (property.isCollectionLike() && id != null) {
 			return accessStrategy.findAllByProperty(id, property);
 		} else if (property.isMap() && id != null) {
 			return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(accessStrategy.findAllByProperty(id, property));
 		} else {
-			return readFrom(resultSet, property, "");
+			return readFrom(resultSet, property, prefix);
 		}
 	}
 
@@ -159,7 +160,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return null;
 		}
 
-		S instance = createInstance(entity, rs, idValue);
+		S instance = createInstance(entity, rs, idValue, prefix);
 
 		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
 
@@ -180,7 +181,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		}
 	}
 
-	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, @Nullable Object idValue) {
+	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, @Nullable Object idValue, String prefix) {
 
 		return converter.createInstance(entity, parameter -> {
 
@@ -190,7 +191,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 			RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
 
-			return readOrLoadProperty(rs, idValue, property);
+			return readOrLoadProperty(rs, idValue, property, prefix);
 		});
 	}
 }
