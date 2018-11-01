@@ -89,6 +89,7 @@ Currently the following _databasetypes_ are available:
 * mysql
 * postgres
 * mariadb
+* mssql
 
 === Run tests with all databases
 
