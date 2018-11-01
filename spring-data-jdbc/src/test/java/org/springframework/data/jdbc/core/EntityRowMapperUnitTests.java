@@ -58,6 +58,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Maciej Walkowiak
  */
 public class EntityRowMapperUnitTests {
 
@@ -124,6 +125,21 @@ public class EntityRowMapperUnitTests {
 		rs.next();
 
 		OneToOne extracted = createRowMapper(OneToOne.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name, e -> e.child.id, e -> e.child.name) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
+	}
+
+	@Test // DATAJDBC-286
+	public void immutableOneToOneGetsProperlyExtracted() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("id", "name", "child_id", "child_name"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
+		rs.next();
+
+		OneToOneImmutable extracted = createRowMapper(OneToOneImmutable.class).mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -369,6 +385,15 @@ public class EntityRowMapperUnitTests {
 		@Id Long id;
 		String name;
 		Trivial child;
+	}
+
+	@RequiredArgsConstructor
+	@Wither
+	static class OneToOneImmutable {
+
+		private final @Id Long id;
+		private final String name;
+		private final TrivialImmutable child;
 	}
 
 	static class OneToSet {
