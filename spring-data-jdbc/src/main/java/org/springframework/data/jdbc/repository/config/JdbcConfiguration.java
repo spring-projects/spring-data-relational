@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import java.util.Optional;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -26,6 +24,8 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+
+import java.util.Optional;
 
 /**
  * Beans that must be registered for Spring Data JDBC to work.
@@ -46,7 +46,7 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	protected JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy) {
+	public JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy) {
 
 		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(jdbcCustomConversions().getSimpleTypeHolder());
@@ -63,7 +63,7 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	protected RelationalConverter relationalConverter(RelationalMappingContext mappingContext) {
+	public RelationalConverter relationalConverter(RelationalMappingContext mappingContext) {
 		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions());
 	}
 
@@ -75,7 +75,7 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	protected JdbcCustomConversions jdbcCustomConversions() {
+	public JdbcCustomConversions jdbcCustomConversions() {
 		return new JdbcCustomConversions();
 	}
 }
