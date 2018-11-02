@@ -46,7 +46,7 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	protected JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy) {
+	public JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy) {
 
 		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
 		mappingContext.setSimpleTypeHolder(jdbcCustomConversions().getSimpleTypeHolder());
@@ -63,7 +63,7 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	protected RelationalConverter relationalConverter(RelationalMappingContext mappingContext) {
+	public RelationalConverter relationalConverter(RelationalMappingContext mappingContext) {
 		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions());
 	}
 
@@ -75,7 +75,7 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	protected JdbcCustomConversions jdbcCustomConversions() {
+	public JdbcCustomConversions jdbcCustomConversions() {
 		return new JdbcCustomConversions();
 	}
 }
