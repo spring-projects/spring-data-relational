@@ -17,10 +17,12 @@ package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -120,13 +122,20 @@ class SqlGenerator {
 				"If the SQL statement should be ordered a keyColumn to order by must be provided.");
 
 		String baseSelect = (keyColumn != null) //
-				? createSelectBuilder().column(cb -> cb.tableAlias(entity.getTableName()).column(keyColumn).as(keyColumn))
-						.build()
+				? createSelectBuilder().column(cb -> cb //
+						.tableAlias(entity.getTableName()) //
+						.column(keyColumn) //
+						.as(keyColumn) //
+				).build()
 				: getFindAll();
 
 		String orderBy = ordered ? " ORDER BY " + keyColumn : "";
 
 		return String.format("%s WHERE %s = :%s%s", baseSelect, columnName, columnName, orderBy);
+	}
+
+	String getFindAllByProperty(PersistentPropertyPath<RelationalPersistentProperty> path) {
+		return new Variant(path).getFindAllByProperty();
 	}
 
 	String getExists() {
@@ -164,6 +173,12 @@ class SqlGenerator {
 				.build();
 	}
 
+	/**
+	 * Create a SelectBuilder that is appropriate if the entity in question is the aggregate root, i.e. it's id consists
+	 * only of it's own id.
+	 *
+	 * @return a {@link SelectBuilder}. Guaranteed to be not {@code null}.
+	 */
 	private SelectBuilder createSelectBuilder() {
 
 		SelectBuilder builder = new SelectBuilder(entity.getTableName());
@@ -182,17 +197,18 @@ class SqlGenerator {
 	private void addColumnsAndJoinsForOneToOneReferences(SelectBuilder builder) {
 
 		for (RelationalPersistentProperty property : entity) {
-			if (!property.isEntity() //
-					|| Collection.class.isAssignableFrom(property.getType()) //
-					|| Map.class.isAssignableFrom(property.getType()) //
+			if (!isSimpleEntity(property) //
 			) {
 				continue;
 			}
 
 			RelationalPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getActualType());
 			String joinAlias = property.getName();
-			builder.join(jb -> jb.leftOuter().table(refEntity.getTableName()).as(joinAlias) //
-					.where(property.getReverseColumnName()).eq().column(entity.getTableName(), entity.getIdColumn()));
+
+			// TODO: joins by back reference and id of parent
+			// but that id might not exist and be instead a list of backreferences and keys in a hierarchy of maps/lists and
+			// references.
+			builder.join(jb -> buildJoin(property, refEntity, joinAlias, jb));
 
 			for (RelationalPersistentProperty refProperty : refEntity) {
 				builder.column( //
@@ -213,6 +229,21 @@ class SqlGenerator {
 				);
 			}
 		}
+	}
+
+	private SelectBuilder.Join.JoinBuilder buildJoin(RelationalPersistentProperty property,
+			RelationalPersistentEntity<?> referenced, String joinAlias, SelectBuilder.Join.JoinBuilder jb) {
+
+		SelectBuilder.Join.JoinBuilder joinBuilder = jb.leftOuter().table(referenced.getTableName()).as(joinAlias);
+
+		if (entity.hasIdProperty()) {
+			return joinBuilder.where(property.getReverseColumnName()).eq().column(entity.getTableName(),
+					entity.getIdColumn());
+		} else {
+			return joinBuilder.where("intermediate").eq().column(entity.getTableName(), "backref") //
+					.and("intermediate_key").eq().column(entity.getTableName(), "backref_key");
+		}
+
 	}
 
 	private void addColumnsForSimpleProperties(SelectBuilder builder) {
@@ -360,5 +391,172 @@ class SqlGenerator {
 				entity.getIdColumn(), //
 				entity.getTableName(), innerCondition //
 		);
+	}
+
+	// TODO: instances need cashing
+	// TODO: shitty name
+	private class Variant {
+
+		private final PersistentPropertyPath<RelationalPersistentProperty> path;
+		private final List<PersistentPropertyPath<RelationalPersistentProperty>> keyContributingPaths;
+
+		public Variant(PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+			// collect keys that are essentially the map keys and list indexes accumulated along the path.
+			List<PersistentPropertyPath<RelationalPersistentProperty>> keyContributingPaths = new ArrayList<>();
+			PersistentPropertyPath<RelationalPersistentProperty> subPath = path;
+			while (!subPath.isEmpty()) {
+
+				if (subPath.getRequiredLeafProperty().isQualified()) {
+					keyContributingPaths.add(subPath);
+				}
+
+				subPath = subPath.getParentPath();
+			}
+
+			Collections.reverse(keyContributingPaths);
+
+			this.path = path;
+			this.keyContributingPaths = keyContributingPaths;
+		}
+
+		public String getFindAllByProperty() {
+
+			RelationalPersistentProperty leafProperty = path.getRequiredLeafProperty();
+
+			PersistentPropertyPath<RelationalPersistentProperty> parentPath = path.getParentPath();
+
+			StringJoiner whereClauseJoiner = new StringJoiner(" AND ");
+
+			RelationalPersistentProperty baseProperty = path.getBaseProperty();
+			String relativeRootId = baseProperty.getReverseColumnName();
+
+			whereClauseJoiner.add(entity.getTableName() + "." + relativeRootId + " = :" + relativeRootId);
+
+			while (!parentPath.isEmpty()) {
+
+				String keyColumn = parentPath.getRequiredLeafProperty().getKeyColumn();
+				whereClauseJoiner.add(keyColumn + " = :" + keyColumn);
+
+				parentPath = parentPath.getParentPath();
+			}
+
+			String baseSelect = (leafProperty.isQualified()) //
+					? createSelectBuilder().column(cb -> {
+						String keyColumn = leafProperty.getKeyColumn();
+						return cb.tableAlias(entity.getTableName()).column(keyColumn).as(keyColumn);
+					}).build()
+					: getFindAll();
+
+			String orderBy = leafProperty.isOrdered() ? " ORDER BY " + leafProperty.getKeyColumn() : "";
+
+			return String.format("%s WHERE %s%s", baseSelect, whereClauseJoiner.toString(), orderBy);
+		}
+
+		/**
+		 * Create a SelectBuilder that is appropriate if the entity in question is the aggregate root, i.e. it's id consists
+		 * only of it's own id.
+		 *
+		 * @return a {@link SelectBuilder}. Guaranteed to be not {@code null}.
+		 */
+		private SelectBuilder createSelectBuilder() {
+
+			SelectBuilder builder = new SelectBuilder(entity.getTableName());
+			addColumnsForSimpleProperties(builder);
+			addColumnsAndJoinsForOneToOneReferences(builder);
+
+			return builder;
+		}
+
+		/**
+		 * Adds the columns to the provided {@link SelectBuilder} representing simplem properties, including those from
+		 * one-to-one relationships.
+		 *
+		 * @param builder The {@link SelectBuilder} to be modified.
+		 */
+		private void addColumnsAndJoinsForOneToOneReferences(SelectBuilder builder) {
+
+			for (RelationalPersistentProperty property : entity) {
+
+				if (isSimpleEntity(property)) {
+
+					RelationalPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getActualType());
+					String joinAlias = property.getName();
+
+					addJoin(builder, property, refEntity, joinAlias);
+					addColumns(builder, refEntity, joinAlias);
+					addNullCheckingColumn(builder, property, refEntity, joinAlias);
+
+				}
+			}
+		}
+
+		private void addNullCheckingColumn(SelectBuilder builder, RelationalPersistentProperty property,
+				RelationalPersistentEntity<?> refEntity, String joinAlias) {
+
+			// if the referenced property doesn't have an id, include the back reference in the select list.
+			// this enables determining if the referenced entity is present or null.
+			if (!refEntity.hasIdProperty()) {
+
+				builder.column( //
+						cb -> cb.tableAlias(joinAlias) //
+								.column(property.getReverseColumnName(path, null)) // todo: null is wrong, we need a path here
+								.as(joinAlias + "_" + property.getReverseColumnName()) //
+				);
+			}
+		}
+
+		private void addColumns(SelectBuilder builder, RelationalPersistentEntity<?> refEntity, String joinAlias) {
+
+			for (RelationalPersistentProperty refProperty : refEntity) {
+				builder.column( //
+						cb -> cb.tableAlias(joinAlias) //
+								.column(refProperty.getColumnName()) //
+								.as(joinAlias + "_" + refProperty.getColumnName()) //
+				);
+			}
+		}
+
+		private void addJoin(SelectBuilder builder, RelationalPersistentProperty property,
+				RelationalPersistentEntity<?> refEntity, String joinAlias) {
+			builder.join(jb -> buildJoin(property, refEntity, joinAlias, jb));
+		}
+
+		private SelectBuilder.Join.JoinBuilder buildJoin(RelationalPersistentProperty property,
+				RelationalPersistentEntity<?> referenced, String joinAlias, SelectBuilder.Join.JoinBuilder jb) {
+
+			// property: child
+			// referenced NoIdChild
+			// entity: NoIdIntermediate
+
+			SelectBuilder.Join.JoinBuilder joinBuilder = jb.leftOuter().table(referenced.getTableName()).as(joinAlias);
+
+			if (entity.hasIdProperty()) {
+				return joinBuilder.where(property.getReverseColumnName()).eq().column(entity.getTableName(),
+						entity.getIdColumn());
+			} else {
+
+				// todo: passing null in the next line is just a temporary workaround befor we turn this into using paths.
+				joinBuilder = joinBuilder.where(property.getReverseColumnName(path, null)).eq().column(entity.getTableName(),
+						path.getRequiredLeafProperty().getReverseColumnName());
+
+				for (PersistentPropertyPath<RelationalPersistentProperty> keyContributingPath : keyContributingPaths) {
+
+					String keyColumn = property.getKeyColumn(keyContributingPath);
+					joinBuilder = joinBuilder.where(keyColumn).eq().column(entity.getTableName(),
+							keyContributingPath.getRequiredLeafProperty().getKeyColumn(keyContributingPath));
+				}
+
+				return joinBuilder;
+			}
+
+		}
+	}
+
+	private boolean isSimpleEntity(RelationalPersistentProperty property) {
+
+		return property.isEntity() //
+				&& !Collection.class.isAssignableFrom(property.getType()) //
+				&& !Map.class.isAssignableFrom(property.getType());
 	}
 }

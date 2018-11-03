@@ -115,8 +115,6 @@ public class JdbcRepositoryConfigExtensionUnitTests {
 		assertThat(jdbcOperations) //
 				.isInstanceOf(RuntimeBeanReference.class) //
 				.extracting(rbr -> ((RuntimeBeanReference) rbr).getBeanName()).contains("two");
-
-		System.out.println(jdbcOperations);
 	}
 
 	@Test // DATAJDBC-293

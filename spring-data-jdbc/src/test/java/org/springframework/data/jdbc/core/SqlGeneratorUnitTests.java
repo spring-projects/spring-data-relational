@@ -15,9 +15,11 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -217,6 +219,35 @@ public class SqlGeneratorUnitTests {
 				"id1 = :id");
 	}
 
+	@Test // DATAJDBC-223
+	public void findAllByPropertyWithMultipartId() {
+
+		String sql = createSqlGenerator(NoIdIntermediate.class)
+				.getFindAllByProperty(getPath("content", ParentOfNoIdHierarchie.class));
+
+		assertThat(sql).describedAs(format(sql)).containsSequence( //
+				"SELECT", //
+				"FROM", //
+				"LEFT OUTER JOIN", //
+				"ON", //
+				"child.parent_of_no_id_hierarchie", "=", "no_id_intermediate.parent_of_no_id_hierarchie", //
+				"AND", //
+				"child.parent_of_no_id_hierarchie_key", "=", "no_id_intermediate.parent_of_no_id_hierarchie_key", //
+				"WHERE" //
+		).doesNotContain("child.no_id_intermediate");
+	}
+
+	private static String format(String sql) {
+
+		List<String> terms = asList("AND", "FROM", "LEFT OUTER JOIN", "ON", "WHERE", "ORDER BY");
+		for (String term : terms) {
+			sql = sql.replaceAll(term, "\n\t" + term);
+
+		}
+
+		return sql;
+	}
+
 	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> base) {
 		return PersistentPropertyPathTestUtils.getPath(context, path, base);
 	}
@@ -224,8 +255,7 @@ public class SqlGeneratorUnitTests {
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
-		@Column("id1")
-		@Id Long id;
+		@Column("id1") @Id Long id;
 		String name;
 		ReferencedEntity ref;
 		Set<Element> elements;
@@ -265,6 +295,21 @@ public class SqlGeneratorUnitTests {
 		String name;
 	}
 
+	@SuppressWarnings("unused")
+	static class IdOnlyEntity {
+
+		@Id Long id;
+	}
+
+	static class ParentOfNoIdHierarchie {
+		@Id Long id;
+		List<NoIdIntermediate> content;
+	}
+
+	static class NoIdIntermediate {
+		NoIdChild child;
+	}
+
 	private static class PrefixingNamingStrategy implements NamingStrategy {
 
 		@Override
@@ -273,11 +318,4 @@ public class SqlGeneratorUnitTests {
 		}
 
 	}
-
-	@SuppressWarnings("unused")
-	static class IdOnlyEntity {
-
-		@Id Long id;
-	}
-
 }

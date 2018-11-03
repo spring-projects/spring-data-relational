@@ -25,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -34,12 +36,17 @@ import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for {@link DefaultDataAccessStrategy}.
@@ -116,10 +123,69 @@ public class DefaultDataAccessStrategyUnitTests {
 		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test // DATAJDBC-233
+	public void findAll() {
+
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+
+		accessStrategy.findAllByProperty("parentId",
+				context.getRequiredPersistentEntity(DummyEntity.class).getPersistentProperty("children"));
+
+		verify(jdbcOperations).query(sqlCaptor.capture(), paramSourceCaptor.capture(), any(RowMapper.class));
+
+		assertThat(sqlCaptor.getValue()).containsSequence( //
+				"SELECT", //
+				"FROM entity_with_boolean", //
+				"WHERE", //
+				"dummy_entity", //
+				":dummy_entity", //
+				"ORDER BY", //
+				"dummy_entity_key" //
+		);
+
+		checkParameter("dummy_entity", "parentId");
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test // DATAJDBC-233
+	public void findAllWithMultipartId() {
+
+		PersistentPropertyPath<RelationalPersistentProperty> path = PersistentPropertyPathTestUtils.getPath(context,
+				"kids.favoriteChild", Granny.class);
+
+		accessStrategy.findAllByProperty(path, "grannyId", "mothersKey");
+
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+
+		verify(jdbcOperations).query(sqlCaptor.capture(), paramSourceCaptor.capture(), any(RowMapper.class));
+
+		checkParameter("granny", "grannyId");
+		checkParameter("granny_key", "mothersKey");
+		assertThat(paramSourceCaptor.getValue().getParameterNames()).hasSize(2);
+
+		assertThat(sqlCaptor.getValue()).containsSequence( //
+				"SELECT", //
+				"FROM child", //
+				"WHERE", //
+				"granny = :granny", //
+				"granny_key = :granny_key" //
+		);
+
+	}
+
+	void checkParameter(String name, String value) {
+
+		assertThat(paramSourceCaptor.getValue().getParameterNames()).contains(name);
+		assertThat(paramSourceCaptor.getValue().getValue(name)).isEqualTo(value);
+	}
+
+	@SuppressWarnings("unused")
 	@RequiredArgsConstructor
 	private static class DummyEntity {
 
 		@Id private final Long id;
+		List<EntityWithBoolean> children;
 	}
 
 	@AllArgsConstructor
@@ -129,13 +195,29 @@ public class DefaultDataAccessStrategyUnitTests {
 		boolean flag;
 	}
 
+	@SuppressWarnings("unused")
+	private static class Granny {
+		@Id String id;
+		Map<String, Mother> kids;
+	}
+
+	@SuppressWarnings("unused")
+	private static class Mother {
+		Map<String, Child> children;
+		Child favoriteChild;
+	}
+
+	private static class Child {
+		String name;
+	}
+
 	@WritingConverter
 	enum BooleanToStringConverter implements Converter<Boolean, String> {
 
 		INSTANCE;
 
 		@Override
-		public String convert(Boolean source) {
+		public String convert(@Nullable Boolean source) {
 			return source != null && source ? "T" : "F";
 		}
 	}
@@ -146,7 +228,7 @@ public class DefaultDataAccessStrategyUnitTests {
 		INSTANCE;
 
 		@Override
-		public Boolean convert(String source) {
+		public Boolean convert(@Nullable String source) {
 			return source != null && source.equalsIgnoreCase("T") ? Boolean.TRUE : Boolean.FALSE;
 		}
 	}

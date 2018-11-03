@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
@@ -74,6 +75,7 @@ public interface DbAction<T> {
 		@NonNull final T entity;
 		@NonNull final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
 		@NonNull final WithEntity<?> dependingOn;
+		@NonNull final EffectiveParentId keys = new EffectiveParentId();
 
 		Map<String, Object> additionalValues = new HashMap<>();
 
@@ -88,6 +90,40 @@ public interface DbAction<T> {
 		public Class<T> getEntityType() {
 			return WithDependingOn.super.getEntityType();
 		}
+
+		@Override
+		public void addKey(PersistentPropertyPath<RelationalPersistentProperty> path, Object value) {
+			keys.addKey(path, value);
+		}
+
+		public EffectiveParentId getKeys(RelationalMappingContext context) {
+
+			if (dependingOn instanceof Insert) {
+				return ((Insert) dependingOn).getKeys(context);
+			}
+
+			// TODO: I don't think this belongs here.
+			if (dependingOn instanceof WithGeneratedId || dependingOn instanceof UpdateRoot) {
+
+				Object id = null;
+				if (dependingOn instanceof WithGeneratedId)
+					id = ((WithGeneratedId) dependingOn).getGeneratedId();
+
+				if (id == null) {
+					id = context.getRequiredPersistentEntity(dependingOn.getEntityType())
+							.getIdentifierAccessor(dependingOn.getEntity()).getIdentifier();
+				}
+
+				PersistentPropertyPath propertyPath = null;
+				if (dependingOn instanceof WithPropertyPath) {
+					propertyPath = ((WithPropertyPath) dependingOn).getPropertyPath();
+				}
+
+				keys.addKey(propertyPath, id);
+			}
+
+			return keys;
+		}
 	}
 
 	/**
@@ -97,7 +133,7 @@ public interface DbAction<T> {
 	 */
 	@Data
 	@RequiredArgsConstructor
-	class InsertRoot<T> implements WithEntity<T>, WithGeneratedId<T> {
+	class InsertRoot<T> implements WithGeneratedId<T> {
 
 		@NonNull private final T entity;
 
@@ -153,12 +189,18 @@ public interface DbAction<T> {
 		@NonNull T entity;
 		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
 		@NonNull WithEntity<?> dependingOn;
+		@NonNull final EffectiveParentId keys = new EffectiveParentId();
 
 		Map<String, Object> additionalValues = new HashMap<>();
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
+		}
+
+		@Override
+		public void addKey(PersistentPropertyPath<RelationalPersistentProperty> path, Object value) {
+			keys.addKey(path, value);
 		}
 	}
 
@@ -261,6 +303,8 @@ public interface DbAction<T> {
 		 */
 		Map<String, Object> getAdditionalValues();
 
+		void addKey(PersistentPropertyPath<RelationalPersistentProperty> path, Object first);
+
 		@Override
 		default Class<T> getEntityType() {
 			return WithEntity.super.getEntityType();
@@ -305,6 +349,7 @@ public interface DbAction<T> {
 		default Class<T> getEntityType() {
 			return (Class<T>) getEntity().getClass();
 		}
+
 	}
 
 	/**

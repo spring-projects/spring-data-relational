@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,6 +32,7 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.relational.core.conversion.EffectiveParentId;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -83,6 +85,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
+	@Nullable
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
@@ -104,13 +107,61 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		parameters.forEach(parameterSource::addValue);
 
+		String insert = sql(domainType).getInsert(parameters.keySet());
+
 		operations.update( //
-				sql(domainType).getInsert(parameters.keySet()), //
+				insert, //
 				parameterSource, //
 				holder //
 		);
 
 		return getIdFromHolder(holder, persistentEntity);
+	}
+
+	@Override
+	public <T> Object insert(T instance, @Nullable PersistentPropertyPath<RelationalPersistentProperty> path,
+			EffectiveParentId effectiveParentId) {
+
+		KeyHolder holder = new GeneratedKeyHolder();
+
+		RelationalPersistentEntity<T> persistentEntity = getPersistentEntity(instance, path);
+
+		Map<String, Object> parameters = new LinkedHashMap<>(effectiveParentId.toParameterMap(path));
+
+		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity);
+
+		Object idValue = getIdValueOrNull(instance, persistentEntity);
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
+
+		if (idValue != null) {
+
+			Assert.notNull(idProperty, "Since we have a non-null idValue, we must have an idProperty as well.");
+
+			parameters.put(idProperty.getColumnName(),
+					converter.writeValue(idValue, ClassTypeInformation.from(idProperty.getColumnType())));
+		}
+
+		parameters.forEach(parameterSource::addValue);
+
+		String insert = sql(persistentEntity.getType()).getInsert(parameters.keySet());
+
+		operations.update( //
+				insert, //
+				parameterSource, //
+				holder //
+		);
+
+		return getIdFromHolder(holder, persistentEntity);
+	}
+
+	@SuppressWarnings({ "unchecked", "ConstantConditions" })
+	private <T> RelationalPersistentEntity<T> getPersistentEntity(T instance,
+			@Nullable PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+		return path != null //
+				? (RelationalPersistentEntity<T>) context
+						.getRequiredPersistentEntity(path.getLeafProperty().getTypeInformation().getRequiredActualType()) //
+				: (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(instance.getClass());
 	}
 
 	/*
@@ -262,6 +313,37 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 						: this.getEntityRowMapper(actualType)));
 	}
 
+	public <T> Iterable<T> findAllByProperty(PersistentPropertyPath<RelationalPersistentProperty> path,
+			Object relativeRootId, Object... keys) {
+
+		RelationalPersistentProperty property = path.getRequiredLeafProperty();
+
+		Class<?> actualType = property.getActualType();
+		String findAllByProperty = sql(actualType) //
+				.getFindAllByProperty(path);
+
+		MapSqlParameterSource parameter = new MapSqlParameterSource();
+
+		parameter.addValue(path.getBaseProperty().getReverseColumnName(), relativeRootId);
+
+		PersistentPropertyPath<RelationalPersistentProperty> parentPath = path.getParentPath();
+		for (int keyIndex = keys.length - 1; keyIndex >= 0; keyIndex--) {
+
+			Assert.notNull(parentPath,
+					String.format("Path length of %s doe not match number of keys in %s", path, Arrays.toString(keys)));
+
+			parameter.addValue(parentPath.getLeafProperty().getKeyColumn(), keys[keyIndex]);
+
+			parentPath = parentPath.getParentPath();
+		}
+
+		return operations.query(findAllByProperty, parameter, //
+				(RowMapper<T>) (property.isMap() //
+						? this.getMapEntityRowMapper(property) //
+						: this.getEntityRowMapper(actualType)));
+
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#existsById(java.lang.Object, java.lang.Class)
@@ -322,22 +404,22 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Nullable
 	private <S> Object getIdFromHolder(KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
 
-        try {
-            // MySQL just returns one value with a special name
-            return holder.getKey();
-        } catch (DataRetrievalFailureException | InvalidDataAccessApiUsageException e) {
-            // Postgres returns a value for each column
+		try {
+			// MySQL just returns one value with a special name
+			return holder.getKey();
+		} catch (DataRetrievalFailureException | InvalidDataAccessApiUsageException e) {
+			// Postgres returns a value for each column
 			// MS SQL Server returns a value that might be null.
 
-            Map<String, Object> keys = holder.getKeys();
+			Map<String, Object> keys = holder.getKeys();
 
-            if (keys == null || persistentEntity.getIdProperty() == null) {
-                return null;
-            }
+			if (keys == null || persistentEntity.getIdProperty() == null) {
+				return null;
+			}
 
-            return keys.get(persistentEntity.getIdColumn());
-        }
-    }
+			return keys.get(persistentEntity.getIdColumn());
+		}
+	}
 
 	private EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, converter, accessStrategy);

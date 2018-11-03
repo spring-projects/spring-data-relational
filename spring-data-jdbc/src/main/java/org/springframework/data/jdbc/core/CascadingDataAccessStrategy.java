@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.conversion.EffectiveParentId;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
@@ -45,6 +46,12 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 		return collect(das -> das.insert(instance, domainType, additionalParameters));
+	}
+
+	@Override
+	public <T> Object insert(T instance, PersistentPropertyPath<RelationalPersistentProperty> path,
+							 EffectiveParentId effectiveParentId) {
+		return collect(das -> das.insert(instance, path, effectiveParentId));
 	}
 
 	/* 
@@ -135,6 +142,12 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
 		return collect(das -> das.findAllByProperty(rootId, property));
+	}
+
+	@Override
+	public <T> Iterable<T> findAllByProperty(PersistentPropertyPath<RelationalPersistentProperty> path,
+			Object relativeRootId, Object... keys) {
+		return collect(das -> das.findAllByProperty(path, relativeRootId, keys));
 	}
 
 	/* 

@@ -16,7 +16,9 @@
 package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * A {@link PersistentProperty} with methods for additional JDBC/RDBMS related meta data.
@@ -53,10 +55,46 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	@Override
 	RelationalPersistentEntity<?> getOwner();
 
+	/**
+	 * @return the name of the column referencing back to the owning entities table.
+	 * @deprecated use {@link #getReverseColumnName(PersistentPropertyPath, PersistentPropertyPath)} instead, which does
+	 *             not assume the owning entity has a unique id column.
+	 */
+	@Deprecated
 	String getReverseColumnName();
+
+	/**
+	 * @param referencedPath
+	 * @param thisPath
+	 * @return the list of column names to reference back to the owning entities table. Guaranteed to be not {@code null}.
+	 */
+	default String getReverseColumnName(PersistentPropertyPath<RelationalPersistentProperty> referencedPath,
+			PersistentPropertyPath<RelationalPersistentProperty> thisPath) {
+
+		if (thisPath == null && referencedPath != null) { // todo temporary workaround. see SqlGenerator callsite.
+			return referencedPath.getLeafProperty().getReverseColumnName();
+		}
+
+		Assert.notNull(thisPath, "thisPath must end in this property and must not be null.");
+		Assert.isTrue(thisPath.getRequiredLeafProperty().equals(this), "thisPath must end in this property.");
+
+		int refLength = (referencedPath == null) ? 0 : referencedPath.getLength();
+		int diff = thisPath.getLength() - refLength;
+
+		for (int i = diff; i > 1; i--) {
+			thisPath = thisPath.getParentPath();
+		}
+
+		return thisPath.getLeafProperty().getReverseColumnName();
+	}
 
 	@Nullable
 	String getKeyColumn();
+
+	@Nullable
+	default String getKeyColumn(PersistentPropertyPath<RelationalPersistentProperty> path) {
+		return path.getLeafProperty().getKeyColumn();
+	}
 
 	/**
 	 * Returns if this property is a qualified property, i.e. a property referencing multiple elements that can get picked
@@ -68,4 +106,5 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * Returns whether this property is an ordered property.
 	 */
 	boolean isOrdered();
+
 }

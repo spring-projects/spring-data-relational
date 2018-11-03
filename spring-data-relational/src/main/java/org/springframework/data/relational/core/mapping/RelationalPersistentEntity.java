@@ -37,6 +37,9 @@ public interface RelationalPersistentEntity<T> extends MutablePersistentEntity<T
 	 * Returns the column representing the identifier.
 	 *
 	 * @return will never be {@literal null}.
+	 *
+	 * @deprecated One should not assume that there is a single identifying column.
 	 */
+	@Deprecated
 	String getIdColumn();
 }

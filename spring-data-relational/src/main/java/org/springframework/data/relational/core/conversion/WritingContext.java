@@ -15,21 +15,23 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.Pair;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPaths;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.Pair;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Holds context information for the current save operation.
@@ -100,10 +102,6 @@ class WritingContext {
 		return actions;
 	}
 
-	private boolean isNew(Object o) {
-		return context.getRequiredPersistentEntity(o.getClass()).isNew(o);
-	}
-
 	//// Operations on all paths
 
 	private List<DbAction<?>> insertReferenced() {
@@ -128,6 +126,7 @@ class WritingContext {
 				insert = new DbAction.Insert<>(value.getSecond(), path, getAction(node.getParent()));
 				insert.getAdditionalValues().put(node.getPath().getRequiredLeafProperty().getKeyColumn(), value.getFirst());
 
+				insert.addKey(node.getPath(), value.getFirst());
 			} else {
 				insert = new DbAction.Insert<>(node.getValue(), path, getAction(node.getParent()));
 			}
@@ -182,34 +181,51 @@ class WritingContext {
 
 		return null;
 	}
-	// commented as of #DATAJDBC-282
-	// private boolean isNew(Object o) {
-	// return context.getRequiredPersistentEntity(o.getClass()).isNew(o);
-	// }
 
-	private List<PathNode> from(
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
+	private boolean isNew(Object o) {
+		return context.getRequiredPersistentEntity(o.getClass()).isNew(o);
+	}
+
+	private List<PathNode> from(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
 		List<PathNode> nodes = new ArrayList<>();
 
+		RelationalPersistentProperty property = path.getRequiredLeafProperty();
 		if (path.getLength() == 1) {
 
 			Object value = context //
 					.getRequiredPersistentEntity(entityType) //
 					.getPropertyAccessor(entity) //
-					.getProperty(path.getRequiredLeafProperty());
+					.getProperty(property);
 
 			nodes.addAll(createNodes(path, null, value));
 
 		} else {
 
 			List<PathNode> pathNodes = nodesCache.get(path.getParentPath());
-			pathNodes.forEach(parentNode -> {
+			pathNodes.forEach(parentPathNode -> {
 
-				Object value = path.getRequiredLeafProperty().getOwner().getPropertyAccessor(parentNode.getValue())
-						.getProperty(path.getRequiredLeafProperty());
+				RelationalPersistentEntity<?> parentType = property.getOwner();
+				Object parentNodeValue = parentPathNode.getValue();
 
-				nodes.addAll(createNodes(path, parentNode, value));
+				RelationalPersistentProperty parentProperty = path.getParentPath().getLeafProperty();
+				boolean parentIsQualified = parentProperty != null && parentProperty.isQualified();
+
+				if (parentIsQualified) {
+
+					Assert.isInstanceOf(Pair.class, parentNodeValue,
+							"The parentValue is expected to be of type Pair. This is a bug please file an issue at https://jira.spring.io/projects/DATAJDBC !");
+
+					Object value = parentType.getPropertyAccessor(((Pair) parentNodeValue).getSecond()).getProperty(property);
+					nodes.addAll(createNodes(path, parentPathNode, value));
+
+				} else {
+
+					PersistentPropertyAccessor<Object> parentValueAccessor = parentType.getPropertyAccessor(parentNodeValue);
+					Object value = parentValueAccessor.getProperty(property);
+
+					nodes.addAll(createNodes(path, parentPathNode, value));
+				}
 			});
 		}
 
@@ -218,8 +234,7 @@ class WritingContext {
 		return nodes;
 	}
 
-	private List<PathNode> createNodes(
-			PersistentPropertyPath<RelationalPersistentProperty> path,
+	private List<PathNode> createNodes(PersistentPropertyPath<RelationalPersistentProperty> path,
 			@Nullable PathNode parentNode, @Nullable Object value) {
 
 		if (value == null) {
@@ -231,8 +246,10 @@ class WritingContext {
 		if (path.getRequiredLeafProperty().isQualified()) {
 
 			if (path.getRequiredLeafProperty().isMap()) {
-				((Map<?, ?>) value)
-						.forEach((k, v) -> nodes.add(new PathNode(path, parentNode, Pair.of(k, v))));
+
+				((Map<?, ?>) value).forEach( //
+						(k, v) -> nodes.add(new PathNode(path, parentNode, Pair.of(k, v))) //
+				);
 			} else {
 
 				List listValue = (List) value;

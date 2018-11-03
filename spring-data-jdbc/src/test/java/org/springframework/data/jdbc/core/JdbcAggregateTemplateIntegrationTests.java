@@ -20,9 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -218,6 +215,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		LegoSet reloadedLegoSet = template.findById(legoSet.getId(), LegoSet.class);
 
+		assertThat(reloadedLegoSet.manual).describedAs("manual must not be null").isNotNull();
 		assertThat(reloadedLegoSet.manual.content).isEqualTo("new content");
 	}
 
@@ -300,24 +298,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 		softly.assertAll();
 	}
 
-	@Test // DATAJDBC-276
-	public void saveAndLoadAnEntityWithListOfElementsWithoutId() {
-
-		ListParent entity = new ListParent();
-		entity.name = "name";
-
-		ElementNoId element = new ElementNoId();
-		element.content = "content";
-
-		entity.content.add(element);
-
-		template.save(entity);
-
-		ListParent reloaded = template.findById(entity.id, ListParent.class);
-
-		assertThat(reloaded.content).extracting(e -> e.content).containsExactly("content");
-	}
-
 	private static LegoSet createLegoSet() {
 
 		LegoSet entity = new LegoSet();
@@ -333,8 +313,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@Data
 	static class LegoSet {
 
-		@Column("id1")
-		@Id private Long id;
+		@Column("id1") @Id private Long id;
 
 		private String name;
 
@@ -345,34 +324,20 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@Data
 	static class Manual {
 
-		@Column("id2")
-		@Id private Long id;
+		@Column("id2") @Id private Long id;
 		private String content;
 
 	}
 
 	static class OneToOneParent {
 
-		@Column("id3")
-		@Id private Long id;
+		@Column("id3") @Id private Long id;
 		private String content;
 
 		private ChildNoId child;
 	}
 
 	static class ChildNoId {
-		private String content;
-	}
-
-	static class ListParent {
-
-		@Column("id4")
-		@Id private Long id;
-		String name;
-		List<ElementNoId> content = new ArrayList<>();
-	}
-
-	static class ElementNoId {
 		private String content;
 	}
 

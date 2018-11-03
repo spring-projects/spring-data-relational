@@ -177,7 +177,6 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 	private static class Log {
 
 		@Id Long id;
-		DummyEntity entity;
 		String text;
 	}
 
@@ -220,7 +219,6 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 				lastLogId = new Random().nextLong();
 				Log log = new Log();
 				log.setId(lastLogId);
-				log.entity = entity;
 				log.text = entity.name + " saved";
 
 				List<DbAction<?>> actions = event.getChange().getActions();

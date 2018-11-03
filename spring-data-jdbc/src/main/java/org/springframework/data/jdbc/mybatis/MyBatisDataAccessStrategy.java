@@ -29,8 +29,10 @@ import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.conversion.EffectiveParentId;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
@@ -131,6 +133,18 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
 		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType, additionalParameters);
+		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
+
+		return myBatisContext.getId();
+	}
+
+	@Override
+	public <T> Object insert(T instance, PersistentPropertyPath<RelationalPersistentProperty> path,
+							 EffectiveParentId effectiveParentId) {
+
+		Class<T> domainType = (Class<T>) instance.getClass();
+		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType,
+				effectiveParentId.toParameterMap(path));
 		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
 
 		return myBatisContext.getId();
@@ -239,6 +253,14 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return sqlSession().selectList(
 				namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
 				new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap()));
+	}
+
+	@Override
+	public <T> Iterable<T> findAllByProperty(PersistentPropertyPath<RelationalPersistentProperty> path,
+			Object relativeRootId, Object... keys) {
+
+		RelationalPersistentEntity<?> baseOwner = path.getBaseProperty().getOwner();
+		return sqlSession().selectList(namespace(baseOwner.getType()) + ".findAllByProperty-" + toDashPath(path));
 	}
 
 	/* 

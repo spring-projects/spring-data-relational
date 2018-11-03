@@ -22,6 +22,7 @@ import java.util.Map;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -49,7 +50,6 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private final RelationalConverter converter;
 	private final RelationalMappingContext context;
 	private final DataAccessStrategy accessStrategy;
-	private final RelationalPersistentProperty idProperty;
 
 	public EntityRowMapper(RelationalPersistentEntity<T> entity, RelationalMappingContext context,
 			RelationalConverter converter, DataAccessStrategy accessStrategy) {
@@ -58,7 +58,6 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		this.converter = converter;
 		this.context = context;
 		this.accessStrategy = accessStrategy;
-		this.idProperty = entity.getIdProperty();
 	}
 
 	/*
@@ -68,130 +67,218 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	@Override
 	public T mapRow(ResultSet resultSet, int rowNumber) {
 
-		String prefix = "";
+		ReadingContext<T> readingContext = new ReadingContext<>(entity, resultSet);
 
-		RelationalPersistentProperty idProperty = entity.getIdProperty();
-
-		Object idValue = null;
-		if (idProperty != null) {
-			idValue = readFrom(resultSet, idProperty, prefix);
-		}
-
-		T result = createInstance(entity, resultSet, idValue, prefix);
+		T result = readingContext.createInstance();
 
 		return entity.requiresPropertyPopulation() //
-				? populateProperties(result, resultSet) //
+				? readingContext.populateProperties(result) //
 				: result;
 	}
 
-	private T populateProperties(T result, ResultSet resultSet) {
+	/**
+	 * The context required for reading an entity.
+	 */
+	private class ReadingContext<S> {
 
-		PersistentPropertyAccessor<T> propertyAccessor = converter.getPropertyAccessor(entity, result);
+		private final ResultSet resultSet;
+		/**
+		 * The path to the entity getting loaded by this context.
+		 */
+		private final PersistentPropertyPath<RelationalPersistentProperty> path;
+		private final RelationalPersistentEntity<S> entity;
+		private Object idValue;
 
-		Object id = idProperty == null ? null : readFrom(resultSet, idProperty, "");
+		ReadingContext(RelationalPersistentEntity<S> entity, ResultSet resultSet,
+				PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-		PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
+			this.resultSet = resultSet;
+			this.path = path;
+			this.entity = entity;
 
-		for (RelationalPersistentProperty property : entity) {
+			RelationalPersistentProperty idProperty = entity.getIdProperty();
 
-			if (persistenceConstructor != null && persistenceConstructor.isConstructorParameter(property)) {
-				continue;
+			Object idValue = null;
+			if (idProperty != null) {
+				idValue = readSimplePropertyFrom(idProperty);
 			}
 
-			propertyAccessor.setProperty(property, readOrLoadProperty(resultSet, id, property, ""));
+			setId(idValue);
 		}
 
-		return propertyAccessor.getBean();
-	}
-
-	@Nullable
-	private Object readOrLoadProperty(ResultSet resultSet, @Nullable Object id, RelationalPersistentProperty property, String prefix) {
-
-		if (property.isCollectionLike() && id != null) {
-			return accessStrategy.findAllByProperty(id, property);
-		} else if (property.isMap() && id != null) {
-			return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(accessStrategy.findAllByProperty(id, property));
-		} else {
-			return readFrom(resultSet, property, prefix);
-		}
-	}
-
-	/**
-	 * Read a single value or a complete Entity from the {@link ResultSet} passed as an argument.
-	 *
-	 * @param resultSet the {@link ResultSet} to extract the value from. Must not be {@code null}.
-	 * @param property the {@link RelationalPersistentProperty} for which the value is intended. Must not be {@code null}.
-	 * @param prefix to be used for all column names accessed by this method. Must not be {@code null}.
-	 * @return the value read from the {@link ResultSet}. May be {@code null}.
-	 */
-	@Nullable
-	private Object readFrom(ResultSet resultSet, RelationalPersistentProperty property, String prefix) {
-
-		if (property.isEntity()) {
-			return readEntityFrom(resultSet, property);
+		/**
+		 * creates a {@code ReadingContext} with an empty path.
+		 *
+		 * @param entity the persistent entity to be loaded.
+		 * @param resultSet the {@link ResultSet} to load the data from.
+		 */
+		ReadingContext(RelationalPersistentEntity<S> entity, ResultSet resultSet) {
+			this(entity, resultSet, context.getPersistentPropertyPath("", entity.getType()));
 		}
 
-		Object value = getObjectFromResultSet(resultSet, prefix + property.getColumnName());
-		return converter.readValue(value, property.getTypeInformation());
-
-	}
-
-	@Nullable
-	private <S> S readEntityFrom(ResultSet rs, RelationalPersistentProperty property) {
-
-		String prefix = property.getName() + "_";
-
+		/**
+		 * creates a new {@code ReadingContext} based on the current one, but extending the path by the property provided.
+		 *
+		 * @param property the property provided for extending the path. Must not be {@code null}.
+		 * @return a new {@code ReadingContext}
+		 */
 		@SuppressWarnings("unchecked")
-		RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) context
-				.getRequiredPersistentEntity(property.getActualType());
+		<R> ReadingContext<R> derive(RelationalPersistentProperty property) {
 
-		RelationalPersistentProperty idProperty = entity.getIdProperty();
-
-		Object idValue = null;
-
-		if (idProperty != null) {
-			idValue = readFrom(rs, idProperty, prefix);
+			return new ReadingContext<>( //
+					(RelationalPersistentEntity<R>) context.getRequiredPersistentEntity(property.getActualType()), //
+					resultSet, //
+					extendPath(property) //
+			);
 		}
 
-		if ((idProperty != null //
-				? idValue //
-				: getObjectFromResultSet(rs, prefix + property.getReverseColumnName()) //
-		) == null) {
-			return null;
+		private PersistentPropertyPath<RelationalPersistentProperty> extendPath(RelationalPersistentProperty property) {
+			return context.getPersistentPropertyPath(extendedPath(property), entity.getType());
 		}
 
-		S instance = createInstance(entity, rs, idValue, prefix);
+		/**
+		 * The prefix used to modify column_names of entities reachable via one-to-one-relationships.
+		 *
+		 * @return Guaranteed to be not {@code null}.
+		 */
+		private String prefix() {
 
-		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
-
-		for (RelationalPersistentProperty p : entity) {
-			accessor.setProperty(p, readFrom(rs, p, prefix));
+			String dotPath = path.toDotPath();
+			return dotPath == null ? "" : dotPath.replaceAll("\\.", "_") + "_";
 		}
 
-		return instance;
-	}
+		/**
+		 * creates a dot separated path string consisting of the current path plus the provided properties name.
+		 *
+		 * @param property the property by which to extend the path. Must not be {@code null}.
+		 * @return Guaranteed to be not {@code null}.
+		 */
+		private String extendedPath(RelationalPersistentProperty property) {
 
-	@Nullable
-	private Object getObjectFromResultSet(ResultSet rs, String backreferenceName) {
-
-		try {
-			return rs.getObject(backreferenceName);
-		} catch (SQLException o_O) {
-			throw new MappingException(String.format("Could not read value %s from result set!", backreferenceName), o_O);
+			String nullablePath = path.toDotPath();
+			return nullablePath == null ? property.getName() : nullablePath + "." + property.getName();
 		}
-	}
 
-	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, @Nullable Object idValue, String prefix) {
+		/**
+		 * Creates an entity from the provided {@link ResultSet}.
+		 *
+		 * @return an instance created using the persistent constructor.
+		 */
+		private S createInstance() {
 
-		return converter.createInstance(entity, parameter -> {
+			return converter.createInstance(entity, parameter -> {
 
-			String parameterName = parameter.getName();
+				String parameterName = parameter.getName();
 
-			Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
+				Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
 
-			RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
+				RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
 
-			return readOrLoadProperty(rs, idValue, property, prefix);
-		});
+				return readOrLoadProperty(property);
+			});
+		}
+
+		/**
+		 * Read a single value or a complete Entity from the {@link ResultSet} passed as an argument.
+		 *
+		 * @param property the {@link RelationalPersistentProperty} for which the value is intended. Must not be
+		 *          {@code null}.
+		 * @return the value read from the {@link ResultSet}. May be {@code null}.
+		 */
+		@Nullable
+		private Object readSimplePropertyFrom(RelationalPersistentProperty property) {
+
+			Object value = getObjectFromResultSet(property.getColumnName());
+			return converter.readValue(value, property.getTypeInformation());
+
+		}
+
+		@Nullable
+		private Object getObjectFromResultSet(String columnName) {
+
+			String fullColumnName = prefix() + columnName;
+			try {
+
+				return resultSet.getObject(fullColumnName);
+			} catch (SQLException o_O) {
+				throw new MappingException(String.format("Could not read value %s from result set!", fullColumnName), o_O);
+			}
+		}
+
+		private S populateProperties(S result) {
+
+			PersistentPropertyAccessor<S> propertyAccessor = converter.getPropertyAccessor(entity, result);
+
+			PreferredConstructor<S, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
+
+			for (RelationalPersistentProperty property : entity) {
+
+				if (persistenceConstructor != null && persistenceConstructor.isConstructorParameter(property)) {
+					continue;
+				}
+
+				propertyAccessor.setProperty(property, readOrLoadProperty(property));
+			}
+
+			return propertyAccessor.getBean();
+		}
+
+		@Nullable
+		private Object readOrLoadProperty(RelationalPersistentProperty property) {
+
+			// TODO: this is the kind of call we need
+			// accessStrategy.findAllByProperty(path, relativeRootId, keys);
+
+			if (property.isCollectionLike()) {
+				return accessStrategy.findAllByProperty(extendPath(property), idValue);
+			} else if (property.isMap()) {
+				return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER
+						.convert(accessStrategy.findAllByProperty(extendPath(property), idValue));
+			} else if (property.isEntity()) {
+				return readEntityFrom(property);
+			} else {
+				return readSimplePropertyFrom(property);
+			}
+		}
+
+		@Nullable
+		private <R> R readEntityFrom(RelationalPersistentProperty property) {
+
+			ReadingContext<R> newReadingContext = derive(property);
+
+			@SuppressWarnings("unchecked")
+			RelationalPersistentEntity<R> entity = (RelationalPersistentEntity<R>) context
+					.getRequiredPersistentEntity(property.getActualType());
+
+			RelationalPersistentProperty idProperty = entity.getIdProperty();
+
+			// return null if either an existing id is null or the backreference is null, meaning there is no data.
+			if ((idProperty != null //
+					? newReadingContext.idValue //
+					: newReadingContext.getObjectFromResultSet(property.getReverseColumnName()) //
+			) == null) {
+				return null;
+			}
+
+			R instance = newReadingContext.createInstance();
+
+			PersistentPropertyAccessor<R> accessor = converter.getPropertyAccessor(entity, instance);
+
+			for (RelationalPersistentProperty p : entity) {
+				if (!entity.isConstructorArgument(p)) {
+					accessor.setProperty(p, newReadingContext.readSimplePropertyFrom(p));
+				}
+			}
+
+			return instance;
+		}
+
+		private void setId(@Nullable Object idValue) {
+
+			Assert.isNull(this.idValue, String.format("Tried to set the idValue twice. New value %s in %s", idValue, this));
+
+			this.idValue = idValue;
+		}
+
 	}
 }

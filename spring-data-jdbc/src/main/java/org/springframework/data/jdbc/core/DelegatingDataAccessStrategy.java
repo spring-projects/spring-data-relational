@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import java.util.Map;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.conversion.EffectiveParentId;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.util.Assert;
 
@@ -38,6 +39,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 		return delegate.insert(instance, domainType, additionalParameters);
+	}
+
+	@Override
+	public <T> Object insert(T instance, PersistentPropertyPath<RelationalPersistentProperty> path, EffectiveParentId effectiveParentId) {
+		return delegate.insert(instance, path, effectiveParentId);
 	}
 
 	/* 
@@ -134,6 +140,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(delegate, "Delegate is null");
 
 		return delegate.findAllByProperty(rootId, property);
+	}
+
+	@Override
+	public <T> Iterable<T> findAllByProperty(PersistentPropertyPath<RelationalPersistentProperty> path, Object relativeRootId, Object... keys) {
+		return delegate.findAllByProperty(path, relativeRootId, keys);
 	}
 
 	/* 

@@ -229,6 +229,10 @@ class SelectBuilder {
 				return new WhereConditionBuilder(this, column);
 			}
 
+			WhereConditionBuilder and(String column) {
+				return new WhereConditionBuilder(this, column);
+			}
+
 			private JoinBuilder where(WhereCondition condition) {
 
 				conditions.add(condition);

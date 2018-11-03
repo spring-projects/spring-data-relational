@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +31,7 @@ import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.conversion.DbAction.Merge;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
+import org.springframework.data.relational.core.conversion.EffectiveParentId;
 import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -58,8 +58,8 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(Insert<T> insert) {
 
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
-
+		EffectiveParentId keys = insert.getKeys(context);
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getPropertyPath(), keys);
 		insert.setGeneratedId(id);
 	}
 
@@ -70,7 +70,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(InsertRoot<T> insert) {
 
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Collections.emptyMap());
+		Object id = accessStrategy.insert(insert.getEntity(), null, new EffectiveParentId());
 		insert.setGeneratedId(id);
 	}
 
@@ -101,6 +101,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 		// temporary implementation
 		if (!accessStrategy.update(merge.getEntity(), merge.getEntityType())) {
+			// TODO: move to new insert implementation
 			accessStrategy.insert(merge.getEntity(), merge.getEntityType(), createAdditionalColumnValues(merge));
 		}
 	}

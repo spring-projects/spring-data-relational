@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import static java.util.Arrays.*;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +46,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -195,7 +198,7 @@ public class EntityRowMapperUnitTests {
 	@Test // DATAJDBC-252
 	public void doesNotTryToSetPropertiesThatAreSetViaConstructor() throws SQLException {
 
-		ResultSet rs = mockResultSet(asList("value"), //
+		ResultSet rs = mockResultSet(singletonList("value"), //
 				"value-from-resultSet");
 		rs.next();
 
@@ -222,7 +225,7 @@ public class EntityRowMapperUnitTests {
 	@Test // DATAJDBC-273
 	public void handlesNonSimplePropertyInConstructor() throws SQLException {
 
-		ResultSet rs = mockResultSet(asList("id"), //
+		ResultSet rs = mockResultSet(singletonList("id"), //
 				ID_FOR_ENTITY_REFERENCING_LIST);
 		rs.next();
 
@@ -242,20 +245,20 @@ public class EntityRowMapperUnitTests {
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determine what kind of ResultSet is needed for subsequent selects.
-		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(accessStrategy)
-				.findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP), any(RelationalPersistentProperty.class));
+		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(accessStrategy).findAllByProperty(
+				any(PersistentPropertyPath.class), eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP), any(Object[].class));
 
 		doReturn(new HashSet<>(asList( //
 				new SimpleEntry<>("one", new Trivial()), //
 				new SimpleEntry<>("two", new Trivial()) //
-		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP),
-				any(RelationalPersistentProperty.class));
+		))).when(accessStrategy).findAllByProperty(any(PersistentPropertyPath.class), eq(ID_FOR_ENTITY_REFERENCING_MAP),
+				any(Object[].class));
 
 		doReturn(new HashSet<>(asList( //
 				new SimpleEntry<>(1, new Trivial()), //
 				new SimpleEntry<>(2, new Trivial()) //
-		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST),
-				any(RelationalPersistentProperty.class));
+		))).when(accessStrategy).findAllByProperty(any(PersistentPropertyPath.class), eq(ID_FOR_ENTITY_REFERENCING_LIST),
+				any(Object[].class));
 
 		RelationalConverter converter = new BasicRelationalConverter(context, new JdbcCustomConversions());
 

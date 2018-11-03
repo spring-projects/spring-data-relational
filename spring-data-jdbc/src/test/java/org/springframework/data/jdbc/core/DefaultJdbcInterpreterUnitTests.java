@@ -18,16 +18,18 @@ package org.springframework.data.jdbc.core;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Map;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
+import org.springframework.data.relational.core.conversion.EffectiveParentId;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -59,6 +61,11 @@ public class DefaultJdbcInterpreterUnitTests {
 	Insert<?> insert = new Insert<>(element, PropertyPathUtils.toPath("element", Container.class, context),
 			containerInsert);
 
+	private final PersistentPropertyPath<RelationalPersistentProperty> path = context.getPersistentPropertyPath("element",
+			Container.class);
+
+	RelationalPersistentProperty elementProperty = path.getRequiredLeafProperty();
+
 	@Test // DATAJDBC-145
 	public void insertDoesHonourNamingStrategyForBackReference() {
 
@@ -67,10 +74,11 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<Map<String, Object>> argumentCaptor = ArgumentCaptor.forClass(Map.class);
-		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
+		ArgumentCaptor<EffectiveParentId> argumentCaptor = ArgumentCaptor.forClass(EffectiveParentId.class);
+		verify(dataAccessStrategy).insert(eq(element), any(PersistentPropertyPath.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue()).containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
+		assertThat(argumentCaptor.getValue().toParameterMap(path))
+				.containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
 	}
 
 	@Test // DATAJDBC-251
@@ -80,10 +88,11 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<Map<String, Object>> argumentCaptor = ArgumentCaptor.forClass(Map.class);
-		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
+		ArgumentCaptor<EffectiveParentId> argumentCaptor = ArgumentCaptor.forClass(EffectiveParentId.class);
+		verify(dataAccessStrategy).insert(eq(element), any(PersistentPropertyPath.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue()).containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
+		assertThat(argumentCaptor.getValue().toParameterMap(path))
+				.containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
 	}
 
 	@Test // DATAJDBC-251
@@ -93,10 +102,11 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<Map<String, Object>> argumentCaptor = ArgumentCaptor.forClass(Map.class);
-		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
+		ArgumentCaptor<EffectiveParentId> argumentCaptor = ArgumentCaptor.forClass(EffectiveParentId.class);
+		verify(dataAccessStrategy).insert(eq(element), any(PersistentPropertyPath.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue()).containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
+		assertThat(argumentCaptor.getValue().toParameterMap(path))
+				.containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
 	}
 
 	static class Container {

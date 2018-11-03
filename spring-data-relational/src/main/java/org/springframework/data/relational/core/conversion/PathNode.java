@@ -16,32 +16,28 @@
 package org.springframework.data.relational.core.conversion;
 
 import lombok.Value;
+
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
 /**
- * Represents a single entity in an aggregate along with its property path from the root entity and the chain of
- * objects to traverse a long this path.
+ * Represents a single entity in an aggregate along with its property path from the root entity and the chain of objects
+ * to traverse a long this path.
  *
  * @author Jens Schauder
  */
 @Value
 class PathNode {
 
-	/**
-	 * The path to this entity
-	 */
+	/** The path to this entity */
 	PersistentPropertyPath<RelationalPersistentProperty> path;
 
 	/**
 	 * The parent {@link PathNode}. This is {@code null} if this is the root entity.
 	 */
-	@Nullable
-	PathNode parent;
+	@Nullable PathNode parent;
 
-	/**
-	 * The value of the entity.
-	 */
+	/** The value of the entity. */
 	Object value;
 }

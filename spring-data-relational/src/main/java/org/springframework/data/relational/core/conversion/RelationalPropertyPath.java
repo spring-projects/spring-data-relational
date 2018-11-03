@@ -24,7 +24,9 @@ import org.springframework.util.StringUtils;
  * empty path. See https://jira.spring.io/browse/DATACMNS-1204.
  *
  * @author Jens Schauder
+ * @deprecated User {@link org.springframework.data.mapping.PersistentPropertyPath} instead.
  */
+@Deprecated
 public class RelationalPropertyPath {
 
 	private final PropertyPath path;
