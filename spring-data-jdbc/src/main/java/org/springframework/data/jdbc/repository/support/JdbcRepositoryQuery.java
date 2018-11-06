@@ -23,6 +23,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -50,6 +51,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private final JdbcQueryMethod queryMethod;
 	private final NamedParameterJdbcOperations operations;
 	private final RowMapper<?> rowMapper;
+	private final ResultSetExtractor<?> resultSetExtractor;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -78,6 +80,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		this.queryMethod = queryMethod;
 		this.operations = operations;
 		this.rowMapper = createRowMapper(queryMethod, defaultRowMapper);
+		this.resultSetExtractor = createResultSetExtractor(queryMethod);
 	}
 
 	/*
@@ -99,15 +102,23 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		}
 
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
-
-			List<?> result = operations.query(query, parameters, rowMapper);
+			List<?> result = null;
+			if(this.resultSetExtractor != null) {
+				result = (List<?>) operations.query(query, parameters, resultSetExtractor);//TODO check return type in constructor if queryMethod.isCollectionQuery()
+			} else {
+				result = operations.query(query, parameters, rowMapper);
+			}
 			publishAfterLoad(result);
 			return result;
 		}
 
 		try {
-
-			Object result = operations.queryForObject(query, parameters, rowMapper);
+			Object result = null;
+			if(this.resultSetExtractor != null) {
+				result =  operations.query(query,parameters, resultSetExtractor);
+			} else {
+				result = operations.queryForObject(query, parameters, rowMapper);
+			}
 			publishAfterLoad(result);
 			return result;
 		} catch (EmptyResultDataAccessException e) {
@@ -156,6 +167,19 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		return rowMapperClass == null || rowMapperClass == RowMapper.class //
 				? defaultRowMapper //
 				: (RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass);
+	}
+	
+	@Nullable
+	private static ResultSetExtractor<?> createResultSetExtractor(JdbcQueryMethod queryMethod) {
+
+		Class<?> resultSetExtractorClass = queryMethod.getResultSetExtractorClass();
+
+		if(resultSetExtractorClass == null || resultSetExtractorClass == ResultSetExtractor.class) { //if it's the default - return null
+			return null;
+		} else {
+			return (ResultSetExtractor<?>) BeanUtils.instantiateClass(resultSetExtractorClass);
+		}
+				
 	}
 
 	private <T> void publishAfterLoad(Iterable<T> all) {
