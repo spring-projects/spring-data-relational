@@ -63,6 +63,16 @@ public class JdbcQueryMethod extends QueryMethod {
 	public Class<?> getRowMapperClass() {
 		return getMergedAnnotationAttribute("rowMapperClass");
 	}
+	
+	/**
+	 * Returns the class to be used as {@link org.springframework.jdbc.core.ResultSetExtractor}
+	 *
+	 * @return May be {@code null}.
+	 */
+	@Nullable
+	public Class<?> getResultSetExtractorClass() {
+		return getMergedAnnotationAttribute("resultSetExtractorClass");
+	}
 
 	/**
 	 * Returns whether the query method is a modifying one.
