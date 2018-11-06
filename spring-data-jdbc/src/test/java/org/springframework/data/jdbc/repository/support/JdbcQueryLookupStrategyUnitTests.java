@@ -27,8 +27,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.repository.RowMapperMap;
-import org.springframework.data.jdbc.repository.config.ConfigurableRowMapperMap;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
@@ -37,6 +37,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -74,7 +75,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	public void typeBasedRowMapperGetsUsedForQuery() {
 
 		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
-		RowMapperMap rowMapperMap = new ConfigurableRowMapperMap().register(NumberFormat.class, numberFormatMapper);
+		QueryMappingConfiguration rowMapperMap = new DefaultQueryMappingConfiguration().registerRowMapper(NumberFormat.class, numberFormatMapper);
 
 		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", rowMapperMap);
 
@@ -82,8 +83,22 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), eq(numberFormatMapper));
 	}
+	
+	@Test // DATAJDBC-290
+	@SuppressWarnings("unchecked")
+	public void typeBasedResultSetExtractorGetsUsedForQuery() {
 
-	private RepositoryQuery getRepositoryQuery(String name, RowMapperMap rowMapperMap) {
+		ResultSetExtractor<? extends NumberFormat> numberFormatMapper = mock(ResultSetExtractor.class);
+		QueryMappingConfiguration rowMapperMap = new DefaultQueryMappingConfiguration().registerResultSetExtractor(NumberFormat.class, numberFormatMapper);
+
+		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", rowMapperMap);
+
+		repositoryQuery.execute(new Object[] {});
+
+		verify(operations).query(anyString(), any(SqlParameterSource.class), eq(numberFormatMapper));
+	}
+
+	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration rowMapperMap) {
 
 		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, mappingContext, converter, accessStrategy,
 				rowMapperMap, operations);

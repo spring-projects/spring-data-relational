@@ -20,7 +20,7 @@ import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
-import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -51,7 +51,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
 
-	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
+	private QueryMappingConfiguration mapperMap = QueryMappingConfiguration.EMPTY;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
@@ -81,11 +81,11 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	/**
 	 * @param rowMapperMap must not be {@literal null} consider {@link RowMapperMap#EMPTY} instead.
 	 */
-	public void setRowMapperMap(RowMapperMap rowMapperMap) {
+	public void setRowMapperMap(QueryMappingConfiguration rowMapperMap) {
 
 		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
 
-		this.rowMapperMap = rowMapperMap;
+		this.mapperMap = rowMapperMap;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -133,6 +133,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(publisher, context, converter, accessStrategy, rowMapperMap, operations));
+		return Optional.of(new JdbcQueryLookupStrategy(publisher, context, converter, accessStrategy, mapperMap, operations));
 	}
 }
