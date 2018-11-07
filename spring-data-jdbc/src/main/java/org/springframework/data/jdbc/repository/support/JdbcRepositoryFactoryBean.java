@@ -23,7 +23,7 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
-import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.jdbc.repository.MapperMap;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
@@ -49,7 +49,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private RelationalMappingContext mappingContext;
 	private RelationalConverter converter;
 	private DataAccessStrategy dataAccessStrategy;
-	private RowMapperMap rowMapperMap = RowMapperMap.EMPTY;
+	private MapperMap mapperMap = MapperMap.EMPTY;
 	private NamedParameterJdbcOperations operations;
 
 	/**
@@ -81,7 +81,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
 				converter, publisher, operations);
-		jdbcRepositoryFactory.setRowMapperMap(rowMapperMap);
+		jdbcRepositoryFactory.setRowMapperMap(mapperMap);
 
 		return jdbcRepositoryFactory;
 	}
@@ -106,8 +106,8 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	 *          {@literal null}.
 	 */
 	@Autowired(required = false)
-	public void setRowMapperMap(RowMapperMap rowMapperMap) {
-		this.rowMapperMap = rowMapperMap;
+	public void setRowMapperMap(MapperMap rowMapperMap) {
+		this.mapperMap = rowMapperMap;
 	}
 
 	@Autowired
@@ -137,8 +137,8 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 					operations);
 		}
 
-		if (rowMapperMap == null) {
-			this.rowMapperMap = RowMapperMap.EMPTY;
+		if (mapperMap == null) {
+			this.mapperMap = MapperMap.EMPTY;
 		}
 
 		super.afterPropertiesSet();

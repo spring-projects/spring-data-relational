@@ -29,7 +29,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.jdbc.repository.MapperMap;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
@@ -100,7 +100,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		assertThat(factoryBean.getObject()).isNotNull();
 		assertThat(ReflectionTestUtils.getField(factoryBean, "dataAccessStrategy"))
 				.isInstanceOf(DefaultDataAccessStrategy.class);
-		assertThat(ReflectionTestUtils.getField(factoryBean, "rowMapperMap")).isEqualTo(RowMapperMap.EMPTY);
+		assertThat(ReflectionTestUtils.getField(factoryBean, "mapperMap")).isEqualTo(MapperMap.EMPTY);
 	}
 
 	private static class DummyEntity {

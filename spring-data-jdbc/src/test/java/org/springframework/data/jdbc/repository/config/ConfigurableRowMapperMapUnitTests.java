@@ -19,7 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.Test;
-import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.jdbc.repository.MapperMap;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
@@ -32,9 +33,17 @@ public class ConfigurableRowMapperMapUnitTests {
 	@Test
 	public void freshInstanceReturnsNull() {
 
-		RowMapperMap map = new ConfigurableRowMapperMap();
+		MapperMap map = new ConfigurableMapperMap();
 
 		assertThat(map.rowMapperFor(Object.class)).isNull();
+	}
+	
+	@Test
+	public void freshInstanceReturnsNullResultSetExtractor() {
+
+		MapperMap map = new ConfigurableMapperMap();
+
+		assertThat(map.resultSetExtractorFor(Object.class)).isNull();
 	}
 
 	@Test
@@ -42,9 +51,19 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		RowMapper rowMapper = mock(RowMapper.class);
 
-		RowMapperMap map = new ConfigurableRowMapperMap().register(Object.class, rowMapper);
+		MapperMap map = new ConfigurableMapperMap().registerRowMapper(Object.class, rowMapper);
 
 		assertThat(map.rowMapperFor(Object.class)).isEqualTo(rowMapper);
+	}
+	
+	@Test
+	public void returnsConfiguredInstanceResultSetExtractorForClass() {
+
+		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
+
+		MapperMap map = new ConfigurableMapperMap().registerResultSetExtractor(Object.class, resultSetExtractor);
+
+		assertThat(map.resultSetExtractorFor(Object.class)).isEqualTo(resultSetExtractor);
 	}
 
 	@Test
@@ -52,10 +71,21 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		RowMapper rowMapper = mock(RowMapper.class);
 
-		RowMapperMap map = new ConfigurableRowMapperMap().register(Number.class, rowMapper);
+		MapperMap map = new ConfigurableMapperMap().registerRowMapper(Number.class, rowMapper);
 
 		assertThat(map.rowMapperFor(Integer.class)).isNull();
 		assertThat(map.rowMapperFor(String.class)).isNull();
+	}
+	
+	@Test
+	public void returnsNullResultSetExtractorForClassNotConfigured() {
+
+		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
+
+		MapperMap map = new ConfigurableMapperMap().registerResultSetExtractor(Number.class, resultSetExtractor);
+
+		assertThat(map.resultSetExtractorFor(Integer.class)).isNull();
+		assertThat(map.resultSetExtractorFor(String.class)).isNull();
 	}
 
 	@Test
@@ -63,9 +93,19 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		RowMapper rowMapper = mock(RowMapper.class);
 
-		RowMapperMap map = new ConfigurableRowMapperMap().register(String.class, rowMapper);
+		MapperMap map = new ConfigurableMapperMap().registerRowMapper(String.class, rowMapper);
 
 		assertThat(map.rowMapperFor(Object.class)).isEqualTo(rowMapper);
+	}
+	
+	@Test
+	public void returnsInstanceOfResultSetExtractorRegisteredForSubClass() {
+
+		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
+
+		MapperMap map = new ConfigurableMapperMap().registerResultSetExtractor(String.class, resultSetExtractor);
+
+		assertThat(map.resultSetExtractorFor(Object.class)).isEqualTo(resultSetExtractor);
 	}
 
 	@Test
@@ -73,12 +113,25 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		RowMapper rowMapper = mock(RowMapper.class);
 
-		RowMapperMap map = new ConfigurableRowMapperMap() //
-				.register(Object.class, mock(RowMapper.class)) //
-				.register(Integer.class, rowMapper) //
-				.register(Number.class, mock(RowMapper.class));
+		MapperMap map = new ConfigurableMapperMap() //
+				.registerRowMapper(Object.class, mock(RowMapper.class)) //
+				.registerRowMapper(Integer.class, rowMapper) //
+				.registerRowMapper(Number.class, mock(RowMapper.class));
 
 		assertThat(map.rowMapperFor(Integer.class)).isEqualTo(rowMapper);
+	}
+	
+	@Test
+	public void prefersExactResultSetExtractorTypeMatchClass() {
+
+		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
+
+		MapperMap map = new ConfigurableMapperMap() //
+				.registerResultSetExtractor(Object.class, mock(ResultSetExtractor.class)) //
+				.registerResultSetExtractor(Integer.class, resultSetExtractor) //
+				.registerResultSetExtractor(Number.class, mock(ResultSetExtractor.class));
+
+		assertThat(map.resultSetExtractorFor(Integer.class)).isEqualTo(resultSetExtractor);
 	}
 
 	@Test
@@ -86,10 +139,22 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		RowMapper rowMapper = mock(RowMapper.class);
 
-		RowMapperMap map = new ConfigurableRowMapperMap() //
-				.register(Integer.class, mock(RowMapper.class)) //
-				.register(Number.class, rowMapper);
+		MapperMap map = new ConfigurableMapperMap() //
+				.registerRowMapper(Integer.class, mock(RowMapper.class)) //
+				.registerRowMapper(Number.class, rowMapper);
 
 		assertThat(map.rowMapperFor(Object.class)).isEqualTo(rowMapper);
+	}
+	
+	@Test
+	public void prefersLatestRegistrationOfResultSetExtractorForSuperTypeMatch() {
+
+		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
+
+		MapperMap map = new ConfigurableMapperMap() //
+				.registerResultSetExtractor(Integer.class, mock(ResultSetExtractor.class)) //
+				.registerResultSetExtractor(Number.class, resultSetExtractor);
+
+		assertThat(map.resultSetExtractorFor(Object.class)).isEqualTo(resultSetExtractor);
 	}
 }
