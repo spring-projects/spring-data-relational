@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.Assert;
 
 /**
- * A {@link RowMapperMap} and {@link MapperMap} that allows for registration of {@link RowMapper}s and {@link ResultSetExtractor}s via a fluent Api.
+ * A {@link MapperMap} that allows for registration of {@link RowMapper}s and {@link ResultSetExtractor}s via a fluent Api.
  *
  * @author Evgeni Dimitrov
  */
@@ -65,7 +65,7 @@ public class ConfigurableMapperMap implements MapperMap{
 	 *
 	 * @return this instance, so this can be used as a fluent interface.
 	 */
-	public <T> ConfigurableMapperMap registerResultSetExtractor(Class<T> type, ResultSetExtractor<? extends T> resultSetExtractor) {
+	public <T> ConfigurableMapperMap registerResultSetExtractor(Class<T> type, ResultSetExtractor resultSetExtractor) {
 		mappers.put(type, resultSetExtractor);
 		return this;
 	}

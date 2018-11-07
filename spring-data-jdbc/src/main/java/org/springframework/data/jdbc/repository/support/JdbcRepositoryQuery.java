@@ -50,8 +50,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private final RelationalMappingContext context;
 	private final JdbcQueryMethod queryMethod;
 	private final NamedParameterJdbcOperations operations;
-	private final RowMapper<?> rowMapper;
-	private final ResultSetExtractor<?> resultSetExtractor;
+	private final Object mapper;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -64,7 +63,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
 	JdbcRepositoryQuery(ApplicationEventPublisher publisher, RelationalMappingContext context, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			@Nullable RowMapper<?> defaultRowMapper) {
+			@Nullable Object defaultMapper) {
 
 		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "Context must not be null!");
@@ -72,15 +71,22 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null!");
 
 		if (!queryMethod.isModifyingQuery()) {
-			Assert.notNull(defaultRowMapper, "RowMapper must not be null!");
+			Assert.notNull(defaultMapper, "Mapper must not be null!");
 		}
 
 		this.publisher = publisher;
 		this.context = context;
 		this.queryMethod = queryMethod;
 		this.operations = operations;
-		this.rowMapper = createRowMapper(queryMethod, defaultRowMapper);
-		this.resultSetExtractor = createResultSetExtractor(queryMethod);
+		
+		RowMapper<?> queryRowMapper = createRowMapper(queryMethod); //use the RowMapper|ResultSetExtractor from Query annotation if set, else use default
+		ResultSetExtractor<?> queryResultSetExtractor = createResultSetExtractor(queryMethod);
+		if(queryRowMapper != null) {
+			this.mapper = queryRowMapper;
+		} else if(queryResultSetExtractor != null) {
+			this.mapper = queryResultSetExtractor;
+		} else this.mapper = defaultMapper;
+		
 	}
 
 	/*
@@ -103,10 +109,10 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
 			List<?> result = null;
-			if(this.resultSetExtractor != null) {
-				result = (List<?>) operations.query(query, parameters, resultSetExtractor);//TODO check return type in constructor if queryMethod.isCollectionQuery()
+			if(this.mapper instanceof ResultSetExtractor) {
+				result = (List<?>) operations.query(query, parameters, (ResultSetExtractor)this.mapper);
 			} else {
-				result = operations.query(query, parameters, rowMapper);
+				result = operations.query(query, parameters, (RowMapper)this.mapper);
 			}
 			publishAfterLoad(result);
 			return result;
@@ -114,10 +120,10 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 
 		try {
 			Object result = null;
-			if(this.resultSetExtractor != null) {
-				result =  operations.query(query,parameters, resultSetExtractor);
+			if(this.mapper instanceof ResultSetExtractor) {
+				result =  operations.query(query,parameters, (ResultSetExtractor)this.mapper);
 			} else {
-				result = operations.queryForObject(query, parameters, rowMapper);
+				result = operations.queryForObject(query, parameters, (RowMapper)this.mapper);
 			}
 			publishAfterLoad(result);
 			return result;
@@ -160,12 +166,12 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	}
 
 	@Nullable
-	private static RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod, @Nullable RowMapper<?> defaultRowMapper) {
+	private static RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod) {
 
 		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
 
 		return rowMapperClass == null || rowMapperClass == RowMapper.class //
-				? defaultRowMapper //
+				? null //
 				: (RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass);
 	}
 	
