@@ -11,6 +11,7 @@ import org.springframework.util.Assert;
 /**
  * A {@link MapperMap} that allows for registration of {@link RowMapper}s and {@link ResultSetExtractor}s via a fluent Api.
  *
+ * @author Jens Schauder
  * @author Evgeni Dimitrov
  */
 public class ConfigurableMapperMap implements MapperMap{

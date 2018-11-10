@@ -7,6 +7,7 @@ import org.springframework.lang.Nullable;
 /**
  * A map from a type to a {@link ResultSetExtractor} to be used for extracting that type from {@link java.sql.ResultSet}s.
  *
+ * @author Jens Schauder
  * @author Evgeni Dimitrov
  */
 public interface MapperMap {
