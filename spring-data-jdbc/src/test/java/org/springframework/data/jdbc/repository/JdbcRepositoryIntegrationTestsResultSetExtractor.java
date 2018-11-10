@@ -98,15 +98,21 @@ public class JdbcRepositoryIntegrationTestsResultSetExtractor {
 	
 	@Test // DATAJDBC-290 
 	public void findAllPeopleWithAdressesReturnsOnePersonWithAdresses() {
-		Person savedPerson = repository.save(new Person(null, "Joe", null));
-		MapSqlParameterSource paramsAddress1 = buildAddressParameters(savedPerson.getId(), "Klokotnitsa");
+		final String personName = "Joe";
+		Person savedPerson = repository.save(new Person(null, personName, null));
+		String street1 = "Klokotnitsa";
+		MapSqlParameterSource paramsAddress1 = buildAddressParameters(savedPerson.getId(), street1);
 		template.update("insert into address (street, person_id) values (:street, :personId)",paramsAddress1);
-		MapSqlParameterSource paramsAddress2 = buildAddressParameters(savedPerson.getId(), "bul. Hristo Botev");
+		String street2 = "bul. Hristo Botev";
+		MapSqlParameterSource paramsAddress2 = buildAddressParameters(savedPerson.getId(), street2);
 		template.update("insert into address (street, person_id) values (:street, :personId)",paramsAddress2);
 		
 		List<Person> people = repository.findAllPeopleWithAdresses();
 		assertThat(people).hasSize(1);
-		assertThat(people.get(0).getAdresses()).hasSize(2);
+		Person person = people.get(0);
+		assertThat(person.getName()).isEqualTo(personName);
+		assertThat(person.getAdresses()).hasSize(2);
+		assertThat(person.getAdresses()).extracting(a -> a.getStreet()).containsExactlyInAnyOrder(street1, street2);
 	}
 
 	private MapSqlParameterSource buildAddressParameters(Long id, String streetName) {
