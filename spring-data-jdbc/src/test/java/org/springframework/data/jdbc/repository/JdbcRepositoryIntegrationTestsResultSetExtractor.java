@@ -42,7 +42,6 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -59,7 +58,6 @@ import lombok.Data;
 @ContextConfiguration
 @Transactional
 public class JdbcRepositoryIntegrationTestsResultSetExtractor {
-
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -72,7 +70,7 @@ public class JdbcRepositoryIntegrationTestsResultSetExtractor {
 		}
 
 		@Bean
-		PersonRepository dummyEntityRepository() {
+		PersonRepository personEntityRepository() {
 			return factory.getRepository(PersonRepository.class);
 		}
 
@@ -82,24 +80,24 @@ public class JdbcRepositoryIntegrationTestsResultSetExtractor {
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
-	@Autowired PersonRepository repository;
+	@Autowired PersonRepository personRepository;
 
 	@Test // DATAJDBC-290
 	public void findAllPeopleWithAdressesReturnsEmptyWhenNoneFound() {
 		// NOT saving anything, so DB is empty
-		assertThat(repository.findAllPeopleWithAdresses()).isEmpty();
+		assertThat(personRepository.findAllPeopleWithAdresses()).isEmpty();
 	}
 	
 	@Test // DATAJDBC-290
 	public void findAllPeopleWithAdressesReturnsOnePersonWithoutAdresses() {
-		repository.save(new Person(null, "Joe", null));
-		assertThat(repository.findAllPeopleWithAdresses()).hasSize(1);
+		personRepository.save(new Person(null, "Joe", null));
+		assertThat(personRepository.findAllPeopleWithAdresses()).hasSize(1);
 	}
 	
 	@Test // DATAJDBC-290 
 	public void findAllPeopleWithAdressesReturnsOnePersonWithAdresses() {
 		final String personName = "Joe";
-		Person savedPerson = repository.save(new Person(null, personName, null));
+		Person savedPerson = personRepository.save(new Person(null, personName, null));
 		String street1 = "Klokotnitsa";
 		MapSqlParameterSource paramsAddress1 = buildAddressParameters(savedPerson.getId(), street1);
 		template.update("insert into address (street, person_id) values (:street, :personId)",paramsAddress1);
@@ -107,14 +105,13 @@ public class JdbcRepositoryIntegrationTestsResultSetExtractor {
 		MapSqlParameterSource paramsAddress2 = buildAddressParameters(savedPerson.getId(), street2);
 		template.update("insert into address (street, person_id) values (:street, :personId)",paramsAddress2);
 		
-		List<Person> people = repository.findAllPeopleWithAdresses();
+		List<Person> people = personRepository.findAllPeopleWithAdresses();
 		assertThat(people).hasSize(1);
 		Person person = people.get(0);
 		assertThat(person.getName()).isEqualTo(personName);
 		assertThat(person.getAdresses()).hasSize(2);
 		assertThat(person.getAdresses()).extracting(a -> a.getStreet()).containsExactlyInAnyOrder(street1, street2);
 	}
-
 	private MapSqlParameterSource buildAddressParameters(Long id, String streetName) {
 		MapSqlParameterSource params = new MapSqlParameterSource();
 		params.addValue("street", streetName, Types.VARCHAR);
