@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -58,32 +59,19 @@ import lombok.Data;
  */
 @ContextConfiguration
 @Transactional
-@Ignore
-public class JdbcRepositoryIntegrationTestsMapperMapResultSetExtractor {
+public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
 	private static String CAR_MODEL = "ResultSetExtracotr Car";
 	@Configuration
 	@Import(TestConfiguration.class)
-//	@EnableJdbcRepositories(considerNestedRepositories = true,
-//		includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE /*, classes = CarRepository.class*/))
+	@EnableJdbcRepositories(considerNestedRepositories = true)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
-
-		@PostConstruct
-		public void init () {
-			factory.setRowMapperMap(mappers());
-		}
 		@Bean
 		Class<?> testClass() {
-			return JdbcRepositoryIntegrationTestsMapperMapResultSetExtractor.class;
-		}
-
-		@Bean
-		CarRepository carEntityRepository() {
-			return factory.getRepository(CarRepository.class);
+			return JdbcRepositoryMapperMapResultSetExtractorIntegrationTests.class;
 		}
 		
-		//@Bean
+		@Bean
 		MapperMap mappers() {
 			return new ConfigurableMapperMap()
 					.registerResultSetExtractor(Car.class, new CarResultSetExtractor());
@@ -97,16 +85,16 @@ public class JdbcRepositoryIntegrationTestsMapperMapResultSetExtractor {
 	@Autowired CarRepository carRepository;
 	
 	@Test // DATAJDBC-290
-	public void findAllCarsPicksResultSetExtractorFromMapperMap() {
+	public void customFindAllCarsPicksResultSetExtractorFromMapperMap() {
 		carRepository.save(new Car(null, "Some model"));
-		Iterable<Car> cars = carRepository.findAll();
+		Iterable<Car> cars = carRepository.customFindAll();
 		assertThat(cars).hasSize(1);
 		assertThat(cars).allMatch(car -> CAR_MODEL.equals(car.getModel()));
 	}
 	
 	interface CarRepository extends CrudRepository<Car, Long> {
-		@Query("")
-		public List<Car> test();
+		@Query("select * from car")
+		public List<Car> customFindAll();
 	}
 	
 	@Data
@@ -117,11 +105,11 @@ public class JdbcRepositoryIntegrationTestsMapperMapResultSetExtractor {
 		private String model;
 	}
 	
-	static class CarResultSetExtractor implements ResultSetExtractor<Car> {
+	static class CarResultSetExtractor implements ResultSetExtractor<List<Car>> {
 
 		@Override
-		public Car extractData(ResultSet rs) throws SQLException, DataAccessException {
-			return new Car(1L, CAR_MODEL);
+		public List<Car> extractData(ResultSet rs) throws SQLException, DataAccessException {
+			return Arrays.asList(new Car(1L, CAR_MODEL));
 		}
 		
 	}

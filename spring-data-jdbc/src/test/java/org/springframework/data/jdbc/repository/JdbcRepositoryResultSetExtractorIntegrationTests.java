@@ -57,7 +57,7 @@ import lombok.Data;
  */
 @ContextConfiguration
 @Transactional
-public class JdbcRepositoryIntegrationTestsResultSetExtractor {
+public class JdbcRepositoryResultSetExtractorIntegrationTests {
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -66,7 +66,7 @@ public class JdbcRepositoryIntegrationTestsResultSetExtractor {
 
 		@Bean
 		Class<?> testClass() {
-			return JdbcRepositoryIntegrationTestsResultSetExtractor.class;
+			return JdbcRepositoryResultSetExtractorIntegrationTests.class;
 		}
 
 		@Bean
