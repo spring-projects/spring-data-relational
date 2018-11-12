@@ -245,9 +245,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		byIndex.forEach((i, o) -> {
 
 			if (o.getValue() != null) {
-				statement.bind(i, o.getValue());
+				statement.bind(i.intValue(), o.getValue());
 			} else {
-				statement.bindNull(i, o.getType());
+				statement.bindNull(i.intValue(), o.getType());
 			}
 		});
 
