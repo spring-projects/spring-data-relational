@@ -867,7 +867,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					.collect(Collectors.joining(","));
 
 			builder.append("INSERT INTO ").append(table).append(" (").append(fieldNames).append(") ").append(" VALUES(")
-					.append(placeholders).append(")");
+					.append(placeholders).append(") RETURNING *");
 
 			String sql = builder.toString();
 			Function<Connection, Statement> insertFunction = it -> {
@@ -881,7 +881,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			};
 
 			Function<Connection, Flux<Result>> resultFunction = it -> Flux
-					.from(insertFunction.apply(it).executeReturningGeneratedKeys());
+					.from(insertFunction.apply(it).execute());
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
@@ -972,7 +972,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					.collect(Collectors.joining(","));
 
 			builder.append("INSERT INTO ").append(table).append(" (").append(fieldNames).append(") ").append(" VALUES(")
-					.append(placeholders).append(")");
+					.append(placeholders).append(") RETURNING *");
 
 			String sql = builder.toString();
 
@@ -999,7 +999,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			};
 
 			Function<Connection, Flux<Result>> resultFunction = it -> {
-				return Flux.from(insertFunction.apply(it).executeReturningGeneratedKeys());
+				return Flux.from(insertFunction.apply(it).execute());
 			};
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
