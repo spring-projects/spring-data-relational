@@ -17,26 +17,21 @@ package org.springframework.data.r2dbc.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
 
-import io.r2dbc.spi.ConnectionFactory;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
+import io.r2dbc.spi.ConnectionFactory;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -44,6 +39,10 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 /**
  * Integration tests for {@link SimpleR2dbcRepository}.
@@ -122,14 +121,20 @@ public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestS
 
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
 		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
+		LegoSet legoSet3 = new LegoSet(null, "RALLYEAUTO", 14);
+		LegoSet legoSet4 = new LegoSet(null, "VOLTRON", 15);
 
-		repository.saveAll(Arrays.asList(legoSet1, legoSet2)) //
+		repository.saveAll(Arrays.asList(legoSet1, legoSet2, legoSet3, legoSet4)) //
+				.map(LegoSet::getManual) //
 				.as(StepVerifier::create) //
-				.expectNextCount(2) //
+				.expectNext(12) //
+				.expectNext(13) //
+				.expectNext(14) //
+				.expectNext(15) //
 				.verifyComplete();
 
 		Map<String, Object> map = jdbc.queryForMap("SELECT COUNT(*) FROM repo_legoset");
-		assertThat(map).containsEntry("count", 2L);
+		assertThat(map).containsEntry("count", 4L);
 	}
 
 	@Test

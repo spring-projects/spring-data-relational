@@ -15,16 +15,13 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.reactivestreams.Publisher;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
@@ -35,6 +32,8 @@ import org.springframework.data.r2dbc.function.convert.SettableValue;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.util.Assert;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Simple {@link ReactiveCrudRepository} implementation using R2DBC through {@link DatabaseClient}.
@@ -118,7 +117,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(objectsToSave, "Objects to save must not be null!");
 
-		return Flux.fromIterable(objectsToSave).flatMap(this::save);
+		return Flux.fromIterable(objectsToSave).concatMap(this::save);
 	}
 
 	/* (non-Javadoc)
@@ -129,7 +128,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(objectsToSave, "Object publisher must not be null!");
 
-		return Flux.from(objectsToSave).flatMap(this::save);
+		return Flux.from(objectsToSave).concatMap(this::save);
 	}
 
 	/* (non-Javadoc)
@@ -210,7 +209,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(idPublisher, "The Id Publisher must not be null!");
 
-		return Flux.from(idPublisher).buffer().filter(ids -> !ids.isEmpty()).flatMap(ids -> {
+		return Flux.from(idPublisher).buffer().filter(ids -> !ids.isEmpty()).concatMap(ids -> {
 
 			String bindings = getInBinding(ids);
 
@@ -259,7 +258,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(idPublisher, "The Id Publisher must not be null!");
 
-		return Flux.from(idPublisher).buffer().filter(ids -> !ids.isEmpty()).flatMap(ids -> {
+		return Flux.from(idPublisher).buffer().filter(ids -> !ids.isEmpty()).concatMap(ids -> {
 
 			String bindings = getInBinding(ids);
 
