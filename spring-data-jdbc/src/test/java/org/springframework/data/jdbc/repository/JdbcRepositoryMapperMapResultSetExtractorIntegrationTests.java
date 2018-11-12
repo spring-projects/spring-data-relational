@@ -22,24 +22,19 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.ConfigurableMapperMap;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -88,6 +83,15 @@ public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
 	public void customFindAllCarsPicksResultSetExtractorFromMapperMap() {
 		carRepository.save(new Car(null, "Some model"));
 		Iterable<Car> cars = carRepository.customFindAll();
+		assertThat(cars).hasSize(1);
+		assertThat(cars).allMatch(car -> CAR_MODEL.equals(car.getModel()));
+	}
+	
+	@Test // DATAJDBC-290
+	@Ignore
+	public void simpleRepositoryFindAllCarsPicksResultSetExtractorFromMapperMap() {
+		carRepository.save(new Car(null, "Some model"));
+		Iterable<Car> cars = carRepository.findAll();
 		assertThat(cars).hasSize(1);
 		assertThat(cars).allMatch(car -> CAR_MODEL.equals(car.getModel()));
 	}
