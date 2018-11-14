@@ -78,15 +78,17 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		this.context = context;
 		this.queryMethod = queryMethod;
 		this.operations = operations;
-		
+		this.mapper = determineMapper(defaultMapper);		
+	}
+	
+	private Object determineMapper(Object defaultMapper) {
 		RowMapper<?> queryRowMapper = createRowMapper(queryMethod); //use the RowMapper|ResultSetExtractor from Query annotation if set, else use default
 		ResultSetExtractor<?> queryResultSetExtractor = createResultSetExtractor(queryMethod);
 		if(queryRowMapper != null) {
-			this.mapper = queryRowMapper;
+			return queryRowMapper;
 		} else if(queryResultSetExtractor != null) {
-			this.mapper = queryResultSetExtractor;
-		} else this.mapper = defaultMapper;
-		
+			return queryResultSetExtractor;
+		} else return defaultMapper;
 	}
 
 	/*
