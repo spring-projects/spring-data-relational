@@ -333,6 +333,7 @@ public class AggregateTemplateIntegrationTests {
 	@Data
 	static class LegoSet {
 
+		@Column("id1")
 		@Id private Long id;
 
 		private String name;
@@ -344,6 +345,7 @@ public class AggregateTemplateIntegrationTests {
 	@Data
 	static class Manual {
 
+		@Column("id2")
 		@Id private Long id;
 		private String content;
 
@@ -351,6 +353,7 @@ public class AggregateTemplateIntegrationTests {
 
 	static class OneToOneParent {
 
+		@Column("id3")
 		@Id private Long id;
 		private String content;
 
@@ -363,6 +366,7 @@ public class AggregateTemplateIntegrationTests {
 
 	static class ListParent {
 
+		@Column("id4")
 		@Id private Long id;
 		String name;
 		List<ElementNoId> content = new ArrayList<>();

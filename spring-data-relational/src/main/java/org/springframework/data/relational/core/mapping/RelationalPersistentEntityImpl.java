@@ -62,7 +62,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	 */
 	@Override
 	public String getIdColumn() {
-		return this.namingStrategy.getColumnName(getRequiredIdProperty());
+		return getRequiredIdProperty().getColumnName();
 	}
 
 	/*
