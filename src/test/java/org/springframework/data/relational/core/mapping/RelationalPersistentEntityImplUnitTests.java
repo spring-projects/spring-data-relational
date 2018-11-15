@@ -22,6 +22,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntityImpl;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.annotation.Id;
 
 /**
  * Unit tests for {@link RelationalPersistentEntityImpl}.
@@ -41,6 +42,16 @@ public class RelationalPersistentEntityImplUnitTests {
 		assertThat(entity.getTableName()).isEqualTo("dummy_sub_entity");
 	}
 
+	@Test // DATAJDBC-294
+	public void considerIdColumnName() {
+
+		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummySubEntity.class);
+
+		assertThat(entity.getIdColumn()).isEqualTo("renamedId");
+	}
+
 	@Table("dummy_sub_entity")
-	static class DummySubEntity {}
+	static class DummySubEntity {
+		@Id @Column("renamedId") Long id;
+	}
 }

@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
@@ -225,7 +226,7 @@ public class AggregateTemplateIntegrationTests {
 	@Data
 	static class LegoSet {
 
-		@Id private Long id;
+		@Column("id1") @Id private Long id;
 
 		private String name;
 
@@ -236,7 +237,7 @@ public class AggregateTemplateIntegrationTests {
 	@Data
 	static class Manual {
 
-		@Id private Long id;
+		@Column("id2") @Id private Long id;
 		private String content;
 
 	}

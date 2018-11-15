@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -66,10 +67,12 @@ public class SqlGeneratorUnitTests {
 		SoftAssertions softAssertions = new SoftAssertions();
 		softAssertions.assertThat(sql) //
 				.startsWith("SELECT") //
-				.contains("dummy_entity.x_id AS x_id,") //
+				.contains("dummy_entity.id1 AS id1,") //
 				.contains("dummy_entity.x_name AS x_name,") //
 				.contains("ref.x_l1id AS ref_x_l1id") //
 				.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
+				.contains("ON ref.dummy_entity = dummy_entity.id1") //
+				.contains("WHERE dummy_entity.id1 = :id") //
 				// 1-N relationships do not get loaded via join
 				.doesNotContain("Element AS elements");
 		softAssertions.assertAll();
@@ -139,9 +142,9 @@ public class SqlGeneratorUnitTests {
 		// this would get called when DummyEntity is the element type of a Set
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, false);
 
-		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, "
+		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, "
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further "
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.x_id "
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 "
 				+ "WHERE back-ref = :back-ref");
 	}
 
@@ -151,10 +154,10 @@ public class SqlGeneratorUnitTests {
 		// this would get called when DummyEntity is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", false);
 
-		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, " //
+		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, " //
 				+ "dummy_entity.key-column AS key-column " //
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.x_id " //
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "WHERE back-ref = :back-ref");
 	}
 
@@ -169,10 +172,10 @@ public class SqlGeneratorUnitTests {
 		// this would get called when DummyEntity is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", true);
 
-		assertThat(sql).isEqualTo("SELECT dummy_entity.x_id AS x_id, dummy_entity.x_name AS x_name, "
+		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, "
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, "
 				+ "dummy_entity.key-column AS key-column "
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.x_id "
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 "
 				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
 	}
 
@@ -193,6 +196,7 @@ public class SqlGeneratorUnitTests {
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
+		@Column("id1")
 		@Id Long id;
 		String name;
 		ReferencedEntity ref;
