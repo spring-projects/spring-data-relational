@@ -15,18 +15,11 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-
 import junit.framework.AssertionFailedError;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-
-import java.util.List;
-import java.util.Random;
-
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,14 +31,23 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.test.annotation.IfProfileValue;
+import org.springframework.test.annotation.ProfileValueSourceConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
+
+import java.util.List;
+import java.util.Random;
+
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests that the event infrastructure of Spring Data JDBC is sufficient to manipulate the {@link DbAction}s to be
@@ -53,8 +55,11 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Michael Bahr
  */
 @ContextConfiguration
+@ProfileValueSourceConfiguration(DatabaseProfileValueSource.class) // DATAJDBC-256
+@IfProfileValue(name = "current.database.is.not.oracle", value = "true") // DATAJDBC-256
 public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();

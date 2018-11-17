@@ -15,19 +15,7 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-
 import lombok.Data;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.Date;
-
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
@@ -51,16 +39,29 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.Date;
+
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Tests storing and retrieving various data types that are considered essential and that might need conversion to
  * something the database driver can handle.
  *
  * @author Jens Schauder
  * @author Thomas Lang
+ * @author Michael Bahr
  */
 @ContextConfiguration
 @ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)
 @Transactional
+@IfProfileValue(name = "current.database.is.not.oracle", value = "true") // DATAJDBC-256
 public class JdbcRepositoryPropertyConversionIntegrationTests {
 
 	@Configuration

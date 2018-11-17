@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
  * {@link JdbcAggregateTemplate}.
  *
  * @author Jens Schauder
+ * @author Michael Bahr
  */
 class SelectBuilder {
 
@@ -37,7 +38,7 @@ class SelectBuilder {
 
 	/**
 	 * Creates a {@link SelectBuilder} using the given table name.
-	 * 
+	 *
 	 * @param tableName the table name. Must not be {@code null}.
 	 */
 	SelectBuilder(String tableName) {
@@ -111,7 +112,7 @@ class SelectBuilder {
 	}
 
 	private String joinTable(Join j) {
-		return String.format("%s JOIN %s AS %s", j.outerJoinModifier(), j.table, j.as);
+		return String.format("%s JOIN %s %s", j.outerJoinModifier(), j.table, j.as);
 	}
 
 	private String joinConditions(Join j) {

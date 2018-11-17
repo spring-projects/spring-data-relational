@@ -15,17 +15,8 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Arrays;
-import java.util.HashMap;
-
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.core.convert.converter.Converter;
@@ -41,11 +32,21 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
+import java.util.Arrays;
+import java.util.HashMap;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 /**
  * Unit tests for {@link DefaultDataAccessStrategy}.
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Michael Bahr
  */
 public class DefaultDataAccessStrategyUnitTests {
 
@@ -64,7 +65,7 @@ public class DefaultDataAccessStrategyUnitTests {
 			converter, //
 			jdbcOperations);
 
-	@Test // DATAJDBC-146
+	@Test // DATAJDBC-146, DATAJDBC-256
 	public void additionalParameterForIdDoesNotLeadToDuplicateParameters() {
 
 		additionalParameters.put("id", ID_FROM_ADDITIONAL_VALUES);
@@ -72,10 +73,10 @@ public class DefaultDataAccessStrategyUnitTests {
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
 		verify(jdbcOperations).update(eq("INSERT INTO dummy_entity (id) VALUES (:id)"), paramSourceCaptor.capture(),
-				any(KeyHolder.class));
+				any(KeyHolder.class), any());
 	}
 
-	@Test // DATAJDBC-146
+	@Test // DATAJDBC-146, DATAJDBC-256
 	public void additionalParametersGetAddedToStatement() {
 
 		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
@@ -84,7 +85,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
-		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
+		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class), any());
 
 		assertThat(sqlCaptor.getValue()) //
 				.containsSequence("INSERT INTO dummy_entity (", "id", ") VALUES (", ":id", ")") //
@@ -92,7 +93,7 @@ public class DefaultDataAccessStrategyUnitTests {
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 	}
 
-	@Test // DATAJDBC-235
+	@Test // DATAJDBC-235, DATAJDBC-256
 	public void considersConfiguredWriteConverter() {
 
 		RelationalConverter converter = new BasicRelationalConverter(context,
@@ -110,7 +111,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(entity, EntityWithBoolean.class, new HashMap<>());
 
-		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
+		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class), any());
 
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");

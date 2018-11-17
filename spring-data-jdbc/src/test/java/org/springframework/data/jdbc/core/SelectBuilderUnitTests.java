@@ -15,14 +15,15 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for the {@link SelectBuilder}.
  *
  * @author Jens Schauder
+ * @author Michael Bahr
  */
 public class SelectBuilderUnitTests {
 
@@ -67,23 +68,23 @@ public class SelectBuilderUnitTests {
 		assertThat(sql).isEqualTo("SELECT mytable.one AS oneAlias, mytable.two AS twoAlias FROM mytable");
 	}
 
-	@Test // DATAJDBC-112
+	@Test // DATAJDBC-112, DATAJDBC-256
 	public void join() {
 		String sql = new SelectBuilder("mytable") //
 				.column(cb -> cb.tableAlias("mytable").column("mycolumn").as("myalias")) //
 				.join(jb -> jb.table("other").as("o").where("oid").eq().column("mytable", "id")).build();
 
-		assertThat(sql).isEqualTo("SELECT mytable.mycolumn AS myalias FROM mytable JOIN other AS o ON o.oid = mytable.id");
+		assertThat(sql).isEqualTo("SELECT mytable.mycolumn AS myalias FROM mytable JOIN other o ON o.oid = mytable.id");
 	}
 
-	@Test // DATAJDBC-112
+	@Test // DATAJDBC-112, DATAJDBC-256
 	public void outerJoin() {
 		String sql = new SelectBuilder("mytable") //
 				.column(cb -> cb.tableAlias("mytable").column("mycolumn").as("myalias")) //
 				.join(jb -> jb.rightOuter().table("other").as("o").where("oid").eq().column("mytable", "id")).build();
 
 		assertThat(sql)
-				.isEqualTo("SELECT mytable.mycolumn AS myalias FROM mytable RIGHT OUTER JOIN other AS o ON o.oid = mytable.id");
+				.isEqualTo("SELECT mytable.mycolumn AS myalias FROM mytable RIGHT OUTER JOIN other o ON o.oid = mytable.id");
 	}
 
 }

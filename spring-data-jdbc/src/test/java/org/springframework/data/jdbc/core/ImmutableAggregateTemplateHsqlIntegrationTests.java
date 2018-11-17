@@ -15,12 +15,8 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-
 import lombok.Value;
 import lombok.experimental.Wither;
-
 import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -31,21 +27,31 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.test.annotation.IfProfileValue;
+import org.springframework.test.annotation.ProfileValueSourceConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+
 /**
  * Integration tests for {@link JdbcAggregateTemplate} and it's handling of immutable entities.
  *
  * @author Jens Schauder
+ * @author Michael Bahr
  */
 @ContextConfiguration
 @Transactional
+@ProfileValueSourceConfiguration(DatabaseProfileValueSource.class) // DATAJDBC-256
+@IfProfileValue(name = "current.database.is.not.oracle", value = "true") // DATAJDBC-256
 public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();

@@ -15,12 +15,6 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-
-import java.util.Map;
-import java.util.Set;
-
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,11 +29,18 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Collections.emptySet;
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Unit tests for the {@link SqlGenerator}.
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Michael Bahr
  */
 public class SqlGeneratorUnitTests {
 
@@ -139,7 +140,7 @@ public class SqlGeneratorUnitTests {
 		assertThat(sql).isEqualTo("DELETE FROM element WHERE dummy_entity = :rootId");
 	}
 
-	@Test // DATAJDBC-131
+	@Test // DATAJDBC-131, DATAJDBC-256
 	public void findAllByProperty() {
 
 		// this would get called when ListParent is the element type of a Set
@@ -148,11 +149,11 @@ public class SqlGeneratorUnitTests {
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further " //
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "WHERE back-ref = :back-ref");
 	}
 
-	@Test // DATAJDBC-131
+	@Test // DATAJDBC-131, DATAJDBC-256
 	public void findAllByPropertyWithKey() {
 
 		// this would get called when ListParent is th element type of a Map
@@ -162,7 +163,7 @@ public class SqlGeneratorUnitTests {
 				+ "dummy_entity.x_other AS x_other, " //
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, " //
 				+ "dummy_entity.key-column AS key-column " //
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "WHERE back-ref = :back-ref");
 	}
 
@@ -171,7 +172,7 @@ public class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, true);
 	}
 
-	@Test // DATAJDBC-131
+	@Test // DATAJDBC-131, DATAJDBC-256
 	public void findAllByPropertyWithKeyOrdered() {
 
 		// this would get called when ListParent is th element type of a Map
@@ -181,7 +182,7 @@ public class SqlGeneratorUnitTests {
 				+ "dummy_entity.x_other AS x_other, " //
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, " //
 				+ "dummy_entity.key-column AS key-column " //
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
+				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
 	}
 

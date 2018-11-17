@@ -15,14 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-
 import lombok.Data;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -45,11 +38,19 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
  *
  * @author Jens Schauder
  * @author Thomas Lang
+ * @author Michael Bahr
  */
 @ContextConfiguration
 @Transactional
@@ -276,14 +277,14 @@ public class AggregateTemplateIntegrationTests {
 
 		LegoSet reloadedLegoSet = template.findById(legoSet.getId(), LegoSet.class);
 
-		assertThat(reloadedLegoSet.alternativeInstructions).isNull();
+		assertThat(reloadedLegoSet.alt).isNull();
 	}
 
 	@Test // DATAJDBC-125
 	public void saveAndLoadAnEntityWithSecondaryReferenceNotNull() {
 
-		legoSet.alternativeInstructions = new Manual();
-		legoSet.alternativeInstructions.content = "alternative content";
+		legoSet.alt = new Manual();
+		legoSet.alt.content = "alternative content";
 		template.save(legoSet);
 
 		assertThat(legoSet.manual.id).describedAs("id of stored manual").isNotNull();
@@ -291,11 +292,11 @@ public class AggregateTemplateIntegrationTests {
 		LegoSet reloadedLegoSet = template.findById(legoSet.getId(), LegoSet.class);
 
 		SoftAssertions softly = new SoftAssertions();
-		softly.assertThat(reloadedLegoSet.alternativeInstructions).isNotNull();
-		softly.assertThat(reloadedLegoSet.alternativeInstructions.id).isNotNull();
-		softly.assertThat(reloadedLegoSet.alternativeInstructions.id).isNotEqualTo(reloadedLegoSet.manual.id);
-		softly.assertThat(reloadedLegoSet.alternativeInstructions.content)
-				.isEqualTo(reloadedLegoSet.alternativeInstructions.content);
+		softly.assertThat(reloadedLegoSet.alt).isNotNull();
+		softly.assertThat(reloadedLegoSet.alt.id).isNotNull();
+		softly.assertThat(reloadedLegoSet.alt.id).isNotEqualTo(reloadedLegoSet.manual.id);
+		softly.assertThat(reloadedLegoSet.alt.content)
+				.isEqualTo(reloadedLegoSet.alt.content);
 
 		softly.assertAll();
 	}
@@ -339,7 +340,7 @@ public class AggregateTemplateIntegrationTests {
 		private String name;
 
 		private Manual manual;
-		@Column("alternative") private Manual alternativeInstructions;
+		@Column("alternative") private Manual alt;
 	}
 
 	@Data

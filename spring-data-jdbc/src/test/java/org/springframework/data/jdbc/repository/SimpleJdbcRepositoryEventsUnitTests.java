@@ -15,22 +15,10 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import junit.framework.AssertionFailedError;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Wither;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import org.assertj.core.groups.Tuple;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,12 +46,24 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 /**
  * Unit tests for application events via {@link SimpleJdbcRepository}.
  *
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Oliver Gierke
+ * @author Michael Bahr
  */
 public class SimpleJdbcRepositoryEventsUnitTests {
 
@@ -223,7 +223,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		};
 
 		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
-		when(operations.update(anyString(), any(SqlParameterSource.class), any(KeyHolder.class)))
+		when(operations.update(anyString(), any(SqlParameterSource.class), any(KeyHolder.class), any()))
 				.thenAnswer(setIdInKeyHolder);
 		return operations;
 	}
