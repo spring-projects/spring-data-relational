@@ -21,6 +21,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
 import org.springframework.data.jdbc.repository.MapperMap;
+import org.springframework.data.jdbc.support.RowMapperResultsetExtractorEither;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -90,37 +91,39 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
 
-		Object mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
+		RowMapperResultsetExtractorEither<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
 
 		return new JdbcRepositoryQuery(publisher, context, queryMethod, operations, mapper);
 	}
 
-	private Object createMapper(JdbcQueryMethod queryMethod) {
+	private RowMapperResultsetExtractorEither<?> createMapper(JdbcQueryMethod queryMethod) {
 
 		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
 
 		if (persistentEntity == null) {
-			return SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService());
+			return RowMapperResultsetExtractorEither.of(
+					SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService()));
 		}
 
 		return determineDefaultMapper(queryMethod);
 	}
 
-	private Object determineDefaultMapper(JdbcQueryMethod queryMethod) {
+	private RowMapperResultsetExtractorEither<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
 
 		Class<?> domainType = queryMethod.getReturnedObjectType();
 		ResultSetExtractor<?> resultSetExtractor = mapperMap.resultSetExtractorFor(domainType);
-		if(resultSetExtractor != null) return resultSetExtractor;
+		if(resultSetExtractor != null) return RowMapperResultsetExtractorEither.of(resultSetExtractor);
 		RowMapper<?> typeMappedRowMapper = mapperMap.rowMapperFor(domainType);
-
-		return typeMappedRowMapper == null //
+		RowMapper<?> defaultRowMapper = typeMappedRowMapper == null //
 				? new EntityRowMapper<>( //
 						context.getRequiredPersistentEntity(domainType), //
 						context, //
 						converter, //
 						accessStrategy) //
 				: typeMappedRowMapper;
+		
+		return RowMapperResultsetExtractorEither.of(defaultRowMapper);
 	}
 }
