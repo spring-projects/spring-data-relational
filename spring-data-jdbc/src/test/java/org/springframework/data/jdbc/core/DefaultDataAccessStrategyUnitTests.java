@@ -28,18 +28,24 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link DefaultDataAccessStrategy}.
@@ -115,6 +121,74 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");
+	}
+
+	@Test // DATAJDBC-256
+	public void shouldExtractProductName() throws SQLException {
+		final String expectedProductName = "myDatabaseProduct";
+
+		final DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
+				null, //
+				null, //
+				null, //
+				mockOperationsForDatabaseProductName(expectedProductName));
+
+		final String databaseProductName = accessStrategy.getDatabaseProductName();
+
+		assertThat(databaseProductName).isEqualTo(expectedProductName);
+	}
+
+	@Test(expected = RuntimeException.class) // DATAJDBC-256
+	public void sqlExceptionOfProductNameExtractionShouldBeWrapped() throws SQLException {
+		final DataSource dataSource = mock(DataSource.class);
+		when(dataSource.getConnection()).thenThrow(new SQLException());
+		final NamedParameterJdbcOperations operations = new NamedParameterJdbcTemplate(dataSource);
+
+		final DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
+				null, //
+				null, //
+				null, //
+				operations);
+
+		final String databaseProductName = accessStrategy.getDatabaseProductName();
+	}
+
+	@Test // DATAJDBC-256
+	public void shouldReturnIdPropertyIfOracle() throws SQLException {
+		final DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
+				null, //
+				null, //
+				null, //
+				mockOperationsForDatabaseProductName("oracle"));
+
+		final String expectedColumn = "column";
+		final RelationalPersistentProperty idProperty = mock(RelationalPersistentProperty.class);
+		when(idProperty.getColumnName()).thenReturn(expectedColumn);
+
+		final Optional<String> result = accessStrategy.getIdColumnNameIfOracle(idProperty);
+		assertThat(result.isPresent()).isTrue();
+		assertThat(result.get()).isEqualTo(expectedColumn);
+	}
+
+	@Test // DATAJDBC-256
+	public void shouldReturnEmptyIfNotOracle() throws SQLException {
+		final DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
+				null, //
+				null, //
+				null, //
+				mockOperationsForDatabaseProductName("mysql"));
+
+		assertThat(accessStrategy.getIdColumnNameIfOracle(null).isPresent()).isFalse();
+	}
+
+	private NamedParameterJdbcOperations mockOperationsForDatabaseProductName(final String databaseProductName) throws SQLException {
+		final DatabaseMetaData metaData = mock(DatabaseMetaData.class);
+		when(metaData.getDatabaseProductName()).thenReturn(databaseProductName);
+		final Connection connection = mock(Connection.class);
+		when(connection.getMetaData()).thenReturn(metaData);
+		final DataSource dataSource = mock(DataSource.class);
+		when(dataSource.getConnection()).thenReturn(connection);
+		return new NamedParameterJdbcTemplate(dataSource);
 	}
 
 	@RequiredArgsConstructor

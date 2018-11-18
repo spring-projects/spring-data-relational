@@ -38,6 +38,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -345,11 +346,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
         }
     }
 
-    private Optional<String> getIdColumnNameIfOracle(final RelationalPersistentProperty idProperty) {
+    Optional<String> getIdColumnNameIfOracle(@Nullable final RelationalPersistentProperty idProperty) {
         if (idProperty == null) {
             return Optional.empty();
         }
-        final String databaseProductName = getDatabaseProductName(operations);
+        final String databaseProductName = getDatabaseProductName();
         if (databaseProductName != null && databaseProductName.toLowerCase().contains("oracle")) {
             return Optional.of(idProperty.getColumnName());
         } else {
@@ -358,16 +359,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
     }
 
 	@Nullable
-	private String getDatabaseProductName(final NamedParameterJdbcOperations operations) {
+	String getDatabaseProductName() {
 		final JdbcTemplate jdbcOperations = (JdbcTemplate) operations.getJdbcOperations();
 		if (jdbcOperations == null) {
 			return null;
 		}
-		try {
-			return jdbcOperations.getDataSource().getConnection().getMetaData().getDatabaseProductName();
+		try (Connection con = jdbcOperations.getDataSource().getConnection()) {
+			return con.getMetaData().getDatabaseProductName();
 		} catch (SQLException e) {
-			e.printStackTrace();
-			return null;
+			throw new RuntimeException("Failed to get database product name.", e);
 		}
 	}
 
