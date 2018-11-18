@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,15 +82,6 @@ public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
 	public void customFindAllCarsPicksResultSetExtractorFromMapperMap() {
 		carRepository.save(new Car(null, "Some model"));
 		Iterable<Car> cars = carRepository.customFindAll();
-		assertThat(cars).hasSize(1);
-		assertThat(cars).allMatch(car -> CAR_MODEL.equals(car.getModel()));
-	}
-	
-	@Test // DATAJDBC-290
-	@Ignore
-	public void simpleRepositoryFindAllCarsPicksResultSetExtractorFromMapperMap() {
-		carRepository.save(new Car(null, "Some model"));
-		Iterable<Car> cars = carRepository.findAll();
 		assertThat(cars).hasSize(1);
 		assertThat(cars).allMatch(car -> CAR_MODEL.equals(car.getModel()));
 	}
