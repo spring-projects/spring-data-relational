@@ -32,10 +32,16 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ComponentScan.Filter;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.TransactionalDatabaseClient;
+import org.springframework.data.r2dbc.repository.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.repository.query.Query;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
@@ -44,30 +50,38 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
  *
  * @author Mark Paluch
  */
+@RunWith(SpringRunner.class)
+@ContextConfiguration
 public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	private static RelationalMappingContext mappingContext = new RelationalMappingContext();
 
-	private ConnectionFactory connectionFactory;
-	private DatabaseClient databaseClient;
-	private LegoSetRepository repository;
+	@Autowired private LegoSetRepository repository;
 	private JdbcTemplate jdbc;
+
+	@Configuration
+	@EnableR2dbcRepositories(considerNestedRepositories = true,
+			includeFilters = @Filter(classes = LegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE))
+	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
+
+		@Override
+		public ConnectionFactory connectionFactory() {
+			return createConnectionFactory();
+		}
+	}
 
 	@Before
 	public void before() {
 
 		Hooks.onOperatorDebug();
-
-		this.connectionFactory = createConnectionFactory();
-		this.databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory)
-				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(new BasicRelationalConverter(mappingContext)))
-				.build();
 
 		this.jdbc = createJdbcTemplate(createDataSource());
 
@@ -76,8 +90,6 @@ public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport
 
 		this.jdbc.execute("DROP TABLE IF EXISTS repo_legoset");
 		this.jdbc.execute(tableToCreate);
-
-		this.repository = new R2dbcRepositoryFactory(databaseClient, mappingContext).getRepository(LegoSetRepository.class);
 	}
 
 	@Test
@@ -136,7 +148,8 @@ public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport
 	@Test
 	public void shouldInsertItemsTransactional() {
 
-		TransactionalDatabaseClient client = TransactionalDatabaseClient.builder().connectionFactory(connectionFactory)
+		TransactionalDatabaseClient client = TransactionalDatabaseClient.builder()
+				.connectionFactory(createConnectionFactory())
 				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(new BasicRelationalConverter(mappingContext)))
 				.build();
 

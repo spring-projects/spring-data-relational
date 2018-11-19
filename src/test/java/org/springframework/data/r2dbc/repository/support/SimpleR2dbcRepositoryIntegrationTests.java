@@ -17,20 +17,28 @@ package org.springframework.data.r2dbc.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.repository.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -39,34 +47,38 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.jdbc.core.JdbcTemplate;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Integration tests for {@link SimpleR2dbcRepository}.
  *
  * @author Mark Paluch
  */
+@RunWith(SpringRunner.class)
+@ContextConfiguration
 public class SimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
-	private static RelationalMappingContext mappingContext = new RelationalMappingContext();
+	@Autowired private DatabaseClient databaseClient;
 
-	private ConnectionFactory connectionFactory;
-	private DatabaseClient databaseClient;
+	@Autowired private RelationalMappingContext mappingContext;
+
 	private SimpleR2dbcRepository<LegoSet, Integer> repository;
 	private JdbcTemplate jdbc;
+
+	@Configuration
+	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
+
+		@Override
+		public ConnectionFactory connectionFactory() {
+			return createConnectionFactory();
+		}
+	}
 
 	@Before
 	public void before() {
 
 		Hooks.onOperatorDebug();
-
-		this.connectionFactory = createConnectionFactory();
-		this.databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory)
-				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(new BasicRelationalConverter(mappingContext)))
-				.build();
 
 		RelationalEntityInformation<LegoSet, Integer> entityInformation = new MappingRelationalEntityInformation<>(
 				(RelationalPersistentEntity<LegoSet>) mappingContext.getRequiredPersistentEntity(LegoSet.class));
