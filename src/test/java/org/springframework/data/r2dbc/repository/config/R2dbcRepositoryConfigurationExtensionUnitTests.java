@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfiguration;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
@@ -38,6 +39,7 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
  * Unit tests for {@link R2dbcRepositoryConfigurationExtension}.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
 public class R2dbcRepositoryConfigurationExtensionUnitTests {
 
@@ -68,6 +70,14 @@ public class R2dbcRepositoryConfigurationExtensionUnitTests {
 
 		R2dbcRepositoryConfigurationExtension extension = new R2dbcRepositoryConfigurationExtension();
 		assertDoesNotHaveRepo(UnannotatedRepository.class,
+				extension.getRepositoryConfigurations(configurationSource, loader, true));
+	}
+
+	@Test // gh-13
+	public void doesNotHaveNonReactiveRepository() {
+
+		R2dbcRepositoryConfigurationExtension extension = new R2dbcRepositoryConfigurationExtension();
+		assertDoesNotHaveRepo(NonReactiveRepository.class,
 				extension.getRepositoryConfigurations(configurationSource, loader, true));
 	}
 
@@ -107,4 +117,6 @@ public class R2dbcRepositoryConfigurationExtensionUnitTests {
 	interface UnannotatedRepository extends ReactiveCrudRepository<Store, Long> {}
 
 	interface StoreRepository extends R2dbcRepository<Store, Long> {}
+
+	interface NonReactiveRepository extends CrudRepository<Sample, Long> {}
 }

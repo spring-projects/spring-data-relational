@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,15 @@ import org.springframework.util.Assert;
  * {@link org.springframework.data.r2dbc.repository.R2dbcRepository} instances.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @see org.springframework.data.repository.reactive.ReactiveCrudRepository
  */
 public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends RepositoryFactoryBeanSupport<T, S, ID> {
 
 	private @Nullable DatabaseClient client;
-	private @Nullable MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private @Nullable
+	MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 
 	private boolean mappingContextConfigured = false;
 
@@ -67,13 +69,21 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	protected void setMappingContext(MappingContext<?, ?> mappingContext) {
+	protected void setMappingContext(@Nullable MappingContext<?, ?> mappingContext) {
 
 		super.setMappingContext(mappingContext);
-		this.mappingContext = (MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty>) mappingContext;
-		this.mappingContextConfigured = true;
+
+		if (mappingContext != null) {
+
+			this.mappingContext = (MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty>) mappingContext;
+			this.mappingContextConfigured = true;
+		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#createRepositoryFactory()
+	 */
 	@Override
 	protected final RepositoryFactorySupport createRepositoryFactory() {
 		return getFactoryInstance(client, this.mappingContext);
@@ -82,15 +92,19 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	/**
 	 * Creates and initializes a {@link RepositoryFactorySupport} instance.
 	 *
-	 * @param client
-	 * @param mappingContext
-	 * @return
+	 * @param client must not be {@literal null}.
+	 * @param mappingContext must not be {@literal null}.
+	 * @return new instance of {@link RepositoryFactorySupport}.
 	 */
 	protected RepositoryFactorySupport getFactoryInstance(DatabaseClient client,
 			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
 		return new R2dbcRepositoryFactory(client, mappingContext);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
+	 */
 	@Override
 	public void afterPropertiesSet() {
 

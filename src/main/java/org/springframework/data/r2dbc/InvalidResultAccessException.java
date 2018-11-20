@@ -25,7 +25,7 @@ import org.springframework.lang.Nullable;
  * Exception thrown when a {@link io.r2dbc.spi.Result} has been accessed in an invalid fashion. Such exceptions always
  * have a {@link io.r2dbc.spi.R2dbcException} root cause.
  * <p>
- * This typically happens when an invalid {@link Result} column index or name has been specified.
+ * This typically happens when an invalid {@link org.springframework.data.r2dbc.function.SqlResult} column index or name has been specified.
  *
  * @author Mark Paluch
  * @see BadSqlGrammarException
@@ -42,7 +42,7 @@ public class InvalidResultAccessException extends InvalidDataAccessResourceUsage
 	 * @param sql the offending SQL statement.
 	 * @param ex the root cause.
 	 */
-	public InvalidResultAccessException(String task, String sql, R2dbcException ex) {
+	public InvalidResultAccessException(String task, @Nullable String sql, R2dbcException ex) {
 
 		super(task + "; invalid Result access for SQL [" + sql + "]", ex);
 

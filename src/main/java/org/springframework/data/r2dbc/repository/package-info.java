@@ -1,7 +1,6 @@
 /**
  * R2DBC-specific repository implementation.
  */
-@NonNullApi
+@org.springframework.lang.NonNullApi
+@org.springframework.lang.NonNullFields
 package org.springframework.data.r2dbc.repository;
-
-import org.springframework.lang.NonNullApi;

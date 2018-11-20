@@ -33,6 +33,7 @@ import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.lang.Nullable;
 
 /**
  * Maps a {@link io.r2dbc.spi.Row} to an entity of type {@code T}, including entities referenced.
@@ -150,6 +151,7 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 		 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
 		 */
 		@Override
+		@Nullable
 		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 
 			String column = prefix + entity.getRequiredPersistentProperty(parameter.getName()).getColumnName();

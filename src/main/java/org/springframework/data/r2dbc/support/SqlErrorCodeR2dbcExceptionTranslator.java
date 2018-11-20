@@ -104,7 +104,7 @@ public class SqlErrorCodeR2dbcExceptionTranslator extends AbstractFallbackR2dbcE
 	 *
 	 * @param sec error codes
 	 */
-	public SqlErrorCodeR2dbcExceptionTranslator(SQLErrorCodes sec) {
+	public SqlErrorCodeR2dbcExceptionTranslator(@Nullable SQLErrorCodes sec) {
 		this();
 		this.sqlErrorCodes = sec;
 	}
