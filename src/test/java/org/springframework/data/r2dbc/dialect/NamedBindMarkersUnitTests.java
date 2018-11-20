@@ -29,24 +29,46 @@ public class NamedBindMarkersUnitTests {
 	@Test // gh-15
 	public void nextShouldIncrementBindMarker() {
 
-		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32).create();
+		String[] prefixes = { "$", "?" };
 
-		BindMarker marker1 = bindMarkers.next();
-		BindMarker marker2 = bindMarkers.next();
+		for (String prefix : prefixes) {
 
-		assertThat(marker1.getPlaceholder()).isEqualTo("@p0");
-		assertThat(marker2.getPlaceholder()).isEqualTo("@p1");
+			BindMarkers bindMarkers = BindMarkersFactory.named(prefix, "p", 32).create();
+
+			BindMarker marker1 = bindMarkers.next();
+			BindMarker marker2 = bindMarkers.next();
+
+			assertThat(marker1.getPlaceholder()).isEqualTo(prefix + "p0");
+			assertThat(marker2.getPlaceholder()).isEqualTo(prefix + "p1");
+		}
 	}
 
 	@Test // gh-15
 	public void nextShouldConsiderNameHint() {
 
-		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32).create();
+		BindMarkers bindMarkers = BindMarkersFactory.named("@", "x", 32).create();
 
-		BindMarker marker1 = bindMarkers.next("foo.bar?");
+		BindMarker marker1 = bindMarkers.next("foo1bar");
 		BindMarker marker2 = bindMarkers.next();
 
-		assertThat(marker1.getPlaceholder()).isEqualTo("@p0_foobar");
+		assertThat(marker1.getPlaceholder()).isEqualTo("@x0foo1bar");
+		assertThat(marker2.getPlaceholder()).isEqualTo("@x1");
+	}
+
+	@Test // gh-15
+	public void nextShouldConsiderFilteredNameHint() {
+
+		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32, s -> {
+
+			return s.chars().filter(Character::isAlphabetic)
+					.collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
+
+		}).create();
+
+		BindMarker marker1 = bindMarkers.next("foo1.bar?");
+		BindMarker marker2 = bindMarkers.next();
+
+		assertThat(marker1.getPlaceholder()).isEqualTo("@p0foobar");
 		assertThat(marker2.getPlaceholder()).isEqualTo("@p1");
 	}
 
@@ -57,7 +79,7 @@ public class NamedBindMarkersUnitTests {
 
 		BindMarker marker1 = bindMarkers.next("123456789");
 
-		assertThat(marker1.getPlaceholder()).isEqualTo("@p0_1234567");
+		assertThat(marker1.getPlaceholder()).isEqualTo("@p012345678");
 	}
 
 	@Test // gh-15
@@ -82,7 +104,6 @@ public class NamedBindMarkersUnitTests {
 		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32).create();
 
 		bindMarkers.next(); // ignore
-
 		bindMarkers.next().bindNull(statement, Integer.class);
 
 		verify(statement).bindNull("p1", Integer.class);

@@ -3,6 +3,7 @@ package org.springframework.data.r2dbc.dialect;
 import io.r2dbc.spi.Statement;
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.Function;
 
 import org.springframework.util.Assert;
 
@@ -21,17 +22,24 @@ class NamedBindMarkers implements BindMarkers {
 
 	private final String prefix;
 
-	private final String indexPrefix;
+	private final String namePrefix;
 
 	private final int nameLimit;
 
-	NamedBindMarkers(String prefix, String indexPrefix, int nameLimit) {
+	private final Function<String, String> hintFilterFunction;
+
+	NamedBindMarkers(String prefix, String namePrefix, int nameLimit, Function<String, String> hintFilterFunction) {
 
 		this.prefix = prefix;
-		this.indexPrefix = indexPrefix;
+		this.namePrefix = namePrefix;
 		this.nameLimit = nameLimit;
+		this.hintFilterFunction = hintFilterFunction;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.dialect.BindMarkers#next()
+	 */
 	@Override
 	public BindMarker next() {
 
@@ -40,18 +48,16 @@ class NamedBindMarkers implements BindMarkers {
 		return new NamedBindMarker(prefix + name, name);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.dialect.BindMarkers#next(java.lang.String)
+	 */
 	@Override
-	public BindMarker next(String nameHint) {
+	public BindMarker next(String hint) {
 
-		Assert.notNull(nameHint, "Name hint must not be null");
+		Assert.notNull(hint, "Name hint must not be null");
 
-		String name = nextName();
-
-		String filteredNameHint = filter(nameHint);
-
-		if (!filteredNameHint.isEmpty()) {
-			name += "_" + filteredNameHint;
-		}
+		String name = nextName() + hintFilterFunction.apply(hint);
 
 		if (name.length() > nameLimit) {
 			name = name.substring(0, nameLimit);
@@ -63,25 +69,7 @@ class NamedBindMarkers implements BindMarkers {
 	private String nextName() {
 
 		int index = COUNTER_INCREMENTER.getAndIncrement(this);
-		return indexPrefix + index;
-	}
-
-	private static String filter(CharSequence input) {
-
-		StringBuilder builder = new StringBuilder();
-
-		for (int i = 0; i < input.length(); i++) {
-
-			char ch = input.charAt(i);
-
-			// ascii letter or digit
-			if (Character.isLetterOrDigit(ch) && ch < 127) {
-				builder.append(ch);
-			}
-
-		}
-
-		return builder.toString();
+		return namePrefix + index;
 	}
 
 	/**

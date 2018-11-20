@@ -24,13 +24,13 @@ public interface BindMarkers {
 	BindMarker next();
 
 	/**
-	 * Creates a new {@link BindMarker} that accepts a {@code nameHint}. Implementations are allowed to consider/ignore
+	 * Creates a new {@link BindMarker} that accepts a {@code hint}. Implementations are allowed to consider/ignore/filter
 	 * the name hint to create more expressive bind markers.
 	 *
-	 * @param nameHint an optional name hint.
+	 * @param hint an optional name hint that can be used as part of the bind marker.
 	 * @return a new {@link BindMarker}.
 	 */
-	default BindMarker next(String nameHint) {
+	default BindMarker next(String hint) {
 		return next();
 	}
 }

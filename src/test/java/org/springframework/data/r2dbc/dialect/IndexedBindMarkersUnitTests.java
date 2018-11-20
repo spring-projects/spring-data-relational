@@ -29,13 +29,18 @@ public class IndexedBindMarkersUnitTests {
 	@Test // gh-15
 	public void nextShouldIncrementBindMarker() {
 
-		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 0).create();
+		String[] prefixes = { "$", "?" };
 
-		BindMarker marker1 = bindMarkers.next();
-		BindMarker marker2 = bindMarkers.next();
+		for (String prefix : prefixes) {
 
-		assertThat(marker1.getPlaceholder()).isEqualTo("$0");
-		assertThat(marker2.getPlaceholder()).isEqualTo("$1");
+			BindMarkers bindMarkers = BindMarkersFactory.indexed(prefix, 0).create();
+
+			BindMarker marker1 = bindMarkers.next();
+			BindMarker marker2 = bindMarkers.next();
+
+			assertThat(marker1.getPlaceholder()).isEqualTo(prefix + "0");
+			assertThat(marker2.getPlaceholder()).isEqualTo(prefix + "1");
+		}
 	}
 
 	@Test // gh-15
