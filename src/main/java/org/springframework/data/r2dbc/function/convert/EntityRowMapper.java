@@ -66,10 +66,7 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 				continue;
 			}
 
-			if (property.isCollectionLike()) {
-				throw new UnsupportedOperationException();
-			} else if (property.isMap()) {
-
+			if (property.isMap()) {
 				throw new UnsupportedOperationException();
 			} else {
 				propertyAccessor.setProperty(property, readFrom(row, property, ""));
