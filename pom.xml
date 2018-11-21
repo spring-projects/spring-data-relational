@@ -30,8 +30,8 @@
 		<degraph-check.version>0.1.4</degraph-check.version>
 		<hsqldb.version>2.4.1</hsqldb.version>
 		<postgresql.version>42.2.5</postgresql.version>
-		<r2dbc-spi.version>1.0.0.BUILD-SNAPSHOT</r2dbc-spi.version>
-		<r2dbc-postgresql.version>1.0.0.BUILD-SNAPSHOT</r2dbc-postgresql.version>
+		<r2dbc-spi.version>1.0.0.M6</r2dbc-spi.version>
+		<r2dbc-postgresql.version>1.0.0.M6</r2dbc-postgresql.version>
 		<testcontainers.version>1.10.1</testcontainers.version>
 
 	</properties>
