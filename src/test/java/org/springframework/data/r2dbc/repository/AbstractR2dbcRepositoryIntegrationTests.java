@@ -30,53 +30,36 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
+import javax.sql.DataSource;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan.Filter;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.r2dbc.dialect.Database;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.TransactionalDatabaseClient;
-import org.springframework.data.r2dbc.repository.config.AbstractR2dbcConfiguration;
-import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
-import org.springframework.data.r2dbc.repository.query.Query;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 
 /**
- * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
+ * Abstract base class for integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
  *
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
-@ContextConfiguration
-public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
+public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	private static RelationalMappingContext mappingContext = new RelationalMappingContext();
 
 	@Autowired private LegoSetRepository repository;
 	private JdbcTemplate jdbc;
-
-	@Configuration
-	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(classes = LegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE))
-	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
-
-		@Override
-		public ConnectionFactory connectionFactory() {
-			return createConnectionFactory();
-		}
-	}
 
 	@Before
 	public void before() {
@@ -85,12 +68,40 @@ public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport
 
 		this.jdbc = createJdbcTemplate(createDataSource());
 
-		String tableToCreate = "CREATE TABLE IF NOT EXISTS repo_legoset (\n" + "    id          SERIAL PRIMARY KEY,\n"
-				+ "    name        varchar(255) NOT NULL,\n" + "    manual      integer NULL\n" + ");";
+		try {
+			this.jdbc.execute("DROP TABLE legoset");
+		} catch (DataAccessException e) {}
 
-		this.jdbc.execute("DROP TABLE IF EXISTS repo_legoset");
-		this.jdbc.execute(tableToCreate);
+		this.jdbc.execute(getCreateTableStatement());
 	}
+
+	/**
+	 * Creates a {@link DataSource} to be used in this test.
+	 *
+	 * @return the {@link DataSource} to be used in this test.
+	 */
+	protected abstract DataSource createDataSource();
+
+	/**
+	 * Creates a {@link ConnectionFactory} to be used in this test.
+	 *
+	 * @return the {@link ConnectionFactory} to be used in this test.
+	 */
+	protected abstract ConnectionFactory createConnectionFactory();
+
+	/**
+	 * Returns the the CREATE TABLE statement for table {@code legoset} with the following three columns:
+	 * <ul>
+	 * <li>id integer (primary key), not null, auto-increment</li>
+	 * <li>name varchar(255), nullable</li>
+	 * <li>manual integer, nullable</li>
+	 * </ul>
+	 *
+	 * @return the CREATE TABLE statement for table {@code legoset} with three columns.
+	 */
+	protected abstract String getCreateTableStatement();
+
+	protected abstract Class<? extends LegoSetRepository> getRepositoryInterfaceType();
 
 	@Test
 	public void shouldInsertNewItems() {
@@ -148,13 +159,14 @@ public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport
 	@Test
 	public void shouldInsertItemsTransactional() {
 
+		Database database = Database.findDatabase(createConnectionFactory()).get();
+		DefaultReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(
+				database.latestDialect(), new BasicRelationalConverter(mappingContext));
 		TransactionalDatabaseClient client = TransactionalDatabaseClient.builder()
-				.connectionFactory(createConnectionFactory())
-				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(new BasicRelationalConverter(mappingContext)))
-				.build();
+				.connectionFactory(createConnectionFactory()).dataAccessStrategy(dataAccessStrategy).build();
 
-		LegoSetRepository transactionalRepository = new R2dbcRepositoryFactory(client, mappingContext)
-				.getRepository(LegoSetRepository.class);
+		LegoSetRepository transactionalRepository = new R2dbcRepositoryFactory(client, mappingContext, dataAccessStrategy)
+				.getRepository(getRepositoryInterfaceType());
 
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
 		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
@@ -162,33 +174,31 @@ public class R2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport
 		Flux<Map<String, Object>> transactional = client.inTransaction(db -> {
 
 			return transactionalRepository.save(legoSet1) //
-					.map(it -> jdbc.queryForMap("SELECT count(*) FROM repo_legoset"));
+					.map(it -> jdbc.queryForMap("SELECT count(*) FROM legoset"));
 		});
 
 		Mono<Map<String, Object>> nonTransactional = transactionalRepository.save(legoSet2) //
-				.map(it -> jdbc.queryForMap("SELECT count(*) FROM repo_legoset"));
+				.map(it -> jdbc.queryForMap("SELECT count(*) FROM legoset"));
 
 		transactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 0L)).verifyComplete();
 		nonTransactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 2L)).verifyComplete();
 
-		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) FROM repo_legoset");
+		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) FROM legoset");
 		assertThat(count).containsEntry("count", 2L);
 	}
 
+	@NoRepositoryBean
 	interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
 
-		@Query("SELECT * FROM repo_legoset WHERE name like $1")
 		Flux<LegoSet> findByNameContains(String name);
 
-		@Query("SELECT * FROM repo_legoset")
 		Flux<Named> findAsProjection();
 
-		@Query("SELECT * FROM repo_legoset WHERE manual = $1")
 		Mono<LegoSet> findByManual(int manual);
 	}
 
 	@Data
-	@Table("repo_legoset")
+	@Table("legoset")
 	@AllArgsConstructor
 	@NoArgsConstructor
 	static class LegoSet {

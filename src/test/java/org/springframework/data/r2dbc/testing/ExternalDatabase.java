@@ -57,12 +57,11 @@ public abstract class ExternalDatabase extends ExternalResource {
 	protected void before() {
 
 		try (Socket socket = new Socket()) {
-			;
 			socket.connect(new InetSocketAddress(getHostname(), getPort()), Math.toIntExact(TimeUnit.SECONDS.toMillis(5)));
 
 		} catch (IOException e) {
 			throw new AssumptionViolatedException(
-					String.format("Cannot connect to %s:%d. Skiping tests.", getHostname(), getPort()));
+					String.format("Cannot connect to %s:%d. Skipping tests.", getHostname(), getPort()));
 		}
 	}
 

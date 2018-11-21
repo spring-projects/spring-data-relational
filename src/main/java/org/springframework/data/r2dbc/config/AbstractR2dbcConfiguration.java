@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.repository.config;
+package org.springframework.data.r2dbc.config;
+
+import io.r2dbc.spi.ConnectionFactory;
 
 import java.util.Optional;
 
-import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.r2dbc.dialect.Database;
+import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
@@ -37,7 +40,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @see ConnectionFactory
  * @see DatabaseClient
- * @see EnableR2dbcRepositories
+ * @see org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
  */
 @Configuration
 public abstract class AbstractR2dbcConfiguration {
@@ -49,6 +52,24 @@ public abstract class AbstractR2dbcConfiguration {
 	 * @return the configured {@link ConnectionFactory}.
 	 */
 	public abstract ConnectionFactory connectionFactory();
+
+	/**
+	 * Return a {@link Dialect} for the given {@link ConnectionFactory}. This method attempts to resolve a {@link Dialect}
+	 * from {@link io.r2dbc.spi.ConnectionFactoryMetadata}. Override this method to specify a dialect instead of
+	 * attempting to resolve one.
+	 *
+	 * @param connectionFactory the configured {@link ConnectionFactory}.
+	 * @return the resolved {@link Dialect}.
+	 * @throws UnsupportedOperationException if the {@link Dialect} cannot be determined.
+	 */
+	public Dialect getDialect(ConnectionFactory connectionFactory) {
+
+		return Database.findDatabase(connectionFactory)
+				.orElseThrow(() -> new UnsupportedOperationException(
+						String.format("Cannot determine a dialect for %s using %s. Please provide a Dialect.",
+								connectionFactory.getMetadata().getName(), connectionFactory)))
+				.latestDialect();
+	}
 
 	/**
 	 * Register a {@link DatabaseClient} using {@link #connectionFactory()} and {@link RelationalMappingContext}.
@@ -86,18 +107,21 @@ public abstract class AbstractR2dbcConfiguration {
 	}
 
 	/**
-	 * Creates a {@link ReactiveDataAccessStrategy} using the configured {@link #r2dbcMappingContext(Optional) RelationalMappingContext}.
+	 * Creates a {@link ReactiveDataAccessStrategy} using the configured {@link #r2dbcMappingContext(Optional)
+	 * RelationalMappingContext}.
 	 *
 	 * @param mappingContext the configured {@link RelationalMappingContext}.
 	 * @return must not be {@literal null}.
 	 * @see #r2dbcMappingContext(Optional)
+	 * @see #getDialect(ConnectionFactory)
 	 * @throws IllegalArgumentException if any of the {@literal mappingContext} is {@literal null}.
 	 */
 	@Bean
 	public ReactiveDataAccessStrategy reactiveDataAccessStrategy(RelationalMappingContext mappingContext) {
 
 		Assert.notNull(mappingContext, "MappingContext must not be null!");
-		return new DefaultReactiveDataAccessStrategy(new BasicRelationalConverter(mappingContext));
+		return new DefaultReactiveDataAccessStrategy(getDialect(connectionFactory()),
+				new BasicRelationalConverter(mappingContext));
 	}
 
 	/**

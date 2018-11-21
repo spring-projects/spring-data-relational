@@ -19,6 +19,7 @@ import java.io.Serializable;
 
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.function.DatabaseClient;
+import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -40,8 +41,8 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 		extends RepositoryFactoryBeanSupport<T, S, ID> {
 
 	private @Nullable DatabaseClient client;
-	private @Nullable
-	MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private @Nullable MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private @Nullable ReactiveDataAccessStrategy dataAccessStrategy;
 
 	private boolean mappingContextConfigured = false;
 
@@ -80,6 +81,10 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 		}
 	}
 
+	public void setDataAccessStrategy(@Nullable ReactiveDataAccessStrategy dataAccessStrategy) {
+		this.dataAccessStrategy = dataAccessStrategy;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#createRepositoryFactory()
@@ -98,7 +103,7 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	 */
 	protected RepositoryFactorySupport getFactoryInstance(DatabaseClient client,
 			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
-		return new R2dbcRepositoryFactory(client, mappingContext);
+		return new R2dbcRepositoryFactory(client, mappingContext, dataAccessStrategy);
 	}
 
 	/*
@@ -109,6 +114,7 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	public void afterPropertiesSet() {
 
 		Assert.state(client != null, "DatabaseClient must not be null!");
+		Assert.state(dataAccessStrategy != null, "ReactiveDataAccessStrategy must not be null!");
 
 		if (!mappingContextConfigured) {
 			setMappingContext(new RelationalMappingContext());

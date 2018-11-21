@@ -89,8 +89,8 @@ public class NamedBindMarkersUnitTests {
 
 		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32).create();
 
-		bindMarkers.next().bindValue(statement, "foo");
-		bindMarkers.next().bindValue(statement, "bar");
+		bindMarkers.next().bind(statement, "foo");
+		bindMarkers.next().bind(statement, "bar");
 
 		verify(statement).bind("p0", "foo");
 		verify(statement).bind("p1", "bar");

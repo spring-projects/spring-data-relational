@@ -15,15 +15,8 @@
  */
 package org.springframework.data.r2dbc.testing;
 
-import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
-import io.r2dbc.postgresql.PostgresqlConnectionFactory;
-import io.r2dbc.spi.ConnectionFactory;
-
 import javax.sql.DataSource;
 
-import org.junit.ClassRule;
-import org.postgresql.ds.PGSimpleDataSource;
-import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -32,34 +25,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author Mark Paluch
  */
 public abstract class R2dbcIntegrationTestSupport {
-
-	/**
-	 * Local test database at {@code postgres:@localhost:5432/postgres}.
-	 */
-	@ClassRule public static final ExternalDatabase database = ProvidedDatabase.builder().hostname("localhost").port(5432)
-			.database("postgres").username("postgres").password("").build();
-
-	/**
-	 * Creates a new {@link ConnectionFactory} configured from the {@link ExternalDatabase}..
-	 */
-	protected static ConnectionFactory createConnectionFactory() {
-		return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder().host(database.getHostname())
-				.database(database.getDatabase()).username(database.getUsername()).password(database.getPassword()).build());
-	}
-
-	/**
-	 * Creates a new {@link DataSource} configured from the {@link ExternalDatabase}.
-	 */
-	protected static DataSource createDataSource() {
-
-		PGSimpleDataSource dataSource = new PGSimpleDataSource();
-		dataSource.setUser(database.getUsername());
-		dataSource.setPassword(database.getPassword());
-		dataSource.setDatabaseName(database.getDatabase());
-		dataSource.setServerName(database.getHostname());
-		dataSource.setPortNumber(database.getPort());
-		return dataSource;
-	}
 
 	/**
 	 * Creates a new {@link JdbcTemplate} for a {@link DataSource}.

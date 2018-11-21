@@ -17,15 +17,23 @@ package org.springframework.data.r2dbc.function;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Statement;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.function.convert.SettableValue;
 
 /**
+ * Draft of a data access strategy that generalizes convenience operations using mapped entities. Typically used
+ * internally by {@link DatabaseClient} and repository support. SQL creation is limited to single-table operations and
+ * single-column primary keys.
+ *
  * @author Mark Paluch
+ * @see BindableOperation
  */
 public interface ReactiveDataAccessStrategy {
 
@@ -33,13 +41,13 @@ public interface ReactiveDataAccessStrategy {
 	 * @param typeToRead
 	 * @return all field names for a specific type.
 	 */
-	List<String> getAllFields(Class<?> typeToRead);
+	List<String> getAllColumns(Class<?> typeToRead);
 
 	/**
 	 * @param object
 	 * @return {@link SettableValue} that represent an {@code INSERT} of {@code object}.
 	 */
-	List<SettableValue> getInsert(Object object);
+	List<SettableValue> getValuesToInsert(Object object);
 
 	/**
 	 * Map the {@link Sort} object to apply field name mapping using {@link Class the type to read}.
@@ -58,4 +66,96 @@ public interface ReactiveDataAccessStrategy {
 	 * @return the table name for the {@link Class entity type}.
 	 */
 	String getTableName(Class<?> type);
+
+	// -------------------------------------------------------------------------
+	// Methods creating SQL operations.
+	// Subject to be moved into a SQL creation DSL.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Create an {@code INSERT} operation for the given {@code table} to insert {@code columns}.
+	 *
+	 * @param table the table to insert data to.
+	 * @param columns column names that will be bound.
+	 * @return the {@link BindableOperation} representing the {@code INSERT} statement.
+	 */
+	BindableOperation insertAndReturnGeneratedKeys(String table, Set<String> columns);
+
+	/**
+	 * Create a {@code SELECT … ORDER BY … LIMIT …} operation for the given {@code table} using {@code columns} to
+	 * project.
+	 *
+	 * @param table the table to insert data to.
+	 * @param columns columns to return.
+	 * @param sort
+	 * @param page
+	 * @return
+	 */
+	QueryOperation select(String table, Set<String> columns, Sort sort, Pageable page);
+
+	/**
+	 * Create a {@code SELECT … WHERE id = ?} operation for the given {@code table} using {@code columns} to project and
+	 * {@code idColumn}.
+	 *
+	 * @param table the table to insert data to.
+	 * @param columns columns to return.
+	 * @param idColumn name of the primary key.
+	 * @return
+	 */
+	BindIdOperation selectById(String table, Set<String> columns, String idColumn);
+
+	/**
+	 * Create a {@code SELECT … WHERE id = ?} operation for the given {@code table} using {@code columns} to project and
+	 * {@code idColumn} applying a limit (TOP, LIMIT, …).
+	 *
+	 * @param table the table to insert data to.
+	 * @param columns columns to return.
+	 * @param idColumn name of the primary key.
+	 * @param limit number of rows to return.
+	 * @return
+	 */
+	BindIdOperation selectById(String table, Set<String> columns, String idColumn, int limit);
+
+	/**
+	 * Create a {@code SELECT … WHERE id IN (?)} operation for the given {@code table} using {@code columns} to project
+	 * and {@code idColumn}. The actual {@link BindableOperation#toQuery() query} string depends on
+	 * {@link BindIdOperation#bindIds(Statement, Iterable) bound parameters}.
+	 *
+	 * @param table the table to insert data to.
+	 * @param columns columns to return.
+	 * @param idColumn name of the primary key.
+	 * @return
+	 */
+	BindIdOperation selectByIdIn(String table, Set<String> columns, String idColumn);
+
+	/**
+	 * Create a {@code UPDATE … SET … WHERE id = ?} operation for the given {@code table} updating {@code columns} and
+	 * {@code idColumn}.
+	 *
+	 * @param table the table to insert data to.
+	 * @param columns columns to update.
+	 * @param idColumn name of the primary key.
+	 * @return
+	 */
+	BindIdOperation updateById(String table, Set<String> columns, String idColumn);
+
+	/**
+	 * Create a {@code DELETE … WHERE id = ?} operation for the given {@code table} and {@code idColumn}.
+	 *
+	 * @param table the table to insert data to.
+	 * @param idColumn name of the primary key.
+	 * @return
+	 */
+	BindIdOperation deleteById(String table, String idColumn);
+
+	/**
+	 * Create a {@code DELETE … WHERE id IN (?)} operation for the given {@code table} and {@code idColumn}. The actual
+	 * {@link BindableOperation#toQuery() query} string depends on {@link BindIdOperation#bindIds(Statement, Iterable)
+	 * bound parameters}.
+	 *
+	 * @param table the table to insert data to.
+	 * @param idColumn name of the primary key.
+	 * @return
+	 */
+	BindIdOperation deleteByIdIn(String table, String idColumn);
 }

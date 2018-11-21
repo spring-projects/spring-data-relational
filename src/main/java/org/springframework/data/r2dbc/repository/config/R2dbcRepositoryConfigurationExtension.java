@@ -98,6 +98,7 @@ public class R2dbcRepositoryConfigurationExtension extends RepositoryConfigurati
 		AnnotationAttributes attributes = config.getAttributes();
 
 		builder.addPropertyReference("databaseClient", attributes.getString("databaseClientRef"));
+		builder.addPropertyReference("dataAccessStrategy", "reactiveDataAccessStrategy");
 	}
 
 	/*

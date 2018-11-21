@@ -16,8 +16,7 @@
 package org.springframework.data.r2dbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
@@ -60,7 +59,6 @@ public class StringBasedR2dbcQueryUnitTests {
 	private RepositoryMetadata metadata;
 
 	@Before
-	@SuppressWarnings("unchecked")
 	public void setUp() {
 
 		this.mappingContext = new RelationalMappingContext();
@@ -68,7 +66,7 @@ public class StringBasedR2dbcQueryUnitTests {
 		this.metadata = AbstractRepositoryMetadata.getMetadata(SampleRepository.class);
 		this.factory = new SpelAwareProxyProjectionFactory();
 
-		when(bindSpec.bind(anyString(), any())).thenReturn(bindSpec);
+		when(bindSpec.bind(anyInt(), any())).thenReturn(bindSpec);
 	}
 
 	@Test
@@ -82,7 +80,7 @@ public class StringBasedR2dbcQueryUnitTests {
 		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
 		assertThat(stringQuery.bind(bindSpec)).isNotNull();
 
-		verify(bindSpec).bind("$1", "White");
+		verify(bindSpec).bind(0, "White");
 	}
 
 	private StringBasedR2dbcQuery getQueryMethod(String name, Class<?>... args) {

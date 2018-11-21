@@ -28,18 +28,21 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import javax.sql.DataSource;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.NoTransactionException;
 
 /**
- * Integration tests for {@link TransactionalDatabaseClient}.
+ * Abstract base class for integration tests for {@link TransactionalDatabaseClient}.
  *
  * @author Mark Paluch
  */
-public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport {
+public abstract class AbstractTransactionalDatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	private ConnectionFactory connectionFactory;
 
@@ -52,14 +55,53 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 
 		connectionFactory = createConnectionFactory();
 
-		String tableToCreate = "CREATE TABLE IF NOT EXISTS legoset (\n"
-				+ "    id          integer CONSTRAINT id PRIMARY KEY,\n" + "    name        varchar(255) NOT NULL,\n"
-				+ "    manual      integer NULL\n" + ");";
-
 		jdbc = createJdbcTemplate(createDataSource());
-		jdbc.execute(tableToCreate);
+		try {
+			jdbc.execute("DROP TABLE legoset");
+		} catch (DataAccessException e) {}
+		jdbc.execute(getCreateTableStatement());
 		jdbc.execute("DELETE FROM legoset");
 	}
+
+	/**
+	 * Creates a {@link DataSource} to be used in this test.
+	 *
+	 * @return the {@link DataSource} to be used in this test.
+	 */
+	protected abstract DataSource createDataSource();
+
+	/**
+	 * Creates a {@link ConnectionFactory} to be used in this test.
+	 *
+	 * @return the {@link ConnectionFactory} to be used in this test.
+	 */
+	protected abstract ConnectionFactory createConnectionFactory();
+
+	/**
+	 * Returns the the CREATE TABLE statement for table {@code legoset} with the following three columns:
+	 * <ul>
+	 * <li>id integer (primary key), not null</li>
+	 * <li>name varchar(255), nullable</li>
+	 * <li>manual integer, nullable</li>
+	 * </ul>
+	 *
+	 * @return the CREATE TABLE statement for table {@code legoset} with three columns.
+	 */
+	protected abstract String getCreateTableStatement();
+
+	/**
+	 * Get a parameterized {@code INSERT INTO legoset} statement setting id, name, and manual values.
+	 *
+	 * @return
+	 */
+	protected abstract String getInsertIntoLegosetStatement();
+
+	/**
+	 * Get a statement that returns the current transactionId.
+	 *
+	 * @return
+	 */
+	protected abstract String getCurrentTransactionIdStatement();
 
 	@Test
 	public void executeInsertInManagedTransaction() {
@@ -68,10 +110,10 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 
 		Flux<Integer> integerFlux = databaseClient.inTransaction(db -> {
 
-			return db.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
+			return db.execute().sql(getInsertIntoLegosetStatement()) //
 					.bind(0, 42055) //
 					.bind(1, "SCHAUFELRADBAGGER") //
-					.bindNull("$3", Integer.class) //
+					.bindNull(2, Integer.class) //
 					.fetch().rowsUpdated();
 		});
 
@@ -87,11 +129,10 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
-		Mono<Integer> integerFlux = databaseClient.execute()
-				.sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
+		Mono<Integer> integerFlux = databaseClient.execute().sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull("$3", Integer.class) //
+				.bindNull(2, Integer.class) //
 				.fetch().rowsUpdated();
 
 		integerFlux.as(StepVerifier::create) //
@@ -107,7 +148,7 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 		Queue<Long> transactionIds = new ArrayBlockingQueue<>(5);
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
-		Flux<Long> txId = databaseClient.execute().sql("SELECT txid_current();").exchange()
+		Flux<Long> txId = databaseClient.execute().sql(getCurrentTransactionIdStatement()).exchange()
 				.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
 
 		Mono<Void> then = databaseClient.enableTransactionSynchronization(databaseClient.beginTransaction() //
@@ -144,10 +185,10 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 
 		Flux<Integer> integerFlux = databaseClient.inTransaction(db -> {
 
-			return db.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
+			return db.execute().sql(getInsertIntoLegosetStatement()) //
 					.bind(0, 42055) //
 					.bind(1, "SCHAUFELRADBAGGER") //
-					.bindNull("$3", Integer.class) //
+					.bindNull(2, Integer.class) //
 					.fetch().rowsUpdated().then(Mono.error(new IllegalStateException("failed")));
 		});
 
@@ -155,7 +196,8 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 				.expectError(IllegalStateException.class) //
 				.verify();
 
-		assertThat(jdbc.queryForMap("SELECT count(*) FROM legoset")).containsEntry("count", 0L);
+		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		assertThat(count).isEqualTo(0);
 	}
 
 	@Test
@@ -163,10 +205,10 @@ public class TransactionalDatabaseClientIntegrationTests extends R2dbcIntegratio
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
-		Flux<Long> transactionIds = databaseClient.inTransaction(db -> {
+		Flux<Object> transactionIds = databaseClient.inTransaction(db -> {
 
-			Flux<Long> txId = db.execute().sql("SELECT txid_current();").exchange()
-					.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
+			Flux<Object> txId = db.execute().sql(getCurrentTransactionIdStatement()).exchange()
+					.flatMapMany(it -> it.extract((r, md) -> r.get(0)).all());
 			return txId.concatWith(txId);
 		});
 

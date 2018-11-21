@@ -88,21 +88,19 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 				T bindSpecToUse = bindSpec;
 
-				// TODO: Encapsulate PostgreSQL-specific bindings
-
 				Parameters<?, ?> bindableParameters = accessor.getBindableParameters();
 
-				int index = 1;
+				int index = 0;
 				for (Object value : accessor.getValues()) {
 
-					Parameter bindableParameter = bindableParameters.getBindableParameter(index - 1);
+					Parameter bindableParameter = bindableParameters.getBindableParameter(index);
 
 					if (value == null) {
 						if (accessor.hasBindableNullValue()) {
-							bindSpecToUse = bindSpecToUse.bindNull("$" + (index++), bindableParameter.getType());
+							bindSpecToUse = bindSpecToUse.bindNull(index++, bindableParameter.getType());
 						}
 					} else {
-						bindSpecToUse = bindSpecToUse.bind("$" + (index++), value);
+						bindSpecToUse = bindSpecToUse.bind(index++, value);
 					}
 				}
 

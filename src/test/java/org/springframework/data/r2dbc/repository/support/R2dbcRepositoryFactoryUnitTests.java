@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.function.DatabaseClient;
+import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
@@ -41,6 +42,7 @@ public class R2dbcRepositoryFactoryUnitTests {
 	@Mock DatabaseClient databaseClient;
 	@Mock @SuppressWarnings("rawtypes") MappingContext mappingContext;
 	@Mock @SuppressWarnings("rawtypes") RelationalPersistentEntity entity;
+	@Mock ReactiveDataAccessStrategy dataAccessStrategy;
 
 	@Before
 	@SuppressWarnings("unchecked")
@@ -52,7 +54,7 @@ public class R2dbcRepositoryFactoryUnitTests {
 	@SuppressWarnings("unchecked")
 	public void usesMappingRelationalEntityInformationIfMappingContextSet() {
 
-		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, mappingContext);
+		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, mappingContext, dataAccessStrategy);
 		RelationalEntityInformation<Person, Long> entityInformation = factory.getEntityInformation(Person.class);
 
 		assertThat(entityInformation).isInstanceOf(MappingRelationalEntityInformation.class);
@@ -62,7 +64,7 @@ public class R2dbcRepositoryFactoryUnitTests {
 	@SuppressWarnings("unchecked")
 	public void createsRepositoryWithIdTypeLong() {
 
-		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, mappingContext);
+		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, mappingContext, dataAccessStrategy);
 		MyPersonRepository repository = factory.getRepository(MyPersonRepository.class);
 
 		assertThat(repository).isNotNull();

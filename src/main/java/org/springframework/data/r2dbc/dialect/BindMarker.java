@@ -28,7 +28,7 @@ public interface BindMarker {
 	 *          {@literal null} values.
 	 * @see Statement#bind
 	 */
-	void bindValue(Statement<?> statement, Object value);
+	void bind(Statement<?> statement, Object value);
 
 	/**
 	 * Bind a {@literal null} value to the {@link Statement} using the underlying binding strategy.
@@ -37,6 +37,5 @@ public interface BindMarker {
 	 * @param valueType value type, must not be {@literal null}.
 	 * @see Statement#bindNull
 	 */
-
 	void bindNull(Statement<?> statement, Class<?> valueType);
 }

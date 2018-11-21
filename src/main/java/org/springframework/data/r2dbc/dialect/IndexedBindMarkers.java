@@ -18,6 +18,7 @@ class IndexedBindMarkers implements BindMarkers {
 	// access via COUNTER_INCREMENTER
 	@SuppressWarnings("unused") private volatile int counter;
 
+	private final int offset;
 	private final String prefix;
 
 	/**
@@ -29,9 +30,10 @@ class IndexedBindMarkers implements BindMarkers {
 	IndexedBindMarkers(String prefix, int beginWith) {
 		this.counter = beginWith;
 		this.prefix = prefix;
+		this.offset = 0 - beginWith;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.BindMarkers#next()
 	 */
@@ -40,7 +42,7 @@ class IndexedBindMarkers implements BindMarkers {
 
 		int index = COUNTER_INCREMENTER.getAndIncrement(this);
 
-		return new IndexedBindMarker(prefix + "" + index, index);
+		return new IndexedBindMarker(prefix + "" + index, index + offset);
 	}
 
 	/**
@@ -57,7 +59,7 @@ class IndexedBindMarkers implements BindMarkers {
 			this.index = index;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.BindMarker#getPlaceholder()
 		 */
@@ -66,16 +68,16 @@ class IndexedBindMarkers implements BindMarkers {
 			return placeholder;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindValue(io.r2dbc.spi.Statement, java.lang.Object)
 		 */
 		@Override
-		public void bindValue(Statement<?> statement, Object value) {
+		public void bind(Statement<?> statement, Object value) {
 			statement.bind(this.index, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindNull(io.r2dbc.spi.Statement, java.lang.Class)
 		 */

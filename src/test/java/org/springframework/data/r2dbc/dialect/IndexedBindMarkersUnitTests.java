@@ -27,6 +27,25 @@ public class IndexedBindMarkersUnitTests {
 	}
 
 	@Test // gh-15
+	public void shouldCreateNewBindMarkersWithOffset() {
+
+		Statement<?> statement = mock(Statement.class);
+
+		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 1).create();
+
+		BindMarker first = bindMarkers.next();
+		first.bind(statement, "foo");
+
+		BindMarker second = bindMarkers.next();
+		second.bind(statement, "bar");
+
+		assertThat(first.getPlaceholder()).isEqualTo("$1");
+		assertThat(second.getPlaceholder()).isEqualTo("$2");
+		verify(statement).bind(0, "foo");
+		verify(statement).bind(1, "bar");
+	}
+
+	@Test // gh-15
 	public void nextShouldIncrementBindMarker() {
 
 		String[] prefixes = { "$", "?" };
@@ -50,8 +69,8 @@ public class IndexedBindMarkersUnitTests {
 
 		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 0).create();
 
-		bindMarkers.next().bindValue(statement, "foo");
-		bindMarkers.next().bindValue(statement, "bar");
+		bindMarkers.next().bind(statement, "foo");
+		bindMarkers.next().bind(statement, "bar");
 
 		verify(statement).bind(0, "foo");
 		verify(statement).bind(1, "bar");

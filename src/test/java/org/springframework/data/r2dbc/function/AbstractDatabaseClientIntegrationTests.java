@@ -23,8 +23,11 @@ import lombok.Data;
 import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
 
+import javax.sql.DataSource;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -33,11 +36,11 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Integration tests for {@link DatabaseClient} against PostgreSQL.
+ * Integration tests for {@link DatabaseClient}.
  *
  * @author Mark Paluch
  */
-public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport {
+public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	private ConnectionFactory connectionFactory;
 
@@ -50,24 +53,56 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 
 		connectionFactory = createConnectionFactory();
 
-		String tableToCreate = "CREATE TABLE IF NOT EXISTS legoset (\n"
-				+ "    id          integer CONSTRAINT id PRIMARY KEY,\n" + "    name        varchar(255) NOT NULL,\n"
-				+ "    manual      integer NULL\n" + ");";
-
 		jdbc = createJdbcTemplate(createDataSource());
-		jdbc.execute(tableToCreate);
-		jdbc.execute("DELETE FROM legoset");
+
+		try {
+			jdbc.execute("DROP TABLE legoset");
+		} catch (DataAccessException e) {}
+		jdbc.execute(getCreateTableStatement());
 	}
+
+	/**
+	 * Creates a {@link DataSource} to be used in this test.
+	 *
+	 * @return the {@link DataSource} to be used in this test.
+	 */
+	protected abstract DataSource createDataSource();
+
+	/**
+	 * Creates a {@link ConnectionFactory} to be used in this test.
+	 *
+	 * @return the {@link ConnectionFactory} to be used in this test.
+	 */
+	protected abstract ConnectionFactory createConnectionFactory();
+
+	/**
+	 * Returns the the CREATE TABLE statement for table {@code legoset} with the following three columns:
+	 * <ul>
+	 * <li>id integer (primary key), not null</li>
+	 * <li>name varchar(255), nullable</li>
+	 * <li>manual integer, nullable</li>
+	 * </ul>
+	 *
+	 * @return the CREATE TABLE statement for table {@code legoset} with three columns.
+	 */
+	protected abstract String getCreateTableStatement();
+
+	/**
+	 * Get a parameterized {@code INSERT INTO legoset} statement setting id, name, and manual values.
+	 *
+	 * @return
+	 */
+	protected abstract String getInsertIntoLegosetStatement();
 
 	@Test
 	public void executeInsert() {
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 
-		databaseClient.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
+		databaseClient.execute().sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull("$3", Integer.class) //
+				.bindNull(2, Integer.class) //
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectNext(1) //
@@ -83,10 +118,10 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 
 		executeInsert();
 
-		databaseClient.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
+		databaseClient.execute().sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull("$3", Integer.class) //
+				.bindNull(2, Integer.class) //
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectErrorSatisfies(exception -> {
@@ -104,7 +139,6 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 
-		// TODO: Driver/Decode does not support decoding null values?
 		databaseClient.execute().sql("SELECT id, name, manual FROM legoset") //
 				.as(LegoSet.class) //
 				.fetch().all() //
@@ -127,9 +161,9 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 				.value("name", "SCHAUFELRADBAGGER") //
 				.nullValue("manual", Integer.class) //
 				.exchange() //
-				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all()) //
+				.flatMapMany(FetchSpec::rowsUpdated) //
 				.as(StepVerifier::create) //
-				.expectNext(42055).verifyComplete();
+				.expectNext(1).verifyComplete();
 
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
@@ -162,8 +196,9 @@ public class DatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport 
 
 		databaseClient.insert().into(LegoSet.class)//
 				.using(legoSet).exchange() //
-				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all()).as(StepVerifier::create) //
-				.expectNext(42055).verifyComplete();
+				.flatMapMany(FetchSpec::rowsUpdated) //
+				.as(StepVerifier::create) //
+				.expectNext(1).verifyComplete();
 
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}

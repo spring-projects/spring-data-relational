@@ -20,6 +20,8 @@ import io.r2dbc.spi.ConnectionFactory;
 
 import java.util.function.Consumer;
 
+import org.springframework.data.r2dbc.dialect.Database;
+import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.function.DatabaseClient.Builder;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.r2dbc.support.SqlErrorCodeR2dbcExceptionTranslator;
@@ -33,9 +35,9 @@ import org.springframework.util.Assert;
  */
 class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
-	private @Nullable ConnectionFactory connector;
+	private @Nullable ConnectionFactory connectionFactory;
 	private @Nullable R2dbcExceptionTranslator exceptionTranslator;
-	private ReactiveDataAccessStrategy accessStrategy = new DefaultReactiveDataAccessStrategy();
+	private ReactiveDataAccessStrategy accessStrategy;
 
 	DefaultDatabaseClientBuilder() {}
 
@@ -43,7 +45,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 		Assert.notNull(other, "DefaultDatabaseClientBuilder must not be null!");
 
-		this.connector = other.connector;
+		this.connectionFactory = other.connectionFactory;
 		this.exceptionTranslator = other.exceptionTranslator;
 		this.accessStrategy = other.accessStrategy;
 	}
@@ -53,7 +55,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 		Assert.notNull(factory, "ConnectionFactory must not be null!");
 
-		this.connector = factory;
+		this.connectionFactory = factory;
 		return this;
 	}
 
@@ -81,10 +83,21 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		R2dbcExceptionTranslator exceptionTranslator = this.exceptionTranslator;
 
 		if (exceptionTranslator == null) {
-			exceptionTranslator = new SqlErrorCodeR2dbcExceptionTranslator(connector);
+			exceptionTranslator = new SqlErrorCodeR2dbcExceptionTranslator(connectionFactory);
 		}
 
-		return doBuild(this.connector, exceptionTranslator, this.accessStrategy, new DefaultDatabaseClientBuilder(this));
+		ReactiveDataAccessStrategy accessStrategy = this.accessStrategy;
+
+		if (accessStrategy == null) {
+
+			Dialect dialect = Database.findDatabase(this.connectionFactory)
+					.orElseThrow(() -> new UnsupportedOperationException(
+							"Cannot determine a Dialect. Configure the dialect by providing DefaultReactiveDataAccessStrategy(Dialect)"))
+					.latestDialect();
+			accessStrategy = new DefaultReactiveDataAccessStrategy(dialect);
+		}
+
+		return doBuild(this.connectionFactory, exceptionTranslator, accessStrategy, new DefaultDatabaseClientBuilder(this));
 	}
 
 	protected DatabaseClient doBuild(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
