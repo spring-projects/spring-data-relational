@@ -1,0 +1,105 @@
+[[mapping-chapter]]
+= Mapping
+
+Rich mapping support is provided by the `MappingR2dbcConverter`. `MappingR2dbcConverter` has a rich metadata model that allows to map domain objects to a data row.
+The mapping metadata model is populated by using annotations on your domain objects.
+However, the infrastructure is not limited to using annotations as the only source of metadata information.
+The `MappingR2dbcConverter` also lets you map objects to rows without providing any additional metadata, by following a set of conventions.
+
+This section describes the features of the `MappingR2dbcConverter`, including how to use conventions for mapping objects to rows and how to override those conventions with annotation-based mapping metadata.
+
+[[mapping-conventions]]
+== Convention-based Mapping
+
+`MappingR2dbcConverter` has a few conventions for mapping objects to rows when no additional mapping metadata is provided.
+The conventions are:
+
+* The short Java class name is mapped to the table name in the following manner.
+The class `com.bigbank.SavingsAccount` maps to the `savings_account` table name.
+
+* Nested objects are not supported.
+
+* The converter uses any Spring Converters registered with it to override the default mapping of object properties to row columns and values.
+
+* The fields of an object are used to convert to and from columns in the row.
+Public `JavaBean` properties are not used.
+
+* If you have a single non-zero-argument constructor whose constructor argument names match top-level column names of the row, that constructor is used.
+Otherwise, the zero-argument constructor is used.
+If there is more than one non-zero-argument constructor, an exception will be thrown.
+
+[[mapping-usage]]
+== Metadata-based Mapping
+
+To take full advantage of the object mapping functionality inside the Spring Data R2DBC support, you should annotate your mapped objects with the `@Table` annotation.
+Although it is not necessary for the mapping framework to have this annotation (your POJOs are mapped correctly, even without any annotations), it lets the classpath scanner find and pre-process your domain objects to extract the necessary metadata.
+If you do not use this annotation, your application takes a slight performance hit the first time you store a domain object, because the mapping framework needs to build up its internal metadata model so that it knows about the properties of your domain object and how to persist them.
+The following example shows a domain object:
+
+.Example domain object
+====
+[source,java]
+----
+package com.mycompany.domain;
+
+@Table
+public class Person {
+
+  @Id
+  private Long id;
+
+  private Integer ssn;
+
+  private String firstName;
+
+  @Indexed
+  private String lastName;
+}
+----
+====
+
+IMPORTANT: The `@Id` annotation tells the mapper which property you want to use for the primary key property.
+
+
+[[mapping-usage-annotations]]
+=== Mapping Annotation Overview
+
+The `MappingR2dbcConverter` can use metadata to drive the mapping of objects to rows. The following annotations are available:
+
+* `@Id`: Applied at the field level to mark the primary used for identity purpose.
+* `@Table`: Applied at the class level to indicate this class is a candidate for mapping to the database. You can specify the name of the table where the database will be stored.
+* `@Transient`: By default all private fields are mapped to the row, this annotation excludes the field where it is applied from being stored in the database
+* `@PersistenceConstructor`: Marks a given constructor - even a package protected one - to use when instantiating the object from the database. Constructor arguments are mapped by name to the key values in the retrieved row.
+* `@Column`: Applied at the field level and described the name of the column as it will be represented in the row thus allowing the name to be different than the fieldname of the class.
+
+The mapping metadata infrastructure is defined in a separate spring-data-commons project that is technology agnostic. Specific subclasses are using in the R2DBC support to support annotation based metadata. Other strategies are also possible to put in place if there is demand.
+
+
+[[mapping-custom-object-construction]]
+=== Customized Object Construction
+
+The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation. The values to be used for the constructor parameters are resolved in the following way:
+
+* If a parameter is annotated with the `@Value` annotation, the given expression is evaluated and the result is used as the parameter value.
+* If the Java type has a property whose name matches the given field of the input row, then it's property information is used to select the appropriate constructor parameter to pass the input field value to. This works only if the parameter name information is present in the java `.class` files which can be achieved by compiling the source with debug information or using the new `-parameters` command-line switch for javac in Java 8.
+* Otherwise a `MappingException` will be thrown indicating that the given constructor parameter could not be bound.
+
+[source,java]
+----
+class OrderItem {
+
+  private @Id String id;
+  private int quantity;
+  private double unitPrice;
+
+  OrderItem(String id, int quantity, double unitPrice) {
+    this.id = id;
+    this.quantity = quantity;
+    this.unitPrice = unitPrice;
+  }
+
+  // getters/setters ommitted
+}
+
+----
+

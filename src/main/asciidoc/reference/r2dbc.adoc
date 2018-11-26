@@ -1,0 +1,493 @@
+[[r2dbc.core]]
+= R2DBC support
+
+The R2DBC support contains a wide range of features:
+
+* Spring configuration support with Java-based `@Configuration` classes  for an R2DBC driver instance.
+* `DatabaseClient` helper class that increases productivity when performing common R2DBC operations with integrated object mapping between rows and POJOs.
+* Exception translation into Spring's portable Data Access Exception hierarchy.
+* Feature-rich Object Mapping integrated with Spring's Conversion Service.
+* Annotation-based mapping metadata that is extensible to support other metadata formats.
+* Automatic implementation of Repository interfaces, including support for custom query methods.
+
+For most tasks, you should use `DatabaseClient` or the Repository support, which both leverage the rich mapping functionality.
+`DatabaseClient` is the place to look for accessing functionality such as ad-hoc CRUD operations.
+
+[[r2dbc.getting-started]]
+== Getting Started
+
+An easy way to bootstrap setting up a working environment is to create a Spring-based project through https://start.spring.io[start.spring.io].
+
+.Add the following to the pom.xml files `dependencies` element:
++
+[source,xml,subs="+attributes"]
+----
+<dependencies>
+
+  <!-- other dependency elements omitted -->
+
+  <dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-r2dbc</artifactId>
+    <version>{version}</version>
+  </dependency>
+
+  <!-- a R2DBC driver -->
+  <dependency>
+    <groupId>io.r2dbc</groupId>
+    <artifactId>…</artifactId>
+    <version>{r2dbcVersion}</version>
+  </dependency>
+
+</dependencies>
+----
+. Change the version of Spring in the pom.xml to be
++
+[source,xml,subs="+attributes"]
+----
+<spring.framework.version>{springVersion}</spring.framework.version>
+----
+. Add the following location of the Spring Milestone repository for Maven to your `pom.xml` such that it is at the same level of your `<dependencies/>` element:
++
+[source,xml]
+----
+<repositories>
+  <repository>
+    <id>spring-milestone</id>
+    <name>Spring Maven MILESTONE Repository</name>
+    <url>http://repo.spring.io/libs-milestone</url>
+  </repository>
+</repositories>
+----
+
+The repository is also http://repo.spring.io/milestone/org/springframework/data/[browseable here].
+
+You may also want to set the logging level to `DEBUG` to see some additional information. To do so, edit the `application.properties` file to have the following content:
+
+[source]
+----
+logging.level.org.springframework.data.r2dbc=DEBUG
+----
+
+Then you can create a `Person` class to persist:
+
+[source,java]
+----
+package org.spring.r2dbc.example;
+
+public class Person {
+
+  private String id;
+  private String name;
+  private int age;
+
+  public Person(String id, String name, int age) {
+    this.id = id;
+    this.name = name;
+    this.age = age;
+  }
+
+  public String getId() {
+    return id;
+  }
+  public String getName() {
+    return name;
+  }
+  public int getAge() {
+    return age;
+  }
+
+  @Override
+  public String toString() {
+    return "Person [id=" + id + ", name=" + name + ", age=" + age + "]";
+  }
+}
+----
+
+Next, you need to create a table structure in your database:
+
+[source,sql]
+----
+CREATE TABLE person
+  (id VARCHAR(255) PRIMARY KEY,
+   name VARCHAR(255),
+   age INT);
+----
+
+You also need a main application to run:
+
+[source,java]
+----
+package org.spring.r2dbc.example;
+
+public class R2dbcApp {
+
+  private static final Log log = LogFactory.getLog(R2dbcApp.class);
+
+  public static void main(String[] args) throws Exception {
+
+    ConnectionFactory connectionFactory = new H2ConnectionFactory(H2ConnectionConfiguration.builder()
+                                                                    .url("mem:test;DB_CLOSE_DELAY=10")
+                                                                    .build());
+
+    DatabaseClient client = DatabaseClient.create(connectionFactory);
+
+    client.execute()
+            .sql("CREATE TABLE person" +
+                    "  (id VARCHAR(255) PRIMARY KEY," +
+                    "   name VARCHAR(255)," +
+                    "   age INT)")
+            .fetch()
+            .rowsUpdated()
+            .as(StepVerifier::create)
+            .expectNextCount(1)
+            .verifyComplete();
+
+    client.insert()
+            .into(Person.class)
+            .using(new Person("joe", "Joe", 34))
+            .then()
+            .as(StepVerifier::create)
+            .verifyComplete();
+
+    client.select()
+            .from(Person.class)
+            .fetch()
+            .first()
+            .doOnNext(it -> log.info(it))
+            .as(StepVerifier::create)
+            .expectNextCount(1)
+            .verifyComplete();
+  }
+}
+----
+
+When you run the main program, the preceding examples produce the following output:
+
+[source]
+----
+2018-11-28 10:47:03,893 DEBUG ata.r2dbc.function.DefaultDatabaseClient: 310 - Executing SQL statement [CREATE TABLE person
+  (id VARCHAR(255) PRIMARY KEY,
+   name VARCHAR(255),
+   age INT)]
+2018-11-28 10:47:04,074 DEBUG ata.r2dbc.function.DefaultDatabaseClient: 908 - Executing SQL statement [INSERT INTO person (id, name, age) VALUES($1, $2, $3)]
+2018-11-28 10:47:04,092 DEBUG ata.r2dbc.function.DefaultDatabaseClient: 575 - Executing SQL statement [SELECT id, name, age FROM person]
+2018-11-28 10:47:04,436  INFO        org.spring.r2dbc.example.R2dbcApp:  43 - Person [id='joe', name='Joe', age=34]
+----
+
+Even in this simple example, there are few things to notice:
+
+* You can create an instance of the central helper class in Spring Data R2DBC, <<r2dbc.datbaseclient,`DatabaseClient`>>, by using a standard `io.r2dbc.spi.ConnectionFactory` object.
+* The mapper works against standard POJO objects without the need for any additional metadata (though you can optionally provide that information. See <<mapping-chapter,here>>.).
+* Mapping conventions can use field access. Notice that the `Person` class has only getters.
+* If the constructor argument names match the column names of the stored row, they are used to instantiate the object.
+
+[[r2dbc.examples-repo]]
+== Examples Repository
+
+There is a https://github.com/spring-projects/spring-data-examples[GitHub repository with several examples] that you can download and play around with to get a feel for how the library works.
+
+[[r2dbc.drivers]]
+== Connecting to a Relational Database with Spring
+
+One of the first tasks when using relational databases and Spring is to create a `io.r2dbc.spi.ConnectionFactory` object using the IoC container. The following example explains Java-based configuration.
+
+[[r2dbc.connectionfactory]]
+=== Registering a `ConnectionFactory` Instance using Java-based Metadata
+
+The following example shows an example of using Java-based bean metadata to register an instance of a `io.r2dbc.spi.ConnectionFactory`:
+
+.Registering a `io.r2dbc.spi.ConnectionFactory` object using Java-based bean metadata
+====
+[source,java]
+----
+@Configuration
+public class ApplicationConfiguration extends AbstractR2dbcConfiguration {
+
+  @Override
+  @Bean
+  public ConnectionFactory connectionFactory() {
+    return …;
+  }
+}
+----
+====
+
+This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instance, with the container using Spring's `AbstractR2dbcConfiguration`. As compared to registering a `ConnectionFactory` instance directly, the configuration support has the added advantage of also providing the container with an `ExceptionTranslator` implementation that translates R2DBC exceptions to exceptions in Spring's portable `DataAccessException` hierarchy for data access classes annotated with the `@Repository` annotation. This hierarchy and the use of `@Repository` is described in http://docs.spring.io/spring/docs/{springVersion}/spring-framework-reference/data-access.html[Spring's DAO support features].
+
+`AbstractR2dbcConfiguration` registers also `DatabaseClient` that is required for database interaction and for Repository implementation.
+
+[[r2dbc.drivers]]
+=== R2DBC Drivers
+
+Spring Data R2DBC supports drivers by R2DBC's pluggable SPI mechanism. Any driver implementing the R2DBC spec can be used with Spring Data R2DBC.
+R2DBC is a relatively young initiative that gains significance by maturing through adoption.
+As of writing the following 3 drivers are available:
+
+* https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
+* https://github.com/r2dbc/r2dbc-h2[H2] (`io.r2dbc:r2dbc-h2`)
+* https://github.com/r2dbc/r2dbc-mssql[Microsoft SQL Server] (`io.r2dbc:r2dbc-mssql`)
+
+Spring Data R2DBC reacts to database specifics by inspecting `ConnectionFactoryMetadata` and selects the appropriate database dialect.
+You can configure an own `Dialect` if the used driver is not yet known to Spring Data R2DBC.
+
+[[r2dbc.datbaseclient]]
+== Introduction to `DatabaseClient`
+
+Spring Data R2DBC includes a reactive, non-blocking `DatabaseClient` for database interaction. The client has a functional, fluent API with reactive types for declarative composition.
+`DatabaseClient` encapsulates resource handling such as opening and closing connections so your application code can make use of executing SQL queries or calling higher-level functionality such as inserting or selecting data.
+
+NOTE: `DatabaseClient` is a young application component providing a minimal set of convenience methods that is likely to be extended through time.
+
+NOTE: Once configured, `DatabaseClient` is thread-safe and can be reused across multiple instances.
+
+Another central feature of `DatabaseClient` is translation of exceptions thrown by R2DBC drivers into Spring's portable Data Access Exception hierarchy. See "`<<r2dbc.exception>>`" for more information.
+
+The next section contains an example of how to work with the `DatabaseClient` in the context of the Spring container.
+
+[[r2dbc.datbaseclient.create]]
+=== Creating `DatabaseClient`
+
+The simplest way to create a `DatabaseClient` is through a static factory method:
+
+[source,java]
+----
+DatabaseClient.create(ConnectionFactory connectionFactory)
+----
+
+The above method creates a `DatabaseClient` with default settings.
+
+You can also use `DatabaseClient.builder()` with further options to customize the client:
+
+* `exceptionTranslator`: Supply a specific `R2dbcExceptionTranslator` to customize how R2DBC exceptions are translated into Spring's portable Data Access Exception hierarchy.  See "`<<r2dbc.exception>>`" for more information.
+* `dataAccessStrategy`: Strategy how SQL queries are generated and how objects are mapped.
+
+Once built, a `DatabaseClient` instance is immutable. However, you can clone it and build a modified copy without affecting the original instance, as the following example shows:
+
+[source,java]
+----
+DatabaseClient client1 = DatabaseClient.builder()
+        .exceptionTranslator(exceptionTranslatorA).build();
+
+DatabaseClient client2 = client1.mutate()
+        .exceptionTranslator(exceptionTranslatorB).build();
+----
+
+=== Controlling Database Connections
+
+Spring Data R2DBC obtains a connection to the database through a `ConnectionFactory`.
+A `ConnectionFactory` is part of the R2DBC specification and is a generalized connection factory.
+It lets a container or a framework hide connection pooling and transaction management issues from the application code.
+
+When you use Spring Data R2DBC, you can create a `ConnectionFactory` using your R2DBC driver.
+`ConnectionFactory` implementations can either return the same connection, different connections or provide connection pooling.
+`DatabaseClient` uses `ConnectionFactory` to create and release connections per operation without affinity to a particular connection across multiple operations.
+
+[[r2dbc.exception]]
+== Exception Translation
+
+The Spring framework provides exception translation for a wide variety of database and mapping technologies.
+This has traditionally been for JDBC and JPA. The Spring support for R2DBC extends this feature by providing implementations of the `R2dbcExceptionTranslator` interface.
+
+`R2dbcExceptionTranslator` is an interface to be implemented by classes that can translate between `R2dbcException` and Spring’s own `org.springframework.dao.DataAccessException`, which is agnostic in regard to data access strategy.
+Implementations can be generic (for example, using SQLState codes) or proprietary (for example, using Postgres error codes) for greater precision.
+
+`SqlErrorCodeR2dbcExceptionTranslator` is the implementation of `R2dbcExceptionTranslator` that is used by default.
+This implementation uses specific vendor codes.
+It is more precise than the SQLState implementation.
+The error code translations are based on codes held in a JavaBean type class called `SQLErrorCodes`.
+This class is created and populated by an `SQLErrorCodesFactory`, which (as the name suggests) is a factory for creating SQLErrorCodes based on the contents of a configuration file named `sql-error-codes.xml` from Spring's Data Access module.
+This file is populated with vendor codes and based on the `ConnectionFactoryName` taken from `ConnectionFactoryMetadata`.
+The codes for the actual database you are using are used.
+
+The `SqlErrorCodeR2dbcExceptionTranslator` applies matching rules in the following sequence:
+
+1. Any custom translation implemented by a subclass. Normally, the provided concrete `SqlErrorCodeR2dbcExceptionTranslator` is used, so this rule does not apply. It applies only if you have actually provided a subclass implementation.
+2. Any custom implementation of the `SQLExceptionTranslator` interface that is provided as the `customSqlExceptionTranslator` property of the `SQLErrorCodes` class.
+3. Error code matching is applied.
+4. Use a fallback translator.
+
+
+NOTE: The `SQLErrorCodesFactory` is used by default to define Error codes and custom exception translations. They are looked up in a file named `sql-error-codes.xml` from the classpath, and the matching `SQLErrorCodes` instance is located based on the database name from the database metadata of the database in use. `SQLErrorCodesFactory` is as of now part of Spring JDBC. Spring Data R2DBC reuses existing translation configurations.
+
+You can extend `SqlErrorCodeR2dbcExceptionTranslator`, as the following example shows:
+
+[source,java]
+----
+public class CustomSqlErrorCodeR2dbcExceptionTranslator extends SqlErrorCodeR2dbcExceptionTranslator {
+
+    protected DataAccessException customTranslate(String task, String sql, R2dbcException r2dbcex) {
+        if (sqlex.getErrorCode() == -12345) {
+            return new DeadlockLoserDataAccessException(task, r2dbcex);
+        }
+        return null;
+    }
+}
+----
+
+In the preceding example, the specific error code (`-12345`) is translated, while other errors are left to be translated by the default translator implementation.
+To use this custom translator, you must configure `DatabaseClient` through the builder method `exceptionTranslator`, and you must use this `DatabaseClient` for all of the data access processing where this translator is needed.
+The following example shows how you can use this custom translator:
+
+[source,java]
+----
+ConnectionFactory connectionFactory = …;
+
+CustomSqlErrorCodeR2dbcExceptionTranslator exceptionTranslator = new CustomSqlErrorCodeR2dbcExceptionTranslator();
+
+DatabaseClient client = DatabaseClient.builder()
+                            .connectionFactory(connectionFactory)
+                            .exceptionTranslator(exceptionTranslator)
+                            .build();
+----
+
+[[r2dbc.datbaseclient.statements]]
+=== Running Statements
+
+Running a statement is the basic functionality that is covered by `DatabaseClient`.
+The following example shows what you need to include for a minimal but fully functional class that creates a new table:
+
+[source,java]
+----
+Mono<Void> completion = client.execute()
+        .sql("CREATE TABLE person (id VARCHAR(255) PRIMARY KEY, name VARCHAR(255), age INTEGER);")
+        .then();
+----
+
+`DatabaseClient` is designed for a convenient fluent usage.
+It exposes intermediate, continuation, and terminal methods at each stage of the execution specification.
+The example above uses `then()` to return a completion `Publisher` that completes as soon as the query (or queries, if the SQL query contains multiple statements) completes.
+
+NOTE: `execute().sql(…)` accepts either the SQL query string or a query `Supplier<String>` to defer the actual query creation until execution.
+
+[[r2dbc.datbaseclient.queries]]
+=== Running Queries
+
+SQL queries can return values or the number of affected rows.
+`DatabaseClient` can return the number of updated rows or the rows themself, depending on the issued query.
+
+The following example shows an `UPDATE` statement that returns the number of updated rows:
+
+[source,java]
+----
+Mono<Integer> affectedRows = client.execute()
+        .sql("UPDATE person SET name = 'Joe'")
+        .fetch().rowsUpdated();
+----
+
+Running a `SELECT` query returns a different type of result, in particular tabular results. Tabular data is typically consumes by streaming each `Row`.
+You might have noticed the use of `fetch()` in the previous example.
+`fetch()` is a continuation operator that allows you to specify how much data you want to consume.
+
+[source,java]
+----
+Mono<Map<String, Object>> first = client.execute()
+        .sql("SELECT id, name FROM person")
+        .fetch().first();
+----
+
+Calling `first()` returns the first row from the result and discards remaining rows.
+You can consume data with the following operators:
+
+* `first()` return the first row of the entire result
+* `one()` returns exactly one result and fails if the result contains more rows.
+* `all()` returns all rows of the result
+* `rowsUpdated()` returns the number of affected rows (`INSERT` count, `UPDATE` count)
+
+`DatabaseClient` queries return their results by default as `Map` of column name to value. You can customize type mapping by applying an `as(Class<T>)` operator.
+
+[source,java]
+----
+Flux<Person> all = client.execute()
+        .sql("SELECT id, name FROM mytable")
+        .as(Person.class)
+        .fetch().all();
+----
+
+`as(…)` applies <<mapping-conventions,Convention-based Object Mapping>> and maps the resulting columns to your POJO.
+
+[[r2dbc.datbaseclient.mapping]]
+=== Mapping Results
+
+You can customize result extraction beyong `Map` and POJO result extraction by providing an extractor `BiFunction<Row, RowMetadata, T>`.
+The extractor function interacts directly with R2DBC's `Row` and `RowMetadata` objects and can return arbitrary values (singular values, collections/maps, objects).
+
+The following example extracts the `id` column and emits its value:
+
+[source,java]
+----
+Flux<String> names= client.execute()
+        .sql("SELECT name FROM person")
+        .fetch()
+        .extract((row, rowMetadata) -> row.get("id", String.class))
+        .all();
+----
+
+[[r2dbc.datbaseclient.mapping.null]]
+.What about `null`?
+****
+Relational database results may contain `null` values.
+Reactive Streams forbids emission of `null` values which requires a proper `null` handling in the extractor function.
+While you can obtain `null` values from a `Row`, you must not emit a `null` value.
+You must wrap any `null` values in an object (e.g. `Optional` for singular values) to make sure a `null` value is never returned directly by your extractor function.
+****
+
+[[r2dbc.datbaseclient.binding]]
+=== Binding Values to Queries
+
+A typical application requires parametrized SQL statements to select or update rows according to some input.
+These are typically `SELECT` statements  constrained by a `WHERE` clause or `INSERT`/`UPDATE` statements accepting input parameters.
+Parametrized statements bear the risk of SQL injection if parameters are not escaped properly.
+`DatabaseClient` leverages R2DBC's Bind API to eliminate the risk of SQL injection for query parameters.
+You can provide a parametrized SQL statement with the `sql(…)` operator and bind parameters to the actual `Statement`.
+Your R2DBC driver then executes the statement using prepared statements and parameter substitution.
+
+Parameter binding supports various binding strategies:
+
+* By Index using zero-based parameter indexes.
+* By Name using the placeholder name.
+
+The following example shows parameter binding for a PostgreSQL query:
+
+[source,java]
+----
+db.execute()
+    .sql("INSERT INTO person (id, name, age) VALUES($1, $2, $3)")
+    .bind(0, "joe")
+    .bind(1, "Joe")
+    .bind(2, 34);
+----
+
+NOTE: If you are familiar with JDBC, then you're also familiar with `?` (questionmark) bind markers.
+JDBC drivers translate questionmark bindmarkers to database-native markers as part of statement execution.
+Make sure to use the appropriate bind markers that are supported by your database as R2DBC requires database-native parameter bind markers.
+
+[[r2dbc.datbaseclient.transactions]]
+=== Transactions
+
+A common pattern when using relational databases is grouping multiple queries within a unit of work that is guarded by a transaction.
+Relational databases typically associate a transaction with a single transport connection.
+Using different connections hence results in utilizing different transactions.
+Spring Data R2DBC includes a transactional `DatabaseClient` implementation with `TransactionalDatabaseClient` that allows you to group multiple statements within the same transaction.
+`TransactionalDatabaseClient` is a extension of `DatabaseClient` that exposes the same functionality as `DatabaseClient` and adds transaction-management methods.
+
+You can run multiple statements within a transaction using the `inTransaction(Function)` closure:
+
+[source,java]
+----
+TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
+
+Flux<Void> completion = databaseClient.inTransaction(db -> {
+
+    return db.execute().sql("INSERT INTO person (id, name, age) VALUES($1, $2, $3)") //
+            .bind(0, "joe") //
+            .bind(1, "Joe") //
+            .bind(2, 34) //
+            .fetch().rowsUpdated()
+            .then(db.execute().sql("INSERT INTO contacts (id, name) VALUES($1, $2)")
+                    .bind(0, "joe")
+                    .bind(1, "Joe")
+                    .fetch().rowsUpdated())
+            .then();
+});
+----

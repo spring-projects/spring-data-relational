@@ -1,0 +1,37 @@
+= Spring Data R2DBC - Reference Documentation
+ Mark Paluch
+:revnumber: {version}
+:revdate: {localdate}
+:toc:
+:toc-placement!:
+:linkcss:
+:doctype: book
+:docinfo: shared
+:source-highlighter: prettify
+:icons: font
+:imagesdir: images
+ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1600]]
+:spring-data-commons-docs: ../../../../spring-data-commons/src/main/asciidoc
+:rr2dbcVersion: 1.0.0.M6
+:reactiveStreamsVersion: 1.0.1
+:reactiveStreamsJavadoc: http://www.reactive-streams.org/reactive-streams-{reactiveStreamsVersion}-javadoc
+
+(C) 2018 The original authors.
+
+NOTE: Copies of this document may be made for your own use and for distribution to others, provided that you do not charge any fee for such copies and further provided that each copy contains this Copyright Notice, whether distributed in print or electronically.
+
+toc::[]
+
+include::preface.adoc[]
+
+include::new-features.adoc[leveloffset=+1]
+include::{spring-data-commons-docs}/dependencies.adoc[leveloffset=+1]
+include::{spring-data-commons-docs}/repositories.adoc[leveloffset=+1]
+
+[[reference]]
+= Reference Documentation
+
+include::reference/introduction.adoc[leveloffset=+1]
+include::reference/r2dbc.adoc[leveloffset=+1]
+include::reference/r2dbc-repositories.adoc[leveloffset=+1]
+include::reference/mapping.adoc[leveloffset=+1]

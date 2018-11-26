@@ -1,0 +1,121 @@
+[[r2dbc.repositories]]
+= R2DBC Repositories
+
+[[r2dbc.repositories.intro]]
+== Introduction
+
+This chapter points out the specialties for repository support for R2DBC.
+This chapter builds on the core repository support explained in <<repositories>>.
+Before reading this chapter, you should have a sound understanding of the basic concepts explained there.
+
+[[r2dbc.repositories.usage]]
+== Usage
+
+To access domain entities stored in a relational database, you can use our sophisticated repository support that eases implementation quite significantly.
+To do so, create an interface for your repository, as the following example shows:
+
+.Sample Person entity
+====
+[source,java]
+----
+public class Person {
+
+  @Id
+  private Long id;
+  private String firstname;
+  private String lastname;
+
+  // … getters and setters omitted
+}
+----
+====
+
+.Basic repository interface to persist Person entities
+====
+[source]
+----
+public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
+
+  // additional custom query methods go here
+}
+----
+====
+
+Right now, this interface serves only to provide type information, but we can add additional methods to it later.
+To configure R2DBC repositories, you can use the `@EnableR2dbcRepositories` annotation.
+If no base package is configured, the infrastructure scans the package of the annotated configuration class.
+The following example shows how to use Java configuration for a repository:
+
+.Java configuration for repositories
+====
+[source,java]
+----
+@Configuration
+@EnableR2dbcRepositories
+class ApplicationConfig extends AbstractR2dbcConfiguration {
+
+  @Override
+  public ConnectionFactory connectionFactory() {
+    return …;
+  }
+}
+----
+====
+
+Because our domain repository extends `ReactiveCrudRepository`, it provides you with CRUD operations to access the entities.
+Working with the repository instance is just a matter of dependency injecting it into a client.
+Consequently, you can retrieve all `Person` objects would resemble the following code:
+
+.Paging access to Person entities
+====
+[source,java]
+----
+@RunWith(SpringRunner.class)
+@ContextConfiguration
+public class PersonRepositoryTests {
+
+    @Autowired PersonRepository repository;
+
+    @Test
+    public void readsallEntitiesCorrectly() {
+
+      repository.findAll()
+                .as(StepVerifier::create)
+                .expectNextCount(1)
+                .verifyComplete();
+    }
+}
+----
+====
+
+The preceding example creates an application context with Spring's unit test support, which performs annotation-based dependency injection into test cases.
+Inside the test method, we use the repository to query the database.
+We use `StepVerifier` as test aid to verify our expectations against the results.
+
+[[r2dbc.repositories.queries]]
+== Query Methods
+
+Most of the data access operations you usually trigger on a repository result in a query being executed against the databases.
+Defining such a query is a matter of declaring a method on the repository interface, as the following example shows:
+
+.PersonRepository with query methods
+====
+[source,java]
+----
+public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
+
+    @Query("SELECT * FROM person WHERE lastname = $1")
+    Flux<Person> findByLastname(String lastname);                      <1>
+
+    @Query("SELECT firstname, lastname FROM person WHERE lastname = $1")
+    Mono<Person> findFirstByLastname(String lastname)                  <2>
+
+}
+----
+<1> The `findByLastname` method shows a query for all people with the given last name.
+The query is provided as R2DBC repositories do not support query derivation.
+The annotated query uses native bind markers, which are Postgres bind markers in this example.
+<4> A query for a single `Person` entity projecting only `firstname` and `lastname` columns.
+====
+
+NOTE: R2DBC repositories do not support query derivation.
