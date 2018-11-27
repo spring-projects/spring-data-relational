@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.3.RELEASE (2018-11-27)
+---------------------------------------------
+* DATAJDBC-294 - ID in where clauses doesn't properly considers the NamingStrategy.
+* DATAJDBC-283 - Release 1.0.3 (Lovelace SR3).
+
+
 Changes in version 1.0.2.RELEASE (2018-10-29)
 ---------------------------------------------
 * DATAJDBC-277 - Release 1.0.2 (Lovelace SR2).
