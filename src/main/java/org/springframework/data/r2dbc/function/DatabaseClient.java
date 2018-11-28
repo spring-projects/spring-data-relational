@@ -157,16 +157,25 @@ public interface DatabaseClient {
 		<R> TypedExecuteSpec<R> as(Class<R> resultType);
 
 		/**
+		 * Configure a result mapping {@link java.util.function.BiFunction function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return
+		 */
+		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+
+		/**
 		 * Perform the SQL call and retrieve the result.
 		 */
 		FetchSpec<Map<String, Object>> fetch();
 
 		/**
-		 * Perform the SQL request and return a {@link SqlResult}.
+		 * Perform the SQL call and return a {@link Mono} that completes without result on statement completion.
 		 *
-		 * @return a {@code Mono} for the result
+		 * @return a {@link Mono} ignoring its payload (actively dropping).
 		 */
-		Mono<SqlResult<Map<String, Object>>> exchange();
+		Mono<Void> then();
 	}
 
 	/**
@@ -184,16 +193,25 @@ public interface DatabaseClient {
 		<R> TypedExecuteSpec<R> as(Class<R> resultType);
 
 		/**
+		 * Configure a result mapping {@link java.util.function.BiFunction function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return
+		 */
+		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+
+		/**
 		 * Perform the SQL call and retrieve the result.
 		 */
 		FetchSpec<T> fetch();
 
 		/**
-		 * Perform the SQL request and return a {@link SqlResult}.
+		 * Perform the SQL call and return a {@link Mono} that completes without result on statement completion.
 		 *
-		 * @return a {@code Mono} for the result
+		 * @return a {@link Mono} ignoring its payload (actively dropping).
 		 */
-		Mono<SqlResult<T>> exchange();
+		Mono<Void> then();
 	}
 
 	/**
@@ -229,7 +247,7 @@ public interface DatabaseClient {
 		 * @param table must not be {@literal null} or empty.
 		 * @return
 		 */
-		GenericInsertSpec into(String table);
+		GenericInsertSpec<Map<String, Object>> into(String table);
 
 		/**
 		 * Specify the target table to insert to using the {@link Class entity class}.
@@ -255,16 +273,18 @@ public interface DatabaseClient {
 		<R> TypedSelectSpec<R> as(Class<R> resultType);
 
 		/**
+		 * Configure a result mapping {@link java.util.function.BiFunction function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return
+		 */
+		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+
+		/**
 		 * Perform the SQL call and retrieve the result.
 		 */
 		FetchSpec<Map<String, Object>> fetch();
-
-		/**
-		 * Perform the SQL request and return a {@link SqlResult}.
-		 *
-		 * @return a {@code Mono} for the result
-		 */
-		Mono<SqlResult<Map<String, Object>>> exchange();
 	}
 
 	/**
@@ -279,28 +299,21 @@ public interface DatabaseClient {
 		 * @param resultType must not be {@literal null}.
 		 * @param <R> result type.
 		 */
-		<R> TypedSelectSpec<R> as(Class<R> resultType);
+		<R> FetchSpec<R> as(Class<R> resultType);
 
 		/**
-		 * Configure a result mapping {@link java.util.function.Function}.
+		 * Configure a result mapping {@link java.util.function.BiFunction function}.
 		 *
 		 * @param mappingFunction must not be {@literal null}.
 		 * @param <R> result type.
 		 * @return
 		 */
-		<R> TypedSelectSpec<R> extract(BiFunction<Row, RowMetadata, R> mappingFunction);
+		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
 		/**
 		 * Perform the SQL call and retrieve the result.
 		 */
 		FetchSpec<T> fetch();
-
-		/**
-		 * Perform the SQL request and return a {@link SqlResult}.
-		 *
-		 * @return a {@code Mono} for the result
-		 */
-		Mono<SqlResult<T>> exchange();
 	}
 
 	/**
@@ -332,8 +345,10 @@ public interface DatabaseClient {
 
 	/**
 	 * Contract for specifying {@code INSERT} options leading to the exchange.
+	 *
+	 * @param <T> Result type of tabular insert results.
 	 */
-	interface GenericInsertSpec extends InsertSpec {
+	interface GenericInsertSpec<T> extends InsertSpec<T> {
 
 		/**
 		 * Specify a field and non-{@literal null} value to insert.
@@ -341,7 +356,7 @@ public interface DatabaseClient {
 		 * @param field must not be {@literal null} or empty.
 		 * @param value must not be {@literal null}
 		 */
-		GenericInsertSpec value(String field, Object value);
+		GenericInsertSpec<T> value(String field, Object value);
 
 		/**
 		 * Specify a {@literal null} value to insert.
@@ -349,7 +364,7 @@ public interface DatabaseClient {
 		 * @param field must not be {@literal null} or empty.
 		 * @param type must not be {@literal null}.
 		 */
-		GenericInsertSpec nullValue(String field, Class<?> type);
+		GenericInsertSpec<T> nullValue(String field, Class<?> type);
 	}
 
 	/**
@@ -363,7 +378,7 @@ public interface DatabaseClient {
 		 * @param objectToInsert
 		 * @return
 		 */
-		InsertSpec using(T objectToInsert);
+		InsertSpec<Map<String, Object>> using(T objectToInsert);
 
 		/**
 		 * Use the given {@code tableName} as insert target.
@@ -374,30 +389,43 @@ public interface DatabaseClient {
 		TypedInsertSpec<T> table(String tableName);
 
 		/**
-		 * Insert the given {@link Publisher} to insert one or more objects.
+		 * Insert the given {@link Publisher} to insert one or more objects. Inserts only a single object when calling
+		 * {@link FetchSpec#one()} or {@link FetchSpec#first()}.
 		 *
 		 * @param objectToInsert
 		 * @return
+		 * @see InsertSpec#fetch()
 		 */
-		InsertSpec using(Publisher<T> objectToInsert);
+		InsertSpec<Map<String, Object>> using(Publisher<T> objectToInsert);
 	}
 
 	/**
 	 * Contract for specifying {@code INSERT} options leading to the exchange.
+	 *
+	 * @param <T> Result type of tabular insert results.
 	 */
-	interface InsertSpec {
+	interface InsertSpec<T> {
 
 		/**
-		 * Perform the SQL call.
+		 * Configure a result mapping {@link java.util.function.BiFunction function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return
+		 */
+		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+
+		/**
+		 * Perform the SQL call and retrieve the result.
+		 */
+		FetchSpec<T> fetch();
+
+		/**
+		 * Perform the SQL call and return a {@link Mono} that completes without result on statement completion.
+		 *
+		 * @return a {@link Mono} ignoring its payload (actively dropping).
 		 */
 		Mono<Void> then();
-
-		/**
-		 * Perform the SQL request and return a {@link SqlResult}.
-		 *
-		 * @return a {@code Mono} for the result
-		 */
-		Mono<SqlResult<Map<String, Object>>> exchange();
 	}
 
 	/**

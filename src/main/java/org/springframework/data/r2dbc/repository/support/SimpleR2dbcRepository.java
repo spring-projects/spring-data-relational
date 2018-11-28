@@ -32,7 +32,6 @@ import org.springframework.data.r2dbc.function.BindIdOperation;
 import org.springframework.data.r2dbc.function.BindableOperation;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
-import org.springframework.data.r2dbc.function.FetchSpec;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.SettableValue;
@@ -66,8 +65,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			return databaseClient.insert() //
 					.into(entity.getJavaType()) //
 					.using(objectToSave) //
-					.exchange() //
-					.flatMap(it -> it.extract(converter.populateIdIfNecessary(objectToSave)).one());
+					.map(converter.populateIdIfNecessary(objectToSave)) //
+					.one();
 		}
 
 		Object id = entity.getRequiredId(objectToSave);
@@ -83,8 +82,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		update.bindId(wrapper, id);
 
 		return wrapper.getBoundOperation().as(entity.getJavaType()) //
-				.exchange() //
-				.flatMap(FetchSpec::rowsUpdated) //
+				.then() //
 				.thenReturn(objectToSave);
 	}
 
@@ -156,8 +154,9 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		select.bindId(wrapper, id);
 
 		return wrapper.getBoundOperation().as(entity.getJavaType()) //
-				.exchange() //
-				.flatMap(it -> it.extract((r, md) -> r).first()).hasElement();
+				.map((r, md) -> r) //
+				.first() //
+				.hasElement();
 	}
 
 	/* (non-Javadoc)
@@ -220,8 +219,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		return databaseClient.execute()
 				.sql(String.format("SELECT COUNT(%s) FROM %s", getIdColumnName(), entity.getTableName())) //
-				.exchange() //
-				.flatMap(it -> it.extract((r, md) -> r.get(0, Long.class)).first()) //
+				.map((r, md) -> r.get(0, Long.class)) //
+				.first() //
 				.defaultIfEmpty(0L);
 
 	}
@@ -312,7 +311,6 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	public Mono<Void> deleteAll() {
 
 		return databaseClient.execute().sql(String.format("DELETE FROM %s", entity.getTableName())) //
-				.exchange() //
 				.then();
 	}
 

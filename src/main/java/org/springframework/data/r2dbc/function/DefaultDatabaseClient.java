@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -223,6 +224,15 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Customization hook.
 	 */
+	protected <T> DefaultTypedExecuteSpec<T> createTypedExecuteSpec(Map<Integer, SettableValue> byIndex,
+			Map<String, SettableValue> byName, Supplier<String> sqlSupplier,
+			BiFunction<Row, RowMetadata, T> mappingFunction) {
+		return new DefaultTypedExecuteSpec<>(byIndex, byName, sqlSupplier, mappingFunction);
+	}
+
+	/**
+	 * Customization hook.
+	 */
 	protected ExecuteSpecSupport createGenericExecuteSpec(Map<Integer, SettableValue> byIndex,
 			Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
 		return new DefaultGenericExecuteSpec(byIndex, byName, sqlSupplier);
@@ -293,6 +303,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.byIndex = Collections.emptyMap();
 			this.byName = Collections.emptyMap();
 			this.sqlSupplier = sqlSupplier;
+		}
+
+		ExecuteSpecSupport(ExecuteSpecSupport other) {
+
+			this.byIndex = other.byIndex;
+			this.byName = other.byName;
+			this.sqlSupplier = other.sqlSupplier;
 		}
 
 		protected String getSql() {
@@ -397,13 +414,21 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange(getSql(), mappingFunction);
+		}
+
+		@Override
 		public FetchSpec<Map<String, Object>> fetch() {
 			return exchange(getSql(), ColumnMapRowMapper.INSTANCE);
 		}
 
 		@Override
-		public Mono<SqlResult<Map<String, Object>>> exchange() {
-			return Mono.just(exchange(getSql(), ColumnMapRowMapper.INSTANCE));
+		public Mono<Void> then() {
+			return fetch().rowsUpdated().then();
 		}
 
 		@Override
@@ -456,6 +481,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
 		}
 
+		DefaultTypedExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
+				Supplier<String> sqlSupplier, BiFunction<Row, RowMetadata, T> mappingFunction) {
+
+			super(byIndex, byName, sqlSupplier);
+			this.typeToRead = null;
+			this.mappingFunction = mappingFunction;
+		}
+
 		@Override
 		public <R> TypedExecuteSpec<R> as(Class<R> resultType) {
 
@@ -465,13 +498,21 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange(getSql(), mappingFunction);
+		}
+
+		@Override
 		public FetchSpec<T> fetch() {
 			return exchange(getSql(), mappingFunction);
 		}
 
 		@Override
-		public Mono<SqlResult<T>> exchange() {
-			return Mono.just(exchange(getSql(), mappingFunction));
+		public Mono<Void> then() {
+			return fetch().rowsUpdated().then();
 		}
 
 		@Override
@@ -603,8 +644,19 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public <R> TypedSelectSpec<R> as(Class<R> resultType) {
+
+			Assert.notNull(resultType, "Result type must not be null!");
+
 			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, resultType,
 					dataAccessStrategy.getRowMapper(resultType));
+		}
+
+		@Override
+		public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange(mappingFunction);
 		}
 
 		@Override
@@ -625,11 +677,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		public FetchSpec<Map<String, Object>> fetch() {
 			return exchange(ColumnMapRowMapper.INSTANCE);
-		}
-
-		@Override
-		public Mono<SqlResult<Map<String, Object>>> exchange() {
-			return Mono.just(exchange(ColumnMapRowMapper.INSTANCE));
 		}
 
 		private <R> SqlResult<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
@@ -660,7 +707,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	@SuppressWarnings("unchecked")
 	private class DefaultTypedSelectSpec<T> extends DefaultSelectSpecSupport implements TypedSelectSpec<T> {
 
-		private final Class<?> typeToRead;
+		private final @Nullable Class<T> typeToRead;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
 		DefaultTypedSelectSpec(Class<T> typeToRead) {
@@ -671,7 +718,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
 		}
 
-		DefaultTypedSelectSpec(String table, List<String> projectedFields, Sort sort, Pageable page, Class<?> typeToRead,
+		DefaultTypedSelectSpec(String table, List<String> projectedFields, Sort sort, Pageable page,
+				BiFunction<Row, RowMetadata, T> mappingFunction) {
+			this(table, projectedFields, sort, page, null, mappingFunction);
+		}
+
+		DefaultTypedSelectSpec(String table, List<String> projectedFields, Sort sort, Pageable page, Class<T> typeToRead,
 				BiFunction<Row, RowMetadata, T> mappingFunction) {
 			super(table, projectedFields, sort, page);
 			this.typeToRead = typeToRead;
@@ -679,20 +731,19 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public <R> TypedSelectSpec<R> as(Class<R> resultType) {
+		public <R> FetchSpec<R> as(Class<R> resultType) {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
-			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, typeToRead,
-					dataAccessStrategy.getRowMapper(resultType));
+			return exchange(dataAccessStrategy.getRowMapper(resultType));
 		}
 
 		@Override
-		public <R> TypedSelectSpec<R> extract(BiFunction<Row, RowMetadata, R> mappingFunction) {
+		public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			Assert.notNull(mappingFunction, "Mapping function must not be null!");
 
-			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, typeToRead, mappingFunction);
+			return exchange(mappingFunction);
 		}
 
 		@Override
@@ -711,13 +762,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public FetchSpec<T> fetch() {
+		public SqlResult<T> fetch() {
 			return exchange(mappingFunction);
-		}
-
-		@Override
-		public Mono<SqlResult<T>> exchange() {
-			return Mono.just(exchange(mappingFunction));
 		}
 
 		private <R> SqlResult<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
@@ -749,13 +795,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultInsertIntoSpec implements InsertIntoSpec {
 
 		@Override
-		public GenericInsertSpec into(String table) {
-			return new DefaultGenericInsertSpec(table, Collections.emptyMap());
+		public GenericInsertSpec<Map<String, Object>> into(String table) {
+			return new DefaultGenericInsertSpec<>(table, Collections.emptyMap(), ColumnMapRowMapper.INSTANCE);
 		}
 
 		@Override
 		public <T> TypedInsertSpec<T> into(Class<T> table) {
-			return new DefaultTypedInsertSpec<>(table);
+			return new DefaultTypedInsertSpec<>(table, ColumnMapRowMapper.INSTANCE);
 		}
 	}
 
@@ -763,10 +809,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * Default implementation of {@link DatabaseClient.GenericInsertSpec}.
 	 */
 	@RequiredArgsConstructor
-	class DefaultGenericInsertSpec implements GenericInsertSpec {
+	class DefaultGenericInsertSpec<T> implements GenericInsertSpec<T> {
 
 		private final String table;
 		private final Map<String, SettableValue> byName;
+		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
 		@Override
 		public GenericInsertSpec value(String field, Object value) {
@@ -776,7 +823,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
 			byName.put(field, new SettableValue(field, value, null));
 
-			return new DefaultGenericInsertSpec(this.table, byName);
+			return new DefaultGenericInsertSpec<>(this.table, byName, this.mappingFunction);
 		}
 
 		@Override
@@ -787,20 +834,28 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
 			byName.put(field, new SettableValue(field, null, type));
 
-			return new DefaultGenericInsertSpec(this.table, byName);
+			return new DefaultGenericInsertSpec<>(this.table, byName, this.mappingFunction);
+		}
+
+		@Override
+		public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange(mappingFunction);
+		}
+
+		@Override
+		public FetchSpec<T> fetch() {
+			return exchange(this.mappingFunction);
 		}
 
 		@Override
 		public Mono<Void> then() {
-			return exchange((row, md) -> row).all().then();
+			return fetch().rowsUpdated().then();
 		}
 
-		@Override
-		public Mono<SqlResult<Map<String, Object>>> exchange() {
-			return Mono.just(exchange(ColumnMapRowMapper.INSTANCE));
-		}
-
-		private <T> SqlResult<T> exchange(BiFunction<Row, RowMetadata, T> mappingFunction) {
+		private <R> SqlResult<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			if (byName.isEmpty()) {
 				throw new IllegalStateException("Insert fields is empty!");
@@ -809,7 +864,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			BindableOperation bindableInsert = dataAccessStrategy.insertAndReturnGeneratedKeys(table, byName.keySet());
 
 			String sql = bindableInsert.toQuery();
-			Function<Connection, Statement> insertFunction = it -> {
+			Function<Connection, Statement<?>> insertFunction = it -> {
 
 				if (logger.isDebugEnabled()) {
 					logger.debug("Executing SQL statement [" + sql + "]");
@@ -837,17 +892,19 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * Default implementation of {@link DatabaseClient.TypedInsertSpec}.
 	 */
 	@RequiredArgsConstructor
-	class DefaultTypedInsertSpec<T> implements TypedInsertSpec<T>, InsertSpec {
+	class DefaultTypedInsertSpec<T, R> implements TypedInsertSpec<T>, InsertSpec<R> {
 
 		private final Class<?> typeToInsert;
 		private final String table;
 		private final Publisher<T> objectToInsert;
+		private final BiFunction<Row, RowMetadata, R> mappingFunction;
 
-		DefaultTypedInsertSpec(Class<?> typeToInsert) {
+		DefaultTypedInsertSpec(Class<?> typeToInsert, BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			this.typeToInsert = typeToInsert;
 			this.table = dataAccessStrategy.getTableName(typeToInsert);
 			this.objectToInsert = Mono.empty();
+			this.mappingFunction = mappingFunction;
 		}
 
 		@Override
@@ -855,7 +912,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.hasText(tableName, "Table name must not be null or empty!");
 
-			return new DefaultTypedInsertSpec<>(typeToInsert, tableName, objectToInsert);
+			return new DefaultTypedInsertSpec<>(typeToInsert, tableName, objectToInsert, this.mappingFunction);
 		}
 
 		@Override
@@ -863,7 +920,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(objectToInsert, "Object to insert must not be null!");
 
-			return new DefaultTypedInsertSpec<>(typeToInsert, table, Mono.just(objectToInsert));
+			return new DefaultTypedInsertSpec<>(typeToInsert, table, Mono.just(objectToInsert), this.mappingFunction);
 		}
 
 		@Override
@@ -871,7 +928,20 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(objectToInsert, "Publisher to insert must not be null!");
 
-			return new DefaultTypedInsertSpec<>(typeToInsert, table, objectToInsert);
+			return new DefaultTypedInsertSpec<>(typeToInsert, table, objectToInsert, this.mappingFunction);
+		}
+
+		@Override
+		public <MR> FetchSpec<MR> map(BiFunction<Row, RowMetadata, MR> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange(mappingFunction);
+		}
+
+		@Override
+		public FetchSpec<R> fetch() {
+			return exchange(this.mappingFunction);
 		}
 
 		@Override
@@ -879,12 +949,33 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return Mono.from(objectToInsert).flatMapMany(toInsert -> exchange(toInsert, (row, md) -> row).all()).then();
 		}
 
-		@Override
-		public Mono<SqlResult<Map<String, Object>>> exchange() {
-			return Mono.from(objectToInsert).map(toInsert -> exchange(toInsert, ColumnMapRowMapper.INSTANCE));
+		private <MR> FetchSpec<MR> exchange(BiFunction<Row, RowMetadata, MR> mappingFunction) {
+
+			return new FetchSpec<MR>() {
+				@Override
+				public Mono<MR> one() {
+					return Mono.from(objectToInsert).flatMap(toInsert -> exchange(toInsert, mappingFunction).one());
+				}
+
+				@Override
+				public Mono<MR> first() {
+					return Mono.from(objectToInsert).flatMap(toInsert -> exchange(toInsert, mappingFunction).first());
+				}
+
+				@Override
+				public Flux<MR> all() {
+					return Flux.from(objectToInsert).flatMap(toInsert -> exchange(toInsert, mappingFunction).all());
+				}
+
+				@Override
+				public Mono<Integer> rowsUpdated() {
+					return Mono.from(objectToInsert).flatMapMany(toInsert -> exchange(toInsert, mappingFunction).rowsUpdated())
+							.collect(Collectors.summingInt(Integer::intValue));
+				}
+			};
 		}
 
-		private <R> SqlResult<R> exchange(Object toInsert, BiFunction<Row, RowMetadata, R> mappingFunction) {
+		private <MR> SqlResult<MR> exchange(Object toInsert, BiFunction<Row, RowMetadata, MR> mappingFunction) {
 
 			List<SettableValue> insertValues = dataAccessStrategy.getValuesToInsert(toInsert);
 			Set<String> columns = new LinkedHashSet<>();
@@ -919,7 +1010,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
 					resultFunction, //
-					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
+					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated)
+							.collect(Collectors.summingInt(Integer::intValue)), //
 					mappingFunction);
 		}
 	}

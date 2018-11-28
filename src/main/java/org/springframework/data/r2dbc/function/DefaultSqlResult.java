@@ -34,6 +34,33 @@ import org.springframework.jdbc.core.SqlProvider;
  */
 class DefaultSqlResult<T> implements SqlResult<T> {
 
+	private final static SqlResult<?> EMPTY = new SqlResult<Object>() {
+		@Override
+		public <R> SqlResult<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
+			return DefaultSqlResult.empty();
+		}
+
+		@Override
+		public Mono<Object> one() {
+			return Mono.empty();
+		}
+
+		@Override
+		public Mono<Object> first() {
+			return Mono.empty();
+		}
+
+		@Override
+		public Flux<Object> all() {
+			return Flux.empty();
+		}
+
+		@Override
+		public Mono<Integer> rowsUpdated() {
+			return Mono.empty();
+		}
+	};
+
 	private final ConnectionAccessor connectionAccessor;
 	private final String sql;
 	private final Function<Connection, Flux<Result>> resultFunction;
@@ -71,11 +98,22 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 		});
 	}
 
+	/**
+	 * Returns an empty {@link SqlResult}.
+	 *
+	 * @param <R>
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static <R> SqlResult<R> empty() {
+		return (SqlResult<R>) EMPTY;
+	}
+
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.SqlResult#extract(java.util.function.BiFunction)
+	 * @see org.springframework.data.jdbc.core.function.SqlResult#map(java.util.function.BiFunction)
 	 */
 	@Override
-	public <R> SqlResult<R> extract(BiFunction<Row, RowMetadata, R> mappingFunction) {
+	public <R> SqlResult<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
 		return new DefaultSqlResult<>(connectionAccessor, sql, resultFunction, updatedRowsFunction, mappingFunction);
 	}
 

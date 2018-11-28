@@ -8,7 +8,7 @@ The state of R2DBC is incubating to evaluate how an reactive integration could l
 
 == This is NOT an ORM
 
-Spring Data R2DBC does not try to be an ORM. 
+Spring Data R2DBC does not try to be an ORM.
 Instead it is more of a construction kit for your personal reactive relational data access component that you can define the way you like or need it.
 
 == Maven Coordinates
@@ -64,12 +64,13 @@ Mono<Integer> count = databaseClient.execute()
 
 Flux<Map<String, Object>> rows = databaseClient.execute()
 				.sql("SELECT id, name, manual FROM legoset")
-				.fetch().all();
+				.fetch()
+				.all();
 
 Flux<Long> result = db.execute()
 				.sql("SELECT txid_current();")
-				.exchange()
-				.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
+				.map((r, md) -> r.get(0, Long.class))
+				.all();
 ----
 
 === Examples selecting data
@@ -100,14 +101,13 @@ Flux<Integer> ids = databaseClient.insert()
 				.value("id", 42055)
 				.value("name", "Description")
 				.nullValue("manual", Integer.class)
-				.exchange() //
-				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all())
+				.map((r, m) -> r.get("id", Integer.class)
+				.all();
 
-Flux<Integer> ids = databaseClient.insert()
+Mono<Void> completion = databaseClient.insert()
 				.into(LegoSet.class)
 				.using(legoSet)
-				.exchange()
-				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all())
+				.then();
 ----
 
 === Examples using reactive repositories
@@ -162,7 +162,7 @@ Flux<Integer> rowsUpdated = databaseClient.inTransaction(db -> {
 [source,java]
 ----
 Flux<Long> txId = databaseClient.execute().sql("SELECT txid_current();").exchange()
-				.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
+				.flatMapMany(it -> it.map((r, md) -> r.get(0, Long.class)).all());
 
 Mono<Void> then = databaseClient.enableTransactionSynchronization(databaseClient.beginTransaction() //
 				.thenMany(txId)) //

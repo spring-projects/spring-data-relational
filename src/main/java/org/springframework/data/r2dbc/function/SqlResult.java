@@ -34,5 +34,5 @@ public interface SqlResult<T> extends FetchSpec<T> {
 	 * @param <R>
 	 * @return a new {@link SqlResult} with {@link BiFunction mapping function} applied.
 	 */
-	<R> SqlResult<R> extract(BiFunction<Row, RowMetadata, R> mappingFunction);
+	<R> SqlResult<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 }

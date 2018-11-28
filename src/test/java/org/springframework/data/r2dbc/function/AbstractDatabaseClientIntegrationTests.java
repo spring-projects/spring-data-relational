@@ -20,6 +20,7 @@ import static org.springframework.data.domain.Sort.Order.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Data;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
 
@@ -108,6 +109,9 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.expectNext(1) //
 				.verifyComplete();
 
+		Flux<LegoSet> rows = databaseClient.select().from("legoset").orderBy(Sort.by(desc("id"))).as(LegoSet.class).fetch()
+				.all();
+
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
@@ -160,8 +164,8 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.value("id", 42055) //
 				.value("name", "SCHAUFELRADBAGGER") //
 				.nullValue("manual", Integer.class) //
-				.exchange() //
-				.flatMapMany(FetchSpec::rowsUpdated) //
+				.fetch() //
+				.rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectNext(1).verifyComplete();
 
@@ -195,16 +199,18 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 
 		databaseClient.insert().into(LegoSet.class)//
-				.using(legoSet).exchange() //
-				.flatMapMany(FetchSpec::rowsUpdated) //
+				.using(legoSet) //
+				.fetch() //
+				.rowsUpdated() //
 				.as(StepVerifier::create) //
-				.expectNext(1).verifyComplete();
+				.expectNext(1) //
+				.verifyComplete();
 
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
 	@Test
-	public void select() {
+	public void selectAsMap() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
 
@@ -213,13 +219,31 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		databaseClient.select().from(LegoSet.class) //
 				.project("id", "name", "manual") //
 				.orderBy(Sort.by("id")) //
-				.fetch().all() //
+				.fetch() //
+				.all() //
 				.as(StepVerifier::create) //
 				.assertNext(actual -> {
 					assertThat(actual.getId()).isEqualTo(42055);
 					assertThat(actual.getName()).isEqualTo("SCHAUFELRADBAGGER");
 					assertThat(actual.getManual()).isEqualTo(12);
 				}).verifyComplete();
+	}
+
+	@Test
+	public void selectExtracting() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.select().from("legoset") //
+				.project("id", "name", "manual") //
+				.orderBy(Sort.by("id")) //
+				.map((r, md) -> r.get("id", Integer.class)) //
+				.all() //
+				.as(StepVerifier::create) //
+				.expectNext(42055) //
+				.verifyComplete();
 	}
 
 	@Test

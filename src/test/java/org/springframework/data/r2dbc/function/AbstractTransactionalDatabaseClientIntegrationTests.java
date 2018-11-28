@@ -148,8 +148,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		Queue<Long> transactionIds = new ArrayBlockingQueue<>(5);
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
-		Flux<Long> txId = databaseClient.execute().sql(getCurrentTransactionIdStatement()).exchange()
-				.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
+		Flux<Long> txId = databaseClient.execute().sql(getCurrentTransactionIdStatement()).map((r, md) -> r.get(0, Long.class)).all();
 
 		Mono<Void> then = databaseClient.enableTransactionSynchronization(databaseClient.beginTransaction() //
 				.thenMany(txId.concatWith(txId).doOnNext(transactionIds::add)) //
@@ -207,8 +206,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 		Flux<Object> transactionIds = databaseClient.inTransaction(db -> {
 
-			Flux<Object> txId = db.execute().sql(getCurrentTransactionIdStatement()).exchange()
-					.flatMapMany(it -> it.extract((r, md) -> r.get(0)).all());
+			Flux<Object> txId = db.execute().sql(getCurrentTransactionIdStatement()).map((r, md) -> r.get(0)).all();
 			return txId.concatWith(txId);
 		});
 
