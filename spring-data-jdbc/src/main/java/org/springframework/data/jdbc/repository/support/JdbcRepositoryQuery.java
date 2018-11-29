@@ -81,16 +81,6 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		this.operations = operations;
 		this.mapper = determineMapper(defaultMapper);		
 	}
-	
-	private RowMapperResultsetExtractorEither<?> determineMapper(RowMapperResultsetExtractorEither<?> defaultMapper) {
-		RowMapper<?> queryRowMapper = createRowMapper(queryMethod); //use the RowMapper|ResultSetExtractor from Query annotation if set, else use default
-		ResultSetExtractor<?> queryResultSetExtractor = createResultSetExtractor(queryMethod);
-		if(queryRowMapper != null) {
-			return RowMapperResultsetExtractorEither.of(queryRowMapper);
-		} else if(queryResultSetExtractor != null) {
-			return RowMapperResultsetExtractorEither.of(queryResultSetExtractor);
-		} else return defaultMapper;
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -168,27 +158,30 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		return parameters;
 	}
 
-	@Nullable
-	private static RowMapper<?> createRowMapper(JdbcQueryMethod queryMethod) {
-
-		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
-
-		return rowMapperClass == null || rowMapperClass == RowMapper.class //
-				? null //
-				: (RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass);
+	private RowMapperResultsetExtractorEither<?> determineMapper(RowMapperResultsetExtractorEither<?> defaultMapper) {
+		RowMapperResultsetExtractorEither<?> configuredMapper = getConfiguredMapper(queryMethod);
+		if(configuredMapper != null) return configuredMapper;
+		return defaultMapper;
 	}
 	
 	@Nullable
-	private static ResultSetExtractor<?> createResultSetExtractor(JdbcQueryMethod queryMethod) {
-
+	private static RowMapperResultsetExtractorEither<?> getConfiguredMapper(JdbcQueryMethod queryMethod) {
+		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
 		Class<?> resultSetExtractorClass = queryMethod.getResultSetExtractorClass();
-
-		if(resultSetExtractorClass == null || resultSetExtractorClass == ResultSetExtractor.class) { //if it's the default - return null
+		if(isConfigured(rowMapperClass, RowMapper.class) && isConfigured(resultSetExtractorClass, ResultSetExtractor.class)) 
+			throw new InvalidQueryConfiguration("Cannot use both rowMapperClass and resultSetExtractorClass on @Query annotation. Query method: [" + queryMethod.getName() + "] query: [" + queryMethod.getAnnotatedQuery() + "]");
+		
+		if(!isConfigured(rowMapperClass, RowMapper.class) && !isConfigured(resultSetExtractorClass, ResultSetExtractor.class))
 			return null;
+		if(isConfigured(rowMapperClass, RowMapper.class)) {
+			return RowMapperResultsetExtractorEither.of((RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass));
 		} else {
-			return (ResultSetExtractor<?>) BeanUtils.instantiateClass(resultSetExtractorClass);
+			return RowMapperResultsetExtractorEither.of((ResultSetExtractor<?>) BeanUtils.instantiateClass(resultSetExtractorClass));
 		}
-				
+	}
+
+	private static boolean isConfigured(Class<?> rowMapperClass, Class<?> defaultClass) {
+		return rowMapperClass != null && rowMapperClass != defaultClass;
 	}
 
 	private <T> void publishAfterLoad(Iterable<T> all) {
