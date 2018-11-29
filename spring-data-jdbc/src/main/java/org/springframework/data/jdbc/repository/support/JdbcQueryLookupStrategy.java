@@ -20,7 +20,7 @@ import java.lang.reflect.Method;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
-import org.springframework.data.jdbc.repository.MapperMap;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.support.RowMapperResultsetExtractorEither;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -51,12 +51,12 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final RelationalMappingContext context;
 	private final RelationalConverter converter;
 	private final DataAccessStrategy accessStrategy;
-	private final MapperMap mapperMap;
+	private final QueryMappingConfiguration mapperMap;
 	private final NamedParameterJdbcOperations operations;
 
 	/**
 	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext},
-	 * {@link DataAccessStrategy} and {@link MapperMap}.
+	 * {@link DataAccessStrategy} and {@link QueryMappingConfiguration}.
 	 *
 	 * @param publisher must not be {@literal null}.
 	 * @param context must not be {@literal null}.
@@ -65,7 +65,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * @param rowMapperMap must not be {@literal null}.
 	 */
 	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, RelationalMappingContext context, RelationalConverter converter,
-			DataAccessStrategy accessStrategy, MapperMap rowMapperMap, NamedParameterJdbcOperations operations) {
+			DataAccessStrategy accessStrategy, QueryMappingConfiguration rowMapperMap, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");

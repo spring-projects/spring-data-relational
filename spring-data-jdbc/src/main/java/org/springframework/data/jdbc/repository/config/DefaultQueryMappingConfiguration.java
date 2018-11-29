@@ -3,19 +3,19 @@ package org.springframework.data.jdbc.repository.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.springframework.data.jdbc.repository.MapperMap;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.support.RowMapperResultsetExtractorEither;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.Assert;
 
 /**
- * A {@link MapperMap} that allows for registration of {@link RowMapper}s and {@link ResultSetExtractor}s via a fluent Api.
+ * A {@link QueryMappingConfiguration} that allows for registration of {@link RowMapper}s and {@link ResultSetExtractor}s via a fluent Api.
  *
  * @author Jens Schauder
  * @author Evgeni Dimitrov
  */
-public class ConfigurableMapperMap implements MapperMap{
+public class DefaultQueryMappingConfiguration implements QueryMappingConfiguration{
 	private Map<Class<?>, RowMapperResultsetExtractorEither<?>> mappers = new LinkedHashMap<>();
 	@Override
 	public <T> ResultSetExtractor<? extends T> resultSetExtractorFor(Class<T> type) {
@@ -59,7 +59,7 @@ public class ConfigurableMapperMap implements MapperMap{
 	 *
 	 * @return this instance, so this can be used as a fluent interface.
 	 */
-	public <T> ConfigurableMapperMap registerRowMapper(Class<T> type, RowMapper<? extends T> rowMapper) {
+	public <T> DefaultQueryMappingConfiguration registerRowMapper(Class<T> type, RowMapper<? extends T> rowMapper) {
 		mappers.put(type, RowMapperResultsetExtractorEither.of(rowMapper));
 		return this;
 	}
@@ -69,7 +69,7 @@ public class ConfigurableMapperMap implements MapperMap{
 	 *
 	 * @return this instance, so this can be used as a fluent interface.
 	 */
-	public <T> ConfigurableMapperMap registerResultSetExtractor(Class<T> type, ResultSetExtractor resultSetExtractor) {
+	public <T> DefaultQueryMappingConfiguration registerResultSetExtractor(Class<T> type, ResultSetExtractor resultSetExtractor) {
 		mappers.put(type, RowMapperResultsetExtractorEither.of(resultSetExtractor));
 		return this;
 	}

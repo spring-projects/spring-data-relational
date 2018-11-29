@@ -23,7 +23,7 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
-import org.springframework.data.jdbc.repository.MapperMap;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
@@ -49,7 +49,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private RelationalMappingContext mappingContext;
 	private RelationalConverter converter;
 	private DataAccessStrategy dataAccessStrategy;
-	private MapperMap mapperMap = MapperMap.EMPTY;
+	private QueryMappingConfiguration mapperMap = QueryMappingConfiguration.EMPTY;
 	private NamedParameterJdbcOperations operations;
 
 	/**
@@ -106,7 +106,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	 *          {@literal null}.
 	 */
 	@Autowired(required = false)
-	public void setRowMapperMap(MapperMap rowMapperMap) {
+	public void setRowMapperMap(QueryMappingConfiguration rowMapperMap) {
 		this.mapperMap = rowMapperMap;
 	}
 
@@ -138,7 +138,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		}
 
 		if (mapperMap == null) {
-			this.mapperMap = MapperMap.EMPTY;
+			this.mapperMap = QueryMappingConfiguration.EMPTY;
 		}
 
 		super.afterPropertiesSet();

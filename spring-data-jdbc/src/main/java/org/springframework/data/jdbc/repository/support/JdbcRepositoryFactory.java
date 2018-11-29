@@ -20,7 +20,7 @@ import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
-import org.springframework.data.jdbc.repository.MapperMap;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -51,7 +51,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
 
-	private MapperMap mapperMap = MapperMap.EMPTY;
+	private QueryMappingConfiguration mapperMap = QueryMappingConfiguration.EMPTY;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
@@ -81,7 +81,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	/**
 	 * @param rowMapperMap must not be {@literal null} consider {@link RowMapperMap#EMPTY} instead.
 	 */
-	public void setRowMapperMap(MapperMap rowMapperMap) {
+	public void setRowMapperMap(QueryMappingConfiguration rowMapperMap) {
 
 		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
 

@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.repository.config.ConfigurableMapperMap;
+import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -66,8 +66,8 @@ public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
 		}
 		
 		@Bean
-		MapperMap mappers() {
-			return new ConfigurableMapperMap()
+		QueryMappingConfiguration mappers() {
+			return new DefaultQueryMappingConfiguration()
 					.registerResultSetExtractor(Car.class, new CarResultSetExtractor());
 		}
 	}

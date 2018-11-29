@@ -10,7 +10,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Evgeni Dimitrov
  */
-public interface MapperMap {
+public interface QueryMappingConfiguration {
 	@Nullable
 	<T> ResultSetExtractor<? extends T> resultSetExtractorFor(Class<T> type);
 	@Nullable
@@ -19,7 +19,7 @@ public interface MapperMap {
 	/**
 	 * An immutable empty instance that will return {@literal null} for all arguments.
 	 */
-	MapperMap EMPTY = new MapperMap() {
+	QueryMappingConfiguration EMPTY = new QueryMappingConfiguration() {
 
 		/*
 		 * (non-Javadoc)

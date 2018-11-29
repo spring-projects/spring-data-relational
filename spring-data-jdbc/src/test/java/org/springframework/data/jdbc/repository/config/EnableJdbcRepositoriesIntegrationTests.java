@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.repository.MapperMap;
+import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.CrudRepository;
@@ -75,20 +75,20 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorConfigurationGetsPickedUp() {
-		MapperMap mapping = (MapperMap) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
+		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
 		assertThat(mapping.resultSetExtractorFor(Integer.class)).isEqualTo(INTEGER_RESULT_SET_EXTRACTOR);
 	}
 	
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorConfigurationIsNotPickedUpIfRowMapperIsRegisteredForTheSameType() {
-		MapperMap mapping = (MapperMap) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
+		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
 		assertThat(mapping.resultSetExtractorFor(String.class)).isNull();
 	}
 	
 	@Test // DATAJDBC-166
 	public void customRowMapperConfigurationGetsPickedUp() {
 
-		MapperMap mapping = (MapperMap) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
+		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
 
 		assertThat(mapping.rowMapperFor(String.class)).isEqualTo(STRING_ROW_MAPPER);
 		assertThat(mapping.rowMapperFor(DummyEntity.class)).isEqualTo(DUMMY_ENTITY_ROW_MAPPER);
@@ -114,8 +114,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		}
 
 		@Bean
-		MapperMap rowMappers() {
-			return new ConfigurableMapperMap() //
+		QueryMappingConfiguration rowMappers() {
+			return new DefaultQueryMappingConfiguration() //
 					.registerRowMapper(DummyEntity.class, DUMMY_ENTITY_ROW_MAPPER) //
 					.registerRowMapper(String.class, STRING_ROW_MAPPER)
 					.registerResultSetExtractor(Integer.class, INTEGER_RESULT_SET_EXTRACTOR);
