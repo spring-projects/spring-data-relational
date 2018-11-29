@@ -111,19 +111,15 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	}
 
 	private RowMapperResultsetExtractorEither<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
-
 		Class<?> domainType = queryMethod.getReturnedObjectType();
-		ResultSetExtractor<?> resultSetExtractor = mapperMap.resultSetExtractorFor(domainType);
-		if(resultSetExtractor != null) return RowMapperResultsetExtractorEither.of(resultSetExtractor);
-		RowMapper<?> typeMappedRowMapper = mapperMap.rowMapperFor(domainType);
-		RowMapper<?> defaultRowMapper = typeMappedRowMapper == null //
-				? new EntityRowMapper<>( //
-						context.getRequiredPersistentEntity(domainType), //
-						context, //
-						converter, //
-						accessStrategy) //
-				: typeMappedRowMapper;
+		RowMapperResultsetExtractorEither<?> configuredQueryMapper = mapperMap.getMapper(domainType);
+		if(configuredQueryMapper != null) return configuredQueryMapper;
 		
-		return RowMapperResultsetExtractorEither.of(defaultRowMapper);
+		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
+				context.getRequiredPersistentEntity(domainType), //
+				context, //
+				converter, //
+				accessStrategy);
+		return RowMapperResultsetExtractorEither.of(defaultEntityRowMapper);
 	}
 }

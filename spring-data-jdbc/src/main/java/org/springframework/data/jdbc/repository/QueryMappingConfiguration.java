@@ -1,8 +1,7 @@
 package org.springframework.data.jdbc.repository;
 
+import org.springframework.data.jdbc.support.RowMapperResultsetExtractorEither;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.Nullable;
 
 /**
  * A map from a type to a {@link ResultSetExtractor} to be used for extracting that type from {@link java.sql.ResultSet}s.
@@ -11,28 +10,18 @@ import org.springframework.lang.Nullable;
  * @author Evgeni Dimitrov
  */
 public interface QueryMappingConfiguration {
-	@Nullable
-	<T> ResultSetExtractor<? extends T> resultSetExtractorFor(Class<T> type);
-	@Nullable
-	<T> RowMapper<? extends T> rowMapperFor(Class<T> type);
+	<T> RowMapperResultsetExtractorEither<?> getMapper(Class<T> type);
 	
 	/**
 	 * An immutable empty instance that will return {@literal null} for all arguments.
 	 */
 	QueryMappingConfiguration EMPTY = new QueryMappingConfiguration() {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.jdbc.repository.RowMapperMap#rowMapperFor(java.lang.Class)
-		 */
-		public <T> RowMapper<? extends T> rowMapperFor(Class<T> type) {
+		@Override
+		public <T> RowMapperResultsetExtractorEither<?> getMapper(Class<T> type) {
 			return null;
 		}
 
-		@Override
-		public <T> ResultSetExtractor<? extends T> resultSetExtractorFor(Class<T> type) {
-			return null;
-		}
 	};
 
 }

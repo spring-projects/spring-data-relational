@@ -33,6 +33,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.jdbc.support.RowMapperResultsetExtractorEither;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -76,13 +77,13 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorConfigurationGetsPickedUp() {
 		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
-		assertThat(mapping.resultSetExtractorFor(Integer.class)).isEqualTo(INTEGER_RESULT_SET_EXTRACTOR);
+		assertThat(mapping.getMapper(Integer.class)).isEqualTo(RowMapperResultsetExtractorEither.of(INTEGER_RESULT_SET_EXTRACTOR));
 	}
 	
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorConfigurationIsNotPickedUpIfRowMapperIsRegisteredForTheSameType() {
 		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
-		assertThat(mapping.resultSetExtractorFor(String.class)).isNull();
+		assertThat(mapping.getMapper(String.class).isResultSetExtractor()).isFalse();
 	}
 	
 	@Test // DATAJDBC-166
@@ -90,8 +91,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
 
-		assertThat(mapping.rowMapperFor(String.class)).isEqualTo(STRING_ROW_MAPPER);
-		assertThat(mapping.rowMapperFor(DummyEntity.class)).isEqualTo(DUMMY_ENTITY_ROW_MAPPER);
+		assertThat(mapping.getMapper(String.class)).isEqualTo(RowMapperResultsetExtractorEither.of(STRING_ROW_MAPPER));
+		assertThat(mapping.getMapper(DummyEntity.class)).isEqualTo(RowMapperResultsetExtractorEither.of(DUMMY_ENTITY_ROW_MAPPER));
 	}
 
 	interface DummyRepository extends CrudRepository<DummyEntity, Long> {

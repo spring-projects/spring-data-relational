@@ -17,27 +17,8 @@ import org.springframework.util.Assert;
  */
 public class DefaultQueryMappingConfiguration implements QueryMappingConfiguration{
 	private Map<Class<?>, RowMapperResultsetExtractorEither<?>> mappers = new LinkedHashMap<>();
-	@Override
-	public <T> ResultSetExtractor<? extends T> resultSetExtractorFor(Class<T> type) {
-		Assert.notNull(type, "Type must not be null");
-		RowMapperResultsetExtractorEither<?> candidate = getMapper(type);
-		if(candidate != null && candidate.isResultSetExtractor()) {
-			return (ResultSetExtractor<? extends T>) candidate.resultSetExtractor();
-		}
-		return null;
-	}
 
-	@Override
-	public <T> RowMapper<? extends T> rowMapperFor(Class<T> type) {
-		Assert.notNull(type, "Type must not be null");
-		RowMapperResultsetExtractorEither<?> candidate = getMapper(type);
-		if(candidate != null && candidate.isRowMapper()) {
-			return (RowMapper<? extends T>) candidate.rowMapper();
-		}
-		return null;
-	}
-
-	private <T> RowMapperResultsetExtractorEither<?> getMapper(Class<T> type) {
+	public <T> RowMapperResultsetExtractorEither<?> getMapper(Class<T> type) {
 		Assert.notNull(type, "Type must not be null");
 
 		RowMapperResultsetExtractorEither<?> candidate = mappers.get(type);
