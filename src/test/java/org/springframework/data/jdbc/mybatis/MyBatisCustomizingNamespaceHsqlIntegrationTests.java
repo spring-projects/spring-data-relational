@@ -75,7 +75,7 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 
 	@org.springframework.context.annotation.Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true, dataAccessStrategyRef="myBatisDataAccessStrategy")
 	static class Config {
 
 		@Bean
@@ -104,7 +104,7 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 			return new SqlSessionTemplate(factory);
 		}
 
-		@Bean
+		@Bean("myBatisDataAccessStrategy")
 		MyBatisDataAccessStrategy dataAccessStrategy(SqlSession sqlSession) {
 
 			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession);

@@ -58,7 +58,7 @@ public class MyBatisHsqlIntegrationTests {
 
 	@org.springframework.context.annotation.Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true, dataAccessStrategyRef = "myBatisDataAccessStrategy")
 	static class Config {
 
 		@Bean
@@ -87,7 +87,7 @@ public class MyBatisHsqlIntegrationTests {
 			return new SqlSessionTemplate(factory);
 		}
 
-		@Bean
+		@Bean("myBatisDataAccessStrategy")
 		DataAccessStrategy dataAccessStrategy(RelationalMappingContext context, RelationalConverter converter,
 				SqlSession sqlSession, EmbeddedDatabase db) {
 			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, converter,

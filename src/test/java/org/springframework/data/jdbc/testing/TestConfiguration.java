@@ -21,10 +21,12 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
@@ -56,8 +58,8 @@ public class TestConfiguration {
 	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
 	@Bean
-	JdbcRepositoryFactory jdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			RelationalConverter converter) {
+	JdbcRepositoryFactory jdbcRepositoryFactory(@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, 
+			RelationalMappingContext context, RelationalConverter converter) {
 		return new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher, namedParameterJdbcTemplate());
 	}
 
@@ -72,13 +74,13 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	DataAccessStrategy defaultDataAccessStrategy(RelationalMappingContext context, RelationalConverter converter) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter,
-				namedParameterJdbcTemplate());
+	DataAccessStrategy defaultDataAccessStrategy(@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
+			RelationalMappingContext context, RelationalConverter converter) {
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter,template);
 	}
 
 	@Bean
-	RelationalMappingContext jdbcMappingContext(NamedParameterJdbcOperations template,
+	RelationalMappingContext jdbcMappingContext(@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 			Optional<NamingStrategy> namingStrategy, CustomConversions conversions) {
 
 		RelationalMappingContext mappingContext = new RelationalMappingContext(

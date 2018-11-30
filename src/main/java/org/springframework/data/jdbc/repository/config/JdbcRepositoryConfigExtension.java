@@ -15,10 +15,21 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
+import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
+import org.springframework.data.repository.config.RepositoryConfigurationSource;
+import org.springframework.util.StringUtils;
 
 /**
  * {@link org.springframework.data.repository.config.RepositoryConfigurationExtension} extending the repository
@@ -28,6 +39,10 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
  */
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 
+	private static final String DEFAULT_JDBC_OPERATION_BEAN_NAME = "namedParameterJdbcTemplate";
+
+	
+	private ListableBeanFactory listableBeanFactory;
 	/*
 	* (non-Javadoc)
 	* @see org.springframework.data.repository.config.RepositoryConfigurationExtension#getModuleName()
@@ -36,6 +51,7 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	public String getModuleName() {
 		return "JDBC";
 	}
+	
 
 	/*
 	* (non-Javadoc)
@@ -53,6 +69,44 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	@Override
 	protected String getModulePrefix() {
 		return getModuleName().toLowerCase(Locale.US);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtension#registerBeansForRoot(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.data.repository.config.RepositoryConfigurationSource)
+	 */
+	public void registerBeansForRoot(BeanDefinitionRegistry registry,
+			RepositoryConfigurationSource configurationSource) {
+		if (registry instanceof ListableBeanFactory) {
+			this.listableBeanFactory =   (ListableBeanFactory) registry;
+		}
+	}
+
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#postProcess(org.springframework.beans.factory.support.BeanDefinitionBuilder, org.springframework.data.repository.config.RepositoryConfigurationSource)
+	 */
+	@Override
+	public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {
+
+		Optional<String> jdbcOperationRef = source.getAttribute("jdbcOperationsRef");
+		builder.addPropertyReference("jdbcOperations", jdbcOperationRef.orElse(DEFAULT_JDBC_OPERATION_BEAN_NAME));
+		Optional<String> dataAccessStrategyRef = source.getAttribute("dataAccessStrategyRef").filter(StringUtils::hasText);
+		if (dataAccessStrategyRef.isPresent()) {
+			builder.addPropertyReference("dataAccessStrategy", dataAccessStrategyRef.get());
+		} else if(this.listableBeanFactory != null) {
+			List<String> beanNames=Arrays.asList(listableBeanFactory.getBeanNamesForType(DataAccessStrategy.class));
+
+			if (beanNames.size() > 1) {
+				throw new NoUniqueBeanDefinitionException(DataAccessStrategy.class, beanNames);
+			}
+
+			if (!beanNames.isEmpty()) {
+				builder.addPropertyReference("dataAccessStrategy", beanNames.get(0));
+			}
+
+		}
 	}
 
 }
