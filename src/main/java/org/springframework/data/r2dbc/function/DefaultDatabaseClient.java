@@ -818,12 +818,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				Statement<?> statement = it.createStatement(sql);
 
 				byName.forEach((k, v) -> {
-
-					if (v.getValue() == null) {
-						bindableInsert.bindNull(statement, k, v.getType());
-					} else {
-						bindableInsert.bind(statement, k, v.getValue());
-					}
+					bindableInsert.bind(statement, v);
 				});
 				return statement;
 			};
@@ -911,12 +906,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				Statement<?> statement = it.createStatement(sql);
 
 				for (SettableValue settable : insertValues) {
-
-					if (settable.getValue() == null) {
-						bindableInsert.bindNull(statement, settable.getIdentifier().toString(), settable.getType());
-					} else {
-						bindableInsert.bind(statement, settable.getIdentifier().toString(), settable.getValue());
-					}
+					bindableInsert.bind(statement, settable);
 				}
 
 				return statement;

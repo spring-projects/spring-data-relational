@@ -78,7 +78,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		GenericExecuteSpec exec = databaseClient.execute().sql(update);
 
-		BindSpecWrapper<GenericExecuteSpec> wrapper = BindSpecWrapper.create(exec);
+		BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(exec);
 		columns.forEach(bind(update, wrapper));
 		update.bindId(wrapper, id);
 
@@ -123,7 +123,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		BindIdOperation select = accessStrategy.selectById(entity.getTableName(), columns, idColumnName);
 
 		GenericExecuteSpec sql = databaseClient.execute().sql(select);
-		BindSpecWrapper<GenericExecuteSpec> wrapper = BindSpecWrapper.create(sql);
+		BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(sql);
 		select.bindId(wrapper, id);
 
 		return wrapper.getBoundOperation().as(entity.getJavaType()) //
@@ -152,7 +152,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				idColumnName, 10);
 
 		GenericExecuteSpec sql = databaseClient.execute().sql(select);
-		BindSpecWrapper<GenericExecuteSpec> wrapper = BindSpecWrapper.create(sql);
+		BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(sql);
 		select.bindId(wrapper, id);
 
 		return wrapper.getBoundOperation().as(entity.getJavaType()) //
@@ -205,7 +205,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			String idColumnName = getIdColumnName();
 			BindIdOperation select = accessStrategy.selectByIdIn(entity.getTableName(), columns, idColumnName);
 
-			BindSpecWrapper<GenericExecuteSpec> wrapper = BindSpecWrapper.create(databaseClient.execute().sql(select));
+			BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(databaseClient.execute().sql(select));
 			select.bindIds(wrapper, ids);
 
 			return wrapper.getBoundOperation().as(entity.getJavaType()).fetch().all();
@@ -235,7 +235,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		Assert.notNull(id, "Id must not be null!");
 
 		BindIdOperation delete = accessStrategy.deleteById(entity.getTableName(), getIdColumnName());
-		BindSpecWrapper<GenericExecuteSpec> wrapper = BindSpecWrapper.create(databaseClient.execute().sql(delete));
+		BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(databaseClient.execute().sql(delete));
 
 		delete.bindId(wrapper, id);
 
@@ -262,7 +262,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			String idColumnName = getIdColumnName();
 			BindIdOperation delete = accessStrategy.deleteByIdIn(entity.getTableName(), idColumnName);
 
-			BindSpecWrapper<GenericExecuteSpec> wrapper = BindSpecWrapper.create(databaseClient.execute().sql(delete));
+			BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(databaseClient.execute().sql(delete));
 			delete.bindIds(wrapper, ids);
 
 			return wrapper.getBoundOperation().as(entity.getJavaType()).fetch().rowsUpdated();
@@ -324,11 +324,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	private BiConsumer<String, SettableValue> bind(BindableOperation operation, Statement<?> statement) {
 
 		return (k, v) -> {
-			if (v.getValue() == null) {
-				operation.bindNull(statement, k, v.getType());
-			} else {
-				operation.bind(statement, k, v.getValue());
-			}
+			operation.bind(statement, v);
 		};
 	}
 }

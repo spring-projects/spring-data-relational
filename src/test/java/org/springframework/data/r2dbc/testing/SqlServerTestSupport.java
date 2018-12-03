@@ -47,7 +47,7 @@ public class SqlServerTestSupport {
 	 */
 	private static ExternalDatabase local() {
 		return ProvidedDatabase.builder().hostname("localhost").port(1433).database("master").username("sa")
-				.password("my1.password").build();
+				.password("A_Str0ng_Required_Password").build();
 	}
 
 	/**

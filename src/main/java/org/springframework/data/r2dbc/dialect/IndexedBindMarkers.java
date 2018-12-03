@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  * prefix for bind markers to be represented within the query string.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 class IndexedBindMarkers implements BindMarkers {
 
@@ -28,9 +29,9 @@ class IndexedBindMarkers implements BindMarkers {
 	 * @param beginWith the first index to use.
 	 */
 	IndexedBindMarkers(String prefix, int beginWith) {
-		this.counter = beginWith;
+		this.counter = 0;
 		this.prefix = prefix;
-		this.offset = 0 - beginWith;
+		this.offset = beginWith;
 	}
 
 	/*
@@ -42,7 +43,7 @@ class IndexedBindMarkers implements BindMarkers {
 
 		int index = COUNTER_INCREMENTER.getAndIncrement(this);
 
-		return new IndexedBindMarker(prefix + "" + index, index + offset);
+		return new IndexedBindMarker(prefix + "" + (index + offset), index);
 	}
 
 	/**

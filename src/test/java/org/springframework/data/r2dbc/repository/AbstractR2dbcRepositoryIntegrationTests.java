@@ -161,7 +161,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		Database database = Database.findDatabase(createConnectionFactory()).get();
 		DefaultReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(
-				database.latestDialect(), new BasicRelationalConverter(mappingContext));
+				database.defaultDialect(), new BasicRelationalConverter(mappingContext));
 		TransactionalDatabaseClient client = TransactionalDatabaseClient.builder()
 				.connectionFactory(createConnectionFactory()).dataAccessStrategy(dataAccessStrategy).build();
 

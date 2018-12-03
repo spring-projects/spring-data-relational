@@ -68,7 +68,7 @@ public abstract class AbstractR2dbcConfiguration {
 				.orElseThrow(() -> new UnsupportedOperationException(
 						String.format("Cannot determine a dialect for %s using %s. Please provide a Dialect.",
 								connectionFactory.getMetadata().getName(), connectionFactory)))
-				.latestDialect();
+				.defaultDialect();
 	}
 
 	/**

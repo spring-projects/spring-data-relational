@@ -17,7 +17,7 @@ public class H2Dialect extends PostgresDialect {
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#returnGeneratedKeys()
 	 */
 	@Override
-	public String returnGeneratedKeys() {
+	public String generatedKeysClause() {
 		return "";
 	}
 }

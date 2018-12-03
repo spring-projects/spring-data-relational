@@ -93,7 +93,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 			Dialect dialect = Database.findDatabase(this.connectionFactory)
 					.orElseThrow(() -> new UnsupportedOperationException(
 							"Cannot determine a Dialect. Configure the dialect by providing DefaultReactiveDataAccessStrategy(Dialect)"))
-					.latestDialect();
+					.defaultDialect();
 			accessStrategy = new DefaultReactiveDataAccessStrategy(dialect);
 		}
 

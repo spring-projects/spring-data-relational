@@ -16,7 +16,7 @@ public class PostgresDialect implements Dialect {
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long, long)
 		 */
@@ -25,7 +25,7 @@ public class PostgresDialect implements Dialect {
 			return String.format("LIMIT %d OFFSET %d", limit, offset);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long)
 		 */
@@ -34,7 +34,7 @@ public class PostgresDialect implements Dialect {
 			return "LIMIT " + limit;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClausePosition()
 		 */
@@ -44,7 +44,7 @@ public class PostgresDialect implements Dialect {
 		}
 	};
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#getBindMarkersFactory()
 	 */
@@ -53,16 +53,16 @@ public class PostgresDialect implements Dialect {
 		return INDEXED;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#returnGeneratedKeys()
 	 */
 	@Override
-	public String returnGeneratedKeys() {
+	public String generatedKeysClause() {
 		return "RETURNING *";
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#limit()
 	 */

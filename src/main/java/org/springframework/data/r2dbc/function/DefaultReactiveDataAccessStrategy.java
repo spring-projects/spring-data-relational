@@ -196,10 +196,10 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Override
 	public BindableOperation insertAndReturnGeneratedKeys(String table, Set<String> columns) {
 		return new DefaultBindableInsert(dialect.getBindMarkersFactory().create(), table, columns,
-				dialect.returnGeneratedKeys());
+				dialect.generatedKeysClause());
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#select(java.lang.String, java.util.Set, org.springframework.data.domain.Sort, org.springframework.data.domain.Pageable)
 	 */
@@ -283,7 +283,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		});
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#selectByIdIn(java.lang.String, java.util.Set, java.lang.String)
 	 */
@@ -303,7 +303,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		return new DefaultBindableUpdate(dialect.getBindMarkersFactory().create(), table, columns, idColumn);
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#deleteById(java.lang.String, java.lang.String)
 	 */
@@ -314,7 +314,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 				marker -> String.format("DELETE FROM %s WHERE %s = %s", table, idColumn, marker.getPlaceholder()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#deleteByIdIn(java.lang.String, java.lang.String)
 	 */
@@ -442,7 +442,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			idMarker.bind(statement, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */
@@ -503,7 +503,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			idMarker.bind(statement, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */
@@ -570,7 +570,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			bindMarker.bind(statement, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */

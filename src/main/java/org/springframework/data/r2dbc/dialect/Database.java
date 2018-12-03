@@ -15,6 +15,7 @@ import org.springframework.util.Assert;
  * if none was configured explicitly.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public enum Database {
 
@@ -25,7 +26,7 @@ public enum Database {
 		}
 
 		@Override
-		public Dialect latestDialect() {
+		public Dialect defaultDialect() {
 			return PostgresDialect.INSTANCE;
 		}
 	},
@@ -37,7 +38,7 @@ public enum Database {
 		}
 
 		@Override
-		public Dialect latestDialect() {
+		public Dialect defaultDialect() {
 			return SqlServerDialect.INSTANCE;
 		}
 	},
@@ -49,7 +50,7 @@ public enum Database {
 		}
 
 		@Override
-		public Dialect latestDialect() {
+		public Dialect defaultDialect() {
 			return H2Dialect.INSTANCE;
 		}
 	};
@@ -63,7 +64,7 @@ public enum Database {
 	 */
 	public static Optional<Database> findDatabase(ConnectionFactory connectionFactory) {
 
-		Assert.notNull(connectionFactory, "ConnectionFactor must not be null!");
+		Assert.notNull(connectionFactory, "ConnectionFactory must not be null!");
 
 		ConnectionFactoryMetadata metadata = connectionFactory.getMetadata();
 
@@ -87,6 +88,6 @@ public enum Database {
 	 *
 	 * @return the latest {@link Dialect} for the underlying database.
 	 */
-	public abstract Dialect latestDialect();
+	public abstract Dialect defaultDialect();
 
 }

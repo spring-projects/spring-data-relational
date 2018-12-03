@@ -17,7 +17,7 @@ public class SqlServerDialect implements Dialect {
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long)
 		 */
@@ -26,7 +26,7 @@ public class SqlServerDialect implements Dialect {
 			return "OFFSET 0 ROWS FETCH NEXT " + limit + " ROWS ONLY";
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long, long)
 		 */
@@ -35,7 +35,7 @@ public class SqlServerDialect implements Dialect {
 			return String.format("OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", offset, limit);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClausePosition()
 		 */
@@ -45,7 +45,7 @@ public class SqlServerDialect implements Dialect {
 		}
 	};
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#getBindMarkersFactory()
 	 */
@@ -54,16 +54,16 @@ public class SqlServerDialect implements Dialect {
 		return NAMED;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#returnGeneratedKeys()
 	 */
 	@Override
-	public String returnGeneratedKeys() {
+	public String generatedKeysClause() {
 		return "select SCOPE_IDENTITY() AS GENERATED_KEYS";
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#limit()
 	 */
