@@ -23,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import java.sql.ResultSet;
 import java.util.function.BiFunction;
 
-import org.springframework.core.convert.ConversionService;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -39,7 +38,7 @@ import org.springframework.lang.Nullable;
  * Maps a {@link io.r2dbc.spi.Row} to an entity of type {@code T}, including entities referenced.
  *
  * @author Mark Paluch
- * @since 1.0
+ * @author Ryland Degnan
  */
 public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 
@@ -52,13 +51,17 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 		this.converter = converter;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.util.function.BiFunction#apply(java.lang.Object, java.lang.Object)
+	 */
 	@Override
 	public T apply(Row row, RowMetadata metadata) {
 
 		T result = createInstance(row, "", entity);
 
-		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(entity.getPropertyAccessor(result),
-				converter.getConversionService());
+		ConvertingPropertyAccessor<T> propertyAccessor = new ConvertingPropertyAccessor<>(
+				entity.getPropertyAccessor(result), converter.getConversionService());
 
 		for (RelationalPersistentProperty property : entity) {
 
@@ -93,7 +96,7 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 				return readEntityFrom(row, property);
 			}
 
-			return row.get(prefix + property.getColumnName());
+			return converter.readValue(row.get(prefix + property.getColumnName()), property.getTypeInformation());
 
 		} catch (Exception o_O) {
 			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
@@ -104,7 +107,6 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 
 		String prefix = property.getName() + "_";
 
-		@SuppressWarnings("unchecked")
 		RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) converter.getMappingContext()
 				.getRequiredPersistentEntity(property.getActualType());
 
@@ -114,8 +116,8 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 
 		S instance = createInstance(row, prefix, entity);
 
-		PersistentPropertyAccessor accessor = entity.getPropertyAccessor(instance);
-		ConvertingPropertyAccessor propertyAccessor = new ConvertingPropertyAccessor(accessor,
+		PersistentPropertyAccessor<S> accessor = entity.getPropertyAccessor(instance);
+		ConvertingPropertyAccessor<S> propertyAccessor = new ConvertingPropertyAccessor<>(accessor,
 				converter.getConversionService());
 
 		for (RelationalPersistentProperty p : entity) {
@@ -129,8 +131,7 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 
 	private <S> S createInstance(Row row, String prefix, RelationalPersistentEntity<S> entity) {
 
-		RowParameterValueProvider rowParameterValueProvider = new RowParameterValueProvider(row, entity,
-				converter.getConversionService(), prefix);
+		RowParameterValueProvider rowParameterValueProvider = new RowParameterValueProvider(row, entity, converter, prefix);
 
 		return converter.createInstance(entity, rowParameterValueProvider::getParameterValue);
 	}
@@ -140,7 +141,7 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 
 		private final @NonNull Row resultSet;
 		private final @NonNull RelationalPersistentEntity<?> entity;
-		private final @NonNull ConversionService conversionService;
+		private final @NonNull RelationalConverter converter;
 		private final @NonNull String prefix;
 
 		/*
@@ -151,10 +152,13 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 		@Nullable
 		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 
-			String column = prefix + entity.getRequiredPersistentProperty(parameter.getName()).getColumnName();
+			RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameter.getName());
+			String column = prefix + property.getColumnName();
 
 			try {
-				return conversionService.convert(resultSet.get(column), parameter.getType().getType());
+
+				Object value = converter.readValue(resultSet.get(column), property.getTypeInformation());
+				return converter.getConversionService().convert(value, parameter.getType().getType());
 			} catch (Exception o_O) {
 				throw new MappingException(String.format("Couldn't read column %s from Row.", column), o_O);
 			}
