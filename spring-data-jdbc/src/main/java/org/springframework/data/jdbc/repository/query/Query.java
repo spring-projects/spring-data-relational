@@ -44,14 +44,14 @@ public @interface Query {
 	String value();
 
 	/**
-	 * Optional {@link RowMapper} to use to convert the result of the query to domain class instances.
-	 * Cannot be used along with {@link #resultSetExtractorClass()} only one of the two can be set.
+	 * Optional {@link RowMapper} to use to convert the result of the query to domain class instances. Cannot be used
+	 * along with {@link #resultSetExtractorClass()} only one of the two can be set.
 	 */
 	Class<? extends RowMapper> rowMapperClass() default RowMapper.class;
-	
+
 	/**
-	 * Optional {@link ResultSetExtractor} to use to convert the result of the query to domain class instances.
-	 * Cannot be used along with {@link #rowMapperClass()} only one of the two can be set.
+	 * Optional {@link ResultSetExtractor} to use to convert the result of the query to domain class instances. Cannot be
+	 * used along with {@link #rowMapperClass()} only one of the two can be set.
 	 */
 	Class<? extends ResultSetExtractor> resultSetExtractorClass() default ResultSetExtractor.class;
 }

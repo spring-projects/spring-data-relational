@@ -33,7 +33,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
-import org.springframework.data.jdbc.support.RowMapperResultsetExtractorEither;
+import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -46,12 +46,13 @@ import org.springframework.util.ReflectionUtils;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Evgeni Dimitrov
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfiguration.class)
 public class EnableJdbcRepositoriesIntegrationTests {
 
-	static final Field MAPPER_MAP = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "mapperMap");
+	static final Field MAPPER_MAP = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "queryMappingConfiguration");
 	public static final RowMapper DUMMY_ENTITY_ROW_MAPPER = mock(RowMapper.class);
 	public static final RowMapper STRING_ROW_MAPPER = mock(RowMapper.class);
 	public static final ResultSetExtractor<Integer> INTEGER_RESULT_SET_EXTRACTOR = mock(ResultSetExtractor.class);
@@ -76,23 +77,28 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorConfigurationGetsPickedUp() {
+
 		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
-		assertThat(mapping.getMapper(Integer.class)).isEqualTo(RowMapperResultsetExtractorEither.of(INTEGER_RESULT_SET_EXTRACTOR));
+		assertThat(mapping.getMapperOrExtractor(Integer.class))
+				.isEqualTo(RowMapperOrResultsetExtractor.of(INTEGER_RESULT_SET_EXTRACTOR));
 	}
-	
+
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorConfigurationIsNotPickedUpIfRowMapperIsRegisteredForTheSameType() {
+
 		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
-		assertThat(mapping.getMapper(String.class).isResultSetExtractor()).isFalse();
+		assertThat(mapping.getMapperOrExtractor(String.class).isResultSetExtractor()).isFalse();
 	}
-	
+
 	@Test // DATAJDBC-166
 	public void customRowMapperConfigurationGetsPickedUp() {
 
 		QueryMappingConfiguration mapping = (QueryMappingConfiguration) ReflectionUtils.getField(MAPPER_MAP, factoryBean);
 
-		assertThat(mapping.getMapper(String.class)).isEqualTo(RowMapperResultsetExtractorEither.of(STRING_ROW_MAPPER));
-		assertThat(mapping.getMapper(DummyEntity.class)).isEqualTo(RowMapperResultsetExtractorEither.of(DUMMY_ENTITY_ROW_MAPPER));
+		assertThat(mapping.getMapperOrExtractor(String.class))
+				.isEqualTo(RowMapperOrResultsetExtractor.of(STRING_ROW_MAPPER));
+		assertThat(mapping.getMapperOrExtractor(DummyEntity.class))
+				.isEqualTo(RowMapperOrResultsetExtractor.of(DUMMY_ENTITY_ROW_MAPPER));
 	}
 
 	interface DummyRepository extends CrudRepository<DummyEntity, Long> {
@@ -116,6 +122,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 		@Bean
 		QueryMappingConfiguration rowMappers() {
+
 			return new DefaultQueryMappingConfiguration() //
 					.registerRowMapper(DummyEntity.class, DUMMY_ENTITY_ROW_MAPPER) //
 					.registerRowMapper(String.class, STRING_ROW_MAPPER)

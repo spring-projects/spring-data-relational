@@ -21,7 +21,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.jdbc.support.RowMapperResultsetExtractorEither;
+import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -30,8 +30,6 @@ import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
@@ -51,7 +49,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final RelationalMappingContext context;
 	private final RelationalConverter converter;
 	private final DataAccessStrategy accessStrategy;
-	private final QueryMappingConfiguration mapperMap;
+	private final QueryMappingConfiguration queryMappingConfiguration;
 	private final NamedParameterJdbcOperations operations;
 
 	/**
@@ -62,22 +60,23 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * @param context must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param accessStrategy must not be {@literal null}.
-	 * @param rowMapperMap must not be {@literal null}.
+	 * @param queryMappingConfiguration must not be {@literal null}.
 	 */
-	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, RelationalMappingContext context, RelationalConverter converter,
-			DataAccessStrategy accessStrategy, QueryMappingConfiguration rowMapperMap, NamedParameterJdbcOperations operations) {
+	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, RelationalMappingContext context,
+			RelationalConverter converter, DataAccessStrategy accessStrategy,
+			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
 		Assert.notNull(converter, "RelationalConverter must not be null!");
 		Assert.notNull(accessStrategy, "DataAccessStrategy must not be null!");
-		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
+		Assert.notNull(queryMappingConfiguration, "RowMapperMap must not be null!");
 
 		this.publisher = publisher;
 		this.context = context;
 		this.converter = converter;
 		this.accessStrategy = accessStrategy;
-		this.mapperMap = rowMapperMap;
+		this.queryMappingConfiguration = queryMappingConfiguration;
 		this.operations = operations;
 	}
 
@@ -91,35 +90,39 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
 
-		RowMapperResultsetExtractorEither<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
+		RowMapperOrResultsetExtractor<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
 
 		return new JdbcRepositoryQuery(publisher, context, queryMethod, operations, mapper);
 	}
 
-	private RowMapperResultsetExtractorEither<?> createMapper(JdbcQueryMethod queryMethod) {
+	private RowMapperOrResultsetExtractor<?> createMapper(JdbcQueryMethod queryMethod) {
 
 		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
 
 		if (persistentEntity == null) {
-			return RowMapperResultsetExtractorEither.of(
-					SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService()));
+			return RowMapperOrResultsetExtractor
+					.of(SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService()));
 		}
 
 		return determineDefaultMapper(queryMethod);
 	}
 
-	private RowMapperResultsetExtractorEither<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
+	private RowMapperOrResultsetExtractor<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
+
 		Class<?> domainType = queryMethod.getReturnedObjectType();
-		RowMapperResultsetExtractorEither<?> configuredQueryMapper = mapperMap.getMapper(domainType);
-		if(configuredQueryMapper != null) return configuredQueryMapper;
-		
+		RowMapperOrResultsetExtractor<?> configuredQueryMapper = queryMappingConfiguration.getMapperOrExtractor(domainType);
+
+		if (configuredQueryMapper != null)
+			return configuredQueryMapper;
+
 		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
 				context.getRequiredPersistentEntity(domainType), //
 				context, //
 				converter, //
 				accessStrategy);
-		return RowMapperResultsetExtractorEither.of(defaultEntityRowMapper);
+
+		return RowMapperOrResultsetExtractor.of(defaultEntityRowMapper);
 	}
 }

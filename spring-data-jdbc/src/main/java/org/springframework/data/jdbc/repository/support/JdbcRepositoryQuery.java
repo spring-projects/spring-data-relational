@@ -15,10 +15,12 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import java.util.List;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.jdbc.support.RowMapperResultsetExtractorEither;
+import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
@@ -31,8 +33,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-
-import java.util.List;
 
 /**
  * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
@@ -51,7 +51,8 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private final RelationalMappingContext context;
 	private final JdbcQueryMethod queryMethod;
 	private final NamedParameterJdbcOperations operations;
-	private final RowMapperResultsetExtractorEither<?> mapper;
+
+	@Nullable private final RowMapperOrResultsetExtractor<?> mapperOrExtractor;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -61,10 +62,11 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	 * @param context must not be {@literal null}.
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
-	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
+	 * @param defaultMapper can be {@literal null} (only in case of a modifying query).
 	 */
-	JdbcRepositoryQuery(ApplicationEventPublisher publisher, RelationalMappingContext context, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			@Nullable RowMapperResultsetExtractorEither<?> defaultMapper) {
+	JdbcRepositoryQuery(ApplicationEventPublisher publisher, RelationalMappingContext context,
+			JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+			@Nullable RowMapperOrResultsetExtractor<?> defaultMapper) {
 
 		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "Context must not be null!");
@@ -79,7 +81,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		this.context = context;
 		this.queryMethod = queryMethod;
 		this.operations = operations;
-		this.mapper = determineMapper(defaultMapper);		
+		this.mapperOrExtractor = determineMapper(defaultMapper);
 	}
 
 	/*
@@ -100,26 +102,31 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 					: updatedCount;
 		}
 
+		assert this.mapperOrExtractor != null;
+
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
-			List<?> result = null;
-			if(this.mapper.isResultSetExtractor()) {
-				result = (List<?>) operations.query(query, parameters, this.mapper.resultSetExtractor());
-			} else {
-				result = operations.query(query, parameters, this.mapper.rowMapper());
-			}
+
+			List<?> result = this.mapperOrExtractor.isResultSetExtractor()
+					? (List<?>) operations.query(query, parameters, this.mapperOrExtractor.getResultSetExtractor())
+					: operations.query(query, parameters, this.mapperOrExtractor.getRowMapper());
+
+			Assert.notNull(result, "A collection valued result must never be null.");
+
 			publishAfterLoad(result);
+
 			return result;
 		}
 
 		try {
-			Object result = null;
-			if(this.mapper.isResultSetExtractor()) {
-				result =  operations.query(query,parameters, this.mapper.resultSetExtractor());
-			} else {
-				result = operations.queryForObject(query, parameters, this.mapper.rowMapper());
-			}
+
+			Object result = this.mapperOrExtractor.isResultSetExtractor()
+					? operations.query(query, parameters, this.mapperOrExtractor.getResultSetExtractor())
+					: operations.queryForObject(query, parameters, this.mapperOrExtractor.getRowMapper());
+
 			publishAfterLoad(result);
+
 			return result;
+
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -158,30 +165,51 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		return parameters;
 	}
 
-	private RowMapperResultsetExtractorEither<?> determineMapper(RowMapperResultsetExtractorEither<?> defaultMapper) {
-		RowMapperResultsetExtractorEither<?> configuredMapper = getConfiguredMapper(queryMethod);
-		if(configuredMapper != null) return configuredMapper;
-		return defaultMapper;
-	}
-	
 	@Nullable
-	private static RowMapperResultsetExtractorEither<?> getConfiguredMapper(JdbcQueryMethod queryMethod) {
+	private RowMapperOrResultsetExtractor<?> determineMapper(@Nullable RowMapperOrResultsetExtractor<?> defaultMapper) {
+
+		RowMapperOrResultsetExtractor<?> configuredMapper = getConfiguredMapper(queryMethod);
+
+		return (configuredMapper == null) ? defaultMapper : configuredMapper;
+	}
+
+	@Nullable
+	private static RowMapperOrResultsetExtractor<?> getConfiguredMapper(JdbcQueryMethod queryMethod) {
+
 		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
 		Class<?> resultSetExtractorClass = queryMethod.getResultSetExtractorClass();
-		if(isConfigured(rowMapperClass, RowMapper.class) && isConfigured(resultSetExtractorClass, ResultSetExtractor.class)) 
-			throw new InvalidQueryConfiguration("Cannot use both rowMapperClass and resultSetExtractorClass on @Query annotation. Query method: [" + queryMethod.getName() + "] query: [" + queryMethod.getAnnotatedQuery() + "]");
-		
-		if(!isConfigured(rowMapperClass, RowMapper.class) && !isConfigured(resultSetExtractorClass, ResultSetExtractor.class))
-			return null;
-		if(isConfigured(rowMapperClass, RowMapper.class)) {
-			return RowMapperResultsetExtractorEither.of((RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass));
-		} else {
-			return RowMapperResultsetExtractorEither.of((ResultSetExtractor<?>) BeanUtils.instantiateClass(resultSetExtractorClass));
+
+		assertOnlyOneIsConfigured(queryMethod, rowMapperClass, resultSetExtractorClass);
+
+		if (isConfigured(rowMapperClass, RowMapper.class)) {
+			return RowMapperOrResultsetExtractor.of((RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass));
+		}
+
+		if (isConfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
+			return RowMapperOrResultsetExtractor
+					.of((ResultSetExtractor<?>) BeanUtils.instantiateClass(resultSetExtractorClass));
+		}
+
+		return null;
+	}
+
+	private static void assertOnlyOneIsConfigured(JdbcQueryMethod queryMethod, @Nullable Class<?> rowMapperClass,
+			@Nullable Class<?> resultSetExtractorClass) {
+
+		if (isConfigured(rowMapperClass, RowMapper.class)
+				&& isConfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
+
+			throw new IllegalStateException( //
+					String.format( //
+							"Cannot use both rowMapperClass and resultSetExtractorClass on @Query annotation. Query // method: [%s] query: [%s]",
+							queryMethod.getName(), //
+							queryMethod.getAnnotatedQuery() //
+					));
 		}
 	}
 
-	private static boolean isConfigured(Class<?> rowMapperClass, Class<?> defaultClass) {
-		return rowMapperClass != null && rowMapperClass != defaultClass;
+	private static boolean isConfigured(@Nullable Class<?> configuredClass, Class<?> defaultClass) {
+		return configuredClass != null && configuredClass != defaultClass;
 	}
 
 	private <T> void publishAfterLoad(Iterable<T> all) {
@@ -196,8 +224,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		if (entity != null && context.hasPersistentEntityFor(entity.getClass())) {
 
 			RelationalPersistentEntity<?> e = context.getRequiredPersistentEntity(entity.getClass());
-			Object identifier = e.getIdentifierAccessor(entity)
-					     .getIdentifier();
+			Object identifier = e.getIdentifierAccessor(entity).getIdentifier();
 
 			if (identifier != null) {
 				publisher.publishEvent(new AfterLoadEvent(Identifier.of(identifier), entity));

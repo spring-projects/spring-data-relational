@@ -49,7 +49,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private RelationalMappingContext mappingContext;
 	private RelationalConverter converter;
 	private DataAccessStrategy dataAccessStrategy;
-	private QueryMappingConfiguration mapperMap = QueryMappingConfiguration.EMPTY;
+	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private NamedParameterJdbcOperations operations;
 
 	/**
@@ -81,7 +81,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
 				converter, publisher, operations);
-		jdbcRepositoryFactory.setRowMapperMap(mapperMap);
+		jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
 
 		return jdbcRepositoryFactory;
 	}
@@ -102,12 +102,12 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	}
 
 	/**
-	 * @param rowMapperMap can be {@literal null}. {@link #afterPropertiesSet()} defaults to {@link RowMapperMap#EMPTY} if
-	 *          {@literal null}.
+	 * @param rowMapperMap can be {@literal null}. {@link #afterPropertiesSet()} defaults to
+	 *          {@link QueryMappingConfiguration#EMPTY} if {@literal null}.
 	 */
 	@Autowired(required = false)
-	public void setRowMapperMap(QueryMappingConfiguration rowMapperMap) {
-		this.mapperMap = rowMapperMap;
+	public void setQueryMappingConfiguration(QueryMappingConfiguration rowMapperMap) {
+		this.queryMappingConfiguration = rowMapperMap;
 	}
 
 	@Autowired
@@ -137,8 +137,8 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 					operations);
 		}
 
-		if (mapperMap == null) {
-			this.mapperMap = QueryMappingConfiguration.EMPTY;
+		if (queryMappingConfiguration == null) {
+			this.queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 		}
 
 		super.afterPropertiesSet();

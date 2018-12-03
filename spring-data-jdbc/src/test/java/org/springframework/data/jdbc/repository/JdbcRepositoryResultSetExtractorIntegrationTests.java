@@ -15,7 +15,10 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -47,9 +50,6 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
 /**
  * Very simple use cases for creation and usage of {@link ResultSetExtractor}s in JdbcRepository.
  *
@@ -58,6 +58,7 @@ import lombok.Data;
 @ContextConfiguration
 @Transactional
 public class JdbcRepositoryResultSetExtractorIntegrationTests {
+
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -84,88 +85,109 @@ public class JdbcRepositoryResultSetExtractorIntegrationTests {
 
 	@Test // DATAJDBC-290
 	public void findAllPeopleWithAdressesReturnsEmptyWhenNoneFound() {
+
 		// NOT saving anything, so DB is empty
+
 		assertThat(personRepository.findAllPeopleWithAdresses()).isEmpty();
 	}
-	
+
 	@Test // DATAJDBC-290
 	public void findAllPeopleWithAdressesReturnsOnePersonWithoutAdresses() {
+
 		personRepository.save(new Person(null, "Joe", null));
+
 		assertThat(personRepository.findAllPeopleWithAdresses()).hasSize(1);
 	}
-	
-	@Test // DATAJDBC-290 
+
+	@Test // DATAJDBC-290
 	public void findAllPeopleWithAdressesReturnsOnePersonWithAdresses() {
+
 		final String personName = "Joe";
 		Person savedPerson = personRepository.save(new Person(null, personName, null));
-		String street1 = "Klokotnitsa";
+
+		String street1 = "Some Street";
+		String street2 = "Some other Street";
+
 		MapSqlParameterSource paramsAddress1 = buildAddressParameters(savedPerson.getId(), street1);
-		template.update("insert into address (street, person_id) values (:street, :personId)",paramsAddress1);
-		String street2 = "bul. Hristo Botev";
+		template.update("insert into address (street, person_id) values (:street, :personId)", paramsAddress1);
+
 		MapSqlParameterSource paramsAddress2 = buildAddressParameters(savedPerson.getId(), street2);
-		template.update("insert into address (street, person_id) values (:street, :personId)",paramsAddress2);
-		
+		template.update("insert into address (street, person_id) values (:street, :personId)", paramsAddress2);
+
 		List<Person> people = personRepository.findAllPeopleWithAdresses();
+
 		assertThat(people).hasSize(1);
 		Person person = people.get(0);
 		assertThat(person.getName()).isEqualTo(personName);
 		assertThat(person.getAdresses()).hasSize(2);
 		assertThat(person.getAdresses()).extracting(a -> a.getStreet()).containsExactlyInAnyOrder(street1, street2);
 	}
+
 	private MapSqlParameterSource buildAddressParameters(Long id, String streetName) {
+
 		MapSqlParameterSource params = new MapSqlParameterSource();
 		params.addValue("street", streetName, Types.VARCHAR);
 		params.addValue("personId", id, Types.NUMERIC);
+
 		return params;
 	}
 
 	interface PersonRepository extends CrudRepository<Person, Long> {
-		@Query(value="select p.id, p.name, a.id addrId, a.street from person p left join address a on(p.id = a.person_id)", 
-				resultSetExtractorClass=PersonResultSetExtractor.class)
-		public List<Person> findAllPeopleWithAdresses();
+
+		@Query(
+				value = "select p.id, p.name, a.id addrId, a.street from person p left join address a on(p.id = a.person_id)",
+				resultSetExtractorClass = PersonResultSetExtractor.class)
+		List<Person> findAllPeopleWithAdresses();
 	}
 
 	@Data
 	@AllArgsConstructor
 	static class Person {
-		@Id 
-		private Long id;
+
+		@Id private Long id;
 		private String name;
 		private List<Address> adresses;
 	}
-	
+
 	@Data
 	@AllArgsConstructor
 	static class Address {
-		@Id 
-		private Long id;
+
+		@Id private Long id;
 		private String street;
 	}
-	
+
 	static class PersonResultSetExtractor implements ResultSetExtractor<List<Person>> {
 
 		@Override
 		public List<Person> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
 			Map<Long, Person> peopleById = new HashMap<>();
-			while(rs.next()) {
+
+			while (rs.next()) {
+
 				long personId = rs.getLong("id");
 				Person currentPerson = peopleById.computeIfAbsent(personId, t -> {
+
 					try {
 						return new Person(personId, rs.getString("name"), new ArrayList<>());
 					} catch (SQLException e) {
 						throw new RecoverableDataAccessException("Error mapping Person", e);
 					}
-				}); 
-				
-				if(currentPerson.getAdresses() == null) currentPerson.setAdresses(new ArrayList<>());
+				});
+
+				if (currentPerson.getAdresses() == null) {
+					currentPerson.setAdresses(new ArrayList<>());
+				}
+
 				long addrId = rs.getLong("addrId");
-				if(!rs.wasNull()) {
+				if (!rs.wasNull()) {
 					currentPerson.getAdresses().add(new Address(addrId, rs.getString("street")));
 				}
 			}
-			
-			return new ArrayList<Person>(peopleById.values());
+
+			return new ArrayList<>(peopleById.values());
 		}
-		
+
 	}
 }
