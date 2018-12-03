@@ -54,7 +54,9 @@ import lombok.Data;
 @ContextConfiguration
 @Transactional
 public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
-	private static String CAR_MODEL = "ResultSetExtracotr Car";
+
+	private static String CAR_MODEL = "ResultSetExtractor Car";
+
 	@Configuration
 	@Import(TestConfiguration.class)
 	@EnableJdbcRepositories(considerNestedRepositories = true)
@@ -80,21 +82,25 @@ public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
 	
 	@Test // DATAJDBC-290
 	public void customFindAllCarsPicksResultSetExtractorFromMapperMap() {
+
 		carRepository.save(new Car(null, "Some model"));
 		Iterable<Car> cars = carRepository.customFindAll();
+
 		assertThat(cars).hasSize(1);
 		assertThat(cars).allMatch(car -> CAR_MODEL.equals(car.getModel()));
 	}
 	
 	interface CarRepository extends CrudRepository<Car, Long> {
+
 		@Query("select * from car")
-		public List<Car> customFindAll();
+		List<Car> customFindAll();
 	}
 	
 	@Data
 	@AllArgsConstructor
 	static class Car {
-		@Id 
+
+		@Id
 		private Long id;
 		private String model;
 	}

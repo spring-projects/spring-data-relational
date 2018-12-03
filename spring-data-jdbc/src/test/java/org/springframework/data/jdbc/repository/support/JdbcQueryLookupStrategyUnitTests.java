@@ -49,6 +49,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  * @author Oliver Gierke
  * @author Mark Paluch
  * @author Maciej Walkowiak
+ * @author Evgeni Dimitrov
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
@@ -75,9 +76,9 @@ public class JdbcQueryLookupStrategyUnitTests {
 	public void typeBasedRowMapperGetsUsedForQuery() {
 
 		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
-		QueryMappingConfiguration rowMapperMap = new DefaultQueryMappingConfiguration().registerRowMapper(NumberFormat.class, numberFormatMapper);
+		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration().registerRowMapper(NumberFormat.class, numberFormatMapper);
 
-		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", rowMapperMap);
+		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", mappingConfiguration);
 
 		repositoryQuery.execute(new Object[] {});
 
@@ -89,19 +90,19 @@ public class JdbcQueryLookupStrategyUnitTests {
 	public void typeBasedResultSetExtractorGetsUsedForQuery() {
 
 		ResultSetExtractor<? extends NumberFormat> numberFormatMapper = mock(ResultSetExtractor.class);
-		QueryMappingConfiguration rowMapperMap = new DefaultQueryMappingConfiguration().registerResultSetExtractor(NumberFormat.class, numberFormatMapper);
+		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration().registerResultSetExtractor(NumberFormat.class, numberFormatMapper);
 
-		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", rowMapperMap);
+		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", mappingConfiguration);
 
 		repositoryQuery.execute(new Object[] {});
 
 		verify(operations).query(anyString(), any(SqlParameterSource.class), eq(numberFormatMapper));
 	}
 
-	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration rowMapperMap) {
+	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 
 		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, mappingContext, converter, accessStrategy,
-				rowMapperMap, operations);
+				mappingConfiguration, operations);
 
 		return queryLookupStrategy.resolveQuery(getMethod(name), metadata, projectionFactory, namedQueries);
 	}

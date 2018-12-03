@@ -43,6 +43,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author Christoph Strobl
  * @author Oliver Gierke
  * @author Mark Paluch
+ * @author Evgeni Dimitrov
+ *
  */
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcRepositoryFactoryBeanUnitTests {
@@ -100,7 +102,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		assertThat(factoryBean.getObject()).isNotNull();
 		assertThat(ReflectionTestUtils.getField(factoryBean, "dataAccessStrategy"))
 				.isInstanceOf(DefaultDataAccessStrategy.class);
-		assertThat(ReflectionTestUtils.getField(factoryBean, "mapperMap")).isEqualTo(QueryMappingConfiguration.EMPTY);
+		assertThat(ReflectionTestUtils.getField(factoryBean, "queryMappingConfiguration")).isEqualTo(QueryMappingConfiguration.EMPTY);
 	}
 
 	private static class DummyEntity {

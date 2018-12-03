@@ -51,7 +51,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
 
-	private QueryMappingConfiguration mapperMap = QueryMappingConfiguration.EMPTY;
+	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
@@ -79,13 +79,14 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	}
 
 	/**
-	 * @param rowMapperMap must not be {@literal null} consider {@link RowMapperMap#EMPTY} instead.
+	 * @param queryMappingConfiguration must not be {@literal null} consider {@link QueryMappingConfiguration#EMPTY}
+	 *          instead.
 	 */
-	public void setRowMapperMap(QueryMappingConfiguration rowMapperMap) {
+	public void setQueryMappingConfiguration(QueryMappingConfiguration queryMappingConfiguration) {
 
-		Assert.notNull(rowMapperMap, "RowMapperMap must not be null!");
+		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null!");
 
-		this.mapperMap = rowMapperMap;
+		this.queryMappingConfiguration = queryMappingConfiguration;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -133,6 +134,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(publisher, context, converter, accessStrategy, mapperMap, operations));
+		return Optional.of(new JdbcQueryLookupStrategy(publisher, context, converter, accessStrategy,
+				queryMappingConfiguration, operations));
 	}
 }
