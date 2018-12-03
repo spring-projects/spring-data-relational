@@ -21,7 +21,6 @@ import io.r2dbc.spi.RowMetadata;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiFunction;
 
 import org.springframework.core.convert.ConversionService;
@@ -63,32 +62,6 @@ public class MappingR2dbcConverter {
 		Assert.notNull(converter, "RelationalConverter must not be null!");
 
 		this.relationalConverter = converter;
-	}
-
-	/**
-	 * Returns a {@link Map} that maps column names to an {@link Optional} value. Used {@link Optional#empty()} if the
-	 * underlying property is {@literal null}.
-	 *
-	 * @param object must not be {@literal null}.
-	 * @return
-	 */
-	public Map<String, SettableValue> getColumnsToUpdate(Object object) {
-
-		Assert.notNull(object, "Entity object must not be null!");
-
-		Class<?> userClass = ClassUtils.getUserClass(object);
-		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(userClass);
-
-		Map<String, SettableValue> update = new LinkedHashMap<>();
-
-		PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(object);
-
-		for (RelationalPersistentProperty property : entity) {
-			update.put(property.getColumnName(),
-					new SettableValue(property.getColumnName(), propertyAccessor.getProperty(property), property.getType()));
-		}
-
-		return update;
 	}
 
 	/**

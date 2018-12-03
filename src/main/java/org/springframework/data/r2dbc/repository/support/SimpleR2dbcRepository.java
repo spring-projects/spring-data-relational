@@ -70,7 +70,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		}
 
 		Object id = entity.getRequiredId(objectToSave);
-		Map<String, SettableValue> columns = converter.getColumnsToUpdate(objectToSave);
+		Map<String, SettableValue> columns = accessStrategy.getColumnsToUpdate(objectToSave);
 		columns.remove(getIdColumnName()); // do not update the Id column.
 		String idColumnName = getIdColumnName();
 		BindIdOperation update = accessStrategy.updateById(entity.getTableName(), columns.keySet(), idColumnName);

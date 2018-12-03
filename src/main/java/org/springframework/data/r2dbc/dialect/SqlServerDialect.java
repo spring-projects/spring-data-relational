@@ -1,11 +1,19 @@
 package org.springframework.data.r2dbc.dialect;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 /**
  * An SQL dialect for Microsoft SQL Server.
  *
  * @author Mark Paluch
  */
 public class SqlServerDialect implements Dialect {
+
+	private static final Set<Class<?>> SIMPLE_TYPES = new HashSet<>(Collections.singletonList(UUID.class));
 
 	/**
 	 * Singleton instance.
@@ -61,6 +69,15 @@ public class SqlServerDialect implements Dialect {
 	@Override
 	public String generatedKeysClause() {
 		return "select SCOPE_IDENTITY() AS GENERATED_KEYS";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.dialect.Dialect#getSimpleTypesKeys()
+	 */
+	@Override
+	public Collection<? extends Class<?>> getSimpleTypes() {
+		return SIMPLE_TYPES;
 	}
 
 	/*

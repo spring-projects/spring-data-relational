@@ -1,11 +1,24 @@
 package org.springframework.data.r2dbc.dialect;
 
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 /**
  * An SQL dialect for Postgres.
  *
  * @author Mark Paluch
  */
 public class PostgresDialect implements Dialect {
+
+	private static final Set<Class<?>> SIMPLE_TYPES = new HashSet<>(
+			Arrays.asList(List.class, Collection.class, String[].class, UUID.class, URL.class, URI.class, InetAddress.class));
 
 	/**
 	 * Singleton instance.
@@ -64,10 +77,28 @@ public class PostgresDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.dialect.Dialect#getSimpleTypesKeys()
+	 */
+	@Override
+	public Collection<? extends Class<?>> getSimpleTypes() {
+		return SIMPLE_TYPES;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#limit()
 	 */
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.dialect.Dialect#supportsArrayColumns()
+	 */
+	@Override
+	public boolean supportsArrayColumns() {
+		return true;
 	}
 }

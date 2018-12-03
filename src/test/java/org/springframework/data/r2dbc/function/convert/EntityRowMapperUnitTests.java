@@ -7,6 +7,8 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -57,6 +59,17 @@ public class EntityRowMapperUnitTests {
 		assertThat(result.id).isEqualTo(36L);
 	}
 
+	@Test // gh-30
+	public void shouldConvertArrayToCollection() {
+
+		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
+		when(rowMock.get("ids")).thenReturn((new String[] { "foo", "bar" }));
+
+		EntityWithCollection result = mapper.apply(rowMock, metadata);
+		assertThat(result.ids).contains("foo", "bar");
+	}
+
+	@SuppressWarnings("unchecked")
 	private <T> EntityRowMapper<T> getRowMapper(Class<T> type) {
 		RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) strategy.getMappingContext()
 				.getRequiredPersistentEntity(type);
@@ -75,5 +88,9 @@ public class EntityRowMapperUnitTests {
 	@RequiredArgsConstructor
 	static class ConversionWithConstructorCreation {
 		final long id;
+	}
+
+	static class EntityWithCollection {
+		List<String> ids;
 	}
 }

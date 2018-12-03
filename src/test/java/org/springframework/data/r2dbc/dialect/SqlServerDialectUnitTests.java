@@ -2,7 +2,10 @@ package org.springframework.data.r2dbc.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.UUID;
+
 import org.junit.Test;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
 
 /**
  * Unit tests for {@link SqlServerDialect}.
@@ -21,5 +24,13 @@ public class SqlServerDialectUnitTests {
 
 		assertThat(first.getPlaceholder()).isEqualTo("@P0");
 		assertThat(second.getPlaceholder()).isEqualTo("@P1_foobar");
+	}
+
+	@Test // gh-30
+	public void shouldConsiderUuidAsSimple() {
+
+		SimpleTypeHolder holder = SqlServerDialect.INSTANCE.getSimpleTypeHolder();
+
+		assertThat(holder.isSimpleType(UUID.class)).isTrue();
 	}
 }

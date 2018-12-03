@@ -1,5 +1,11 @@
 package org.springframework.data.r2dbc.dialect;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+
 /**
  * Represents a dialect that is implemented by a particular database.
  *
@@ -27,9 +33,40 @@ public interface Dialect {
 	String generatedKeysClause();
 
 	/**
+	 * Return a collection of types that are natively supported by this database/driver. Defaults to
+	 * {@link Collections#emptySet()}.
+	 *
+	 * @return a collection of types that are natively supported by this database/driver. Defaults to
+	 *         {@link Collections#emptySet()}.
+	 */
+	default Collection<? extends Class<?>> getSimpleTypes() {
+		return Collections.emptySet();
+	}
+
+	/**
+	 * Return the {@link SimpleTypeHolder} for this dialect.
+	 *
+	 * @return the {@link SimpleTypeHolder} for this dialect.
+	 * @see #getSimpleTypes()
+	 */
+	default SimpleTypeHolder getSimpleTypeHolder() {
+		return new SimpleTypeHolder(new HashSet<>(getSimpleTypes()), true);
+	}
+
+	/**
 	 * Return the {@link LimitClause} used by this dialect.
 	 *
 	 * @return the {@link LimitClause} used by this dialect.
 	 */
 	LimitClause limit();
+
+	/**
+	 * Returns {@literal true} whether this dialect supports array-typed column. Collection-typed columns can map their
+	 * content to native array types.
+	 *
+	 * @return {@literal true} whether this dialect supports array-typed columns.
+	 */
+	default boolean supportsArrayColumns() {
+		return false;
+	}
 }

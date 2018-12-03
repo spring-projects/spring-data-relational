@@ -17,15 +17,20 @@ package org.springframework.data.r2dbc.config;
 
 import io.r2dbc.spi.ConnectionFactory;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.r2dbc.dialect.Database;
 import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.function.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.r2dbc.support.SqlErrorCodeR2dbcExceptionTranslator;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
@@ -95,15 +100,21 @@ public abstract class AbstractR2dbcConfiguration {
 	 * Register a {@link RelationalMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
 	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
+	 * @param r2dbcCustomConversions customized R2DBC conversions.
 	 * @return must not be {@literal null}.
 	 * @throws IllegalArgumentException if any of the required args is {@literal null}.
 	 */
 	@Bean
-	public RelationalMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy) {
+	public RelationalMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
+			R2dbcCustomConversions r2dbcCustomConversions) {
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
 
-		return new RelationalMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
+		RelationalMappingContext relationalMappingContext = new RelationalMappingContext(
+				namingStrategy.orElse(NamingStrategy.INSTANCE));
+		relationalMappingContext.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
+
+		return relationalMappingContext;
 	}
 
 	/**
@@ -111,17 +122,37 @@ public abstract class AbstractR2dbcConfiguration {
 	 * RelationalMappingContext}.
 	 *
 	 * @param mappingContext the configured {@link RelationalMappingContext}.
+	 * @param r2dbcCustomConversions customized R2DBC conversions.
 	 * @return must not be {@literal null}.
-	 * @see #r2dbcMappingContext(Optional)
+	 * @see #r2dbcMappingContext(Optional, R2dbcCustomConversions)
 	 * @see #getDialect(ConnectionFactory)
 	 * @throws IllegalArgumentException if any of the {@literal mappingContext} is {@literal null}.
 	 */
 	@Bean
-	public ReactiveDataAccessStrategy reactiveDataAccessStrategy(RelationalMappingContext mappingContext) {
+	public ReactiveDataAccessStrategy reactiveDataAccessStrategy(RelationalMappingContext mappingContext,
+			R2dbcCustomConversions r2dbcCustomConversions) {
 
 		Assert.notNull(mappingContext, "MappingContext must not be null!");
-		return new DefaultReactiveDataAccessStrategy(getDialect(connectionFactory()),
-				new BasicRelationalConverter(mappingContext));
+
+		BasicRelationalConverter converter = new BasicRelationalConverter(mappingContext, r2dbcCustomConversions);
+
+		return new DefaultReactiveDataAccessStrategy(getDialect(connectionFactory()), converter);
+	}
+
+	/**
+	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
+	 * {@link CustomConversions} will be registered with the {@link BasicRelationalConverter} and
+	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)}. Returns an empty {@link R2dbcCustomConversions}
+	 * instance by default.
+	 *
+	 * @return must not be {@literal null}.
+	 */
+	@Bean
+	public R2dbcCustomConversions r2dbcCustomConversions() {
+
+		Dialect dialect = getDialect(connectionFactory());
+		StoreConversions storeConversions = StoreConversions.of(dialect.getSimpleTypeHolder());
+		return new R2dbcCustomConversions(storeConversions, Collections.emptyList());
 	}
 
 	/**

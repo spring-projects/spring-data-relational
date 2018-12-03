@@ -24,7 +24,6 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
  * R2DBC-specific {@link org.springframework.context.annotation.ImportBeanDefinitionRegistrar}.
  *
  * @author Mark Paluch
- * @since 2.0
  */
 class R2dbcRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport {
 
