@@ -15,17 +15,8 @@
  */
 package org.springframework.data.r2dbc.function;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.domain.Sort.Order.*;
-
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Data;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
@@ -35,6 +26,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.domain.Sort.Order.*;
 
 /**
  * Integration tests for {@link DatabaseClient}.
@@ -58,7 +57,8 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 		try {
 			jdbc.execute("DROP TABLE legoset");
-		} catch (DataAccessException e) {}
+		} catch (DataAccessException e) {
+		}
 		jdbc.execute(getCreateTableStatement());
 	}
 
@@ -90,12 +90,10 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 	/**
 	 * Get a parameterized {@code INSERT INTO legoset} statement setting id, name, and manual values.
-	 *
-	 * @return
 	 */
 	protected abstract String getInsertIntoLegosetStatement();
 
-	@Test
+	@Test // gh-2
 	public void executeInsert() {
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
@@ -115,7 +113,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
-	@Test
+	@Test // gh-2
 	public void shouldTranslateDuplicateKeyException() {
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
@@ -128,15 +126,13 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.bindNull(2, Integer.class) //
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
-				.expectErrorSatisfies(exception -> {
-
-					assertThat(exception).isInstanceOf(DuplicateKeyException.class)
-							.hasMessageContaining("execute; SQL [INSERT INTO legoset");
-				}) //
+				.expectErrorSatisfies(exception -> assertThat(exception) //
+						.isInstanceOf(DuplicateKeyException.class) //
+						.hasMessageContaining("execute; SQL [INSERT INTO legoset")) //
 				.verify();
 	}
 
-	@Test
+	@Test // gh-2
 	public void executeSelect() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
@@ -155,7 +151,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				}).verifyComplete();
 	}
 
-	@Test
+	@Test // gh-2
 	public void insert() {
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
@@ -172,7 +168,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
-	@Test
+	@Test // gh-2
 	public void insertWithoutResult() {
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
@@ -188,7 +184,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
-	@Test
+	@Test // gh-2
 	public void insertTypedObject() {
 
 		LegoSet legoSet = new LegoSet();
@@ -209,7 +205,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
-	@Test
+	@Test // gh-2
 	public void selectAsMap() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
@@ -229,7 +225,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				}).verifyComplete();
 	}
 
-	@Test
+	@Test // gh-8
 	public void selectExtracting() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
@@ -246,7 +242,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // gh-2
 	public void selectOrderByIdDesc() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
@@ -264,7 +260,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // gh-2
 	public void selectOrderPaged() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
@@ -282,7 +278,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // gh-2
 	public void selectTypedLater() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
@@ -304,6 +300,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 	@Data
 	@Table("legoset")
 	static class LegoSet {
+
 		int id;
 		String name;
 		Integer manual;

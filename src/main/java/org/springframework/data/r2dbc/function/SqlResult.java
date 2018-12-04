@@ -31,7 +31,7 @@ public interface SqlResult<T> extends FetchSpec<T> {
 	 * Apply a {@link BiFunction mapping function} to the result that emits {@link Row}s.
 	 *
 	 * @param mappingFunction must not be {@literal null}.
-	 * @param <R>
+	 * @param <R> the value type of the {@code SqlResult}.
 	 * @return a new {@link SqlResult} with {@link BiFunction mapping function} applied.
 	 */
 	<R> SqlResult<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);

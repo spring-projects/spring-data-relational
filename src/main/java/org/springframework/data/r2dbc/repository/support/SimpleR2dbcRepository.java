@@ -315,14 +315,16 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	}
 
 	private String getIdColumnName() {
-		return converter.getMappingContext().getRequiredPersistentEntity(entity.getJavaType()).getRequiredIdProperty()
+
+		return converter //
+				.getMappingContext() //
+				.getRequiredPersistentEntity(entity.getJavaType()) //
+				.getRequiredIdProperty() //
 				.getColumnName();
 	}
 
 	private BiConsumer<String, SettableValue> bind(BindableOperation operation, Statement<?> statement) {
 
-		return (k, v) -> {
-			operation.bind(statement, v);
-		};
+		return (k, v) -> operation.bind(statement, v);
 	}
 }

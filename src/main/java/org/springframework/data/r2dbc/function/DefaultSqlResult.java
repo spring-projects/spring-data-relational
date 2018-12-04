@@ -101,8 +101,8 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 	/**
 	 * Returns an empty {@link SqlResult}.
 	 *
-	 * @param <R>
-	 * @return
+	 * @param <R> value type of the {@code SqlResult}.
+	 * @return a {@code SqlResult}.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <R> SqlResult<R> empty() {

@@ -15,27 +15,25 @@
  */
 package org.springframework.data.r2dbc.function;
 
-import static org.assertj.core.api.Assertions.*;
-
 import io.r2dbc.spi.ConnectionFactory;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-
-import javax.sql.DataSource;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.NoTransactionException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Abstract base class for integration tests for {@link TransactionalDatabaseClient}.
@@ -58,7 +56,8 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		jdbc = createJdbcTemplate(createDataSource());
 		try {
 			jdbc.execute("DROP TABLE legoset");
-		} catch (DataAccessException e) {}
+		} catch (DataAccessException e) {
+		}
 		jdbc.execute(getCreateTableStatement());
 		jdbc.execute("DELETE FROM legoset");
 	}
@@ -91,31 +90,27 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 	/**
 	 * Get a parameterized {@code INSERT INTO legoset} statement setting id, name, and manual values.
-	 *
-	 * @return
 	 */
 	protected abstract String getInsertIntoLegosetStatement();
 
 	/**
 	 * Get a statement that returns the current transactionId.
-	 *
-	 * @return
 	 */
 	protected abstract String getCurrentTransactionIdStatement();
 
-	@Test
+	@Test // gh-2
 	public void executeInsertInManagedTransaction() {
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
-		Flux<Integer> integerFlux = databaseClient.inTransaction(db -> {
-
-			return db.execute().sql(getInsertIntoLegosetStatement()) //
-					.bind(0, 42055) //
-					.bind(1, "SCHAUFELRADBAGGER") //
-					.bindNull(2, Integer.class) //
-					.fetch().rowsUpdated();
-		});
+		Flux<Integer> integerFlux = databaseClient.inTransaction(db -> db //
+				.execute() //
+				.sql(getInsertIntoLegosetStatement()) //
+				.bind(0, 42055) //
+				.bind(1, "SCHAUFELRADBAGGER") //
+				.bindNull(2, Integer.class) //
+				.fetch().rowsUpdated() //
+		);
 
 		integerFlux.as(StepVerifier::create) //
 				.expectNext(1) //
@@ -124,7 +119,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
-	@Test
+	@Test // gh-2
 	public void executeInsertInAutoCommitTransaction() {
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
@@ -142,13 +137,17 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
-	@Test
+	@Test // gh-2
 	public void shouldManageUserTransaction() {
 
 		Queue<Long> transactionIds = new ArrayBlockingQueue<>(5);
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
-		Flux<Long> txId = databaseClient.execute().sql(getCurrentTransactionIdStatement()).map((r, md) -> r.get(0, Long.class)).all();
+		Flux<Long> txId = databaseClient //
+				.execute() //
+				.sql(getCurrentTransactionIdStatement()) //
+				.map((r, md) -> r.get(0, Long.class)) //
+				.all();
 
 		Mono<Void> then = databaseClient.enableTransactionSynchronization(databaseClient.beginTransaction() //
 				.thenMany(txId.concatWith(txId).doOnNext(transactionIds::add)) //
@@ -162,7 +161,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		assertThat(listOfTxIds).containsExactly(listOfTxIds.get(1), listOfTxIds.get(0));
 	}
 
-	@Test
+	@Test // gh-2
 	public void userTransactionManagementShouldFailWithoutSynchronizer() {
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
@@ -177,7 +176,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 				}).verify();
 	}
 
-	@Test
+	@Test // gh-2
 	public void shouldRollbackTransaction() {
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
@@ -199,7 +198,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		assertThat(count).isEqualTo(0);
 	}
 
-	@Test
+	@Test // gh-2
 	public void emitTransactionIds() {
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
