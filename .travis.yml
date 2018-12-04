@@ -15,11 +15,6 @@ matrix:
       - NO_JACOCO='true'
       before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -F 11
 
-addons:
-  apt:
-    packages:
-    - oracle-java8-installer
-
 cache:
   directories:
     - $HOME/.m2
