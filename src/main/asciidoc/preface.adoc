@@ -50,13 +50,13 @@ While the open source ecosystem hosts various non-blocking relational database d
 The term, reactive refers to programming models that are built around reacting to change, availability, and processability — network components reacting to I/O events, UI controllers reacting to mouse events, resources being made available and others.
 In that sense, non-blocking is reactive, because, instead of being blocked, we are now in the mode of reacting to notifications as operations complete or data becomes available.
 
-There is also another important mechanism that we on the Spring team associate with reactive and that is non-blocking back pressure.
+There is also another important mechanism that we on the Spring team associated with reactive and that is non-blocking back pressure.
 In synchronous, imperative code, blocking calls serve as a natural form of back pressure that forces the caller to wait.
-In non-blocking code, it becomes important to control the rate of events so that a fast producer does not overwhelm its destination.
+In non-blocking code, it becomes essential to control the rate of events so that a fast producer does not overwhelm its destination.
 
-Reactive Streams is a https://github.com/reactive-streams/reactive-streams-jvm/blob/v{reactiveStreamsVersion}/README.md#specification[small spec] (also https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Flow.html[adopted] in Java 9) that defines the interaction between asynchronous components with back pressure.
-For example a data repository (acting as {reactiveStreamsJavadoc}/org/reactivestreams/Publisher.html[`Publisher`]) can produce data that an HTTP server (acting as {reactiveStreamsJavadoc}/org/reactivestreams/Subscriber.html`[`Subscriber`]) can then write to the response.
-The main purpose of Reactive Streams is to let the subscriber to control how quickly or how slowly the publisher produces data.
+https://github.com/reactive-streams/reactive-streams-jvm/blob/v{reactiveStreamsVersion}/README.md#specification[Reactive Streams is a small spec] (also https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Flow.html[adopted in Java 9]) that defines the interaction between asynchronous components with back pressure.
+For example, a data repository (acting as {reactiveStreamsJavadoc}/org/reactivestreams/Publisher.html[`Publisher`]) can produce data that an HTTP server (acting as {reactiveStreamsJavadoc}/org/reactivestreams/Subscriber.html`[`Subscriber`]) can then write to the response.
+The main purpose of Reactive Streams is to let the subscriber control how quickly or how slowly the publisher produces data.
 
 [[get-started:first-steps:reactive-api]]
 == Reactive API
@@ -81,8 +81,8 @@ Whenever feasible, Spring Data adapts transparently to the use of RxJava or anot
 The Spring Data R2DBC 1.x binaries require:
 
 * JDK level 8.0 and above
-* http://spring.io/docs[Spring Framework] {springVersion} and above
-* R2DBC {r2dbcVersion} and above
+* https://spring.io/docs[Spring Framework] {springVersion} and above
+* https://r2dbc.io[R2DBC] {r2dbcVersion} and above
 
 [[get-started:help]]
 == Additional Help Resources
@@ -101,12 +101,15 @@ Professional Support :: Professional, from-the-source support, with guaranteed r
 [[get-started:up-to-date]]
 == Following Development
 
-For information on the Spring Data R2DBC source code repository, nightly builds, and snapshot artifacts, see the Spring Data R2DBC http://projects.spring.io/spring-data-r2dbc/[homepage].
-You can help make Spring Data best serve the needs of the Spring community by interacting with developers through the Community on http://stackoverflow.com/questions/tagged/spring-data[Stack Overflow].
-To follow developer activity, look for the mailing list information on the Spring Data R2DBC https://projects.spring.io/spring-data-r2dbc/[homepage].
-If you encounter a bug or want to suggest an improvement, please create a ticket on the Spring Data R2DBC https://github.com/spring-projects/spring-data-r2dbc/issues[issue tracker].
-To stay up to date with the latest news and announcements in the Spring eco system, subscribe to the Spring Community http://spring.io[Portal].
-You can also follow the Spring http://spring.io/blog[blog] or the Spring Data project team on Twitter (http://twitter.com/SpringData[SpringData]).
+* For information on the Spring Data R2DBC source code repository, nightly builds, and snapshot artifacts, see the Spring Data R2DBC http://projects.spring.io/spring-data-r2dbc/[homepage].
+
+* You can help make Spring Data best serve the needs of the Spring community by interacting with developers through the Community on http://stackoverflow.com/questions/tagged/spring-data[Stack Overflow].
+
+* If you encounter a bug or want to suggest an improvement, please create a ticket on the Spring Data R2DBC https://github.com/spring-projects/spring-data-r2dbc/issues[issue tracker].
+
+* To stay up to date with the latest news and announcements in the Spring ecosystem, subscribe to the Spring Community http://spring.io[Portal].
+
+* You can also follow the Spring http://spring.io/blog[blog] or the Spring Data project team on Twitter (http://twitter.com/SpringData[SpringData]).
 
 == Project Metadata
 

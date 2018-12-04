@@ -12,8 +12,6 @@
 :imagesdir: images
 ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1600]]
 :spring-data-commons-docs: ../../../../spring-data-commons/src/main/asciidoc
-:rr2dbcVersion: 1.0.0.M6
-:reactiveStreamsVersion: 1.0.1
 :reactiveStreamsJavadoc: http://www.reactive-streams.org/reactive-streams-{reactiveStreamsVersion}-javadoc
 
 (C) 2018 The original authors.

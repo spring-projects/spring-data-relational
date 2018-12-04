@@ -18,7 +18,7 @@ For most tasks, you should use `DatabaseClient` or the Repository support, which
 
 An easy way to bootstrap setting up a working environment is to create a Spring-based project through https://start.spring.io[start.spring.io].
 
-.Add the following to the pom.xml files `dependencies` element:
+. Add the following to the pom.xml files `dependencies` element:
 +
 [source,xml,subs="+attributes"]
 ----
@@ -35,7 +35,7 @@ An easy way to bootstrap setting up a working environment is to create a Spring-
   <!-- a R2DBC driver -->
   <dependency>
     <groupId>io.r2dbc</groupId>
-    <artifactId>…</artifactId>
+    <artifactId>r2dbc-h2</artifactId>
     <version>{r2dbcVersion}</version>
   </dependency>
 
@@ -127,16 +127,16 @@ public class R2dbcApp {
   public static void main(String[] args) throws Exception {
 
     ConnectionFactory connectionFactory = new H2ConnectionFactory(H2ConnectionConfiguration.builder()
-                                                                    .url("mem:test;DB_CLOSE_DELAY=10")
-                                                                    .build());
+                                .url("mem:test;DB_CLOSE_DELAY=10")
+                                .build());
 
     DatabaseClient client = DatabaseClient.create(connectionFactory);
 
     client.execute()
             .sql("CREATE TABLE person" +
-                    "  (id VARCHAR(255) PRIMARY KEY," +
-                    "   name VARCHAR(255)," +
-                    "   age INT)")
+                    "(id VARCHAR(255) PRIMARY KEY," +
+                    "name VARCHAR(255)," +
+                    "age INT)")
             .fetch()
             .rowsUpdated()
             .as(StepVerifier::create)
@@ -162,7 +162,7 @@ public class R2dbcApp {
 }
 ----
 
-When you run the main program, the preceding examples produce the following output:
+When you run the main program, the preceding examples produce output similar to the following:
 
 [source]
 ----
@@ -364,7 +364,7 @@ NOTE: `execute().sql(…)` accepts either the SQL query string or a query `Suppl
 === Running Queries
 
 SQL queries can return values or the number of affected rows.
-`DatabaseClient` can return the number of updated rows or the rows themself, depending on the issued query.
+`DatabaseClient` can return the number of updated rows or the rows themselves, depending on the issued query.
 
 The following example shows an `UPDATE` statement that returns the number of updated rows:
 
@@ -409,7 +409,7 @@ Flux<Person> all = client.execute()
 [[r2dbc.datbaseclient.mapping]]
 === Mapping Results
 
-You can customize result extraction beyong `Map` and POJO result extraction by providing an extractor `BiFunction<Row, RowMetadata, T>`.
+You can customize result extraction beyond `Map` and POJO result extraction by providing an extractor `BiFunction<Row, RowMetadata, T>`.
 The extractor function interacts directly with R2DBC's `Row` and `RowMetadata` objects and can return arbitrary values (singular values, collections/maps, objects).
 
 The following example extracts the `id` column and emits its value:
@@ -418,8 +418,7 @@ The following example extracts the `id` column and emits its value:
 ----
 Flux<String> names= client.execute()
         .sql("SELECT name FROM person")
-        .fetch()
-        .extract((row, rowMetadata) -> row.get("id", String.class))
+        .map((row, rowMetadata) -> row.get("id", String.class))
         .all();
 ----
 
@@ -435,11 +434,11 @@ You must wrap any `null` values in an object (e.g. `Optional` for singular value
 [[r2dbc.datbaseclient.binding]]
 === Binding Values to Queries
 
-A typical application requires parametrized SQL statements to select or update rows according to some input.
+A typical application requires parameterized SQL statements to select or update rows according to some input.
 These are typically `SELECT` statements  constrained by a `WHERE` clause or `INSERT`/`UPDATE` statements accepting input parameters.
-Parametrized statements bear the risk of SQL injection if parameters are not escaped properly.
+Parameterized statements bear the risk of SQL injection if parameters are not escaped properly.
 `DatabaseClient` leverages R2DBC's Bind API to eliminate the risk of SQL injection for query parameters.
-You can provide a parametrized SQL statement with the `sql(…)` operator and bind parameters to the actual `Statement`.
+You can provide a parameterized SQL statement with the `sql(…)` operator and bind parameters to the actual `Statement`.
 Your R2DBC driver then executes the statement using prepared statements and parameter substitution.
 
 Parameter binding supports various binding strategies:
@@ -458,8 +457,8 @@ db.execute()
     .bind(2, 34);
 ----
 
-NOTE: If you are familiar with JDBC, then you're also familiar with `?` (questionmark) bind markers.
-JDBC drivers translate questionmark bindmarkers to database-native markers as part of statement execution.
+NOTE: If you are familiar with JDBC, then you're also familiar with `?` (question mark) bind markers.
+JDBC drivers translate question mark bind markers to database-native markers as part of statement execution.
 Make sure to use the appropriate bind markers that are supported by your database as R2DBC requires database-native parameter bind markers.
 
 [[r2dbc.datbaseclient.transactions]]

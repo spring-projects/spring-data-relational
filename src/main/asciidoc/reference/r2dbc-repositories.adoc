@@ -77,7 +77,7 @@ public class PersonRepositoryTests {
     @Autowired PersonRepository repository;
 
     @Test
-    public void readsallEntitiesCorrectly() {
+    public void readsAllEntitiesCorrectly() {
 
       repository.findAll()
                 .as(StepVerifier::create)
@@ -119,3 +119,5 @@ The annotated query uses native bind markers, which are Postgres bind markers in
 ====
 
 NOTE: R2DBC repositories do not support query derivation.
+
+NOTE: R2DBC repositories require native parameter bind markers that are bound by index.

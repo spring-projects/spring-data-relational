@@ -35,6 +35,7 @@
 		<r2dbc-postgresql.version>1.0.0.M6</r2dbc-postgresql.version>
 		<r2dbc-h2.version>1.0.0.M6</r2dbc-h2.version>
 		<r2dbc-mssql.version>1.0.0.M6</r2dbc-mssql.version>
+		<reactive-streams.version>1.0.1</reactive-streams.version>
 		<testcontainers.version>1.10.1</testcontainers.version>
 
 	</properties>
@@ -343,6 +344,25 @@
 			<plugin>
 				<groupId>org.asciidoctor</groupId>
 				<artifactId>asciidoctor-maven-plugin</artifactId>
+				<configuration>
+					<sourceDirectory>${project.root}/src/main/asciidoc</sourceDirectory>
+					<sourceDocumentName>index.adoc</sourceDocumentName>
+					<doctype>book</doctype>
+					<attributes>
+						<version>${project.version}</version>
+						<projectName>${project.name}</projectName>
+						<projectVersion>${project.version}</projectVersion>
+						<aspectjVersion>${aspectj}</aspectjVersion>
+						<querydslVersion>${querydsl}</querydslVersion>
+						<springVersion>${spring}</springVersion>
+						<r2dbcVersion>${r2dbc-spi.version}</r2dbcVersion>
+						<reactiveStreamsVersion>${reactive-streams.version}</reactiveStreamsVersion>
+						<releasetrainVersion>${releasetrain}</releasetrainVersion>
+						<allow-uri-read>true</allow-uri-read>
+						<toclevels>3</toclevels>
+						<numbered>true</numbered>
+					</attributes>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
