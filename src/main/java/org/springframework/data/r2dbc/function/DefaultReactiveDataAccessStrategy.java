@@ -261,11 +261,13 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			}
 
 			if (!dialect.supportsArrayColumns()) {
+
 				throw new InvalidDataAccessResourceUsageException(
 						"Dialect " + dialect.getClass().getName() + " does not support array columns");
 			}
 
 			if (!property.isArray()) {
+
 				Object zeroLengthArray = Array.newInstance(property.getActualType(), 0);
 				return relationalConverter.getConversionService().convert(value, zeroLengthArray.getClass());
 			}

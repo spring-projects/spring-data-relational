@@ -112,6 +112,7 @@ public class DefaultReactiveDataAccessStrategyUnitTests {
 				.getColumnsToUpdate(new WithCollectionTypes(new String[] { "one", "two" }, null));
 
 		Object stringArray = columnsToUpdate.get("string_array").getValue();
+
 		assertThat(stringArray).isInstanceOf(String[].class);
 		assertThat((String[]) stringArray).hasSize(2).contains("one", "two");
 	}
@@ -123,6 +124,7 @@ public class DefaultReactiveDataAccessStrategyUnitTests {
 				.getColumnsToUpdate(new WithCollectionTypes(null, Arrays.asList("one", "two")));
 
 		Object stringArray = columnsToUpdate.get("string_collection").getValue();
+
 		assertThat(stringArray).isInstanceOf(String[].class);
 		assertThat((String[]) stringArray).hasSize(2).contains("one", "two");
 	}
@@ -134,6 +136,7 @@ public class DefaultReactiveDataAccessStrategyUnitTests {
 		List<String> stringCollection;
 
 		WithCollectionTypes(String[] stringArray, List<String> stringCollection) {
+
 			this.stringArray = stringArray;
 			this.stringCollection = stringCollection;
 		}

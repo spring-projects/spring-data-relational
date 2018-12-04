@@ -69,6 +69,35 @@ public class EntityRowMapperUnitTests {
 		assertThat(result.ids).contains("foo", "bar");
 	}
 
+	@Test // gh-30
+	public void shouldConvertArrayToSet() {
+
+		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
+		when(rowMock.get("integerSet")).thenReturn((new int[] { 3, 14 }));
+
+		EntityWithCollection result = mapper.apply(rowMock, metadata);
+		assertThat(result.integerSet).contains(3, 14);
+	}
+
+	@Test // gh-30
+	public void shouldConvertArrayMembers() {
+
+		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
+		when(rowMock.get("primitiveIntegers")).thenReturn((new long[] { 3L, 14L }));
+
+		EntityWithCollection result = mapper.apply(rowMock, metadata);
+		assertThat(result.primitiveIntegers).contains(3, 14);
+	}
+
+	@Test // gh-30
+	public void shouldConvertArrayToBoxedArray() {
+
+		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
+		when(rowMock.get("boxedIntegers")).thenReturn((new int[] { 3, 11 }));
+
+		EntityWithCollection result = mapper.apply(rowMock, metadata);
+		assertThat(result.boxedIntegers).contains(3, 11);
+	}
 	@SuppressWarnings("unchecked")
 	private <T> EntityRowMapper<T> getRowMapper(Class<T> type) {
 		RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) strategy.getMappingContext()
@@ -92,5 +121,8 @@ public class EntityRowMapperUnitTests {
 
 	static class EntityWithCollection {
 		List<String> ids;
+		Set<Integer> integerSet;
+		Integer[] boxedIntegers;
+		int[] primitiveIntegers;
 	}
 }

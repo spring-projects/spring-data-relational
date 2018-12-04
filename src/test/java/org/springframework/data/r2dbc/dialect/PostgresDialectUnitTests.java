@@ -42,5 +42,21 @@ public class PostgresDialectUnitTests {
 		SimpleTypeHolder holder = PostgresDialect.INSTANCE.getSimpleTypeHolder();
 
 		assertThat(holder.isSimpleType(String[].class)).isTrue();
+
+		@Test // gh-30
+		public void shouldConsiderIntArrayTypeAsSimple() {
+
+			SimpleTypeHolder holder = PostgresDialect.INSTANCE.getSimpleTypeHolder();
+
+			assertThat(holder.isSimpleType(int[].class)).isTrue();
+		}
+
+		@Test // gh-30
+		public void shouldConsiderIntegerArrayTypeAsSimple() {
+
+			SimpleTypeHolder holder = PostgresDialect.INSTANCE.getSimpleTypeHolder();
+
+			assertThat(holder.isSimpleType(Integer[].class)).isTrue();
+		}
 	}
 }

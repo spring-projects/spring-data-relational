@@ -118,7 +118,7 @@ public abstract class AbstractR2dbcConfiguration {
 	}
 
 	/**
-	 * Creates a {@link ReactiveDataAccessStrategy} using the configured {@link #r2dbcMappingContext(Optional)
+	 * Creates a {@link ReactiveDataAccessStrategy} using the configured {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)}
 	 * RelationalMappingContext}.
 	 *
 	 * @param mappingContext the configured {@link RelationalMappingContext}.
