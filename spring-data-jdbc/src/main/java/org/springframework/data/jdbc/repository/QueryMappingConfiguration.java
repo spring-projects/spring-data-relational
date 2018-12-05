@@ -14,7 +14,7 @@ import org.springframework.lang.Nullable;
 public interface QueryMappingConfiguration {
 
 	@Nullable
-	<T> RowMapperOrResultsetExtractor<?> getMapperOrExtractor(Class<T> type);
+	<T> RowMapperOrResultsetExtractor<? extends T> getMapperOrExtractor(Class<T> type);
 
 	/**
 	 * An immutable empty instance that will return {@literal null} for all arguments.
@@ -22,7 +22,7 @@ public interface QueryMappingConfiguration {
 	QueryMappingConfiguration EMPTY = new QueryMappingConfiguration() {
 
 		@Override
-		public <T> RowMapperOrResultsetExtractor<?> getMapperOrExtractor(Class<T> type) {
+		public <T> RowMapperOrResultsetExtractor<? extends T> getMapperOrExtractor(Class<T> type) {
 			return null;
 		}
 

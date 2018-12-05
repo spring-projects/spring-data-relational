@@ -24,6 +24,7 @@ import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
@@ -102,12 +103,24 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	}
 
 	/**
-	 * @param rowMapperMap can be {@literal null}. {@link #afterPropertiesSet()} defaults to
+	 * @param queryMappingConfiguration can be {@literal null}. {@link #afterPropertiesSet()} defaults to
 	 *          {@link QueryMappingConfiguration#EMPTY} if {@literal null}.
 	 */
 	@Autowired(required = false)
-	public void setQueryMappingConfiguration(QueryMappingConfiguration rowMapperMap) {
-		this.queryMappingConfiguration = rowMapperMap;
+	public void setQueryMappingConfiguration(QueryMappingConfiguration queryMappingConfiguration) {
+		this.queryMappingConfiguration = queryMappingConfiguration;
+	}
+
+	/**
+	 * @param rowMapperMap can be {@literal null}. {@link #afterPropertiesSet()} defaults to {@link RowMapperMap#EMPTY} if
+	 *          {@literal null}.
+	 *
+	 * @deprecated use {@link #setQueryMappingConfiguration(QueryMappingConfiguration)} instead.
+	 */
+	@Deprecated
+	@Autowired(required = false)
+	public void setRowMapperMap(RowMapperMap rowMapperMap) {
+		setQueryMappingConfiguration(rowMapperMap);
 	}
 
 	@Autowired
