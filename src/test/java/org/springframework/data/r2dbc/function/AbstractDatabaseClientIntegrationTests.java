@@ -15,8 +15,16 @@
  */
 package org.springframework.data.r2dbc.function;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.domain.Sort.Order.*;
+
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Data;
+import reactor.core.publisher.Hooks;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
@@ -26,14 +34,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.domain.Sort.Order.*;
 
 /**
  * Integration tests for {@link DatabaseClient}.
@@ -57,8 +57,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 		try {
 			jdbc.execute("DROP TABLE legoset");
-		} catch (DataAccessException e) {
-		}
+		} catch (DataAccessException e) {}
 		jdbc.execute(getCreateTableStatement());
 	}
 
@@ -106,9 +105,6 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.as(StepVerifier::create) //
 				.expectNext(1) //
 				.verifyComplete();
-
-		Flux<LegoSet> rows = databaseClient.select().from("legoset").orderBy(Sort.by(desc("id"))).as(LegoSet.class).fetch()
-				.all();
 
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}

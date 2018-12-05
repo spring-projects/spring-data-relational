@@ -65,8 +65,9 @@ public interface DatabaseClient {
 
 	/**
 	 * Creates a {@code DatabaseClient} that will use the provided {@link io.r2dbc.spi.ConnectionFactory}.
+	 *
 	 * @param factory The {@code ConnectionFactory} to use for obtaining connections.
-	 * @return a new {@code DatabaseClient}. Guaranteed to be not {@code null}.
+	 * @return a new {@code DatabaseClient}. Guaranteed to be not {@literal null}.
 	 */
 	static DatabaseClient create(ConnectionFactory factory) {
 		return new DefaultDatabaseClientBuilder().connectionFactory(factory).build();
@@ -163,7 +164,7 @@ public interface DatabaseClient {
 		 *
 		 * @param mappingFunction must not be {@literal null}.
 		 * @param <R> result type.
-		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@code null}.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
 		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
@@ -199,7 +200,7 @@ public interface DatabaseClient {
 		 *
 		 * @param mappingFunction must not be {@literal null}.
 		 * @param <R> result type.
-		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@code null}.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
 		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
@@ -225,7 +226,8 @@ public interface DatabaseClient {
 		 * Specify the source {@literal table} to select from.
 		 *
 		 * @param table must not be {@literal null} or empty.
-		 * @return a {@link GenericSelectSpec} for further configuration of the select. Guaranteed to be not {@code null}.
+		 * @return a {@link GenericSelectSpec} for further configuration of the select. Guaranteed to be not
+		 *         {@literal null}.
 		 */
 		GenericSelectSpec from(String table);
 
@@ -233,7 +235,7 @@ public interface DatabaseClient {
 		 * Specify the source table to select from to using the {@link Class entity class}.
 		 *
 		 * @param table must not be {@literal null}.
-		 * @return a {@link TypedSelectSpec} for further configuration of the select. Guaranteed to be not {@code null}.
+		 * @return a {@link TypedSelectSpec} for further configuration of the select. Guaranteed to be not {@literal null}.
 		 */
 		<T> TypedSelectSpec<T> from(Class<T> table);
 	}
@@ -247,7 +249,8 @@ public interface DatabaseClient {
 		 * Specify the target {@literal table} to insert into.
 		 *
 		 * @param table must not be {@literal null} or empty.
-		 * @return a {@link GenericInsertSpec} for further configuration of the insert. Guaranteed to be not {@code null}.
+		 * @return a {@link GenericInsertSpec} for further configuration of the insert. Guaranteed to be not
+		 *         {@literal null}.
 		 */
 		GenericInsertSpec<Map<String, Object>> into(String table);
 
@@ -255,7 +258,7 @@ public interface DatabaseClient {
 		 * Specify the target table to insert to using the {@link Class entity class}.
 		 *
 		 * @param table must not be {@literal null}.
-		 * @return a {@link TypedInsertSpec} for further configuration of the insert. Guaranteed to be not {@code null}.
+		 * @return a {@link TypedInsertSpec} for further configuration of the insert. Guaranteed to be not {@literal null}.
 		 */
 		<T> TypedInsertSpec<T> into(Class<T> table);
 	}
@@ -279,7 +282,7 @@ public interface DatabaseClient {
 		 *
 		 * @param mappingFunction must not be {@literal null}.
 		 * @param <R> result type.
-		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@code null}.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
 		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
@@ -308,7 +311,7 @@ public interface DatabaseClient {
 		 *
 		 * @param mappingFunction must not be {@literal null}.
 		 * @param <R> result type.
-		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@code null}.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
 		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
@@ -377,8 +380,9 @@ public interface DatabaseClient {
 		/**
 		 * Insert the given {@code objectToInsert}.
 		 *
-		 * @param objectToInsert the object of which the attributes will provide the values for the insert. Must not be {@code null}.
-		 * @return a {@link InsertSpec} for further configuration of the insert. Guaranteed to be not {@code null}.
+		 * @param objectToInsert the object of which the attributes will provide the values for the insert. Must not be
+		 *          {@literal null}.
+		 * @return a {@link InsertSpec} for further configuration of the insert. Guaranteed to be not {@literal null}.
 		 */
 		InsertSpec<Map<String, Object>> using(T objectToInsert);
 
@@ -386,7 +390,7 @@ public interface DatabaseClient {
 		 * Use the given {@code tableName} as insert target.
 		 *
 		 * @param tableName must not be {@literal null} or empty.
-		 * @return a {@link TypedInsertSpec} for further configuration of the insert. Guaranteed to be not {@code null}.
+		 * @return a {@link TypedInsertSpec} for further configuration of the insert. Guaranteed to be not {@literal null}.
 		 */
 		TypedInsertSpec<T> table(String tableName);
 
@@ -394,8 +398,9 @@ public interface DatabaseClient {
 		 * Insert the given {@link Publisher} to insert one or more objects. Inserts only a single object when calling
 		 * {@link FetchSpec#one()} or {@link FetchSpec#first()}.
 		 *
-		 * @param objectToInsert a publisher providing the objects of which the attributes will provide the values for the insert. Must not be {@code null}.
-		 * @return a {@link InsertSpec} for further configuration of the insert. Guaranteed to be not {@code null}.
+		 * @param objectToInsert a publisher providing the objects of which the attributes will provide the values for the
+		 *          insert. Must not be {@literal null}.
+		 * @return a {@link InsertSpec} for further configuration of the insert. Guaranteed to be not {@literal null}.
 		 * @see InsertSpec#fetch()
 		 */
 		InsertSpec<Map<String, Object>> using(Publisher<T> objectToInsert);
@@ -413,7 +418,7 @@ public interface DatabaseClient {
 		 *
 		 * @param mappingFunction must not be {@literal null}.
 		 * @param <R> result type.
-		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@code null}.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
 		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
