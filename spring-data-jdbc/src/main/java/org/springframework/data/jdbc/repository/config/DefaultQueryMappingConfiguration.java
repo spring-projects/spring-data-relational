@@ -22,7 +22,7 @@ public class DefaultQueryMappingConfiguration implements QueryMappingConfigurati
 	private Map<Class<?>, RowMapperOrResultsetExtractor<?>> mappers = new LinkedHashMap<>();
 
 	@Nullable
-	public <T> RowMapperOrResultsetExtractor<?> getMapperOrExtractor(Class<T> type) {
+	public <T> RowMapperOrResultsetExtractor<? extends T> getMapperOrExtractor(Class<T> type) {
 
 		Assert.notNull(type, "Type must not be null");
 
@@ -37,7 +37,7 @@ public class DefaultQueryMappingConfiguration implements QueryMappingConfigurati
 				}
 			}
 		}
-		return candidate;
+		return (RowMapperOrResultsetExtractor<? extends T>) candidate;
 	}
 
 	/**

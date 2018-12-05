@@ -23,11 +23,11 @@ public class RowMapperOrResultsetExtractor<T> {
 		this.resultSetExtractor = resultSetExtractor;
 	}
 
-	public static RowMapperOrResultsetExtractor<?> of(RowMapper<?> rowMapper) {
+	public static <T> RowMapperOrResultsetExtractor<T> of(RowMapper<T> rowMapper) {
 		return new RowMapperOrResultsetExtractor<>(rowMapper, null);
 	}
 
-	public static RowMapperOrResultsetExtractor<?> of(ResultSetExtractor<?> resultSetExtractor) {
+	public static <T> RowMapperOrResultsetExtractor<T> of(ResultSetExtractor<T> resultSetExtractor) {
 		return new RowMapperOrResultsetExtractor<>(null, resultSetExtractor);
 	}
 
