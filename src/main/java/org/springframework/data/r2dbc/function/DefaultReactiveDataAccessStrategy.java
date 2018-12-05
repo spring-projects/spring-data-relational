@@ -38,6 +38,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.r2dbc.dialect.ArrayColumns;
 import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.Dialect;
@@ -249,7 +250,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	private Object getWriteValue(PersistentPropertyAccessor propertyAccessor, RelationalPersistentProperty property) {
 
 		TypeInformation<?> type = property.getTypeInformation();
-		Object value = relationalConverter.writeValue(propertyAccessor.getProperty(property), type);
+		Object value = propertyAccessor.getProperty(property);
 
 		if (type.isCollectionLike()) {
 
@@ -260,17 +261,28 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 				throw new InvalidDataAccessApiUsageException("Nested entities are not supported");
 			}
 
-			if (!dialect.supportsArrayColumns()) {
+			ArrayColumns arrayColumns = dialect.getArraySupport();
+
+			if (!arrayColumns.isSupported()) {
 
 				throw new InvalidDataAccessResourceUsageException(
 						"Dialect " + dialect.getClass().getName() + " does not support array columns");
 			}
 
-			if (!property.isArray()) {
+			return getArrayValue(arrayColumns, property, value);
+		}
 
-				Object zeroLengthArray = Array.newInstance(property.getActualType(), 0);
-				return relationalConverter.getConversionService().convert(value, zeroLengthArray.getClass());
-			}
+		return value;
+	}
+
+	private Object getArrayValue(ArrayColumns arrayColumns, RelationalPersistentProperty property, Object value) {
+
+		Class<?> targetType = arrayColumns.getArrayType(property.getActualType());
+
+		if (!property.isArray() || !property.getActualType().equals(targetType)) {
+
+			Object zeroLengthArray = Array.newInstance(targetType, 0);
+			return relationalConverter.getConversionService().convert(value, zeroLengthArray.getClass());
 		}
 
 		return value;

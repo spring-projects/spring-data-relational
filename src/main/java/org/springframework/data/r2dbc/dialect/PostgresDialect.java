@@ -1,14 +1,19 @@
 package org.springframework.data.r2dbc.dialect;
 
+import lombok.RequiredArgsConstructor;
+
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 /**
  * An SQL dialect for Postgres.
@@ -18,7 +23,7 @@ import java.util.UUID;
 public class PostgresDialect implements Dialect {
 
 	private static final Set<Class<?>> SIMPLE_TYPES = new HashSet<>(
-			Arrays.asList(List.class, Collection.class, String[].class, UUID.class, URL.class, URI.class, InetAddress.class));
+			Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class));
 
 	/**
 	 * Singleton instance.
@@ -56,6 +61,8 @@ public class PostgresDialect implements Dialect {
 			return Position.END;
 		}
 	};
+
+	private final PostgresArrayColumns ARRAY_COLUMNS = new PostgresArrayColumns(getSimpleTypeHolder());
 
 	/*
 	 * (non-Javadoc)
@@ -95,10 +102,41 @@ public class PostgresDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#supportsArrayColumns()
+	 * @see org.springframework.data.r2dbc.dialect.Dialect#getArraySupport()
 	 */
 	@Override
-	public boolean supportsArrayColumns() {
-		return true;
+	public ArrayColumns getArraySupport() {
+		return ARRAY_COLUMNS;
+	}
+
+	@RequiredArgsConstructor
+	static class PostgresArrayColumns implements ArrayColumns {
+
+		private final SimpleTypeHolder simpleTypes;
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.dialect.ArrayColumns#isSupported()
+		 */
+		@Override
+		public boolean isSupported() {
+			return true;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.dialect.ArrayColumns#getArrayType(java.lang.Class)
+		 */
+		@Override
+		public Class<?> getArrayType(Class<?> userType) {
+
+			Assert.notNull(userType, "Array component type must not be null");
+
+			if (!simpleTypes.isSimpleType(userType)) {
+				throw new IllegalArgumentException("Unsupported array type: " + ClassUtils.getQualifiedName(userType));
+			}
+
+			return ClassUtils.resolvePrimitiveIfNecessary(userType);
+		}
 	}
 }

@@ -96,7 +96,8 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 				return readEntityFrom(row, property);
 			}
 
-			return converter.readValue(row.get(prefix + property.getColumnName()), property.getTypeInformation());
+			Object value = row.get(prefix + property.getColumnName());
+			return converter.readValue(value, property.getTypeInformation());
 
 		} catch (Exception o_O) {
 			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
@@ -156,9 +157,7 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 			String column = prefix + property.getColumnName();
 
 			try {
-
-				Object value = converter.readValue(resultSet.get(column), property.getTypeInformation());
-				return converter.getConversionService().convert(value, parameter.getType().getType());
+				return converter.getConversionService().convert(resultSet.get(column), parameter.getType().getType());
 			} catch (Exception o_O) {
 				throw new MappingException(String.format("Couldn't read column %s from Row.", column), o_O);
 			}

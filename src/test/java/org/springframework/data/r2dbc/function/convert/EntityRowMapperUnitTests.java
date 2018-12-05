@@ -8,6 +8,7 @@ import io.r2dbc.spi.RowMetadata;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,6 +21,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
  * Unit tests for {@link EntityRowMapper}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @RunWith(MockitoJUnitRunner.class)
 public class EntityRowMapperUnitTests {
@@ -73,7 +75,7 @@ public class EntityRowMapperUnitTests {
 	public void shouldConvertArrayToSet() {
 
 		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
-		when(rowMock.get("integerSet")).thenReturn((new int[] { 3, 14 }));
+		when(rowMock.get("integer_set")).thenReturn((new int[] { 3, 14 }));
 
 		EntityWithCollection result = mapper.apply(rowMock, metadata);
 		assertThat(result.integerSet).contains(3, 14);
@@ -83,7 +85,7 @@ public class EntityRowMapperUnitTests {
 	public void shouldConvertArrayMembers() {
 
 		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
-		when(rowMock.get("primitiveIntegers")).thenReturn((new long[] { 3L, 14L }));
+		when(rowMock.get("primitive_integers")).thenReturn((new Long[] { 3L, 14L }));
 
 		EntityWithCollection result = mapper.apply(rowMock, metadata);
 		assertThat(result.primitiveIntegers).contains(3, 14);
@@ -93,11 +95,12 @@ public class EntityRowMapperUnitTests {
 	public void shouldConvertArrayToBoxedArray() {
 
 		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
-		when(rowMock.get("boxedIntegers")).thenReturn((new int[] { 3, 11 }));
+		when(rowMock.get("boxed_integers")).thenReturn((new int[] { 3, 11 }));
 
 		EntityWithCollection result = mapper.apply(rowMock, metadata);
 		assertThat(result.boxedIntegers).contains(3, 11);
 	}
+
 	@SuppressWarnings("unchecked")
 	private <T> EntityRowMapper<T> getRowMapper(Class<T> type) {
 		RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) strategy.getMappingContext()

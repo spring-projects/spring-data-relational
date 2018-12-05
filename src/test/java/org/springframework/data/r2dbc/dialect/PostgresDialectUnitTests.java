@@ -1,8 +1,8 @@
 package org.springframework.data.r2dbc.dialect;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.junit.Test;
@@ -28,35 +28,50 @@ public class PostgresDialectUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldConsiderCollectionTypesAsSimple() {
+	public void shouldConsiderSimpleTypes() {
 
 		SimpleTypeHolder holder = PostgresDialect.INSTANCE.getSimpleTypeHolder();
 
-		assertThat(holder.isSimpleType(List.class)).isTrue();
-		assertThat(holder.isSimpleType(Collection.class)).isTrue();
+		assertSoftly(it -> {
+			it.assertThat(holder.isSimpleType(String.class)).isTrue();
+			it.assertThat(holder.isSimpleType(int.class)).isTrue();
+			it.assertThat(holder.isSimpleType(Integer.class)).isTrue();
+		});
 	}
 
 	@Test // gh-30
-	public void shouldConsiderStringArrayTypeAsSimple() {
+	public void shouldSupportArrays() {
 
-		SimpleTypeHolder holder = PostgresDialect.INSTANCE.getSimpleTypeHolder();
+		ArrayColumns arrayColumns = PostgresDialect.INSTANCE.getArraySupport();
 
-		assertThat(holder.isSimpleType(String[].class)).isTrue();
+		assertThat(arrayColumns.isSupported()).isTrue();
+	}
 
-		@Test // gh-30
-		public void shouldConsiderIntArrayTypeAsSimple() {
+	@Test // gh-30
+	public void shouldUseBoxedArrayTypesForPrimitiveTypes() {
 
-			SimpleTypeHolder holder = PostgresDialect.INSTANCE.getSimpleTypeHolder();
+		ArrayColumns arrayColumns = PostgresDialect.INSTANCE.getArraySupport();
 
-			assertThat(holder.isSimpleType(int[].class)).isTrue();
-		}
+		assertSoftly(it -> {
+			it.assertThat(arrayColumns.getArrayType(int.class)).isEqualTo(Integer.class);
+			it.assertThat(arrayColumns.getArrayType(double.class)).isEqualTo(Double.class);
+			it.assertThat(arrayColumns.getArrayType(String.class)).isEqualTo(String.class);
+		});
+	}
 
-		@Test // gh-30
-		public void shouldConsiderIntegerArrayTypeAsSimple() {
+	@Test // gh-30
+	public void shouldRejectNonSimpleArrayTypes() {
 
-			SimpleTypeHolder holder = PostgresDialect.INSTANCE.getSimpleTypeHolder();
+		ArrayColumns arrayColumns = PostgresDialect.INSTANCE.getArraySupport();
 
-			assertThat(holder.isSimpleType(Integer[].class)).isTrue();
-		}
+		assertThatThrownBy(() -> arrayColumns.getArrayType(getClass())).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test // gh-30
+	public void shouldRejectNestedCollections() {
+
+		ArrayColumns arrayColumns = PostgresDialect.INSTANCE.getArraySupport();
+
+		assertThatThrownBy(() -> arrayColumns.getArrayType(List.class)).isInstanceOf(IllegalArgumentException.class);
 	}
 }

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.r2dbc.dialect.ArrayColumns.Unsupported;
 
 /**
  * Represents a dialect that is implemented by a particular database.
@@ -61,12 +62,11 @@ public interface Dialect {
 	LimitClause limit();
 
 	/**
-	 * Returns {@literal true} whether this dialect supports array-typed column. Collection-typed columns can map their
-	 * content to native array types.
+	 * Returns the array support object that describes how array-typed columns are supported by this dialect.
 	 *
-	 * @return {@literal true} whether this dialect supports array-typed columns.
+	 * @return the array support object that describes how array-typed columns are supported by this dialect.
 	 */
-	default boolean supportsArrayColumns() {
-		return false;
+	default ArrayColumns getArraySupport() {
+		return Unsupported.INSTANCE;
 	}
 }

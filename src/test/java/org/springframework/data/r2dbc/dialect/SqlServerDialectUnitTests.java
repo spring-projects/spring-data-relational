@@ -33,4 +33,13 @@ public class SqlServerDialectUnitTests {
 
 		assertThat(holder.isSimpleType(UUID.class)).isTrue();
 	}
+
+	@Test // gh-30
+	public void shouldNotSupportArrays() {
+
+		ArrayColumns arrayColumns = SqlServerDialect.INSTANCE.getArraySupport();
+
+		assertThat(arrayColumns.isSupported()).isFalse();
+		assertThatThrownBy(() -> arrayColumns.getArrayType(String.class)).isInstanceOf(UnsupportedOperationException.class);
+	}
 }
