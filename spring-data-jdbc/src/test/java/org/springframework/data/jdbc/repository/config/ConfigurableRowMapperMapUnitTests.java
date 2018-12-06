@@ -19,10 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
@@ -38,7 +35,7 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration();
 
-		assertThat(map.getMapperOrExtractor(Object.class)).isNull();
+		assertThat(map.getRowMapper(Object.class)).isNull();
 	}
 
 	@Test // DATAJDBC-166
@@ -48,18 +45,7 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration().registerRowMapper(Object.class, rowMapper);
 
-		assertThat(map.getMapperOrExtractor(Object.class)).isEqualTo(RowMapperOrResultsetExtractor.of(rowMapper));
-	}
-
-	@Test // DATAJDBC-166
-	public void returnsConfiguredInstanceResultSetExtractorForClass() {
-
-		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
-
-		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration().registerResultSetExtractor(Object.class,
-				resultSetExtractor);
-
-		assertThat(map.getMapperOrExtractor(Object.class)).isEqualTo(RowMapperOrResultsetExtractor.of(resultSetExtractor));
+		assertThat(map.getRowMapper(Object.class)).isEqualTo(rowMapper);
 	}
 
 	@Test // DATAJDBC-166
@@ -69,20 +55,8 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration().registerRowMapper(Number.class, rowMapper);
 
-		assertThat(map.getMapperOrExtractor(Integer.class)).isNull();
-		assertThat(map.getMapperOrExtractor(String.class)).isNull();
-	}
-
-	@Test // DATAJDBC-166
-	public void returnsNullResultSetExtractorForClassNotConfigured() {
-
-		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
-
-		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration().registerResultSetExtractor(Number.class,
-				resultSetExtractor);
-
-		assertThat(map.getMapperOrExtractor(Integer.class)).isNull();
-		assertThat(map.getMapperOrExtractor(String.class)).isNull();
+		assertThat(map.getRowMapper(Integer.class)).isNull();
+		assertThat(map.getRowMapper(String.class)).isNull();
 	}
 
 	@Test // DATAJDBC-166
@@ -92,18 +66,7 @@ public class ConfigurableRowMapperMapUnitTests {
 
 		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration().registerRowMapper(String.class, rowMapper);
 
-		assertThat(map.getMapperOrExtractor(Object.class)).isEqualTo(RowMapperOrResultsetExtractor.of(rowMapper));
-	}
-
-	@Test // DATAJDBC-290
-	public void returnsInstanceOfResultSetExtractorRegisteredForSubClass() {
-
-		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
-
-		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration().registerResultSetExtractor(String.class,
-				resultSetExtractor);
-
-		assertThat(map.getMapperOrExtractor(Object.class)).isEqualTo(RowMapperOrResultsetExtractor.of(resultSetExtractor));
+		assertThat(map.getRowMapper(Object.class)).isEqualTo(rowMapper);
 	}
 
 	@Test // DATAJDBC-166
@@ -116,20 +79,7 @@ public class ConfigurableRowMapperMapUnitTests {
 				.registerRowMapper(Integer.class, rowMapper) //
 				.registerRowMapper(Number.class, mock(RowMapper.class));
 
-		assertThat(map.getMapperOrExtractor(Integer.class)).isEqualTo(RowMapperOrResultsetExtractor.of(rowMapper));
-	}
-
-	@Test // DATAJDBC-290
-	public void prefersExactResultSetExtractorTypeMatchClass() {
-
-		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
-
-		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration() //
-				.registerResultSetExtractor(Object.class, mock(ResultSetExtractor.class)) //
-				.registerResultSetExtractor(Integer.class, resultSetExtractor) //
-				.registerResultSetExtractor(Number.class, mock(ResultSetExtractor.class));
-
-		assertThat(map.getMapperOrExtractor(Integer.class)).isEqualTo(RowMapperOrResultsetExtractor.of(resultSetExtractor));
+		assertThat(map.getRowMapper(Integer.class)).isEqualTo(rowMapper);
 	}
 
 	@Test // DATAJDBC-166
@@ -141,18 +91,7 @@ public class ConfigurableRowMapperMapUnitTests {
 				.registerRowMapper(Integer.class, mock(RowMapper.class)) //
 				.registerRowMapper(Number.class, rowMapper);
 
-		assertThat(map.getMapperOrExtractor(Object.class)).isEqualTo(RowMapperOrResultsetExtractor.of(rowMapper));
+		assertThat(map.getRowMapper(Object.class)).isEqualTo(rowMapper);
 	}
 
-	@Test // DATAJDBC-290
-	public void prefersLatestRegistrationOfResultSetExtractorForSuperTypeMatch() {
-
-		ResultSetExtractor resultSetExtractor = mock(ResultSetExtractor.class);
-
-		QueryMappingConfiguration map = new DefaultQueryMappingConfiguration() //
-				.registerResultSetExtractor(Integer.class, mock(ResultSetExtractor.class)) //
-				.registerResultSetExtractor(Number.class, resultSetExtractor);
-
-		assertThat(map.getMapperOrExtractor(Object.class)).isEqualTo(RowMapperOrResultsetExtractor.of(resultSetExtractor));
-	}
 }

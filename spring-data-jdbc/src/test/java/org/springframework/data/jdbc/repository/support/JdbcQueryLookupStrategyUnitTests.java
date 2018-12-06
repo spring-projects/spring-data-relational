@@ -84,20 +84,6 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), eq(numberFormatMapper));
 	}
-	
-	@Test // DATAJDBC-290
-	@SuppressWarnings("unchecked")
-	public void typeBasedResultSetExtractorGetsUsedForQuery() {
-
-		ResultSetExtractor<? extends NumberFormat> numberFormatMapper = mock(ResultSetExtractor.class);
-		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration().registerResultSetExtractor(NumberFormat.class, numberFormatMapper);
-
-		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", mappingConfiguration);
-
-		repositoryQuery.execute(new Object[] {});
-
-		verify(operations).query(anyString(), any(SqlParameterSource.class), eq(numberFormatMapper));
-	}
 
 	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 

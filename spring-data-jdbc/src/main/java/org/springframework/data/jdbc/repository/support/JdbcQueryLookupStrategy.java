@@ -21,7 +21,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.EntityRowMapper;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -30,6 +29,7 @@ import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
@@ -90,29 +90,28 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
 
-		RowMapperOrResultsetExtractor<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
+		RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
 
 		return new JdbcRepositoryQuery(publisher, context, queryMethod, operations, mapper);
 	}
 
-	private RowMapperOrResultsetExtractor<?> createMapper(JdbcQueryMethod queryMethod) {
+	private RowMapper<?> createMapper(JdbcQueryMethod queryMethod) {
 
 		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
 
 		if (persistentEntity == null) {
-			return RowMapperOrResultsetExtractor
-					.of(SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService()));
+			return SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService());
 		}
 
 		return determineDefaultMapper(queryMethod);
 	}
 
-	private RowMapperOrResultsetExtractor<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
+	private RowMapper<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
 
 		Class<?> domainType = queryMethod.getReturnedObjectType();
-		RowMapperOrResultsetExtractor<?> configuredQueryMapper = queryMappingConfiguration.getMapperOrExtractor(domainType);
+		RowMapper<?> configuredQueryMapper = queryMappingConfiguration.getRowMapper(domainType);
 
 		if (configuredQueryMapper != null)
 			return configuredQueryMapper;
@@ -123,6 +122,6 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 				converter, //
 				accessStrategy);
 
-		return RowMapperOrResultsetExtractor.of(defaultEntityRowMapper);
+		return defaultEntityRowMapper;
 	}
 }

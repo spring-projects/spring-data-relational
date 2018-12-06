@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,15 +23,14 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.*;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.query.DefaultParameters;
@@ -54,7 +54,6 @@ public class JdbcRepositoryQueryUnitTests {
 
 	RowMapper<?> defaultRowMapper;
 	ResultSetExtractor<?> defaultResultSetExtractor;
-	JdbcRepositoryQuery query;
 	NamedParameterJdbcOperations operations;
 	ApplicationEventPublisher publisher;
 	RelationalMappingContext context;
@@ -72,8 +71,6 @@ public class JdbcRepositoryQueryUnitTests {
 		this.operations = mock(NamedParameterJdbcOperations.class);
 		this.publisher = mock(ApplicationEventPublisher.class);
 		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
-
-		this.query = new JdbcRepositoryQuery(publisher, context, queryMethod, operations, RowMapperOrResultsetExtractor.of(defaultRowMapper));
 	}
 
 	@Test // DATAJDBC-165
@@ -82,7 +79,8 @@ public class JdbcRepositoryQueryUnitTests {
 		doReturn(null).when(queryMethod).getAnnotatedQuery();
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> query.execute(new Object[] {}));
+				.isThrownBy(() -> new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper)
+						.execute(new Object[] {}));
 	}
 
 	@Test // DATAJDBC-165
@@ -90,6 +88,7 @@ public class JdbcRepositoryQueryUnitTests {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(RowMapper.class).when(queryMethod).getRowMapperClass();
+		JdbcRepositoryQuery query = new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper);
 
 		query.execute(new Object[] {});
 
@@ -100,6 +99,7 @@ public class JdbcRepositoryQueryUnitTests {
 	public void defaultRowMapperIsUsedForNull() {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		JdbcRepositoryQuery query = new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper);
 
 		query.execute(new Object[] {});
 
@@ -112,35 +112,59 @@ public class JdbcRepositoryQueryUnitTests {
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
-		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, RowMapperOrResultsetExtractor.of(defaultRowMapper)).execute(new Object[] {});
+		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
 
 		verify(operations) //
 				.queryForObject(anyString(), any(SqlParameterSource.class), isA(CustomRowMapper.class));
 	}
-	
+
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorIsUsedWhenSpecified() {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
 
-		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, RowMapperOrResultsetExtractor.of(defaultRowMapper)).execute(new Object[] {});
+		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
 
-		verify(operations) //
-				.query(anyString(), any(SqlParameterSource.class), isA(CustomResultSetExtractor.class));
+		ArgumentCaptor<CustomResultSetExtractor> captor = ArgumentCaptor.forClass(CustomResultSetExtractor.class);
+
+		verify(operations).query(anyString(), any(SqlParameterSource.class), captor.capture());
+
+		assertThat(captor.getValue()) //
+				.isInstanceOf(CustomResultSetExtractor.class) // not verified by the captor
+				.matches(crse -> crse.rowMapper == null, "RowMapper is expected to be null.");
 	}
 
+	@Test // DATAJDBC-290
+	public void customResultSetExtractorAndRowMapperGetCombined() {
+
+		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
+		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
+
+		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
+
+		ArgumentCaptor<CustomResultSetExtractor> captor = ArgumentCaptor.forClass(CustomResultSetExtractor.class);
+
+		verify(operations).query(anyString(), any(SqlParameterSource.class), captor.capture());
+
+		assertThat(captor.getValue()) //
+				.isInstanceOf(CustomResultSetExtractor.class) // not verified by the captor
+				.matches(crse -> crse.rowMapper != null, "RowMapper is not expected to be null");
+	}
 
 	@Test // DATAJDBC-263
 	public void publishesSingleEventWhenQueryReturnsSingleAggregate() {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(false).when(queryMethod).isCollectionQuery();
-		doReturn(new DummyEntity(1L)).when(operations).queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
+		doReturn(new DummyEntity(1L)).when(operations).queryForObject(anyString(), any(SqlParameterSource.class),
+				any(RowMapper.class));
 		doReturn(true).when(context).hasPersistentEntityFor(DummyEntity.class);
-		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getRequiredIdentifier()).thenReturn("some identifier");
+		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getRequiredIdentifier())
+				.thenReturn("some identifier");
 
-		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, RowMapperOrResultsetExtractor.of(defaultRowMapper)).execute(new Object[] {});
+		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
 
 		verify(publisher).publishEvent(any(AfterLoadEvent.class));
 	}
@@ -150,11 +174,13 @@ public class JdbcRepositoryQueryUnitTests {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
 		doReturn(true).when(queryMethod).isCollectionQuery();
-		doReturn(Arrays.asList(new DummyEntity(1L), new DummyEntity(1L))).when(operations).query(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
+		doReturn(Arrays.asList(new DummyEntity(1L), new DummyEntity(1L))).when(operations).query(anyString(),
+				any(SqlParameterSource.class), any(RowMapper.class));
 		doReturn(true).when(context).hasPersistentEntityFor(DummyEntity.class);
-		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getRequiredIdentifier()).thenReturn("some identifier");
+		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getRequiredIdentifier())
+				.thenReturn("some identifier");
 
-		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, RowMapperOrResultsetExtractor.of(defaultRowMapper)).execute(new Object[] {});
+		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
 
 		verify(publisher, times(2)).publishEvent(any(AfterLoadEvent.class));
 	}
@@ -172,11 +198,22 @@ public class JdbcRepositoryQueryUnitTests {
 			return null;
 		}
 	}
-	
+
 	private static class CustomResultSetExtractor implements ResultSetExtractor<Object> {
 
+		private final RowMapper rowMapper;
+
+		CustomResultSetExtractor() {
+			rowMapper = null;
+		}
+
+		public CustomResultSetExtractor(RowMapper rowMapper) {
+
+			this.rowMapper = rowMapper;
+		}
+
 		@Override
-		public Object extractData(ResultSet rs) throws SQLException, DataAccessException {
+		public Object extractData(ResultSet rs) throws DataAccessException {
 			return null;
 		}
 	}

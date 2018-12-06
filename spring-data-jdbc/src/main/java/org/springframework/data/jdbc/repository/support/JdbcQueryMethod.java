@@ -24,6 +24,8 @@ import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryMethod;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 
 /**
@@ -32,7 +34,9 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @deprecated Visibility of this class will be reduced to package private.
  */
+@Deprecated
 public class JdbcQueryMethod extends QueryMethod {
 
 	private final Method method;
@@ -50,7 +54,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	public String getAnnotatedQuery() {
+	String getAnnotatedQuery() {
 		return getMergedAnnotationAttribute("value");
 	}
 
@@ -60,7 +64,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	public Class<?> getRowMapperClass() {
+	Class<? extends RowMapper> getRowMapperClass() {
 		return getMergedAnnotationAttribute("rowMapperClass");
 	}
 
@@ -70,7 +74,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	public Class<?> getResultSetExtractorClass() {
+	Class<? extends ResultSetExtractor> getResultSetExtractorClass() {
 		return getMergedAnnotationAttribute("resultSetExtractorClass");
 	}
 
