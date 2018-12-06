@@ -53,7 +53,7 @@ import lombok.Data;
  */
 @ContextConfiguration
 @Transactional
-public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
+public class JdbcRepositoryQueryMappingConfigurationIntegrationTests {
 
 	private static String CAR_MODEL = "ResultSetExtractor Car";
 
@@ -64,13 +64,12 @@ public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return JdbcRepositoryMapperMapResultSetExtractorIntegrationTests.class;
+			return JdbcRepositoryQueryMappingConfigurationIntegrationTests.class;
 		}
 		
 		@Bean
 		QueryMappingConfiguration mappers() {
-			return new DefaultQueryMappingConfiguration()
-					.registerResultSetExtractor(Car.class, new CarResultSetExtractor());
+			return new DefaultQueryMappingConfiguration();
 		}
 	}
 
@@ -81,7 +80,7 @@ public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
 	@Autowired CarRepository carRepository;
 	
 	@Test // DATAJDBC-290
-	public void customFindAllCarsPicksResultSetExtractorFromMapperMap() {
+	public void customFindAllCarsUsesConfiguredResultSetExtractor() {
 
 		carRepository.save(new Car(null, "Some model"));
 		Iterable<Car> cars = carRepository.customFindAll();
@@ -92,7 +91,7 @@ public class JdbcRepositoryMapperMapResultSetExtractorIntegrationTests {
 	
 	interface CarRepository extends CrudRepository<Car, Long> {
 
-		@Query("select * from car")
+		@Query(value = "select * from car", resultSetExtractorClass = CarResultSetExtractor.class)
 		List<Car> customFindAll();
 	}
 	

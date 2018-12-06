@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 
@@ -42,7 +41,7 @@ public interface RowMapperMap extends QueryMappingConfiguration {
 		}
 
 		@Override
-		public <T> RowMapperOrResultsetExtractor<T> getMapperOrExtractor(Class<T> type) {
+		public <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
 			return null;
 		}
 	};
@@ -50,9 +49,8 @@ public interface RowMapperMap extends QueryMappingConfiguration {
 	@Nullable
 	<T> RowMapper<? extends T> rowMapperFor(Class<T> type);
 
-
 	@Override
-	default <T> RowMapperOrResultsetExtractor<? extends T> getMapperOrExtractor(Class<T> type) {
-		return RowMapperOrResultsetExtractor.of(rowMapperFor(type));
+	default <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
+		return rowMapperFor(type);
 	}
 }

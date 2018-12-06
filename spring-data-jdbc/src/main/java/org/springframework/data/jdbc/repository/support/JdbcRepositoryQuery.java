@@ -15,12 +15,12 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import java.lang.reflect.Constructor;
 import java.util.List;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
@@ -32,6 +32,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -51,8 +52,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private final RelationalMappingContext context;
 	private final JdbcQueryMethod queryMethod;
 	private final NamedParameterJdbcOperations operations;
-
-	@Nullable private final RowMapperOrResultsetExtractor<?> mapperOrExtractor;
+	private final QueryExecutor<Object> executor;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -62,11 +62,10 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	 * @param context must not be {@literal null}.
 	 * @param queryMethod must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
-	 * @param defaultMapper can be {@literal null} (only in case of a modifying query).
+	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
 	JdbcRepositoryQuery(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			@Nullable RowMapperOrResultsetExtractor<?> defaultMapper) {
+			JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations, RowMapper<?> defaultRowMapper) {
 
 		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "Context must not be null!");
@@ -74,14 +73,40 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null!");
 
 		if (!queryMethod.isModifyingQuery()) {
-			Assert.notNull(defaultMapper, "Mapper must not be null!");
+			Assert.notNull(defaultRowMapper, "Mapper must not be null!");
 		}
 
 		this.publisher = publisher;
 		this.context = context;
 		this.queryMethod = queryMethod;
 		this.operations = operations;
-		this.mapperOrExtractor = determineMapper(defaultMapper);
+
+		RowMapper rowMapper = determineRowMapper(defaultRowMapper);
+		executor = createExecutor( //
+				queryMethod, //
+				determineResultSetExtractor(rowMapper != defaultRowMapper ? rowMapper : null), //
+				rowMapper //
+		);
+
+	}
+
+	private QueryExecutor<Object> createExecutor(JdbcQueryMethod queryMethod, @Nullable ResultSetExtractor extractor,
+			RowMapper rowMapper) {
+
+		String query = determineQuery();
+
+		if (queryMethod.isModifyingQuery()) {
+			return createModifyingQueryExecutor(query);
+		}
+		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
+			QueryExecutor<Object> innerExecutor = extractor != null ? createResultSetExtractorQueryExecutor(query, extractor)
+					: createListRowMapperQueryExecutor(query, rowMapper);
+			return createCollectionQueryExecutor(innerExecutor);
+		}
+
+		QueryExecutor<Object> innerExecutor = extractor != null ? createResultSetExtractorQueryExecutor(query, extractor)
+				: createObjectRowMapperQueryExecutor(query, rowMapper);
+		return createObjectQueryExecutor(innerExecutor);
 	}
 
 	/*
@@ -91,45 +116,66 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	@Override
 	public Object execute(Object[] objects) {
 
-		String query = determineQuery();
-		MapSqlParameterSource parameters = bindParameters(objects);
+		return executor.execute(bindParameters(objects));
+	}
 
-		if (queryMethod.isModifyingQuery()) {
+	private QueryExecutor<Object> createObjectQueryExecutor(QueryExecutor executor) {
 
-			int updatedCount = operations.update(query, parameters);
-			Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
-			return (returnedObjectType == boolean.class || returnedObjectType == Boolean.class) ? updatedCount != 0
-					: updatedCount;
-		}
+		return parameters -> {
 
-		assert this.mapperOrExtractor != null;
+			try {
 
-		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
+				Object result;
 
-			List<?> result = this.mapperOrExtractor.isResultSetExtractor()
-					? (List<?>) operations.query(query, parameters, this.mapperOrExtractor.getResultSetExtractor())
-					: operations.query(query, parameters, this.mapperOrExtractor.getRowMapper());
+				result = executor.execute(parameters);
+
+				publishAfterLoad(result);
+
+				return result;
+
+			} catch (EmptyResultDataAccessException e) {
+				return null;
+			}
+		};
+	}
+
+	private QueryExecutor<Object> createCollectionQueryExecutor(QueryExecutor<Object> executor) {
+
+		return parameters -> {
+
+			List<?> result = (List<?>) executor.execute(parameters);
 
 			Assert.notNull(result, "A collection valued result must never be null.");
 
 			publishAfterLoad(result);
 
 			return result;
-		}
+		};
+	}
 
-		try {
+	private QueryExecutor<Object> createModifyingQueryExecutor(String query) {
 
-			Object result = this.mapperOrExtractor.isResultSetExtractor()
-					? operations.query(query, parameters, this.mapperOrExtractor.getResultSetExtractor())
-					: operations.queryForObject(query, parameters, this.mapperOrExtractor.getRowMapper());
+		return parameters -> {
 
-			publishAfterLoad(result);
+			int updatedCount = operations.update(query, parameters);
+			Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
-			return result;
+			return (returnedObjectType == boolean.class || returnedObjectType == Boolean.class) ? updatedCount != 0
+					: updatedCount;
+		};
+	}
 
-		} catch (EmptyResultDataAccessException e) {
-			return null;
-		}
+	private QueryExecutor<Object> createListRowMapperQueryExecutor(String query, RowMapper<?> rowMapper) {
+		return parameters -> operations.query(query, parameters, rowMapper);
+	}
+
+	private QueryExecutor<Object> createObjectRowMapperQueryExecutor(String query, RowMapper<?> rowMapper) {
+		return parameters -> operations.queryForObject(query, parameters, rowMapper);
+	}
+
+	private QueryExecutor<Object> createResultSetExtractorQueryExecutor(String query,
+			ResultSetExtractor<?> resultSetExtractor) {
+		return parameters -> operations.query(query, parameters, resultSetExtractor);
 	}
 
 	/*
@@ -166,50 +212,37 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	}
 
 	@Nullable
-	private RowMapperOrResultsetExtractor<?> determineMapper(@Nullable RowMapperOrResultsetExtractor<?> defaultMapper) {
+	private ResultSetExtractor determineResultSetExtractor(@Nullable RowMapper<?> rowMapper) {
 
-		RowMapperOrResultsetExtractor<?> configuredMapper = getConfiguredMapper(queryMethod);
+		Class<? extends ResultSetExtractor> resultSetExtractorClass = (Class<? extends ResultSetExtractor>) queryMethod.getResultSetExtractorClass();
 
-		return (configuredMapper == null) ? defaultMapper : configuredMapper;
+		if (isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
+			return null;
+		}
+
+		Constructor<? extends ResultSetExtractor> constructor = ClassUtils
+				.getConstructorIfAvailable(resultSetExtractorClass, RowMapper.class);
+
+		if (constructor != null) {
+			return BeanUtils.instantiateClass(constructor, rowMapper);
+		}
+
+		return BeanUtils.instantiateClass(resultSetExtractorClass);
 	}
 
-	@Nullable
-	private static RowMapperOrResultsetExtractor<?> getConfiguredMapper(JdbcQueryMethod queryMethod) {
+	private RowMapper determineRowMapper(RowMapper<?> defaultMapper) {
 
 		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
-		Class<?> resultSetExtractorClass = queryMethod.getResultSetExtractorClass();
 
-		assertOnlyOneIsConfigured(queryMethod, rowMapperClass, resultSetExtractorClass);
-
-		if (isConfigured(rowMapperClass, RowMapper.class)) {
-			return RowMapperOrResultsetExtractor.of((RowMapper<?>) BeanUtils.instantiateClass(rowMapperClass));
+		if (isUnconfigured(rowMapperClass, RowMapper.class)) {
+			return defaultMapper;
 		}
 
-		if (isConfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
-			return RowMapperOrResultsetExtractor
-					.of((ResultSetExtractor<?>) BeanUtils.instantiateClass(resultSetExtractorClass));
-		}
-
-		return null;
+		return (RowMapper) BeanUtils.instantiateClass(rowMapperClass);
 	}
 
-	private static void assertOnlyOneIsConfigured(JdbcQueryMethod queryMethod, @Nullable Class<?> rowMapperClass,
-			@Nullable Class<?> resultSetExtractorClass) {
-
-		if (isConfigured(rowMapperClass, RowMapper.class)
-				&& isConfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
-
-			throw new IllegalStateException( //
-					String.format( //
-							"Cannot use both rowMapperClass and resultSetExtractorClass on @Query annotation. Query // method: [%s] query: [%s]",
-							queryMethod.getName(), //
-							queryMethod.getAnnotatedQuery() //
-					));
-		}
-	}
-
-	private static boolean isConfigured(@Nullable Class<?> configuredClass, Class<?> defaultClass) {
-		return configuredClass != null && configuredClass != defaultClass;
+	private static boolean isUnconfigured(@Nullable Class<?> configuredClass, Class<?> defaultClass) {
+		return configuredClass == null || configuredClass == defaultClass;
 	}
 
 	private <T> void publishAfterLoad(Iterable<T> all) {
@@ -231,5 +264,10 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 			}
 		}
 
+	}
+
+	private interface QueryExecutor<T> {
+		@Nullable
+		T execute(MapSqlParameterSource parameter);
 	}
 }

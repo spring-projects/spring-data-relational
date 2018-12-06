@@ -1,7 +1,7 @@
 package org.springframework.data.jdbc.repository;
 
-import org.springframework.data.jdbc.support.RowMapperOrResultsetExtractor;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 
 /**
@@ -14,7 +14,7 @@ import org.springframework.lang.Nullable;
 public interface QueryMappingConfiguration {
 
 	@Nullable
-	<T> RowMapperOrResultsetExtractor<? extends T> getMapperOrExtractor(Class<T> type);
+	<T> RowMapper<? extends T> getRowMapper(Class<T> type);
 
 	/**
 	 * An immutable empty instance that will return {@literal null} for all arguments.
@@ -22,7 +22,7 @@ public interface QueryMappingConfiguration {
 	QueryMappingConfiguration EMPTY = new QueryMappingConfiguration() {
 
 		@Override
-		public <T> RowMapperOrResultsetExtractor<? extends T> getMapperOrExtractor(Class<T> type) {
+		public <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
 			return null;
 		}
 
