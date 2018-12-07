@@ -23,20 +23,6 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.Statement;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.reactivestreams.Publisher;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.UncategorizedR2dbcException;
-import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
-import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
-import org.springframework.data.r2dbc.function.convert.SettableValue;
-import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
-import org.springframework.jdbc.core.SqlProvider;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -56,6 +42,21 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.reactivestreams.Publisher;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.r2dbc.UncategorizedR2dbcException;
+import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
+import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
+import org.springframework.data.r2dbc.function.convert.SettableValue;
+import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.jdbc.core.SqlProvider;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Default implementation of {@link DatabaseClient}.
@@ -313,7 +314,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return sql;
 		}
 
-		<T> SqlResult<T> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
+		<T> FetchSpec<T> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			Function<Connection, Statement<?>> executeFunction = it -> {
 
@@ -603,7 +604,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return createInstance(table, projectedFields, sort, page);
 		}
 
-		<R> SqlResult<R> execute(String sql, BiFunction<Row, RowMetadata, R> mappingFunction) {
+		<R> FetchSpec<R> execute(String sql, BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			Function<Connection, Statement<?>> selectFunction = it -> {
 
@@ -674,7 +675,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return exchange(ColumnMapRowMapper.INSTANCE);
 		}
 
-		private <R> SqlResult<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
+		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			Set<String> columns;
 
@@ -758,11 +759,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public SqlResult<T> fetch() {
+		public FetchSpec<T> fetch() {
 			return exchange(mappingFunction);
 		}
 
-		private <R> SqlResult<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
+		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			List<String> columns;
 
@@ -851,7 +852,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return fetch().rowsUpdated().then();
 		}
 
-		private <R> SqlResult<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
+		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			if (byName.isEmpty()) {
 				throw new IllegalStateException("Insert fields is empty!");
@@ -970,7 +971,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			};
 		}
 
-		private <MR> SqlResult<MR> exchange(Object toInsert, BiFunction<Row, RowMetadata, MR> mappingFunction) {
+		private <MR> FetchSpec<MR> exchange(Object toInsert, BiFunction<Row, RowMetadata, MR> mappingFunction) {
 
 			List<SettableValue> insertValues = dataAccessStrategy.getValuesToInsert(toInsert);
 			Set<String> columns = new LinkedHashSet<>();

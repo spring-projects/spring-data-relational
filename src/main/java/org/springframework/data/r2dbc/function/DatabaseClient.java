@@ -166,7 +166,7 @@ public interface DatabaseClient {
 		 * @param <R> result type.
 		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
-		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+		<R> RowsFetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
 		/**
 		 * Perform the SQL call and retrieve the result.
@@ -202,7 +202,7 @@ public interface DatabaseClient {
 		 * @param <R> result type.
 		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
-		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+		<R> RowsFetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
 		/**
 		 * Perform the SQL call and retrieve the result.
@@ -284,7 +284,7 @@ public interface DatabaseClient {
 		 * @param <R> result type.
 		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
-		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+		<R> RowsFetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
 		/**
 		 * Perform the SQL call and retrieve the result.
@@ -304,7 +304,7 @@ public interface DatabaseClient {
 		 * @param resultType must not be {@literal null}.
 		 * @param <R> result type.
 		 */
-		<R> FetchSpec<R> as(Class<R> resultType);
+		<R> RowsFetchSpec<R> as(Class<R> resultType);
 
 		/**
 		 * Configure a result mapping {@link java.util.function.BiFunction function}.
@@ -313,7 +313,7 @@ public interface DatabaseClient {
 		 * @param <R> result type.
 		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
-		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+		<R> RowsFetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
 		/**
 		 * Perform the SQL call and retrieve the result.
@@ -416,11 +416,11 @@ public interface DatabaseClient {
 		/**
 		 * Configure a result mapping {@link java.util.function.BiFunction function}.
 		 *
-		 * @param mappingFunction must not be {@literal null}.
+		 * @param mappwingFunction must not be {@literal null}.
 		 * @param <R> result type.
 		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
-		<R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
+		<R> RowsFetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction);
 
 		/**
 		 * Perform the SQL call and retrieve the result.

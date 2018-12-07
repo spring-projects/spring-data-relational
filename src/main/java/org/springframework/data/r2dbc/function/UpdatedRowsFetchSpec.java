@@ -15,12 +15,19 @@
  */
 package org.springframework.data.r2dbc.function;
 
+import reactor.core.publisher.Mono;
+
 /**
- * Contract for fetching results.
+ * Contract for fetching the number of affected rows.
  *
- * @param <T> row result type.
  * @author Mark Paluch
- * @see RowsFetchSpec
- * @see UpdatedRowsFetchSpec
  */
-public interface FetchSpec<T> extends RowsFetchSpec<T>, UpdatedRowsFetchSpec {}
+public interface UpdatedRowsFetchSpec {
+
+	/**
+	 * Get the number of updated rows.
+	 *
+	 * @return {@link Mono} emitting the number of updated rows. Never {@literal null}.
+	 */
+	Mono<Integer> rowsUpdated();
+}

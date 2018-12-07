@@ -15,12 +15,36 @@
  */
 package org.springframework.data.r2dbc.function;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 /**
- * Contract for fetching results.
+ * Contract for fetching tabular results.
  *
  * @param <T> row result type.
  * @author Mark Paluch
- * @see RowsFetchSpec
- * @see UpdatedRowsFetchSpec
  */
-public interface FetchSpec<T> extends RowsFetchSpec<T>, UpdatedRowsFetchSpec {}
+public interface RowsFetchSpec<T> {
+
+	/**
+	 * Get exactly zero or one result.
+	 *
+	 * @return {@link Mono#empty()} if no match found. Never {@literal null}.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	Mono<T> one();
+
+	/**
+	 * Get the first or no result.
+	 *
+	 * @return {@link Mono#empty()} if no match found. Never {@literal null}.
+	 */
+	Mono<T> first();
+
+	/**
+	 * Get all matching elements.
+	 *
+	 * @return never {@literal null}.
+	 */
+	Flux<T> all();
+}

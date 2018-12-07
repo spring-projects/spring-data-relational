@@ -25,7 +25,7 @@ import java.util.function.BiFunction;
  *
  * @author Mark Paluch
  */
-public interface SqlResult<T> extends FetchSpec<T> {
+interface SqlResult<T> extends FetchSpec<T> {
 
 	/**
 	 * Apply a {@link BiFunction mapping function} to the result that emits {@link Row}s.
