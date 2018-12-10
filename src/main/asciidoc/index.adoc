@@ -3,14 +3,6 @@ Jens Schauder, Jay Bryant, Mark Paluch
 :revnumber: {version}
 :revdate: {localdate}
 :javadoc-base: https://docs.spring.io/spring-data/jdbc/docs/{revnumber}/api/
-:linkcss:
-:doctype: book
-:docinfo: shared
-:toc: left
-:toclevels: 4
-:source-highlighter: prettify
-:icons: font
-:imagesdir: images
 ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1600]]
 :spring-data-commons-docs: https://raw.githubusercontent.com/spring-projects/spring-data-commons/master/src/main/asciidoc
 :spring-framework-docs: http://docs.spring.io/spring-framework/docs/{springVersion}/
