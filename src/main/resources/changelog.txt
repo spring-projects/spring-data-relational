@@ -1,6 +1,28 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.0.M1 (2018-12-11)
+----------------------------------------
+* DATAJDBC-306 - Simplify reference documentation setup.
+* DATAJDBC-305 - Release 1.1 M1 (Moore).
+* DATAJDBC-301 - Fix Travis build failing due to moved JDK8.
+* DATAJDBC-294 - ID in where clauses doesn't properly considers the NamingStrategy.
+* DATAJDBC-288 - Alter visibility of JdbcConfiguration to support better extensibility.
+* DATAJDBC-286 - Mapping OneToOne relationship broken for immutable entities & PostgreSQL.
+* DATAJDBC-280 - The Travis build is broken due to a broken JDK download.
+* DATAJDBC-276 - AggregateChange.setId requires an ID-attribute for List elements.
+* DATAJDBC-273 - Creating entity via constructor assumes child properties are nested entities.
+* DATAJDBC-272 - Split Spring Data JDBC project into modules.
+* DATAJDBC-271 - Simplify README.
+* DATAJDBC-266 - Referenced entity in one to one relationship requires an id, which it shouldn't.
+* DATAJDBC-263 - When entities get created via a method with @Query annotation no AfterLoadEvent gets triggered.
+* DATAJDBC-262 - Id gets updated.
+* DATAJDBC-258 - Run integration tests with Microsoft SQL Server.
+* DATAJDBC-246 - Make the Travis build run with different JDKs.
+* DATAJDBC-221 - Introduce a Reference type for cross aggregate references.
+* DATAJDBC-125 - support multiple entity references of same type.
+
+
 Changes in version 1.0.3.RELEASE (2018-11-27)
 ---------------------------------------------
 * DATAJDBC-294 - ID in where clauses doesn't properly considers the NamingStrategy.
