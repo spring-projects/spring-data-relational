@@ -19,8 +19,6 @@
 	</parent>
 
 	<properties>
-		<dist.key>DATAJDBC</dist.key>
-
 		<springdata.commons>2.2.0.BUILD-SNAPSHOT</springdata.commons>
 		<assertj>3.6.2</assertj>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
@@ -35,7 +33,6 @@
 		<postgresql.version>42.0.0</postgresql.version>
 		<mariadb-java-client.version>2.2.3</mariadb-java-client.version>
 		<testcontainers.version>1.9.1</testcontainers.version>
-
 	</properties>
 
 	<inceptionYear>2017</inceptionYear>
@@ -43,6 +40,7 @@
 	<modules>
 		<module>spring-data-relational</module>
 		<module>spring-data-jdbc</module>
+		<module>spring-data-jdbc-distribution</module>
 	</modules>
 
 	<developers>
@@ -241,18 +239,6 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>wagon-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.asciidoctor</groupId>
-				<artifactId>asciidoctor-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
