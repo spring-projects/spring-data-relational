@@ -1,3 +1,30 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.0.0.M1 (2018-12-12)
+----------------------------------------
+* #36 - Release 1.0 M1.
+* #35 - Simplify reference documentation setup.
+* #32 - Drop oracle-java8-installer from TravisCI build.
+* #30 - Add support for Custom Conversions for array-types.
+* #27 - Add project site redirect.
+* #26 - Add support to write simple type collections as arrays.
+* #25 - Provide reference documentation.
+* #21 - Upgrade to R2DBC 1.0M6.
+* #20 - Add Dialect support to apply driver-specific bind markers.
+* #18 - Cleanup pom.xml and upgrade dependencies.
+* #16 - Add abstract configuration class for R2DBC.
+* #15 - Add support for parameter bind markers.
+* #14 - RETURNING * does not work on H2.
+* #13 - Add configuration components for @EnableR2dbcRepositories.
+* #12 - SimpleR2dbcRepository does not retain item order on save(…).
+* #11 - Adapt Statement.bind(…) calls to newly introduced positional (integer-arg) binding.
+* #10 - Adapt to removed Statement.executeReturningGeneratedKeys().
+* #9 - H2Statement does not define or inherit an implementation of  bind(Ljava/lang/Integer;Ljava/lang/Object;).
+* #8 - exchange() should allow to deal with DROP or  CREATE requests.
+* #6 - Preserving order on multiple inserts.
+* #5 - Build failures due to failing Oracle JDK downloads.
+* #2 - Add initial support for DatabaseClient and Reactive Repositories.
+* #1 - Setup repository.
+
+
