@@ -15,7 +15,13 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import lombok.Data;
+
+import java.lang.reflect.Field;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,19 +33,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
-import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.test.annotation.IfProfileValue;
-import org.springframework.test.annotation.ProfileValueSourceConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ReflectionUtils;
-
-import java.lang.reflect.Field;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 /**
  * Tests the {@link EnableJdbcRepositories} annotation.
@@ -50,8 +48,6 @@ import static org.mockito.Mockito.mock;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfiguration.class)
-@ProfileValueSourceConfiguration(DatabaseProfileValueSource.class) // DATAJDBC-256
-@IfProfileValue(name = "current.database.is.not.oracle", value = "true") // DATAJDBC-256
 public class EnableJdbcRepositoriesIntegrationTests {
 
 	static final Field ROW_MAPPER_MAP = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "rowMapperMap");

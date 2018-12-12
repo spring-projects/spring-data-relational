@@ -1,0 +1,15 @@
+DROP TABLE Dummy_Entity§
+DROP SEQUENCE Dummy_Entity_SEQ§
+
+CREATE TABLE Dummy_Entity ( id NUMBER(13,10) PRIMARY KEY)§
+
+CREATE SEQUENCE Dummy_Entity_SEQ§
+
+CREATE OR REPLACE TRIGGER Dummy_Entity_ON_INSERT
+BEFORE INSERT ON Dummy_Entity
+FOR EACH ROW
+BEGIN
+SELECT Dummy_Entity_SEQ.nextval
+    INTO :new.id1
+FROM dual;
+END;§
