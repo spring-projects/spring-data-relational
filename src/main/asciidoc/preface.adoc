@@ -111,6 +111,7 @@ Professional Support :: Professional, from-the-source support, with guaranteed r
 
 * You can also follow the Spring http://spring.io/blog[blog] or the Spring Data project team on Twitter (http://twitter.com/SpringData[SpringData]).
 
+[[project-metadata]]
 == Project Metadata
 
 * Version control: http://github.com/spring-projects/spring-data-r2dbc
