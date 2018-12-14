@@ -15,30 +15,40 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import lombok.Data;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.Field;
+
+import javax.sql.DataSource;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
+import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ReflectionUtils;
+
+import lombok.Data;
 
 /**
  * Tests the {@link EnableJdbcRepositories} annotation.
@@ -46,6 +56,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Evgeni Dimitrov
+ * @author Fei Dong
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfiguration.class)
@@ -53,16 +64,24 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 	static final Field MAPPER_MAP = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class,
 			"queryMappingConfiguration");
+	static final Field OPERATIONS = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "operations");
+	static final Field DATA_ACCESS_STRATEGY = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "dataAccessStrategy");
 	public static final RowMapper DUMMY_ENTITY_ROW_MAPPER = mock(RowMapper.class);
 	public static final RowMapper STRING_ROW_MAPPER = mock(RowMapper.class);
 	public static final ResultSetExtractor<Integer> INTEGER_RESULT_SET_EXTRACTOR = mock(ResultSetExtractor.class);
 
 	@Autowired JdbcRepositoryFactoryBean factoryBean;
 	@Autowired DummyRepository repository;
+	@Autowired @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations defaultOperations;
+	@Autowired @Qualifier("defaultDataAccessStrategy") DataAccessStrategy defaultDataAccessStrategy;
+	@Autowired @Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations qualifierJdbcOperations;
+	@Autowired @Qualifier("qualifierDataAccessStrategy") DataAccessStrategy qualifierDataAccessStrategy;
 
 	@BeforeClass
 	public static void setup() {
 		MAPPER_MAP.setAccessible(true);
+		OPERATIONS.setAccessible(true);
+		DATA_ACCESS_STRATEGY.setAccessible(true);
 	}
 
 	@Test // DATAJDBC-100
@@ -84,6 +103,15 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		assertThat(mapping.getRowMapper(DummyEntity.class)).isEqualTo(DUMMY_ENTITY_ROW_MAPPER);
 	}
 
+ 	@Test // DATAJDBC-293
+	public void jdbcOperationsRef() {
+		NamedParameterJdbcOperations operations = (NamedParameterJdbcOperations) ReflectionUtils.getField(OPERATIONS, factoryBean);
+		assertThat(operations).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierJdbcOperations);
+
+		DataAccessStrategy dataAccessStrategy = (DataAccessStrategy) ReflectionUtils.getField(DATA_ACCESS_STRATEGY, factoryBean);
+		assertThat(dataAccessStrategy).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierDataAccessStrategy);
+	}
+
 	interface DummyRepository extends CrudRepository<DummyEntity, Long> {
 
 	}
@@ -95,7 +123,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 	@ComponentScan("org.springframework.data.jdbc.testing")
 	@EnableJdbcRepositories(considerNestedRepositories = true,
-			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class))
+			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class),
+			jdbcOperationsRef = "qualifierJdbcOperations", dataAccessStrategyRef = "qualifierDataAccessStrategy")
 	static class TestConfiguration {
 
 		@Bean
@@ -111,5 +140,15 @@ public class EnableJdbcRepositoriesIntegrationTests {
 					.registerRowMapper(String.class, STRING_ROW_MAPPER);
 		}
 
+		@Bean("qualifierJdbcOperations")
+		NamedParameterJdbcOperations qualifierJdbcOperations(DataSource dataSource) {
+			return new NamedParameterJdbcTemplate(dataSource);
+		}
+
+		@Bean("qualifierDataAccessStrategy")
+		DataAccessStrategy defaultDataAccessStrategy(@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
+				RelationalMappingContext context, RelationalConverter converter) {
+			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter, template);
+		}
 	}
 }

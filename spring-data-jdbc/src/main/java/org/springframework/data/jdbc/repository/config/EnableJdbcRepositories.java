@@ -34,6 +34,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBea
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Mark Paluch
+ * @author Fei Dong
  * @see JdbcConfiguration
  */
 @Target(ElementType.TYPE)
@@ -98,4 +99,17 @@ public @interface EnableJdbcRepositories {
 	 * for {@code PersonRepositoryImpl}.
 	 */
 	String repositoryImplementationPostfix() default "Impl";
+
+	/**
+	 * Configures the name of the {@link NamedParameterJdbcOperations} bean definition to be used to create repositories 
+	 * discovered through this annotation. Defaults to {@code namedParameterJdbcTemplate}.
+	 */
+	String jdbcOperationsRef() default "";
+
+
+	/**
+	 * Configures the name of the {@link DataAccessStrategy} bean definition to be used to create repositories 
+	 * discovered through this annotation. Defaults to {@code defaultDataAccessStrategy} if existed.
+	 */
+	String dataAccessStrategyRef() default "";
 }

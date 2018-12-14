@@ -58,7 +58,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	 *
 	 * @param repositoryInterface must not be {@literal null}.
 	 */
-	JdbcRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
+	protected JdbcRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
 		super(repositoryInterface);
 	}
 
@@ -97,7 +97,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	/**
 	 * @param dataAccessStrategy can be {@literal null}.
 	 */
-	@Autowired(required = false)
 	public void setDataAccessStrategy(DataAccessStrategy dataAccessStrategy) {
 		this.dataAccessStrategy = dataAccessStrategy;
 	}
@@ -123,7 +122,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		setQueryMappingConfiguration(rowMapperMap);
 	}
 
-	@Autowired
 	public void setJdbcOperations(NamedParameterJdbcOperations operations) {
 		this.operations = operations;
 	}
