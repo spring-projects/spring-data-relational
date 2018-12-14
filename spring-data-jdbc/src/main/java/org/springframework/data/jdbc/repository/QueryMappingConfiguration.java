@@ -1,20 +1,22 @@
 package org.springframework.data.jdbc.repository;
 
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 
 /**
- * Configures a {@link org.springframework.jdbc.core.RowMapper} or a {@link ResultSetExtractor} for each type to be used
- * for extracting entities of that type from a {@link java.sql.ResultSet}.
+ * Configures a {@link org.springframework.jdbc.core.RowMapper} for each type to be used for extracting entities of that
+ * type from a {@link java.sql.ResultSet}.
  *
  * @author Jens Schauder
  * @author Evgeni Dimitrov
+ * @since 1.1
  */
 public interface QueryMappingConfiguration {
 
 	@Nullable
-	<T> RowMapper<? extends T> getRowMapper(Class<T> type);
+	default <T> RowMapper<? extends T> getRowMapper(Class<T> type) {
+		return null;
+	}
 
 	/**
 	 * An immutable empty instance that will return {@literal null} for all arguments.

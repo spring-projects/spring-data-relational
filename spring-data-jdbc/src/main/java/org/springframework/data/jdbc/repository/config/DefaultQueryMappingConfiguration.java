@@ -15,6 +15,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Evgeni Dimitrov
+ * @since 1.1
  */
 public class DefaultQueryMappingConfiguration implements QueryMappingConfiguration {
 
