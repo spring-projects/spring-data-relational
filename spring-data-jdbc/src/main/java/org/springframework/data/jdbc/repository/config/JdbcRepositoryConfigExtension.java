@@ -15,20 +15,16 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.function.Function;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -37,6 +33,8 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBea
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -49,7 +47,8 @@ import org.springframework.util.StringUtils;
  */
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 
-	private ConfigurableListableBeanFactory listableBeanFactory;
+	private ListableBeanFactory beanFactory;
+
 	/*
 	* (non-Javadoc)
 	* @see org.springframework.data.repository.config.RepositoryConfigurationExtension#getModuleName()
@@ -58,7 +57,6 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	public String getModuleName() {
 		return "JDBC";
 	}
-	
 
 	/*
 	* (non-Javadoc)
@@ -82,13 +80,12 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtension#registerBeansForRoot(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.data.repository.config.RepositoryConfigurationSource)
 	 */
-	public void registerBeansForRoot(BeanDefinitionRegistry registry,
-			RepositoryConfigurationSource configurationSource) {
-		if (registry instanceof ConfigurableListableBeanFactory) {
-			this.listableBeanFactory =   (ConfigurableListableBeanFactory) registry;
+	public void registerBeansForRoot(BeanDefinitionRegistry registry, RepositoryConfigurationSource configurationSource) {
+
+		if (registry instanceof ListableBeanFactory) {
+			this.beanFactory = (ListableBeanFactory) registry;
 		}
 	}
-
 
 	/* 
 	 * (non-Javadoc)
@@ -96,69 +93,97 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	 */
 	@Override
 	public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {
-		resolveReference(builder, source, "jdbcOperationsRef", "jdbcOperations", NamedParameterJdbcOperations.class,
-				true);
-		resolveReference(builder, source, "dataAccessStrategyRef", "dataAccessStrategy", DataAccessStrategy.class,
-				false);
+
+		resolveReference(builder, source, "jdbcOperationsRef", "jdbcOperations", NamedParameterJdbcOperations.class, true);
+		resolveReference(builder, source, "dataAccessStrategyRef", "dataAccessStrategy", DataAccessStrategy.class, false);
 	}
 
 	private void resolveReference(BeanDefinitionBuilder builder, RepositoryConfigurationSource source,
 			String attributeName, String propertyName, Class<?> classRef, boolean required) {
+
 		Optional<String> beanNameRef = source.getAttribute(attributeName).filter(StringUtils::hasText);
 
-		String beanName = beanNameRef.orElseGet(() -> {
-			if (this.listableBeanFactory != null) {
-				List<String> beanNames = Arrays.asList(listableBeanFactory.getBeanNamesForType(classRef));
-				Map<String, BeanDefinition> bdMap = beanNames.stream()
-						.collect(Collectors.toMap(Function.identity(), listableBeanFactory::getBeanDefinition));
+		String beanName = beanNameRef.orElseGet(() -> determineMatchingBeanName(propertyName, classRef, required));
 
-				if (beanNames.size() > 1) {
-					// determine primary
-
-					Map<String, BeanDefinition> primaryBdMap = bdMap.entrySet().stream()
-							.filter(e -> e.getValue().isPrimary())
-							.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-					Optional<String> primaryBeanName = getSingleBeanName(primaryBdMap.keySet(), classRef,
-							() -> "more than one 'primary' bean found among candidates: " + primaryBdMap.keySet());
-
-					// In Java 11 should use Optional.or()
-					if (primaryBeanName.isPresent()) {
-						return primaryBeanName.get();
-					}
-
-					// determine matchesBeanName
-
-					Optional<String> matchesBeanName = beanNames.stream()
-							.filter(name -> propertyName.equals(name)
-									|| ObjectUtils.containsElement(listableBeanFactory.getAliases(name), propertyName))
-							.findFirst();
-
-					if (matchesBeanName.isPresent()) {
-						return matchesBeanName.get();
-					}
-
-				}
-
-				if (beanNames.size() == 1) {
-					return beanNames.get(0);
-				}
-			}
-			return null;
-		});
 		if (beanName != null) {
 			builder.addPropertyReference(propertyName, beanName);
-		} else if (required) {
-			throw new NoSuchBeanDefinitionException(classRef);
-		}
-	}
-
-	private Optional<String> getSingleBeanName(Collection<String> beanNames, Class<?> classRef,
-			Supplier<String> errorMessage) {
-		if (beanNames.size() > 1) {
-			throw new NoUniqueBeanDefinitionException(classRef, beanNames.size(), errorMessage.get());
+		} else {
+			Assert.isTrue(!required,
+					"The beanName must not be null when requested as 'required'. Please report this as a bug.");
 		}
 
-		return beanNames.stream().findFirst();
 	}
+
+	@Nullable
+	private String determineMatchingBeanName(String propertyName, Class<?> classRef, boolean required) {
+
+		if (this.beanFactory == null) {
+			return nullOrThrowException(required,
+					() -> new NoSuchBeanDefinitionException(classRef, "No BeanFactory available."));
+		}
+
+		List<String> beanNames = Arrays.asList(beanFactory.getBeanNamesForType(classRef));
+
+		if (beanNames.isEmpty()) {
+			return nullOrThrowException(required,
+					() -> new NoSuchBeanDefinitionException(classRef, String.format("No bean of type %s available", classRef)));
+		}
+
+		if (beanNames.size() == 1) {
+			return beanNames.get(0);
+		}
+
+		if (!(beanFactory instanceof ConfigurableListableBeanFactory)) {
+
+			return nullOrThrowException(required,
+					() -> new NoSuchBeanDefinitionException(String.format(
+							"BeanFactory does not implement ConfigurableListableBeanFactory when trying to find bean of type %s.",
+							classRef)));
+		}
+
+		List<String> primaryBeanNames = getPrimaryBeanDefinitions(beanNames, (ConfigurableListableBeanFactory) beanFactory);
+
+		if (primaryBeanNames.size() == 1) {
+			return primaryBeanNames.get(0);
+		}
+
+		if (primaryBeanNames.size() > 1) {
+			throw new NoUniqueBeanDefinitionException(classRef, primaryBeanNames.size(),
+					"more than one 'primary' bean found among candidates: " + primaryBeanNames);
+		}
+
+		for (String beanName : beanNames) {
+
+			if (propertyName.equals(beanName)
+					|| ObjectUtils.containsElement(beanFactory.getAliases(beanName), propertyName)) {
+				return beanName;
+			}
+		}
+
+		return nullOrThrowException(required,
+				() -> new NoSuchBeanDefinitionException(String.format("No bean of name %s found.", propertyName)));
+	}
+
+	private static List<String> getPrimaryBeanDefinitions(List<String> beanNames,
+			ConfigurableListableBeanFactory beanFactory) {
+
+		ArrayList<String> primaryBeanNames = new ArrayList<>();
+		for (String name : beanNames) {
+
+			if (beanFactory.getBeanDefinition(name).isPrimary()) {
+				primaryBeanNames.add(name);
+			}
+		}
+		return primaryBeanNames;
+	}
+
+	@Nullable
+	private static String nullOrThrowException(boolean required, Supplier<RuntimeException> exception) {
+
+		if (required) {
+			throw exception.get();
+		}
+		return null;
+	}
+
 }

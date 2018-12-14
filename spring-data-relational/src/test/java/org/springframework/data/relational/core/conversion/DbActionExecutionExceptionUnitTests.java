@@ -20,9 +20,11 @@ import static org.mockito.Mockito.*;
 import org.junit.Test;
 
 /**
+ * Unit test for {@link DbActionExecutionException}.
+ * 
  * @author Jens Schauder
  */
-public class DbActionExecutionExceptionTest {
+public class DbActionExecutionExceptionUnitTests {
 
 	@Test // DATAJDBC-162
 	public void constructorWorksWithNullPropertyPath() {
