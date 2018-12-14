@@ -48,6 +48,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Oliver Gierke
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Fei Dong
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)

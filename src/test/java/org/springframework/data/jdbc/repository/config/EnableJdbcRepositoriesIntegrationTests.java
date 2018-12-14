@@ -54,6 +54,7 @@ import lombok.Data;
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Fei Dong
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfiguration.class)
