@@ -209,9 +209,11 @@ public class QueryAnnotationHsqlIntegrationTests {
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsLocalDateTimeList() {
 
-		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime preciseNow = LocalDateTime.now();
+		LocalDateTime truncatedNow = truncateSubmillis(preciseNow);
+
 		repository.nowWithLocalDateTimeList() //
-				.forEach(d -> assertThat(d).isAfterOrEqualTo(now));
+				.forEach(d -> assertThat(d).isAfterOrEqualTo(truncatedNow));
 
 	}
 
@@ -256,6 +258,12 @@ public class QueryAnnotationHsqlIntegrationTests {
 	public void executeCustomQueryWithImmutableResultType() {
 
 		assertThat(repository.immutableTuple()).isEqualTo(new DummyEntityRepository.ImmutableTuple("one", "two", 3));
+	}
+
+	private static LocalDateTime truncateSubmillis(LocalDateTime now) {
+
+		int NANOS_IN_MILLIS = 1_000_000;
+		return now.withNano((now.getNano() / NANOS_IN_MILLIS) * 1_000_000);
 	}
 
 	private DummyEntity dummyEntity(String name) {
