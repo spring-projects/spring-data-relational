@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,15 @@ import java.util.List;
 
 /**
  * Converts an aggregate represented by its root into an {@link AggregateChange}.
+ * Does not perform any isNew check.
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Thomas Lang
  */
-public class RelationalEntityWriter extends AbstractRelationalEntityWriter {
+public class RelationalEntityUpdateWriter extends AbstractRelationalEntityWriter {
 
-	public RelationalEntityWriter(RelationalMappingContext context) {
+	public RelationalEntityUpdateWriter(RelationalMappingContext context) {
 		super(context);
 	}
 
@@ -36,7 +38,7 @@ public class RelationalEntityWriter extends AbstractRelationalEntityWriter {
 	 * @see org.springframework.data.convert.EntityWriter#save(java.lang.Object, java.lang.Object)
 	 */
 	@Override public void write(Object root, AggregateChange<?> aggregateChange) {
-		List<DbAction<?>> actions = new WritingContext(root, aggregateChange).save();
+		List<DbAction<?>> actions = new WritingContext(root, aggregateChange).update();
 		actions.forEach(aggregateChange::addAction);
 	}
 }
