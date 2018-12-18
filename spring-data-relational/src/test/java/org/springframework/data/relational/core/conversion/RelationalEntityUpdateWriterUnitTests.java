@@ -21,53 +21,27 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
-import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Unit tests for the {@link RelationalEntityInsertWriter}
+ * Unit tests for the {@link RelationalEntityUpdateWriter}
  *
  * @author Jens Schauder
  * @author Thomas Lang
  */
-@RunWith(MockitoJUnitRunner.class)
-public class RelationalEntityInsertWriterUnitTests {
+@RunWith(MockitoJUnitRunner.class) public class RelationalEntityUpdateWriterUnitTests {
 
 	public static final long SOME_ENTITY_ID = 23L;
-	RelationalEntityInsertWriter converter = new RelationalEntityInsertWriter(new RelationalMappingContext());
+	RelationalEntityUpdateWriter converter = new RelationalEntityUpdateWriter(new RelationalMappingContext());
 
 	@Test // DATAJDBC-112
-	public void newEntityGetsConvertedToOneInsert() {
-
-		SingleReferenceEntity entity = new SingleReferenceEntity(null);
-		AggregateChange<SingleReferenceEntity> aggregateChange = //
-				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
-
-		converter.write(entity, aggregateChange);
-
-		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
-						this::isWithDependsOn) //
-				.containsExactly( //
-						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
-				);
-	}
-
-	@Test // DATAJDBC-282
-	public void existingEntityGetsNotConvertedToDeletePlusUpdate() {
+	public void existingEntityGetsConvertedToDeletePlusUpdate() {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = //
+		AggregateChange<RelationalEntityWriterUnitTests.SingleReferenceEntity> aggregateChange = //
 				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -76,32 +50,9 @@ public class RelationalEntityInsertWriterUnitTests {
 				.extracting(DbAction::getClass, DbAction::getEntityType, this::extractPath, this::actualEntityType,
 						this::isWithDependsOn) //
 				.containsExactly( //
-						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
+						tuple(DbAction.Delete.class, Element.class, "other", null, false), //
+						tuple(DbAction.UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
 				);
-
-		assertThat(aggregateChange.getEntity()).isNotNull();
-		// the new id should not be the same as the origin one - should do insert, not update
-		// assertThat(aggregateChange.getEntity().id).isNotEqualTo(SOME_ENTITY_ID);
-	}
-
-	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {
-
-		CascadingReferenceMiddleElement middleElement1 = new CascadingReferenceMiddleElement(null);
-		middleElement1.element.add(first);
-		middleElement1.element.add(second);
-		return middleElement1;
-	}
-
-	private Object getMapKey(DbAction a) {
-		return a instanceof DbAction.WithDependingOn ?
-				((DbAction.WithDependingOn) a).getAdditionalValues().get("map_container_key") :
-				null;
-	}
-
-	private Object getListKey(DbAction a) {
-		return a instanceof DbAction.WithDependingOn ?
-				((DbAction.WithDependingOn) a).getAdditionalValues().get("list_container_key") :
-				null;
 	}
 
 	private String extractPath(DbAction action) {
@@ -125,76 +76,16 @@ public class RelationalEntityInsertWriterUnitTests {
 		return null;
 	}
 
-	@RequiredArgsConstructor
-	static class SingleReferenceEntity {
+	@RequiredArgsConstructor static class SingleReferenceEntity {
 
-		@Id
-		final Long id;
+		@Id final Long id;
 		Element other;
 		// should not trigger own Dbaction
 		String name;
 	}
 
-	@RequiredArgsConstructor
-	static class ReferenceWoIdEntity {
-
-		@Id
-		final Long id;
-		NoIdElement other;
-		// should not trigger own Dbaction
-		String name;
-	}
-
-	@RequiredArgsConstructor
-	private static class CascadingReferenceMiddleElement {
-
-		@Id
-		final Long id;
-		final Set<Element> element = new HashSet<>();
-	}
-
-	@RequiredArgsConstructor
-	private static class CascadingReferenceEntity {
-
-		@Id
-		final Long id;
-		final Set<CascadingReferenceMiddleElement> other = new HashSet<>();
-	}
-
-	@RequiredArgsConstructor
-	private static class SetContainer {
-
-		@Id
-		final Long id;
-		Set<Element> elements = new HashSet<>();
-	}
-
-	@RequiredArgsConstructor
-	private static class MapContainer {
-
-		@Id
-		final Long id;
-		Map<String, Element> elements = new HashMap<>();
-	}
-
-	@RequiredArgsConstructor
-	private static class ListContainer {
-
-		@Id
-		final Long id;
-		List<Element> elements = new ArrayList<>();
-	}
-
-	@RequiredArgsConstructor
-	private static class Element {
-		@Id
-		final Long id;
-	}
-
-	@RequiredArgsConstructor
-	private static class NoIdElement {
-		// empty classes feel weird.
-		String name;
+	@RequiredArgsConstructor private static class Element {
+		@Id final Long id;
 	}
 
 }

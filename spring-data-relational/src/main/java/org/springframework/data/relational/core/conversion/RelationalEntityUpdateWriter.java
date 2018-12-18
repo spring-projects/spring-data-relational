@@ -27,9 +27,9 @@ import java.util.List;
  * @author Mark Paluch
  * @author Thomas Lang
  */
-public class RelationalEntityInsertWriter extends AbstractRelationalEntityWriter {
+public class RelationalEntityUpdateWriter extends AbstractRelationalEntityWriter {
 
-	public RelationalEntityInsertWriter(RelationalMappingContext context) {
+	public RelationalEntityUpdateWriter(RelationalMappingContext context) {
 		super(context);
 	}
 
@@ -38,7 +38,7 @@ public class RelationalEntityInsertWriter extends AbstractRelationalEntityWriter
 	 * @see org.springframework.data.convert.EntityWriter#save(java.lang.Object, java.lang.Object)
 	 */
 	@Override public void write(Object root, AggregateChange<?> aggregateChange) {
-		List<DbAction<?>> actions = new WritingContext(root, aggregateChange).insert();
+		List<DbAction<?>> actions = new WritingContext(root, aggregateChange).update();
 		actions.forEach(aggregateChange::addAction);
 	}
 }
