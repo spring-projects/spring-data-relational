@@ -88,7 +88,7 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 		Flux<Named> findAsProjection();
 
 		@Override
-		@Query("SELECT * FROM legoset WHERE manual = $1")
+		@Query("SELECT * FROM legoset WHERE manual = :manual")
 		Mono<LegoSet> findByManual(int manual);
 	}
 }

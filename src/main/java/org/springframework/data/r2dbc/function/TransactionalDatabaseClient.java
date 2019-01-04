@@ -40,10 +40,10 @@ import org.springframework.util.Assert;
  * <pre class="code">
  * Flux<Integer> transactionalFlux = databaseClient.inTransaction(db -> {
  *
- * 	return db.execute().sql("INSERT INTO person (id, firstname, lastname) VALUES($1, $2, $3)") //
- * 			.bind(0, 1) //
- * 			.bind(1, "Walter") //
- * 			.bind(2, "White") //
+ * 	return db.execute().sql("INSERT INTO person (id, firstname, lastname) VALUES(:id, :firstname, :lastname)") //
+ * 			.bind("id", 1) //
+ * 			.bind("firstname", "Walter") //
+ * 			.bind("lastname", "White") //
  * 			.fetch().rowsUpdated();
  * });
  * </pre>
@@ -54,10 +54,11 @@ import org.springframework.util.Assert;
  *
  * <pre class="code">
  * Mono<Void> mono = databaseClient.beginTransaction()
- * 		.then(databaseClient.execute().sql("INSERT INTO person (id, firstname, lastname) VALUES($1, $2, $3)") //
- * 				.bind(0, 1) //
- * 				.bind(1, "Walter") //
- * 				.bind(2, "White") //
+ * 		.then(databaseClient.execute()
+ * 				.sql("INSERT INTO person (id, firstname, lastname) VALUES(:id, :firstname, :lastname)") //
+ * 				.bind("id", 1) //
+ * 				.bind("firstname", "Walter") //
+ * 				.bind("lastname", "White") //
  * 				.fetch().rowsUpdated())
  * 		.then(databaseClient.commitTransaction());
  *
@@ -168,7 +169,7 @@ public interface TransactionalDatabaseClient extends DatabaseClient {
 		 * Configures the {@link ConnectionFactory R2DBC connector}.
 		 *
 		 * @param factory must not be {@literal null}.
-		 * @return {@code this} {@link DatabaseClient.Builder}.
+		 * @return {@code this} {@link Builder}.
 		 */
 		Builder connectionFactory(ConnectionFactory factory);
 
@@ -176,7 +177,7 @@ public interface TransactionalDatabaseClient extends DatabaseClient {
 		 * Configures a {@link R2dbcExceptionTranslator}.
 		 *
 		 * @param exceptionTranslator must not be {@literal null}.
-		 * @return {@code this} {@link DatabaseClient.Builder}.
+		 * @return {@code this} {@link Builder}.
 		 */
 		Builder exceptionTranslator(R2dbcExceptionTranslator exceptionTranslator);
 
@@ -184,15 +185,25 @@ public interface TransactionalDatabaseClient extends DatabaseClient {
 		 * Configures a {@link ReactiveDataAccessStrategy}.
 		 *
 		 * @param accessStrategy must not be {@literal null}.
-		 * @return {@code this} {@link DatabaseClient.Builder}.
+		 * @return {@code this} {@link Builder}.
 		 */
 		Builder dataAccessStrategy(ReactiveDataAccessStrategy accessStrategy);
+
+		/**
+		 * Configures {@link NamedParameterExpander}.
+		 *
+		 * @param namedParameters must not be {@literal null}.
+		 * @return {@code this} {@link Builder}.
+		 * @see NamedParameterExpander#enabled()
+		 * @see NamedParameterExpander#disabled()
+		 */
+		Builder namedParameters(NamedParameterExpander namedParameters);
 
 		/**
 		 * Configures a {@link Consumer} to configure this builder.
 		 *
 		 * @param builderConsumer must not be {@literal null}.
-		 * @return {@code this} {@link DatabaseClient.Builder}.
+		 * @return {@code this} {@link Builder}.
 		 */
 		Builder apply(Consumer<DatabaseClient.Builder> builderConsumer);
 

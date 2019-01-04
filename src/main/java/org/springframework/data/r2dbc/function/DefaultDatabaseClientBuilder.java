@@ -38,6 +38,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 	private @Nullable ConnectionFactory connectionFactory;
 	private @Nullable R2dbcExceptionTranslator exceptionTranslator;
 	private ReactiveDataAccessStrategy accessStrategy;
+	private NamedParameterExpander namedParameters;
 
 	DefaultDatabaseClientBuilder() {}
 
@@ -48,8 +49,13 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		this.connectionFactory = other.connectionFactory;
 		this.exceptionTranslator = other.exceptionTranslator;
 		this.accessStrategy = other.accessStrategy;
+		this.namedParameters = other.namedParameters;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#connectionFactory(io.r2dbc.spi.ConnectionFactory)
+	 */
 	@Override
 	public Builder connectionFactory(ConnectionFactory factory) {
 
@@ -59,6 +65,10 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		return this;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#exceptionTranslator(org.springframework.data.r2dbc.support.R2dbcExceptionTranslator)
+	 */
 	@Override
 	public Builder exceptionTranslator(R2dbcExceptionTranslator exceptionTranslator) {
 
@@ -68,6 +78,10 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		return this;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#dataAccessStrategy(org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy)
+	 */
 	@Override
 	public Builder dataAccessStrategy(ReactiveDataAccessStrategy accessStrategy) {
 
@@ -77,6 +91,23 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		return this;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#namedParameters(org.springframework.data.r2dbc.function.NamedParameterExpander)
+	 */
+	@Override
+	public Builder namedParameters(NamedParameterExpander namedParameters) {
+
+		Assert.notNull(namedParameters, "NamedParameterExpander must not be null!");
+
+		this.namedParameters = namedParameters;
+		return this;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#build()
+	 */
 	@Override
 	public DatabaseClient build() {
 
@@ -97,19 +128,35 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 			accessStrategy = new DefaultReactiveDataAccessStrategy(dialect);
 		}
 
-		return doBuild(this.connectionFactory, exceptionTranslator, accessStrategy, new DefaultDatabaseClientBuilder(this));
+		NamedParameterExpander namedParameters = this.namedParameters;
+
+		if (namedParameters == null) {
+			namedParameters = NamedParameterExpander.enabled();
+		}
+
+		return doBuild(this.connectionFactory, exceptionTranslator, accessStrategy, namedParameters,
+				new DefaultDatabaseClientBuilder(this));
 	}
 
 	protected DatabaseClient doBuild(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy accessStrategy, DefaultDatabaseClientBuilder builder) {
-		return new DefaultDatabaseClient(connector, exceptionTranslator, accessStrategy, builder);
+			ReactiveDataAccessStrategy accessStrategy, NamedParameterExpander namedParameters,
+			DefaultDatabaseClientBuilder builder) {
+		return new DefaultDatabaseClient(connector, exceptionTranslator, accessStrategy, namedParameters, builder);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
 	@Override
 	public DatabaseClient.Builder clone() {
 		return new DefaultDatabaseClientBuilder(this);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#apply(java.util.function.Consumer)
+	 */
 	@Override
 	public DatabaseClient.Builder apply(Consumer<DatabaseClient.Builder> builderConsumer) {
 		Assert.notNull(builderConsumer, "BuilderConsumer must not be null");

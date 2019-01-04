@@ -26,6 +26,7 @@ import java.util.function.BiFunction;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.function.convert.SettableValue;
 
 /**
@@ -75,6 +76,13 @@ public interface ReactiveDataAccessStrategy {
 	 * @return the table name for the {@link Class entity type}.
 	 */
 	String getTableName(Class<?> type);
+
+	/**
+	 * Returns the configured {@link BindMarkersFactory} to create native parameter placeholder markers.
+	 *
+	 * @return the configured {@link BindMarkersFactory}.
+	 */
+	BindMarkersFactory getBindMarkersFactory();
 
 	// -------------------------------------------------------------------------
 	// Methods creating SQL operations.

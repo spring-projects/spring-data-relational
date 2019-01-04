@@ -41,6 +41,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.dialect.ArrayColumns;
 import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
+import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.dialect.LimitClause;
 import org.springframework.data.r2dbc.dialect.LimitClause.Position;
@@ -236,6 +237,15 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Override
 	public String getTableName(Class<?> type) {
 		return getRequiredPersistentEntity(type).getTableName();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getBindMarkersFactory()
+	 */
+	@Override
+	public BindMarkersFactory getBindMarkersFactory() {
+		return dialect.getBindMarkersFactory();
 	}
 
 	private RelationalPersistentEntity<?> getRequiredPersistentEntity(Class<?> typeToRead) {

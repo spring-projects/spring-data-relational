@@ -104,7 +104,7 @@ Defining such a query is a matter of declaring a method on the repository interf
 ----
 public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
 
-    @Query("SELECT * FROM person WHERE lastname = $1")
+    @Query("SELECT * FROM person WHERE lastname = :lastname")
     Flux<Person> findByLastname(String lastname);                      <1>
 
     @Query("SELECT firstname, lastname FROM person WHERE lastname = $1")
@@ -114,10 +114,10 @@ public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
 ----
 <1> The `findByLastname` method shows a query for all people with the given last name.
 The query is provided as R2DBC repositories do not support query derivation.
+<2> A query for a single `Person` entity projecting only `firstname` and `lastname` columns.
 The annotated query uses native bind markers, which are Postgres bind markers in this example.
-<4> A query for a single `Person` entity projecting only `firstname` and `lastname` columns.
 ====
 
 NOTE: R2DBC repositories do not support query derivation.
 
-NOTE: R2DBC repositories require native parameter bind markers that are bound by index.
+NOTE: R2DBC repositories bind parameters to placeholders by index.

@@ -93,7 +93,7 @@ public class SqlServerR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepos
 		Flux<Named> findAsProjection();
 
 		@Override
-		@Query("SELECT * FROM legoset WHERE manual = @P0")
+		@Query("SELECT * FROM legoset WHERE manual = :manual")
 		Mono<LegoSet> findByManual(int manual);
 	}
 }

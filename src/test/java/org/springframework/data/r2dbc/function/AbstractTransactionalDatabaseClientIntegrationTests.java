@@ -15,25 +15,27 @@
  */
 package org.springframework.data.r2dbc.function;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+
+import javax.sql.DataSource;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.NoTransactionException;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
-
-import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Abstract base class for integration tests for {@link TransactionalDatabaseClient}.
@@ -56,8 +58,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		jdbc = createJdbcTemplate(createDataSource());
 		try {
 			jdbc.execute("DROP TABLE legoset");
-		} catch (DataAccessException e) {
-		}
+		} catch (DataAccessException e) {}
 		jdbc.execute(getCreateTableStatement());
 		jdbc.execute("DELETE FROM legoset");
 	}
@@ -91,7 +92,9 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	/**
 	 * Get a parameterized {@code INSERT INTO legoset} statement setting id, name, and manual values.
 	 */
-	protected abstract String getInsertIntoLegosetStatement();
+	protected String getInsertIntoLegosetStatement() {
+		return "INSERT INTO legoset (id, name, manual) VALUES(:id, :name, :manual)";
+	}
 
 	/**
 	 * Get a statement that returns the current transactionId.

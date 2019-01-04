@@ -90,7 +90,9 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 	/**
 	 * Get a parameterized {@code INSERT INTO legoset} statement setting id, name, and manual values.
 	 */
-	protected abstract String getInsertIntoLegosetStatement();
+	protected String getInsertIntoLegosetStatement() {
+		return "INSERT INTO legoset (id, name, manual) VALUES(:id, :name, :manual)";
+	}
 
 	@Test // gh-2
 	public void executeInsert() {
@@ -98,9 +100,9 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 
 		databaseClient.execute().sql(getInsertIntoLegosetStatement()) //
-				.bind(0, 42055) //
-				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull(2, Integer.class) //
+				.bind("id", 42055) //
+				.bind("name", "SCHAUFELRADBAGGER") //
+				.bindNull("manual", Integer.class) //
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectNext(1) //

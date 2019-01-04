@@ -39,8 +39,9 @@ import org.springframework.transaction.NoTransactionException;
 class DefaultTransactionalDatabaseClient extends DefaultDatabaseClient implements TransactionalDatabaseClient {
 
 	DefaultTransactionalDatabaseClient(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy dataAccessStrategy, DefaultDatabaseClientBuilder builder) {
-		super(connector, exceptionTranslator, dataAccessStrategy, builder);
+			ReactiveDataAccessStrategy dataAccessStrategy, NamedParameterExpander namedParameters,
+			DefaultDatabaseClientBuilder builder) {
+		super(connector, exceptionTranslator, dataAccessStrategy, namedParameters, builder);
 	}
 
 	@Override

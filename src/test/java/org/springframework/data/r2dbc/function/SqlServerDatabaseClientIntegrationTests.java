@@ -46,9 +46,4 @@ public class SqlServerDatabaseClientIntegrationTests extends AbstractDatabaseCli
 	protected String getCreateTableStatement() {
 		return SqlServerTestSupport.CREATE_TABLE_LEGOSET;
 	}
-
-	@Override
-	protected String getInsertIntoLegosetStatement() {
-		return SqlServerTestSupport.INSERT_INTO_LEGOSET;
-	}
 }

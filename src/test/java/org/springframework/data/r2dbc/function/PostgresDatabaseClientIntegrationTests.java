@@ -48,11 +48,6 @@ public class PostgresDatabaseClientIntegrationTests extends AbstractDatabaseClie
 		return PostgresTestSupport.CREATE_TABLE_LEGOSET;
 	}
 
-	@Override
-	protected String getInsertIntoLegosetStatement() {
-		return PostgresTestSupport.INSERT_INTO_LEGOSET;
-	}
-
 	@Ignore("Adding RETURNING * lets Postgres report 0 affected rows.")
 	@Override
 	public void insert() {}

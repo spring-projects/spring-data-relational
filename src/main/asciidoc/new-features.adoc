@@ -1,10 +1,15 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.1-0-0-M2]]
+== What's New in Spring Data R2DBC 1.0.0 M2
+
+* Support for named parameters.
+
 [[new-features.1-0-0-M1]]
 == What's New in Spring Data R2DBC 1.0.0 M1
 
-* Initial R2DBC support through `DatabaseClient`
-* Initial Transaction support through `TransactionalDatabaseClient`
-* Initial R2DBC Repository Support through `R2dbcRepository`
-* Initial Dialect support for Postgres and Microsoft SQL Server
+* Initial R2DBC support through `DatabaseClient`.
+* Initial Transaction support through `TransactionalDatabaseClient`.
+* Initial R2DBC Repository Support through `R2dbcRepository`.
+* Initial Dialect support for Postgres and Microsoft SQL Server.

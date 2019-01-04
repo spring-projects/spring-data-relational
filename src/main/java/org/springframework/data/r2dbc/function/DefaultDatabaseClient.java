@@ -66,9 +66,6 @@ import org.springframework.util.Assert;
  */
 class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
-	/**
-	 * Logger available to subclasses
-	 */
 	private final Log logger = LogFactory.getLog(getClass());
 
 	private final ConnectionFactory connector;
@@ -77,14 +74,18 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 
+	private final NamedParameterExpander namedParameters;
+
 	private final DefaultDatabaseClientBuilder builder;
 
 	DefaultDatabaseClient(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy dataAccessStrategy, DefaultDatabaseClientBuilder builder) {
+			ReactiveDataAccessStrategy dataAccessStrategy, NamedParameterExpander namedParameters,
+			DefaultDatabaseClientBuilder builder) {
 
 		this.connector = connector;
 		this.exceptionTranslator = exceptionTranslator;
 		this.dataAccessStrategy = dataAccessStrategy;
+		this.namedParameters = namedParameters;
 		this.builder = builder;
 	}
 
@@ -325,8 +326,21 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					logger.debug("Executing SQL statement [" + sql + "]");
 				}
 
-				Statement<?> statement = it.createStatement(sql);
-				doBind(statement, byName, byIndex);
+				BindableOperation operation = namedParameters.expand(sql, dataAccessStrategy.getBindMarkersFactory(),
+						new MapBindParameterSource(byName));
+
+				Statement<?> statement = it.createStatement(operation.toQuery());
+
+				byName.forEach((name, o) -> {
+
+					if (o.getValue() != null) {
+						operation.bind(statement, name, o.getValue());
+					} else {
+						operation.bindNull(statement, name, o.getType());
+					}
+				});
+
+				doBind(statement, Collections.emptyMap(), byIndex);
 
 				return statement;
 			};

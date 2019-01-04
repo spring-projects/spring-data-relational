@@ -34,11 +34,6 @@ public class PostgresTransactionalDatabaseClientIntegrationTests
 	}
 
 	@Override
-	protected String getInsertIntoLegosetStatement() {
-		return PostgresTestSupport.INSERT_INTO_LEGOSET;
-	}
-
-	@Override
 	protected String getCurrentTransactionIdStatement() {
 		return "SELECT txid_current();";
 	}

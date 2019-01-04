@@ -446,20 +446,61 @@ Parameter binding supports various binding strategies:
 * By Index using zero-based parameter indexes.
 * By Name using the placeholder name.
 
-The following example shows parameter binding for a PostgreSQL query:
+The following example shows parameter binding for a query:
 
 [source,java]
 ----
 db.execute()
-    .sql("INSERT INTO person (id, name, age) VALUES($1, $2, $3)")
-    .bind(0, "joe")
-    .bind(1, "Joe")
-    .bind(2, 34);
+    .sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+    .bind("id", "joe")
+    .bind("name", "Joe")
+    .bind("age", 34);
 ----
 
-NOTE: If you are familiar with JDBC, then you're also familiar with `?` (question mark) bind markers.
+.R2DBC Native Bind Markers
+****
+R2DBC uses database-native bind markers that depend on the actual database.
+If you are familiar with JDBC, then you're also familiar with `?` (question mark) bind markers.
 JDBC drivers translate question mark bind markers to database-native markers as part of statement execution.
-Make sure to use the appropriate bind markers that are supported by your database as R2DBC requires database-native parameter bind markers.
+
+Postgres uses indexed markers (`$1`, `$2`), SQL Server uses named bind markers prefixed with `@` as its native bind marker syntax.
+Spring Data R2DBC leverages `Dialect` implementations to expand named parameters to native bind markers at the time of query execution which gives you a certain degree of query portability across various database vendors.
+You can still use native bind markers if you prefer to do so.
+****
+
+The query-preprocessor unrolls named `Collection` parameters into a series of bind markers to remove the need of dynamic query creation based on the number of arguments.
+Nested object arrays are expanded to allow usage of e.g. select lists.
+
+Consider the following query:
+
+[source,sql]
+----
+SELECT id, name, state FROM table WHERE (name, age) IN (('John', 35), ('Ann', 50))
+----
+
+This query can be parametrized and executed as:
+
+[source,java]
+----
+List<Object[]> tuples = new ArrayList<>();
+tuples.add(new Object[] {"John", 35});
+tuples.add(new Object[] {"Ann",  50});
+
+db.execute()
+    .sql("SELECT id, name, state FROM table WHERE (name, age) IN (:tuples)")
+    .bind("tuples", tuples);
+----
+
+NOTE: Usage of select lists is vendor-dependent.
+
+A simpler variant using `IN` predicates:
+
+[source,java]
+----
+db.execute()
+    .sql("SELECT id, name, state FROM table WHERE age IN (:ages)")
+    .bind("ages", Arrays.asList(35, 50));
+----
 
 [[r2dbc.datbaseclient.transactions]]
 === Transactions
@@ -478,14 +519,14 @@ TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(
 
 Flux<Void> completion = databaseClient.inTransaction(db -> {
 
-    return db.execute().sql("INSERT INTO person (id, name, age) VALUES($1, $2, $3)") //
-            .bind(0, "joe") //
-            .bind(1, "Joe") //
-            .bind(2, 34) //
+    return db.execute().sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+            .bind("id", "joe")
+            .bind("name", "Joe")
+            .bind("age", 34)
             .fetch().rowsUpdated()
-            .then(db.execute().sql("INSERT INTO contacts (id, name) VALUES($1, $2)")
-                    .bind(0, "joe")
-                    .bind(1, "Joe")
+            .then(db.execute().sql("INSERT INTO contacts (id, name) VALUES(:id, :name)")
+                    .bind("id", "joe")
+                    .bind("name", "Joe")
                     .fetch().rowsUpdated())
             .then();
 });
