@@ -145,6 +145,27 @@ This also means references are 1-1 or 1-n, but not n-1 or n-m.
 If you have n-1 or n-m references, you are, by definition, dealing with two separate aggregates.
 References between those should be encoded as simple `id` values, which should map properly with Spring Data JDBC.
 
+=== Custom converters
+Custom coverters can be registered, for types that are not supported by default, by inheriting your configuration from `JdbcConfiguration` and overwriting the method `jdbcCustomConversions()`. 
+====
+[source, java]
+----
+@Configuration
+public class DataJdbcConfiguration extends JdbcConfiguration {
+    @Override
+    protected JdbcCustomConversions jdbcCustomConversions() {
+      return new JdbcCustomConversions(Arrays.asList(new Converter<TIMESTAMPTZ, Date>() {
+        @Override
+        public Date convert(TIMESTAMPTZ source) {
+          //...
+        }
+      }));
+    }
+}
+----
+====
+The constructor of `JdbcCustomConversions` accepts a list of `org.springframework.core.convert.converter.Converter`.
+
 [[jdbc.entity-persistence.naming-strategy]]
 === `NamingStrategy`
 
