@@ -99,17 +99,10 @@ public class JdbcRepositoryIntegrationTests {
     @Test // DATAJDBC-282
     public void insertAnExistingEntity() {
 
-        DummyEntity entity = repository.insert(createDummyEntity());
-
+        DummyEntity existingDummyEntity = createExistingDummyEntity();
+        DummyEntity entity = repository.insert(existingDummyEntity);
         assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-                "id_Prop = " + entity.getIdProp())).isEqualTo(1);
-
-        entity.setName("new name");
-
-        DummyEntity updatedEntity = repository.insert(createDummyEntity());
-
-        assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-                "id_Prop = " + updatedEntity.getIdProp())).isEqualTo(1);
+                "id_Prop = " + existingDummyEntity.getIdProp())).isEqualTo(1);
     }
 
     @Test // DATAJDBC-95
@@ -276,6 +269,14 @@ public class JdbcRepositoryIntegrationTests {
     private static DummyEntity createDummyEntity() {
 
         DummyEntity entity = new DummyEntity();
+        entity.setName("Entity Name");
+        return entity;
+    }
+
+    private static DummyEntity createExistingDummyEntity() {
+
+        DummyEntity entity = new DummyEntity();
+        entity.setIdProp(Long.parseLong("123"));
         entity.setName("Entity Name");
         return entity;
     }
