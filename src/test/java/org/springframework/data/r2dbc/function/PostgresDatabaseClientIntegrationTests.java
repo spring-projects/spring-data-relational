@@ -21,6 +21,7 @@ import javax.sql.DataSource;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Test;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
 
@@ -49,10 +50,12 @@ public class PostgresDatabaseClientIntegrationTests extends AbstractDatabaseClie
 	}
 
 	@Ignore("Adding RETURNING * lets Postgres report 0 affected rows.")
+	@Test
 	@Override
 	public void insert() {}
 
 	@Ignore("Adding RETURNING * lets Postgres report 0 affected rows.")
+	@Test
 	@Override
 	public void insertTypedObject() {}
 }

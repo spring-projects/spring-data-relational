@@ -32,6 +32,7 @@ import org.springframework.data.r2dbc.dialect.SqlServerDialect;
  * Unit tests for {@link NamedParameterUtils}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class NamedParameterUtilsUnitTests {
 
@@ -42,19 +43,19 @@ public class NamedParameterUtilsUnitTests {
 
 		String sql = "xxx :a yyyy :b :c :a zzzzz";
 		ParsedSql psql = NamedParameterUtils.parseSqlStatement(sql);
-		assertThat(psql.getParameterNames()).containsSequence("a", "b", "c", "a");
+		assertThat(psql.getParameterNames()).containsExactly("a", "b", "c", "a");
 		assertThat(psql.getTotalParameterCount()).isEqualTo(4);
 		assertThat(psql.getNamedParameterCount()).isEqualTo(3);
 
 		String sql2 = "xxx &a yyyy ? zzzzz";
 		ParsedSql psql2 = NamedParameterUtils.parseSqlStatement(sql2);
-		assertThat(psql2.getParameterNames().get(0)).isEqualTo("a");
+		assertThat(psql2.getParameterNames()).containsExactly("a");
 		assertThat(psql2.getTotalParameterCount()).isEqualTo(2);
 		assertThat(psql2.getNamedParameterCount()).isEqualTo(1);
 
 		String sql3 = "xxx &ä+:ö" + '\t' + ":ü%10 yyyy ? zzzzz";
 		ParsedSql psql3 = NamedParameterUtils.parseSqlStatement(sql3);
-		assertThat(psql3.getParameterNames()).containsSequence("ä", "ö", "ü");
+		assertThat(psql3.getParameterNames()).containsExactly("ä", "ö", "ü");
 	}
 
 	@Test // gh-23
@@ -177,9 +178,8 @@ public class NamedParameterUtilsUnitTests {
 		String sql = "select '0\\:0' as a, foo from bar where baz < DATE(:p1 23\\:59\\:59) and baz = :p2";
 
 		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-		assertThat(parsedSql.getParameterNames()).hasSize(2);
-		assertThat(parsedSql.getParameterNames().get(0)).isEqualTo("p1");
-		assertThat(parsedSql.getParameterNames().get(1)).isEqualTo("p2");
+
+		assertThat(parsedSql.getParameterNames()).containsExactly("p1", "p2");
 		assertThat(expand(parsedSql)).isEqualTo(expectedSql);
 	}
 
@@ -190,9 +190,7 @@ public class NamedParameterUtilsUnitTests {
 		String sql = "select foo from bar where baz = b:{p1}:{p2}z";
 
 		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-		assertThat(parsedSql.getParameterNames()).hasSize(2);
-		assertThat(parsedSql.getParameterNames().get(0)).isEqualTo("p1");
-		assertThat(parsedSql.getParameterNames().get(1)).isEqualTo("p2");
+		assertThat(parsedSql.getParameterNames()).containsExactly("p1", "p2");
 		assertThat(expand(parsedSql)).isEqualTo(expectedSql);
 	}
 
@@ -217,12 +215,12 @@ public class NamedParameterUtilsUnitTests {
 
 	@Test // gh-23
 	public void parseSqlStatementWithSingleLetterInBrackets() {
+
 		String expectedSql = "select foo from bar where baz = b$1z";
 		String sql = "select foo from bar where baz = b:{p}z";
 
 		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-		assertThat(parsedSql.getParameterNames()).hasSize(1);
-		assertThat(parsedSql.getParameterNames().get(0)).isEqualTo("p");
+		assertThat(parsedSql.getParameterNames()).containsExactly("p");
 		assertThat(expand(parsedSql)).isEqualTo(expectedSql);
 	}
 
@@ -260,7 +258,7 @@ public class NamedParameterUtilsUnitTests {
 		ParsedSql psql = NamedParameterUtils.parseSqlStatement(sql);
 
 		assertThat(psql.getTotalParameterCount()).isEqualTo(1);
-		assertThat(psql.getParameterNames().get(0)).isEqualTo("xxx");
+		assertThat(psql.getParameterNames()).containsExactly("xxx");
 	}
 
 	@Test // gh-23
@@ -271,7 +269,7 @@ public class NamedParameterUtilsUnitTests {
 		ParsedSql psql = NamedParameterUtils.parseSqlStatement(sql);
 
 		assertThat(psql.getTotalParameterCount()).isEqualTo(1);
-		assertThat(psql.getParameterNames().get(0)).isEqualTo("xxx");
+		assertThat(psql.getParameterNames()).containsExactly("xxx");
 	}
 
 	@Test // gh-23
@@ -282,7 +280,7 @@ public class NamedParameterUtilsUnitTests {
 		ParsedSql psql2 = NamedParameterUtils.parseSqlStatement(sql2);
 
 		assertThat(psql2.getTotalParameterCount()).isEqualTo(1);
-		assertThat(psql2.getParameterNames().get(0)).isEqualTo("xxx");
+		assertThat(psql2.getParameterNames()).containsExactly("xxx");
 	}
 
 	private String expand(ParsedSql sql) {

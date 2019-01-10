@@ -35,8 +35,6 @@ public class PostgresTestSupport {
 			+ "    manual      integer NULL\n" //
 			+ ");";
 
-	public static String INSERT_INTO_LEGOSET = "INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)";
-
 	/**
 	 * Returns a database either hosted locally at {@code postgres:@localhost:5432/postgres} or running inside Docker.
 	 *

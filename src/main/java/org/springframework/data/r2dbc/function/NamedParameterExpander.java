@@ -36,14 +36,18 @@ import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
  */
 public class NamedParameterExpander {
 
-	/** Default maximum number of entries for the SQL cache: 256. */
+	/**
+	 * Default maximum number of entries for the SQL cache: 256.
+	 */
 	public static final int DEFAULT_CACHE_LIMIT = 256;
 
 	private volatile int cacheLimit = DEFAULT_CACHE_LIMIT;
 
 	private final Log logger = LogFactory.getLog(getClass());
 
-	/** Cache of original SQL String to ParsedSql representation. */
+	/**
+	 * Cache of original SQL String to ParsedSql representation.
+	 */
 	@SuppressWarnings("serial") private final Map<String, ParsedSql> parsedSqlCache = new LinkedHashMap<String, ParsedSql>(
 			DEFAULT_CACHE_LIMIT, 0.75f, true) {
 		@Override
@@ -101,8 +105,10 @@ public class NamedParameterExpander {
 		}
 
 		synchronized (this.parsedSqlCache) {
+
 			ParsedSql parsedSql = this.parsedSqlCache.get(sql);
 			if (parsedSql == null) {
+
 				parsedSql = NamedParameterUtils.parseSqlStatement(sql);
 				this.parsedSqlCache.put(sql, parsedSql);
 			}
