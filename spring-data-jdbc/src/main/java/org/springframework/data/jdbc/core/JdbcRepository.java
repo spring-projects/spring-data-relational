@@ -12,7 +12,7 @@ import org.springframework.data.repository.Repository;
  */
 public interface JdbcRepository<T, ID> extends Repository<T, ID> {
 
-	<S extends T> S insert(S var1);
+    <S extends T> S insert(S var1);
 
-	<S extends T> S update(S var1);
+    <S extends T> S update(S var1);
 }
