@@ -40,6 +40,8 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
  *
@@ -49,246 +51,222 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class JdbcRepositoryIntegrationTests {
 
-    @Configuration
-    @Import(TestConfiguration.class)
-    static class Config {
+	@Configuration
+	@Import(TestConfiguration.class)
+	static class Config {
 
-        @Autowired
-        JdbcRepositoryFactory factory;
+		@Autowired JdbcRepositoryFactory factory;
 
-        @Bean
-        Class<?> testClass() {
-            return JdbcRepositoryIntegrationTests.class;
-        }
+		@Bean
+		Class<?> testClass() {
+			return JdbcRepositoryIntegrationTests.class;
+		}
 
-        @Bean
-        DummyEntityRepository dummyEntityRepository() {
-            return factory.getRepository(DummyEntityRepository.class);
-        }
+		@Bean
+		DummyEntityRepository dummyEntityRepository() {
+			return factory.getRepository(DummyEntityRepository.class);
+		}
 
-    }
+	}
 
-    @ClassRule
-    public static final SpringClassRule classRule = new SpringClassRule();
-    @Rule
-    public SpringMethodRule methodRule = new SpringMethodRule();
+	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
-    @Autowired
-    NamedParameterJdbcTemplate template;
-    @Autowired
-    DummyEntityRepository repository;
+	@Autowired NamedParameterJdbcTemplate template;
+	@Autowired DummyEntityRepository repository;
 
-    @Test // DATAJDBC-95
-    public void savesAnEntity() {
+	@Test // DATAJDBC-95
+	public void savesAnEntity() {
 
-        DummyEntity entity = repository.save(createDummyEntity());
+		DummyEntity entity = repository.save(createDummyEntity());
 
-        assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-                "id_Prop = " + entity.getIdProp())).isEqualTo(1);
-    }
+		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
+				"id_Prop = " + entity.getIdProp())).isEqualTo(1);
+	}
 
-    @Test // DATAJDBC-282
-    public void insertAnEntity() {
+	@Test // DATAJDBC-282
+	public void insertAnEntity() {
 
-        DummyEntity entity = repository.insert(createDummyEntity());
+		DummyEntity entity = repository.insert(createDummyEntity());
 
-        assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-                "id_Prop = " + entity.getIdProp())).isEqualTo(1);
-    }
+		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
+				"id_Prop = " + entity.getIdProp())).isEqualTo(1);
+	}
 
-    @Test // DATAJDBC-282
-    public void insertAnExistingEntity() {
+	@Test // DATAJDBC-95
+	public void saveAndLoadAnEntity() {
 
-        DummyEntity existingDummyEntity = createExistingDummyEntity();
-        DummyEntity entity = repository.insert(existingDummyEntity);
-        assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-                "id_Prop = " + existingDummyEntity.getIdProp())).isEqualTo(1);
-    }
+		DummyEntity entity = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-95
-    public void saveAndLoadAnEntity() {
+		assertThat(repository.findById(entity.getIdProp())).hasValueSatisfying(it -> {
 
-        DummyEntity entity = repository.save(createDummyEntity());
+			assertThat(it.getIdProp()).isEqualTo(entity.getIdProp());
+			assertThat(it.getName()).isEqualTo(entity.getName());
+		});
+	}
 
-        assertThat(repository.findById(entity.getIdProp())).hasValueSatisfying(it -> {
+	@Test // DATAJDBC-97
+	public void savesManyEntities() {
 
-            assertThat(it.getIdProp()).isEqualTo(entity.getIdProp());
-            assertThat(it.getName()).isEqualTo(entity.getName());
-        });
-    }
+		DummyEntity entity = createDummyEntity();
+		DummyEntity other = createDummyEntity();
 
-    @Test // DATAJDBC-97
-    public void savesManyEntities() {
+		repository.saveAll(asList(entity, other));
 
-        DummyEntity entity = createDummyEntity();
-        DummyEntity other = createDummyEntity();
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getIdProp) //
+				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+	}
 
-        repository.saveAll(asList(entity, other));
+	@Test // DATAJDBC-97
+	public void existsReturnsTrueIffEntityExists() {
 
-        assertThat(repository.findAll()) //
-                .extracting(DummyEntity::getIdProp) //
-                .containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
-    }
+		DummyEntity entity = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-97
-    public void existsReturnsTrueIffEntityExists() {
+		assertThat(repository.existsById(entity.getIdProp())).isTrue();
+		assertThat(repository.existsById(entity.getIdProp() + 1)).isFalse();
+	}
 
-        DummyEntity entity = repository.save(createDummyEntity());
+	@Test // DATAJDBC-97
+	public void findAllFindsAllEntities() {
 
-        assertThat(repository.existsById(entity.getIdProp())).isTrue();
-        assertThat(repository.existsById(entity.getIdProp() + 1)).isFalse();
-    }
+		DummyEntity entity = repository.save(createDummyEntity());
+		DummyEntity other = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-97
-    public void findAllFindsAllEntities() {
+		Iterable<DummyEntity> all = repository.findAll();
 
-        DummyEntity entity = repository.save(createDummyEntity());
-        DummyEntity other = repository.save(createDummyEntity());
+		assertThat(all)//
+				.extracting(DummyEntity::getIdProp)//
+				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+	}
 
-        Iterable<DummyEntity> all = repository.findAll();
+	@Test // DATAJDBC-97
+	public void findAllFindsAllSpecifiedEntities() {
 
-        assertThat(all)//
-                .extracting(DummyEntity::getIdProp)//
-                .containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
-    }
+		DummyEntity entity = repository.save(createDummyEntity());
+		DummyEntity other = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-97
-    public void findAllFindsAllSpecifiedEntities() {
+		assertThat(repository.findAllById(asList(entity.getIdProp(), other.getIdProp())))//
+				.extracting(DummyEntity::getIdProp)//
+				.containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
+	}
 
-        DummyEntity entity = repository.save(createDummyEntity());
-        DummyEntity other = repository.save(createDummyEntity());
+	@Test // DATAJDBC-97
+	public void countsEntities() {
 
-        assertThat(repository.findAllById(asList(entity.getIdProp(), other.getIdProp())))//
-                .extracting(DummyEntity::getIdProp)//
-                .containsExactlyInAnyOrder(entity.getIdProp(), other.getIdProp());
-    }
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-97
-    public void countsEntities() {
+		assertThat(repository.count()).isEqualTo(3L);
+	}
 
-        repository.save(createDummyEntity());
-        repository.save(createDummyEntity());
-        repository.save(createDummyEntity());
+	@Test // DATAJDBC-97
+	public void deleteById() {
 
-        assertThat(repository.count()).isEqualTo(3L);
-    }
+		DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-97
-    public void deleteById() {
+		repository.deleteById(two.getIdProp());
 
-        DummyEntity one = repository.save(createDummyEntity());
-        DummyEntity two = repository.save(createDummyEntity());
-        DummyEntity three = repository.save(createDummyEntity());
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getIdProp) //
+				.containsExactlyInAnyOrder(one.getIdProp(), three.getIdProp());
+	}
 
-        repository.deleteById(two.getIdProp());
+	@Test // DATAJDBC-97
+	public void deleteByEntity() {
 
-        assertThat(repository.findAll()) //
-                .extracting(DummyEntity::getIdProp) //
-                .containsExactlyInAnyOrder(one.getIdProp(), three.getIdProp());
-    }
+		DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-97
-    public void deleteByEntity() {
+		repository.delete(one);
 
-        DummyEntity one = repository.save(createDummyEntity());
-        DummyEntity two = repository.save(createDummyEntity());
-        DummyEntity three = repository.save(createDummyEntity());
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getIdProp) //
+				.containsExactlyInAnyOrder(two.getIdProp(), three.getIdProp());
+	}
 
-        repository.delete(one);
+	@Test // DATAJDBC-97
+	public void deleteByList() {
 
-        assertThat(repository.findAll()) //
-                .extracting(DummyEntity::getIdProp) //
-                .containsExactlyInAnyOrder(two.getIdProp(), three.getIdProp());
-    }
+		DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-97
-    public void deleteByList() {
+		repository.deleteAll(asList(one, three));
 
-        DummyEntity one = repository.save(createDummyEntity());
-        DummyEntity two = repository.save(createDummyEntity());
-        DummyEntity three = repository.save(createDummyEntity());
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getIdProp) //
+				.containsExactlyInAnyOrder(two.getIdProp());
+	}
 
-        repository.deleteAll(asList(one, three));
+	@Test // DATAJDBC-97
+	public void deleteAll() {
 
-        assertThat(repository.findAll()) //
-                .extracting(DummyEntity::getIdProp) //
-                .containsExactlyInAnyOrder(two.getIdProp());
-    }
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-97
-    public void deleteAll() {
+		assertThat(repository.findAll()).isNotEmpty();
 
-        repository.save(createDummyEntity());
-        repository.save(createDummyEntity());
-        repository.save(createDummyEntity());
+		repository.deleteAll();
 
-        assertThat(repository.findAll()).isNotEmpty();
+		assertThat(repository.findAll()).isEmpty();
+	}
 
-        repository.deleteAll();
+	@Test // DATAJDBC-98
+	public void update() {
 
-        assertThat(repository.findAll()).isEmpty();
-    }
+		DummyEntity entity = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-98
-    public void update() {
+		entity.setName("something else");
+		DummyEntity saved = repository.save(entity);
 
-        DummyEntity entity = repository.save(createDummyEntity());
+		assertThat(repository.findById(entity.getIdProp())).hasValueSatisfying(it -> {
+			assertThat(it.getName()).isEqualTo(saved.getName());
+		});
+	}
 
-        entity.setName("something else");
-        DummyEntity saved = repository.save(entity);
+	@Test // DATAJDBC-98
+	public void updateMany() {
 
-        assertThat(repository.findById(entity.getIdProp())).hasValueSatisfying(it -> {
-            assertThat(it.getName()).isEqualTo(saved.getName());
-        });
-    }
+		DummyEntity entity = repository.save(createDummyEntity());
+		DummyEntity other = repository.save(createDummyEntity());
 
-    @Test // DATAJDBC-98
-    public void updateMany() {
+		entity.setName("something else");
+		other.setName("others Name");
 
-        DummyEntity entity = repository.save(createDummyEntity());
-        DummyEntity other = repository.save(createDummyEntity());
+		repository.saveAll(asList(entity, other));
 
-        entity.setName("something else");
-        other.setName("others Name");
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getName) //
+				.containsExactlyInAnyOrder(entity.getName(), other.getName());
+	}
 
-        repository.saveAll(asList(entity, other));
+	@Test // DATAJDBC-112
+	public void findByIdReturnsEmptyWhenNoneFound() {
 
-        assertThat(repository.findAll()) //
-                .extracting(DummyEntity::getName) //
-                .containsExactlyInAnyOrder(entity.getName(), other.getName());
-    }
+		// NOT saving anything, so DB is empty
 
-    @Test // DATAJDBC-112
-    public void findByIdReturnsEmptyWhenNoneFound() {
+		assertThat(repository.findById(-1L)).isEmpty();
+	}
 
-        // NOT saving anything, so DB is empty
+	private static DummyEntity createDummyEntity() {
 
-        assertThat(repository.findById(-1L)).isEmpty();
-    }
+		DummyEntity entity = new DummyEntity();
+		entity.setName("Entity Name");
+		return entity;
+	}
 
-    private static DummyEntity createDummyEntity() {
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, JdbcRepository<DummyEntity, Long> {}
 
-        DummyEntity entity = new DummyEntity();
-        entity.setName("Entity Name");
-        return entity;
-    }
+	@Data
+	static class DummyEntity {
 
-    private static DummyEntity createExistingDummyEntity() {
-
-        DummyEntity entity = new DummyEntity();
-        entity.setIdProp(Long.parseLong("123"));
-        entity.setName("Entity Name");
-        return entity;
-    }
-
-    interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, JdbcRepository<DummyEntity, Long> {
-    }
-
-    @Data
-    static class DummyEntity {
-
-        String name;
-        @Id
-        private Long idProp;
-    }
+		String name;
+		@Id private Long idProp;
+	}
 }

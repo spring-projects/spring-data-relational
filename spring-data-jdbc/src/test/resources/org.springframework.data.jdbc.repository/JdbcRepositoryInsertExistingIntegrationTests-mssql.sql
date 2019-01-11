@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS dummy_entity;
+CREATE TABLE dummy_entity (id_Prop BIGINT PRIMARY KEY, NAME VARCHAR(100));

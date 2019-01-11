@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
@@ -41,15 +40,6 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 	RelationalEntityDeleteWriter converter = new RelationalEntityDeleteWriter(new RelationalMappingContext());
 
-	private static Object dotPath(DbAction dba) {
-		if (dba instanceof DbAction.WithPropertyPath) {
-			PersistentPropertyPath propertyPath = ((DbAction.WithPropertyPath<?>) dba).getPropertyPath();
-			return propertyPath == null ? null : propertyPath.toDotPath();
-		} else {
-			return null;
-		}
-	}
-
 	@Test // DATAJDBC-112
 	public void deleteDeletesTheEntityAndReferencedEntities() {
 
@@ -60,11 +50,11 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(entity.id, aggregateChange);
 
 		Assertions.assertThat(aggregateChange.getActions())
-				.extracting(DbAction::getClass, DbAction::getEntityType, RelationalEntityDeleteWriterUnitTests::dotPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(Delete.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(Delete.class, OtherEntity.class, "other"), //
-						Tuple.tuple(DeleteRoot.class, SomeEntity.class, null) //
+						Tuple.tuple(DeleteRoot.class, SomeEntity.class, "") //
 				);
 	}
 
@@ -76,11 +66,11 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(null, aggregateChange);
 
 		Assertions.assertThat(aggregateChange.getActions())
-				.extracting(DbAction::getClass, DbAction::getEntityType, RelationalEntityDeleteWriterUnitTests::dotPath) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(DeleteAll.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(DeleteAll.class, OtherEntity.class, "other"), //
-						Tuple.tuple(DeleteAllRoot.class, SomeEntity.class, null) //
+						Tuple.tuple(DeleteAllRoot.class, SomeEntity.class, "") //
 				);
 	}
 

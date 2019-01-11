@@ -152,7 +152,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID>, JdbcR
      * @see org.springframework.data.repository.JdbcRepository#update(T t)
      */
     @Override
-    public <S extends T> S update(S var1) {
-        return entityOperations.update(var1);
+    public <S extends T> S update(S aggregateRoot) {
+        return entityOperations.update(aggregateRoot);
     }
 }
