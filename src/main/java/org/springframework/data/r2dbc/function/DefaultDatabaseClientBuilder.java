@@ -96,11 +96,11 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#namedParameters(org.springframework.data.r2dbc.function.NamedParameterExpander)
 	 */
 	@Override
-	public Builder namedParameters(NamedParameterExpander namedParameters) {
+	public Builder namedParameters(NamedParameterExpander expander) {
 
-		Assert.notNull(namedParameters, "NamedParameterExpander must not be null!");
+		Assert.notNull(expander, "NamedParameterExpander must not be null!");
 
-		this.namedParameters = namedParameters;
+		this.namedParameters = expander;
 		return this;
 	}
 

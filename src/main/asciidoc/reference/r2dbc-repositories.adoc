@@ -120,4 +120,4 @@ The annotated query uses native bind markers, which are Postgres bind markers in
 
 NOTE: R2DBC repositories do not support query derivation.
 
-NOTE: R2DBC repositories bind parameters to placeholders by index.
+NOTE: R2DBC repositories bind internally parameters to placeholders via `Statement.bind(…)` by index.

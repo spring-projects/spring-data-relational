@@ -192,12 +192,12 @@ public interface TransactionalDatabaseClient extends DatabaseClient {
 		/**
 		 * Configures {@link NamedParameterExpander}.
 		 *
-		 * @param namedParameters must not be {@literal null}.
+		 * @param expander must not be {@literal null}.
 		 * @return {@code this} {@link Builder}.
 		 * @see NamedParameterExpander#enabled()
 		 * @see NamedParameterExpander#disabled()
 		 */
-		Builder namedParameters(NamedParameterExpander namedParameters);
+		Builder namedParameters(NamedParameterExpander expander);
 
 		/**
 		 * Configures a {@link Consumer} to configure this builder.

@@ -254,14 +254,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	private static void doBind(Statement<?> statement, Map<String, SettableValue> byName,
 			Map<Integer, SettableValue> byIndex) {
 
-		byIndex.forEach((i, o) -> {
+		bindByIndex(statement, byIndex);
+		bindByName(statement, byName);
+	}
 
-			if (o.getValue() != null) {
-				statement.bind(i.intValue(), o.getValue());
-			} else {
-				statement.bindNull(i.intValue(), o.getType());
-			}
-		});
+	private static void bindByName(Statement<?> statement, Map<String, SettableValue> byName) {
 
 		byName.forEach((name, o) -> {
 
@@ -269,6 +266,18 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				statement.bind(name, o.getValue());
 			} else {
 				statement.bindNull(name, o.getType());
+			}
+		});
+	}
+
+	private static void bindByIndex(Statement<?> statement, Map<Integer, SettableValue> byIndex) {
+
+		byIndex.forEach((i, o) -> {
+
+			if (o.getValue() != null) {
+				statement.bind(i.intValue(), o.getValue());
+			} else {
+				statement.bindNull(i.intValue(), o.getType());
 			}
 		});
 	}
@@ -340,7 +349,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					}
 				});
 
-				doBind(statement, Collections.emptyMap(), byIndex);
+				bindByIndex(statement, byIndex);
 
 				return statement;
 			};

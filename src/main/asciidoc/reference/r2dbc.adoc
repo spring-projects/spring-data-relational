@@ -459,13 +459,16 @@ db.execute()
 
 .R2DBC Native Bind Markers
 ****
-R2DBC uses database-native bind markers that depend on the actual database.
-If you are familiar with JDBC, then you're also familiar with `?` (question mark) bind markers.
-JDBC drivers translate question mark bind markers to database-native markers as part of statement execution.
+R2DBC uses database-native bind markers that depend on the actual database vendor.
+As an example, Postgres uses indexed markers such as `$1`, `$2`, `$n`.
+Another example is SQL Server that uses named bind markers prefixed with `@` (at).
 
-Postgres uses indexed markers (`$1`, `$2`), SQL Server uses named bind markers prefixed with `@` as its native bind marker syntax.
-Spring Data R2DBC leverages `Dialect` implementations to expand named parameters to native bind markers at the time of query execution which gives you a certain degree of query portability across various database vendors.
-You can still use native bind markers if you prefer to do so.
+This is different from JDBC which requires `?` (question mark) as bind markers.
+In JDBC, the actual drivers translate question mark bind markers to database-native markers as part of their statement execution.
+
+Spring Data R2DBC allows you to use native bind markers or named bind markers with the `:name` syntax.
+
+Named parameter support leverages ``Dialect``s  to expand named parameters to native bind markers at the time of query execution which gives you a certain degree of query portability across various database vendors.
 ****
 
 The query-preprocessor unrolls named `Collection` parameters into a series of bind markers to remove the need of dynamic query creation based on the number of arguments.

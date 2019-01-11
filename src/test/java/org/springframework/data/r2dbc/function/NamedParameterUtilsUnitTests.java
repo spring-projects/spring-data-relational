@@ -50,7 +50,7 @@ public class NamedParameterUtilsUnitTests {
 		String sql2 = "xxx &a yyyy ? zzzzz";
 		ParsedSql psql2 = NamedParameterUtils.parseSqlStatement(sql2);
 		assertThat(psql2.getParameterNames()).containsExactly("a");
-		assertThat(psql2.getTotalParameterCount()).isEqualTo(2);
+		assertThat(psql2.getTotalParameterCount()).isEqualTo(1);
 		assertThat(psql2.getNamedParameterCount()).isEqualTo(1);
 
 		String sql3 = "xxx &ä+:ö" + '\t' + ":ü%10 yyyy ? zzzzz";
