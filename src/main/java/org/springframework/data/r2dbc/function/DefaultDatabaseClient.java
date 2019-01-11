@@ -38,6 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -122,15 +123,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		Assert.notNull(action, "Callback object must not be null");
 
-		Mono<Connection> connectionMono = getConnection();
-		// Create close-suppressing Connection proxy, also preparing returned Statements.
+		Mono<ConnectionCloseHolder> connectionMono = getConnection()
+				.map(it -> new ConnectionCloseHolder(it, this::closeConnection));
 
 		return Mono.usingWhen(connectionMono, it -> {
 
-			Connection connectionToUse = createConnectionProxy(it);
+			// Create close-suppressing Connection proxy
+			Connection connectionToUse = createConnectionProxy(it.connection);
 
 			return doInConnection(connectionToUse, action);
-		}, this::closeConnection, this::closeConnection, this::closeConnection) //
+		}, ConnectionCloseHolder::close, ConnectionCloseHolder::close, ConnectionCloseHolder::close) //
 				.onErrorMap(R2dbcException.class, ex -> translateException("execute", getSql(action), ex));
 	}
 
@@ -149,15 +151,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		Assert.notNull(action, "Callback object must not be null");
 
-		Mono<Connection> connectionMono = getConnection();
-		// Create close-suppressing Connection proxy, also preparing returned Statements.
+		Mono<ConnectionCloseHolder> connectionMono = getConnection()
+				.map(it -> new ConnectionCloseHolder(it, this::closeConnection));
 
 		return Flux.usingWhen(connectionMono, it -> {
 
-			Connection connectionToUse = createConnectionProxy(it);
+			// Create close-suppressing Connection proxy, also preparing returned Statements.
+			Connection connectionToUse = createConnectionProxy(it.connection);
 
 			return doInConnectionMany(connectionToUse, action);
-		}, this::closeConnection, this::closeConnection, this::closeConnection) //
+		}, ConnectionCloseHolder::close, ConnectionCloseHolder::close, ConnectionCloseHolder::close) //
 				.onErrorMap(R2dbcException.class, ex -> translateException("executeMany", getSql(action), ex));
 	}
 
@@ -1102,6 +1105,28 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			} catch (InvocationTargetException ex) {
 				throw ex.getTargetException();
 			}
+		}
+	}
+
+	/**
+	 * Holder for a connection that makes sure the close action is invoked atomically only once.
+	 */
+	@RequiredArgsConstructor
+	static class ConnectionCloseHolder extends AtomicBoolean {
+
+		final Connection connection;
+		final Function<Connection, Publisher<Void>> closeFunction;
+
+		Mono<Void> close() {
+
+			return Mono.defer(() -> {
+
+				if (compareAndSet(false, true)) {
+					return Mono.from(closeFunction.apply(connection));
+				}
+
+				return Mono.empty();
+			});
 		}
 	}
 }
