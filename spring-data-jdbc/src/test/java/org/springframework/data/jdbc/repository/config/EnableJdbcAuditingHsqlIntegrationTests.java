@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import lombok.Data;
 

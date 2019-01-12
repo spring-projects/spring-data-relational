@@ -15,9 +15,17 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+
 import junit.framework.AssertionFailedError;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,24 +46,15 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-
 /**
  * Very simple use cases for creation and usage of JdbcRepositories for Entities that contain {@link List}s.
  *
  * @author Jens Schauder
  * @author Thomas Lang
- * @author Michael Bahr
  */
 @ContextConfiguration
 @ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)
 @Transactional
-@IfProfileValue(name = "current.database.is.not.oracle", value = "true") // DATAJDBC-256
 public class JdbcRepositoryWithListsIntegrationTests {
 
 	@Configuration

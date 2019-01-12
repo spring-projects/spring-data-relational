@@ -15,8 +15,13 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+
 import lombok.Value;
 import lombok.experimental.Wither;
+
 import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -38,15 +43,10 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-
 /**
  * Integration tests for {@link JdbcAggregateTemplate} and it's handling of immutable entities.
  *
  * @author Jens Schauder
- * @author Michael Bahr
  */
 @ContextConfiguration
 @Transactional

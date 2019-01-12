@@ -16,13 +16,15 @@
 package org.springframework.data.jdbc.testing;
 
 import oracle.jdbc.pool.OracleDataSource;
+
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.OracleContainer;
-
-import javax.sql.DataSource;
-import java.sql.SQLException;
 
 /**
  * {@link DataSource} setup for Oracle.
@@ -61,7 +63,7 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 	@Override
 	protected void customizePopulator(ResourceDatabasePopulator populator) {
 		populator.setIgnoreFailedDrops(true);
-		populator.setSeparator("§");
+		populator.setSeparator("/");
 	}
 
 }

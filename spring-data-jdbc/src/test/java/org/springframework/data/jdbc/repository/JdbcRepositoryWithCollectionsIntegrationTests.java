@@ -15,9 +15,17 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+
 import junit.framework.AssertionFailedError;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,24 +46,15 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
  *
  * @author Jens Schauder
  * @author Thomas Lang
- * @author Michael Bahr
  */
 @ContextConfiguration
 @ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)
 @Transactional
-@IfProfileValue(name = "current.database.is.not.oracle", value = "true") // DATAJDBC-256
 public class JdbcRepositoryWithCollectionsIntegrationTests {
 
 	@Configuration
