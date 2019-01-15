@@ -54,7 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration
 @Transactional
 @ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)
-public class AggregateTemplateIntegrationTests {
+public class JdbcAggregateTemplateIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
@@ -382,7 +382,7 @@ public class AggregateTemplateIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return AggregateTemplateIntegrationTests.class;
+			return JdbcAggregateTemplateIntegrationTests.class;
 		}
 
 		@Bean
