@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.AssumptionViolatedException;
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link ExternalResource} wrapper to encapsulate {@link ProvidedDatabase} and
@@ -32,6 +34,8 @@ import org.junit.rules.ExternalResource;
  * @author Mark Paluch
  */
 public abstract class ExternalDatabase extends ExternalResource {
+
+	private static Logger LOG = LoggerFactory.getLogger(ExternalDatabase.class);
 
 	/**
 	 * @return the post of the database service.
@@ -53,16 +57,35 @@ public abstract class ExternalDatabase extends ExternalResource {
 	 */
 	public abstract String getUsername();
 
+	/**
+	 * Throws an {@link AssumptionViolatedException} if the database cannot be reached.
+	 */
 	@Override
 	protected void before() {
 
-		try (Socket socket = new Socket()) {
-			socket.connect(new InetSocketAddress(getHostname(), getPort()), Math.toIntExact(TimeUnit.SECONDS.toMillis(5)));
-
-		} catch (IOException e) {
+		if (!checkValidity()) {
 			throw new AssumptionViolatedException(
 					String.format("Cannot connect to %s:%d. Skipping tests.", getHostname(), getPort()));
 		}
+	}
+
+	/**
+	 * performs a test if the database can actually be reached.
+	 *
+	 * @return true, if the database could be reached.
+	 */
+	boolean checkValidity() {
+
+		try (Socket socket = new Socket()) {
+
+			socket.connect(new InetSocketAddress(getHostname(), getPort()), Math.toIntExact(TimeUnit.SECONDS.toMillis(5)));
+			return  true;
+
+		} catch (IOException e) {
+			LOG.debug("external database not available.", e);
+		}
+
+		return false;
 	}
 
 	/**
@@ -120,6 +143,44 @@ public abstract class ExternalDatabase extends ExternalResource {
 		@Override
 		public String getPassword() {
 			return password;
+		}
+	}
+
+	/**
+	 * An {@link ExternalDatabase} that couldn't get constructed.
+	 *
+	 * @author Jens Schauder
+	 */
+	static class NoSuchDatabase extends ExternalDatabase {
+
+		@Override
+		boolean checkValidity() {
+			return false;
+		}
+
+		@Override
+		public int getPort() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getHostname() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getDatabase() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getUsername() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getPassword() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

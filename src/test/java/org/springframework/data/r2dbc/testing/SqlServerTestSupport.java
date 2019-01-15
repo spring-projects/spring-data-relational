@@ -33,31 +33,35 @@ public class SqlServerTestSupport {
 
 	/**
 	 * Returns a locally provided database at {@code sqlserver:@localhost:1433/master}.
-	 *
-	 * @return
 	 */
 	public static ExternalDatabase database() {
 		return local();
 	}
 
 	/**
-	 * Returns a locally provided database at {@code postgres:@localhost:5432/postgres}.
-	 *
-	 * @return
+	 * Returns a locally provided database at {@code sqlserver:@localhost:1433/master}.
 	 */
 	private static ExternalDatabase local() {
-		return ProvidedDatabase.builder().hostname("localhost").port(1433).database("master").username("sa")
-				.password("A_Str0ng_Required_Password").build();
+
+		return ProvidedDatabase.builder() //
+				.hostname("localhost") //
+				.port(1433) //
+				.database("master") //
+				.username("sa") //
+				.password("A_Str0ng_Required_Password") //
+				.build();
 	}
 
 	/**
 	 * Creates a new {@link ConnectionFactory} configured from the {@link ExternalDatabase}..
 	 */
 	public static ConnectionFactory createConnectionFactory(ExternalDatabase database) {
+
 		return new MssqlConnectionFactory(MssqlConnectionConfiguration.builder().host(database.getHostname()) //
 				.database(database.getDatabase()) //
 				.username(database.getUsername()) //
 				.password(database.getPassword()) //
+				.port(database.getPort()) //
 				.build());
 	}
 
