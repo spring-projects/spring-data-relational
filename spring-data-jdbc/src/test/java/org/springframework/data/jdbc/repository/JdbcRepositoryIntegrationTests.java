@@ -28,7 +28,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.JdbcRepository;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
@@ -79,15 +78,6 @@ public class JdbcRepositoryIntegrationTests {
 	public void savesAnEntity() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
-
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-				"id_Prop = " + entity.getIdProp())).isEqualTo(1);
-	}
-
-	@Test // DATAJDBC-282
-	public void insertAnEntity() {
-
-		DummyEntity entity = repository.insert(createDummyEntity());
 
 		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
 				"id_Prop = " + entity.getIdProp())).isEqualTo(1);
@@ -261,7 +251,8 @@ public class JdbcRepositoryIntegrationTests {
 		return entity;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, JdbcRepository<DummyEntity, Long> {}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+	}
 
 	@Data
 	static class DummyEntity {

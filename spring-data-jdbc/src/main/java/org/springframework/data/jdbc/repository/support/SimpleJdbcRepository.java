@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
-import org.springframework.data.jdbc.core.JdbcRepository;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.util.Streamable;
@@ -32,7 +31,7 @@ import org.springframework.data.util.Streamable;
  * @author Oliver Gierke
  */
 @RequiredArgsConstructor
-public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID>, JdbcRepository<T, ID> {
+public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 
     private final @NonNull
     JdbcAggregateOperations entityOperations;
@@ -136,23 +135,5 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID>, JdbcR
     @Override
     public void deleteAll() {
         entityOperations.deleteAll(entity.getType());
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.JdbcRepository#insert(T t)
-     */
-    @Override
-    public <S extends T> S insert(S var1) {
-        return entityOperations.insert(var1);
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.JdbcRepository#update(T t)
-     */
-    @Override
-    public <S extends T> S update(S aggregateRoot) {
-        return entityOperations.update(aggregateRoot);
     }
 }
