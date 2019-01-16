@@ -190,6 +190,87 @@ Converters should be annotated with `@ReadingConverter` or `@WritingConverter` i
 When you use the standard implementations of `CrudRepository` that Spring Data JDBC provides, they expect a certain table structure.
 You can tweak that by providing a {javadoc-base}org/springframework/data/relational/core/mapping/NamingStrategy.html[`NamingStrategy`] in your application context.
 
+[[jdbc.entity-persistence.custom-table-name]]
+=== `Custom table names`
+
+When the NamingStrategy does not matching on your database table names, you can customize the names with the {javadoc-base}org/springframework/data/relational/core/mapping/Table.html[`@Table`] annotation.
+The element `value` of this annotation provides the custom table name. The following example maps the `MyEntity` class to the `CUSTOM_TABLE_NAME` table in the database:
+
+====
+[source, java]
+----
+@Table("CUSTOM_TABLE_NAME")
+public class MyEntity {
+    @Id
+    Integer id;
+
+    String name;
+}
+----
+====
+
+[[jdbc.entity-persistence.custom-column-name]]
+=== `Custom column names`
+
+When the NamingStrategy does not matching on your database column names, you can customize the names with the {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation.
+The element `value` of this annotation provides the custom column name.
+The following example maps the `name` property of the `MyEntity` class to the `CUSTOM_COLUMN_NAME` column in the database:
+
+====
+[source, java]
+----
+public class MyEntity {
+    @Id
+    Integer id;
+
+    @Column("CUSTOM_COLUMN_NAME")
+    String name;
+}
+----
+====
+
+The {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation can also be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship)
+On all these types the `value` element of the annotation is used to provide a custom name for the id column in the other table.
+In the following example the corresponding table for the `MySubEntity` class has a name column, and the id column of the `MyEntity` id for relationship reasons.
+The name of this `MySubEntity` class's id column can also be customized with the `value` element of the {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation:
+
+====
+[source, java]
+----
+public class MyEntity {
+    @Id
+    Integer id;
+
+    @Column("CUSTOM_COLUMN_NAME")
+    Set<MySubEntity> name;
+}
+
+public class MySubEntity {
+    String name;
+}
+----
+====
+
+By the using of Lists and Maps you must have an additional column for the position of a dataset in a List or the key value of a dataset in the map.
+This additional column name can be customized with the `keyColumn` Element of the {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation:
+
+====
+[source, java]
+----
+public class MyEntity {
+    @Id
+    Integer id;
+
+    @Column(value = "CUSTOM_COLUMN_NAME", keyColumn = "CUSTOM_KEY_COLUMN_NAME")
+    List<MySubEntity> name;
+}
+
+public class MySubEntity {
+    String name;
+}
+----
+====
+
 [[jdbc.entity-persistence.state-detection-strategies]]
 === Entity State Detection Strategies
 
