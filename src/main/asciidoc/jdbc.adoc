@@ -230,7 +230,7 @@ public class MyEntity {
 ====
 
 The {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation can also be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship)
-On all these types the `value` element of the annotation is used to provide a custom name for the id column in the other table.
+On all these types the `value` element of the annotation is used to provide a custom name for the foreign key column referencing the id column in the other table.
 In the following example the corresponding table for the `MySubEntity` class has a name column, and the id column of the `MyEntity` id for relationship reasons.
 The name of this `MySubEntity` class's id column can also be customized with the `value` element of the {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation:
 
@@ -251,8 +251,8 @@ public class MySubEntity {
 ----
 ====
 
-By the using of Lists and Maps you must have an additional column for the position of a dataset in a List or the key value of a dataset in the map.
-This additional column name can be customized with the `keyColumn` Element of the {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation:
+When using `List` and `Map` you must have an additional column for the position of a dataset in the `List` or the key value of the entity in the `Map`.
+This additional column name may be customized with the `keyColumn` Element of the {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation:
 
 ====
 [source, java]
