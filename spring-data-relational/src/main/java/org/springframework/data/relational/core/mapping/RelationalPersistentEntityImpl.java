@@ -21,12 +21,14 @@ import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.util.StringUtils;
 
 /**
  * Meta data a repository might need for implementing persistence operations for instances of type {@code T}
  *
  * @author Jens Schauder
  * @author Greg Turnquist
+ * @author Bastian Wilhelm
  */
 class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
 		implements RelationalPersistentEntity<T> {
@@ -44,7 +46,11 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 		super(information);
 
 		this.namingStrategy = namingStrategy;
-		this.tableName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Table.class)).map(Table::value));
+		this.tableName = Lazy.of(() -> Optional.ofNullable( //
+				findAnnotation(Table.class)) //
+				.map(Table::value) //
+				.filter(StringUtils::hasText) //
+		);
 	}
 
 	/* 
