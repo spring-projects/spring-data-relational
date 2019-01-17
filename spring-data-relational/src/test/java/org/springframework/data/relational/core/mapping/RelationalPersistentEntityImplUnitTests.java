@@ -25,6 +25,7 @@ import org.springframework.data.annotation.Id;
  * 
  * @author Oliver Gierke
  * @author Kazuki Shimizu
+ * @author Bastian Wilhelm
  */
 public class RelationalPersistentEntityImplUnitTests {
 
@@ -46,8 +47,21 @@ public class RelationalPersistentEntityImplUnitTests {
 		assertThat(entity.getIdColumn()).isEqualTo("renamedId");
 	}
 
+	@Test // DATAJDBC-296
+	public void emptyTableAnnotationFallsBackToNamingStrategy() {
+
+		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummyEntityWithEmptyAnnotation.class);
+
+		assertThat(entity.getTableName()).isEqualTo("dummy_entity_with_empty_annotation");
+	}
+
 	@Table("dummy_sub_entity")
 	static class DummySubEntity {
 		@Id @Column("renamedId") Long id;
+	}
+
+	@Table()
+	static class DummyEntityWithEmptyAnnotation {
+		@Id @Column() Long id;
 	}
 }
