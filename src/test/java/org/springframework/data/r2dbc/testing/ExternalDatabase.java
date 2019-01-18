@@ -32,10 +32,20 @@ import org.slf4j.LoggerFactory;
  * {@link org.testcontainers.containers.PostgreSQLContainer}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public abstract class ExternalDatabase extends ExternalResource {
 
 	private static Logger LOG = LoggerFactory.getLogger(ExternalDatabase.class);
+
+	/**
+	 * Construct an absent database that is used as {@literal null} object if no database is available.
+	 *
+	 * @return an absent database.
+	 */
+	public static ExternalDatabase unavailable() {
+		return NoAvailableDatabase.INSTANCE;
+	}
 
 	/**
 	 * @return the post of the database service.
@@ -70,7 +80,7 @@ public abstract class ExternalDatabase extends ExternalResource {
 	}
 
 	/**
-	 * performs a test if the database can actually be reached.
+	 * Performs a test if the database can actually be reached.
 	 *
 	 * @return true, if the database could be reached.
 	 */
@@ -79,7 +89,7 @@ public abstract class ExternalDatabase extends ExternalResource {
 		try (Socket socket = new Socket()) {
 
 			socket.connect(new InetSocketAddress(getHostname(), getPort()), Math.toIntExact(TimeUnit.SECONDS.toMillis(5)));
-			return  true;
+			return true;
 
 		} catch (IOException e) {
 			LOG.debug("external database not available.", e);
@@ -151,8 +161,13 @@ public abstract class ExternalDatabase extends ExternalResource {
 	 *
 	 * @author Jens Schauder
 	 */
-	static class NoSuchDatabase extends ExternalDatabase {
+	private static class NoAvailableDatabase extends ExternalDatabase {
 
+		private static final NoAvailableDatabase INSTANCE = new NoAvailableDatabase();
+
+		/* (non-Javadoc)
+		 * @see org.springframework.data.jdbc.core.function.ExternalDatabase#getPort()
+		 */
 		@Override
 		boolean checkValidity() {
 			return false;
@@ -160,27 +175,39 @@ public abstract class ExternalDatabase extends ExternalResource {
 
 		@Override
 		public int getPort() {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(getClass().getSimpleName());
 		}
 
+		/* (non-Javadoc)
+		 * @see org.springframework.data.jdbc.core.function.ExternalDatabase#getHostname()
+		 */
 		@Override
 		public String getHostname() {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(getClass().getSimpleName());
 		}
 
+		/* (non-Javadoc)
+		 * @see org.springframework.data.jdbc.core.function.ExternalDatabase#getDatabase()
+		 */
 		@Override
 		public String getDatabase() {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(getClass().getSimpleName());
 		}
 
+		/* (non-Javadoc)
+		 * @see org.springframework.data.jdbc.core.function.ExternalDatabase#getUsername()
+		 */
 		@Override
 		public String getUsername() {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(getClass().getSimpleName());
 		}
 
+		/* (non-Javadoc)
+		 * @see org.springframework.data.jdbc.core.function.ExternalDatabase#getPassword()
+		 */
 		@Override
 		public String getPassword() {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(getClass().getSimpleName());
 		}
 	}
 }

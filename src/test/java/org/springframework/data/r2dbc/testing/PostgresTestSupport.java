@@ -5,6 +5,7 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.ConnectionFactory;
 
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
@@ -58,15 +59,13 @@ public class PostgresTestSupport {
 		}
 	}
 
-	private static ExternalDatabase getFirstWorkingDatabase(Supplier<ExternalDatabase> first,
-			Supplier<ExternalDatabase> second) {
+	@SafeVarargs
+	private static ExternalDatabase getFirstWorkingDatabase(Supplier<ExternalDatabase>... suppliers) {
 
-		ExternalDatabase database = first.get();
-		if (database.checkValidity()) {
-			return database;
-		} else {
-			return second.get();
-		}
+		return Stream.of(suppliers).map(Supplier::get) //
+				.filter(ExternalDatabase::checkValidity) //
+				.findFirst() //
+				.orElse(ExternalDatabase.unavailable());
 	}
 
 	/**
@@ -101,8 +100,8 @@ public class PostgresTestSupport {
 						.password(postgreSQLContainer.getPassword()).build();
 
 			} catch (IllegalStateException ise) {
-				// docker is not available.
-				testContainerDatabase = new ExternalDatabase.NoSuchDatabase();
+				// docker not available.
+				testContainerDatabase = ExternalDatabase.unavailable();
 			}
 
 		}
