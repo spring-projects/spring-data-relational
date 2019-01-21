@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  * @author Oliver Gierke
  * @author Mark Paluch
  * @author Maciej Walkowiak
+ * @author Bastian Wilhelm
  */
 public class EntityRowMapper<T> implements RowMapper<T> {
 
@@ -139,24 +140,6 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		return converter.readValue(value, property.getTypeInformation());
 
 	}
-
-//	private <S> S readEmbeddedEntityFrom(ResultSet resultSet, RelationalPersistentProperty property) {
-//		String prefix = property.getEmbeddedPrefix();
-//
-//		@SuppressWarnings("unchecked")
-//		RelationalPersistentEntity<S> embeddedEntity = (RelationalPersistentEntity<S>) context
-//				.getRequiredPersistentEntity(property.getActualType());
-//
-//		S instance = createInstance(entity, resultSet, null, prefix);
-//
-//		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
-//
-//		for (RelationalPersistentProperty p : entity) {
-//			accessor.setProperty(p, readFrom(resultSet, p, prefix));
-//		}
-//
-//		return instance;
-//	}
 
 	@Nullable
 	private <S> S readEmbeddedEntityFrom(ResultSet rs, RelationalPersistentProperty property) {

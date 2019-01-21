@@ -35,6 +35,7 @@ import java.util.Map;
  * Holds context information for the current save operation.
  *
  * @author Jens Schauder
+ * @author Bastian Wilhelm
  */
 class WritingContext {
 

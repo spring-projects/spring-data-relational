@@ -40,6 +40,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Yoichi Imai
+ * @author Bastian Wilhelm
  */
 class SqlGenerator {
 
