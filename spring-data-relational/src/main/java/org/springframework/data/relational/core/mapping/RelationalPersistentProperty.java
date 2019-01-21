@@ -23,6 +23,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Bastian Wilhelm
  */
 public interface RelationalPersistentProperty extends PersistentProperty<RelationalPersistentProperty> {
 
@@ -68,4 +69,15 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * Returns whether this property is an ordered property.
 	 */
 	boolean isOrdered();
+
+	/**
+	 * @return true, if the Property is an embedded value object, otherwise false.
+	 */
+	boolean isEmbedded();
+
+	/**
+	 * @return Prefix for embedded columns. If the column is not embedded the return value is null.
+	 */
+	@Nullable
+	String getEmbeddedPrefix();
 }

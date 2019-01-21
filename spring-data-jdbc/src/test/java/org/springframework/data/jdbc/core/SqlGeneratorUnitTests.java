@@ -139,7 +139,7 @@ public class SqlGeneratorUnitTests {
 		assertThat(sql).isEqualTo("DELETE FROM element WHERE dummy_entity = :rootId");
 	}
 
-	@Test // DATAJDBC-131
+	@Test // DATAJDBC-131, DATAJDBC-111
 	public void findAllByProperty() {
 
 		// this would get called when ListParent is the element type of a Set
@@ -147,12 +147,15 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
-				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further " //
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
+				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, "
+				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something " //
+				+ "FROM dummy_entity "
+				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
+				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
 				+ "WHERE back-ref = :back-ref");
 	}
 
-	@Test // DATAJDBC-131
+	@Test // DATAJDBC-131, DATAJDBC-111
 	public void findAllByPropertyWithKey() {
 
 		// this would get called when ListParent is th element type of a Map
@@ -160,9 +163,12 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
-				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, " //
+				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, "
+				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something, " //
 				+ "dummy_entity.key-column AS key-column " //
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
+				+ "FROM dummy_entity "
+				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
+				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
 				+ "WHERE back-ref = :back-ref");
 	}
 
@@ -171,7 +177,7 @@ public class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, true);
 	}
 
-	@Test // DATAJDBC-131
+	@Test // DATAJDBC-131, DATAJDBC-111
 	public void findAllByPropertyWithKeyOrdered() {
 
 		// this would get called when ListParent is th element type of a Map
@@ -179,9 +185,12 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
-				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, ref.x_further AS ref_x_further, " //
+				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, "
+				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something, " //
 				+ "dummy_entity.key-column AS key-column " //
-				+ "FROM dummy_entity LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
+				+ "FROM dummy_entity "
+				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
+				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
 				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
 	}
 

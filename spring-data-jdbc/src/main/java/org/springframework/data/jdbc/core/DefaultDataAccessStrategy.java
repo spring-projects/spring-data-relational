@@ -50,6 +50,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Thomas Lang
+ * @author Bastian Wilhelm
  */
 @RequiredArgsConstructor
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -89,7 +90,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 		Map<String, Object> parameters = new LinkedHashMap<>(additionalParameters);
 
-		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity);
+		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity, "");
 
 		Object idValue = getIdValueOrNull(instance, persistentEntity);
 		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
@@ -122,7 +123,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		return operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity)) != 0;
+		return operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity, "")) != 0;
 	}
 
 	/*
@@ -279,7 +280,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	private <S> MapSqlParameterSource getPropertyMap(final S instance, RelationalPersistentEntity<S> persistentEntity) {
+	private <S, T> MapSqlParameterSource getPropertyMap(final S instance, RelationalPersistentEntity<S> persistentEntity, String prefix) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
@@ -287,14 +288,20 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
-			if (property.isEntity()) {
+			if (property.isEntity() && !property.isEmbedded()) {
 				return;
 			}
 
-			Object value = propertyAccessor.getProperty(property);
-			Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
-			parameters.addValue(property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
-
+			if(property.isEmbedded()){
+				T value = (T) propertyAccessor.getProperty(property);
+				final RelationalPersistentEntity<T> embeddedEntity = (RelationalPersistentEntity<T>) context.getPersistentEntity(property.getType());
+				final MapSqlParameterSource additionalParameters = getPropertyMap(value, embeddedEntity, prefix + property.getEmbeddedPrefix());
+				parameters.addValues(additionalParameters.getValues());
+			} else {
+				Object value = propertyAccessor.getProperty(property);
+				Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
+				parameters.addValue(prefix + property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
+			}
 		});
 
 		return parameters;

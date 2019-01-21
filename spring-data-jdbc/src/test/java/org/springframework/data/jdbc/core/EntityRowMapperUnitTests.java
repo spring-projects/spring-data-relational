@@ -46,6 +46,7 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -59,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Maciej Walkowiak
+ * @author Bastian Wilhelm
  */
 public class EntityRowMapperUnitTests {
 
@@ -144,6 +146,21 @@ public class EntityRowMapperUnitTests {
 		assertThat(extracted) //
 				.isNotNull() //
 				.extracting(e -> e.id, e -> e.name, e -> e.child.id, e -> e.child.name) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
+	}
+
+	@Test // DATAJDBC-111
+	public void simpleEmbeddedGetsProperlyExtracted() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("id", "name", "prefix_id", "prefix_name"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
+		rs.next();
+
+		EmbeddedEntity extracted = createRowMapper(EmbeddedEntity.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name, e -> e.children.id, e -> e.children.name) //
 				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
 	}
 
@@ -415,6 +432,13 @@ public class EntityRowMapperUnitTests {
 		@Id Long id;
 		String name;
 		List<Trivial> children;
+	}
+
+	static class EmbeddedEntity {
+
+		@Id Long id;
+		String name;
+		@Embedded("prefix_") Trivial children;
 	}
 
 	private static class DontUseSetter {

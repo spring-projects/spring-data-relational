@@ -36,6 +36,7 @@ import org.springframework.data.mapping.PropertyHandler;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Florian Lüdiger
+ * @author Bastian Wilhelm
  */
 public class BasicRelationalPersistentPropertyUnitTests {
 
@@ -99,6 +100,26 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		assertThat(listProperty.getKeyColumn()).isEqualTo("dummy_key_column_name");
 	}
 
+	@Test // DATAJDBC-111
+	public void detectsEmbeddedEntity() {
+
+		final RelationalPersistentEntity<?> requiredPersistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+
+		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("someList").isEmbedded()).isFalse();
+		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("someList").getEmbeddedPrefix()).isNull();
+
+		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("id").isEmbedded()).isFalse();
+		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("id").getEmbeddedPrefix()).isNull();
+
+		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("embeddableEntity").isEmbedded()).isTrue();
+		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("embeddableEntity").getEmbeddedPrefix()).isEmpty();
+
+		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("prefixedEmbeddableEntity").isEmbedded()).isTrue();
+		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("prefixedEmbeddableEntity").getEmbeddedPrefix()).isEqualTo("prefix");
+	}
+
+
+
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Class<?> expected) {
 
@@ -123,6 +144,13 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		// DATACMNS-106
 		private @Column("dummy_name") String name;
 
+		// DATAJDBC-111
+		private @Embedded EmbeddableEntity embeddableEntity;
+
+		// DATAJDBC-111
+		private @Embedded("prefix") EmbeddableEntity prefixedEmbeddableEntity;
+
+
 		@Column("dummy_last_updated_at")
 		public LocalDateTime getLocalDateTime() {
 			return localDateTime;
@@ -140,5 +168,11 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	@SuppressWarnings("unused")
 	private enum SomeEnum {
 		ALPHA
+	}
+
+	// DATAJDBC-111
+	@Data
+	private static class EmbeddableEntity{
+		private final String embeddedTest;
 	}
 }
