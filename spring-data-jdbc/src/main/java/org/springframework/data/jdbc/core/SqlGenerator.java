@@ -79,7 +79,15 @@ class SqlGenerator {
 				if (!entity.isIdProperty(p)) {
 					nonIdColumnNames.add(p.getColumnName());
 				}
-			}
+			} else if (p.isEmbedded()){
+        final String embeddedPrefix = p.getEmbeddedPrefix();
+        final RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(p.getColumnType());
+        for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
+          final String columnName = embeddedPrefix + embeddedProperty.getColumnName();
+          columnNames.add(columnName);
+          nonIdColumnNames.add(columnName);
+        }
+      }
 		});
 	}
 
@@ -168,6 +176,7 @@ class SqlGenerator {
 
 		SelectBuilder builder = new SelectBuilder(entity.getTableName());
 		addColumnsForSimpleProperties(builder);
+		addColumnsForEmbeddedProperties(builder);
 		addColumnsAndJoinsForOneToOneReferences(builder);
 
 		return builder;
@@ -183,6 +192,7 @@ class SqlGenerator {
 
 		for (RelationalPersistentProperty property : entity) {
 			if (!property.isEntity() //
+          || property.isEmbedded() //
 					|| Collection.class.isAssignableFrom(property.getType()) //
 					|| Map.class.isAssignableFrom(property.getType()) //
 			) {
@@ -212,6 +222,29 @@ class SqlGenerator {
 								.as(joinAlias + "_" + property.getReverseColumnName()) //
 				);
 			}
+		}
+	}
+
+	private void addColumnsForEmbeddedProperties(SelectBuilder builder) {
+		for(RelationalPersistentProperty property : entity){
+			if(!property.isEmbedded()){
+				continue;
+			}
+
+			final String embeddedPrefix = property.getEmbeddedPrefix();
+			final RelationalPersistentEntity<?> embeddedEntity = context.getRequiredPersistentEntity(property.getColumnType());
+
+			for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
+				builder.column(cb -> {
+          final String columnName = embeddedPrefix + embeddedProperty.getColumnName();
+              return cb
+                  .tableAlias(entity.getTableName())
+                  .column(columnName)
+                  .as(columnName);
+            }
+				);
+			}
+
 		}
 	}
 
