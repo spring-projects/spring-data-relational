@@ -40,6 +40,7 @@ import org.springframework.util.StringUtils;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Florian Lüdiger
+ * @author Bastian Wilhelm
  */
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
@@ -56,6 +57,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final RelationalMappingContext context;
 	private final Lazy<Optional<String>> columnName;
 	private final Lazy<Optional<String>> keyColumnName;
+	private final Lazy<Boolean> isEmbedded;
+	private final Lazy<String> embeddedPrefix;
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
@@ -73,6 +76,17 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		Assert.notNull(context, "context must not be null.");
 
 		this.context = context;
+
+		this.isEmbedded = Lazy.of(() -> Optional.ofNullable(
+				findAnnotation(Embedded.class))
+				.isPresent()
+		);
+
+		this.embeddedPrefix = Lazy.of(() -> Optional.ofNullable(
+				findAnnotation(Embedded.class))
+				.map(Embedded::value)
+        .orElse("")
+    );
 
 		this.columnName = Lazy.of(() -> Optional.ofNullable( //
 				findAnnotation(Column.class)) //
@@ -168,7 +182,17 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return isListLike();
 	}
 
-	private boolean isListLike() {
+	@Override
+	public boolean isEmbedded() {
+		return isEmbedded.get();
+	}
+
+  @Override
+  public String getEmbeddedPrefix() {
+    return embeddedPrefix.get();
+  }
+
+  private boolean isListLike() {
 		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
 	}
 
