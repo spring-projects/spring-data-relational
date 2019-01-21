@@ -189,7 +189,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
   @Override
   public String getEmbeddedPrefix() {
-    return embeddedPrefix.get();
+		if(isEmbedded()){
+			return embeddedPrefix.get();
+		} else {
+			return null;
+		}
   }
 
   private boolean isListLike() {
