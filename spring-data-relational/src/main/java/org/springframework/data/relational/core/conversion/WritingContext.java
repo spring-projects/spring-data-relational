@@ -52,7 +52,7 @@ class WritingContext {
 		this.root = root;
 		this.entity = aggregateChange.getEntity();
 		this.entityType = aggregateChange.getEntityType();
-		this.paths = context.findPersistentPropertyPaths(entityType, PersistentProperty::isEntity);
+		this.paths = context.findPersistentPropertyPaths(entityType, (p) -> p.isEntity() && !p.isEmbedded());
 	}
 
 	/**

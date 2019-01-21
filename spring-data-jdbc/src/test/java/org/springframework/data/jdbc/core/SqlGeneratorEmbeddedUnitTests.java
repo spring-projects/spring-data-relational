@@ -33,7 +33,7 @@ import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit tests for the {@link SqlGenerator}.
+ * Unit tests for the {@link SqlGenerator} in a context of the {@link Embedded} annotation.
  *
  * @author Bastian Wilhelm
  */

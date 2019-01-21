@@ -35,6 +35,7 @@ import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
+import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
@@ -62,6 +63,25 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
+				);
+	}
+
+	@Test // DATAJDBC-111
+	public void newEntityGetsConvertedToOneInsertByEmbeddedEntities() {
+
+		EmbeddedReferenceEntity entity = new EmbeddedReferenceEntity(null);
+		entity.other = new Element(2L);
+
+		AggregateChange<EmbeddedReferenceEntity> aggregateChange = //
+				new AggregateChange<>(Kind.SAVE, EmbeddedReferenceEntity.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
+						DbActionTestSupport::isWithDependsOn) //
+				.containsExactly( //
+						tuple(InsertRoot.class, EmbeddedReferenceEntity.class, "", EmbeddedReferenceEntity.class, false) //
 				);
 	}
 
@@ -415,6 +435,13 @@ public class RelationalEntityWriterUnitTests {
 		Element other;
 		// should not trigger own Dbaction
 		String name;
+	}
+
+	@RequiredArgsConstructor
+	static class EmbeddedReferenceEntity {
+
+		@Id final Long id;
+		@Embedded("prefix_") Element other;
 	}
 
 	@RequiredArgsConstructor

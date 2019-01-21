@@ -50,6 +50,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Thomas Lang
+ * @author Bastian Wilhelm
  */
 @RequiredArgsConstructor
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -287,13 +288,29 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
-			if (property.isEntity()) {
+			if (property.isEntity() && !property.isEmbedded()) {
 				return;
 			}
 
 			Object value = propertyAccessor.getProperty(property);
-			Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
-			parameters.addValue(property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
+			if(property.isEmbedded()){
+				final RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getColumnType());
+				embeddedEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) embeddedProperty -> {
+					final Object convertedEmbeddedValue;
+					if(value != null){
+						final PersistentPropertyAccessor<Object> embeddedPropertyAccessor = embeddedEntity.getPropertyAccessor(value);
+						final Object embeddedValue = embeddedPropertyAccessor.getProperty(embeddedProperty);
+						convertedEmbeddedValue = converter.writeValue(embeddedValue, ClassTypeInformation.from(embeddedProperty.getColumnType()));
+					} else{
+						convertedEmbeddedValue = null;
+					}
+					parameters.addValue(property.getEmbeddedPrefix() + embeddedProperty.getColumnName(), convertedEmbeddedValue, JdbcUtil.sqlTypeFor(embeddedProperty.getColumnType()));
+				});
+			} else {
+				Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
+				parameters.addValue(property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
+			}
+
 
 		});
 
