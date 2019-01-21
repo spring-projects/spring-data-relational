@@ -27,5 +27,6 @@ services:
 install: true
 
 script:
+  - "echo 'microsoft/mssql-server-linux:2017-CU6' > spring-data-jdbc/src/test/resources/container-license-acceptance.txt"
   - "mvn -version"
   - "mvn clean dependency:list test -Pall-dbs${NO_JACOCO:+',no-jacoco'} -Dsort -U"
