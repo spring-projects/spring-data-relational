@@ -1,0 +1,82 @@
+/*
+ * Copyright 2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.springframework.data.relational.core.sql;
+
+import static org.assertj.core.api.Assertions.*;
+
+import org.junit.Test;
+
+/**
+ * Unit tests for {@link SelectValidator}.
+ *
+ * @author Mark Paluch
+ */
+public class SelectValidatorUnitTests {
+
+	@Test // DATAJDBC-309
+	public void shouldReportMissingTableViaSelectlist() {
+
+		Column column = SQL.table("table").column("foo");
+
+		assertThatThrownBy(() -> {
+			SQL.newSelect(column).from(SQL.table("bar")).build();
+		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
+	}
+
+	@Test // DATAJDBC-309
+	public void shouldReportMissingTableViaSelectlistCount() {
+
+		Column column = SQL.table("table").column("foo");
+
+		assertThatThrownBy(() -> {
+			SQL.newSelect(Functions.count(column)).from(SQL.table("bar")).build();
+		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
+	}
+
+	@Test // DATAJDBC-309
+	public void shouldReportMissingTableViaSelectlistDistinct() {
+
+		Column column = SQL.table("table").column("foo");
+
+		assertThatThrownBy(() -> {
+			SQL.newSelect(Functions.distinct(column)).from(SQL.table("bar")).build();
+		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
+	}
+
+	@Test // DATAJDBC-309
+	public void shouldReportMissingTableViaOrderBy() {
+
+		Column column = SQL.table("table").column("foo");
+
+		assertThatThrownBy(() -> {
+			SQL.newSelect(SQL.column("foo")) //
+					.from(SQL.table("bar")).orderBy(column) //
+					.build();
+		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a ORDER BY column not imported by FROM [bar] or JOIN []");
+	}
+
+	@Test // DATAJDBC-309
+	public void shouldReportMissingTableViaWhere() {
+
+		Column column = SQL.table("table").column("foo");
+
+		assertThatThrownBy(() -> {
+			SQL.newSelect(SQL.column("foo")).from(SQL.table("bar")) //
+					.where(new SimpleCondition(column, "=", "foo")) //
+					.build();
+		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a WHERE predicate not imported by FROM [bar] or JOIN []");
+	}
+}
