@@ -49,7 +49,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
-@Ignore
 public class JdbcRepositoryEmbeddedWithEntityIntegrationTests {
 
 	@Configuration
