@@ -181,9 +181,9 @@ class SqlGenerator {
 	private SelectBuilder createSelectBuilder() {
 
 		SelectBuilder builder = new SelectBuilder(entity.getTableName());
-		addColumnsForSimpleProperties(entity, "", entity, builder);
-		addColumnsForEmbeddedProperties(entity, "", entity, builder);
-		addColumnsAndJoinsForOneToOneReferences(entity, builder);
+		addColumnsForSimpleProperties(entity, "", entity.getTableName(), false, entity, builder);
+		addColumnsForEmbeddedProperties(entity, "", entity.getTableName(), false, entity, builder);
+		addColumnsAndJoinsForOneToOneReferences(entity, "", builder);
 
 		return builder;
 	}
@@ -194,7 +194,7 @@ class SqlGenerator {
 	 *
 	 * @param builder The {@link SelectBuilder} to be modified.
 	 */
-	private void addColumnsAndJoinsForOneToOneReferences(RelationalPersistentEntity<?> entity, SelectBuilder builder) {
+	private void addColumnsAndJoinsForOneToOneReferences(RelationalPersistentEntity<?> entity, String joinAlias, SelectBuilder builder) {
 
 		for (RelationalPersistentProperty property : entity) {
 			if (!property.isEntity() //
@@ -205,33 +205,29 @@ class SqlGenerator {
 				continue;
 			}
 
-			RelationalPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getActualType());
-			String joinAlias = property.getName();
-			builder.join(jb -> jb.leftOuter().table(refEntity.getTableName()).as(joinAlias) //
+			final RelationalPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getActualType());
+			final String newJoinAlias = joinAlias.isEmpty() ? property.getName() : joinAlias + "_" + property.getName();
+			builder.join(jb -> jb.leftOuter().table(refEntity.getTableName()).as(newJoinAlias) //
 					.where(property.getReverseColumnName()).eq().column(entity.getTableName(), entity.getIdColumn()));
 
-			for (RelationalPersistentProperty refProperty : refEntity) {
-				builder.column( //
-						cb -> cb.tableAlias(joinAlias) //
-								.column(refProperty.getColumnName()) //
-								.as(joinAlias + "_" + refProperty.getColumnName()) //
-				);
-			}
+			addColumnsForSimpleProperties(refEntity, "", newJoinAlias, true, refEntity, builder);
+			addColumnsForEmbeddedProperties(refEntity, "", newJoinAlias, true, refEntity, builder);
+			addColumnsAndJoinsForOneToOneReferences(refEntity, newJoinAlias, builder);
 
 			// if the referenced property doesn't have an id, include the back reference in the select list.
 			// this enables determining if the referenced entity is present or null.
 			if (!refEntity.hasIdProperty()) {
 
 				builder.column( //
-						cb -> cb.tableAlias(joinAlias) //
+						cb -> cb.tableAlias(newJoinAlias) //
 								.column(property.getReverseColumnName()) //
-								.as(joinAlias + "_" + property.getReverseColumnName()) //
+								.as(newJoinAlias + "_" + property.getReverseColumnName()) //
 				);
 			}
 		}
 	}
 
-	private void addColumnsForEmbeddedProperties(RelationalPersistentEntity<?> currentEntity, String prefix, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
+	private void addColumnsForEmbeddedProperties(RelationalPersistentEntity<?> currentEntity, String prefix, String tableAlias, boolean printTableAliasInColumn, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
 		for(RelationalPersistentProperty property : currentEntity){
 			if(!property.isEmbedded()){
 				continue;
@@ -240,12 +236,13 @@ class SqlGenerator {
 			final String embeddedPrefix = prefix + property.getEmbeddedPrefix();
 			final RelationalPersistentEntity<?> embeddedEntity = context.getRequiredPersistentEntity(property.getColumnType());
 
-			addColumnsForSimpleProperties(embeddedEntity, embeddedPrefix, rootEntity, builder);
-			addColumnsForEmbeddedProperties(embeddedEntity, embeddedPrefix, rootEntity, builder);
+			addColumnsForSimpleProperties(embeddedEntity, embeddedPrefix, tableAlias, printTableAliasInColumn, rootEntity, builder);
+			addColumnsForEmbeddedProperties(embeddedEntity, embeddedPrefix, tableAlias, printTableAliasInColumn, rootEntity, builder);
+			addColumnsAndJoinsForOneToOneReferences(embeddedEntity, tableAlias, builder);
 		}
 	}
 
-	private void addColumnsForSimpleProperties(RelationalPersistentEntity<?> currentEntity, String prefix, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
+	private void addColumnsForSimpleProperties(RelationalPersistentEntity<?> currentEntity, String prefix, String tableAlias, boolean printTableInColumnAlias, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
 
 		for (RelationalPersistentProperty property : currentEntity) {
 
@@ -253,10 +250,17 @@ class SqlGenerator {
 				continue;
 			}
 
-			builder.column(cb -> cb //
-					.tableAlias(rootEntity.getTableName()) //
-					.column(prefix + property.getColumnName()) //
-					.as(prefix + property.getColumnName()));
+			if(printTableInColumnAlias){
+				builder.column(cb -> cb //
+						.tableAlias(tableAlias) //
+						.column(prefix + property.getColumnName()) //
+						.as(tableAlias + "_" + prefix + property.getColumnName()));
+			} else {
+				builder.column(cb -> cb //
+						.tableAlias(tableAlias) //
+						.column(prefix + property.getColumnName()) //
+						.as(prefix + property.getColumnName()));
+			}
 		}
 	}
 
