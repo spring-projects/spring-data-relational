@@ -68,28 +68,33 @@ class SqlGenerator {
 		this.context = context;
 		this.entity = entity;
 		this.sqlGeneratorSource = sqlGeneratorSource;
-		initColumnNames();
+		initColumnNames(entity, "");
 	}
 
-	private void initColumnNames() {
-
-		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
+	private void initColumnNames(RelationalPersistentEntity<?> entity, String prefix) {
+		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 			// the referencing column of referenced entity is expected to be on the other side of the relation
-			if (!p.isEntity()) {
-				columnNames.add(p.getColumnName());
-				if (!entity.isIdProperty(p)) {
-					nonIdColumnNames.add(p.getColumnName());
-				}
-			} else if (p.isEmbedded()){
-        final String embeddedPrefix = p.getEmbeddedPrefix();
-        final RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(p.getColumnType());
-        for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
-          final String columnName = embeddedPrefix + embeddedProperty.getColumnName();
-          columnNames.add(columnName);
-          nonIdColumnNames.add(columnName);
-        }
+			if (!property.isEntity()) {
+				initSimpleColumnName(property, prefix);
+			} else if (property.isEmbedded()){
+       	initEmbeddedColumnNames(property, prefix);
       }
 		});
+	}
+
+	private void initSimpleColumnName(RelationalPersistentProperty property, String prefix) {
+		String columnName = prefix + property.getColumnName();
+		columnNames.add(columnName);
+		if (!entity.isIdProperty(property)) {
+			nonIdColumnNames.add(columnName);
+		}
+	}
+
+	private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix) {
+		final String embeddedPrefix = property.getEmbeddedPrefix();
+		final RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getColumnType());
+
+		initColumnNames(embeddedEntity, prefix + embeddedPrefix);
 	}
 
 	/**
@@ -176,9 +181,9 @@ class SqlGenerator {
 	private SelectBuilder createSelectBuilder() {
 
 		SelectBuilder builder = new SelectBuilder(entity.getTableName());
-		addColumnsForSimpleProperties(builder);
-		addColumnsForEmbeddedProperties(builder);
-		addColumnsAndJoinsForOneToOneReferences(builder);
+		addColumnsForSimpleProperties(entity, "", entity, builder);
+		addColumnsForEmbeddedProperties(entity, "", entity, builder);
+		addColumnsAndJoinsForOneToOneReferences(entity, builder);
 
 		return builder;
 	}
@@ -189,7 +194,7 @@ class SqlGenerator {
 	 *
 	 * @param builder The {@link SelectBuilder} to be modified.
 	 */
-	private void addColumnsAndJoinsForOneToOneReferences(SelectBuilder builder) {
+	private void addColumnsAndJoinsForOneToOneReferences(RelationalPersistentEntity<?> entity, SelectBuilder builder) {
 
 		for (RelationalPersistentProperty property : entity) {
 			if (!property.isEntity() //
@@ -226,41 +231,32 @@ class SqlGenerator {
 		}
 	}
 
-	private void addColumnsForEmbeddedProperties(SelectBuilder builder) {
-		for(RelationalPersistentProperty property : entity){
+	private void addColumnsForEmbeddedProperties(RelationalPersistentEntity<?> currentEntity, String prefix, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
+		for(RelationalPersistentProperty property : currentEntity){
 			if(!property.isEmbedded()){
 				continue;
 			}
 
-			final String embeddedPrefix = property.getEmbeddedPrefix();
+			final String embeddedPrefix = prefix + property.getEmbeddedPrefix();
 			final RelationalPersistentEntity<?> embeddedEntity = context.getRequiredPersistentEntity(property.getColumnType());
 
-			for (RelationalPersistentProperty embeddedProperty : embeddedEntity) {
-				builder.column(cb -> {
-          final String columnName = embeddedPrefix + embeddedProperty.getColumnName();
-              return cb
-                  .tableAlias(entity.getTableName())
-                  .column(columnName)
-                  .as(columnName);
-            }
-				);
-			}
-
+			addColumnsForSimpleProperties(embeddedEntity, embeddedPrefix, rootEntity, builder);
+			addColumnsForEmbeddedProperties(embeddedEntity, embeddedPrefix, rootEntity, builder);
 		}
 	}
 
-	private void addColumnsForSimpleProperties(SelectBuilder builder) {
+	private void addColumnsForSimpleProperties(RelationalPersistentEntity<?> currentEntity, String prefix, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
 
-		for (RelationalPersistentProperty property : entity) {
+		for (RelationalPersistentProperty property : currentEntity) {
 
 			if (property.isEntity()) {
 				continue;
 			}
 
 			builder.column(cb -> cb //
-					.tableAlias(entity.getTableName()) //
-					.column(property.getColumnName()) //
-					.as(property.getColumnName()));
+					.tableAlias(rootEntity.getTableName()) //
+					.column(prefix + property.getColumnName()) //
+					.as(prefix + property.getColumnName()));
 		}
 	}
 

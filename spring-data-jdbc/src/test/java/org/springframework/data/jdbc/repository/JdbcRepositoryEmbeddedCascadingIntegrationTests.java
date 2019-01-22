@@ -41,13 +41,13 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Very simple use cases for creation and usage of JdbcRepositories with {@link Embedded} annotation in Entities.
+ * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
  *
  * @author Bastian Wilhelm
  */
 @ContextConfiguration
 @Transactional
-public class JdbcRepositoryEmbeddedIntegrationTests {
+public class JdbcRepositoryEmbeddedCascadingIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
@@ -57,7 +57,7 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return JdbcRepositoryEmbeddedIntegrationTests.class;
+			return JdbcRepositoryEmbeddedCascadingIntegrationTests.class;
 		}
 
 		@Bean
@@ -89,10 +89,10 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		assertThat(repository.findById(entity.getId())).hasValueSatisfying(it -> {
 			assertThat(it.getId()).isEqualTo(entity.getId());
-			assertThat(it.getPrefixedEmbeddable().getAttr1()).isEqualTo(entity.getPrefixedEmbeddable().getAttr1());
-			assertThat(it.getPrefixedEmbeddable().getAttr2()).isEqualTo(entity.getPrefixedEmbeddable().getAttr2());
-			assertThat(it.getEmbeddable().getAttr1()).isEqualTo(entity.getEmbeddable().getAttr1());
-			assertThat(it.getEmbeddable().getAttr2()).isEqualTo(entity.getEmbeddable().getAttr2());
+			assertThat(it.getPrefixedEmbeddable().getTest()).isEqualTo(entity.getPrefixedEmbeddable().getTest());
+			assertThat(it.getPrefixedEmbeddable().getEmbeddable().getAttr()).isEqualTo(entity.getPrefixedEmbeddable().getEmbeddable().getAttr());
+			assertThat(it.getEmbeddable().getTest()).isEqualTo(entity.getEmbeddable().getTest());
+			assertThat(it.getEmbeddable().getEmbeddable().getAttr()).isEqualTo(entity.getEmbeddable().getEmbeddable().getAttr());
 		});
 	}
 
@@ -114,11 +114,13 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
-		entity.getPrefixedEmbeddable().setAttr2("something else");
+		entity.getPrefixedEmbeddable().setTest("something else");
+		entity.getPrefixedEmbeddable().getEmbeddable().setAttr(3L);
 		DummyEntity saved = repository.save(entity);
 
 		assertThat(repository.findById(entity.getId())).hasValueSatisfying(it -> {
-			assertThat(it.getPrefixedEmbeddable().getAttr2()).isEqualTo(saved.getPrefixedEmbeddable().getAttr2());
+			assertThat(it.getPrefixedEmbeddable().getTest()).isEqualTo(saved.getPrefixedEmbeddable().getTest());
+			assertThat(it.getPrefixedEmbeddable().getEmbeddable().getAttr()).isEqualTo(saved.getPrefixedEmbeddable().getEmbeddable().getAttr());
 		});
 	}
 
@@ -128,28 +130,44 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		DummyEntity entity = repository.save(createDummyEntity());
 		DummyEntity other = repository.save(createDummyEntity());
 
-		entity.getEmbeddable().setAttr2("something else");
-		other.getEmbeddable().setAttr2("others Name");
+		entity.getEmbeddable().setTest("something else");
+		other.getEmbeddable().setTest("others Name");
+
+		entity.getPrefixedEmbeddable().getEmbeddable().setAttr(3L);
+		other.getPrefixedEmbeddable().getEmbeddable().setAttr(5L);
 
 		repository.saveAll(asList(entity, other));
 
 		assertThat(repository.findAll()) //
-				.extracting(d -> d.getEmbeddable().getAttr2()) //
-				.containsExactlyInAnyOrder(entity.getEmbeddable().getAttr2(), other.getEmbeddable().getAttr2());
+				.extracting(d -> d.getEmbeddable().getTest()) //
+				.containsExactlyInAnyOrder(entity.getEmbeddable().getTest(), other.getEmbeddable().getTest());
+
+		assertThat(repository.findAll()) //
+				.extracting(d -> d.getPrefixedEmbeddable().getEmbeddable().getAttr()) //
+				.containsExactlyInAnyOrder(entity.getPrefixedEmbeddable().getEmbeddable().getAttr(), other.getPrefixedEmbeddable().getEmbeddable().getAttr());
 	}
 
 	private static DummyEntity createDummyEntity() {
 		DummyEntity entity = new DummyEntity();
 
-		final Embeddable prefixedEmbeddable = new Embeddable();
-		prefixedEmbeddable.setAttr1(1L);
-		prefixedEmbeddable.setAttr2("test1");
-		entity.setPrefixedEmbeddable(prefixedEmbeddable);
+		final CascadedEmbeddable prefixedCascadedEmbeddable = new CascadedEmbeddable();
+		prefixedCascadedEmbeddable.setTest("c1");
 
-		final Embeddable embeddable = new Embeddable();
-		embeddable.setAttr1(2L);
-		embeddable.setAttr2("test2");
-		entity.setEmbeddable(embeddable);
+		final Embeddable embeddable1 = new Embeddable();
+		embeddable1.setAttr(1L);
+		prefixedCascadedEmbeddable.setEmbeddable(embeddable1);
+
+		entity.setPrefixedEmbeddable(prefixedCascadedEmbeddable);
+
+
+		final CascadedEmbeddable cascadedEmbeddable = new CascadedEmbeddable();
+		cascadedEmbeddable.setTest("c2");
+
+		final Embeddable embeddable2 = new Embeddable();
+		embeddable2.setAttr(2L);
+		cascadedEmbeddable.setEmbeddable(embeddable2);
+
+		entity.setEmbeddable(cascadedEmbeddable);
 
 		return entity;
 	}
@@ -161,14 +179,21 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		@Id Long id;
 
-		@Embedded("prefix_") Embeddable prefixedEmbeddable;
+		@Embedded("prefix_") CascadedEmbeddable prefixedEmbeddable;
 
-		@Embedded Embeddable embeddable;
+		@Embedded CascadedEmbeddable embeddable;
+	}
+
+	@Data
+	static class CascadedEmbeddable {
+		String test;
+
+		@Embedded("prefix2_")
+		Embeddable embeddable;
 	}
 
 	@Data
 	static class Embeddable {
-		Long attr1;
-		String attr2;
+		Long attr;
 	}
 }

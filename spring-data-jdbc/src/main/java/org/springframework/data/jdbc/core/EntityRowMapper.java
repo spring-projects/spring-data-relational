@@ -106,7 +106,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	}
 
 	@Nullable
-	private Object readOrLoadProperty(ResultSet resultSet, @Nullable Object id, RelationalPersistentProperty property, String prefix) {
+	private Object readOrLoadProperty(ResultSet resultSet, @Nullable Object id, RelationalPersistentProperty property,
+			String prefix) {
 
 		if (property.isCollectionLike() && id != null) {
 			return accessStrategy.findAllByProperty(id, property);
@@ -129,10 +130,10 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private Object readFrom(ResultSet resultSet, RelationalPersistentProperty property, String prefix) {
 
 		if (property.isEntity()) {
-			if(property.isEmbedded()){
-				return readEmbeddedEntityFrom(resultSet, property);
+			if (property.isEmbedded()) {
+				return readEmbeddedEntityFrom(resultSet, property, prefix);
 			} else {
-				return readEntityFrom(resultSet, property);
+				return readEntityFrom(resultSet, property, prefix);
 			}
 		}
 
@@ -142,29 +143,28 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	}
 
 	@Nullable
-	private <S> S readEmbeddedEntityFrom(ResultSet rs, RelationalPersistentProperty property) {
-
-		String prefix = property.getEmbeddedPrefix();
+	private <S> S readEmbeddedEntityFrom(ResultSet rs, RelationalPersistentProperty property, String prefix) {
+		String newPrefix = prefix + property.getEmbeddedPrefix();
 
 		@SuppressWarnings("unchecked")
 		RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) context
 				.getRequiredPersistentEntity(property.getActualType());
 
-		S instance = createInstance(entity, rs, null, prefix);
+		S instance = createInstance(entity, rs, null, newPrefix);
 
 		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
 
 		for (RelationalPersistentProperty p : entity) {
-			accessor.setProperty(p, readFrom(rs, p, prefix));
+			accessor.setProperty(p, readFrom(rs, p, newPrefix));
 		}
 
 		return instance;
 	}
 
 	@Nullable
-	private <S> S readEntityFrom(ResultSet rs, RelationalPersistentProperty property) {
+	private <S> S readEntityFrom(ResultSet rs, RelationalPersistentProperty property, String prefix) {
 
-		String prefix = property.getName() + "_";
+		String newPrefix = prefix + property.getName() + "_";
 
 		@SuppressWarnings("unchecked")
 		RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) context
@@ -175,22 +175,22 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		Object idValue = null;
 
 		if (idProperty != null) {
-			idValue = readFrom(rs, idProperty, prefix);
+			idValue = readFrom(rs, idProperty, newPrefix);
 		}
 
 		if ((idProperty != null //
 				? idValue //
-				: getObjectFromResultSet(rs, prefix + property.getReverseColumnName()) //
+				: getObjectFromResultSet(rs, newPrefix + property.getReverseColumnName()) //
 		) == null) {
 			return null;
 		}
 
-		S instance = createInstance(entity, rs, idValue, prefix);
+		S instance = createInstance(entity, rs, idValue, newPrefix);
 
 		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
 
 		for (RelationalPersistentProperty p : entity) {
-			accessor.setProperty(p, readFrom(rs, p, prefix));
+			accessor.setProperty(p, readFrom(rs, p, newPrefix));
 		}
 
 		return instance;
@@ -206,7 +206,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		}
 	}
 
-	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, @Nullable Object idValue, String prefix) {
+	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, @Nullable Object idValue,
+			String prefix) {
 
 		return converter.createInstance(entity, parameter -> {
 
