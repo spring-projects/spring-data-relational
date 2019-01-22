@@ -62,6 +62,14 @@ Currently the following _databasetypes_ are available:
 * mysql
 * postgres
 * mariadb
+* mssql
+
+Testing with Microsoft SQL Server requires you to accept the EULA of the Microsoft SQL Server Docker image, so the build may download and run it for you.
+In order to accept the EULA please add a file named `container-license-acceptance.txt` to the classpath, i.e. `src/test/resources` with the content:
+
+```
+microsoft/mssql-server-linux:2017-CU6
+```
 
 === Run tests with all databases
 
