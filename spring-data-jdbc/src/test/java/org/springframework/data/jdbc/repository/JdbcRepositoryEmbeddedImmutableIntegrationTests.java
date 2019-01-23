@@ -110,6 +110,13 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 	}
 
 	@Test // DATAJDBC-111
+	public void findByIdReturnsEmptyWhenNoneFound() {
+
+		// NOT saving anything, so DB is empty
+		assertThat(repository.findById(-1L)).isEmpty();
+	}
+
+	@Test // DATAJDBC-111
 	public void update() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
@@ -136,6 +143,61 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 		assertThat(repository.findAll()) //
 				.extracting(d -> d.getPrefixedEmbeddable().getAttr2()) //
 				.containsExactlyInAnyOrder(entity.getPrefixedEmbeddable().getAttr2(), other.getPrefixedEmbeddable().getAttr2());
+	}
+
+	@Test // DATAJDBC-111
+	public void deleteById() {
+
+		DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+
+		repository.deleteById(two.getId());
+
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getId) //
+				.containsExactlyInAnyOrder(one.getId(), three.getId());
+	}
+
+	@Test // DATAJDBC-111
+	public void deleteByEntity() {
+		DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+
+		repository.delete(one);
+
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getId) //
+				.containsExactlyInAnyOrder(two.getId(), three.getId());
+	}
+
+	@Test // DATAJDBC-111
+	public void deleteByList() {
+
+		DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+
+		repository.deleteAll(asList(one, three));
+
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getId) //
+				.containsExactlyInAnyOrder(two.getId());
+	}
+
+	@Test // DATAJDBC-111
+	public void deleteAll() {
+
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
+
+		assertThat(repository.findAll()).isNotEmpty();
+
+		repository.deleteAll();
+
+		assertThat(repository.findAll()).isEmpty();
 	}
 
 	private static DummyEntity createDummyEntity() {

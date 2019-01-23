@@ -31,6 +31,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Bastian Wilhelm
  */
 public class RelationalEntityDeleteWriter implements EntityWriter<Object, AggregateChange<?>> {
 
@@ -66,6 +67,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 		List<DbAction<?>> actions = new ArrayList<>();
 
 		context.findPersistentPropertyPaths(entityType, PersistentProperty::isEntity)
+				.filter(p -> !p.getRequiredLeafProperty().isEmbedded())
 				.forEach(p -> actions.add(new DbAction.DeleteAll<>(p)));
 
 		Collections.reverse(actions);
@@ -95,6 +97,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 		List<DbAction<?>> actions = new ArrayList<>();
 
 		context.findPersistentPropertyPaths(aggregateChange.getEntityType(), PersistentProperty::isEntity)
+				.filter(p -> !p.getRequiredLeafProperty().isEmbedded())
 				.forEach(p -> actions.add(new DbAction.Delete<>(id, p)));
 
 		Collections.reverse(actions);
