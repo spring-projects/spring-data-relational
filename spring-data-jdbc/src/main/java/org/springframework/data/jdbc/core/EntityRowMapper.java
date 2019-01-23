@@ -113,6 +113,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return accessStrategy.findAllByProperty(id, property);
 		} else if (property.isMap() && id != null) {
 			return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(accessStrategy.findAllByProperty(id, property));
+		} else if(property.isEmbedded()) {
+			return readEmbeddedEntityFrom(resultSet, id, property, prefix);
 		} else {
 			return readFrom(resultSet, property, prefix);
 		}
@@ -128,13 +130,8 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	 */
 	@Nullable
 	private Object readFrom(ResultSet resultSet, RelationalPersistentProperty property, String prefix) {
-
 		if (property.isEntity()) {
-			if (property.isEmbedded()) {
-				return readEmbeddedEntityFrom(resultSet, property, prefix);
-			} else {
 				return readEntityFrom(resultSet, property, prefix);
-			}
 		}
 
 		Object value = getObjectFromResultSet(resultSet, prefix + property.getColumnName());
@@ -143,7 +140,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	}
 
 	@Nullable
-	private <S> S readEmbeddedEntityFrom(ResultSet rs, RelationalPersistentProperty property, String prefix) {
+	private <S> S readEmbeddedEntityFrom(ResultSet rs, @Nullable Object id, RelationalPersistentProperty property, String prefix) {
 		String newPrefix = prefix + property.getEmbeddedPrefix();
 
 		@SuppressWarnings("unchecked")
@@ -155,7 +152,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
 
 		for (RelationalPersistentProperty p : entity) {
-			accessor.setProperty(p, readFrom(rs, p, newPrefix));
+			accessor.setProperty(p, readOrLoadProperty(rs, id, p, newPrefix));
 		}
 
 		return instance;
@@ -190,7 +187,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
 
 		for (RelationalPersistentProperty p : entity) {
-			accessor.setProperty(p, readFrom(rs, p, newPrefix));
+			accessor.setProperty(p, readOrLoadProperty(rs, idValue, p, newPrefix));
 		}
 
 		return instance;

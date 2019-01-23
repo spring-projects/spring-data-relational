@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
-public class JdbcRepositoryEmbeddedWithEntityIntegrationTests {
+public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
@@ -59,7 +58,7 @@ public class JdbcRepositoryEmbeddedWithEntityIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return JdbcRepositoryEmbeddedWithEntityIntegrationTests.class;
+			return JdbcRepositoryEmbeddedWithReferenceIntegrationTests.class;
 		}
 
 		@Bean
