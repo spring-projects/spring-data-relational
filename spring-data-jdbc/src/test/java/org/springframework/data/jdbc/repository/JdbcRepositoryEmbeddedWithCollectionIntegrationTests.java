@@ -254,7 +254,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 	@Data
 	private static class Embeddable {
-		@Column(value = "id", keyColumn = "key")
+		@Column(value = "id", keyColumn = "order_key")
 		List<DummyEntity2> list = new ArrayList<>();
 
 		String test;
