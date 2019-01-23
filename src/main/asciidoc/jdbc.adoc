@@ -120,10 +120,11 @@ The properties of the following types are currently supported:
 
 * Anything your database driver accepts.
 
-* References to other entities. They are considered a one-to-one relationship.
-It is optional for such entities to have an `id` attribute.
+* References to other entities. They are considered a one-to-one relationship, or an embedded type.
+It is optional for one-to-one relationship entities to have an `id` attribute.
 The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
 You can change this name by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)`.
+Embedded entities do not have an `id`.
 
 * `Set<some entity>` is considered a one-to-many relationship.
 The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
@@ -270,6 +271,34 @@ public class MySubEntity {
 }
 ----
 ====
+
+[[jdbc.entity-persistence.embedded-entities]]
+=== `Embedded entities`
+
+Embedded entities are used to have value objects in your java data model, even if there is only one table in your database.
+In the following example you see, that `MyEntity` is mapped with the `@Embedded` annotation.
+The consequence of this is, that in the database a table `my_entity` with the two columns `id` and `name` (from the `EmbeddedEntity` class) is expected.
+
+====
+[source, java]
+----
+public class MyEntity {
+    @Id
+    Integer id;
+
+    @Embedded
+    EmbeddedEntity embeddedEntity;
+}
+
+public class EmbeddedEntity {
+    String name;
+}
+----
+====
+
+If you need a value object multiple times in an entity, this can be achieved with the optional `value` element of the `@Embedded` annotation.
+This element represents a prefix and is prepend for each column name in the embedded object.
+
 
 [[jdbc.entity-persistence.state-detection-strategies]]
 === Entity State Detection Strategies
