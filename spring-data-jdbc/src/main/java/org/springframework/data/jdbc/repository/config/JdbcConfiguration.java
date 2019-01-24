@@ -17,15 +17,22 @@ package org.springframework.data.jdbc.repository.config;
 
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
+import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Beans that must be registered for Spring Data JDBC to work.
@@ -77,5 +84,23 @@ public class JdbcConfiguration {
 	@Bean
 	public JdbcCustomConversions jdbcCustomConversions() {
 		return new JdbcCustomConversions();
+	}
+
+	/**
+	 * Register a {@link JdbcAggregateTemplate} as a bean for easy use in applications that need a lower level of
+	 * abstraction than the normal repository abstraction.
+	 * 
+	 * @param publisher
+	 * @param context
+	 * @param converter
+	 * @param operations
+	 * @return
+	 */
+	@Bean
+	public JdbcAggregateOperations jdbcAggregateOperations(ApplicationEventPublisher publisher,
+			RelationalMappingContext context, RelationalConverter converter, NamedParameterJdbcOperations operations) {
+		DataAccessStrategy dataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context,
+				converter, operations);
+		return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 	}
 }
