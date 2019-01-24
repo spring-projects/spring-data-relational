@@ -72,7 +72,9 @@ class SqlGenerator {
 	}
 
 	private void initColumnNames(RelationalPersistentEntity<?> entity, String prefix) {
+
 		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+
 			// the referencing column of referenced entity is expected to be on the other side of the relation
 			if (!property.isEntity()) {
 				initSimpleColumnName(property, prefix);
@@ -83,16 +85,21 @@ class SqlGenerator {
 	}
 
 	private void initSimpleColumnName(RelationalPersistentProperty property, String prefix) {
+
 		String columnName = prefix + property.getColumnName();
+
 		columnNames.add(columnName);
+
 		if (!entity.isIdProperty(property)) {
 			nonIdColumnNames.add(columnName);
 		}
 	}
 
 	private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix) {
+
 		final String embeddedPrefix = property.getEmbeddedPrefix();
-		final RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getColumnType());
+
+		final RelationalPersistentEntity<?> embeddedEntity = context.getRequiredPersistentEntity(property.getColumnType());
 
 		initColumnNames(embeddedEntity, prefix + embeddedPrefix);
 	}
@@ -189,10 +196,10 @@ class SqlGenerator {
 	}
 
 	/**
-	 * Adds the columns to the provided {@link SelectBuilder} representing simplem properties, including those from
+	 * Adds the columns to the provided {@link SelectBuilder} representing simple properties, including those from
 	 * one-to-one relationships.
 	 *
-	 * @param rootEntity
+	 * @param rootEntity the root entity for which to add the columns.
 	 * @param builder The {@link SelectBuilder} to be modified.
 	 */
 	private void addColumnsAndJoinsForOneToOneReferences(RelationalPersistentEntity<?> entity, String prefix,
@@ -356,8 +363,6 @@ class SqlGenerator {
 		RelationalPersistentEntity<?> entityToDelete = context
 				.getRequiredPersistentEntity(path.getRequiredLeafProperty().getActualType());
 
-		RelationalPersistentProperty property = path.getBaseProperty();
-
 		final String innerMostCondition1 = createInnerMostCondition("%s IS NOT NULL", path);
 		String condition = cascadeConditions(innerMostCondition1, getSubPath(path));
 
@@ -381,7 +386,8 @@ class SqlGenerator {
 
 	private String createInnerMostCondition(String template, PersistentPropertyPath<RelationalPersistentProperty> path) {
 		PersistentPropertyPath<RelationalPersistentProperty> currentPath = path;
-		while (!currentPath.getParentPath().isEmpty() && !currentPath.getParentPath().getRequiredLeafProperty().isEmbedded()){
+		while (!currentPath.getParentPath().isEmpty()
+				&& !currentPath.getParentPath().getRequiredLeafProperty().isEmbedded()) {
 			currentPath = currentPath.getParentPath();
 		}
 
@@ -408,9 +414,7 @@ class SqlGenerator {
 			ancestor = ancestor.getParentPath();
 		}
 
-		final PersistentPropertyPath<RelationalPersistentProperty> extensionForBaseOf = path
-				.getExtensionForBaseOf(ancestor);
-		return extensionForBaseOf;
+		return path.getExtensionForBaseOf(ancestor);
 	}
 
 	private String cascadeConditions(String innerCondition, PersistentPropertyPath<RelationalPersistentProperty> path) {

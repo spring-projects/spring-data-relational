@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -113,7 +114,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 			return accessStrategy.findAllByProperty(id, property);
 		} else if (property.isMap() && id != null) {
 			return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(accessStrategy.findAllByProperty(id, property));
-		} else if(property.isEmbedded()) {
+		} else if (property.isEmbedded()) {
 			return readEmbeddedEntityFrom(resultSet, id, property, prefix);
 		} else {
 			return readFrom(resultSet, property, prefix);
@@ -130,8 +131,9 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	 */
 	@Nullable
 	private Object readFrom(ResultSet resultSet, RelationalPersistentProperty property, String prefix) {
+
 		if (property.isEntity()) {
-				return readEntityFrom(resultSet, property, prefix);
+			return readEntityFrom(resultSet, property, prefix);
 		}
 
 		Object value = getObjectFromResultSet(resultSet, prefix + property.getColumnName());
@@ -139,17 +141,18 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 	}
 
-	@Nullable
-	private <S> S readEmbeddedEntityFrom(ResultSet rs, @Nullable Object id, RelationalPersistentProperty property, String prefix) {
+	private Object readEmbeddedEntityFrom(ResultSet rs, @Nullable Object id, RelationalPersistentProperty property,
+			String prefix) {
+
 		String newPrefix = prefix + property.getEmbeddedPrefix();
 
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(property.getActualType());
+
+		Object instance = createInstance(entity, rs, null, newPrefix);
+
 		@SuppressWarnings("unchecked")
-		RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) context
-				.getRequiredPersistentEntity(property.getActualType());
-
-		S instance = createInstance(entity, rs, null, newPrefix);
-
-		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
+		PersistentPropertyAccessor<?> accessor = converter.getPropertyAccessor((PersistentEntity<Object, ?>) entity,
+				instance);
 
 		for (RelationalPersistentProperty p : entity) {
 			accessor.setProperty(p, readOrLoadProperty(rs, id, p, newPrefix));

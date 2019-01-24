@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,15 +76,6 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 	@Autowired DummyEntityRepository repository;
 
 	@Test // DATAJDBC-111
-	public void savesAnEntity() {
-
-		DummyEntity entity = repository.save(createDummyEntity());
-
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-				"id = " + entity.getId())).isEqualTo(1);
-	}
-
-	@Test // DATAJDBC-111
 	public void saveAndLoadAnEntity() {
 
 		DummyEntity entity = repository.save(createDummyEntity());
@@ -96,121 +87,14 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 		});
 	}
 
-	@Test // DATAJDBC-111
-	public void findAllFindsAllEntities() {
-
-		DummyEntity entity = repository.save(createDummyEntity());
-		DummyEntity other = repository.save(createDummyEntity());
-
-		Iterable<DummyEntity> all = repository.findAll();
-
-		assertThat(all)//
-				.extracting(DummyEntity::getId)//
-				.containsExactlyInAnyOrder(entity.getId(), other.getId());
-	}
-
-	@Test // DATAJDBC-111
-	public void findByIdReturnsEmptyWhenNoneFound() {
-
-		// NOT saving anything, so DB is empty
-		assertThat(repository.findById(-1L)).isEmpty();
-	}
-
-	@Test // DATAJDBC-111
-	public void update() {
-
-		DummyEntity entity = repository.save(createDummyEntity());
-
-		entity.setPrefixedEmbeddable(entity.getPrefixedEmbeddable().withAttr2("something else"));
-		DummyEntity saved = repository.save(entity);
-
-		assertThat(repository.findById(entity.getId())).hasValueSatisfying(it -> {
-			assertThat(it.getPrefixedEmbeddable().getAttr2()).isEqualTo(saved.getPrefixedEmbeddable().getAttr2());
-		});
-	}
-
-	@Test // DATAJDBC-111
-	public void updateMany() {
-
-		DummyEntity entity = repository.save(createDummyEntity());
-		DummyEntity other = repository.save(createDummyEntity());
-
-		entity.setPrefixedEmbeddable(entity.getPrefixedEmbeddable().withAttr2("something else"));
-		other.setPrefixedEmbeddable(entity.getPrefixedEmbeddable().withAttr2("others Name"));
-
-		repository.saveAll(asList(entity, other));
-
-		assertThat(repository.findAll()) //
-				.extracting(d -> d.getPrefixedEmbeddable().getAttr2()) //
-				.containsExactlyInAnyOrder(entity.getPrefixedEmbeddable().getAttr2(), other.getPrefixedEmbeddable().getAttr2());
-	}
-
-	@Test // DATAJDBC-111
-	public void deleteById() {
-
-		DummyEntity one = repository.save(createDummyEntity());
-		DummyEntity two = repository.save(createDummyEntity());
-		DummyEntity three = repository.save(createDummyEntity());
-
-		repository.deleteById(two.getId());
-
-		assertThat(repository.findAll()) //
-				.extracting(DummyEntity::getId) //
-				.containsExactlyInAnyOrder(one.getId(), three.getId());
-	}
-
-	@Test // DATAJDBC-111
-	public void deleteByEntity() {
-		DummyEntity one = repository.save(createDummyEntity());
-		DummyEntity two = repository.save(createDummyEntity());
-		DummyEntity three = repository.save(createDummyEntity());
-
-		repository.delete(one);
-
-		assertThat(repository.findAll()) //
-				.extracting(DummyEntity::getId) //
-				.containsExactlyInAnyOrder(two.getId(), three.getId());
-	}
-
-	@Test // DATAJDBC-111
-	public void deleteByList() {
-
-		DummyEntity one = repository.save(createDummyEntity());
-		DummyEntity two = repository.save(createDummyEntity());
-		DummyEntity three = repository.save(createDummyEntity());
-
-		repository.deleteAll(asList(one, three));
-
-		assertThat(repository.findAll()) //
-				.extracting(DummyEntity::getId) //
-				.containsExactlyInAnyOrder(two.getId());
-	}
-
-	@Test // DATAJDBC-111
-	public void deleteAll() {
-
-		repository.save(createDummyEntity());
-		repository.save(createDummyEntity());
-		repository.save(createDummyEntity());
-
-		assertThat(repository.findAll()).isNotEmpty();
-
-		repository.deleteAll();
-
-		assertThat(repository.findAll()).isEmpty();
-	}
-
 	private static DummyEntity createDummyEntity() {
-		DummyEntity entity = new DummyEntity();
-
-		entity.setPrefixedEmbeddable(new Embeddable(1L, "test1"));
-
-		return entity;
+		return new DummyEntity(null, new Embeddable(1L, "test1"));
 	}
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
-	@Data
+	@Value
+	@Wither
 	static class DummyEntity {
 
 		@Id Long id;
@@ -221,6 +105,7 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 	@Value
 	@Wither
 	private static class Embeddable {
+
 		Long attr1;
 		String attr2;
 	}

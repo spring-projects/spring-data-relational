@@ -15,6 +15,13 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -22,14 +29,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
 
 /**
  * Holds context information for the current save operation.
@@ -121,18 +120,20 @@ class WritingContext {
 		List<DbAction<?>> actions = new ArrayList<>();
 
 		from(path).forEach(node -> {
-				DbAction.Insert<Object> insert;
-				if (node.getPath().getRequiredLeafProperty().isQualified()) {
 
-					Pair<Object, Object> value = (Pair) node.getValue();
-					insert = new DbAction.Insert<>(value.getSecond(), path, getAction(node.getParent()));
-					insert.getAdditionalValues().put(node.getPath().getRequiredLeafProperty().getKeyColumn(), value.getFirst());
+			DbAction.Insert<Object> insert;
+			if (node.getPath().getRequiredLeafProperty().isQualified()) {
 
-				} else {
-					insert = new DbAction.Insert<>(node.getValue(), path, getAction(node.getParent()));
-				}
-				previousActions.put(node, insert);
-				actions.add(insert);
+				@SuppressWarnings("unchecked")
+				Pair<Object, Object> value = (Pair) node.getValue();
+				insert = new DbAction.Insert<>(value.getSecond(), path, getAction(node.getParent()));
+				insert.getAdditionalValues().put(node.getPath().getRequiredLeafProperty().getKeyColumn(), value.getFirst());
+
+			} else {
+				insert = new DbAction.Insert<>(node.getValue(), path, getAction(node.getParent()));
+			}
+			previousActions.put(node, insert);
+			actions.add(insert);
 		});
 
 		return actions;
@@ -186,12 +187,11 @@ class WritingContext {
 	// return context.getRequiredPersistentEntity(o.getClass()).isNew(o);
 	// }
 
-	private List<PathNode> from(
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
+	private List<PathNode> from(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
 		List<PathNode> nodes = new ArrayList<>();
 
-		if (dependsOnRootIgnoringEmbeddables(path)) {
+		if (isDirectlyReferencedByRootIgnoringEmbeddables(path)) {
 
 			Object value = getFromRootValue(path);
 			nodes.addAll(createNodes(path, null, value));
@@ -213,11 +213,14 @@ class WritingContext {
 		return nodes;
 	}
 
-	private boolean dependsOnRootIgnoringEmbeddables(PersistentPropertyPath<RelationalPersistentProperty> path){
+	private boolean isDirectlyReferencedByRootIgnoringEmbeddables(
+			PersistentPropertyPath<RelationalPersistentProperty> path) {
+
 		PersistentPropertyPath<RelationalPersistentProperty> currentPath = path.getParentPath();
 
-		while (!currentPath.isEmpty()){
-			if(!currentPath.getRequiredLeafProperty().isEmbedded()){
+		while (!currentPath.isEmpty()) {
+
+			if (!currentPath.getRequiredLeafProperty().isEmbedded()) {
 				return false;
 			}
 			currentPath = currentPath.getParentPath();
@@ -227,32 +230,11 @@ class WritingContext {
 	}
 
 	@Nullable
-	private Object getFromRootValue(PersistentPropertyPath<RelationalPersistentProperty> path){
-		final Stack<PersistentPropertyPath<RelationalPersistentProperty>> stack = new Stack<>();
-		PersistentPropertyPath<RelationalPersistentProperty> currentPath = path;
-
-		while (!currentPath.isEmpty()){
-			stack.push(currentPath);
-			currentPath = currentPath.getParentPath();
-		}
-
-
-		Object value = entity;
-		while (!stack.empty() && value != null){
-			currentPath = stack.pop();
-			final RelationalPersistentProperty property = currentPath.getRequiredLeafProperty();
-
-			value = context //
-				.getRequiredPersistentEntity(property.getOwner().getType()) //
-				.getPropertyAccessor(value) //
-				.getProperty(property);
-		}
-
-		return value;
+	private Object getFromRootValue(PersistentPropertyPath<RelationalPersistentProperty> path) {
+		return path.getBaseProperty().getOwner().getPropertyAccessor(entity).getProperty(path);
 	}
 
-	private List<PathNode> createNodes(
-			PersistentPropertyPath<RelationalPersistentProperty> path,
+	private List<PathNode> createNodes(PersistentPropertyPath<RelationalPersistentProperty> path,
 			@Nullable PathNode parentNode, @Nullable Object value) {
 
 		if (value == null) {
@@ -260,13 +242,12 @@ class WritingContext {
 		}
 
 		List<PathNode> nodes = new ArrayList<>();
-		if(path.getRequiredLeafProperty().isEmbedded()){
+		if (path.getRequiredLeafProperty().isEmbedded()) {
 			nodes.add(new PathNode(path, parentNode, value));
 		} else if (path.getRequiredLeafProperty().isQualified()) {
 
 			if (path.getRequiredLeafProperty().isMap()) {
-				((Map<?, ?>) value)
-						.forEach((k, v) -> nodes.add(new PathNode(path, parentNode, Pair.of(k, v))));
+				((Map<?, ?>) value).forEach((k, v) -> nodes.add(new PathNode(path, parentNode, Pair.of(k, v))));
 			} else {
 
 				List listValue = (List) value;

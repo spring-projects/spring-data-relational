@@ -293,11 +293,13 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			}
 
 			if(property.isEmbedded()){
-				T value = (T) propertyAccessor.getProperty(property);
-				final RelationalPersistentEntity<T> embeddedEntity = (RelationalPersistentEntity<T>) context.getPersistentEntity(property.getType());
-				final MapSqlParameterSource additionalParameters = getPropertyMap(value, embeddedEntity, prefix + property.getEmbeddedPrefix());
+
+				Object value = propertyAccessor.getProperty(property);
+				final RelationalPersistentEntity<?> embeddedEntity =  context.getPersistentEntity(property.getType());
+				final MapSqlParameterSource additionalParameters = getPropertyMap((T)value, (RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix());
 				parameters.addValues(additionalParameters.getValues());
 			} else {
+
 				Object value = propertyAccessor.getProperty(property);
 				Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
 				parameters.addValue(prefix + property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));

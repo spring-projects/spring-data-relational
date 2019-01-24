@@ -77,16 +77,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		this.context = context;
 
-		this.isEmbedded = Lazy.of(() -> Optional.ofNullable(
-				findAnnotation(Embedded.class))
-				.isPresent()
-		);
+		this.isEmbedded = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)).isPresent());
 
-		this.embeddedPrefix = Lazy.of(() -> Optional.ofNullable(
-				findAnnotation(Embedded.class))
-				.map(Embedded::value)
-        .orElse("")
-    );
+		this.embeddedPrefix = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)) //
+				.map(Embedded::value) //
+				.orElse(""));
 
 		this.columnName = Lazy.of(() -> Optional.ofNullable( //
 				findAnnotation(Column.class)) //
@@ -187,16 +182,12 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return isEmbedded.get();
 	}
 
-  @Override
-  public String getEmbeddedPrefix() {
-		if(isEmbedded()){
-			return embeddedPrefix.get();
-		} else {
-			return null;
-		}
-  }
+	@Override
+	public String getEmbeddedPrefix() {
+		return isEmbedded() ? embeddedPrefix.get() : null;
+	}
 
-  private boolean isListLike() {
+	private boolean isListLike() {
 		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
 	}
 

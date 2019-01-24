@@ -24,6 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
@@ -103,22 +104,31 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	@Test // DATAJDBC-111
 	public void detectsEmbeddedEntity() {
 
-		final RelationalPersistentEntity<?> requiredPersistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+		final RelationalPersistentEntity<?> requiredPersistentEntity = context
+				.getRequiredPersistentEntity(DummyEntity.class);
 
-		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("someList").isEmbedded()).isFalse();
-		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("someList").getEmbeddedPrefix()).isNull();
+		SoftAssertions softly = new SoftAssertions();
 
-		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("id").isEmbedded()).isFalse();
-		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("id").getEmbeddedPrefix()).isNull();
+		BiConsumer<String, String> checkEmbedded = (name, prefix) -> {
 
-		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("embeddableEntity").isEmbedded()).isTrue();
-		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("embeddableEntity").getEmbeddedPrefix()).isEmpty();
+			RelationalPersistentProperty property = requiredPersistentEntity.getRequiredPersistentProperty(name);
 
-		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("prefixedEmbeddableEntity").isEmbedded()).isTrue();
-		assertThat(requiredPersistentEntity.getRequiredPersistentProperty("prefixedEmbeddableEntity").getEmbeddedPrefix()).isEqualTo("prefix");
+			softly.assertThat(property.isEmbedded()) //
+					.describedAs(name + " is embedded") //
+					.isEqualTo(prefix != null);
+
+			softly.assertThat(property.getEmbeddedPrefix()) //
+					.describedAs(name + " prefix") //
+					.isEqualTo(prefix);
+		};
+
+		checkEmbedded.accept("someList", null);
+		checkEmbedded.accept("id", null);
+		checkEmbedded.accept("embeddableEntity", "");
+		checkEmbedded.accept("prefixedEmbeddableEntity", "prefix");
+
+		softly.assertAll();
 	}
-
-
 
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Class<?> expected) {
@@ -150,7 +160,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		// DATAJDBC-111
 		private @Embedded("prefix") EmbeddableEntity prefixedEmbeddableEntity;
 
-
 		@Column("dummy_last_updated_at")
 		public LocalDateTime getLocalDateTime() {
 			return localDateTime;
@@ -172,7 +181,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 	// DATAJDBC-111
 	@Data
-	private static class EmbeddableEntity{
+	private static class EmbeddableEntity {
 		private final String embeddedTest;
 	}
 }

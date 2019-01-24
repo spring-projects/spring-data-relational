@@ -73,11 +73,15 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	/**
 	 * @return true, if the Property is an embedded value object, otherwise false.
 	 */
-	boolean isEmbedded();
+	default boolean isEmbedded() {
+		return false;
+	};
 
 	/**
 	 * @return Prefix for embedded columns. If the column is not embedded the return value is null.
 	 */
 	@Nullable
-	String getEmbeddedPrefix();
+	default String getEmbeddedPrefix() {
+		return null;
+	};
 }

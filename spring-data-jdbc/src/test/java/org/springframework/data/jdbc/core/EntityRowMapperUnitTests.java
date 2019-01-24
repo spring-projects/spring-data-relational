@@ -149,6 +149,7 @@ public class EntityRowMapperUnitTests {
 				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
 	}
 
+	// TODO add additional test for multilevel embeddables
 	@Test // DATAJDBC-111
 	public void simpleEmbeddedGetsProperlyExtracted() throws SQLException {
 
