@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.mapping.context.MappingContext;
@@ -25,6 +28,9 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+
+import java.sql.Array;
+import java.sql.SQLException;
 
 /**
  * {@link RelationalConverter} that uses a {@link MappingContext} to apply basic conversion of relational values to
@@ -39,6 +45,8 @@ import org.springframework.lang.Nullable;
  * @see CustomConversions
  */
 public class BasicJdbcConverter extends BasicRelationalConverter {
+
+	private static final Logger LOG = LoggerFactory.getLogger(BasicJdbcConverter.class);
 
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
@@ -83,6 +91,14 @@ public class BasicJdbcConverter extends BasicRelationalConverter {
 			TypeInformation<?> idType = type.getSuperTypeInformation(AggregateReference.class).getTypeArguments().get(1);
 
 			return AggregateReference.to(readValue(value, idType));
+		}
+
+		if (value instanceof Array) {
+			try {
+				return readValue(((Array) value).getArray(), type);
+			} catch (SQLException | ConverterNotFoundException e ) {
+				LOG.info("Failed to extract a value of type %s from an Array. Attempting to use standard conversions.", e);
+			}
 		}
 
 		return super.readValue(value, type);

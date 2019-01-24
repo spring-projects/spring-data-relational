@@ -45,7 +45,7 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 
 	/**
 	 * The SQL type constant used when using this property as a parameter for a SQL statement.
-	 * 
+	 *
 	 * @return Must not be {@code null}.
 	 * @see java.sql.Types
 	 */
@@ -84,4 +84,12 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	default String getEmbeddedPrefix() {
 		return null;
 	};
+
+	default boolean isCollectionOfEntitiesLike() {
+		return isCollectionLike() && isEntity();
+	}
+
+	default boolean isCollectionOfSimpleTypeLike() {
+		return isCollectionLike() && !isEntity();
+	}
 }

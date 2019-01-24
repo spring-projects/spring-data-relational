@@ -70,20 +70,16 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 		SoftAssertions softly = new SoftAssertions();
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-
-		checkTargetType(softly, persistentEntity, "someEnum", String.class);
-		checkTargetType(softly, persistentEntity, "localDateTime", Date.class);
-		checkTargetType(softly, persistentEntity, "zonedDateTime", String.class);
-		checkTargetType(softly, persistentEntity, "uuid", UUID.class);
+		checkTargetType(softly, entity, "someEnum", String.class);
+		checkTargetType(softly, entity, "localDateTime", Date.class);
+		checkTargetType(softly, entity, "zonedDateTime", String.class);
+		checkTargetType(softly, entity, "uuid", UUID.class);
 
 		softly.assertAll();
 	}
 
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
-
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo("dummy_name");
 		assertThat(entity.getRequiredPersistentProperty("localDateTime").getColumnName())
@@ -93,9 +89,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	@Test // DATAJDBC-218
 	public void detectsAnnotatedColumnAndKeyName() {
 
-		RelationalPersistentProperty listProperty = context //
-				.getRequiredPersistentEntity(DummyEntity.class) //
-				.getRequiredPersistentProperty("someList");
+		RelationalPersistentProperty listProperty = entity.getRequiredPersistentProperty("someList");
 
 		assertThat(listProperty.getReverseColumnName()).isEqualTo("dummy_column_name");
 		assertThat(listProperty.getKeyColumn()).isEqualTo("dummy_key_column_name");
@@ -130,6 +124,40 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		softly.assertAll();
 	}
 
+	@Test // DATAJDBC-259
+	public void classificationOfCollectionLikeProperties() {
+
+		RelationalPersistentProperty listOfString = entity.getRequiredPersistentProperty("listOfString");
+		RelationalPersistentProperty arrayOfString = entity.getRequiredPersistentProperty("arrayOfString");
+		RelationalPersistentProperty listOfEntity = entity.getRequiredPersistentProperty("listOfEntity");
+		RelationalPersistentProperty arrayOfEntity = entity.getRequiredPersistentProperty("arrayOfEntity");
+
+		SoftAssertions softly = new SoftAssertions();
+
+		softly.assertThat(listOfString.isCollectionOfSimpleTypeLike())
+				.describedAs("listOfString is a Collection of a simple type.").isEqualTo(true);
+		softly.assertThat(arrayOfString.isCollectionOfSimpleTypeLike())
+				.describedAs("arrayOfString is a Collection of a simple type.").isTrue();
+		softly.assertThat(listOfEntity.isCollectionOfSimpleTypeLike())
+				.describedAs("listOfEntity  is a Collection of a simple type.").isFalse();
+		softly.assertThat(arrayOfEntity.isCollectionOfSimpleTypeLike())
+				.describedAs("arrayOfEntity is a Collection of a simple type.").isFalse();
+
+		BiConsumer<RelationalPersistentProperty, String> checkEitherOr = (p, s) -> softly
+				.assertThat(p.isCollectionOfSimpleTypeLike()).describedAs(s + " contains either simple types or entities")
+				.isNotEqualTo(p.isCollectionOfEntitiesLike());
+
+		checkEitherOr.accept(listOfString,"listOfString");
+		checkEitherOr.accept(arrayOfString,"arrayOfString");
+		checkEitherOr.accept(listOfEntity,"listOfEntity");
+		checkEitherOr.accept(arrayOfEntity,"arrayOfEntity");
+
+		softly.assertThat(arrayOfString.getColumnType()).isEqualTo(String[].class);
+		softly.assertThat(listOfString.getColumnType()).isEqualTo(String[].class);
+
+		softly.assertAll();
+	}
+
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Class<?> expected) {
 
@@ -146,8 +174,13 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
-		private final List<String> listField;
 		private final UUID uuid;
+
+		// DATAJDBC-259
+		private final List<String> listOfString;
+		private final String[] arrayOfString;
+		private final List<OtherEntity> listOfEntity;
+		private final OtherEntity[] arrayOfEntity;
 
 		@Column(value = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
 
@@ -184,4 +217,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	private static class EmbeddableEntity {
 		private final String embeddedTest;
 	}
+
+	@SuppressWarnings("unused")
+	private static class OtherEntity {}
 }

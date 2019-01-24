@@ -118,6 +118,8 @@ The properties of the following types are currently supported:
 
 * `java.util.Date`, `java.time.LocalDate`, `java.time.LocalDateTime`, and `java.time.LocalTime`
 
+* Arrays and Collections of the types mentioned above can be mapped to columns of array type if your database supports that.
+
 * Anything your database driver accepts.
 
 * References to other entities. They are considered a one-to-one relationship, or an embedded type.

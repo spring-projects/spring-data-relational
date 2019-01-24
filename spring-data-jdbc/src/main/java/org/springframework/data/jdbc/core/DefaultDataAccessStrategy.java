@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.core;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.sql.Connection;
+import java.sql.JDBCType;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -301,12 +303,29 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			} else {
 
 				Object value = propertyAccessor.getProperty(property);
-				Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
+				Object convertedValue = convertForWrite(property, value);
+
 				parameters.addValue(prefix + property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
 			}
 		});
 
 		return parameters;
+	}
+	@Nullable
+	private Object convertForWrite(RelationalPersistentProperty property, @Nullable Object value) {
+
+		Object convertedValue = converter.writeValue(value, ClassTypeInformation.from(property.getColumnType()));
+
+		if (convertedValue == null || !convertedValue.getClass().isArray()) {
+			return convertedValue;
+		}
+
+		Class<?> componentType = convertedValue.getClass().getComponentType();
+		String typeName = JDBCType.valueOf(JdbcUtil.sqlTypeFor(componentType)).getName();
+
+		return operations.getJdbcOperations().execute(
+				(Connection c) -> c.createArrayOf(typeName, (Object[]) convertedValue)
+		);
 	}
 
 	@SuppressWarnings("unchecked")

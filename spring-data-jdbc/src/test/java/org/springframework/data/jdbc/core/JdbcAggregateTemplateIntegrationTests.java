@@ -21,9 +21,13 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,8 +42,10 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.test.annotation.IfProfileValue;
 import org.springframework.test.annotation.ProfileValueSourceConfiguration;
+import org.springframework.test.annotation.ProfileValueUtils;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -318,6 +324,102 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.content).extracting(e -> e.content).containsExactly("content");
 	}
 
+	@Test // DATAJDBC-259
+	public void saveAndLoadAnEntityWithArray() {
+
+		// MySQL and other do not support array datatypes. See
+		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
+		assumeNot("mysql");
+		assumeNot("mariadb");
+		assumeNot("mssql");
+
+		ArrayOwner arrayOwner = new ArrayOwner();
+		arrayOwner.digits = new String[] { "one", "two", "three" };
+
+		ArrayOwner saved = template.save(arrayOwner);
+
+		assertThat(saved.id).isNotNull();
+
+		ArrayOwner reloaded = template.findById(saved.id, ArrayOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+		assertThat(reloaded.digits).isEqualTo(new String[] { "one", "two", "three" });
+	}
+
+	@Test // DATAJDBC-259
+	public void saveAndLoadAnEntityWithList() {
+
+		// MySQL and others do not support array datatypes. See
+		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
+		assumeNot("mysql");
+		assumeNot("mariadb");
+		assumeNot("mssql");
+
+		ListOwner arrayOwner = new ListOwner();
+		arrayOwner.digits.addAll(Arrays.asList("one", "two", "three"));
+
+		ListOwner saved = template.save(arrayOwner);
+
+		assertThat(saved.id).isNotNull();
+
+		ListOwner reloaded = template.findById(saved.id, ListOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+		assertThat(reloaded.digits).isEqualTo(Arrays.asList("one", "two", "three"));
+	}
+
+	@Test // DATAJDBC-259
+	public void saveAndLoadAnEntityWithSet() {
+
+		// MySQL and others do not support array datatypes. See
+		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
+		assumeNot("mysql");
+		assumeNot("mariadb");
+		assumeNot("mssql");
+
+		SetOwner setOwner = new SetOwner();
+		setOwner.digits.addAll(Arrays.asList("one", "two", "three"));
+
+		SetOwner saved = template.save(setOwner);
+
+		assertThat(saved.id).isNotNull();
+
+		SetOwner reloaded = template.findById(saved.id, SetOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+		assertThat(reloaded.digits).isEqualTo(new HashSet<>(Arrays.asList("one", "two", "three")));
+	}
+
+	private static void assumeNot(String dbProfileName) {
+
+		Assume.assumeTrue("true"
+				.equalsIgnoreCase(ProfileValueUtils.retrieveProfileValueSource(JdbcAggregateTemplateIntegrationTests.class)
+						.get("current.database.is.not." + dbProfileName)));
+	}
+
+	private static class ArrayOwner {
+		@Id Long id;
+
+		String[] digits;
+	}
+
+	@Table("ARRAY_OWNER")
+	private static class ListOwner {
+		@Id Long id;
+
+		List<String> digits = new ArrayList<>();
+	}
+
+	@Table("ARRAY_OWNER")
+	private static class SetOwner {
+		@Id Long id;
+
+		Set<String> digits = new HashSet<>();
+	}
+
 	private static LegoSet createLegoSet() {
 
 		LegoSet entity = new LegoSet();
@@ -333,8 +435,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@Data
 	static class LegoSet {
 
-		@Column("id1")
-		@Id private Long id;
+		@Column("id1") @Id private Long id;
 
 		private String name;
 
@@ -345,16 +446,14 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@Data
 	static class Manual {
 
-		@Column("id2")
-		@Id private Long id;
+		@Column("id2") @Id private Long id;
 		private String content;
 
 	}
 
 	static class OneToOneParent {
 
-		@Column("id3")
-		@Id private Long id;
+		@Column("id3") @Id private Long id;
 		private String content;
 
 		private ChildNoId child;
@@ -366,8 +465,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	static class ListParent {
 
-		@Column("id4")
-		@Id private Long id;
+		@Column("id4") @Id private Long id;
 		String name;
 		List<ElementNoId> content = new ArrayList<>();
 	}

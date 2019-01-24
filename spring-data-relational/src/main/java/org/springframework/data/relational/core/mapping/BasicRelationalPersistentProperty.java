@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.lang.reflect.Array;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Date;
@@ -139,7 +140,17 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		Class columnType = columnTypeIfEntity(getActualType());
 
-		return columnType == null ? columnTypeForNonEntity(getActualType()) : columnType;
+		if (columnType != null) {
+			return columnType;
+		}
+
+		Class componentColumnType = columnTypeForNonEntity(getActualType());
+
+		if (isCollectionOfSimpleTypeLike()) {
+			return Array.newInstance(componentColumnType, 0).getClass();
+		}
+
+		return componentColumnType;
 	}
 
 	@Override

@@ -63,6 +63,10 @@ public class JdbcMappingContext extends RelationalMappingContext {
 
 	@Override
 	protected boolean shouldCreatePersistentEntityFor(TypeInformation<?> type) {
-		return super.shouldCreatePersistentEntityFor(type) && !AggregateReference.class.isAssignableFrom(type.getType());
+
+		return super.shouldCreatePersistentEntityFor(type) //
+				&& !AggregateReference.class.isAssignableFrom(type.getType()) //
+				&& !type.isCollectionLike();
 	}
+
 }
