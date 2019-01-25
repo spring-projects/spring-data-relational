@@ -22,7 +22,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  */
-public class BindMarker implements Segment {
+public class BindMarker extends AbstractSegment implements Expression {
 
 	/*
 	 * (non-Javadoc)

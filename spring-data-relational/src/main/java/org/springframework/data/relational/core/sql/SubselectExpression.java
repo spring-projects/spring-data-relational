@@ -15,26 +15,22 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.util.Assert;
-
 /**
- * {@code Where} clause.
- *
- * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class Where extends AbstractSegment {
+public class SubselectExpression extends AbstractSegment implements Expression {
 
-	private final Condition condition;
+	private final Select subselect;
 
-	Where(Condition condition) {
+	public SubselectExpression(Select subselect) {
 
-		super(condition);
+		super(subselect);
 
-		this.condition = condition;
+		this.subselect = subselect;
 	}
 
 	@Override
 	public String toString() {
-		return "WHERE " + condition.toString();
+		return "(" + subselect.toString() + ")";
 	}
 }

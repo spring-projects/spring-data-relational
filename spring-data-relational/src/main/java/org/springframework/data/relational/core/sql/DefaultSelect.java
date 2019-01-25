@@ -29,7 +29,7 @@ import org.springframework.util.Assert;
  */
 class DefaultSelect implements Select {
 
-	private final @Nullable SelectTop top;
+	private final boolean distinct;
 	private final List<Expression> selectList;
 	private final From from;
 	private final long limit;
@@ -38,10 +38,10 @@ class DefaultSelect implements Select {
 	private final @Nullable Where where;
 	private final List<OrderByField> orderBy;
 
-	DefaultSelect(@Nullable SelectTop top, List<Expression> selectList, List<Table> from, long limit, long offset,
+	DefaultSelect(boolean distinct, List<Expression> selectList, List<Table> from, long limit, long offset,
 				  List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy) {
 
-		this.top = top;
+		this.distinct = distinct;
 		this.selectList = new ArrayList<>(selectList);
 		this.from = new From(from);
 		this.limit = limit;
@@ -69,6 +69,11 @@ class DefaultSelect implements Select {
 		return offset == -1 ? OptionalLong.empty() : OptionalLong.of(offset);
 	}
 
+	@Override
+	public boolean isDistinct() {
+		return distinct;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
@@ -79,8 +84,6 @@ class DefaultSelect implements Select {
 		Assert.notNull(visitor, "Visitor must not be null!");
 
 		visitor.enter(this);
-
-		visitIfNotNull(top, visitor);
 
 		selectList.forEach(it -> it.visit(visitor));
 		from.visit(visitor);
@@ -94,6 +97,7 @@ class DefaultSelect implements Select {
 	}
 
 	private void visitIfNotNull(@Nullable Visitable visitable, Visitor visitor) {
+
 		if (visitable != null) {
 			visitable.visit(visitor);
 		}

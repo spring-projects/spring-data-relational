@@ -15,18 +15,14 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.util.Assert;
-
 /**
- * {@code Where} clause.
- *
- * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class Where extends AbstractSegment {
+public class Not extends AbstractSegment implements Condition {
 
 	private final Condition condition;
 
-	Where(Condition condition) {
+	public Not(Condition condition) {
 
 		super(condition);
 
@@ -34,7 +30,12 @@ public class Where extends AbstractSegment {
 	}
 
 	@Override
+	public Condition not() {
+		return condition;
+	}
+
+	@Override
 	public String toString() {
-		return "WHERE " + condition.toString();
+		return "NOT " + condition.toString();
 	}
 }

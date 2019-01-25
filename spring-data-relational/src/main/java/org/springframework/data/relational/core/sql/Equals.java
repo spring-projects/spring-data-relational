@@ -30,6 +30,9 @@ public class Equals extends AbstractSegment implements Condition {
 	private final Expression right;
 
 	Equals(Expression left, Expression right) {
+
+		super(left, right);
+
 		this.left = left;
 		this.right = right;
 	}
@@ -47,17 +50,6 @@ public class Equals extends AbstractSegment implements Condition {
 		Assert.notNull(right, "Right expression must not be null!");
 
 		return new Equals(left, right);
-	}
-
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-		left.visit(visitor);
-		right.visit(visitor);
-		visitor.leave(this);
 	}
 
 	/**

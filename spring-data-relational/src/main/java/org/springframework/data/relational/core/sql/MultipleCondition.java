@@ -15,28 +15,26 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
+
+import org.springframework.util.Assert;
+
 /**
- * {@code TOP} clause for {@code SELECT TOP …}.
- *
- * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class SelectTop extends AbstractSegment implements Segment {
+public abstract class MultipleCondition extends AbstractSegment implements Condition {
 
-	private final int count;
+	private final List<Condition> conditions;
+	private final String delimiter;
 
-	private SelectTop(int count) {
-		this.count = count;
-	}
+	MultipleCondition(String delimiter, Condition... conditions) {
 
-	public static SelectTop create(int count) {
-		return new SelectTop(count);
-	}
+		super(conditions);
 
-	/**
-	 * @return the count.
-	 */
-	public int getCount() {
-		return count;
+		this.delimiter = delimiter;
+		this.conditions = Arrays.asList(conditions);
 	}
 
 	/*
@@ -45,6 +43,9 @@ public class SelectTop extends AbstractSegment implements Segment {
 	 */
 	@Override
 	public String toString() {
-		return "TOP " + count;
+
+		StringJoiner joiner = new StringJoiner(delimiter);
+		conditions.forEach(c -> joiner.add(c.toString()));
+		return joiner.toString();
 	}
 }

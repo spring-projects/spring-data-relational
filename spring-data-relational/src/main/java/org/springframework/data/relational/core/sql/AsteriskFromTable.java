@@ -30,21 +30,12 @@ public class AsteriskFromTable extends AbstractSegment implements Expression {
 	private final Table table;
 
 	AsteriskFromTable(Table table) {
+		super(table);
 		this.table = table;
 	}
 
 	public static AsteriskFromTable create(Table table) {
 		return new AsteriskFromTable(table);
-	}
-
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-		table.visit(visitor);
-		visitor.leave(this);
 	}
 
 	/**

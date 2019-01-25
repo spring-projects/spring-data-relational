@@ -25,7 +25,7 @@ package org.springframework.data.relational.core.sql;
  */
 public abstract class Expressions {
 
-	private static Expression ASTERISK = new ConstantExpression("*");
+	private static Expression ASTERISK = new SimpleExpression("*");
 
 	/**
 	 * @return a new asterisk {@code *} expression.
@@ -41,7 +41,7 @@ public abstract class Expressions {
 	 * @return a SQL {@link Expression}.
 	 */
 	public static Expression just(String sql) {
-		return new ConstantExpression(sql);
+		return new SimpleExpression(sql);
 	}
 
 	/**
@@ -55,11 +55,11 @@ public abstract class Expressions {
 	private Expressions() {
 	}
 
-	static class ConstantExpression extends AbstractSegment implements Expression {
+	static class SimpleExpression extends AbstractSegment implements Expression {
 
 		private final String expression;
 
-		ConstantExpression(String expression) {
+		SimpleExpression(String expression) {
 			this.expression = expression;
 		}
 

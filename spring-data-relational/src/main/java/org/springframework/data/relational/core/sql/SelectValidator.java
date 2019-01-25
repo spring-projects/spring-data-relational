@@ -82,7 +82,7 @@ class SelectValidator implements Visitor {
 		}
 
 		if (segment instanceof Column
-				&& (parent instanceof Select || parent instanceof SimpleFunction || parent instanceof Distinct)) {
+				&& (parent instanceof Select || parent instanceof SimpleFunction)) {
 
 			selectFieldCount++;
 			Table table = ((Column) segment).getTable();
@@ -120,8 +120,7 @@ class SelectValidator implements Visitor {
 		}
 
 		if (segment instanceof Join || segment instanceof OrderByField || segment instanceof From
-				|| segment instanceof Select || segment instanceof Where || segment instanceof SimpleFunction
-				|| segment instanceof Distinct) {
+				|| segment instanceof Select || segment instanceof Where || segment instanceof SimpleFunction) {
 			parent = segment;
 		}
 	}
@@ -131,6 +130,5 @@ class SelectValidator implements Visitor {
 	 * @see org.springframework.data.relational.core.sql.Visitor#leave(org.springframework.data.relational.core.sql.Visitable)
 	 */
 	@Override
-	public void leave(Visitable segment) {
-	}
+	public void leave(Visitable segment) {}
 }

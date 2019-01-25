@@ -24,7 +24,7 @@ import org.springframework.util.Assert;
 /**
  * @author Mark Paluch
  */
-public class OrderByField extends AbstractSegment implements Segment {
+public class OrderByField extends AbstractSegment {
 
 	private final Expression expression;
 	private final @Nullable Sort.Direction direction;
@@ -32,6 +32,7 @@ public class OrderByField extends AbstractSegment implements Segment {
 
 	OrderByField(Expression expression, Direction direction, NullHandling nullHandling) {
 
+		super(expression);
 		Assert.notNull(expression, "Order by expression must not be null");
 		Assert.notNull(nullHandling, "NullHandling by expression must not be null");
 
@@ -44,14 +45,6 @@ public class OrderByField extends AbstractSegment implements Segment {
 		return new OrderByField(column, null, NullHandling.NATIVE);
 	}
 
-	public static OrderByField create(String name) {
-		return new OrderByField(Column.create(name), null, NullHandling.NATIVE);
-	}
-
-	public static OrderByField index(int index) {
-		return new OrderByField(new IndexedOrderByField(index), null, NullHandling.NATIVE);
-	}
-
 	public OrderByField asc() {
 		return new OrderByField(expression, Direction.ASC, NullHandling.NATIVE);
 	}
@@ -62,18 +55,6 @@ public class OrderByField extends AbstractSegment implements Segment {
 
 	public OrderByField withNullHandling(NullHandling nullHandling) {
 		return new OrderByField(expression, direction, nullHandling);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
-	@Override
-	public void visit(Visitor visitor) {
-
-		visitor.enter(this);
-		expression.visit(visitor);
-		visitor.leave(this);
 	}
 
 	public Expression getExpression() {
@@ -96,12 +77,5 @@ public class OrderByField extends AbstractSegment implements Segment {
 	@Override
 	public String toString() {
 		return direction != null ? expression.toString() + " " + direction : expression.toString();
-	}
-
-	static class IndexedOrderByField extends Column implements Expression {
-
-		IndexedOrderByField(int index) {
-			super("" + index, null);
-		}
 	}
 }

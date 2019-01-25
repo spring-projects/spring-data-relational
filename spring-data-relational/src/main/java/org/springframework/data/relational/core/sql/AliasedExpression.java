@@ -15,26 +15,31 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.util.Assert;
-
 /**
- * {@code Where} clause.
+ * An expression with an alias.
  *
- * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class Where extends AbstractSegment {
+public class AliasedExpression extends AbstractSegment implements Aliased, Expression {
 
-	private final Condition condition;
+	private final Expression expression;
+	private final String alias;
 
-	Where(Condition condition) {
+	public AliasedExpression(Expression expression, String alias) {
 
-		super(condition);
+		super(expression);
 
-		this.condition = condition;
+		this.expression = expression;
+		this.alias = alias;
+	}
+
+	@Override
+	public String getAlias() {
+		return alias;
 	}
 
 	@Override
 	public String toString() {
-		return "WHERE " + condition.toString();
+		return expression.toString() + " AS " + alias;
 	}
 }
