@@ -24,31 +24,19 @@ package org.springframework.data.relational.core.sql;
  *
  * @author Mark Paluch
  */
-public class Join implements Segment {
+public class Join extends AbstractSegment {
 
 	private final JoinType type;
 	private final Table joinTable;
 	private final Condition on;
 
 	Join(JoinType type, Table joinTable, Condition on) {
+
+		super(joinTable, on);
+
 		this.joinTable = joinTable;
 		this.type = type;
 		this.on = on;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
-	@Override
-	public void visit(Visitor visitor) {
-
-		visitor.enter(this);
-
-		joinTable.visit(visitor);
-		on.visit(visitor);
-
-		visitor.leave(this);
 	}
 
 	/**

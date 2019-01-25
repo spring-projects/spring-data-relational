@@ -15,12 +15,32 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.util.Assert;
+
 /**
  * Abstract implementation to support {@link Segment} implementations.
  *
  * @author Mark Paluch
  */
 abstract class AbstractSegment implements Segment {
+
+	private final Segment[] children;
+
+	protected AbstractSegment(Segment ... children) {
+		this.children = children;
+	}
+
+	@Override
+	public void visit(Visitor visitor) {
+
+		Assert.notNull(visitor, "Visitor must not be null!");
+
+		visitor.enter(this);
+		for (Segment child : children) {
+			child.visit(visitor);
+		}
+		visitor.leave(this);
+	}
 
 	/*
 	 * (non-Javadoc)

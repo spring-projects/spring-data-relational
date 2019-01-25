@@ -31,6 +31,9 @@ public class SimpleCondition extends AbstractSegment implements Condition {
 	private final String predicate;
 
 	SimpleCondition(Expression expression, String comparator, String predicate) {
+
+		super(expression);
+
 		this.expression = expression;
 		this.comparator = comparator;
 		this.predicate = predicate;
@@ -54,20 +57,6 @@ public class SimpleCondition extends AbstractSegment implements Condition {
 
 	public String getPredicate() {
 		return predicate;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-		expression.visit(visitor);
-		visitor.leave(this);
 	}
 
 	/*

@@ -15,26 +15,38 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.util.Assert;
-
 /**
- * {@code Where} clause.
- *
- * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class Where extends AbstractSegment {
+public class IsNull extends AbstractSegment implements Condition {
 
-	private final Condition condition;
+	private final Expression expression;
 
-	Where(Condition condition) {
+	private final boolean negated;
 
-		super(condition);
+	public IsNull(Expression expression, boolean negated) {
 
-		this.condition = condition;
+		super(expression);
+
+		this.expression = expression;
+		this.negated = negated;
+	}
+
+	public IsNull(Expression expression) {
+		this(expression, false);
+	}
+
+	@Override
+	public Condition not() {
+		return new IsNull(expression, !negated);
 	}
 
 	@Override
 	public String toString() {
-		return "WHERE " + condition.toString();
+		return expression + (negated ? " IS NOT NULL" : " IS NULL");
+	}
+
+	public boolean isNegated() {
+		return negated;
 	}
 }

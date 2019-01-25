@@ -46,6 +46,18 @@ public abstract class Conditions {
 	private Conditions() {
 	}
 
+	public static Condition isNull(Expression expression) {
+		return new IsNull(expression);
+	}
+
+	public static Condition isEqual(Column bar, Expression param) {
+		return new Equals(bar, param);
+	}
+
+	public static Condition in(Column bar, Expression subselectExpression) {
+		return new In(bar, subselectExpression);
+	}
+
 	static class ConstantCondition extends AbstractSegment implements Condition {
 
 		private final String condition;

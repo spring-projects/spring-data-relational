@@ -31,6 +31,9 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 	private List<Expression> expressions;
 
 	SimpleFunction(String functionName, List<Expression> expressions) {
+
+		super(expressions.toArray(new Expression[]{}));
+
 		this.functionName = functionName;
 		this.expressions = expressions;
 	}
@@ -46,20 +49,6 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 		Assert.hasText(alias, "Alias must not be null or empty");
 
 		return new AliasedFunction(functionName, expressions, alias);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-		expressions.forEach(it -> it.visit(visitor));
-		visitor.leave(this);
 	}
 
 	/**

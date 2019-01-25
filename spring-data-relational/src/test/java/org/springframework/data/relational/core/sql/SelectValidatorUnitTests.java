@@ -33,7 +33,8 @@ public class SelectValidatorUnitTests {
 
 		assertThatThrownBy(() -> {
 			SQL.newSelect(column).from(SQL.table("bar")).build();
-		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
+		}).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
 	}
 
 	@Test // DATAJDBC-309
@@ -43,7 +44,8 @@ public class SelectValidatorUnitTests {
 
 		assertThatThrownBy(() -> {
 			SQL.newSelect(Functions.count(column)).from(SQL.table("bar")).build();
-		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
+		}).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
 	}
 
 	@Test // DATAJDBC-309
@@ -52,31 +54,38 @@ public class SelectValidatorUnitTests {
 		Column column = SQL.table("table").column("foo");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(Functions.distinct(column)).from(SQL.table("bar")).build();
-		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
+			SQL.newSelect(column).distinct().from(SQL.table("bar")).build();
+		}).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
 	}
 
 	@Test // DATAJDBC-309
 	public void shouldReportMissingTableViaOrderBy() {
 
-		Column column = SQL.table("table").column("foo");
+		Column foo = SQL.table("table").column("foo");
+		Table bar = SQL.table("bar");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(SQL.column("foo")) //
-					.from(SQL.table("bar")).orderBy(column) //
+			SQL.newSelect(bar.column("foo")) //
+					.from(bar) //
+					.orderBy(foo) //
 					.build();
-		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a ORDER BY column not imported by FROM [bar] or JOIN []");
+		}).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Required table [table] by a ORDER BY column not imported by FROM [bar] or JOIN []");
 	}
 
 	@Test // DATAJDBC-309
 	public void shouldReportMissingTableViaWhere() {
 
 		Column column = SQL.table("table").column("foo");
+		Table bar = SQL.table("bar");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(SQL.column("foo")).from(SQL.table("bar")) //
+			SQL.newSelect(bar.column("foo")) //
+					.from(bar) //
 					.where(new SimpleCondition(column, "=", "foo")) //
 					.build();
-		}).isInstanceOf(IllegalStateException.class).hasMessageContaining("Required table [table] by a WHERE predicate not imported by FROM [bar] or JOIN []");
+		}).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Required table [table] by a WHERE predicate not imported by FROM [bar] or JOIN []");
 	}
 }

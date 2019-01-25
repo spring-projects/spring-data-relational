@@ -43,12 +43,7 @@ public interface Condition extends Segment {
 		return new OrCondition(this, other);
 	}
 
-	/**
-	 * Encapsulate this {@link Condition} in a group of parentheses.
-	 *
-	 * @return the grouped {@link Condition}.
-	 */
-	default Condition group() {
-		return new ConditionGroup(this);
+	default Condition not() {
+		return new Not(this);
 	}
 }

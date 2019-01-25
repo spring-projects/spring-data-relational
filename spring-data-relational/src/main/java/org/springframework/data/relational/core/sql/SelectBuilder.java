@@ -29,25 +29,14 @@ public interface SelectBuilder {
 	 *
 	 * @param count the top count.
 	 * @return {@code this} {@link SelectBuilder}.
-	 * @see SelectTop
 	 */
 	SelectBuilder top(int count);
-
-	/**
-	 * Include an arbitrary {@code sql} select list item. The {@code sql} is encapsulated into a simple {@link Expression}.
-	 *
-	 * @param sql the select list item.
-	 * @return {@code this} builder.
-	 * @see SQL#column(String)
-	 */
-	SelectAndFrom select(String sql);
 
 	/**
 	 * Include a {@link Expression} in the select list.
 	 *
 	 * @param expression the expression to include.
 	 * @return {@code this} builder.
-	 * @see SQL#column(String)
 	 * @see Table#column(String)
 	 */
 	SelectAndFrom select(Expression expression);
@@ -57,7 +46,6 @@ public interface SelectBuilder {
 	 *
 	 * @param expressions the expressions to include.
 	 * @return {@code this} builder.
-	 * @see SQL#column(String)
 	 * @see Table#columns(String...)
 	 */
 	SelectAndFrom select(Expression... expressions);
@@ -67,10 +55,16 @@ public interface SelectBuilder {
 	 *
 	 * @param expressions the expressions to include.
 	 * @return {@code this} builder.
-	 * @see SQL#column(String)
 	 * @see Table#columns(String...)
 	 */
 	SelectAndFrom select(Collection<? extends Expression> expressions);
+
+	/**
+	 * Makes the select statement distinct
+	 *
+	 * @return {@code this} builder.
+	 */
+	SelectAndFrom distinct();
 
 	/**
 	 * Builder exposing {@code select} and {@code from} methods.
@@ -78,20 +72,10 @@ public interface SelectBuilder {
 	interface SelectAndFrom extends SelectFrom {
 
 		/**
-		 * Include an arbitrary {@code sql} select list item. The {@code sql} is encapsulated into a simple {@link Expression}. Multiple calls to this or other {@code select} methods keep adding items to the select list and do not replace previously contained items.
-		 *
-		 * @param sql the select list item.
-		 * @return {@code this} builder.
-		 * @see SQL#column(String)
-		 */
-		SelectFrom select(String sql);
-
-		/**
 		 * Include a {@link Expression} in the select list. Multiple calls to this or other {@code select} methods keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param expression the expression to include.
 		 * @return {@code this} builder.
-		 * @see SQL#column(String)
 		 * @see Table#column(String)
 		 */
 		SelectFrom select(Expression expression);
@@ -101,7 +85,6 @@ public interface SelectBuilder {
 		 *
 		 * @param expressions the expressions to include.
 		 * @return {@code this} builder.
-		 * @see SQL#column(String)
 		 * @see Table#columns(String...)
 		 */
 		SelectFrom select(Expression... expressions);
@@ -111,10 +94,16 @@ public interface SelectBuilder {
 		 *
 		 * @param expressions the expressions to include.
 		 * @return {@code this} builder.
-		 * @see SQL#column(String)
 		 * @see Table#columns(String...)
 		 */
 		SelectFrom select(Collection<? extends Expression> expressions);
+
+		/**
+		 * Makes the select statement distinct
+		 *
+		 * @return {@code this} builder.
+		 */
+		SelectAndFrom distinct();
 
 		/**
 		 * Declare a {@link Table} to {@code SELECT … FROM}.
@@ -230,13 +219,7 @@ public interface SelectBuilder {
 		SelectFromAndOrderBy from(Collection<? extends Table> tables);
 
 		@Override
-		SelectFromAndOrderBy orderBy(String field);
-
-		@Override
 		SelectFromAndOrderBy orderBy(Column... columns);
-
-		@Override
-		SelectFromAndOrderBy orderBy(int... indexes);
 
 		@Override
 		SelectFromAndOrderBy orderBy(OrderByField... orderByFields);
@@ -380,38 +363,18 @@ public interface SelectBuilder {
 	interface SelectOrdered extends BuildSelect {
 
 		/**
-		 * Add an order by {@code field} using default sort semantics.
-		 *
-		 * @param field field name, must not be {@literal null} or empty.
-		 * @return {@code this} builder.
-		 * @see OrderByField#create(String)
-		 */
-		SelectOrdered orderBy(String field);
-
-		/**
 		 * Add one or more {@link Column columns} to order by.
 		 *
 		 * @param columns the columns to order by.
 		 * @return {@code this} builder.
-		 * @see OrderByField#create(String)
 		 */
 		SelectOrdered orderBy(Column... columns);
-
-		/**
-		 * Add an order by field using {@code indexes} using default sort semantics.
-		 *
-		 * @param indexes field indexes as declared in the select list.
-		 * @return {@code this} builder.
-		 * @see OrderByField#index(int)
-		 */
-		SelectOrdered orderBy(int... indexes);
 
 		/**
 		 * Add one or more {@link OrderByField order by fields}.
 		 *
 		 * @param orderByFields the fields to order by.
 		 * @return {@code this} builder.
-		 * @see OrderByField#create(String)
 		 */
 		SelectOrdered orderBy(OrderByField... orderByFields);
 
@@ -420,7 +383,6 @@ public interface SelectBuilder {
 		 *
 		 * @param orderByFields the fields to order by.
 		 * @return {@code this} builder.
-		 * @see OrderByField#create(String)
 		 */
 		SelectOrdered orderBy(Collection<? extends OrderByField> orderByFields);
 	}
@@ -496,22 +458,12 @@ public interface SelectBuilder {
 	 */
 	interface SelectOn {
 
-		/**
-		 * Declare the source column in the {@code JOIN}.
-		 *
-		 * @param column name of the source column, must not be {@literal null} or empty.
-		 * @return {@code this} builder.
-		 * @see SQL#column(String)
-		 * @see Table#column(String)
-		 */
-		SelectOnConditionComparison on(String column);
 
 		/**
 		 * Declare the source column in the {@code JOIN}.
 		 *
 		 * @param column the source column, must not be {@literal null} or empty.
 		 * @return {@code this} builder.
-		 * @see SQL#column(String)
 		 * @see Table#column(String)
 		 */
 		SelectOnConditionComparison on(Expression column);
@@ -523,21 +475,10 @@ public interface SelectBuilder {
 	interface SelectOnConditionComparison {
 
 		/**
-		 * Declare an equals {@link Condition} between the source column and the target {@code column}.
-		 *
-		 * @param column name of the target column, must not be {@literal null} or empty.
-		 * @return {@code this} builder.
-		 * @see SQL#column(String)
-		 * @see Table#column(String)
-		 */
-		SelectFromAndJoinCondition equals(String column);
-
-		/**
 		 * Declare an equals {@link Condition} between the source column and the target {@link Column}.
 		 *
 		 * @param column the target column, must not be {@literal null}.
 		 * @return {@code this} builder.
-		 * @see SQL#column(String)
 		 * @see Table#column(String)
 		 */
 		SelectFromAndJoinCondition equals(Expression column);
@@ -551,19 +492,8 @@ public interface SelectBuilder {
 		/**
 		 * Declare an additional source column in the {@code JOIN}.
 		 *
-		 * @param column the column name, must not be {@literal null} or empty.
-		 * @return {@code this} builder.
-		 * @see SQL#column(String)
-		 * @see Table#column(String)
-		 */
-		SelectOnConditionComparison and(String column);
-
-		/**
-		 * Declare an additional source column in the {@code JOIN}.
-		 *
 		 * @param column the column, must not be {@literal null}.
 		 * @return {@code this} builder.
-		 * @see SQL#column(String)
 		 * @see Table#column(String)
 		 */
 		SelectOnConditionComparison and(Expression column);
