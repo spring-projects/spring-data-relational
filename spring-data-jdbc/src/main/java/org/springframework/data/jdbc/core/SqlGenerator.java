@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
@@ -41,6 +43,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Yoichi Imai
  * @author Bastian Wilhelm
+ * @author Oleksandr Kucher
  */
 class SqlGenerator {
 
@@ -48,6 +51,7 @@ class SqlGenerator {
 	private final RelationalMappingContext context;
 	private final List<String> columnNames = new ArrayList<>();
 	private final List<String> nonIdColumnNames = new ArrayList<>();
+	private final Set<String> readOnlyColumnNames = new HashSet<>();
 
 	private final Lazy<String> findOneSql = Lazy.of(this::createFindOneSelectSql);
 	private final Lazy<String> findAllSql = Lazy.of(this::createFindAllSql);
@@ -92,6 +96,9 @@ class SqlGenerator {
 
 		if (!entity.isIdProperty(property)) {
 			nonIdColumnNames.add(columnName);
+		}
+		if (property.isAnnotationPresent(ReadOnlyProperty.class)) {
+			readOnlyColumnNames.add(columnName);
 		}
 	}
 
@@ -328,6 +335,7 @@ class SqlGenerator {
 
 		LinkedHashSet<String> columnNamesForInsert = new LinkedHashSet<>(nonIdColumnNames);
 		columnNamesForInsert.addAll(additionalColumns);
+		columnNamesForInsert.removeIf(readOnlyColumnNames::contains);
 
 		String tableColumns = String.join(", ", columnNamesForInsert);
 
@@ -344,6 +352,7 @@ class SqlGenerator {
 
 		String setClause = columnNames.stream() //
 				.filter(s -> !s.equals(entity.getIdColumn())) //
+				.filter(s -> !readOnlyColumnNames.contains(s)) //
 				.map(n -> String.format("%s = :%s", n, n)) //
 				.collect(Collectors.joining(", "));
 
