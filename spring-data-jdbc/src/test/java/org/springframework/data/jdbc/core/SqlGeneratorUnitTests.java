@@ -15,16 +15,11 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-
-import java.util.Map;
-import java.util.Set;
-
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
@@ -34,6 +29,12 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Collections.emptySet;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -226,6 +227,78 @@ public class SqlGeneratorUnitTests {
 				"id1 = :id");
 	}
 
+	@Test // DATAJDBC-324
+	public void readOnlyPropertyExcludedFromQuery_when_generateUpdateSql() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
+		assertThat(sqlGenerator.getUpdate()).isEqualToIgnoringCase(
+				"UPDATE entity_with_read_only_property "
+				+ "SET x_name = :x_name "
+				+ "WHERE x_id = :x_id"
+		);
+	}
+
+	@Test // DATAJDBC-324
+	public void readOnlyPropertyExcludedFromQuery_when_generateInsertSql() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
+		assertThat(sqlGenerator.getInsert(emptySet())).isEqualToIgnoringCase(
+				"INSERT INTO entity_with_read_only_property (x_name) "
+				+ "VALUES (:x_name)"
+		);
+	}
+
+	@Test // DATAJDBC-324
+	public void readOnlyPropertyIncludedIntoQuery_when_generateFindAllSql() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
+		assertThat(sqlGenerator.getFindAll()).isEqualToIgnoringCase(
+				"SELECT "
+				+ "entity_with_read_only_property.x_id AS x_id, "
+				+ "entity_with_read_only_property.x_name AS x_name, "
+				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value "
+				+ "FROM entity_with_read_only_property"
+		);
+	}
+
+	@Test // DATAJDBC-324
+	public void readOnlyPropertyIncludedIntoQuery_when_generateFindAllByPropertySql() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
+		assertThat(sqlGenerator.getFindAllByProperty("back-ref", "key-column", true)).isEqualToIgnoringCase(
+				"SELECT "
+				+ "entity_with_read_only_property.x_id AS x_id, "
+				+ "entity_with_read_only_property.x_name AS x_name, "
+				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value, "
+				+ "entity_with_read_only_property.key-column AS key-column "
+				+ "FROM entity_with_read_only_property "
+				+ "WHERE back-ref = :back-ref "
+				+ "ORDER BY key-column"
+		);
+	}
+
+	@Test // DATAJDBC-324
+	public void readOnlyPropertyIncludedIntoQuery_when_generateFindAllInListSql() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
+		assertThat(sqlGenerator.getFindAllInList()).isEqualToIgnoringCase(
+				"SELECT "
+				+ "entity_with_read_only_property.x_id AS x_id, "
+				+ "entity_with_read_only_property.x_name AS x_name, "
+				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value "
+				+ "FROM entity_with_read_only_property "
+				+ "WHERE entity_with_read_only_property.x_id in(:ids)"
+		);
+	}
+
+	@Test // DATAJDBC-324
+	public void readOnlyPropertyIncludedIntoQuery_when_generateFindOneSql() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
+		assertThat(sqlGenerator.getFindOne()).isEqualToIgnoringCase(
+				"SELECT "
+				+ "entity_with_read_only_property.x_id AS x_id, "
+				+ "entity_with_read_only_property.x_name AS x_name, "
+				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value "
+				+ "FROM entity_with_read_only_property "
+				+ "WHERE entity_with_read_only_property.x_id = :id"
+		);
+	}
+
 	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> base) {
 		return PersistentPropertyPathTestUtils.getPath(context, path, base);
 	}
@@ -289,4 +362,9 @@ public class SqlGeneratorUnitTests {
 		@Id Long id;
 	}
 
+	static class EntityWithReadOnlyProperty {
+		@Id Long id;
+		String name;
+		@ReadOnlyProperty String readOnlyValue;
+	}
 }
