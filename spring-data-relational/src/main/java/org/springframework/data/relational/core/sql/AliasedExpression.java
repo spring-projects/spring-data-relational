@@ -20,7 +20,7 @@ package org.springframework.data.relational.core.sql;
  *
  * @author Jens Schauder
  */
-public class AliasedExpression extends AbstractSegment implements Aliased, Expression {
+class AliasedExpression extends AbstractSegment implements Aliased, Expression {
 
 	private final Expression expression;
 	private final String alias;
@@ -33,11 +33,19 @@ public class AliasedExpression extends AbstractSegment implements Aliased, Expre
 		this.alias = alias;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.Aliased#getAlias()
+	 */
 	@Override
 	public String getAlias() {
 		return alias;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return expression.toString() + " AS " + alias;

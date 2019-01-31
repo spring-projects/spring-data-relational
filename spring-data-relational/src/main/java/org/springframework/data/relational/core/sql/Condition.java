@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql;
  * AST {@link Segment} for a condition.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see Conditions
  */
 public interface Condition extends Segment {
@@ -43,6 +44,11 @@ public interface Condition extends Segment {
 		return new OrCondition(this, other);
 	}
 
+	/**
+	 * Creates a {@link Condition} that negates this {@link Condition}.
+	 *
+	 * @return the negated  {@link Condition}.
+	 */
 	default Condition not() {
 		return new Not(this);
 	}

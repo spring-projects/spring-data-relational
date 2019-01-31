@@ -32,7 +32,7 @@ public class SelectValidatorUnitTests {
 		Column column = SQL.table("table").column("foo");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(column).from(SQL.table("bar")).build();
+			StatementBuilder.select(column).from(SQL.table("bar")).build();
 		}).isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
 	}
@@ -43,7 +43,7 @@ public class SelectValidatorUnitTests {
 		Column column = SQL.table("table").column("foo");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(Functions.count(column)).from(SQL.table("bar")).build();
+			StatementBuilder.select(Functions.count(column)).from(SQL.table("bar")).build();
 		}).isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
 	}
@@ -54,7 +54,7 @@ public class SelectValidatorUnitTests {
 		Column column = SQL.table("table").column("foo");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(column).distinct().from(SQL.table("bar")).build();
+			StatementBuilder.select(column).distinct().from(SQL.table("bar")).build();
 		}).isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
 	}
@@ -66,7 +66,7 @@ public class SelectValidatorUnitTests {
 		Table bar = SQL.table("bar");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(bar.column("foo")) //
+			StatementBuilder.select(bar.column("foo")) //
 					.from(bar) //
 					.orderBy(foo) //
 					.build();
@@ -81,7 +81,7 @@ public class SelectValidatorUnitTests {
 		Table bar = SQL.table("bar");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(bar.column("foo")) //
+			StatementBuilder.select(bar.column("foo")) //
 					.from(bar) //
 					.where(new SimpleCondition(column, "=", "foo")) //
 					.build();

@@ -22,6 +22,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
+ * Represents a field in the {@code ORDER BY} clause.
+ *
  * @author Mark Paluch
  */
 public class OrderByField extends AbstractSegment {
@@ -30,7 +32,7 @@ public class OrderByField extends AbstractSegment {
 	private final @Nullable Sort.Direction direction;
 	private final Sort.NullHandling nullHandling;
 
-	OrderByField(Expression expression, Direction direction, NullHandling nullHandling) {
+	OrderByField(Expression expression, @Nullable Direction direction, NullHandling nullHandling) {
 
 		super(expression);
 		Assert.notNull(expression, "Order by expression must not be null");
@@ -41,18 +43,42 @@ public class OrderByField extends AbstractSegment {
 		this.nullHandling = nullHandling;
 	}
 
+	/**
+	 * Creates a new {@link OrderByField} from a {@link Column} applying default ordering.
+	 *
+	 * @param column must not be {@literal null}.
+	 * @return the {@link OrderByField}.
+	 */
 	public static OrderByField from(Column column) {
 		return new OrderByField(column, null, NullHandling.NATIVE);
 	}
 
+	/**
+	 * Creates a new {@link OrderByField} from a the current one using ascending sorting.
+	 *
+	 * @return the new {@link OrderByField} with ascending sorting.
+	 * @see #desc()
+	 */
 	public OrderByField asc() {
-		return new OrderByField(expression, Direction.ASC, NullHandling.NATIVE);
+		return new OrderByField(expression, Direction.ASC, nullHandling);
 	}
 
+	/**
+	 * Creates a new {@link OrderByField} from a the current one using descending sorting.
+	 *
+	 * @return the new {@link OrderByField} with descending sorting.
+	 * @see #asc()
+	 */
 	public OrderByField desc() {
-		return new OrderByField(expression, Direction.DESC, NullHandling.NATIVE);
+		return new OrderByField(expression, Direction.DESC, nullHandling);
 	}
 
+	/**
+	 * Creates a new {@link OrderByField} with {@link NullHandling} applied.
+	 *
+	 * @param nullHandling must not be {@literal null}.
+	 * @return the new {@link OrderByField} with {@link NullHandling} applied.
+	 */
 	public OrderByField withNullHandling(NullHandling nullHandling) {
 		return new OrderByField(expression, direction, nullHandling);
 	}

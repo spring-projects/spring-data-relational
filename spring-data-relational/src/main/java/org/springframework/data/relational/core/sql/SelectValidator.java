@@ -19,6 +19,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Validator for {@link Select} statements.
+ * <p/>
+ * Validates that all {@link Column}s using a table qualifier have a table import from either the {@code FROM} or {@code JOIN} clause.
+ *
  * @author Mark Paluch
  */
 class SelectValidator implements Visitor {
@@ -130,5 +134,6 @@ class SelectValidator implements Visitor {
 	 * @see org.springframework.data.relational.core.sql.Visitor#leave(org.springframework.data.relational.core.sql.Visitable)
 	 */
 	@Override
-	public void leave(Visitable segment) {}
+	public void leave(Visitable segment) {
+	}
 }

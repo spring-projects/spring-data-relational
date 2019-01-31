@@ -72,7 +72,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	/**
-	 * Create a new aliased {@link Column}.
+	 * Creates a new aliased {@link Column}.
 	 *
 	 * @param alias column alias name, must not {@literal null} or empty.
 	 * @return the aliased {@link Column}.
@@ -85,7 +85,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	/**
-	 * Create a new {@link Column} associated with a {@link Table}.
+	 * Creates a new {@link Column} associated with a {@link Table}.
 	 *
 	 * @param table the table, must not be {@literal null}.
 	 * @return a new {@link Column} associated with {@link Table}.

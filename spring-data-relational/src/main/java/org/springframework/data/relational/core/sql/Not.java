@@ -22,18 +22,26 @@ public class Not extends AbstractSegment implements Condition {
 
 	private final Condition condition;
 
-	public Not(Condition condition) {
+	Not(Condition condition) {
 
 		super(condition);
 
 		this.condition = condition;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.Condition#not()
+	 */
 	@Override
 	public Condition not() {
 		return condition;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return "NOT " + condition.toString();

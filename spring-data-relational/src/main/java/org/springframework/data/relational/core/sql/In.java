@@ -15,24 +15,98 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+
 /**
+ * {@code IN} {@link Condition} clause.
+ *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class In extends AbstractSegment implements Condition {
 
 	private final Expression left;
-	private final Expression right;
+	private final Collection<Expression> expressions;
 
-	public In(Expression left, Expression right) {
+	private In(Expression left, Collection<Expression> expressions) {
 
-		super(left, right);
+		super(toArray(left, expressions));
 
 		this.left = left;
-		this.right = right;
+		this.expressions = expressions;
 	}
 
+	private static Segment[] toArray(Expression expression, Collection<Expression> expressions) {
+
+		Segment[] segments = new Segment[1 + expressions.size()];
+		segments[0] = expression;
+
+		int index = 1;
+
+		for (Expression e : expressions) {
+			segments[index++] = e;
+		}
+
+		return segments;
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param arg right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static Condition create(Expression columnOrExpression, Expression arg) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(arg, "Expression argument must not be null");
+
+		return new In(columnOrExpression, Collections.singletonList(arg));
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static Condition create(Expression columnOrExpression, Collection<? extends Expression> expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return new In(columnOrExpression, new ArrayList<>(expressions));
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static Condition create(Expression columnOrExpression, Expression... expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return new In(columnOrExpression, Arrays.asList(expressions));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
-		return left + " IN " + right;
+		return left + " IN (" + StringUtils.collectionToDelimitedString(expressions, ", ") + ")";
 	}
 }

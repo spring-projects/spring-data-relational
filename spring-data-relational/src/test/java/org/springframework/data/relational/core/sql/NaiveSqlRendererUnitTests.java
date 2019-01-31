@@ -17,13 +17,14 @@ package org.springframework.data.relational.core.sql;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.render.NaiveSqlRenderer;
 
 /**
  * Unit tests for {@link NaiveSqlRenderer}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class NaiveSqlRendererUnitTests {
 
@@ -182,7 +183,7 @@ public class NaiveSqlRendererUnitTests {
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
 
-		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name"))).build();
+		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, SQL.bindMarker(":name"))).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name");
 	}
@@ -195,12 +196,12 @@ public class NaiveSqlRendererUnitTests {
 		Column baz = table.column("baz");
 
 		Select select = Select.builder().select(bar).from(table).where(
-				Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name"))
-				.or(Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name2")))
-				.and(Conditions.isNull(baz))
+				Conditions.isEqual(bar, SQL.bindMarker(":name"))
+						.or(Conditions.isEqual(bar, SQL.bindMarker(":name2")))
+						.and(Conditions.isNull(baz))
 		).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE (foo.bar = :name OR foo.bar = :name2) AND foo.baz IS NULL");
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name OR foo.bar = :name2 AND foo.baz IS NULL");
 	}
 
 	@Test // DATAJDBC-309
@@ -210,10 +211,23 @@ public class NaiveSqlRendererUnitTests {
 		Column bar = table.column("bar");
 
 		Select select = Select.builder().select(bar).from(table).where(
-				Conditions.in(bar, new BindMarker.NamedBindMarker("name"))
+				Conditions.in(bar, SQL.bindMarker(":name"))
 		).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name)");
+	}
+
+	@Test // DATAJDBC-309
+	public void shouldInWithNamedParameters() {
+
+		Table table = SQL.table("foo");
+		Column bar = table.column("bar");
+
+		Select select = Select.builder().select(bar).from(table).where(
+				Conditions.in(bar, SQL.bindMarker(":name"), SQL.bindMarker(":name2"))
+		).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name, :name2)");
 	}
 
 	@Test // DATAJDBC-309
@@ -227,7 +241,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select subselect = Select.builder().select(bah).from(floo).build();
 
-		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, new SubselectExpression(subselect))).build();
+		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, subselect)).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (SELECT floo.bah FROM floo)");
 	}

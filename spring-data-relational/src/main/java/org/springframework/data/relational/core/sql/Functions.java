@@ -42,7 +42,7 @@ public class Functions {
 		Assert.notNull(columns, "Columns must not be null!");
 		Assert.notEmpty(columns, "Columns must contains at least one column");
 
-		return new SimpleFunction("COUNT", Arrays.asList(columns));
+		return SimpleFunction.create("COUNT", Arrays.asList(columns));
 	}
 
 	/**
@@ -55,9 +55,10 @@ public class Functions {
 
 		Assert.notNull(columns, "Columns must not be null!");
 
-		return new SimpleFunction("COUNT", new ArrayList<>(columns));
+		return SimpleFunction.create("COUNT", new ArrayList<>(columns));
 	}
 
 	// Utility constructor.
-	private Functions() {}
+	private Functions() {
+	}
 }

@@ -26,7 +26,7 @@ import org.springframework.util.Assert;
 public interface Visitable {
 
 	/**
-	 * Accept a {@link Visitor} visiting this {@link Segment} and its nested {@link Segment}s if applicable.
+	 * Accept a {@link Visitor} visiting this {@link Visitable} and its nested {@link Visitable}s if applicable.
 	 *
 	 * @param visitor the visitor to notify, must not be {@literal null}.
 	 */

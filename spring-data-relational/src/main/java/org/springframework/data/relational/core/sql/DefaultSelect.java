@@ -30,7 +30,7 @@ import org.springframework.util.Assert;
 class DefaultSelect implements Select {
 
 	private final boolean distinct;
-	private final List<Expression> selectList;
+	private final SelectList selectList;
 	private final From from;
 	private final long limit;
 	private final long offset;
@@ -42,7 +42,7 @@ class DefaultSelect implements Select {
 				  List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy) {
 
 		this.distinct = distinct;
-		this.selectList = new ArrayList<>(selectList);
+		this.selectList = new SelectList(new ArrayList<>(selectList));
 		this.from = new From(from);
 		this.limit = limit;
 		this.offset = offset;
@@ -85,7 +85,7 @@ class DefaultSelect implements Select {
 
 		visitor.enter(this);
 
-		selectList.forEach(it -> it.visit(visitor));
+		selectList.visit(visitor);
 		from.visit(visitor);
 		joins.forEach(it -> it.visit(visitor));
 

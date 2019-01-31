@@ -16,6 +16,8 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.util.Assert;
@@ -66,7 +68,7 @@ public class Table extends AbstractSegment {
 	}
 
 	/**
-	 * Create a new {@link Table} aliased to {@code alias}.
+	 * Creates a new {@link Table} aliased to {@code alias}.
 	 *
 	 * @param alias must not be {@literal null} or empty.
 	 * @return the new {@link Table} using the {@code alias}.
@@ -79,7 +81,7 @@ public class Table extends AbstractSegment {
 	}
 
 	/**
-	 * Create a new {@link Column} associated with this {@link Table}.
+	 * Creates a new {@link Column} associated with this {@link Table}.
 	 * <p/>
 	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
 	 * {@link Column}s that were created for this table.
@@ -95,7 +97,7 @@ public class Table extends AbstractSegment {
 	}
 
 	/**
-	 * Create a {@link List} of {@link Column}s associated with this {@link Table}.
+	 * Creates a {@link List} of {@link Column}s associated with this {@link Table}.
 	 * <p/>
 	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
 	 * {@link Column}s that were created for this table.
@@ -104,6 +106,22 @@ public class Table extends AbstractSegment {
 	 * @return a new {@link List} of {@link Column}s associated with this {@link Table}.
 	 */
 	public List<Column> columns(String... names) {
+
+		Assert.notNull(names, "Names must not be null");
+
+		return columns(Arrays.asList(names));
+	}
+
+	/**
+	 * Creates a {@link List} of {@link Column}s associated with this {@link Table}.
+	 * <p/>
+	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
+	 * {@link Column}s that were created for this table.
+	 *
+	 * @param names column names, must not be {@literal null} or empty.
+	 * @return a new {@link List} of {@link Column}s associated with this {@link Table}.
+	 */
+	public List<Column> columns(Collection<String> names) {
 
 		Assert.notNull(names, "Names must not be null");
 
@@ -139,7 +157,7 @@ public class Table extends AbstractSegment {
 
 	/**
 	 * @return the table name as it is used in references. This can be the actual {@link #getName() name} or an
-	 *         {@link Aliased#getAlias() alias}.
+	 * {@link Aliased#getAlias() alias}.
 	 */
 	public String getReferenceName() {
 		return name;

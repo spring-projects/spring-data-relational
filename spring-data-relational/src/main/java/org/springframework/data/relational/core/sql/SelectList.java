@@ -15,15 +15,30 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.List;
+
+import org.springframework.util.StringUtils;
+
 /**
- * {@link Condition} representing an {@code AND} relation between two {@link Condition}s.
+ * Value object representing the select list (selected columns, functions).
  *
  * @author Mark Paluch
- * @see Condition#and(Condition)
  */
-public class AndCondition extends MultipleCondition {
+public class SelectList extends AbstractSegment {
 
-	AndCondition(Condition... conditions) {
-		super(" AND ", conditions);
+	private final List<Expression> selectList;
+
+	SelectList(List<Expression> selectList) {
+		super(selectList.toArray(new Expression[0]));
+		this.selectList = selectList;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return StringUtils.collectionToDelimitedString(selectList, ", ");
 	}
 }

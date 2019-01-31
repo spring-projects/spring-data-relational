@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.util.Assert;
-
 /**
  * Simple condition consisting of {@link Expression}, {@code comparator} and {@code predicate}.
  *

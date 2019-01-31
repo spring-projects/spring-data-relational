@@ -29,7 +29,7 @@ public class Equals extends AbstractSegment implements Condition {
 	private final Expression left;
 	private final Expression right;
 
-	Equals(Expression left, Expression right) {
+	private Equals(Expression left, Expression right) {
 
 		super(left, right);
 
@@ -44,12 +44,12 @@ public class Equals extends AbstractSegment implements Condition {
 	 * @param right the right {@link Expression}.
 	 * @return the {@link Equals} condition.
 	 */
-	public static Equals create(Expression left, Expression right) {
+	public static Equals create(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
 
-		Assert.notNull(left, "Left expression must not be null!");
-		Assert.notNull(right, "Right expression must not be null!");
+		Assert.notNull(leftColumnOrExpression, "Left expression must not be null!");
+		Assert.notNull(rightColumnOrExpression, "Right expression must not be null!");
 
-		return new Equals(left, right);
+		return new Equals(leftColumnOrExpression, rightColumnOrExpression);
 	}
 
 	/**

@@ -22,7 +22,7 @@ public class SimpleSegment extends AbstractSegment {
 
 	private final String sql;
 
-	public SimpleSegment(String sql) {
+	SimpleSegment(String sql) {
 		this.sql = sql;
 	}
 

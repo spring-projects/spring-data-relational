@@ -16,7 +16,7 @@
 package org.springframework.data.relational.core.sql;
 
 /**
- * AST {@link Segment} visitor. Visitor methods get called by segments on entering a {@link Segment}, their child {@link Segment}s and on leaving the {@link Segment}.
+ * AST {@link Segment} visitor. Visitor methods get called by segments on entering a {@link Visitable}, their child {@link Visitable}s and on leaving the {@link Visitable}.
  *
  * @author Mark Paluch
  */
@@ -24,18 +24,17 @@ package org.springframework.data.relational.core.sql;
 public interface Visitor {
 
 	/**
-	 * Enter a {@link Segment}.
+	 * Enter a {@link Visitable}.
 	 *
 	 * @param segment the segment to visit.
 	 */
 	void enter(Visitable segment);
 
 	/**
-	 * Leave a {@link Segment}.
+	 * Leave a {@link Visitable}.
 	 *
 	 * @param segment the visited segment.
 	 */
 	default void leave(Visitable segment) {
-
 	}
 }

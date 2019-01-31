@@ -15,12 +15,14 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.util.Assert;
-
 /**
  * {@link Segment} to select all columns from a {@link Table}.
  * <p/>
- * * Renders to: {@code <table>.*} as in {@code SELECT <table>.* FROM …}.
+ * * Renders to: {@code
+ * <table>
+ * .*} as in {@code SELECT
+ * <table>
+ * .* FROM …}.
  *
  * @author Mark Paluch
  * @see Table#asterisk()
@@ -45,6 +47,10 @@ public class AsteriskFromTable extends AbstractSegment implements Expression {
 		return table;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 

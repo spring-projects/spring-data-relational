@@ -19,9 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
 
-import org.springframework.util.Assert;
-
 /**
+ * Wrapper for multiple {@link Condition}s.
+ *
  * @author Jens Schauder
  */
 public abstract class MultipleCondition extends AbstractSegment implements Condition {

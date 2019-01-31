@@ -16,52 +16,21 @@
 package org.springframework.data.relational.core.sql;
 
 import org.springframework.data.relational.core.sql.BindMarker.NamedBindMarker;
-import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 import org.springframework.util.Assert;
 
 /**
- * Utility to create SQL {@link Segment}s. Typically used as entry point to the Query Builder AST.
+ * Utility to create SQL {@link Segment}s. Typically used as entry point to the Statement Builder.
  * Objects and dependent objects created by the Query AST are immutable except for builders.
- * <p/>The Query Builder API is intended for framework usage to produce SQL required for framework operations.
+ * <p/>The Statement Builder API is intended for framework usage to produce SQL required for framework operations.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see Expressions
  * @see Conditions
  * @see Functions
+ * @see StatementBuilder
  */
 public abstract class SQL {
-
-	/**
-	 * Creates a new {@link SelectBuilder} by specifying a {@code SELECT} column.
-	 *
-	 * @param expression the select list expression.
-	 * @return the {@link SelectBuilder} containing {@link Expression}.
-	 * @see SelectBuilder#select(Expression)
-	 */
-	public static SelectAndFrom newSelect(Expression expression) {
-		return Select.builder().select(expression);
-	}
-
-	/**
-	 * Creates a new {@link SelectBuilder} by specifying one or more {@code SELECT} columns.
-	 *
-	 * @param expressions the select list expressions.
-	 * @return the {@link SelectBuilder} containing {@link Expression}s.
-	 * @see SelectBuilder#select(Expression...)
-	 */
-	public static SelectAndFrom newSelect(Expression... expressions) {
-		return Select.builder().select(expressions);
-	}
-
-	/**
-	 * Creates a new {@link SelectBuilder}.
-	 *
-	 * @return the new {@link SelectBuilder}.
-	 * @see SelectBuilder
-	 */
-	public static SelectBuilder select() {
-		return Select.builder();
-	}
 
 	/**
 	 * Creates a new {@link Column} associated with a source {@link Table}.

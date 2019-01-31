@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.sql;
+package org.springframework.data.relational.core.sql.render;
+
+import org.springframework.data.relational.core.sql.Visitor;
 
 /**
- * {@link Condition} representing an {@code AND} relation between two {@link Condition}s.
+ * {@link Visitor} that renders a specific partial clause or expression.
  *
  * @author Mark Paluch
- * @see Condition#and(Condition)
  */
-public class AndCondition extends MultipleCondition {
+interface PartRenderer extends Visitor {
 
-	AndCondition(Condition... conditions) {
-		super(" AND ", conditions);
-	}
+	/**
+	 * Returns the rendered part.
+	 *
+	 * @return the rendered part.
+	 */
+	CharSequence getRenderedPart();
 }
