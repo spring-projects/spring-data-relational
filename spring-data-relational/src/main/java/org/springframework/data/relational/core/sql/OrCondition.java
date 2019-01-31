@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql;
  * {@link Condition} representing an {@code OR} relation between two {@link Condition}s.
  *
  * @author Mark Paluch
+ * @since 1.1
  * @see Condition#or(Condition)
  */
 public class OrCondition extends MultipleCondition {

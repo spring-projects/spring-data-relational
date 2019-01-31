@@ -21,15 +21,20 @@ import org.springframework.util.Assert;
  * Abstract implementation to support {@link Segment} implementations.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 abstract class AbstractSegment implements Segment {
 
 	private final Segment[] children;
 
-	protected AbstractSegment(Segment ... children) {
+	protected AbstractSegment(Segment... children) {
 		this.children = children;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
+	 */
 	@Override
 	public void visit(Visitor visitor) {
 

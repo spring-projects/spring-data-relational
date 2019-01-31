@@ -18,11 +18,10 @@ package org.springframework.data.relational.core.sql;
 import java.util.OptionalLong;
 
 /**
- * AST for a {@code SELECT} statement.
- * Visiting order:
+ * AST for a {@code SELECT} statement. Visiting order:
  * <ol>
  * <li>Self</li>
- * <li>{@link Column SELECT columns} </li>
+ * <li>{@link Column SELECT columns}</li>
  * <li>{@link Table FROM tables} clause</li>
  * <li>{@link Join JOINs}</li>
  * <li>{@link Condition WHERE} condition</li>
@@ -30,11 +29,12 @@ import java.util.OptionalLong;
  * </ol>
  *
  * @author Mark Paluch
+ * @since 1.1
+ * @see StatementBuilder
  * @see SelectBuilder
  * @see SQL
  */
 public interface Select extends Segment, Visitable {
-
 
 	/**
 	 * Creates a new {@link SelectBuilder}.

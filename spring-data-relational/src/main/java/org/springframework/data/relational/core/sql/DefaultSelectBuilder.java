@@ -24,11 +24,13 @@ import org.springframework.data.relational.core.sql.Join.JoinType;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndJoin;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectWhereAndOr;
+import org.springframework.lang.Nullable;
 
 /**
  * Default {@link SelectBuilder} implementation.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAndJoin, SelectWhereAndOr {
 
@@ -38,7 +40,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	private long limit = -1;
 	private long offset = -1;
 	private List<Join> joins = new ArrayList<>();
-	private Condition where;
+	private @Nullable Condition where;
 	private List<OrderByField> orderBy = new ArrayList<>();
 
 	/*
@@ -273,7 +275,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		private final DefaultSelectBuilder selectBuilder;
 		private Expression from;
 		private Expression to;
-		private Condition condition;
+		private @Nullable Condition condition;
 
 		JoinBuilder(Table table, DefaultSelectBuilder selectBuilder) {
 			this.table = table;
@@ -314,12 +316,12 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		}
 
 		private void finishCondition() {
-			Equals equals = Equals.create(from, to);
+			Comparison comparison = Comparison.create(from, "=", to);
 
 			if (condition == null) {
-				condition = equals;
+				condition = comparison;
 			} else {
-				condition = condition.and(equals);
+				condition = condition.and(comparison);
 			}
 		}
 

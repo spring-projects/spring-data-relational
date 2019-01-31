@@ -24,18 +24,34 @@ import org.springframework.util.StringUtils;
  * Simple function accepting one or more {@link Expression}s.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class SimpleFunction extends AbstractSegment implements Expression {
 
 	private String functionName;
 	private List<Expression> expressions;
 
-	SimpleFunction(String functionName, List<Expression> expressions) {
+	private SimpleFunction(String functionName, List<Expression> expressions) {
 
-		super(expressions.toArray(new Expression[]{}));
+		super(expressions.toArray(new Expression[0]));
 
 		this.functionName = functionName;
 		this.expressions = expressions;
+	}
+
+	/**
+	 * Creates a new {@link SimpleFunction} given {@code functionName} and {@link List} of {@link Expression}s.
+	 *
+	 * @param functionName must not be {@literal null}.
+	 * @param expressions zero or many {@link Expression}s, must not be {@literal null}.
+	 * @return
+	 */
+	public static SimpleFunction create(String functionName, List<Expression> expressions) {
+
+		Assert.hasText(functionName, "Function name must not be null or empty");
+		Assert.notNull(expressions, "Expressions name must not be null");
+
+		return new SimpleFunction(functionName, expressions);
 	}
 
 	/**
@@ -79,6 +95,10 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 			this.alias = alias;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.sql.Aliased#getAlias()
+		 */
 		@Override
 		public String getAlias() {
 			return alias;

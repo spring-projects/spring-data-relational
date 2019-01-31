@@ -19,7 +19,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Validator for {@link Select} statements.
+ * <p/>
+ * Validates that all {@link Column}s using a table qualifier have a table import from either the {@code FROM} or
+ * {@code JOIN} clause.
+ *
  * @author Mark Paluch
+ * @since 1.1
  */
 class SelectValidator implements Visitor {
 
@@ -81,8 +87,7 @@ class SelectValidator implements Visitor {
 			selectFieldCount++;
 		}
 
-		if (segment instanceof Column
-				&& (parent instanceof Select || parent instanceof SimpleFunction)) {
+		if (segment instanceof Column && (parent instanceof Select || parent instanceof SimpleFunction)) {
 
 			selectFieldCount++;
 			Table table = ((Column) segment).getTable();

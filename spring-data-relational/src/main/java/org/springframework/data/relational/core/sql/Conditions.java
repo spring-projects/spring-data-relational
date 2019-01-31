@@ -15,22 +15,23 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.springframework.util.Assert;
+
 /**
  * Factory for common {@link Condition}s.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
+ * @since 1.1
  * @see SQL
  * @see Expressions
  * @see Functions
  */
 public abstract class Conditions {
-
-	/**
-	 * @return a new {@link Equals} condition.
-	 */
-	public static Equals equals(Expression left, Expression right) {
-		return Equals.create(left, right);
-	}
 
 	/**
 	 * Creates a plain {@code sql} {@link Condition}.
@@ -42,20 +43,153 @@ public abstract class Conditions {
 		return new ConstantCondition(sql);
 	}
 
-	// Utility constructor.
-	private Conditions() {
+	/**
+	 * Creates a {@code IS NULL} condition.
+	 *
+	 * @param expression the expression to check for nullability, must not be {@literal null}.
+	 * @return the {@code IS NULL} condition.
+	 */
+	public static IsNull isNull(Expression expression) {
+		return IsNull.create(expression);
 	}
 
-	public static Condition isNull(Expression expression) {
-		return new IsNull(expression);
+	/**
+	 * Creates a {@code =} (equals) {@link Condition}.
+	 *
+	 * @param leftColumnOrExpression left side of the comparison.
+	 * @param rightColumnOrExpression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public static Comparison isEqual(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+		return Comparison.create(leftColumnOrExpression, "=", rightColumnOrExpression);
 	}
 
-	public static Condition isEqual(Column bar, Expression param) {
-		return new Equals(bar, param);
+	/**
+	 * Creates a {@code !=} (not equals) {@link Condition}.
+	 *
+	 * @param leftColumnOrExpression left side of the comparison.
+	 * @param rightColumnOrExpression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public static Comparison isNotEqual(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+		return Comparison.create(leftColumnOrExpression, "!=", rightColumnOrExpression);
 	}
 
-	public static Condition in(Column bar, Expression subselectExpression) {
-		return new In(bar, subselectExpression);
+	/**
+	 * Creates a {@code <} (less) {@link Condition} comparing {@code left} is less than {@code right}.
+	 *
+	 * @param leftColumnOrExpression left side of the comparison.
+	 * @param rightColumnOrExpression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public static Comparison isLess(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+		return Comparison.create(leftColumnOrExpression, "<", rightColumnOrExpression);
+	}
+
+	/**
+	 * Creates a {@code <=} (less or equal to) {@link Condition} comparing {@code left} is less than or equal to
+	 * {@code right}.
+	 *
+	 * @param leftColumnOrExpression left side of the comparison.
+	 * @param rightColumnOrExpression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public static Comparison isLessOrEqualTo(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+		return Comparison.create(leftColumnOrExpression, "<=", rightColumnOrExpression);
+	}
+
+	/**
+	 * Creates a {@code <=} (greater ) {@link Condition} comparing {@code left} is greater than {@code right}.
+	 *
+	 * @param leftColumnOrExpression left side of the comparison.
+	 * @param rightColumnOrExpression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public static Comparison isGreater(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+		return Comparison.create(leftColumnOrExpression, ">", rightColumnOrExpression);
+	}
+
+	/**
+	 * Creates a {@code <=} (greater or equal to) {@link Condition} comparing {@code left} is greater than or equal to
+	 * {@code right}.
+	 *
+	 * @param leftColumnOrExpression left side of the comparison.
+	 * @param rightColumnOrExpression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public static Comparison isGreaterOrEqualTo(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+		return Comparison.create(leftColumnOrExpression, ">=", rightColumnOrExpression);
+	}
+
+	/**
+	 * Creates a {@code LIKE} {@link Condition}.
+	 *
+	 * @param leftColumnOrExpression left side of the comparison.
+	 * @param rightColumnOrExpression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public static Like like(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+		return Like.create(leftColumnOrExpression, rightColumnOrExpression);
+	}
+
+	/**
+	 * Creates a {@code IN} {@link Condition clause}.
+	 *
+	 * @param columnOrExpression left side of the comparison.
+	 * @param arg IN argument.
+	 * @return the {@link In} condition.
+	 */
+	public static Condition in(Expression columnOrExpression, Expression arg) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(arg, "Expression argument must not be null");
+
+		return In.create(columnOrExpression, arg);
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static Condition in(Expression columnOrExpression, Collection<? extends Expression> expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return In.create(columnOrExpression, new ArrayList<>(expressions));
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static In in(Expression columnOrExpression, Expression... expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return In.create(columnOrExpression, Arrays.asList(expressions));
+	}
+
+	/**
+	 * Creates a {@code IN} {@link Condition clause} for a {@link Select subselect}.
+	 *
+	 * @param column the column to compare.
+	 * @param subselect the subselect.
+	 * @return the {@link In} condition.
+	 */
+	public static Condition in(Column column, Select subselect) {
+
+		Assert.notNull(column, "Column must not be null");
+		Assert.notNull(subselect, "Subselect must not be null");
+
+		return in(column, new SubselectExpression(subselect));
 	}
 
 	static class ConstantCondition extends AbstractSegment implements Condition {
@@ -71,8 +205,7 @@ public abstract class Conditions {
 			return condition;
 		}
 	}
+
+	// Utility constructor.
+	private Conditions() {}
 }
-
-
-
-

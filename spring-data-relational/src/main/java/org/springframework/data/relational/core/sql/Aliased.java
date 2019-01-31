@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql;
  * Aliased element exposing an {@link #getAlias() alias}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public interface Aliased {
 

@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
  * Renders to: {@code <name>} or {@code <table(alias)>.<name>}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class Column extends AbstractSegment implements Expression, Named {
 
@@ -72,7 +73,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	/**
-	 * Create a new aliased {@link Column}.
+	 * Creates a new aliased {@link Column}.
 	 *
 	 * @param alias column alias name, must not {@literal null} or empty.
 	 * @return the aliased {@link Column}.
@@ -85,7 +86,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	/**
-	 * Create a new {@link Column} associated with a {@link Table}.
+	 * Creates a new {@link Column} associated with a {@link Table}.
 	 *
 	 * @param table the table, must not be {@literal null}.
 	 * @return a new {@link Column} associated with {@link Table}.
@@ -95,6 +96,108 @@ public class Column extends AbstractSegment implements Expression, Named {
 		Assert.notNull(table, "Table must not be null");
 
 		return new Column(name, table);
+	}
+
+	// -------------------------------------------------------------------------
+	// Methods for Condition creation.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Creates a {@code =} (equals) {@link Condition}.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public Comparison isEqualTo(Expression expression) {
+		return Conditions.isEqual(this, expression);
+	}
+
+	/**
+	 * Creates a {@code !=} (not equals) {@link Condition}.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public Comparison isNotEqualTo(Expression expression) {
+		return Conditions.isNotEqual(this, expression);
+	}
+
+	/**
+	 * Creates a {@code <} (less) {@link Condition} {@link Condition}.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public Comparison isLess(Expression expression) {
+		return Conditions.isLess(this, expression);
+	}
+
+	/**
+	 * CCreates a {@code <=} (greater ) {@link Condition} {@link Condition}.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public Comparison isLessOrEqualTo(Expression expression) {
+		return Conditions.isLessOrEqualTo(this, expression);
+	}
+
+	/**
+	 * Creates a {@code !=} (not equals) {@link Condition}.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public Comparison isGreater(Expression expression) {
+		return Conditions.isGreater(this, expression);
+	}
+
+	/**
+	 * Creates a {@code <=} (greater or equal to) {@link Condition} {@link Condition}.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link Comparison} condition.
+	 */
+	public Comparison isGreaterOrEqualTo(Expression expression) {
+		return Conditions.isGreaterOrEqualTo(this, expression);
+	}
+
+	/**
+	 * Creates a {@code LIKE} {@link Condition}.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link Like} condition.
+	 */
+	public Like like(Expression expression) {
+		return Conditions.like(this, expression);
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given right {@link Expression}s.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link In} condition.
+	 */
+	public In in(Expression... expression) {
+		return Conditions.in(this, expression);
+	}
+
+	/**
+	 * Creates a {@code IS NULL} condition.
+	 *
+	 * @return the {@link IsNull} condition.
+	 */
+	public IsNull isNull() {
+		return Conditions.isNull(this);
+	}
+
+	/**
+	 * Creates a {@code IS NOT NULL} condition.
+	 *
+	 * @return the {@link Condition} condition.
+	 */
+	public Condition isNotNull() {
+		return isNull().not();
 	}
 
 	/*

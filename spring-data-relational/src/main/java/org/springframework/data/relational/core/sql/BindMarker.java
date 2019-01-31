@@ -21,6 +21,7 @@ import org.springframework.lang.Nullable;
  * Bind marker/parameter placeholder used to construct prepared statements with parameter substitution.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class BindMarker extends AbstractSegment implements Expression {
 

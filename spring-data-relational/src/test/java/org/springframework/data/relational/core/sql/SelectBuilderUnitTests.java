@@ -34,7 +34,7 @@ public class SelectBuilderUnitTests {
 	@Test // DATAJDBC-309
 	public void simpleSelect() {
 
-		SelectBuilder builder = SQL.select();
+		SelectBuilder builder = StatementBuilder.select();
 
 		Table table = SQL.table("mytable");
 		Column foo = table.column("foo");
@@ -46,13 +46,12 @@ public class SelectBuilderUnitTests {
 		select.visit(visitor);
 
 		assertThat(visitor.enter).containsSequence(foo, table, bar, table, new From(table), table);
-		assertThat(visitor.leave).containsSequence(table, foo, table, bar, table, new From(table));
 	}
 
 	@Test // DATAJDBC-309
 	public void selectTop() {
 
-		SelectBuilder builder = SQL.select();
+		SelectBuilder builder = StatementBuilder.select();
 
 		Table table = SQL.table("mytable");
 		Column foo = table.column("foo");
@@ -69,7 +68,7 @@ public class SelectBuilderUnitTests {
 	@Test // DATAJDBC-309
 	public void moreAdvancedSelect() {
 
-		SelectBuilder builder = SQL.select();
+		SelectBuilder builder = StatementBuilder.select();
 
 		Table table1 = SQL.table("mytable1");
 		Table table2 = SQL.table("mytable2");
@@ -88,7 +87,7 @@ public class SelectBuilderUnitTests {
 	@Test // DATAJDBC-309
 	public void orderBy() {
 
-		SelectBuilder builder = SQL.select();
+		SelectBuilder builder = StatementBuilder.select();
 
 		Table table = SQL.table("mytable");
 
@@ -106,7 +105,7 @@ public class SelectBuilderUnitTests {
 	@Test // DATAJDBC-309
 	public void joins() {
 
-		SelectBuilder builder = SQL.select();
+		SelectBuilder builder = StatementBuilder.select();
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");

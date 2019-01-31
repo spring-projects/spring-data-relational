@@ -19,9 +19,8 @@ package org.springframework.data.relational.core.sql;
  * Expression that can be used in select lists.
  *
  * @author Mark Paluch
+ * @since 1.1
  * @see SQL
  * @see Expressions
  */
-public interface Expression extends Segment {
-
-}
+public interface Expression extends Segment {}

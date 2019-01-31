@@ -15,12 +15,11 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.util.Assert;
-
 /**
  * {@code Where} clause.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class Where extends AbstractSegment {
 
@@ -33,6 +32,10 @@ public class Where extends AbstractSegment {
 		this.condition = condition;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return "WHERE " + condition.toString();

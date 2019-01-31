@@ -21,6 +21,7 @@ import java.util.Collection;
  * Entry point to construct a {@link Select} statement.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public interface SelectBuilder {
 
@@ -67,12 +68,13 @@ public interface SelectBuilder {
 	SelectAndFrom distinct();
 
 	/**
-	 * Builder exposing {@code select} and {@code from} methods.
+	 * Builder exposing {@code SELECT} and {@code FROM} methods.
 	 */
 	interface SelectAndFrom extends SelectFrom {
 
 		/**
-		 * Include a {@link Expression} in the select list. Multiple calls to this or other {@code select} methods keep adding items to the select list and do not replace previously contained items.
+		 * Include a {@link Expression} in the select list. Multiple calls to this or other {@code select} methods keep
+		 * adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param expression the expression to include.
 		 * @return {@code this} builder.
@@ -81,7 +83,8 @@ public interface SelectBuilder {
 		SelectFrom select(Expression expression);
 
 		/**
-		 * Include one or more {@link Expression}s in the select list.  Multiple calls to this or other {@code select} methods keep adding items to the select list and do not replace previously contained items.
+		 * Include one or more {@link Expression}s in the select list. Multiple calls to this or other {@code select}
+		 * methods keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param expressions the expressions to include.
 		 * @return {@code this} builder.
@@ -90,7 +93,8 @@ public interface SelectBuilder {
 		SelectFrom select(Expression... expressions);
 
 		/**
-		 * Include one or more {@link Expression}s in the select list.  Multiple calls to this or other {@code select} methods keep adding items to the select list and do not replace previously contained items.
+		 * Include one or more {@link Expression}s in the select list. Multiple calls to this or other {@code select}
+		 * methods keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param expressions the expressions to include.
 		 * @return {@code this} builder.
@@ -106,8 +110,8 @@ public interface SelectBuilder {
 		SelectAndFrom distinct();
 
 		/**
-		 * Declare a {@link Table} to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare a {@link Table} to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods keep
+		 * adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param table the table to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -118,8 +122,8 @@ public interface SelectBuilder {
 		SelectFromAndJoin from(Table table);
 
 		/**
-		 * Declare one or more {@link Table}s to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
+		 * keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param tables the tables to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -130,8 +134,8 @@ public interface SelectBuilder {
 		SelectFromAndJoin from(Table... tables);
 
 		/**
-		 * Declare one or more {@link Table}s to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
+		 * keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param tables the tables to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -143,13 +147,13 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Builder exposing {@code from} methods.
+	 * Builder exposing {@code FROM} methods.
 	 */
 	interface SelectFrom extends BuildSelect {
 
 		/**
-		 * Declare a {@link Table} to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare a {@link Table} to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods keep
+		 * adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param table the table name to {@code SELECT … FROM} must not be {@literal null} or empty.
 		 * @return {@code this} builder.
@@ -159,8 +163,8 @@ public interface SelectBuilder {
 		SelectFromAndOrderBy from(String table);
 
 		/**
-		 * Declare a {@link Table} to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare a {@link Table} to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods keep
+		 * adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param table the table to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -170,8 +174,8 @@ public interface SelectBuilder {
 		SelectFromAndOrderBy from(Table table);
 
 		/**
-		 * Declare one or more {@link Table}s to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
+		 * keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param tables the tables to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -181,8 +185,8 @@ public interface SelectBuilder {
 		SelectFromAndOrderBy from(Table... tables);
 
 		/**
-		 * Declare one or more {@link Table}s to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
+		 * keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param tables the tables to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -193,7 +197,7 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Builder exposing {@code from} and {@code order by} methods.
+	 * Builder exposing {@code FROM}, {@code JOIN}, {@code WHERE} and {@code LIMIT/OFFSET} methods.
 	 */
 	interface SelectFromAndOrderBy extends SelectFrom, SelectOrdered, SelectLimitOffset, BuildSelect {
 
@@ -228,11 +232,14 @@ public interface SelectBuilder {
 		SelectFromAndOrderBy orderBy(Collection<? extends OrderByField> orderByFields);
 	}
 
+	/**
+	 * Builder exposing {@code FROM}, {@code JOIN}, {@code WHERE} and {@code LIMIT/OFFSET} methods.
+	 */
 	interface SelectFromAndJoin extends SelectFromAndOrderBy, BuildSelect, SelectJoin, SelectWhere, SelectLimitOffset {
 
 		/**
-		 * Declare a {@link Table} to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare a {@link Table} to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods keep
+		 * adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param table the table to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -243,8 +250,8 @@ public interface SelectBuilder {
 		SelectFromAndJoin from(Table table);
 
 		/**
-		 * Declare one or more {@link Table}s to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
+		 * keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param tables the tables to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -255,8 +262,8 @@ public interface SelectBuilder {
 		SelectFromAndJoin from(Table... tables);
 
 		/**
-		 * Declare one or more {@link Table}s to {@code SELECT … FROM}.
-		 * Multiple calls to this or other {@code from} methods keep adding items to the select list and do not replace previously contained items.
+		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
+		 * keep adding items to the select list and do not replace previously contained items.
 		 *
 		 * @param tables the tables to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
@@ -267,8 +274,8 @@ public interface SelectBuilder {
 		SelectFromAndJoin from(Collection<? extends Table> tables);
 
 		/**
-		 * Apply {@code limit} and {@code offset} parameters to the select statement.
-		 * To read the first 20 rows from start use {@code limitOffset(20, 0)}. to read the next 20 use {@code limitOffset(20, 20)}.
+		 * Apply {@code limit} and {@code offset} parameters to the select statement. To read the first 20 rows from start
+		 * use {@code limitOffset(20, 0)}. to read the next 20 use {@code limitOffset(20, 20)}.
 		 *
 		 * @param limit rows to read.
 		 * @param offset row offset, zero-based.
@@ -294,13 +301,14 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Builder exposing join/where/and {@code JOIN … ON} continuation methods.
+	 * Builder exposing {@code FROM}, {@code WHERE}, {@code LIMIT/OFFSET}, and JOIN {@code AND} continuation methods.
 	 */
-	interface SelectFromAndJoinCondition extends BuildSelect, SelectJoin, SelectWhere, SelectOnCondition, SelectLimitOffset {
+	interface SelectFromAndJoinCondition
+			extends BuildSelect, SelectJoin, SelectWhere, SelectOnCondition, SelectLimitOffset {
 
 		/**
-		 * Apply {@code limit} and {@code offset} parameters to the select statement.
-		 * To read the first 20 rows from start use {@code limitOffset(20, 0)}. to read the next 20 use {@code limitOffset(20, 20)}.
+		 * Apply {@code limit} and {@code offset} parameters to the select statement. To read the first 20 rows from start
+		 * use {@code limitOffset(20, 0)}. to read the next 20 use {@code limitOffset(20, 20)}.
 		 *
 		 * @param limit rows to read.
 		 * @param offset row offset, zero-based.
@@ -331,8 +339,8 @@ public interface SelectBuilder {
 	interface SelectLimitOffset {
 
 		/**
-		 * Apply {@code limit} and {@code offset} parameters to the select statement.
-		 * To read the first 20 rows from start use {@code limitOffset(20, 0)}. to read the next 20 use {@code limitOffset(20, 20)}.
+		 * Apply {@code limit} and {@code offset} parameters to the select statement. To read the first 20 rows from start
+		 * use {@code limitOffset(20, 0)}. to read the next 20 use {@code limitOffset(20, 20)}.
 		 *
 		 * @param limit rows to read.
 		 * @param offset row offset, zero-based.
@@ -404,7 +412,7 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Interface exposing {@code AND}/{@code OR} combinatior methods for {@code WHERE} {@link Condition}s.
+	 * Interface exposing {@code AND}/{@code OR} combinator methods for {@code WHERE} {@link Condition}s.
 	 */
 	interface SelectWhereAndOr extends SelectOrdered, BuildSelect {
 
@@ -458,7 +466,6 @@ public interface SelectBuilder {
 	 */
 	interface SelectOn {
 
-
 		/**
 		 * Declare the source column in the {@code JOIN}.
 		 *
@@ -505,7 +512,8 @@ public interface SelectBuilder {
 	interface BuildSelect {
 
 		/**
-		 * Build the {@link Select} statement and verify basic relationship constraints such as all referenced columns have a {@code FROM} or {@code JOIN} table import.
+		 * Build the {@link Select} statement and verify basic relationship constraints such as all referenced columns have
+		 * a {@code FROM} or {@code JOIN} table import.
 		 *
 		 * @return the build and immutable {@link Select} statement.
 		 */
