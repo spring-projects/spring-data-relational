@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
@@ -31,7 +32,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 @RequiredArgsConstructor
 public class SqlGeneratorSource {
 
-	private final Map<Class, SqlGenerator> sqlGeneratorCache = new HashMap<>();
+	private final Map<Class, SqlGenerator> sqlGeneratorCache = new ConcurrentHashMap<>();
 	private final RelationalMappingContext context;
 
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
