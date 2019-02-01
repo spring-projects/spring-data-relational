@@ -29,7 +29,7 @@ public class IndexedBindMarkersUnitTests {
 	@Test // gh-15
 	public void shouldCreateNewBindMarkersWithOffset() {
 
-		Statement<?> statement = mock(Statement.class);
+		Statement statement = mock(Statement.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 1).create();
 
@@ -65,7 +65,7 @@ public class IndexedBindMarkersUnitTests {
 	@Test // gh-15
 	public void bindValueShouldBindByIndex() {
 
-		Statement<?> statement = mock(Statement.class);
+		Statement statement = mock(Statement.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 0).create();
 
@@ -79,7 +79,7 @@ public class IndexedBindMarkersUnitTests {
 	@Test // gh-15
 	public void bindNullShouldBindByIndex() {
 
-		Statement<?> statement = mock(Statement.class);
+		Statement statement = mock(Statement.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 0).create();
 

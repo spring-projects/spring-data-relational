@@ -304,8 +304,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 */
 	@Override
 	public BindableOperation insertAndReturnGeneratedKeys(String table, Set<String> columns) {
-		return new DefaultBindableInsert(dialect.getBindMarkersFactory().create(), table, columns,
-				dialect.generatedKeysClause());
+		return new DefaultBindableInsert(dialect.getBindMarkersFactory().create(), table, columns);
 	}
 
 	/*
@@ -442,8 +441,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		private final Map<String, BindMarker> markers = new LinkedHashMap<>();
 		private final String query;
 
-		DefaultBindableInsert(BindMarkers bindMarkers, String table, Collection<String> columns,
-				String returningStatement) {
+		DefaultBindableInsert(BindMarkers bindMarkers, String table, Collection<String> columns) {
 
 			StringBuilder builder = new StringBuilder();
 			List<String> placeholders = new ArrayList<>(columns.size());
@@ -459,10 +457,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			builder.append("INSERT INTO ").append(table).append(" (").append(columnsString).append(")").append(" VALUES(")
 					.append(placeholdersString).append(")");
 
-			if (StringUtils.hasText(returningStatement)) {
-				builder.append(' ').append(returningStatement);
-			}
-
 			this.query = builder.toString();
 		}
 
@@ -471,7 +465,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
 		 */
 		@Override
-		public void bind(Statement<?> statement, String identifier, Object value) {
+		public void bind(Statement statement, String identifier, Object value) {
 			markers.get(identifier).bind(statement, value);
 		}
 
@@ -480,7 +474,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
 		 */
 		@Override
-		public void bindNull(Statement<?> statement, String identifier, Class<?> valueType) {
+		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
 			markers.get(identifier).bindNull(statement, valueType);
 		}
 
@@ -529,7 +523,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
 		 */
 		@Override
-		public void bind(Statement<?> statement, String identifier, Object value) {
+		public void bind(Statement statement, String identifier, Object value) {
 			markers.get(identifier).bind(statement, value);
 		}
 
@@ -538,7 +532,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
 		 */
 		@Override
-		public void bindNull(Statement<?> statement, String identifier, Class<?> valueType) {
+		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
 			markers.get(identifier).bindNull(statement, valueType);
 		}
 
@@ -547,7 +541,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindId(io.r2dbc.spi.Statement, java.lang.Object)
 		 */
 		@Override
-		public void bindId(Statement<?> statement, Object value) {
+		public void bindId(Statement statement, Object value) {
 			idMarker.bind(statement, value);
 		}
 
@@ -556,7 +550,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */
 		@Override
-		public void bindIds(Statement<?> statement, Iterable<? extends Object> values) {
+		public void bindIds(Statement statement, Iterable<? extends Object> values) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -590,7 +584,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
 		 */
 		@Override
-		public void bind(Statement<?> statement, String identifier, Object value) {
+		public void bind(Statement statement, String identifier, Object value) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -599,7 +593,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
 		 */
 		@Override
-		public void bindNull(Statement<?> statement, String identifier, Class<?> valueType) {
+		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -608,7 +602,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindId(io.r2dbc.spi.Statement, java.lang.Object)
 		 */
 		@Override
-		public void bindId(Statement<?> statement, Object value) {
+		public void bindId(Statement statement, Object value) {
 			idMarker.bind(statement, value);
 		}
 
@@ -617,7 +611,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */
 		@Override
-		public void bindIds(Statement<?> statement, Iterable<? extends Object> values) {
+		public void bindIds(Statement statement, Iterable<? extends Object> values) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -654,7 +648,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
 		 */
 		@Override
-		public void bind(Statement<?> statement, String identifier, Object value) {
+		public void bind(Statement statement, String identifier, Object value) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -663,7 +657,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
 		 */
 		@Override
-		public void bindNull(Statement<?> statement, String identifier, Class<?> valueType) {
+		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -672,7 +666,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindId(io.r2dbc.spi.Statement, java.lang.Object)
 		 */
 		@Override
-		public void bindId(Statement<?> statement, Object value) {
+		public void bindId(Statement statement, Object value) {
 
 			BindMarker bindMarker = bindMarkers.next();
 			markers.add(bindMarker.getPlaceholder());
@@ -684,7 +678,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */
 		@Override
-		public void bindIds(Statement<?> statement, Iterable<? extends Object> values) {
+		public void bindIds(Statement statement, Iterable<? extends Object> values) {
 
 			for (Object value : values) {
 				bindId(statement, value);

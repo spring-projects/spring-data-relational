@@ -75,6 +75,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
+	@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/67")
 	public void shouldReadAndWriteBoxedSingleDimensionArrays() {
 
 		EntityWithArrays withArrays = new EntityWithArrays(new Integer[] { 1, 2, 3 }, null, null, null);
@@ -89,6 +90,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
+	@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/67")
 	public void shouldReadAndWriteConvertedDimensionArrays() {
 
 		EntityWithArrays withArrays = new EntityWithArrays(null, null, null, Arrays.asList(5, 6, 7));

@@ -251,14 +251,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		return new DefaultGenericExecuteSpec(sqlSupplier);
 	}
 
-	private static void doBind(Statement<?> statement, Map<String, SettableValue> byName,
+	private static void doBind(Statement statement, Map<String, SettableValue> byName,
 			Map<Integer, SettableValue> byIndex) {
 
 		bindByIndex(statement, byIndex);
 		bindByName(statement, byName);
 	}
 
-	private static void bindByName(Statement<?> statement, Map<String, SettableValue> byName) {
+	private static void bindByName(Statement statement, Map<String, SettableValue> byName) {
 
 		byName.forEach((name, o) -> {
 
@@ -270,7 +270,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		});
 	}
 
-	private static void bindByIndex(Statement<?> statement, Map<Integer, SettableValue> byIndex) {
+	private static void bindByIndex(Statement statement, Map<Integer, SettableValue> byIndex) {
 
 		byIndex.forEach((i, o) -> {
 
@@ -329,7 +329,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		<T> FetchSpec<T> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
-			Function<Connection, Statement<?>> executeFunction = it -> {
+			Function<Connection, Statement> executeFunction = it -> {
 
 				if (logger.isDebugEnabled()) {
 					logger.debug("Executing SQL statement [" + sql + "]");
@@ -338,7 +338,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				BindableOperation operation = namedParameters.expand(sql, dataAccessStrategy.getBindMarkersFactory(),
 						new MapBindParameterSource(byName));
 
-				Statement<?> statement = it.createStatement(operation.toQuery());
+				Statement statement = it.createStatement(operation.toQuery());
 
 				byName.forEach((name, o) -> {
 
@@ -632,7 +632,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		<R> FetchSpec<R> execute(String sql, BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			Function<Connection, Statement<?>> selectFunction = it -> {
+			Function<Connection, Statement> selectFunction = it -> {
 
 				if (logger.isDebugEnabled()) {
 					logger.debug("Executing SQL statement [" + sql + "]");
@@ -886,13 +886,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			BindableOperation bindableInsert = dataAccessStrategy.insertAndReturnGeneratedKeys(table, byName.keySet());
 
 			String sql = bindableInsert.toQuery();
-			Function<Connection, Statement<?>> insertFunction = it -> {
+			Function<Connection, Statement> insertFunction = it -> {
 
 				if (logger.isDebugEnabled()) {
 					logger.debug("Executing SQL statement [" + sql + "]");
 				}
 
-				Statement<?> statement = it.createStatement(sql);
+				Statement statement = it.createStatement(sql).returnGeneratedValues();
 
 				byName.forEach((k, v) -> bindableInsert.bind(statement, v));
 
@@ -1015,7 +1015,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					logger.debug("Executing SQL statement [" + sql + "]");
 				}
 
-				Statement<?> statement = it.createStatement(sql);
+				Statement statement = it.createStatement(sql).returnGeneratedValues();
 
 				for (SettableValue settable : insertValues) {
 					bindableInsert.bind(statement, settable);

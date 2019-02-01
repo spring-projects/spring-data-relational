@@ -85,7 +85,7 @@ public class NamedBindMarkersUnitTests {
 	@Test // gh-15
 	public void bindValueShouldBindByName() {
 
-		Statement<?> statement = mock(Statement.class);
+		Statement statement = mock(Statement.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32).create();
 
@@ -99,7 +99,7 @@ public class NamedBindMarkersUnitTests {
 	@Test // gh-15
 	public void bindNullShouldBindByName() {
 
-		Statement<?> statement = mock(Statement.class);
+		Statement statement = mock(Statement.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32).create();
 

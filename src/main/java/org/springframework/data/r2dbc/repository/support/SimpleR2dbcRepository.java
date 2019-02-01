@@ -323,7 +323,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				.getColumnName();
 	}
 
-	private BiConsumer<String, SettableValue> bind(BindableOperation operation, Statement<?> statement) {
+	private BiConsumer<String, SettableValue> bind(BindableOperation operation, Statement statement) {
 
 		return (k, v) -> operation.bind(statement, v);
 	}

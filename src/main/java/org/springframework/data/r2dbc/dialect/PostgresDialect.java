@@ -75,15 +75,6 @@ public class PostgresDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#returnGeneratedKeys()
-	 */
-	@Override
-	public String generatedKeysClause() {
-		return "RETURNING *";
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#getSimpleTypesKeys()
 	 */
 	@Override

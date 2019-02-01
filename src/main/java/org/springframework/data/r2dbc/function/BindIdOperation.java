@@ -19,7 +19,7 @@ public interface BindIdOperation extends BindableOperation {
 	 * @param value the actual value. Must not be {@literal null}.
 	 * @see Statement#bind
 	 */
-	void bindId(Statement<?> statement, Object value);
+	void bindId(Statement statement, Object value);
 
 	/**
 	 * Bind the given {@code values} to the {@link Statement} using the underlying binding strategy.
@@ -28,5 +28,5 @@ public interface BindIdOperation extends BindableOperation {
 	 * @param values the actual values.
 	 * @see Statement#bind
 	 */
-	void bindIds(Statement<?> statement, Iterable<? extends Object> values);
+	void bindIds(Statement statement, Iterable<? extends Object> values);
 }

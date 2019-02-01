@@ -395,9 +395,15 @@ abstract class NamedParameterUtils {
 		 */
 		@Override
 		@SuppressWarnings("unchecked")
-		public void bind(Statement<?> statement, String identifier, Object value) {
+		public void bind(Statement statement, String identifier, Object value) {
 
 			List<BindMarker> bindMarkers = getBindMarkers(identifier);
+
+			if (bindMarkers == null) {
+
+				statement.bind(identifier, value);
+				return;
+			}
 
 			if (bindMarkers.size() == 1) {
 				bindMarkers.get(0).bind(statement, value);
@@ -427,7 +433,7 @@ abstract class NamedParameterUtils {
 			}
 		}
 
-		private void bind(Statement<?> statement, Iterator<BindMarker> markers, Object valueToBind) {
+		private void bind(Statement statement, Iterator<BindMarker> markers, Object valueToBind) {
 
 			Assert.isTrue(markers.hasNext(),
 					() -> String.format(
@@ -442,7 +448,7 @@ abstract class NamedParameterUtils {
 		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
 		 */
 		@Override
-		public void bindNull(Statement<?> statement, String identifier, Class<?> valueType) {
+		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
 
 			List<BindMarker> bindMarkers = getBindMarkers(identifier);
 
@@ -455,12 +461,7 @@ abstract class NamedParameterUtils {
 		}
 
 		private List<BindMarker> getBindMarkers(String identifier) {
-
-			List<BindMarker> bindMarkers = markers.get(identifier);
-
-			Assert.notNull(bindMarkers, () -> String.format("Parameter name [%s] is unknown. Known parameters names are: %s",
-					identifier, markers.keySet()));
-			return bindMarkers;
+			return markers.get(identifier);
 		}
 
 		/*

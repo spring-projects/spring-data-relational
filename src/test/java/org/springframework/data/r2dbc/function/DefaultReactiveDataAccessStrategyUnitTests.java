@@ -30,7 +30,7 @@ public class DefaultReactiveDataAccessStrategyUnitTests {
 		BindableOperation operation = strategy.insertAndReturnGeneratedKeys("table",
 				new HashSet<>(Arrays.asList("firstname", "lastname")));
 
-		assertThat(operation.toQuery()).isEqualTo("INSERT INTO table (firstname, lastname) VALUES($1, $2) RETURNING *");
+		assertThat(operation.toQuery()).isEqualTo("INSERT INTO table (firstname, lastname) VALUES($1, $2)");
 	}
 
 	@Test // gh-20
@@ -73,7 +73,7 @@ public class DefaultReactiveDataAccessStrategyUnitTests {
 	@Test // gh-20
 	public void shouldRenderSelectByIdInQuery() {
 
-		Statement<?> statement = mock(Statement.class);
+		Statement statement = mock(Statement.class);
 		BindIdOperation operation = strategy.selectByIdIn("table", new HashSet<>(Arrays.asList("firstname", "lastname")),
 				"id");
 
@@ -95,7 +95,7 @@ public class DefaultReactiveDataAccessStrategyUnitTests {
 	@Test // gh-20
 	public void shouldRenderDeleteByIdInQuery() {
 
-		Statement<?> statement = mock(Statement.class);
+		Statement statement = mock(Statement.class);
 		BindIdOperation operation = strategy.deleteByIdIn("table", "id");
 
 		operation.bindId(statement, Collections.singleton("foo"));

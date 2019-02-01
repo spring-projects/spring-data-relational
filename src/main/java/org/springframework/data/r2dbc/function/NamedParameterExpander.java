@@ -147,12 +147,12 @@ public class NamedParameterExpander {
 			return new BindableOperation() {
 
 				@Override
-				public void bind(Statement<?> statement, String identifier, Object value) {
+				public void bind(Statement statement, String identifier, Object value) {
 					statement.bind(identifier, value);
 				}
 
 				@Override
-				public void bindNull(Statement<?> statement, String identifier, Class<?> valueType) {
+				public void bindNull(Statement statement, String identifier, Class<?> valueType) {
 					statement.bindNull(identifier, valueType);
 				}
 

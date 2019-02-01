@@ -11,13 +11,4 @@ public class H2Dialect extends PostgresDialect {
 	 * Singleton instance.
 	 */
 	public static final H2Dialect INSTANCE = new H2Dialect();
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#returnGeneratedKeys()
-	 */
-	@Override
-	public String generatedKeysClause() {
-		return "";
-	}
 }

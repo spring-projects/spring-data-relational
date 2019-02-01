@@ -13,7 +13,7 @@ import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
  * @param <S> type of the bind specification.
  * @author Mark Paluch
  */
-class BindSpecAdapter<S extends BindSpec<S>> implements Statement<BindSpecAdapter<S>> {
+class BindSpecAdapter<S extends BindSpec<S>> implements Statement {
 
 	private S bindSpec;
 

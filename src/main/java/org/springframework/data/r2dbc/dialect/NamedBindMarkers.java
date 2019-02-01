@@ -101,7 +101,7 @@ class NamedBindMarkers implements BindMarkers {
 		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindValue(io.r2dbc.spi.Statement, java.lang.Object)
 		 */
 		@Override
-		public void bind(Statement<?> statement, Object value) {
+		public void bind(Statement statement, Object value) {
 			statement.bind(this.identifier, value);
 		}
 
@@ -110,7 +110,7 @@ class NamedBindMarkers implements BindMarkers {
 		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindNull(io.r2dbc.spi.Statement, java.lang.Class)
 		 */
 		@Override
-		public void bindNull(Statement<?> statement, Class<?> valueType) {
+		public void bindNull(Statement statement, Class<?> valueType) {
 			statement.bindNull(this.identifier, valueType);
 		}
 	}

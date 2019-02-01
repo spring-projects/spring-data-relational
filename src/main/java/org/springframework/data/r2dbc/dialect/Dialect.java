@@ -23,17 +23,6 @@ public interface Dialect {
 	BindMarkersFactory getBindMarkersFactory();
 
 	/**
-	 * Returns the clause to include for returning generated keys. The returned query is directly appended to
-	 * {@code INSERT} statements.
-	 *
-	 * @return the clause to include for returning generated keys.
-	 * @deprecated to be removed after upgrading to R2DBC 1.0M7 in favor of using the driver's direct support for
-	 *             retrieving generated keys.
-	 */
-	@Deprecated
-	String generatedKeysClause();
-
-	/**
 	 * Return a collection of types that are natively supported by this database/driver. Defaults to
 	 * {@link Collections#emptySet()}.
 	 *

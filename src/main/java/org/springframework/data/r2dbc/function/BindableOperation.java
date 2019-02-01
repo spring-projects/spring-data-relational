@@ -24,7 +24,7 @@ public interface BindableOperation extends QueryOperation {
 	 *          {@literal null} values.
 	 * @see Statement#bind
 	 */
-	void bind(Statement<?> statement, String identifier, Object value);
+	void bind(Statement statement, String identifier, Object value);
 
 	/**
 	 * Bind a {@literal null} value to the {@link Statement} using the underlying binding strategy.
@@ -34,7 +34,7 @@ public interface BindableOperation extends QueryOperation {
 	 * @param valueType value type, must not be {@literal null}.
 	 * @see Statement#bindNull
 	 */
-	void bindNull(Statement<?> statement, String identifier, Class<?> valueType);
+	void bindNull(Statement statement, String identifier, Class<?> valueType);
 
 	/**
 	 * Bind a {@link SettableValue} to the {@link Statement} using the underlying binding strategy. Binds either the
@@ -45,7 +45,7 @@ public interface BindableOperation extends QueryOperation {
 	 * @see Statement#bind
 	 * @see Statement#bindNull
 	 */
-	default void bind(Statement<?> statement, SettableValue value) {
+	default void bind(Statement statement, SettableValue value) {
 
 		if (value.getValue() == null) {
 			bindNull(statement, value.getIdentifier().toString(), value.getType());

@@ -64,15 +64,6 @@ public class SqlServerDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#returnGeneratedKeys()
-	 */
-	@Override
-	public String generatedKeysClause() {
-		return "select SCOPE_IDENTITY() AS GENERATED_KEYS";
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#getSimpleTypesKeys()
 	 */
 	@Override
