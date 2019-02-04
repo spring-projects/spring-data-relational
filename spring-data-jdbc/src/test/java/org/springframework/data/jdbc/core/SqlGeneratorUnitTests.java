@@ -151,7 +151,7 @@ public class SqlGeneratorUnitTests {
 				+ "dummy_entity.x_other AS x_other, " //
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, "
 				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something " //
-				+ "FROM dummy_entity "
+				+ "FROM dummy_entity " //
 				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
 				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
 				+ "WHERE back-ref = :back-ref");
@@ -168,7 +168,7 @@ public class SqlGeneratorUnitTests {
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, "
 				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something, " //
 				+ "dummy_entity.key-column AS key-column " //
-				+ "FROM dummy_entity "
+				+ "FROM dummy_entity " //
 				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
 				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
 				+ "WHERE back-ref = :back-ref");
@@ -190,7 +190,7 @@ public class SqlGeneratorUnitTests {
 				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, "
 				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something, " //
 				+ "dummy_entity.key-column AS key-column " //
-				+ "FROM dummy_entity "
+				+ "FROM dummy_entity " //
 				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
 				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
 				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
