@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
 
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
@@ -47,6 +48,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
 
 	private ApplicationEventPublisher publisher;
+	private BeanFactory beanFactory;
 	private RelationalMappingContext mappingContext;
 	private RelationalConverter converter;
 	private DataAccessStrategy dataAccessStrategy;
@@ -113,7 +115,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	/**
 	 * @param rowMapperMap can be {@literal null}. {@link #afterPropertiesSet()} defaults to {@link RowMapperMap#EMPTY} if
 	 *          {@literal null}.
-	 *
 	 * @deprecated use {@link #setQueryMappingConfiguration(QueryMappingConfiguration)} instead.
 	 */
 	@Deprecated
@@ -131,6 +132,14 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.converter = converter;
 	}
 
+	@Override
+	public void setBeanFactory(BeanFactory beanFactory) {
+
+		super.setBeanFactory(beanFactory);
+
+		this.beanFactory = beanFactory;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#afterPropertiesSet()
@@ -141,12 +150,8 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		Assert.state(this.mappingContext != null, "MappingContext is required and must not be null!");
 		Assert.state(this.converter != null, "RelationalConverter is required and must not be null!");
 
-		if (dataAccessStrategy == null) {
-
-			SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
-			this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, converter,
-					operations);
-		}
+		ensureJdbcOperationsIsInitialized();
+		ensureDataAccessStrategyIsInitialized();
 
 		if (queryMappingConfiguration == null) {
 			this.queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
@@ -154,4 +159,27 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		super.afterPropertiesSet();
 	}
+
+	private void ensureJdbcOperationsIsInitialized() {
+
+		if (operations != null) {
+			return;
+		}
+
+		operations = beanFactory.getBean(NamedParameterJdbcOperations.class);
+	}
+
+	private void ensureDataAccessStrategyIsInitialized() {
+
+		if (dataAccessStrategy != null) {
+			return;
+		}
+
+		dataAccessStrategy = beanFactory.getBeanProvider(DataAccessStrategy.class).getIfAvailable(() -> {
+
+			SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
+			return new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, converter, operations);
+		});
+	}
+
 }

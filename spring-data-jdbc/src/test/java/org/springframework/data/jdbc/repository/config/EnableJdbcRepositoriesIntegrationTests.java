@@ -79,6 +79,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 	@BeforeClass
 	public static void setup() {
+
 		MAPPER_MAP.setAccessible(true);
 		OPERATIONS.setAccessible(true);
 		DATA_ACCESS_STRATEGY.setAccessible(true);
@@ -105,8 +106,9 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
  	@Test // DATAJDBC-293
 	public void jdbcOperationsRef() {
+
 		NamedParameterJdbcOperations operations = (NamedParameterJdbcOperations) ReflectionUtils.getField(OPERATIONS, factoryBean);
-		assertThat(operations).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierJdbcOperations);
+		assertThat(operations).isNotSameAs(defaultOperations).isSameAs(qualifierJdbcOperations);
 
 		DataAccessStrategy dataAccessStrategy = (DataAccessStrategy) ReflectionUtils.getField(DATA_ACCESS_STRATEGY, factoryBean);
 		assertThat(dataAccessStrategy).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierDataAccessStrategy);
