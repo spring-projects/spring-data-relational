@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * @see SimpleTypeHolder
  * @see CustomConversions
  */
-public class BasicJdbcConverter extends BasicRelationalConverter {
+public class BasicJdbcConverter extends BasicRelationalConverter implements JdbcConverter {
 
 	private static final Logger LOG = LoggerFactory.getLogger(BasicJdbcConverter.class);
 
