@@ -30,6 +30,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -88,8 +89,10 @@ public class MyBatisHsqlIntegrationTests {
 		}
 
 		@Bean
+		@Primary
 		DataAccessStrategy dataAccessStrategy(RelationalMappingContext context, RelationalConverter converter,
 				SqlSession sqlSession, EmbeddedDatabase db) {
+
 			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, converter,
 					new NamedParameterJdbcTemplate(db), sqlSession);
 		}

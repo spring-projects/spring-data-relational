@@ -32,6 +32,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -105,6 +106,7 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 		}
 
 		@Bean
+		@Primary
 		MyBatisDataAccessStrategy dataAccessStrategy(SqlSession sqlSession) {
 
 			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession);
