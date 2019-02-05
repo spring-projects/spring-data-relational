@@ -38,7 +38,7 @@ import org.springframework.lang.Nullable;
  * @see SimpleTypeHolder
  * @see CustomConversions
  */
-public class BasicJdbcConverter extends BasicRelationalConverter {
+public class BasicJdbcConverter extends BasicRelationalConverter implements JdbcConverter {
 
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.

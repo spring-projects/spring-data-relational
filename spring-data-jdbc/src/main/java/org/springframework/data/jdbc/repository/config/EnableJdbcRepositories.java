@@ -35,7 +35,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBea
  * @author Greg Turnquist
  * @author Mark Paluch
  * @author Fei Dong
- * @see JdbcConfiguration
+ * @see AbstractJdbcConfiguration
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
