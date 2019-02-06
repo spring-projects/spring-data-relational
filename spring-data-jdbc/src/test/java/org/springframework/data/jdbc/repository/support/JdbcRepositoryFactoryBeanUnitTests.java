@@ -18,12 +18,12 @@ package org.springframework.data.jdbc.repository.support;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.function.Supplier;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.BeanFactory;
@@ -40,8 +40,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.function.Supplier;
 
 /**
  * Tests the dependency injection for {@link JdbcRepositoryFactoryBean}.
@@ -72,13 +70,11 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		// Setup standard configuration
 		factoryBean = new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class);
 
-
 		when(beanFactory.getBean(NamedParameterJdbcOperations.class)).thenReturn(mock(NamedParameterJdbcOperations.class));
 
 		ObjectProvider<DataAccessStrategy> provider = mock(ObjectProvider.class);
 		when(beanFactory.getBeanProvider(DataAccessStrategy.class)).thenReturn(provider);
-		when(provider.getIfAvailable(any()))
-				.then((Answer) invocation -> ((Supplier)invocation.getArgument(0)).get());
+		when(provider.getIfAvailable(any())).then((Answer) invocation -> ((Supplier) invocation.getArgument(0)).get());
 	}
 
 	@Test
@@ -126,6 +122,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	}
 
 	private static class DummyEntity {
+
 		@Id private Long id;
 	}
 

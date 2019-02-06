@@ -150,36 +150,24 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		Assert.state(this.mappingContext != null, "MappingContext is required and must not be null!");
 		Assert.state(this.converter != null, "RelationalConverter is required and must not be null!");
 
-		ensureJdbcOperationsIsInitialized();
-		ensureDataAccessStrategyIsInitialized();
+		if (this.operations == null) {
+			this.operations = beanFactory.getBean(NamedParameterJdbcOperations.class);
+		}
 
-		if (queryMappingConfiguration == null) {
+		if (this.dataAccessStrategy == null) {
+			this.dataAccessStrategy = this.beanFactory.getBeanProvider(DataAccessStrategy.class) //
+					.getIfAvailable(() -> {
+
+						SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(this.mappingContext);
+						return new DefaultDataAccessStrategy(sqlGeneratorSource, this.mappingContext, this.converter,
+								this.operations);
+					});
+		}
+
+		if (this.queryMappingConfiguration == null) {
 			this.queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 		}
 
 		super.afterPropertiesSet();
 	}
-
-	private void ensureJdbcOperationsIsInitialized() {
-
-		if (operations != null) {
-			return;
-		}
-
-		operations = beanFactory.getBean(NamedParameterJdbcOperations.class);
-	}
-
-	private void ensureDataAccessStrategyIsInitialized() {
-
-		if (dataAccessStrategy != null) {
-			return;
-		}
-
-		dataAccessStrategy = beanFactory.getBeanProvider(DataAccessStrategy.class).getIfAvailable(() -> {
-
-			SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
-			return new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, converter, operations);
-		});
-	}
-
 }

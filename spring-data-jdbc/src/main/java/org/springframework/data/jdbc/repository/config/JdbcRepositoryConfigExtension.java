@@ -17,9 +17,7 @@ package org.springframework.data.jdbc.repository.config;
 
 import java.util.Locale;
 
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
@@ -31,14 +29,13 @@ import org.springframework.util.StringUtils;
  *
  * @author Jens Schauder
  * @author Fei Dong
+ * @author Mark Paluch
  */
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 
-	private ListableBeanFactory beanFactory;
-
 	/*
-	* (non-Javadoc)
-	* @see org.springframework.data.repository.config.RepositoryConfigurationExtension#getModuleName()
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtension#getModuleName()
 	 */
 	@Override
 	public String getModuleName() {
@@ -46,8 +43,8 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	}
 
 	/*
-	* (non-Javadoc)
-	* @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getRepositoryFactoryBeanClassName()
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getRepositoryFactoryBeanClassName()
 	 */
 	@Override
 	public String getRepositoryFactoryBeanClassName() {
@@ -55,23 +52,12 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	}
 
 	/*
-	* (non-Javadoc)
-	* @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getModulePrefix()
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport#getModulePrefix()
 	 */
 	@Override
 	protected String getModulePrefix() {
 		return getModuleName().toLowerCase(Locale.US);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.config.RepositoryConfigurationExtension#registerBeansForRoot(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.data.repository.config.RepositoryConfigurationSource)
-	 */
-	public void registerBeansForRoot(BeanDefinitionRegistry registry, RepositoryConfigurationSource configurationSource) {
-
-		if (registry instanceof ListableBeanFactory) {
-			this.beanFactory = (ListableBeanFactory) registry;
-		}
 	}
 
 	/*
@@ -82,12 +68,11 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {
 
 		source.getAttribute("jdbcOperationsRef") //
-				.filter(s -> !StringUtils.isEmpty(s)) //
+				.filter(StringUtils::hasText) //
 				.ifPresent(s -> builder.addPropertyReference("jdbcOperations", s));
 
 		source.getAttribute("dataAccessStrategyRef") //
-				.filter(s -> !StringUtils.isEmpty(s)) //
+				.filter(StringUtils::hasText) //
 				.ifPresent(s -> builder.addPropertyReference("dataAccessStrategy", s));
 	}
-
 }
