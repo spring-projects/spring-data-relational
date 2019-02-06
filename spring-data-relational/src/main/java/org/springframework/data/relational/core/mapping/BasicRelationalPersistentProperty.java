@@ -60,6 +60,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final Lazy<Optional<String>> keyColumnName;
 	private final Lazy<Boolean> isEmbedded;
 	private final Lazy<String> embeddedPrefix;
+	private final Lazy<Class<?>> columnType = Lazy.of(this::doGetColumnType);
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
@@ -130,9 +131,12 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 *
 	 * @return a {@link Class} that is suitable for usage with JDBC drivers
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
-	public Class getColumnType() {
+	public Class<?> getColumnType() {
+		return columnType.get();
+	}
+
+	private Class<?> doGetColumnType() {
 
 		if (isReference()) {
 			return columnTypeForReference();
@@ -146,7 +150,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		Class componentColumnType = columnTypeForNonEntity(getActualType());
 
-		if (isCollectionOfSimpleTypeLike()) {
+		while (componentColumnType.isArray()) {
+			componentColumnType = componentColumnType.getComponentType();
+		}
+
+		if (isCollectionLike() && !isEntity()) {
 			return Array.newInstance(componentColumnType, 0).getClass();
 		}
 

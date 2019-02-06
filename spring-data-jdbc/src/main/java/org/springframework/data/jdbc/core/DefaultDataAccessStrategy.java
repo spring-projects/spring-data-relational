@@ -81,7 +81,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		this.accessStrategy = this;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
@@ -320,7 +320,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			return convertedValue;
 		}
 
-		Class<?> componentType = convertedValue.getClass().getComponentType();
+		Class<?> componentType = convertedValue.getClass();
+		while (componentType.isArray()) {
+			componentType = componentType.getComponentType();
+		}
+
 		String typeName = JDBCType.valueOf(JdbcUtil.sqlTypeFor(componentType)).getName();
 
 		return operations.getJdbcOperations().execute(

@@ -37,9 +37,11 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	String getColumnName();
 
 	/**
-	 * The type to be used to store this property in the database.
+	 * The type to be used to store this property in the database. Multidimensional arrays are unwrapped to reflect a
+	 * top-level array type (e.g. {@code String[][]} returns {@code String[]}).
 	 *
 	 * @return a {@link Class} that is suitable for usage with JDBC drivers.
+	 * @see org.springframework.data.jdbc.support.JdbcUtil#sqlTypeFor(Class)
 	 */
 	Class<?> getColumnType();
 
@@ -84,12 +86,4 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	default String getEmbeddedPrefix() {
 		return null;
 	};
-
-	default boolean isCollectionOfEntitiesLike() {
-		return isCollectionLike() && isEntity();
-	}
-
-	default boolean isCollectionOfSimpleTypeLike() {
-		return isCollectionLike() && !isEntity();
-	}
 }
