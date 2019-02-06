@@ -16,12 +16,9 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.io.Serializable;
-import java.util.Map;
 
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
@@ -35,9 +32,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * Special adapter for Springs {@link org.springframework.beans.factory.FactoryBean} interface to allow easy setup of
@@ -53,14 +48,12 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
 
 	private ApplicationEventPublisher publisher;
-	private ConfigurableListableBeanFactory beanFactory;
+	private BeanFactory beanFactory;
 	private RelationalMappingContext mappingContext;
 	private RelationalConverter converter;
 	private DataAccessStrategy dataAccessStrategy;
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private NamedParameterJdbcOperations operations;
-	private String dataAccessStrategyRef;
-	private String jdbcOperationsRef;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
@@ -110,10 +103,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.dataAccessStrategy = dataAccessStrategy;
 	}
 
-	public void setDataAccessStrategyRef(String dataAccessStrategyRef) {
-		this.dataAccessStrategyRef = dataAccessStrategyRef;
-	}
-
 	/**
 	 * @param queryMappingConfiguration can be {@literal null}. {@link #afterPropertiesSet()} defaults to
 	 *          {@link QueryMappingConfiguration#EMPTY} if {@literal null}.
@@ -126,7 +115,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	/**
 	 * @param rowMapperMap can be {@literal null}. {@link #afterPropertiesSet()} defaults to {@link RowMapperMap#EMPTY} if
 	 *          {@literal null}.
-	 *
 	 * @deprecated use {@link #setQueryMappingConfiguration(QueryMappingConfiguration)} instead.
 	 */
 	@Deprecated
@@ -139,10 +127,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.operations = operations;
 	}
 
-	public void setJdbcOperationsRef(String jdbcOperationsRef) {
-		this.jdbcOperationsRef = jdbcOperationsRef;
-	}
-
 	@Autowired
 	public void setConverter(RelationalConverter converter) {
 		this.converter = converter;
@@ -153,7 +137,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		super.setBeanFactory(beanFactory);
 
-		this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
+		this.beanFactory = beanFactory;
 	}
 
 	/*
@@ -182,8 +166,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 			return;
 		}
 
-		operations = findBeanByNameOrType(NamedParameterJdbcOperations.class, jdbcOperationsRef);
-
+		operations = beanFactory.getBean(NamedParameterJdbcOperations.class);
 	}
 
 	private void ensureDataAccessStrategyIsInitialized() {
@@ -192,44 +175,11 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 			return;
 		}
 
-		dataAccessStrategy = findBeanByNameOrType(DataAccessStrategy.class, dataAccessStrategyRef);
+		dataAccessStrategy = beanFactory.getBeanProvider(DataAccessStrategy.class).getIfAvailable(() -> {
 
-		if (dataAccessStrategy != null) {
-			return;
-		}
-
-		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
-		this.dataAccessStrategy = new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, converter,
-				operations);
+			SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(mappingContext);
+			return new DefaultDataAccessStrategy(sqlGeneratorSource, mappingContext, converter, operations);
+		});
 	}
 
-	@Nullable
-	private <B> B findBeanByNameOrType(Class<B> beanType, String beanName) {
-
-		if (beanFactory == null) {
-			return null;
-		}
-
-		if (!StringUtils.isEmpty(beanName)) {
-			return beanFactory.getBean(beanName, beanType);
-		}
-
-		Map<String, B> beansOfType = beanFactory.getBeansOfType(beanType);
-
-		if (beansOfType.size() == 0) {
-			return null;
-		}
-
-		if (beansOfType.size() == 1) {
-			return beansOfType.values().iterator().next();
-		}
-
-		for (Map.Entry<String, B> entry : beansOfType.entrySet()) {
-			if (beanFactory.getBeanDefinition(entry.getKey()).isPrimary()) {
-				return entry.getValue();
-			}
-		}
-
-		throw new NoUniqueBeanDefinitionException(beanType, beansOfType.keySet());
-	}
 }

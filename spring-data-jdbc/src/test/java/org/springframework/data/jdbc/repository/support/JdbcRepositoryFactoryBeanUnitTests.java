@@ -21,9 +21,13 @@ import static org.mockito.Mockito.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
@@ -33,7 +37,10 @@ import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.function.Supplier;
 
 /**
  * Tests the dependency injection for {@link JdbcRepositoryFactoryBean}.
@@ -44,7 +51,6 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author Oliver Gierke
  * @author Mark Paluch
  * @author Evgeni Dimitrov
- *
  */
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcRepositoryFactoryBeanUnitTests {
@@ -53,6 +59,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 	@Mock DataAccessStrategy dataAccessStrategy;
 	@Mock ApplicationEventPublisher publisher;
+	@Mock(answer = Answers.RETURNS_DEEP_STUBS) ListableBeanFactory beanFactory;
 
 	RelationalMappingContext mappingContext;
 
@@ -63,6 +70,11 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		// Setup standard configuration
 		factoryBean = new JdbcRepositoryFactoryBean<>(DummyEntityRepository.class);
+
+
+		when(beanFactory.getBean(NamedParameterJdbcOperations.class)).thenReturn(mock(NamedParameterJdbcOperations.class));
+		when(beanFactory.getBeanProvider(DataAccessStrategy.class).getIfAvailable(any()))
+				.then((Answer) invocation -> ((Supplier)invocation.getArgument(0)).get());
 	}
 
 	@Test
@@ -72,6 +84,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		factoryBean.setMappingContext(mappingContext);
 		factoryBean.setConverter(new BasicRelationalConverter(mappingContext));
 		factoryBean.setApplicationEventPublisher(publisher);
+		factoryBean.setBeanFactory(beanFactory);
 		factoryBean.afterPropertiesSet();
 
 		assertThat(factoryBean.getObject()).isNotNull();
@@ -88,6 +101,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		factoryBean.setMappingContext(null);
 		factoryBean.setApplicationEventPublisher(publisher);
+		factoryBean.setBeanFactory(beanFactory);
 		factoryBean.afterPropertiesSet();
 	}
 
@@ -97,12 +111,14 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		factoryBean.setMappingContext(mappingContext);
 		factoryBean.setConverter(new BasicRelationalConverter(mappingContext));
 		factoryBean.setApplicationEventPublisher(publisher);
+		factoryBean.setBeanFactory(beanFactory);
 		factoryBean.afterPropertiesSet();
 
 		assertThat(factoryBean.getObject()).isNotNull();
 		assertThat(ReflectionTestUtils.getField(factoryBean, "dataAccessStrategy"))
 				.isInstanceOf(DefaultDataAccessStrategy.class);
-		assertThat(ReflectionTestUtils.getField(factoryBean, "queryMappingConfiguration")).isEqualTo(QueryMappingConfiguration.EMPTY);
+		assertThat(ReflectionTestUtils.getField(factoryBean, "queryMappingConfiguration"))
+				.isEqualTo(QueryMappingConfiguration.EMPTY);
 	}
 
 	private static class DummyEntity {

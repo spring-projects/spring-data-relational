@@ -15,27 +15,14 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.springframework.beans.factory.ListableBeanFactory;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -94,10 +81,13 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 	@Override
 	public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {
 
-		builder.addPropertyValue("jdbcOperationsRef", source.getAttribute("jdbcOperationsRef").orElse(null));
-		builder.addPropertyValue("dataAccessStrategyRef", source.getAttribute("dataAccessStrategyRef").orElse(null));
+		source.getAttribute("jdbcOperationsRef") //
+				.filter(s -> !StringUtils.isEmpty(s)) //
+				.ifPresent(s -> builder.addPropertyReference("jdbcOperations", s));
+
+		source.getAttribute("dataAccessStrategyRef") //
+				.filter(s -> !StringUtils.isEmpty(s)) //
+				.ifPresent(s -> builder.addPropertyReference("dataAccessStrategy", s));
 	}
-
-
 
 }
