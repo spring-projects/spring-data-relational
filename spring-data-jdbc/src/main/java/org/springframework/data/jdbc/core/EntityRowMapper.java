@@ -110,7 +110,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private Object readOrLoadProperty(ResultSet resultSet, @Nullable Object id, RelationalPersistentProperty property,
 			String prefix) {
 
-		if (property.isCollectionOfEntitiesLike() && id != null) {
+		if (property.isCollectionLike() && property.isEntity() && id != null) {
 			return accessStrategy.findAllByProperty(id, property);
 		} else if (property.isMap() && id != null) {
 			return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(accessStrategy.findAllByProperty(id, property));

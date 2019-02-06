@@ -56,6 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Thomas Lang
+ * @author Mark Paluch
  */
 @ContextConfiguration
 @Transactional
@@ -348,6 +349,31 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259
+	public void saveAndLoadAnEntityWithMultidimensionalArray() {
+
+		// MySQL and other do not support array datatypes. See
+		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
+		assumeNot("mysql");
+		assumeNot("mariadb");
+		assumeNot("mssql");
+		assumeNot("hsqldb");
+
+		ArrayOwner arrayOwner = new ArrayOwner();
+		arrayOwner.multidimensional = new String[][] { { "one-a", "two-a", "three-a" }, { "one-b", "two-b", "three-b" } };
+
+		ArrayOwner saved = template.save(arrayOwner);
+
+		assertThat(saved.id).isNotNull();
+
+		ArrayOwner reloaded = template.findById(saved.id, ArrayOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+		assertThat(reloaded.multidimensional)
+				.isEqualTo(new String[][] { { "one-a", "two-a", "three-a" }, { "one-b", "two-b", "three-b" } });
+	}
+
+	@Test // DATAJDBC-259
 	public void saveAndLoadAnEntityWithList() {
 
 		// MySQL and others do not support array datatypes. See
@@ -404,6 +430,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long id;
 
 		String[] digits;
+		String[][] multidimensional;
 	}
 
 	@Table("ARRAY_OWNER")

@@ -134,18 +134,18 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 		SoftAssertions softly = new SoftAssertions();
 
-		softly.assertThat(listOfString.isCollectionOfSimpleTypeLike())
+		softly.assertThat(listOfString.isCollectionLike() && !listOfString.isEntity())
 				.describedAs("listOfString is a Collection of a simple type.").isEqualTo(true);
-		softly.assertThat(arrayOfString.isCollectionOfSimpleTypeLike())
+		softly.assertThat(arrayOfString.isCollectionLike() && !arrayOfString.isEntity())
 				.describedAs("arrayOfString is a Collection of a simple type.").isTrue();
-		softly.assertThat(listOfEntity.isCollectionOfSimpleTypeLike())
+		softly.assertThat(listOfEntity.isCollectionLike() && !listOfEntity.isEntity())
 				.describedAs("listOfEntity  is a Collection of a simple type.").isFalse();
-		softly.assertThat(arrayOfEntity.isCollectionOfSimpleTypeLike())
+		softly.assertThat(arrayOfEntity.isCollectionLike() && !arrayOfEntity.isEntity())
 				.describedAs("arrayOfEntity is a Collection of a simple type.").isFalse();
 
 		BiConsumer<RelationalPersistentProperty, String> checkEitherOr = (p, s) -> softly
-				.assertThat(p.isCollectionOfSimpleTypeLike()).describedAs(s + " contains either simple types or entities")
-				.isNotEqualTo(p.isCollectionOfEntitiesLike());
+				.assertThat(p.isCollectionLike() && !p.isEntity()).describedAs(s + " contains either simple types or entities")
+				.isNotEqualTo(p.isCollectionLike() && p.isEntity());
 
 		checkEitherOr.accept(listOfString,"listOfString");
 		checkEitherOr.accept(arrayOfString,"arrayOfString");
