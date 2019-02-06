@@ -28,6 +28,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
@@ -59,7 +60,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 	@Mock DataAccessStrategy dataAccessStrategy;
 	@Mock ApplicationEventPublisher publisher;
-	@Mock(answer = Answers.RETURNS_DEEP_STUBS) ListableBeanFactory beanFactory;
+	@Mock ListableBeanFactory beanFactory;
 
 	RelationalMappingContext mappingContext;
 
@@ -73,7 +74,10 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 
 		when(beanFactory.getBean(NamedParameterJdbcOperations.class)).thenReturn(mock(NamedParameterJdbcOperations.class));
-		when(beanFactory.getBeanProvider(DataAccessStrategy.class).getIfAvailable(any()))
+
+		ObjectProvider<DataAccessStrategy> provider = mock(ObjectProvider.class);
+		when(beanFactory.getBeanProvider(DataAccessStrategy.class)).thenReturn(provider);
+		when(provider.getIfAvailable(any()))
 				.then((Answer) invocation -> ((Supplier)invocation.getArgument(0)).get());
 	}
 
