@@ -26,6 +26,7 @@ import java.lang.annotation.Target;
  *
  * @author Kazuki Shimizu
  * @author Florian Lüdiger
+ * @author Bastian Wilhelm
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })

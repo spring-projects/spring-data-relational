@@ -24,8 +24,7 @@ import java.lang.annotation.Target;
 /**
  * The annotation to configure the mapping from an collection in the database.
  *
- * @author Kazuki Shimizu
- * @author Florian Lüdiger
+ * @author Bastian Wilhelm
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
