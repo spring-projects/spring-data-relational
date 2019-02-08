@@ -57,7 +57,10 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	private final RelationalMappingContext context;
 	private final Lazy<Optional<String>> columnName;
-	private final Lazy<Optional<String>> keyColumnName;
+	/** @deprecated see {@link Column#keyColumn()} */
+	@Deprecated private final Lazy<Optional<String>> keyColumnName;
+	private final Lazy<Optional<String>> collectionIdColumnName;
+	private final Lazy<Optional<String>> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
 	private final Lazy<String> embeddedPrefix;
 	private final Lazy<Class<?>> columnType = Lazy.of(this::doGetColumnType);
@@ -88,13 +91,25 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		this.columnName = Lazy.of(() -> Optional.ofNullable( //
 				findAnnotation(Column.class)) //
 				.map(Column::value) //
-				.filter(StringUtils::hasText) //
+				.filter(StringUtils::hasText)//
 		);
 
 		this.keyColumnName = Lazy.of(() -> Optional.ofNullable( //
 				findAnnotation(Column.class)) //
 				.map(Column::keyColumn) //
 				.filter(StringUtils::hasText) //
+		);
+
+		this.collectionIdColumnName = Lazy.of(() -> Optional.ofNullable( //
+				findAnnotation(MappedCollection.class)) //
+				.map(MappedCollection::idColumn) //
+				.filter(StringUtils::hasText)//
+		);
+
+		this.collectionKeyColumnName = Lazy.of(() -> Optional.ofNullable( //
+				findAnnotation(MappedCollection.class)) //
+				.map(MappedCollection::keyColumn) //
+				.filter(StringUtils::hasText)//
 		);
 	}
 
@@ -173,14 +188,22 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public String getReverseColumnName() {
-		return columnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(this));
+		return collectionIdColumnName.get().orElseGet(
+				() -> columnName.get().orElseGet(
+						() -> context.getNamingStrategy().getReverseColumnName(this)
+				)
+		);
 	}
 
 	@Override
 	public String getKeyColumn() {
 
 		if (isQualified()) {
-			return keyColumnName.get().orElseGet(() -> context.getNamingStrategy().getKeyColumn(this));
+			return collectionKeyColumnName.get().orElseGet(
+					() -> keyColumnName.get().orElseGet(
+							() -> context.getNamingStrategy().getKeyColumn(this)
+					)
+			);
 		} else {
 			return null;
 		}

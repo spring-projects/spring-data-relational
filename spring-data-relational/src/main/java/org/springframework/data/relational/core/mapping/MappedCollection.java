@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The annotation to configure the mapping from an attribute to a database column.
+ * The annotation to configure the mapping from an collection in the database.
  *
  * @author Kazuki Shimizu
  * @author Florian Lüdiger
@@ -30,18 +30,15 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Documented
-public @interface Column {
+public @interface MappedCollection {
 
 	/**
-	 * The mapping column name.
+	 * The column name for id column in the corresponding relationship table.
 	 */
-	String value() default "";
+	String idColumn() default "";
 
 	/**
-	 * The column name for key columns of List or Map collections.
-	 *
-	 * @deprecated Was used for collection mapping. Use {@link MappedCollection} instead of this.
+	 * The column name for key columns of List or Map collections in the corresponding relationship table.
 	 */
-	@Deprecated
 	String keyColumn() default "";
 }

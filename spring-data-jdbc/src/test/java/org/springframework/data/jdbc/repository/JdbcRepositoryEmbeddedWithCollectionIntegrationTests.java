@@ -32,6 +32,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -254,7 +255,7 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 	@Data
 	private static class Embeddable {
-		@Column(value = "id", keyColumn = "order_key")
+		@MappedCollection(idColumn = "id", keyColumn = "order_key")
 		List<DummyEntity2> list = new ArrayList<>();
 
 		String test;
