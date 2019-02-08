@@ -31,6 +31,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -137,7 +138,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		private final List<String> listField;
 		private final UUID uuid;
 
-		@Column(value = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
+		@MappedCollection(idColumn = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;

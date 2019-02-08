@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,27 +22,27 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The annotation to configure the mapping from an attribute to a database column.
+ * The annotation to configure the mapping from an collection in the database.
  *
- * @author Kazuki Shimizu
- * @author Florian Lüdiger
+ * @since 1.1
  * @author Bastian Wilhelm
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Documented
-public @interface Column {
+public @interface MappedCollection {
 
 	/**
-	 * The mapping column name.
+	 * The column name for id column in the corresponding relationship table.
+	 * If the default value (empty String) is used, the column name is resolved by the used
+	 * {@link NamingStrategy} method {@link NamingStrategy#getReverseColumnName(RelationalPersistentProperty)}
 	 */
-	String value() default "";
+	String idColumn() default "";
 
 	/**
-	 * The column name for key columns of List or Map collections.
-	 *
-	 * @deprecated since 1.1, was used for collection mapping. Use {@link MappedCollection} instead of this.
+	 * The column name for key columns of List or Map collections in the corresponding relationship table.
+	 * If the default value (empty String) is used, the column name is resolved by the used
+	 * {@link NamingStrategy} method {@link NamingStrategy#getKeyColumn(RelationalPersistentProperty)}
 	 */
-	@Deprecated
 	String keyColumn() default "";
 }

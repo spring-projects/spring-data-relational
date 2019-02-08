@@ -182,7 +182,7 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private final List<OtherEntity> listOfEntity;
 		private final OtherEntity[] arrayOfEntity;
 
-		@Column(value = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
+		@MappedCollection(idColumn = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;
