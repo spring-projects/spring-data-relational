@@ -136,7 +136,7 @@ You can change this name by implementing `NamingStrategy.getReverseColumnName(Re
 * `Map<simple type, some entity>` is considered a qualified one-to-many relationship.
 The table of the referenced entity is expected to have two additional columns: One named the same as the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
 You can change this behavior by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
-Alternatively you may annotate the attribute with `@Column(value="your_column_name", keyColumn="your_key_column_name")`
+Alternatively you may annotate the attribute with `@MappedCollection(idColumn="your_column_name", keyColumn="your_key_column_name")`
 
 * `List<some entity>` is mapped as a  `Map<Integer, some entity>`.
 
@@ -233,10 +233,10 @@ public class MyEntity {
 ----
 ====
 
-The {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation can also be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship)
+The {javadoc-base}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation can be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship)
 On all these types the `value` element of the annotation is used to provide a custom name for the foreign key column referencing the id column in the other table.
 In the following example the corresponding table for the `MySubEntity` class has a name column, and the id column of the `MyEntity` id for relationship reasons.
-The name of this `MySubEntity` class's id column can also be customized with the `value` element of the {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation:
+The name of this `MySubEntity` class's id column can also be customized with the `idColumn` element of the {javadoc-base}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation:
 
 ====
 [source, java]
@@ -245,7 +245,7 @@ public class MyEntity {
     @Id
     Integer id;
 
-    @Column("CUSTOM_COLUMN_NAME")
+    @MappedCollection(idColumn = "CUSTOM_COLUMN_NAME")
     Set<MySubEntity> name;
 }
 
@@ -256,7 +256,7 @@ public class MySubEntity {
 ====
 
 When using `List` and `Map` you must have an additional column for the position of a dataset in the `List` or the key value of the entity in the `Map`.
-This additional column name may be customized with the `keyColumn` Element of the {javadoc-base}org/springframework/data/relational/core/mapping/Column.html[`@Column`] annotation:
+This additional column name may be customized with the `keyColumn` Element of the {javadoc-base}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation:
 
 ====
 [source, java]
@@ -265,7 +265,7 @@ public class MyEntity {
     @Id
     Integer id;
 
-    @Column(value = "CUSTOM_COLUMN_NAME", keyColumn = "CUSTOM_KEY_COLUMN_NAME")
+    @MappedCollection(idColumn = "CUSTOM_COLUMN_NAME", keyColumn = "CUSTOM_KEY_COLUMN_NAME")
     List<MySubEntity> name;
 }
 
