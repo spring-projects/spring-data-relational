@@ -33,24 +33,35 @@ import org.springframework.data.relational.core.sql.Where;
  */
 class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
+	private final RenderContext context;
+
 	private StringBuilder builder = new StringBuilder();
 	private StringBuilder selectList = new StringBuilder();
 	private StringBuilder from = new StringBuilder();
 	private StringBuilder join = new StringBuilder();
 	private StringBuilder where = new StringBuilder();
 
-	private SelectListVisitor selectListVisitor = new SelectListVisitor(selectList::append);
-	private OrderByClauseVisitor orderByClauseVisitor = new OrderByClauseVisitor();
-	private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor(it -> {
+	private SelectListVisitor selectListVisitor;
+	private OrderByClauseVisitor orderByClauseVisitor;
+	private FromClauseVisitor fromClauseVisitor;
+	private WhereClauseVisitor whereClauseVisitor;
 
-		if (from.length() != 0) {
-			from.append(", ");
-		}
+	SelectStatementVisitor(RenderContext context) {
 
-		from.append(it);
-	});
+		this.context = context;
+		this.selectListVisitor = new SelectListVisitor(context, selectList::append);
+		this.orderByClauseVisitor = new OrderByClauseVisitor(context);
+		this.fromClauseVisitor = new FromClauseVisitor(context, it -> {
 
-	private WhereClauseVisitor whereClauseVisitor = new WhereClauseVisitor(where::append);
+			if (from.length() != 0) {
+				from.append(", ");
+			}
+
+			from.append(it);
+		});
+
+		this.whereClauseVisitor = new WhereClauseVisitor(context, where::append);
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -72,7 +83,7 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		}
 
 		if (segment instanceof Join) {
-			return Delegation.delegateTo(new JoinVisitor(it -> {
+			return Delegation.delegateTo(new JoinVisitor(context, it -> {
 
 				if (join.length() != 0) {
 					join.append(' ');

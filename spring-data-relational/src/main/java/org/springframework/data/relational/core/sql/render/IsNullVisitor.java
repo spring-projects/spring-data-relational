@@ -29,7 +29,8 @@ class IsNullVisitor extends TypedSingleConditionRenderSupport<IsNull> {
 	private final RenderTarget target;
 	private final StringBuilder part = new StringBuilder();
 
-	IsNullVisitor(RenderTarget target) {
+	IsNullVisitor(RenderContext context, RenderTarget target) {
+		super(context);
 		this.target = target;
 	}
 

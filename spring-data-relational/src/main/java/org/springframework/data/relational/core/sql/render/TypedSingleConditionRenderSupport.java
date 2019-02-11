@@ -28,7 +28,12 @@ import org.springframework.util.Assert;
  */
 abstract class TypedSingleConditionRenderSupport<T extends Visitable & Condition> extends TypedSubtreeVisitor<T> {
 
+	private final RenderContext context;
 	private PartRenderer current;
+
+	TypedSingleConditionRenderSupport(RenderContext context) {
+		this.context = context;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -38,13 +43,13 @@ abstract class TypedSingleConditionRenderSupport<T extends Visitable & Condition
 	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Expression) {
-			ExpressionVisitor visitor = new ExpressionVisitor();
+			ExpressionVisitor visitor = new ExpressionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Condition) {
-			ConditionVisitor visitor = new ConditionVisitor();
+			ConditionVisitor visitor = new ConditionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}

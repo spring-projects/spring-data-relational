@@ -27,8 +27,14 @@ import org.springframework.data.relational.core.sql.Visitable;
  */
 class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements PartRenderer {
 
+	private final RenderContext context;
+
 	private final StringBuilder builder = new StringBuilder();
 	private boolean first = true;
+
+	OrderByClauseVisitor(RenderContext context) {
+		this.context = context;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -70,7 +76,7 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Column) {
-			builder.append(((Column) segment).getReferenceName());
+			builder.append(context.getNamingStrategy().getReferenceName(((Column) segment)));
 		}
 
 		return super.leaveNested(segment);

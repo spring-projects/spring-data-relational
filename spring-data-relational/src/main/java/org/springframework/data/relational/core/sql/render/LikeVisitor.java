@@ -30,12 +30,14 @@ import org.springframework.lang.Nullable;
  */
 class LikeVisitor extends FilteredSubtreeVisitor {
 
+	private final RenderContext context;
 	private final RenderTarget target;
 	private final StringBuilder part = new StringBuilder();
 	private @Nullable PartRenderer current;
 
-	LikeVisitor(Like condition, RenderTarget target) {
+	LikeVisitor(Like condition, RenderContext context, RenderTarget target) {
 		super(it -> it == condition);
+		this.context = context;
 		this.target = target;
 	}
 
@@ -47,13 +49,13 @@ class LikeVisitor extends FilteredSubtreeVisitor {
 	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Expression) {
-			ExpressionVisitor visitor = new ExpressionVisitor();
+			ExpressionVisitor visitor = new ExpressionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Condition) {
-			ConditionVisitor visitor = new ConditionVisitor();
+			ConditionVisitor visitor = new ConditionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}

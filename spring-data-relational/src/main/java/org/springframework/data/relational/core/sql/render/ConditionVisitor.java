@@ -39,7 +39,12 @@ import org.springframework.lang.Nullable;
  */
 class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRenderer {
 
+	private final RenderContext context;
 	private StringBuilder builder = new StringBuilder();
+
+	ConditionVisitor(RenderContext context) {
+		this.context = context;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -57,27 +62,27 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 	private DelegatingVisitor getDelegation(Condition segment) {
 
 		if (segment instanceof AndCondition) {
-			return new MultiConcatConditionVisitor((AndCondition) segment, builder::append);
+			return new MultiConcatConditionVisitor(context, (AndCondition) segment, builder::append);
 		}
 
 		if (segment instanceof OrCondition) {
-			return new MultiConcatConditionVisitor((OrCondition) segment, builder::append);
+			return new MultiConcatConditionVisitor(context, (OrCondition) segment, builder::append);
 		}
 
 		if (segment instanceof IsNull) {
-			return new IsNullVisitor(builder::append);
+			return new IsNullVisitor(context, builder::append);
 		}
 
 		if (segment instanceof Comparison) {
-			return new ComparisonVisitor((Comparison) segment, builder::append);
+			return new ComparisonVisitor(context, (Comparison) segment, builder::append);
 		}
 
 		if (segment instanceof Like) {
-			return new LikeVisitor((Like) segment, builder::append);
+			return new LikeVisitor((Like) segment, context, builder::append);
 		}
 
 		if (segment instanceof In) {
-			return new InVisitor(builder::append);
+			return new InVisitor(context, builder::append);
 		}
 
 		return null;

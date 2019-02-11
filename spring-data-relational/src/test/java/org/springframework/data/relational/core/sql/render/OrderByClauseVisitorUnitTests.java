@@ -25,6 +25,8 @@ import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.Table;
 
 /**
+ * Unit tests for {@link OrderByClauseVisitor}.
+ *
  * @author Mark Paluch
  */
 public class OrderByClauseVisitorUnitTests {
@@ -37,9 +39,23 @@ public class OrderByClauseVisitorUnitTests {
 
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
 
-		OrderByClauseVisitor visitor = new OrderByClauseVisitor();
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
 		select.visit(visitor);
 
 		assertThat(visitor.getRenderedPart().toString()).isEqualTo("emp_name ASC");
+	}
+
+	@Test // DATAJDBC-309
+	public void shouldApplyNamingStrategy() {
+
+		Table employee = SQL.table("employee").as("emp");
+		Column column = employee.column("name").as("emp_name");
+
+		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
+
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.toUpper()));
+		select.visit(visitor);
+
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("EMP_NAME ASC");
 	}
 }

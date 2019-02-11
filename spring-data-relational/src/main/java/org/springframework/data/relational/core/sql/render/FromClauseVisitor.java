@@ -26,22 +26,24 @@ import org.springframework.data.relational.core.sql.Visitable;
  */
 class FromClauseVisitor extends TypedSubtreeVisitor<From> {
 
-	private final StringBuilder builder = new StringBuilder();
+	private final FromTableVisitor visitor;
 	private final RenderTarget parent;
-
+	private final StringBuilder builder = new StringBuilder();
 	private boolean first = true;
-	private final FromTableVisitor visitor = new FromTableVisitor(it -> {
 
-		if (first) {
-			first = false;
-		} else {
-			builder.append(", ");
-		}
+	FromClauseVisitor(RenderContext context, RenderTarget parent) {
 
-		builder.append(it);
-	});
+		this.visitor = new FromTableVisitor(context, it -> {
 
-	FromClauseVisitor(RenderTarget parent) {
+			if (first) {
+				first = false;
+			} else {
+				builder.append(", ");
+			}
+
+			builder.append(it);
+		});
+
 		this.parent = parent;
 	}
 

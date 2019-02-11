@@ -28,10 +28,12 @@ import org.springframework.data.relational.core.sql.Table;
  */
 class FromTableVisitor extends TypedSubtreeVisitor<Table> {
 
+	private final RenderContext context;
 	private final RenderTarget parent;
 
-	FromTableVisitor(RenderTarget parent) {
+	FromTableVisitor(RenderContext context, RenderTarget parent) {
 		super();
+		this.context = context;
 		this.parent = parent;
 	}
 
@@ -44,7 +46,7 @@ class FromTableVisitor extends TypedSubtreeVisitor<Table> {
 
 		StringBuilder builder = new StringBuilder();
 
-		builder.append(segment.getName());
+		builder.append(context.getNamingStrategy().getName(segment));
 		if (segment instanceof Aliased) {
 			builder.append(" AS ").append(((Aliased) segment).getAlias());
 		}

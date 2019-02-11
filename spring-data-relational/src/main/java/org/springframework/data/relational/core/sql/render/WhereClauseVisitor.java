@@ -28,9 +28,10 @@ import org.springframework.data.relational.core.sql.Where;
 class WhereClauseVisitor extends TypedSubtreeVisitor<Where> {
 
 	private final RenderTarget parent;
-	private final ConditionVisitor conditionVisitor = new ConditionVisitor();
+	private final ConditionVisitor conditionVisitor;
 
-	WhereClauseVisitor(RenderTarget parent) {
+	WhereClauseVisitor(RenderContext context, RenderTarget parent) {
+		this.conditionVisitor = new ConditionVisitor(context);
 		this.parent = parent;
 	}
 

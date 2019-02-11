@@ -31,15 +31,17 @@ import org.springframework.lang.Nullable;
  */
 class ComparisonVisitor extends FilteredSubtreeVisitor {
 
+	private final RenderContext context;
 	private final Comparison condition;
 	private final RenderTarget target;
 	private final StringBuilder part = new StringBuilder();
 	private @Nullable PartRenderer current;
 
-	ComparisonVisitor(Comparison condition, RenderTarget target) {
+	ComparisonVisitor(RenderContext context, Comparison condition, RenderTarget target) {
 		super(it -> it == condition);
 		this.condition = condition;
 		this.target = target;
+		this.context = context;
 	}
 
 	/*
@@ -50,13 +52,13 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Expression) {
-			ExpressionVisitor visitor = new ExpressionVisitor();
+			ExpressionVisitor visitor = new ExpressionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Condition) {
-			ConditionVisitor visitor = new ConditionVisitor();
+			ConditionVisitor visitor = new ConditionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}

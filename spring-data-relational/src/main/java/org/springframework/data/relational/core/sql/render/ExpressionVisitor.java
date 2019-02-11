@@ -33,10 +33,13 @@ import org.springframework.data.relational.core.sql.Visitable;
  */
 class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartRenderer {
 
+	private final RenderContext context;
+
 	private CharSequence value = "";
 	private PartRenderer partRenderer;
 
-	ExpressionVisitor() {
+	ExpressionVisitor(RenderContext context) {
+		this.context = context;
 	}
 
 	/*
@@ -48,13 +51,17 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 
 		if (segment instanceof SubselectExpression) {
 
-			SelectStatementVisitor visitor = new SelectStatementVisitor();
+			SelectStatementVisitor visitor = new SelectStatementVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Column) {
-			value = ((Column) segment).getTable().getReferenceName() + "." + ((Column) segment).getReferenceName();
+
+			RenderNamingStrategy namingStrategy = context.getNamingStrategy();
+			Column column = (Column) segment;
+
+			value = namingStrategy.getReferenceName(column.getTable()) + "." + namingStrategy.getReferenceName(column);
 		} else if (segment instanceof BindMarker) {
 
 			if (segment instanceof Named) {
@@ -75,7 +82,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Condition) {
-			ConditionVisitor visitor = new ConditionVisitor();
+			ConditionVisitor visitor = new ConditionVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		}

@@ -28,8 +28,10 @@ import org.springframework.util.Assert;
 public class NaiveSqlRenderer {
 
 	private final Select select;
+	private final RenderContext context;
 
-	private NaiveSqlRenderer(Select select) {
+	private NaiveSqlRenderer(Select select, RenderContext context) {
+		this.context = context;
 
 		Assert.notNull(select, "Select must not be null!");
 
@@ -43,7 +45,18 @@ public class NaiveSqlRenderer {
 	 * @return the renderer.
 	 */
 	public static NaiveSqlRenderer create(Select select) {
-		return new NaiveSqlRenderer(select);
+		return new NaiveSqlRenderer(select, new SimpleRenderContext(NamingStrategies.asIs()));
+	}
+
+	/**
+	 * Creates a new {@link NaiveSqlRenderer} using a {@link RenderContext}.
+	 *
+	 * @param select must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @return the renderer.
+	 */
+	public static NaiveSqlRenderer create(Select select, RenderContext context) {
+		return new NaiveSqlRenderer(select, context);
 	}
 
 	/**
@@ -63,7 +76,7 @@ public class NaiveSqlRenderer {
 	 */
 	public String render() {
 
-		SelectStatementVisitor visitor = new SelectStatementVisitor();
+		SelectStatementVisitor visitor = new SelectStatementVisitor(context);
 		select.visit(visitor);
 
 		return visitor.getRenderedPart().toString();

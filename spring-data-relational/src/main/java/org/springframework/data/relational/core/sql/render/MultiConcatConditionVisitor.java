@@ -32,14 +32,14 @@ class MultiConcatConditionVisitor extends FilteredSingleConditionRenderSupport {
 	private final String concat;
 	private final StringBuilder part = new StringBuilder();
 
-	MultiConcatConditionVisitor(AndCondition condition, RenderTarget target) {
-		super(it -> it == condition);
+	MultiConcatConditionVisitor(RenderContext context, AndCondition condition, RenderTarget target) {
+		super(context, it -> it == condition);
 		this.target = target;
 		this.concat = " AND ";
 	}
 
-	MultiConcatConditionVisitor(OrCondition condition, RenderTarget target) {
-		super(it -> it == condition);
+	MultiConcatConditionVisitor(RenderContext context, OrCondition condition, RenderTarget target) {
+		super(context, it -> it == condition);
 		this.target = target;
 		this.concat = " OR ";
 	}

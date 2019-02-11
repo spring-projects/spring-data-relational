@@ -30,7 +30,8 @@ class InVisitor extends TypedSingleConditionRenderSupport<In> {
 	private final StringBuilder part = new StringBuilder();
 	private boolean needsComma = false;
 
-	InVisitor(RenderTarget target) {
+	InVisitor(RenderContext context, RenderTarget target) {
+		super(context);
 		this.target = target;
 	}
 

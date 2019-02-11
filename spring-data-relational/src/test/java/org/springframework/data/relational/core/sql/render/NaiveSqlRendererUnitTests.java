@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.sql;
+package org.springframework.data.relational.core.sql.render;
 
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
-import org.springframework.data.relational.core.sql.render.NaiveSqlRenderer;
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Conditions;
+import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.Table;
+import org.springframework.util.StringUtils;
 
 /**
  * Unit tests for {@link NaiveSqlRenderer}.
@@ -183,7 +190,8 @@ public class NaiveSqlRendererUnitTests {
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
 
-		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, SQL.bindMarker(":name"))).build();
+		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, SQL.bindMarker(":name")))
+				.build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name");
 	}
@@ -195,13 +203,11 @@ public class NaiveSqlRendererUnitTests {
 		Column bar = table.column("bar");
 		Column baz = table.column("baz");
 
-		Select select = Select.builder().select(bar).from(table).where(
-				Conditions.isEqual(bar, SQL.bindMarker(":name"))
-						.or(Conditions.isEqual(bar, SQL.bindMarker(":name2")))
-						.and(Conditions.isNull(baz))
-		).build();
+		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, SQL.bindMarker(":name"))
+				.or(Conditions.isEqual(bar, SQL.bindMarker(":name2"))).and(Conditions.isNull(baz))).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name OR foo.bar = :name2 AND foo.baz IS NULL");
+		assertThat(NaiveSqlRenderer.render(select))
+				.isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name OR foo.bar = :name2 AND foo.baz IS NULL");
 	}
 
 	@Test // DATAJDBC-309
@@ -210,9 +216,7 @@ public class NaiveSqlRendererUnitTests {
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
 
-		Select select = Select.builder().select(bar).from(table).where(
-				Conditions.in(bar, SQL.bindMarker(":name"))
-		).build();
+		Select select = Select.builder().select(bar).from(table).where(Conditions.in(bar, SQL.bindMarker(":name"))).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name)");
 	}
@@ -223,9 +227,8 @@ public class NaiveSqlRendererUnitTests {
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
 
-		Select select = Select.builder().select(bar).from(table).where(
-				Conditions.in(bar, SQL.bindMarker(":name"), SQL.bindMarker(":name2"))
-		).build();
+		Select select = Select.builder().select(bar).from(table)
+				.where(Conditions.in(bar, SQL.bindMarker(":name"), SQL.bindMarker(":name2"))).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name, :name2)");
 	}
@@ -243,6 +246,28 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, subselect)).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (SELECT floo.bah FROM floo)");
+		assertThat(NaiveSqlRenderer.render(select))
+				.isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (SELECT floo.bah FROM floo)");
 	}
+
+	@Test // DATAJDBC-309
+	public void shouldConsiderNamingStrategy() {
+
+		Table foo = SQL.table("Foo");
+		Column bar = foo.column("BaR");
+		Column baz = foo.column("BaZ");
+
+		Select select = Select.builder().select(bar).from(foo).where(bar.isEqualTo(baz)).build();
+
+		String upper = NaiveSqlRenderer.create(select, new SimpleRenderContext(NamingStrategies.toUpper())).render();
+		assertThat(upper).isEqualTo("SELECT FOO.BAR FROM FOO WHERE FOO.BAR = FOO.BAZ");
+
+		String lower = NaiveSqlRenderer.create(select, new SimpleRenderContext(NamingStrategies.toLower())).render();
+		assertThat(lower).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = foo.baz");
+
+		String mapped = NaiveSqlRenderer
+				.create(select, new SimpleRenderContext(NamingStrategies.mapWith(StringUtils::uncapitalize))).render();
+		assertThat(mapped).isEqualTo("SELECT foo.baR FROM foo WHERE foo.baR = foo.baZ");
+	}
+
 }

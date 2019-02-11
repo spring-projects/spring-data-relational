@@ -30,13 +30,15 @@ import org.springframework.data.relational.core.sql.Visitable;
  */
 class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartRenderer {
 
+	private final RenderContext context;
 	private final StringBuilder builder = new StringBuilder();
 	private final RenderTarget target;
 	private boolean requiresComma = false;
 	private boolean insideFunction = false; // this is hackery and should be fix with a proper visitor for
 	// subelements.
 
-	SelectListVisitor(RenderTarget target) {
+	SelectListVisitor(RenderContext context, RenderTarget target) {
+		this.context = context;
 		this.target = target;
 	}
 
@@ -80,14 +82,14 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Table) {
-			builder.append(((Table) segment).getReferenceName()).append('.');
+			builder.append(context.getNamingStrategy().getReferenceName((Table) segment)).append('.');
 		}
 
 		if (segment instanceof SimpleFunction) {
 			builder.append(")");
 			requiresComma = true;
 		} else if (segment instanceof Column) {
-			builder.append(((Column) segment).getName());
+			builder.append(context.getNamingStrategy().getName((Column) segment));
 			if (segment instanceof Aliased) {
 				builder.append(" AS ").append(((Aliased) segment).getAlias());
 			}

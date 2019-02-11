@@ -29,12 +29,14 @@ import org.springframework.data.relational.core.sql.Visitable;
  */
 class JoinVisitor extends TypedSubtreeVisitor<Join> {
 
+	private final RenderContext context;
 	private final RenderTarget parent;
 	private final StringBuilder joinClause = new StringBuilder();
 	private boolean inCondition = false;
 	private boolean hasSeenCondition = false;
 
-	JoinVisitor(RenderTarget parent) {
+	JoinVisitor(RenderContext context, RenderTarget parent) {
+		this.context = context;
 		this.parent = parent;
 	}
 
@@ -58,7 +60,7 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Table && !inCondition) {
-			joinClause.append(((Table) segment).getName());
+			joinClause.append(context.getNamingStrategy().getName(((Table) segment)));
 			if (segment instanceof Aliased) {
 				joinClause.append(" AS ").append(((Aliased) segment).getAlias());
 			}

@@ -30,17 +30,20 @@ import org.springframework.util.Assert;
  */
 abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisitor {
 
+	private final RenderContext context;
 	private PartRenderer current;
 
 	/**
 	 * Creates a new {@link FilteredSingleConditionRenderSupport} given the filter {@link Predicate}.
 	 *
+	 * @param context
 	 * @param filter filter predicate to identify when to {@link #enterMatched(Visitable)
 	 *          enter}/{@link #leaveMatched(Visitable) leave} the {@link Visitable segment} that this visitor is
 	 *          responsible for.
 	 */
-	FilteredSingleConditionRenderSupport(Predicate<Visitable> filter) {
+	FilteredSingleConditionRenderSupport(RenderContext context, Predicate<Visitable> filter) {
 		super(filter);
+		this.context = context;
 	}
 
 	/*
@@ -51,13 +54,13 @@ abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisit
 	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Expression) {
-			ExpressionVisitor visitor = new ExpressionVisitor();
+			ExpressionVisitor visitor = new ExpressionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Condition) {
-			ConditionVisitor visitor = new ConditionVisitor();
+			ConditionVisitor visitor = new ConditionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}
