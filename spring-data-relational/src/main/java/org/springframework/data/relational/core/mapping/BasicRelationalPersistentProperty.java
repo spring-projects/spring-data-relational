@@ -21,8 +21,10 @@ import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
@@ -57,8 +59,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	private final RelationalMappingContext context;
 	private final Lazy<Optional<String>> columnName;
-	/** @deprecated see {@link Column#keyColumn()} */
-	@Deprecated private final Lazy<Optional<String>> keyColumnName;
 	private final Lazy<Optional<String>> collectionIdColumnName;
 	private final Lazy<Optional<String>> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
@@ -94,22 +94,34 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.filter(StringUtils::hasText)//
 		);
 
-		this.keyColumnName = Lazy.of(() -> Optional.ofNullable( //
-				findAnnotation(Column.class)) //
-				.map(Column::keyColumn) //
-				.filter(StringUtils::hasText) //
+		this.collectionIdColumnName = Lazy.of(() ->
+				Stream.concat( //
+						Stream.of( //
+								findAnnotation(MappedCollection.class)) //
+								.filter(Objects::nonNull) //
+								.map(MappedCollection::idColumn), //
+						Stream.of( //
+								findAnnotation(Column.class)) //
+								.filter(Objects::nonNull) //
+								.map(Column::value) //
+				)
+						.filter(StringUtils::hasText)
+						.findFirst()
 		);
 
-		this.collectionIdColumnName = Lazy.of(() -> Optional.ofNullable( //
-				findAnnotation(MappedCollection.class)) //
-				.map(MappedCollection::idColumn) //
-				.filter(StringUtils::hasText)//
-		);
-
-		this.collectionKeyColumnName = Lazy.of(() -> Optional.ofNullable( //
-				findAnnotation(MappedCollection.class)) //
-				.map(MappedCollection::keyColumn) //
-				.filter(StringUtils::hasText)//
+		this.collectionKeyColumnName = Lazy.of(() ->
+				Stream.concat( //
+						Stream.of( //
+								findAnnotation(MappedCollection.class)) //
+								.filter(Objects::nonNull) //
+								.map(MappedCollection::keyColumn), //
+						Stream.of( //
+								findAnnotation(Column.class)) //
+								.filter(Objects::nonNull) //
+								.map(Column::keyColumn) //
+				)
+						.filter(StringUtils::hasText)
+						.findFirst()
 		);
 	}
 
@@ -188,22 +200,14 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public String getReverseColumnName() {
-		return collectionIdColumnName.get().orElseGet(
-				() -> columnName.get().orElseGet(
-						() -> context.getNamingStrategy().getReverseColumnName(this)
-				)
-		);
+		return collectionIdColumnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(this));
 	}
 
 	@Override
 	public String getKeyColumn() {
 
 		if (isQualified()) {
-			return collectionKeyColumnName.get().orElseGet(
-					() -> keyColumnName.get().orElseGet(
-							() -> context.getNamingStrategy().getKeyColumn(this)
-					)
-			);
+			return collectionKeyColumnName.get().orElseGet(() -> context.getNamingStrategy().getKeyColumn(this));
 		} else {
 			return null;
 		}
