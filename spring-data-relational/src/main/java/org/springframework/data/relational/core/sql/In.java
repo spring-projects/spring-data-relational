@@ -63,7 +63,7 @@ public class In extends AbstractSegment implements Condition {
 	 * @param arg right hand side (collection {@link Expression}) must not be {@literal null}.
 	 * @return the {@link In} {@link Condition}.
 	 */
-	public static Condition create(Expression columnOrExpression, Expression arg) {
+	public static In create(Expression columnOrExpression, Expression arg) {
 
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(arg, "Expression argument must not be null");
@@ -78,7 +78,7 @@ public class In extends AbstractSegment implements Condition {
 	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
 	 * @return the {@link In} {@link Condition}.
 	 */
-	public static Condition create(Expression columnOrExpression, Collection<? extends Expression> expressions) {
+	public static In create(Expression columnOrExpression, Collection<? extends Expression> expressions) {
 
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(expressions, "Expression argument must not be null");
@@ -93,7 +93,7 @@ public class In extends AbstractSegment implements Condition {
 	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
 	 * @return the {@link In} {@link Condition}.
 	 */
-	public static Condition create(Expression columnOrExpression, Expression... expressions) {
+	public static In create(Expression columnOrExpression, Expression... expressions) {
 
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(expressions, "Expression argument must not be null");

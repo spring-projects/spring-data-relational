@@ -16,11 +16,13 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.AndCondition;
+import org.springframework.data.relational.core.sql.Comparison;
 import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.Equals;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.data.relational.core.sql.IsNull;
+import org.springframework.data.relational.core.sql.Like;
 import org.springframework.data.relational.core.sql.OrCondition;
+import org.springframework.lang.Nullable;
 
 /**
  * {@link org.springframework.data.relational.core.sql.Visitor} delegating {@link Condition} rendering to condition
@@ -31,7 +33,8 @@ import org.springframework.data.relational.core.sql.OrCondition;
  * @see AndCondition
  * @see OrCondition
  * @see IsNull
- * @see Equals
+ * @see Comparison
+ * @see Like
  * @see In
  */
 class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRenderer {
@@ -50,6 +53,7 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 		return visitor != null ? Delegation.delegateTo(visitor) : Delegation.retain();
 	}
 
+	@Nullable
 	private DelegatingVisitor getDelegation(Condition segment) {
 
 		if (segment instanceof AndCondition) {
@@ -64,8 +68,12 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 			return new IsNullVisitor(builder::append);
 		}
 
-		if (segment instanceof Equals) {
-			return new ComparisonVisitor((Equals) segment, builder::append);
+		if (segment instanceof Comparison) {
+			return new ComparisonVisitor((Comparison) segment, builder::append);
+		}
+
+		if (segment instanceof Like) {
+			return new LikeVisitor((Like) segment, builder::append);
 		}
 
 		if (segment instanceof In) {

@@ -15,9 +15,9 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.Comparison;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Like;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
@@ -26,19 +26,16 @@ import org.springframework.lang.Nullable;
  * {@link RenderTarget} to call back for render results.
  *
  * @author Mark Paluch
- * @author Jens Schauder
- * @see Comparison
+ * @see Like
  */
-class ComparisonVisitor extends FilteredSubtreeVisitor {
+class LikeVisitor extends FilteredSubtreeVisitor {
 
-	private final Comparison condition;
 	private final RenderTarget target;
 	private final StringBuilder part = new StringBuilder();
 	private @Nullable PartRenderer current;
 
-	ComparisonVisitor(Comparison condition, RenderTarget target) {
+	LikeVisitor(Like condition, RenderTarget target) {
 		super(it -> it == condition);
-		this.condition = condition;
 		this.target = target;
 	}
 
@@ -73,7 +70,7 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 
 		if (current != null) {
 			if (part.length() != 0) {
-				part.append(' ').append(condition.getComparator()).append(' ');
+				part.append(" LIKE ");
 			}
 
 			part.append(current.getRenderedPart());

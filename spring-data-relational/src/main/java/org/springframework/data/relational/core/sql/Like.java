@@ -18,18 +18,18 @@ package org.springframework.data.relational.core.sql;
 import org.springframework.util.Assert;
 
 /**
- * Equals to {@link Condition} comparing two {@link Expression}s.
+ * LIKE {@link Condition} comparing two {@link Expression}s.
  * <p/>
- * Results in a rendered condition: {@code <left> = <right>}.
+ * Results in a rendered condition: {@code <left> LIKE <right>}.
  *
  * @author Mark Paluch
  */
-public class Equals extends AbstractSegment implements Condition {
+public class Like extends AbstractSegment implements Condition {
 
 	private final Expression left;
 	private final Expression right;
 
-	private Equals(Expression left, Expression right) {
+	private Like(Expression left, Expression right) {
 
 		super(left, right);
 
@@ -38,18 +38,18 @@ public class Equals extends AbstractSegment implements Condition {
 	}
 
 	/**
-	 * Creates a new {@link Equals} {@link Condition} given two {@link Expression}s.
+	 * Creates a new {@link Like} {@link Condition} given two {@link Expression}s.
 	 *
-	 * @param left the left {@link Expression}.
-	 * @param right the right {@link Expression}.
-	 * @return the {@link Equals} condition.
+	 * @param leftColumnOrExpression the left {@link Expression}.
+	 * @param rightColumnOrExpression the right {@link Expression}.
+	 * @return the {@link Like} condition.
 	 */
-	public static Equals create(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+	public static Like create(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
 
 		Assert.notNull(leftColumnOrExpression, "Left expression must not be null!");
 		Assert.notNull(rightColumnOrExpression, "Right expression must not be null!");
 
-		return new Equals(leftColumnOrExpression, rightColumnOrExpression);
+		return new Like(leftColumnOrExpression, rightColumnOrExpression);
 	}
 
 	/**
@@ -68,6 +68,6 @@ public class Equals extends AbstractSegment implements Condition {
 
 	@Override
 	public String toString() {
-		return left.toString() + " = " + right.toString();
+		return left.toString() + " LIKE " + right.toString();
 	}
 }
