@@ -31,7 +31,7 @@
 		<hsqldb.version>2.4.1</hsqldb.version>
 		<postgresql.version>42.2.5</postgresql.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
-		<r2dbc.version>1.0.0.BUILD-SNAPSHOT</r2dbc.version>
+		<r2dbc.version>1.0.0.M7</r2dbc.version>
 		<r2dbc-spi.version>${r2dbc.version}</r2dbc-spi.version>
 		<r2dbc-postgresql.version>${r2dbc.version}</r2dbc-postgresql.version>
 		<r2dbc-h2.version>${r2dbc.version}</r2dbc-h2.version>
