@@ -29,6 +29,7 @@ import java.util.stream.StreamSupport;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -37,6 +38,7 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -87,10 +89,24 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+		return insert(instance, domainType, JdbcIdentifierBuilder.from(additionalParameters).build());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
+	 */
+	@Override
+	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
-		Map<String, Object> parameters = new LinkedHashMap<>(additionalParameters);
+
+		Map<String, Object> parameters = new LinkedHashMap<>();
+		identifier.forEach(identifierValue -> {
+			parameters.put(identifierValue.getName(),
+					converter.writeValue(identifierValue.getValue(), ClassTypeInformation.from(identifierValue.getTargetType())));
+		});
 
 		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity, "");
 
@@ -282,7 +298,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	private <S, T> MapSqlParameterSource getPropertyMap(final S instance, RelationalPersistentEntity<S> persistentEntity, String prefix) {
+	private <S, T> MapSqlParameterSource getPropertyMap(final S instance, RelationalPersistentEntity<S> persistentEntity,
+			String prefix) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
@@ -294,23 +311,26 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				return;
 			}
 
-			if(property.isEmbedded()){
+			if (property.isEmbedded()) {
 
 				Object value = propertyAccessor.getProperty(property);
-				final RelationalPersistentEntity<?> embeddedEntity =  context.getPersistentEntity(property.getType());
-				final MapSqlParameterSource additionalParameters = getPropertyMap((T)value, (RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix());
+				final RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getType());
+				final MapSqlParameterSource additionalParameters = getPropertyMap((T) value,
+						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix());
 				parameters.addValues(additionalParameters.getValues());
 			} else {
 
 				Object value = propertyAccessor.getProperty(property);
 				Object convertedValue = convertForWrite(property, value);
 
-				parameters.addValue(prefix + property.getColumnName(), convertedValue, JdbcUtil.sqlTypeFor(property.getColumnType()));
+				parameters.addValue(prefix + property.getColumnName(), convertedValue,
+						JdbcUtil.sqlTypeFor(property.getColumnType()));
 			}
 		});
 
 		return parameters;
 	}
+
 	@Nullable
 	private Object convertForWrite(RelationalPersistentProperty property, @Nullable Object value) {
 
@@ -327,9 +347,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		String typeName = JDBCType.valueOf(JdbcUtil.sqlTypeFor(componentType)).getName();
 
-		return operations.getJdbcOperations().execute(
-				(Connection c) -> c.createArrayOf(typeName, (Object[]) convertedValue)
-		);
+		return operations.getJdbcOperations()
+				.execute((Connection c) -> c.createArrayOf(typeName, (Object[]) convertedValue));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -354,22 +373,22 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Nullable
 	private <S> Object getIdFromHolder(KeyHolder holder, RelationalPersistentEntity<S> persistentEntity) {
 
-        try {
-            // MySQL just returns one value with a special name
-            return holder.getKey();
-        } catch (DataRetrievalFailureException | InvalidDataAccessApiUsageException e) {
-            // Postgres returns a value for each column
+		try {
+			// MySQL just returns one value with a special name
+			return holder.getKey();
+		} catch (DataRetrievalFailureException | InvalidDataAccessApiUsageException e) {
+			// Postgres returns a value for each column
 			// MS SQL Server returns a value that might be null.
 
-            Map<String, Object> keys = holder.getKeys();
+			Map<String, Object> keys = holder.getKeys();
 
-            if (keys == null || persistentEntity.getIdProperty() == null) {
-                return null;
-            }
+			if (keys == null || persistentEntity.getIdProperty() == null) {
+				return null;
+			}
 
-            return keys.get(persistentEntity.getIdColumn());
-        }
-    }
+			return keys.get(persistentEntity.getIdColumn());
+		}
+	}
 
 	private EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), context, converter, accessStrategy);

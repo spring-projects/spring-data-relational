@@ -127,7 +127,7 @@ class WritingContext {
 				@SuppressWarnings("unchecked")
 				Pair<Object, Object> value = (Pair) node.getValue();
 				insert = new DbAction.Insert<>(value.getSecond(), path, getAction(node.getParent()));
-				insert.getAdditionalValues().put(node.getPath().getRequiredLeafProperty().getKeyColumn(), value.getFirst());
+				insert.getQualifiers().put(node.getPath(), value.getFirst());
 
 			} else {
 				insert = new DbAction.Insert<>(node.getValue(), path, getAction(node.getParent()));

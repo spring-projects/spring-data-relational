@@ -27,7 +27,10 @@ import java.util.Set;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * Unit tests for the {@link AggregateChange}.
@@ -52,7 +55,7 @@ public class AggregateChangeUnitTests {
 
 		DbAction.Insert<Object> insert = new DbAction.Insert<>(value,
 				context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert);
-		insert.getAdditionalValues().put("dummy_entity_key", key);
+		insert.getQualifiers().put(toPath(propertyName, DummyEntity.class), key);
 
 		return insert;
 	}
@@ -110,6 +113,14 @@ public class AggregateChangeUnitTests {
 		DummyEntity result = propertyAccessor.getBean();
 		assertThat(result.contentMap.entrySet()).extracting(e -> e.getKey(), e -> e.getValue().id)
 				.containsExactlyInAnyOrder(tuple("one", 23));
+	}
+
+	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class source) {
+
+		PersistentPropertyPaths<?, RelationalPersistentProperty> persistentPropertyPaths = context
+				.findPersistentPropertyPaths(source, p -> true);
+
+		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst().orElse(null);
 	}
 
 	private static class DummyEntity {

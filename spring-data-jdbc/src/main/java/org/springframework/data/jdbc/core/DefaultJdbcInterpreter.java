@@ -18,9 +18,10 @@ package org.springframework.data.jdbc.core;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
@@ -58,7 +59,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(Insert<T> insert) {
 
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), getParentKeys(insert));
 
 		insert.setGeneratedId(id);
 	}
@@ -101,7 +102,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 		// temporary implementation
 		if (!accessStrategy.update(merge.getEntity(), merge.getEntityType())) {
-			accessStrategy.insert(merge.getEntity(), merge.getEntityType(), createAdditionalColumnValues(merge));
+			accessStrategy.insert(merge.getEntity(), merge.getEntityType(), getParentKeys(merge));
 		}
 	}
 
@@ -141,27 +142,21 @@ class DefaultJdbcInterpreter implements Interpreter {
 		accessStrategy.deleteAll(deleteAllRoot.getEntityType());
 	}
 
-	private <T> Map<String, Object> createAdditionalColumnValues(DbAction.WithDependingOn<T> action) {
-
-		Map<String, Object> additionalColumnValues = new HashMap<>();
-		addDependingOnInformation(action, additionalColumnValues);
-		additionalColumnValues.putAll(action.getAdditionalValues());
-
-		return additionalColumnValues;
-	}
-
-	private <T> void addDependingOnInformation(DbAction.WithDependingOn<T> action,
-			Map<String, Object> additionalColumnValues) {
+	private <T> Identifier getParentKeys(DbAction.WithDependingOn<?> action) {
 
 		DbAction.WithEntity<?> dependingOn = action.getDependingOn();
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
 
-		String columnName = getColumnNameForReverseColumn(action);
+		Object id = getIdFromEntityDependingOn(dependingOn, persistentEntity);
+		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
+				.forBackReferences(action.getPropertyPath(), id);
 
-		Object identifier = getIdFromEntityDependingOn(dependingOn, persistentEntity);
+		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers().entrySet()) {
+			identifier = identifier.withQualifier(qualifier.getKey(), qualifier.getValue());
+		}
 
-		additionalColumnValues.put(columnName, identifier);
+		return identifier.build();
 	}
 
 	@Nullable
@@ -182,9 +177,4 @@ class DefaultJdbcInterpreter implements Interpreter {
 		return persistentEntity.getIdentifierAccessor(entity).getIdentifier();
 	}
 
-	private String getColumnNameForReverseColumn(DbAction.WithPropertyPath<?> action) {
-
-		PersistentPropertyPath<RelationalPersistentProperty> path = action.getPropertyPath();
-		return path.getRequiredLeafProperty().getReverseColumnName();
-	}
 }

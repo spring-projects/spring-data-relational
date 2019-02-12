@@ -30,6 +30,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
@@ -37,6 +39,7 @@ import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
  * Unit tests for the {@link RelationalEntityWriter}
@@ -47,8 +50,13 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 @RunWith(MockitoJUnitRunner.class)
 public class RelationalEntityWriterUnitTests {
 
-	public static final long SOME_ENTITY_ID = 23L;
-	RelationalEntityWriter converter = new RelationalEntityWriter(new RelationalMappingContext());
+	static final long SOME_ENTITY_ID = 23L;
+	final RelationalMappingContext context = new RelationalMappingContext();
+	final RelationalEntityWriter converter = new RelationalEntityWriter(context);
+
+	final PersistentPropertyPath<RelationalPersistentProperty> listContainerElements = toPath("elements", ListContainer.class, context);
+
+	private final PersistentPropertyPath<RelationalPersistentProperty> mapContainerElements = toPath("elements", MapContainer.class, context);
 
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {
@@ -60,8 +68,8 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
 				);
@@ -79,8 +87,8 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, EmbeddedReferenceEntity.class, "", EmbeddedReferenceEntity.class, false) //
 				);
@@ -98,8 +106,8 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
 						tuple(Insert.class, Element.class, "other", Element.class, true) //
@@ -117,8 +125,8 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(Delete.class, Element.class, "other", null, false), //
 						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
@@ -131,14 +139,14 @@ public class RelationalEntityWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 		entity.other = new Element(null);
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange<>(Kind.SAVE, SingleReferenceEntity.class,
-				entity);
+		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange<>(Kind.SAVE,
+				SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(Delete.class, Element.class, "other", null, false), //
 						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
@@ -150,14 +158,14 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptySetResultsInSingleInsert() {
 
 		SetContainer entity = new SetContainer(null);
-		AggregateChange<RelationalEntityWriterUnitTests.SetContainer> aggregateChange = new AggregateChange<>(
-				Kind.SAVE, SetContainer.class, entity);
+		AggregateChange<RelationalEntityWriterUnitTests.SetContainer> aggregateChange = new AggregateChange<>(Kind.SAVE,
+				SetContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions()) //
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, SetContainer.class, "", SetContainer.class, false));
 	}
@@ -173,8 +181,8 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions())
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, SetContainer.class, "", SetContainer.class, false), //
 						tuple(Insert.class, Element.class, "elements", Element.class, true), //
@@ -203,8 +211,8 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions())
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false), //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
@@ -239,8 +247,8 @@ public class RelationalEntityWriterUnitTests {
 		converter.write(entity, aggregateChange);
 
 		assertThat(aggregateChange.getActions())
-				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
-						DbActionTestSupport::isWithDependsOn) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
+						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(Delete.class, Element.class, "other.element", null, false),
 						tuple(Delete.class, CascadingReferenceMiddleElement.class, "other", null, false),
@@ -264,7 +272,8 @@ public class RelationalEntityWriterUnitTests {
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
+		assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						tuple(InsertRoot.class, MapContainer.class, ""));
 	}
@@ -341,7 +350,8 @@ public class RelationalEntityWriterUnitTests {
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
+		assertThat(aggregateChange.getActions())
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						tuple(InsertRoot.class, ListContainer.class, ""));
 	}
@@ -418,15 +428,27 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	private Object getMapKey(DbAction a) {
-		return a instanceof DbAction.WithDependingOn
-				? ((DbAction.WithDependingOn) a).getAdditionalValues().get("map_container_key")
+
+		return a instanceof DbAction.WithDependingOn //
+				? ((DbAction.WithDependingOn) a).getQualifiers().get(mapContainerElements) //
 				: null;
 	}
 
 	private Object getListKey(DbAction a) {
-		return a instanceof DbAction.WithDependingOn
-				? ((DbAction.WithDependingOn) a).getAdditionalValues().get("list_container_key")
+
+		return a instanceof DbAction.WithDependingOn //
+				? ((DbAction.WithDependingOn) a).getQualifiers()
+						.get(listContainerElements) //
 				: null;
+	}
+
+	static PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class source,
+																			  RelationalMappingContext context) {
+
+		PersistentPropertyPaths<?, RelationalPersistentProperty> persistentPropertyPaths = context
+				.findPersistentPropertyPaths(source, p -> true);
+
+		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst().orElse(null);
 	}
 
 	@RequiredArgsConstructor

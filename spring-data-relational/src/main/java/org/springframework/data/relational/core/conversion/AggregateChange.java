@@ -114,8 +114,7 @@ public class AggregateChange<T> {
 
 		if (leafProperty.isQualified()) {
 
-			String keyColumn = leafProperty.getKeyColumn();
-			Object keyObject = action.getAdditionalValues().get(keyColumn);
+			Object keyObject = action.getQualifiers().get(propertyPathToEntity);
 
 			if (List.class.isAssignableFrom(leafProperty.getType())) {
 				setIdInElementOfList(converter, action, generatedId, (List) currentPropertyValue, (int) keyObject);

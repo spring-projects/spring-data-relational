@@ -96,7 +96,9 @@ public class JdbcRepositoryWithMapsIntegrationTests {
 	public void saveAndLoadNonEmptyMap() {
 
 		Element element1 = new Element();
+		element1.content = "element 1";
 		Element element2 = new Element();
+		element2.content = "element 2";
 
 		DummyEntity entity = createDummyEntity();
 		entity.content.put("one", element1);

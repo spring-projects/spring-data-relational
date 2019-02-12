@@ -16,11 +16,8 @@
 package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Map;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -31,6 +28,7 @@ import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 
 /**
  * Unit tests for {@link DefaultJdbcInterpreter}
@@ -67,10 +65,12 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<Map<String, Object>> argumentCaptor = ArgumentCaptor.forClass(Map.class);
+		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue()).containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
+		assertThat(argumentCaptor.getValue().getParameters()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	@Test // DATAJDBC-251
@@ -80,10 +80,12 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<Map<String, Object>> argumentCaptor = ArgumentCaptor.forClass(Map.class);
+		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue()).containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
+		assertThat(argumentCaptor.getValue().getParameters()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	@Test // DATAJDBC-251
@@ -93,10 +95,12 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<Map<String, Object>> argumentCaptor = ArgumentCaptor.forClass(Map.class);
+		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue()).containsExactly(new SimpleEntry(BACK_REFERENCE, CONTAINER_ID));
+		assertThat(argumentCaptor.getValue().getParameters()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	static class Container {

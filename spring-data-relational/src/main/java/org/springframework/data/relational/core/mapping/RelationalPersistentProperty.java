@@ -67,6 +67,8 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 */
 	boolean isQualified();
 
+	Class<?> getQualifierColumnType();
+
 	/**
 	 * Returns whether this property is an ordered property.
 	 */
