@@ -75,7 +75,7 @@ public interface DbAction<T> {
 		@NonNull final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
 		@NonNull final WithEntity<?> dependingOn;
 
-		Map<String, Object> additionalValues = new HashMap<>();
+		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = new HashMap<>();
 
 		private Object generatedId;
 
@@ -154,7 +154,7 @@ public interface DbAction<T> {
 		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
 		@NonNull WithEntity<?> dependingOn;
 
-		Map<String, Object> additionalValues = new HashMap<>();
+		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = new HashMap<>();
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -248,7 +248,7 @@ public interface DbAction<T> {
 		 * become available once the parent entity got persisted.
 		 *
 		 * @return Guaranteed to be not {@code null}.
-		 * @see #getAdditionalValues()
+		 * @see #getQualifiers()
 		 */
 		WithEntity<?> getDependingOn();
 
@@ -259,7 +259,7 @@ public interface DbAction<T> {
 		 *
 		 * @return Guaranteed to be not {@code null}.
 		 */
-		Map<String, Object> getAdditionalValues();
+		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers();
 
 		@Override
 		default Class<T> getEntityType() {

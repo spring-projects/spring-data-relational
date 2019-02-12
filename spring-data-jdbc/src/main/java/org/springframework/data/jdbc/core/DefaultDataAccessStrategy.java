@@ -87,10 +87,23 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+		return insert(instance, domainType, ParentKeys.fromNamedValues(additionalParameters));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
+	 */
+	@Override
+	public <T> Object insert(T instance, Class<T> domainType, ParentKeys parentKeys) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
-		Map<String, Object> parameters = new LinkedHashMap<>(additionalParameters);
+
+		Map<String, Object> parameters = new LinkedHashMap<>();
+		for (ParentKeys.ParentKey parameter : parentKeys.getParameters()) {
+			parameters.put(parameter.getName(), converter.writeValue(parameter.getValue(), ClassTypeInformation.from(parameter.getTargetType())));
+		}
 
 		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity, "");
 

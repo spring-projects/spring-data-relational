@@ -40,6 +40,15 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		return delegate.insert(instance, domainType, additionalParameters);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, org.springframework.data.jdbc.core.ParentKeys)
+	 */
+	@Override
+	public <T> Object insert(T instance, Class<T> domainType, ParentKeys parentKeys) {
+		return delegate.insert(instance, domainType, parentKeys);
+	}
+
 	/* 
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)

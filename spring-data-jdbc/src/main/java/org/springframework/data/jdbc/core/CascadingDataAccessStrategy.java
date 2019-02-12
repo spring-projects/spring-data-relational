@@ -47,6 +47,15 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 		return collect(das -> das.insert(instance, domainType, additionalParameters));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, org.springframework.data.jdbc.core.ParentKeys)
+	 */
+	@Override
+	public <T> Object insert(T instance, Class<T> domainType, ParentKeys parentKeys) {
+		return collect(das -> das.insert(instance, domainType, parentKeys));
+	}
+
 	/* 
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
@@ -149,7 +158,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	private <T> T collect(Function<DataAccessStrategy, T> function) {
 
 		// Keep <T> as Eclipse fails to compile if <> is used.
-		return strategies.stream().collect(new FunctionCollector<T>(function));
+		return strategies.stream().collect(new FunctionCollector<>(function));
 	}
 
 	private void collectVoid(Consumer<DataAccessStrategy> consumer) {

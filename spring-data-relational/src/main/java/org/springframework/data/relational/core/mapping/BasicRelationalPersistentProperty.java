@@ -196,6 +196,19 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Override
+	public Class<?> getQualifierColumnType() {
+
+		Assert.isTrue(isQualified(), "The qualifier column type is only defined for properties that are qualified");
+
+		if (isMap()) {
+			return getTypeInformation().getComponentType().getType();
+		}
+
+		// for lists and arrays
+		return Integer.class;
+	}
+
+	@Override
 	public boolean isOrdered() {
 		return isListLike();
 	}

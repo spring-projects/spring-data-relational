@@ -16,9 +16,9 @@
 package org.springframework.data.jdbc.core;
 
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -37,6 +37,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * {@link Interpreter} for {@link DbAction}s using a {@link DataAccessStrategy} for performing actual database
@@ -58,7 +59,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(Insert<T> insert) {
 
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), createAdditionalColumnValues(insert));
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), getParentKeys(insert));
 
 		insert.setGeneratedId(id);
 	}
@@ -101,7 +102,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 		// temporary implementation
 		if (!accessStrategy.update(merge.getEntity(), merge.getEntityType())) {
-			accessStrategy.insert(merge.getEntity(), merge.getEntityType(), createAdditionalColumnValues(merge));
+			accessStrategy.insert(merge.getEntity(), merge.getEntityType(), getParentKeys(merge));
 		}
 	}
 
@@ -141,27 +142,21 @@ class DefaultJdbcInterpreter implements Interpreter {
 		accessStrategy.deleteAll(deleteAllRoot.getEntityType());
 	}
 
-	private <T> Map<String, Object> createAdditionalColumnValues(DbAction.WithDependingOn<T> action) {
-
-		Map<String, Object> additionalColumnValues = new HashMap<>();
-		addDependingOnInformation(action, additionalColumnValues);
-		additionalColumnValues.putAll(action.getAdditionalValues());
-
-		return additionalColumnValues;
-	}
-
-	private <T> void addDependingOnInformation(DbAction.WithDependingOn<T> action,
-			Map<String, Object> additionalColumnValues) {
+	private <T> ParentKeys getParentKeys(DbAction.WithDependingOn<?> action) {
 
 		DbAction.WithEntity<?> dependingOn = action.getDependingOn();
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
 
-		String columnName = getColumnNameForReverseColumn(action);
-
 		Object identifier = getIdFromEntityDependingOn(dependingOn, persistentEntity);
+		ParentKeys parentKeys = ParentKeys //
+				.forBackReferences(action.getPropertyPath(), identifier);
 
-		additionalColumnValues.put(columnName, identifier);
+		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers().entrySet()) {
+			parentKeys = parentKeys.withQualifier(qualifier.getKey(), qualifier.getValue());
+		}
+
+		return parentKeys;
 	}
 
 	@Nullable
@@ -182,9 +177,4 @@ class DefaultJdbcInterpreter implements Interpreter {
 		return persistentEntity.getIdentifierAccessor(entity).getIdentifier();
 	}
 
-	private String getColumnNameForReverseColumn(DbAction.WithPropertyPath<?> action) {
-
-		PersistentPropertyPath<RelationalPersistentProperty> path = action.getPropertyPath();
-		return path.getRequiredLeafProperty().getReverseColumnName();
-	}
 }

@@ -26,6 +26,7 @@ import org.springframework.data.jdbc.core.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
+import org.springframework.data.jdbc.core.ParentKeys;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
@@ -131,6 +132,19 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
 
 		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType, additionalParameters);
+		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
+
+		return myBatisContext.getId();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, ParentKeys)
+	 */
+	@Override
+	public <T> Object insert(T instance, Class<T> domainType, ParentKeys parentKeys) {
+
+		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType, parentKeys.getParametersByName());
 		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
 
 		return myBatisContext.getId();
