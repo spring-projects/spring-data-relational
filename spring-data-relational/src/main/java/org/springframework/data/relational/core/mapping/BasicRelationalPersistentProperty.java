@@ -21,10 +21,8 @@ import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
@@ -32,6 +30,7 @@ import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.Lazy;
+import org.springframework.data.util.Optionals;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -88,41 +87,19 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.map(Embedded::value) //
 				.orElse(""));
 
-		this.columnName = Lazy.of(() -> Optional.ofNullable( //
-				findAnnotation(Column.class)) //
+		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)) //
 				.map(Column::value) //
-				.filter(StringUtils::hasText)//
-		);
+				.filter(StringUtils::hasText));
 
-		this.collectionIdColumnName = Lazy.of(() ->
-				Stream.concat( //
-						Stream.of( //
-								findAnnotation(MappedCollection.class)) //
-								.filter(Objects::nonNull) //
-								.map(MappedCollection::idColumn), //
-						Stream.of( //
-								findAnnotation(Column.class)) //
-								.filter(Objects::nonNull) //
-								.map(Column::value) //
-				)
-						.filter(StringUtils::hasText)
-						.findFirst()
-		);
+		this.collectionIdColumnName = Lazy.of(() -> Optionals
+				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::idColumn),
+						Optional.ofNullable(findAnnotation(Column.class)).map(Column::value)) //
+				.filter(StringUtils::hasText).findFirst());
 
-		this.collectionKeyColumnName = Lazy.of(() ->
-				Stream.concat( //
-						Stream.of( //
-								findAnnotation(MappedCollection.class)) //
-								.filter(Objects::nonNull) //
-								.map(MappedCollection::keyColumn), //
-						Stream.of( //
-								findAnnotation(Column.class)) //
-								.filter(Objects::nonNull) //
-								.map(Column::keyColumn) //
-				)
-						.filter(StringUtils::hasText)
-						.findFirst()
-		);
+		this.collectionKeyColumnName = Lazy.of(() -> Optionals
+				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn),
+						Optional.ofNullable(findAnnotation(Column.class)).map(Column::keyColumn)) //
+				.filter(StringUtils::hasText).findFirst());
 	}
 
 	/*

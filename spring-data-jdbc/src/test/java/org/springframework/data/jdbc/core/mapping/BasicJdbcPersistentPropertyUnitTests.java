@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import lombok.Data;
 
@@ -27,6 +27,7 @@ import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
@@ -42,6 +43,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Florian Lüdiger
+ * @author Mark Paluch
  */
 public class BasicJdbcPersistentPropertyUnitTests {
 
@@ -50,8 +52,6 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 	@Test // DATAJDBC-104
 	public void enumGetsStoredAsString() {
-
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
 			switch (p.getName()) {
@@ -118,6 +118,28 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		softly.assertAll();
 	}
 
+	@Test // DATAJDBC-331
+	public void detectsKeyColumnNameFromColumnAnnotation() {
+
+		RelationalPersistentProperty listProperty = context //
+				.getRequiredPersistentEntity(WithCollections.class) //
+				.getRequiredPersistentProperty("someList");
+
+		assertThat(listProperty.getKeyColumn()).isEqualTo("some_key");
+		assertThat(listProperty.getReverseColumnName()).isEqualTo("some_value");
+	}
+
+	@Test // DATAJDBC-331
+	public void detectsKeyColumnOverrideNameFromMappedCollectionAnnotation() {
+
+		RelationalPersistentProperty listProperty = context //
+				.getRequiredPersistentEntity(WithCollections.class) //
+				.getRequiredPersistentProperty("overrideList");
+
+		assertThat(listProperty.getKeyColumn()).isEqualTo("override_key");
+		assertThat(listProperty.getReverseColumnName()).isEqualTo("override_id");
+	}
+
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Class<?> expected) {
 
@@ -138,7 +160,8 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		private final List<String> listField;
 		private final UUID uuid;
 
-		@MappedCollection(idColumn = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
+		@MappedCollection(idColumn = "dummy_column_name",
+				keyColumn = "dummy_key_column_name") private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;
@@ -155,6 +178,14 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		public List<Date> getListGetter() {
 			return null;
 		}
+	}
+
+	@Data
+	private static class WithCollections {
+
+		@Column(value = "some_value", keyColumn = "some_key") List<Integer> someList;
+		@Column(value = "some_value", keyColumn = "some_key") @MappedCollection(idColumn = "override_id",
+				keyColumn = "override_key") List<Integer> overrideList;
 	}
 
 	@SuppressWarnings("unused")

@@ -20,12 +20,15 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.List;
+import java.util.Map;
 
 /**
- * The annotation to configure the mapping from an collection in the database.
+ * The annotation to configure the mapping for a {@link List} or {@link Map} property in the database.
  *
  * @since 1.1
  * @author Bastian Wilhelm
+ * @author Mark Paluch
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
@@ -33,16 +36,18 @@ import java.lang.annotation.Target;
 public @interface MappedCollection {
 
 	/**
-	 * The column name for id column in the corresponding relationship table.
-	 * If the default value (empty String) is used, the column name is resolved by the used
-	 * {@link NamingStrategy} method {@link NamingStrategy#getReverseColumnName(RelationalPersistentProperty)}
+	 * The column name for id column in the corresponding relationship table. Defaults to {@link NamingStrategy} usage if
+	 * the value is empty.
+	 *
+	 * @see NamingStrategy#getReverseColumnName(RelationalPersistentProperty)
 	 */
 	String idColumn() default "";
 
 	/**
-	 * The column name for key columns of List or Map collections in the corresponding relationship table.
-	 * If the default value (empty String) is used, the column name is resolved by the used
-	 * {@link NamingStrategy} method {@link NamingStrategy#getKeyColumn(RelationalPersistentProperty)}
+	 * The column name for key columns of {@link List} or {@link Map} collections in the corresponding relationship table.
+	 * Defaults to {@link NamingStrategy} usage if the value is empty.
+	 *
+	 * @see NamingStrategy#getKeyColumn(RelationalPersistentProperty)
 	 */
 	String keyColumn() default "";
 }
