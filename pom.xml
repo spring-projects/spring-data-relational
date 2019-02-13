@@ -5,7 +5,7 @@
 
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-jdbc</artifactId>
-    <version>1.0.5.BUILD-SNAPSHOT</version>
+    <version>1.0.5.RELEASE</version>
 
 	<name>Spring Data JDBC</name>
 	<description>Spring Data module for JDBC repositories.</description>
