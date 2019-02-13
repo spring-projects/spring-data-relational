@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.5.RELEASE (2019-02-13)
+---------------------------------------------
+* DATAJDBC-325 - SqlGeneratorSource needs thread safety.
+* DATAJDBC-317 - Release 1.0.5 (Lovelace SR5).
+* DATAJDBC-285 - Add description for `@Table` and `@Column` to the reference documentation.
+
+
 Changes in version 1.0.4.RELEASE (2019-01-10)
 ---------------------------------------------
 * DATAJDBC-313 - Update copyright years to 2019.
