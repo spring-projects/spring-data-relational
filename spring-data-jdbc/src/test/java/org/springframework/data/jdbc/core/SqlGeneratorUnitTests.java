@@ -206,6 +206,17 @@ public class SqlGeneratorUnitTests {
 		assertThat(insert).endsWith("()");
 	}
 
+	@Test // DATAJDBC-334
+	public void getInsertForQuotedColumnName() {
+		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class);
+
+		String insert = sqlGenerator.getInsert(emptySet());
+
+		assertThat(insert).isEqualTo("INSERT INTO entity_with_quoted_column_name " +
+				"(\"test_@123\") " +
+				"VALUES (:test_123)");
+	}
+
 	@Test // DATAJDBC-266
 	public void joinForOneToOneWithoutIdIncludesTheBackReferenceOfTheOuterJoin() {
 
@@ -238,6 +249,17 @@ public class SqlGeneratorUnitTests {
 						+ "SET x_name = :x_name " //
 						+ "WHERE x_id = :x_id" //
 		);
+	}
+
+	@Test // DATAJDBC-334
+	public void getUpdateForQuotedColumnName() {
+		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class);
+
+		String update = sqlGenerator.getUpdate();
+
+		assertThat(update).isEqualTo("UPDATE entity_with_quoted_column_name " +
+				"SET \"test_@123\" = :test_123 " +
+				"WHERE x_id = :x_id");
 	}
 
 	@Test // DATAJDBC-324
@@ -377,5 +399,10 @@ public class SqlGeneratorUnitTests {
 		@Id Long id;
 		String name;
 		@ReadOnlyProperty String readOnlyValue;
+	}
+
+	static class EntityWithQuotedColumnName {
+		@Id Long id;
+		@Column("\"test_@123\"") String name;
 	}
 }
