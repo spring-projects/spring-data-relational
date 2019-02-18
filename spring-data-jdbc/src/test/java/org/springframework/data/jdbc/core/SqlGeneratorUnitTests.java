@@ -259,7 +259,7 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(update).isEqualTo("UPDATE entity_with_quoted_column_name " +
 				"SET \"test_@123\" = :test_123 " +
-				"WHERE x_id = :x_id");
+				"WHERE \"test_@id\" = :test_id");
 	}
 
 	@Test // DATAJDBC-324
@@ -402,7 +402,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	static class EntityWithQuotedColumnName {
-		@Id Long id;
+		@Id @Column("\"test_@id\"") Long id;
 		@Column("\"test_@123\"") String name;
 	}
 }
