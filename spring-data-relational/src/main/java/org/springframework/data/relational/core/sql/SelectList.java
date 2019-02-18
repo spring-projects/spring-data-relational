@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
  * Value object representing the select list (selected columns, functions).
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class SelectList extends AbstractSegment {
 

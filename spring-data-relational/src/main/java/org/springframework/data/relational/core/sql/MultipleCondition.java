@@ -23,6 +23,7 @@ import java.util.StringJoiner;
  * Wrapper for multiple {@link Condition}s.
  *
  * @author Jens Schauder
+ * @since 1.1
  */
 public abstract class MultipleCondition extends AbstractSegment implements Condition {
 

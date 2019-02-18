@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
  * Results in a rendered condition: {@code <left> LIKE <right>}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class Like extends AbstractSegment implements Condition {
 

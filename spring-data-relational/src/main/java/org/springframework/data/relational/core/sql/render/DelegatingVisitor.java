@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  * Delegation is recursive and limited by the stack size.
  *
  * @author Mark Paluch
+ * @since 1.1
  * @see FilteredSubtreeVisitor
  * @see TypedSubtreeVisitor
  */

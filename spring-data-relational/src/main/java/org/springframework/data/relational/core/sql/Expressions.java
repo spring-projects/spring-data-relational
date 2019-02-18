@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql;
  * Factory for common {@link Expression}s.
  *
  * @author Mark Paluch
+ * @since 1.1
  * @see SQL
  * @see Conditions
  * @see Functions
@@ -52,8 +53,7 @@ public abstract class Expressions {
 	}
 
 	// Utility constructor.
-	private Expressions() {
-	}
+	private Expressions() {}
 
 	static class SimpleExpression extends AbstractSegment implements Expression {
 
@@ -69,7 +69,3 @@ public abstract class Expressions {
 		}
 	}
 }
-
-
-
-

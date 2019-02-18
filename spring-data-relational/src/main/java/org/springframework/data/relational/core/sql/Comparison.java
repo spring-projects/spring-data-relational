@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
  * Results in a rendered condition: {@code <left> <comparator> <right>} (e.g. {@code col = 'predicate'}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class Comparison extends AbstractSegment implements Condition {
 

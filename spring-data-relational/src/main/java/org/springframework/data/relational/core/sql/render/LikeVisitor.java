@@ -27,6 +27,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @see Like
+ * @since 1.1
  */
 class LikeVisitor extends FilteredSubtreeVisitor {
 

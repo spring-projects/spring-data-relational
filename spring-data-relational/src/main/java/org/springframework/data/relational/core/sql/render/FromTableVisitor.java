@@ -25,6 +25,7 @@ import org.springframework.data.relational.core.sql.Table;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  */
 class FromTableVisitor extends TypedSubtreeVisitor<Table> {
 

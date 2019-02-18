@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql;
  * Simple condition consisting of {@link Expression}, {@code comparator} and {@code predicate}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class SimpleCondition extends AbstractSegment implements Condition {
 

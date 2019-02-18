@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 /**
  * @author Jens Schauder
+ * @since 1.1
  */
 public class Not extends AbstractSegment implements Condition {
 

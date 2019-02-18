@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  * and delegate nested {@link Expression} and {@link Condition} rendering.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisitor {
 

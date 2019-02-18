@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
  * Renders to: {@code <name>} or {@code <table(alias)>.<name>}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class Column extends AbstractSegment implements Expression, Named {
 

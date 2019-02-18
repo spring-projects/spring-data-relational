@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 /**
  * @author Mark Paluch
+ * @since 1.1
  */
 public class SimpleSegment extends AbstractSegment {
 

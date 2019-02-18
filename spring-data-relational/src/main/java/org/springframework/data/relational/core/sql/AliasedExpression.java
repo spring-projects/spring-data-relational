@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql;
  * An expression with an alias.
  *
  * @author Jens Schauder
+ * @since 1.1
  */
 class AliasedExpression extends AbstractSegment implements Aliased, Expression {
 

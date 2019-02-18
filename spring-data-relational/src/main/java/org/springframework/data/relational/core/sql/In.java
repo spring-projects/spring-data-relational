@@ -28,6 +28,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @since 1.1
  */
 public class In extends AbstractSegment implements Condition {
 

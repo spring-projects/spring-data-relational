@@ -18,15 +18,18 @@ package org.springframework.data.relational.core.sql.render;
 import org.springframework.data.relational.core.sql.Visitor;
 
 /**
- * Callback interface for {@link Visitor visitors} that wish to notify a render target when they are complete with rendering.
+ * Callback interface for {@link Visitor visitors} that wish to notify a render target when they are complete with
+ * rendering.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 @FunctionalInterface
 interface RenderTarget {
 
 	/**
-	 * Callback method that is invoked once the rendering for a part or expression is finished. When called multiple times, it's the responsibility of the implementor to ensure proper concatenation of render results.
+	 * Callback method that is invoked once the rendering for a part or expression is finished. When called multiple
+	 * times, it's the responsibility of the implementor to ensure proper concatenation of render results.
 	 *
 	 * @param sequence the rendered part or expression.
 	 */

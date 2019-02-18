@@ -19,12 +19,15 @@ package org.springframework.data.relational.core.sql;
  * {@link Segment} to select all columns from a {@link Table}.
  * <p/>
  * * Renders to: {@code
- * <table>
+ *
+<table>
  * .*} as in {@code SELECT
- * <table>
+ *
+<table>
  * .* FROM …}.
  *
  * @author Mark Paluch
+ * @since 1.1
  * @see Table#asterisk()
  */
 public class AsteriskFromTable extends AbstractSegment implements Expression {

@@ -30,6 +30,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  * @see AndCondition
  * @see OrCondition
  * @see IsNull

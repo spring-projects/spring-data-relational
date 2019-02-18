@@ -27,6 +27,7 @@ import org.springframework.data.relational.core.sql.Visitable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  */
 class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartRenderer {
 

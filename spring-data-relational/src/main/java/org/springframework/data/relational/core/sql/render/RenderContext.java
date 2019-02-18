@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql.render;
  * Render context providing {@link RenderNamingStrategy} and other resources that are required during rendering.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public interface RenderContext {
 

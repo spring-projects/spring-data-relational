@@ -25,6 +25,7 @@ import org.springframework.util.Assert;
  * Represents a field in the {@code ORDER BY} clause.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class OrderByField extends AbstractSegment {
 
@@ -32,7 +33,7 @@ public class OrderByField extends AbstractSegment {
 	private final @Nullable Sort.Direction direction;
 	private final Sort.NullHandling nullHandling;
 
-	OrderByField(Expression expression, @Nullable Direction direction, NullHandling nullHandling) {
+	private OrderByField(Expression expression, @Nullable Direction direction, NullHandling nullHandling) {
 
 		super(expression);
 		Assert.notNull(expression, "Order by expression must not be null");

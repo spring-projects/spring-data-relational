@@ -16,16 +16,15 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
  * {@code FROM} clause.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class From extends AbstractSegment {
 
@@ -37,7 +36,7 @@ public class From extends AbstractSegment {
 
 	From(List<Table> tables) {
 
-		super(tables.toArray(new Table[]{}));
+		super(tables.toArray(new Table[] {}));
 
 		this.tables = tables;
 	}

@@ -28,6 +28,7 @@ import org.springframework.util.Assert;
  * Factory for {@link RenderNamingStrategy} objects.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public abstract class NamingStrategies {
 

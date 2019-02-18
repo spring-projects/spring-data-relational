@@ -24,6 +24,7 @@ import org.springframework.data.relational.core.sql.Where;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  */
 class WhereClauseVisitor extends TypedSubtreeVisitor<Where> {
 

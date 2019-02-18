@@ -25,6 +25,7 @@ import org.springframework.util.Assert;
  * Factory for common {@link Expression function expressions}.
  *
  * @author Mark Paluch
+ * @since 1.1
  * @see SQL
  * @see Expressions
  * @see Functions
@@ -59,6 +60,5 @@ public class Functions {
 	}
 
 	// Utility constructor.
-	private Functions() {
-	}
+	private Functions() {}
 }

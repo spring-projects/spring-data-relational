@@ -21,6 +21,7 @@ import org.springframework.data.relational.core.sql.Visitor;
  * {@link Visitor} that renders a specific partial clause or expression.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 interface PartRenderer extends Visitor {
 

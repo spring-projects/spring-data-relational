@@ -20,6 +20,7 @@ package org.springframework.data.relational.core.sql;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  * @see Conditions
  */
 public interface Condition extends Segment {

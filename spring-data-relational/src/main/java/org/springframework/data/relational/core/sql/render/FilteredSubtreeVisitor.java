@@ -38,12 +38,13 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @see TypedSubtreeVisitor
+ * @since 1.1
  */
 abstract class FilteredSubtreeVisitor extends DelegatingVisitor {
 
 	private final Predicate<Visitable> filter;
 
-	private Visitable currentSegment;
+	private @Nullable Visitable currentSegment;
 
 	/**
 	 * Creates a new {@link FilteredSubtreeVisitor} given the filter {@link Predicate}.
@@ -65,10 +66,6 @@ abstract class FilteredSubtreeVisitor extends DelegatingVisitor {
 	 *         {@link Delegation#delegateTo(DelegatingVisitor)}.
 	 * @see Delegation#retain()
 	 */
-	/**
-	 * @param segment
-	 * @return
-	 */
 	Delegation enterMatched(Visitable segment) {
 		return Delegation.retain();
 	}
@@ -82,10 +79,6 @@ abstract class FilteredSubtreeVisitor extends DelegatingVisitor {
 	 *         {@link Delegation#delegateTo(DelegatingVisitor)}.
 	 * @see Delegation#retain()
 	 */
-	/**
-	 * @param segment
-	 * @return
-	 */
 	Delegation enterNested(Visitable segment) {
 		return Delegation.retain();
 	}
@@ -98,11 +91,6 @@ abstract class FilteredSubtreeVisitor extends DelegatingVisitor {
 	 * @return delegation options. Can be either {@link Delegation#retain()} or {@link Delegation#leave()}.
 	 * @see Delegation#leave()
 	 */
-	/**
-	 * @param segment
-	 * @return
-	 */
-	@Nullable
 	Delegation leaveMatched(Visitable segment) {
 		return Delegation.leave();
 	}
@@ -114,10 +102,6 @@ abstract class FilteredSubtreeVisitor extends DelegatingVisitor {
 	 * @param segment the segment, must not be {@literal null}.
 	 * @return delegation options. Can be either {@link Delegation#retain()} or {@link Delegation#leave()}.
 	 * @see Delegation#retain()
-	 */
-	/**
-	 * @param segment
-	 * @return
 	 */
 	Delegation leaveNested(Visitable segment) {
 		return Delegation.retain();

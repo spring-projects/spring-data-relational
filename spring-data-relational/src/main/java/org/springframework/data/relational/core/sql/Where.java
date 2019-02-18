@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql;
  * {@code Where} clause.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class Where extends AbstractSegment {
 

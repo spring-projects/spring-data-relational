@@ -24,13 +24,14 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  */
-public class NaiveSqlRenderer {
+public class SqlRenderer {
 
 	private final Select select;
 	private final RenderContext context;
 
-	private NaiveSqlRenderer(Select select, RenderContext context) {
+	private SqlRenderer(Select select, RenderContext context) {
 		this.context = context;
 
 		Assert.notNull(select, "Select must not be null!");
@@ -39,24 +40,24 @@ public class NaiveSqlRenderer {
 	}
 
 	/**
-	 * Creates a new {@link NaiveSqlRenderer}.
+	 * Creates a new {@link SqlRenderer}.
 	 *
 	 * @param select must not be {@literal null}.
 	 * @return the renderer.
 	 */
-	public static NaiveSqlRenderer create(Select select) {
-		return new NaiveSqlRenderer(select, new SimpleRenderContext(NamingStrategies.asIs()));
+	public static SqlRenderer create(Select select) {
+		return new SqlRenderer(select, new SimpleRenderContext(NamingStrategies.asIs()));
 	}
 
 	/**
-	 * Creates a new {@link NaiveSqlRenderer} using a {@link RenderContext}.
+	 * Creates a new {@link SqlRenderer} using a {@link RenderContext}.
 	 *
 	 * @param select must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @return the renderer.
 	 */
-	public static NaiveSqlRenderer create(Select select, RenderContext context) {
-		return new NaiveSqlRenderer(select, context);
+	public static SqlRenderer create(Select select, RenderContext context) {
+		return new SqlRenderer(select, context);
 	}
 
 	/**

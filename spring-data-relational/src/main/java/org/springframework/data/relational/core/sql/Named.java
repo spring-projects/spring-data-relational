@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.sql;
  * Named element exposing a {@link #getName() name}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public interface Named {
 

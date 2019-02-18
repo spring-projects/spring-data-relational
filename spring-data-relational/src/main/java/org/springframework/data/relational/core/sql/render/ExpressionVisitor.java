@@ -22,12 +22,14 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Named;
 import org.springframework.data.relational.core.sql.SubselectExpression;
 import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.lang.Nullable;
 
 /**
  * {@link PartRenderer} for {@link Expression}s.
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  * @see Column
  * @see SubselectExpression
  */
@@ -36,7 +38,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	private final RenderContext context;
 
 	private CharSequence value = "";
-	private PartRenderer partRenderer;
+	private @Nullable PartRenderer partRenderer;
 
 	ExpressionVisitor(RenderContext context) {
 		this.context = context;

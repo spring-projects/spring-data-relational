@@ -21,11 +21,11 @@ import org.springframework.util.Assert;
  * {@code IS NULL} {@link Condition}.
  *
  * @author Jens Schauder
+ * @since 1.1
  */
 public class IsNull extends AbstractSegment implements Condition {
 
 	private final Expression expression;
-
 	private final boolean negated;
 
 	private IsNull(Expression expression) {

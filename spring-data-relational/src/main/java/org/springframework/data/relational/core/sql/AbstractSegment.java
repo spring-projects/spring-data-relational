@@ -21,6 +21,7 @@ import org.springframework.util.Assert;
  * Abstract implementation to support {@link Segment} implementations.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 abstract class AbstractSegment implements Segment {
 

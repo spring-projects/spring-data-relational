@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql.render;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
+
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.Functions;
@@ -28,12 +29,12 @@ import org.springframework.data.relational.core.sql.Table;
 import org.springframework.util.StringUtils;
 
 /**
- * Unit tests for {@link NaiveSqlRenderer}.
+ * Unit tests for {@link SqlRenderer}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public class NaiveSqlRendererUnitTests {
+public class SqlRendererUnitTests {
 
 	@Test // DATAJDBC-309
 	public void shouldRenderSingleColumn() {
@@ -43,7 +44,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(foo).from(bar).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT bar.foo FROM bar");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT bar.foo FROM bar");
 	}
 
 	@Test // DATAJDBC-309
@@ -53,7 +54,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(table.column("foo").as("my_foo")).from(table).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT my_bar.foo AS my_foo FROM bar AS my_bar");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT my_bar.foo AS my_foo FROM bar AS my_bar");
 	}
 
 	@Test // DATAJDBC-309
@@ -65,7 +66,7 @@ public class NaiveSqlRendererUnitTests {
 		Select select = Select.builder().select(table1.column("col1")).select(table2.column("col2")).from(table1)
 				.from(table2).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT table1.col1, table2.col2 FROM table1, table2");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT table1.col1, table2.col2 FROM table1, table2");
 	}
 
 	@Test // DATAJDBC-309
@@ -77,7 +78,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().distinct().select(foo, bar).from(table).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT DISTINCT bar.foo, bar.bar FROM bar");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT DISTINCT bar.foo, bar.bar FROM bar");
 	}
 
 	@Test // DATAJDBC-309
@@ -89,7 +90,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(Functions.count(foo), bar).from(table).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT COUNT(bar.foo), bar.bar FROM bar");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT COUNT(bar.foo), bar.bar FROM bar");
 	}
 
 	@Test // DATAJDBC-309
@@ -102,7 +103,7 @@ public class NaiveSqlRendererUnitTests {
 				.join(department).on(employee.column("department_id")).equals(department.column("id")) //
 				.build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
 				+ "JOIN department ON employee.department_id = department.id");
 	}
 
@@ -117,7 +118,7 @@ public class NaiveSqlRendererUnitTests {
 				.and(employee.column("tenant")).equals(department.column("tenant")) //
 				.build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
 				+ "JOIN department ON employee.department_id = department.id " + "AND employee.tenant = department.tenant");
 	}
 
@@ -134,7 +135,7 @@ public class NaiveSqlRendererUnitTests {
 				.join(tenant).on(tenant.column("tenant_id")).equals(department.column("tenant")) //
 				.build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
 				+ "JOIN department ON employee.department_id = department.id " + "AND employee.tenant = department.tenant "
 				+ "JOIN tenant AS tenant_base ON tenant_base.tenant_id = department.tenant");
 	}
@@ -147,7 +148,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
 
-		assertThat(NaiveSqlRenderer.render(select))
+		assertThat(SqlRenderer.render(select))
 				.isEqualTo("SELECT emp.name AS emp_name FROM employee AS emp ORDER BY emp_name ASC");
 	}
 
@@ -159,7 +160,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from("foo").limitOffset(10, 20).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo LIMIT 10 OFFSET 20");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo LIMIT 10 OFFSET 20");
 	}
 
 	@Test // DATAJDBC-309
@@ -170,7 +171,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(table).where(Conditions.isNull(bar)).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IS NULL");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IS NULL");
 	}
 
 	@Test // DATAJDBC-309
@@ -181,7 +182,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(table).where(Conditions.isNull(bar).not()).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IS NOT NULL");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-309
@@ -193,7 +194,7 @@ public class NaiveSqlRendererUnitTests {
 		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, SQL.bindMarker(":name")))
 				.build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name");
 	}
 
 	@Test // DATAJDBC-309
@@ -206,7 +207,7 @@ public class NaiveSqlRendererUnitTests {
 		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, SQL.bindMarker(":name"))
 				.or(Conditions.isEqual(bar, SQL.bindMarker(":name2"))).and(Conditions.isNull(baz))).build();
 
-		assertThat(NaiveSqlRenderer.render(select))
+		assertThat(SqlRenderer.render(select))
 				.isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name OR foo.bar = :name2 AND foo.baz IS NULL");
 	}
 
@@ -218,7 +219,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(table).where(Conditions.in(bar, SQL.bindMarker(":name"))).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name)");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name)");
 	}
 
 	@Test // DATAJDBC-309
@@ -230,7 +231,7 @@ public class NaiveSqlRendererUnitTests {
 		Select select = Select.builder().select(bar).from(table)
 				.where(Conditions.in(bar, SQL.bindMarker(":name"), SQL.bindMarker(":name2"))).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name, :name2)");
+		assertThat(SqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name, :name2)");
 	}
 
 	@Test // DATAJDBC-309
@@ -246,7 +247,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, subselect)).build();
 
-		assertThat(NaiveSqlRenderer.render(select))
+		assertThat(SqlRenderer.render(select))
 				.isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (SELECT floo.bah FROM floo)");
 	}
 
@@ -259,13 +260,13 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(foo).where(bar.isEqualTo(baz)).build();
 
-		String upper = NaiveSqlRenderer.create(select, new SimpleRenderContext(NamingStrategies.toUpper())).render();
+		String upper = SqlRenderer.create(select, new SimpleRenderContext(NamingStrategies.toUpper())).render();
 		assertThat(upper).isEqualTo("SELECT FOO.BAR FROM FOO WHERE FOO.BAR = FOO.BAZ");
 
-		String lower = NaiveSqlRenderer.create(select, new SimpleRenderContext(NamingStrategies.toLower())).render();
+		String lower = SqlRenderer.create(select, new SimpleRenderContext(NamingStrategies.toLower())).render();
 		assertThat(lower).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = foo.baz");
 
-		String mapped = NaiveSqlRenderer
+		String mapped = SqlRenderer
 				.create(select, new SimpleRenderContext(NamingStrategies.mapWith(StringUtils::uncapitalize))).render();
 		assertThat(mapped).isEqualTo("SELECT foo.baR FROM foo WHERE foo.baR = foo.baZ");
 	}

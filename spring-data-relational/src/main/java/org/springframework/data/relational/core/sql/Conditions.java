@@ -26,6 +26,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  * @see SQL
  * @see Expressions
  * @see Functions

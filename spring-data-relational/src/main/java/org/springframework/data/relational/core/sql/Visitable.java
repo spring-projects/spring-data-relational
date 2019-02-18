@@ -21,6 +21,7 @@ import org.springframework.util.Assert;
  * Interface for implementations that wish to be visited by a {@link Visitor}.
  *
  * @author Mark Paluch
+ * @since 1.1
  * @see Visitor
  */
 public interface Visitable {

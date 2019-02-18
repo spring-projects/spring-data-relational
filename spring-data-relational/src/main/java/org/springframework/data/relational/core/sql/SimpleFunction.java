@@ -24,6 +24,7 @@ import org.springframework.util.StringUtils;
  * Simple function accepting one or more {@link Expression}s.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class SimpleFunction extends AbstractSegment implements Expression {
 

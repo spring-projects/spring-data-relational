@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql.render;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -25,11 +26,12 @@ import org.springframework.util.Assert;
  * delegate nested {@link Expression} and {@link Condition} rendering.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 abstract class TypedSingleConditionRenderSupport<T extends Visitable & Condition> extends TypedSubtreeVisitor<T> {
 
 	private final RenderContext context;
-	private PartRenderer current;
+	private @Nullable PartRenderer current;
 
 	TypedSingleConditionRenderSupport(RenderContext context) {
 		this.context = context;

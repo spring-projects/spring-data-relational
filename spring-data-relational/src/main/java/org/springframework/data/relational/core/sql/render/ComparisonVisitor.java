@@ -27,6 +27,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  * @see Comparison
  */
 class ComparisonVisitor extends FilteredSubtreeVisitor {

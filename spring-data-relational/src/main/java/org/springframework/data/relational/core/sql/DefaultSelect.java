@@ -26,6 +26,7 @@ import org.springframework.util.Assert;
  * Default {@link Select} implementation.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 class DefaultSelect implements Select {
 
@@ -39,7 +40,7 @@ class DefaultSelect implements Select {
 	private final List<OrderByField> orderBy;
 
 	DefaultSelect(boolean distinct, List<Expression> selectList, List<Table> from, long limit, long offset,
-				  List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy) {
+			List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy) {
 
 		this.distinct = distinct;
 		this.selectList = new SelectList(new ArrayList<>(selectList));

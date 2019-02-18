@@ -19,10 +19,12 @@ package org.springframework.data.relational.core.sql;
  * {@link Segment} for a {@code JOIN} declaration.
  * <p/>
  * Renders to: {@code JOIN
- * <table>
+ *
+<table>
  *  ON <condition>}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class Join extends AbstractSegment {
 

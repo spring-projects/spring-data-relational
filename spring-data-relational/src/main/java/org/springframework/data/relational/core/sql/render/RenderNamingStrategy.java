@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @see NamingStrategies
+ * @since 1.1
  */
 public interface RenderNamingStrategy {
 

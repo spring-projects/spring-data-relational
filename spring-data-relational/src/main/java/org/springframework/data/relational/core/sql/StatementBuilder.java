@@ -23,6 +23,7 @@ import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
  * Entrypoint to build SQL statements.
  *
  * @author Mark Paluch
+ * @since 1.1
  * @see SQL
  * @see Expressions
  * @see Conditions

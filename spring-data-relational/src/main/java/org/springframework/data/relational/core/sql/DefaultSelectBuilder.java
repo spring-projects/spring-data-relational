@@ -30,6 +30,7 @@ import org.springframework.lang.Nullable;
  * Default {@link SelectBuilder} implementation.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAndJoin, SelectWhereAndOr {
 
@@ -39,7 +40,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	private long limit = -1;
 	private long offset = -1;
 	private List<Join> joins = new ArrayList<>();
-	private Condition where;
+	private @Nullable Condition where;
 	private List<OrderByField> orderBy = new ArrayList<>();
 
 	/*

@@ -21,6 +21,7 @@ import lombok.Value;
  * Default {@link RenderContext} implementation.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 @Value
 class SimpleRenderContext implements RenderContext {

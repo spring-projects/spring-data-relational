@@ -26,6 +26,7 @@ import org.springframework.data.relational.core.sql.Visitable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @since 1.1
  */
 class JoinVisitor extends TypedSubtreeVisitor<Join> {
 

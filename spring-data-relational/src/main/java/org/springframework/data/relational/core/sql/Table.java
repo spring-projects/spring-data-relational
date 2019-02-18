@@ -29,6 +29,7 @@ import org.springframework.util.Assert;
  * Renders to: {@code <name>} or {@code <name> AS <name>}.
  *
  * @author Mark Paluch
+ * @since 1.1
  */
 public class Table extends AbstractSegment {
 
@@ -135,7 +136,8 @@ public class Table extends AbstractSegment {
 
 	/**
 	 * Creates a {@link AsteriskFromTable} maker selecting all columns from this {@link Table} (e.g. {@code SELECT
-	 * <table>
+	 *
+	<table>
 	 * .*}.
 	 *
 	 * @return the select all marker for this {@link Table}.
@@ -157,7 +159,7 @@ public class Table extends AbstractSegment {
 
 	/**
 	 * @return the table name as it is used in references. This can be the actual {@link #getName() name} or an
-	 * {@link Aliased#getAlias() alias}.
+	 *         {@link Aliased#getAlias() alias}.
 	 */
 	public String getReferenceName() {
 		return name;
