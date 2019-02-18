@@ -21,6 +21,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +41,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Yoichi Imai
+ * @author Bastian Wilhelm
  */
 class SqlGenerator {
 
@@ -60,6 +62,8 @@ class SqlGenerator {
 	private final Lazy<String> deleteByIdSql = Lazy.of(this::createDeleteSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 	private final SqlGeneratorSource sqlGeneratorSource;
+
+	private final Pattern parameterPattern = Pattern.compile("\\W");
 
 	SqlGenerator(RelationalMappingContext context, RelationalPersistentEntity<?> entity,
 			SqlGeneratorSource sqlGeneratorSource) {
@@ -263,6 +267,7 @@ class SqlGenerator {
 		String tableColumns = String.join(", ", columnNamesForInsert);
 
 		String parameterNames = columnNamesForInsert.stream()//
+				.map(this::columnNameToParameterName)
 				.map(n -> String.format(":%s", n))//
 				.collect(Collectors.joining(", "));
 
@@ -274,10 +279,11 @@ class SqlGenerator {
 		String updateTemplate = "UPDATE %s SET %s WHERE %s = :%s";
 
 		String setClause = columnNames.stream()//
-				.map(n -> String.format("%s = :%s", n, n))//
+				.map(n -> String.format("%s = :%s", n, columnNameToParameterName(n))) //
 				.collect(Collectors.joining(", "));
 
-		return String.format(updateTemplate, entity.getTableName(), setClause, entity.getIdColumn(), entity.getIdColumn());
+		return String.format(updateTemplate, entity.getTableName(), setClause, entity.getIdColumn(),
+				columnNameToParameterName(entity.getIdColumn()));
 	}
 
 	private String createDeleteSql() {
@@ -348,5 +354,9 @@ class SqlGenerator {
 				entity.getIdColumn(), //
 				entity.getTableName(), innerCondition //
 		);
+	}
+
+	private String columnNameToParameterName(String columnName){
+		return parameterPattern.matcher(columnName).replaceAll("");
 	}
 }
