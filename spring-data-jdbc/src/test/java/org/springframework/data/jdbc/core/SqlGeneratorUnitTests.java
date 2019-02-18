@@ -42,6 +42,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Oleksandr Kucher
+ * @author Bastian Wilhelm
  */
 public class SqlGeneratorUnitTests {
 
