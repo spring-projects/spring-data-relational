@@ -82,7 +82,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteFirstLevel() {
 
-		String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref"));
 
 		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE dummy_entity = :rootId");
 	}
@@ -90,7 +90,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteAllSecondLevel() {
 
-		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further"));
 
 		assertThat(sql).isEqualTo(
 				"DELETE FROM second_level_referenced_entity WHERE referenced_entity IN (SELECT x_l1id FROM referenced_entity WHERE dummy_entity = :rootId)");
@@ -107,7 +107,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteAllFirstLevel() {
 
-		String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref"));
 
 		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE dummy_entity IS NOT NULL");
 	}
@@ -115,7 +115,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteSecondLevel() {
 
-		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further"));
 
 		assertThat(sql).isEqualTo(
 				"DELETE FROM second_level_referenced_entity WHERE referenced_entity IN (SELECT x_l1id FROM referenced_entity WHERE dummy_entity IS NOT NULL)");
@@ -124,7 +124,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-227
 	public void deleteAllMap() {
 
-		String sql = sqlGenerator.createDeleteAllSql(getPath("mappedElements", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("mappedElements"));
 
 		assertThat(sql).isEqualTo("DELETE FROM element WHERE dummy_entity IS NOT NULL");
 	}
@@ -132,7 +132,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-227
 	public void deleteMapByPath() {
 
-		String sql = sqlGenerator.createDeleteByPath(getPath("mappedElements", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("mappedElements"));
 
 		assertThat(sql).isEqualTo("DELETE FROM element WHERE dummy_entity = :rootId");
 	}
@@ -164,7 +164,7 @@ public class SqlGeneratorUnitTests {
 
 	@Test(expected = IllegalArgumentException.class) // DATAJDBC-130
 	public void findAllByPropertyOrderedWithoutKey() {
-		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, true);
+		sqlGenerator.getFindAllByProperty("back-ref", null, true);
 	}
 
 	@Test // DATAJDBC-131
@@ -192,6 +192,7 @@ public class SqlGeneratorUnitTests {
 
 	@Test // DATAJDBC-334
 	public void getInsertForQuotedColumnName() {
+
 		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class);
 
 		String insert = sqlGenerator.getInsert(emptySet());
@@ -202,6 +203,7 @@ public class SqlGeneratorUnitTests {
 
 	@Test // DATAJDBC-334
 	public void getUpdateForQuotedColumnName() {
+
 		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class);
 
 		String update = sqlGenerator.getUpdate();
@@ -210,8 +212,8 @@ public class SqlGeneratorUnitTests {
 				.endsWith("\"test_@123\" = :test_123 " + "WHERE \"test_@id\" = :test_id");
 	}
 
-	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> base) {
-		return PersistentPropertyPathTestUtils.getPath(context, path, base);
+	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path) {
+		return PersistentPropertyPathTestUtils.getPath(context, path, DummyEntity.class);
 	}
 
 	@SuppressWarnings("unused")
@@ -260,6 +262,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	static class EntityWithQuotedColumnName {
+
 		@Id @Column("\"test_@id\"") Long id;
 		@Column("\"test_@123\"") String name;
 	}
