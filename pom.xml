@@ -35,6 +35,7 @@
 		<r2dbc-releasetrain.version>Arabba-M7</r2dbc-releasetrain.version>
 		<reactive-streams.version>1.0.1</reactive-streams.version>
 		<testcontainers.version>1.10.1</testcontainers.version>
+		<coroutines.version>1.1.1</coroutines.version>
 
 	</properties>
 
@@ -126,6 +127,32 @@
 			<artifactId>reactor-core</artifactId>
 		</dependency>
 
+		<!-- Kotlin extension -->
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib</artifactId>
+			<version>${kotlin}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-reflect</artifactId>
+			<version>${kotlin}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlinx</groupId>
+			<artifactId>kotlinx-coroutines-core</artifactId>
+			<version>${coroutines.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlinx</groupId>
+			<artifactId>kotlinx-coroutines-reactor</artifactId>
+			<version>${coroutines.version}</version>
+			<optional>true</optional>
+		</dependency>
+
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
@@ -195,6 +222,13 @@
 			<groupId>org.testcontainers</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>${testcontainers.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>io.mockk</groupId>
+			<artifactId>mockk</artifactId>
+			<version>1.9.1</version>
 			<scope>test</scope>
 		</dependency>
 
