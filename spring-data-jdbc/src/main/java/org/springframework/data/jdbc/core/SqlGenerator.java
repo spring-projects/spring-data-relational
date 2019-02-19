@@ -360,8 +360,13 @@ class SqlGenerator {
 				.map(n -> String.format("%s = :%s", n, columnNameToParameterName(n))) //
 				.collect(Collectors.joining(", "));
 
-		return String.format(updateTemplate, entity.getTableName(), setClause, entity.getIdColumn(),
-				columnNameToParameterName(entity.getIdColumn()));
+		return String.format( //
+				updateTemplate, //
+				entity.getTableName(), //
+				setClause, //
+				entity.getIdColumn(), //
+				columnNameToParameterName(entity.getIdColumn()) //
+		);
 	}
 
 	private String createDeleteSql() {
