@@ -13,9 +13,9 @@ import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 
 /**
  * Unit tests for {@link EntityRowMapper}.
@@ -101,11 +101,8 @@ public class EntityRowMapperUnitTests {
 		assertThat(result.boxedIntegers).contains(3, 11);
 	}
 
-	@SuppressWarnings("unchecked")
 	private <T> EntityRowMapper<T> getRowMapper(Class<T> type) {
-		RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) strategy.getMappingContext()
-				.getRequiredPersistentEntity(type);
-		return new EntityRowMapper<>(entity, strategy.getRelationalConverter());
+		return new EntityRowMapper<>(type, strategy.getConverter());
 	}
 
 	static class SimpleEntity {

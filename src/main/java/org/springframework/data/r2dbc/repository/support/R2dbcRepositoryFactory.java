@@ -25,11 +25,10 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
 import org.springframework.data.r2dbc.repository.query.StringBasedR2dbcQuery;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
@@ -56,28 +55,25 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private static final SpelExpressionParser EXPRESSION_PARSER = new SpelExpressionParser();
 
 	private final DatabaseClient databaseClient;
-	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
-	private final MappingR2dbcConverter converter;
+	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+	private final R2dbcConverter converter;
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 
 	/**
 	 * Creates a new {@link R2dbcRepositoryFactory} given {@link DatabaseClient} and {@link MappingContext}.
 	 *
 	 * @param databaseClient must not be {@literal null}.
-	 * @param mappingContext must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
 	 */
-	public R2dbcRepositoryFactory(DatabaseClient databaseClient,
-			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext,
-			ReactiveDataAccessStrategy dataAccessStrategy) {
+	public R2dbcRepositoryFactory(DatabaseClient databaseClient, ReactiveDataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
-		Assert.notNull(mappingContext, "MappingContext must not be null!");
 		Assert.notNull(dataAccessStrategy, "ReactiveDataAccessStrategy must not be null!");
 
 		this.databaseClient = databaseClient;
-		this.mappingContext = mappingContext;
+		this.converter = dataAccessStrategy.getConverter();
+		this.mappingContext = this.converter.getMappingContext();
 		this.dataAccessStrategy = dataAccessStrategy;
-		this.converter = new MappingR2dbcConverter(new BasicRelationalConverter(mappingContext));
 	}
 
 	/*
@@ -140,7 +136,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 
 		private final DatabaseClient databaseClient;
 		private final QueryMethodEvaluationContextProvider evaluationContextProvider;
-		private final MappingR2dbcConverter converter;
+		private final R2dbcConverter converter;
 
 		/*
 		 * (non-Javadoc)
@@ -163,7 +159,6 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 			}
 
 			throw new UnsupportedOperationException("Query derivation not yet supported!");
-
 		}
 	}
 }

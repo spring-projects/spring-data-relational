@@ -17,7 +17,7 @@ package org.springframework.data.r2dbc.repository.query;
 
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
-import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
@@ -46,9 +46,8 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * @param expressionParser must not be {@literal null}.
 	 * @param evaluationContextProvider must not be {@literal null}.
 	 */
-	public StringBasedR2dbcQuery(R2dbcQueryMethod queryMethod, DatabaseClient databaseClient,
-			MappingR2dbcConverter converter, SpelExpressionParser expressionParser,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+	public StringBasedR2dbcQuery(R2dbcQueryMethod queryMethod, DatabaseClient databaseClient, R2dbcConverter converter,
+			SpelExpressionParser expressionParser, QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		this(queryMethod.getRequiredAnnotatedQuery(), queryMethod, databaseClient, converter, expressionParser,
 				evaluationContextProvider);
@@ -65,7 +64,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * @param evaluationContextProvider must not be {@literal null}.
 	 */
 	public StringBasedR2dbcQuery(String query, R2dbcQueryMethod method, DatabaseClient databaseClient,
-			MappingR2dbcConverter converter, SpelExpressionParser expressionParser,
+			R2dbcConverter converter, SpelExpressionParser expressionParser,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		super(method, databaseClient, converter);

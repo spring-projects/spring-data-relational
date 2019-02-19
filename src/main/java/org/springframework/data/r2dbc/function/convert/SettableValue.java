@@ -15,57 +15,87 @@
  */
 package org.springframework.data.r2dbc.function.convert;
 
+import java.util.Objects;
+
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * A database value that can be set in a statement.
  *
  * @author Mark Paluch
+ * @see OutboundRow
  */
 public class SettableValue {
 
-	private final Object identifier;
 	private final @Nullable Object value;
 	private final Class<?> type;
 
 	/**
-	 * Create a {@link SettableValue} using an integer index.
+	 * Create a {@link SettableValue}.
 	 *
-	 * @param index
 	 * @param value
 	 * @param type
 	 */
-	public SettableValue(int index, @Nullable Object value, Class<?> type) {
+	public SettableValue(@Nullable Object value, Class<?> type) {
 
-		this.identifier = index;
+		Assert.notNull(type, "Type must not be null");
+
 		this.value = value;
 		this.type = type;
 	}
 
 	/**
-	 * Create a {@link SettableValue} using a {@link String} identifier.
+	 * Returns the column value. Can be {@literal null}.
 	 *
-	 * @param identifier
-	 * @param value
-	 * @param type
+	 * @return the column value. Can be {@literal null}.
+	 * @see #hasValue()
 	 */
-	public SettableValue(String identifier, @Nullable Object value, Class<?> type) {
-
-		this.identifier = identifier;
-		this.value = value;
-		this.type = type;
-	}
-
-	public Object getIdentifier() {
-		return identifier;
-	}
-
 	@Nullable
 	public Object getValue() {
 		return value;
 	}
 
+	/**
+	 * Returns the column value type. Must be also present if the {@code value} is {@literal null}.
+	 *
+	 * @return the column value type
+	 */
 	public Class<?> getType() {
 		return type;
+	}
+
+	/**
+	 * Returns whether this {@link SettableValue} has a value.
+	 *
+	 * @return whether this {@link SettableValue} has a value. {@literal false} if {@link #getValue()} is {@literal null}.
+	 */
+	public boolean hasValue() {
+		return value != null;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof SettableValue))
+			return false;
+		SettableValue value1 = (SettableValue) o;
+		return Objects.equals(value, value1.value) && Objects.equals(type, value1.type);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(value, type);
+	}
+
+	@Override
+	public String toString() {
+		final StringBuffer sb = new StringBuffer();
+		sb.append(getClass().getSimpleName());
+		sb.append(" [value=").append(value);
+		sb.append(", type=").append(type);
+		sb.append(']');
+		return sb.toString();
 	}
 }

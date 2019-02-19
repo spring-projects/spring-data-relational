@@ -45,12 +45,12 @@ public interface BindableOperation extends QueryOperation {
 	 * @see Statement#bind
 	 * @see Statement#bindNull
 	 */
-	default void bind(Statement statement, SettableValue value) {
+	default void bind(Statement statement, String identifier, SettableValue value) {
 
 		if (value.getValue() == null) {
-			bindNull(statement, value.getIdentifier().toString(), value.getType());
+			bindNull(statement, identifier, value.getType());
 		} else {
-			bind(statement, value.getIdentifier().toString(), value.getValue());
+			bind(statement, identifier, value.getValue());
 		}
 	}
 

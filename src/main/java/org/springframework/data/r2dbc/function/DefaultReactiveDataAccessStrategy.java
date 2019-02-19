@@ -19,7 +19,6 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.Statement;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,13 +30,11 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.dialect.ArrayColumns;
 import org.springframework.data.r2dbc.dialect.BindMarker;
@@ -45,11 +42,12 @@ import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.function.convert.EntityRowMapper;
+import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.function.convert.OutboundRow;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.function.convert.SettableValue;
 import org.springframework.data.r2dbc.support.StatementRenderUtil;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -58,7 +56,6 @@ import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -72,7 +69,7 @@ import org.springframework.util.StringUtils;
 public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStrategy {
 
 	private final Dialect dialect;
-	private final RelationalConverter relationalConverter;
+	private final R2dbcConverter converter;
 	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 
 	/**
@@ -84,7 +81,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		this(dialect, createConverter(dialect));
 	}
 
-	private static BasicRelationalConverter createConverter(Dialect dialect) {
+	private static R2dbcConverter createConverter(Dialect dialect) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 
@@ -94,11 +91,11 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		RelationalMappingContext context = new RelationalMappingContext();
 		context.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
 
-		return new BasicRelationalConverter(context, customConversions);
+		return new MappingR2dbcConverter(context, customConversions);
 	}
 
-	public RelationalConverter getRelationalConverter() {
-		return relationalConverter;
+	public R2dbcConverter getConverter() {
+		return converter;
 	}
 
 	public MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getMappingContext() {
@@ -106,19 +103,19 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	}
 
 	/**
-	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect} and {@link RelationalConverter}.
+	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect} and {@link R2dbcConverter}.
 	 *
 	 * @param dialect the {@link Dialect} to use.
 	 * @param converter must not be {@literal null}.
 	 */
 	@SuppressWarnings("unchecked")
-	public DefaultReactiveDataAccessStrategy(Dialect dialect, RelationalConverter converter) {
+	public DefaultReactiveDataAccessStrategy(Dialect dialect, R2dbcConverter converter) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converter, "RelationalConverter must not be null");
 
-		this.relationalConverter = converter;
-		this.mappingContext = (MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty>) relationalConverter
+		this.converter = converter;
+		this.mappingContext = (MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty>) this.converter
 				.getMappingContext();
 		this.dialect = dialect;
 	}
@@ -146,55 +143,47 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getValuesToInsert(java.lang.Object)
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getOutboundRow(java.lang.Object)
 	 */
-	@Override
-	public List<SettableValue> getValuesToInsert(Object object) {
-
-		Class<?> userClass = ClassUtils.getUserClass(object);
-
-		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(userClass);
-		PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(object);
-
-		List<SettableValue> values = new ArrayList<>();
-
-		for (RelationalPersistentProperty property : entity) {
-
-			Object value = getWriteValue(propertyAccessor, property);
-
-			if (value == null) {
-				continue;
-			}
-
-			values.add(new SettableValue(property.getColumnName(), value, property.getType()));
-		}
-
-		return values;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getColumnsToUpdate(java.lang.Object)
-	 */
-	public Map<String, SettableValue> getColumnsToUpdate(Object object) {
+	public OutboundRow getOutboundRow(Object object) {
 
 		Assert.notNull(object, "Entity object must not be null!");
 
-		Class<?> userClass = ClassUtils.getUserClass(object);
-		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(userClass);
+		OutboundRow row = new OutboundRow();
 
-		Map<String, SettableValue> update = new LinkedHashMap<>();
+		converter.write(object, row);
 
-		PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(object);
+		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(ClassUtils.getUserClass(object));
 
 		for (RelationalPersistentProperty property : entity) {
 
-			Object writeValue = getWriteValue(propertyAccessor, property);
+			SettableValue value = row.get(property.getColumnName());
+			if (shouldConvertArrayValue(property, value)) {
 
-			update.put(property.getColumnName(), new SettableValue(property.getColumnName(), writeValue, property.getType()));
+				SettableValue writeValue = getArrayValue(value, property);
+				row.put(property.getColumnName(), writeValue);
+			}
 		}
 
-		return update;
+		return row;
+	}
+
+	private boolean shouldConvertArrayValue(RelationalPersistentProperty property, SettableValue value) {
+		return value != null && value.hasValue() && property.isCollectionLike();
+	}
+
+	private SettableValue getArrayValue(SettableValue value, RelationalPersistentProperty property) {
+
+		ArrayColumns arrayColumns = dialect.getArraySupport();
+
+		if (!arrayColumns.isSupported()) {
+
+			throw new InvalidDataAccessResourceUsageException(
+					"Dialect " + dialect.getClass().getName() + " does not support array columns");
+		}
+
+		return new SettableValue(converter.getArrayValue(arrayColumns, property, value.getValue()),
+				property.getActualType());
 	}
 
 	/*
@@ -232,8 +221,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead) {
-		return new EntityRowMapper<T>((RelationalPersistentEntity) getRequiredPersistentEntity(typeToRead),
-				relationalConverter);
+		return new EntityRowMapper<>(typeToRead, converter);
 	}
 
 	/*
@@ -261,48 +249,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Nullable
 	private RelationalPersistentEntity<?> getPersistentEntity(Class<?> typeToRead) {
 		return mappingContext.getPersistentEntity(typeToRead);
-	}
-
-	@SuppressWarnings("unchecked")
-	private Object getWriteValue(PersistentPropertyAccessor propertyAccessor, RelationalPersistentProperty property) {
-
-		TypeInformation<?> type = property.getTypeInformation();
-		Object value = propertyAccessor.getProperty(property);
-
-		if (type.isCollectionLike()) {
-
-			RelationalPersistentEntity<?> nestedEntity = mappingContext
-					.getPersistentEntity(type.getRequiredActualType().getType());
-
-			if (nestedEntity != null) {
-				throw new InvalidDataAccessApiUsageException("Nested entities are not supported");
-			}
-
-			ArrayColumns arrayColumns = dialect.getArraySupport();
-
-			if (!arrayColumns.isSupported()) {
-
-				throw new InvalidDataAccessResourceUsageException(
-						"Dialect " + dialect.getClass().getName() + " does not support array columns");
-			}
-
-			return getArrayValue(arrayColumns, property, value);
-		}
-
-		return value;
-	}
-
-	private Object getArrayValue(ArrayColumns arrayColumns, RelationalPersistentProperty property, Object value) {
-
-		Class<?> targetType = arrayColumns.getArrayType(property.getActualType());
-
-		if (!property.isArray() || !property.getActualType().equals(targetType)) {
-
-			Object zeroLengthArray = Array.newInstance(targetType, 0);
-			return relationalConverter.getConversionService().convert(value, zeroLengthArray.getClass());
-		}
-
-		return value;
 	}
 
 	/*

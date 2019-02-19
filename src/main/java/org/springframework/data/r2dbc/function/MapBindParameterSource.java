@@ -65,7 +65,7 @@ class MapBindParameterSource implements BindParameterSource {
 		Assert.notNull(paramName, "Parameter name must not be null!");
 		Assert.notNull(value, "Value must not be null!");
 
-		this.values.put(paramName, new SettableValue(paramName, value, value.getClass()));
+		this.values.put(paramName, new SettableValue(value, value.getClass()));
 		return this;
 	}
 

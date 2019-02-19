@@ -34,15 +34,16 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.Database;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.TransactionalDatabaseClient;
+import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.NoRepositoryBean;
@@ -161,11 +162,11 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		Database database = Database.findDatabase(createConnectionFactory()).get();
 		DefaultReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(
-				database.defaultDialect(), new BasicRelationalConverter(mappingContext));
+				database.defaultDialect(), new MappingR2dbcConverter(mappingContext));
 		TransactionalDatabaseClient client = TransactionalDatabaseClient.builder()
 				.connectionFactory(createConnectionFactory()).dataAccessStrategy(dataAccessStrategy).build();
 
-		LegoSetRepository transactionalRepository = new R2dbcRepositoryFactory(client, mappingContext, dataAccessStrategy)
+		LegoSetRepository transactionalRepository = new R2dbcRepositoryFactory(client, dataAccessStrategy)
 				.getRepository(getRepositoryInterfaceType());
 
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);

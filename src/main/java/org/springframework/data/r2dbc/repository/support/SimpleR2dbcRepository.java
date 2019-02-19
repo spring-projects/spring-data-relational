@@ -15,7 +15,6 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import io.r2dbc.spi.Statement;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
@@ -26,18 +25,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import org.reactivestreams.Publisher;
 
 import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.function.BindIdOperation;
-import org.springframework.data.r2dbc.function.BindableOperation;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.SettableValue;
 import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.Expression;
@@ -61,7 +58,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 	private final @NonNull RelationalEntityInformation<T, ID> entity;
 	private final @NonNull DatabaseClient databaseClient;
-	private final @NonNull MappingR2dbcConverter converter;
+	private final @NonNull R2dbcConverter converter;
 	private final @NonNull ReactiveDataAccessStrategy accessStrategy;
 
 	/* (non-Javadoc)
@@ -82,7 +79,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		}
 
 		Object id = entity.getRequiredId(objectToSave);
-		Map<String, SettableValue> columns = accessStrategy.getColumnsToUpdate(objectToSave);
+		Map<String, SettableValue> columns = accessStrategy.getOutboundRow(objectToSave);
 		columns.remove(getIdColumnName()); // do not update the Id column.
 		String idColumnName = getIdColumnName();
 		BindIdOperation update = accessStrategy.updateById(entity.getTableName(), columns.keySet(), idColumnName);
@@ -90,7 +87,10 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		GenericExecuteSpec exec = databaseClient.execute().sql(update);
 
 		BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(exec);
-		columns.forEach(bind(update, wrapper));
+		columns.forEach((k, v) -> {
+			update.bind(wrapper, k, v);
+
+		});
 		update.bindId(wrapper, id);
 
 		return wrapper.getBoundOperation().as(entity.getJavaType()) //
@@ -236,11 +236,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			}
 
 			Table table = Table.create(entity.getTableName());
-			Select select = StatementBuilder
-					.select(table.columns(columns))
-					.from(table)
-					.where(Conditions.in(table.column(idColumnName), markers))
-					.build();
+			Select select = StatementBuilder.select(table.columns(columns)).from(table)
+					.where(Conditions.in(table.column(idColumnName), markers)).build();
 
 			GenericExecuteSpec executeSpec = databaseClient.execute().sql(SqlRenderer.toString(select));
 
@@ -367,10 +364,5 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				.getRequiredPersistentEntity(entity.getJavaType()) //
 				.getRequiredIdProperty() //
 				.getColumnName();
-	}
-
-	private BiConsumer<String, SettableValue> bind(BindableOperation operation, Statement statement) {
-
-		return (k, v) -> operation.bind(statement, v);
 	}
 }

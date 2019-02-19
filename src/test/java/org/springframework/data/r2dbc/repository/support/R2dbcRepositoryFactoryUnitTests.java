@@ -23,9 +23,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
@@ -40,31 +42,32 @@ import org.springframework.data.repository.Repository;
 public class R2dbcRepositoryFactoryUnitTests {
 
 	@Mock DatabaseClient databaseClient;
+	@Mock R2dbcConverter r2dbcConverter;
+	@Mock ReactiveDataAccessStrategy dataAccessStrategy;
 	@Mock @SuppressWarnings("rawtypes") MappingContext mappingContext;
 	@Mock @SuppressWarnings("rawtypes") RelationalPersistentEntity entity;
-	@Mock ReactiveDataAccessStrategy dataAccessStrategy;
 
 	@Before
 	@SuppressWarnings("unchecked")
 	public void before() {
 		when(mappingContext.getRequiredPersistentEntity(Person.class)).thenReturn(entity);
+		when(dataAccessStrategy.getConverter()).thenReturn(r2dbcConverter);
+		when(r2dbcConverter.getMappingContext()).thenReturn(mappingContext);
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void usesMappingRelationalEntityInformationIfMappingContextSet() {
 
-		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, mappingContext, dataAccessStrategy);
+		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, dataAccessStrategy);
 		RelationalEntityInformation<Person, Long> entityInformation = factory.getEntityInformation(Person.class);
 
 		assertThat(entityInformation).isInstanceOf(MappingRelationalEntityInformation.class);
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void createsRepositoryWithIdTypeLong() {
 
-		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, mappingContext, dataAccessStrategy);
+		R2dbcRepositoryFactory factory = new R2dbcRepositoryFactory(databaseClient, dataAccessStrategy);
 		MyPersonRepository repository = factory.getRepository(MyPersonRepository.class);
 
 		assertThat(repository).isNotNull();

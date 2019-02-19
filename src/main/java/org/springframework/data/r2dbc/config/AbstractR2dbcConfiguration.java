@@ -30,6 +30,7 @@ import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.r2dbc.support.SqlErrorCodeR2dbcExceptionTranslator;
@@ -118,8 +119,8 @@ public abstract class AbstractR2dbcConfiguration {
 	}
 
 	/**
-	 * Creates a {@link ReactiveDataAccessStrategy} using the configured {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)}
-	 * RelationalMappingContext}.
+	 * Creates a {@link ReactiveDataAccessStrategy} using the configured
+	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)} RelationalMappingContext}.
 	 *
 	 * @param mappingContext the configured {@link RelationalMappingContext}.
 	 * @param r2dbcCustomConversions customized R2DBC conversions.
@@ -134,7 +135,7 @@ public abstract class AbstractR2dbcConfiguration {
 
 		Assert.notNull(mappingContext, "MappingContext must not be null!");
 
-		BasicRelationalConverter converter = new BasicRelationalConverter(mappingContext, r2dbcCustomConversions);
+		MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext, r2dbcCustomConversions);
 
 		return new DefaultReactiveDataAccessStrategy(getDialect(connectionFactory()), converter);
 	}

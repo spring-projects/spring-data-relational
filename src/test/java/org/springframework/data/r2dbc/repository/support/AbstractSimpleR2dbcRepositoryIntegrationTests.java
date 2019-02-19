@@ -34,6 +34,7 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
@@ -41,7 +42,6 @@ import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.Table;
@@ -74,7 +74,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				(RelationalPersistentEntity<LegoSet>) mappingContext.getRequiredPersistentEntity(LegoSet.class));
 
 		this.repository = new SimpleR2dbcRepository<>(entityInformation, databaseClient,
-				new MappingR2dbcConverter(new BasicRelationalConverter(mappingContext)), strategy);
+				new MappingR2dbcConverter(mappingContext), strategy);
 
 		this.jdbc = createJdbcTemplate(createDataSource());
 		try {

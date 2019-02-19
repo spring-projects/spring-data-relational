@@ -19,12 +19,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.reactivestreams.Publisher;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.function.FetchSpec;
-import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingConverter;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingExecution;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -44,7 +45,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
 	private final R2dbcQueryMethod method;
 	private final DatabaseClient databaseClient;
-	private final MappingR2dbcConverter converter;
+	private final R2dbcConverter converter;
 	private final EntityInstantiators instantiators;
 
 	/**
@@ -54,11 +55,11 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 * @param databaseClient must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 */
-	public AbstractR2dbcQuery(R2dbcQueryMethod method, DatabaseClient databaseClient, MappingR2dbcConverter converter) {
+	public AbstractR2dbcQuery(R2dbcQueryMethod method, DatabaseClient databaseClient, R2dbcConverter converter) {
 
 		Assert.notNull(method, "R2dbcQueryMethod must not be null!");
 		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
-		Assert.notNull(converter, "MappingR2dbcConverter must not be null!");
+		Assert.notNull(converter, "R2dbcConverter must not be null!");
 
 		this.method = method;
 		this.databaseClient = databaseClient;

@@ -26,12 +26,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -62,7 +62,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	public void setUp() {
 
 		this.mappingContext = new RelationalMappingContext();
-		this.converter = new MappingR2dbcConverter(new BasicRelationalConverter(this.mappingContext));
+		this.converter = new MappingR2dbcConverter(this.mappingContext);
 		this.metadata = AbstractRepositoryMetadata.getMetadata(SampleRepository.class);
 		this.factory = new SpelAwareProxyProjectionFactory();
 

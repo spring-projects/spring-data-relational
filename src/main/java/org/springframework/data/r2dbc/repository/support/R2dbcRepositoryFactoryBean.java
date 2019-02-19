@@ -20,9 +20,6 @@ import java.io.Serializable;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
@@ -41,7 +38,6 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 		extends RepositoryFactoryBeanSupport<T, S, ID> {
 
 	private @Nullable DatabaseClient client;
-	private @Nullable MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 	private @Nullable ReactiveDataAccessStrategy dataAccessStrategy;
 
 	private boolean mappingContextConfigured = false;
@@ -69,14 +65,11 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#setMappingContext(org.springframework.data.mapping.context.MappingContext)
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	protected void setMappingContext(@Nullable MappingContext<?, ?> mappingContext) {
 
 		super.setMappingContext(mappingContext);
 
 		if (mappingContext != null) {
-
-			this.mappingContext = (MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty>) mappingContext;
 			this.mappingContextConfigured = true;
 		}
 	}
@@ -91,19 +84,19 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	 */
 	@Override
 	protected final RepositoryFactorySupport createRepositoryFactory() {
-		return getFactoryInstance(client, this.mappingContext);
+		return getFactoryInstance(client, dataAccessStrategy);
 	}
 
 	/**
 	 * Creates and initializes a {@link RepositoryFactorySupport} instance.
 	 *
 	 * @param client must not be {@literal null}.
-	 * @param mappingContext must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @return new instance of {@link RepositoryFactorySupport}.
 	 */
 	protected RepositoryFactorySupport getFactoryInstance(DatabaseClient client,
-			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
-		return new R2dbcRepositoryFactory(client, mappingContext, dataAccessStrategy);
+			ReactiveDataAccessStrategy dataAccessStrategy) {
+		return new R2dbcRepositoryFactory(client, dataAccessStrategy);
 	}
 
 	/*
@@ -117,7 +110,7 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 		Assert.state(dataAccessStrategy != null, "ReactiveDataAccessStrategy must not be null!");
 
 		if (!mappingContextConfigured) {
-			setMappingContext(new RelationalMappingContext());
+			setMappingContext(dataAccessStrategy.getConverter().getMappingContext());
 		}
 
 		super.afterPropertiesSet();

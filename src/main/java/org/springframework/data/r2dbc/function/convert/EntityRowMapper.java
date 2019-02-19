@@ -17,22 +17,8 @@ package org.springframework.data.r2dbc.function.convert;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
-import java.sql.ResultSet;
 import java.util.function.BiFunction;
-
-import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PreferredConstructor.Parameter;
-import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
-import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.lang.Nullable;
 
 /**
  * Maps a {@link io.r2dbc.spi.Row} to an entity of type {@code T}, including entities referenced.
@@ -42,12 +28,12 @@ import org.springframework.lang.Nullable;
  */
 public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 
-	private final RelationalPersistentEntity<T> entity;
-	private final RelationalConverter converter;
+	private final Class<T> typeRoRead;
+	private final R2dbcConverter converter;
 
-	public EntityRowMapper(RelationalPersistentEntity<T> entity, RelationalConverter converter) {
+	public EntityRowMapper(Class<T> typeRoRead, R2dbcConverter converter) {
 
-		this.entity = entity;
+		this.typeRoRead = typeRoRead;
 		this.converter = converter;
 	}
 
@@ -57,110 +43,6 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 	 */
 	@Override
 	public T apply(Row row, RowMetadata metadata) {
-
-		T result = createInstance(row, "", entity);
-
-		ConvertingPropertyAccessor<T> propertyAccessor = new ConvertingPropertyAccessor<>(
-				entity.getPropertyAccessor(result), converter.getConversionService());
-
-		for (RelationalPersistentProperty property : entity) {
-
-			if (entity.isConstructorArgument(property)) {
-				continue;
-			}
-
-			if (property.isMap()) {
-				throw new UnsupportedOperationException();
-			} else {
-				propertyAccessor.setProperty(property, readFrom(row, property, ""));
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * Read a single value or a complete Entity from the {@link ResultSet} passed as an argument.
-	 *
-	 * @param row the {@link Row} to extract the value from. Must not be {@literal null}.
-	 * @param property the {@link RelationalPersistentProperty} for which the value is intended. Must not be
-	 *          {@literal null}.
-	 * @param prefix to be used for all column names accessed by this method. Must not be {@literal null}.
-	 * @return the value read from the {@link ResultSet}. May be {@literal null}.
-	 */
-	private Object readFrom(Row row, RelationalPersistentProperty property, String prefix) {
-
-		try {
-
-			if (property.isEntity()) {
-				return readEntityFrom(row, property);
-			}
-
-			Object value = row.get(prefix + property.getColumnName());
-			return converter.readValue(value, property.getTypeInformation());
-
-		} catch (Exception o_O) {
-			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
-		}
-	}
-
-	private <S> S readEntityFrom(Row row, PersistentProperty<?> property) {
-
-		String prefix = property.getName() + "_";
-
-		RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) converter.getMappingContext()
-				.getRequiredPersistentEntity(property.getActualType());
-
-		if (readFrom(row, entity.getRequiredIdProperty(), prefix) == null) {
-			return null;
-		}
-
-		S instance = createInstance(row, prefix, entity);
-
-		PersistentPropertyAccessor<S> accessor = entity.getPropertyAccessor(instance);
-		ConvertingPropertyAccessor<S> propertyAccessor = new ConvertingPropertyAccessor<>(accessor,
-				converter.getConversionService());
-
-		for (RelationalPersistentProperty p : entity) {
-			if (!entity.isConstructorArgument(property)) {
-				propertyAccessor.setProperty(p, readFrom(row, p, prefix));
-			}
-		}
-
-		return instance;
-	}
-
-	private <S> S createInstance(Row row, String prefix, RelationalPersistentEntity<S> entity) {
-
-		RowParameterValueProvider rowParameterValueProvider = new RowParameterValueProvider(row, entity, converter, prefix);
-
-		return converter.createInstance(entity, rowParameterValueProvider::getParameterValue);
-	}
-
-	@RequiredArgsConstructor
-	private static class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
-
-		private final @NonNull Row resultSet;
-		private final @NonNull RelationalPersistentEntity<?> entity;
-		private final @NonNull RelationalConverter converter;
-		private final @NonNull String prefix;
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
-		 */
-		@Override
-		@Nullable
-		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
-
-			RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameter.getName());
-			String column = prefix + property.getColumnName();
-
-			try {
-				return converter.getConversionService().convert(resultSet.get(column), parameter.getType().getType());
-			} catch (Exception o_O) {
-				throw new MappingException(String.format("Couldn't read column %s from Row.", column), o_O);
-			}
-		}
+		return converter.read(typeRoRead, row);
 	}
 }
