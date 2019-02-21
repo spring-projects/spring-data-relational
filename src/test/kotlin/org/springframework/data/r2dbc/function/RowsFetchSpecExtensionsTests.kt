@@ -19,33 +19,44 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import reactor.core.publisher.Mono
 
+/**
+ * Unit tests for [RowsFetchSpec] extensions.
+ *
+ * @author Sebastien Deleuze
+ */
 class RowsFetchSpecExtensionsTests {
 
-    @Test
-    fun awaitOne() {
-        val spec = mockk<RowsFetchSpec<String>>()
-        every { spec.one() } returns Mono.just("foo")
-        runBlocking {
-            assertEquals("foo", spec.awaitOne())
-        }
-        verify {
-            spec.one()
-        }
-    }
+	@Test // gh-63
+	fun awaitOne() {
 
-    @Test
-    fun awaitFirst() {
-        val spec = mockk<RowsFetchSpec<String>>()
-        every { spec.first() } returns Mono.just("foo")
-        runBlocking {
-            assertEquals("foo", spec.awaitFirst())
-        }
-        verify {
-            spec.first()
-        }
-    }
+		val spec = mockk<RowsFetchSpec<String>>()
+		every { spec.one() } returns Mono.just("foo")
+
+		runBlocking {
+			assertThat(spec.awaitOne()).isEqualTo("foo")
+		}
+
+		verify {
+			spec.one()
+		}
+	}
+
+	@Test // gh-63
+	fun awaitFirst() {
+
+		val spec = mockk<RowsFetchSpec<String>>()
+		every { spec.first() } returns Mono.just("foo")
+
+		runBlocking {
+			assertThat(spec.awaitFirst()).isEqualTo("foo")
+		}
+
+		verify {
+			spec.first()
+		}
+	}
 }

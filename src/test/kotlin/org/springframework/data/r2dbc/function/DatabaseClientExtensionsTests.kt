@@ -19,96 +19,122 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import reactor.core.publisher.Mono
 
+/**
+ * Unit tests for [DatabaseClient] extensions.
+ *
+ * @author Sebastien Deleuze
+ */
 class DatabaseClientExtensionsTests {
 
-    @Test
-    fun genericExecuteSpecAwait() {
-        val spec = mockk<DatabaseClient.GenericExecuteSpec>()
-        every { spec.then() } returns Mono.empty()
-        runBlocking {
-            spec.await()
-        }
-        verify {
-            spec.then()
-        }
-    }
+	@Test // gh-63
+	fun genericExecuteSpecAwait() {
 
-    @Test
-    fun genericExecuteSpecAsType() {
-        val genericSpec = mockk<DatabaseClient.GenericExecuteSpec>()
-        val typedSpec: DatabaseClient.TypedExecuteSpec<String> = mockk()
-        every { genericSpec.`as`(String::class.java) } returns typedSpec
-        runBlocking {
-            assertEquals(typedSpec, genericSpec.asType<String>())
-        }
-        verify {
-            genericSpec.`as`(String::class.java)
-        }
-    }
+		val spec = mockk<DatabaseClient.GenericExecuteSpec>()
+		every { spec.then() } returns Mono.empty()
 
-    @Test
-    fun genericSelectSpecAsType() {
-        val genericSpec = mockk<DatabaseClient.GenericSelectSpec>()
-        val typedSpec: DatabaseClient.TypedSelectSpec<String> = mockk()
-        every { genericSpec.`as`(String::class.java) } returns typedSpec
-        runBlocking {
-            assertEquals(typedSpec, genericSpec.asType<String>())
-        }
-        verify {
-            genericSpec.`as`(String::class.java)
-        }
-    }
+		runBlocking {
+			spec.await()
+		}
 
-    @Test
-    fun typedExecuteSpecAwait() {
-        val spec = mockk<DatabaseClient.TypedExecuteSpec<String>>()
-        every { spec.then() } returns Mono.empty()
-        runBlocking {
-            spec.await()
-        }
-        verify {
-            spec.then()
-        }
-    }
+		verify {
+			spec.then()
+		}
+	}
 
-    @Test
-    fun typedExecuteSpecAsType() {
-        val spec: DatabaseClient.TypedExecuteSpec<String> = mockk()
-        every { spec.`as`(String::class.java) } returns spec
-        runBlocking {
-            assertEquals(spec, spec.asType())
-        }
-        verify {
-            spec.`as`(String::class.java)
-        }
-    }
+	@Test // gh-63
+	fun genericExecuteSpecAsType() {
 
-    @Test
-    fun insertSpecAwait() {
-        val spec = mockk<DatabaseClient.InsertSpec<String>>()
-        every { spec.then() } returns Mono.empty()
-        runBlocking {
-            spec.await()
-        }
-        verify {
-            spec.then()
-        }
-    }
+		val genericSpec = mockk<DatabaseClient.GenericExecuteSpec>()
+		val typedSpec: DatabaseClient.TypedExecuteSpec<String> = mockk()
+		every { genericSpec.`as`(String::class.java) } returns typedSpec
 
-    @Test
-    fun insertIntoSpecInto() {
-        val spec = mockk<DatabaseClient.InsertIntoSpec>()
-        val typedSpec: DatabaseClient.TypedInsertSpec<String> = mockk()
-        every { spec.into(String::class.java) } returns typedSpec
-        runBlocking {
-            assertEquals(typedSpec, spec.into<String>())
-        }
-        verify {
-            spec.into(String::class.java)
-        }
-    }
+		runBlocking {
+			assertThat(genericSpec.asType<String>()).isEqualTo(typedSpec)
+		}
+
+		verify {
+			genericSpec.`as`(String::class.java)
+		}
+	}
+
+	@Test // gh-63
+	fun genericSelectSpecAsType() {
+
+		val genericSpec = mockk<DatabaseClient.GenericSelectSpec>()
+		val typedSpec: DatabaseClient.TypedSelectSpec<String> = mockk()
+		every { genericSpec.`as`(String::class.java) } returns typedSpec
+
+		runBlocking {
+			assertThat(genericSpec.asType<String>()).isEqualTo(typedSpec)
+		}
+
+		verify {
+			genericSpec.`as`(String::class.java)
+		}
+	}
+
+	@Test // gh-63
+	fun typedExecuteSpecAwait() {
+
+		val spec = mockk<DatabaseClient.TypedExecuteSpec<String>>()
+		every { spec.then() } returns Mono.empty()
+
+		runBlocking {
+			spec.await()
+		}
+
+		verify {
+			spec.then()
+		}
+	}
+
+	@Test // gh-63
+	fun typedExecuteSpecAsType() {
+
+		val spec: DatabaseClient.TypedExecuteSpec<String> = mockk()
+		every { spec.`as`(String::class.java) } returns spec
+
+		runBlocking {
+			assertThat(spec.asType()).isEqualTo(spec)
+		}
+
+		verify {
+			spec.`as`(String::class.java)
+		}
+	}
+
+	@Test // gh-63
+	fun insertSpecAwait() {
+
+		val spec = mockk<DatabaseClient.InsertSpec<String>>()
+		every { spec.then() } returns Mono.empty()
+
+		runBlocking {
+			spec.await()
+		}
+
+		verify {
+			spec.then()
+		}
+	}
+
+	@Test // gh-63
+	fun insertIntoSpecInto() {
+
+		val spec = mockk<DatabaseClient.InsertIntoSpec>()
+		val typedSpec: DatabaseClient.TypedInsertSpec<String> = mockk()
+		every { spec.into(String::class.java) } returns typedSpec
+
+		runBlocking {
+			assertThat(spec.into<String>()).isEqualTo(typedSpec)
+		}
+
+		verify {
+			spec.into(String::class.java)
+		}
+	}
 }
