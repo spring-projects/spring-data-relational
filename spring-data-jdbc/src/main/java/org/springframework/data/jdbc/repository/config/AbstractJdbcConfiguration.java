@@ -26,12 +26,14 @@ import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
@@ -71,13 +73,13 @@ public abstract class AbstractJdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	public JdbcConverter jdbcConverter(RelationalMappingContext mappingContext) {
-		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions());
+	public JdbcConverter jdbcConverter(RelationalMappingContext mappingContext, JdbcOperations operations) {
+		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions(), new DefaultJdbcTypeFactory(operations));
 	}
 
 	/**
 	 * Register custom {@link Converter}s in a {@link JdbcCustomConversions} object if required. These
-	 * {@link JdbcCustomConversions} will be registered with the {@link #relationalConverter(RelationalMappingContext)}.
+	 * {@link JdbcCustomConversions} will be registered with the {@link #jdbcConverter(RelationalMappingContext, JdbcOperations)}.
 	 * Returns an empty {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return must not be {@literal null}.
@@ -100,7 +102,7 @@ public abstract class AbstractJdbcConfiguration {
 	 */
 	@Bean
 	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationEventPublisher publisher,
-			RelationalMappingContext context, RelationalConverter converter, NamedParameterJdbcOperations operations) {
+			RelationalMappingContext context, JdbcConverter converter, NamedParameterJdbcOperations operations) {
 
 		DataAccessStrategy dataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context,
 				converter, operations);

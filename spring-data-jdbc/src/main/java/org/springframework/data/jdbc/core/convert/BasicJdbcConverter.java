@@ -15,28 +15,26 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.Array;
+import java.sql.JDBCType;
+import java.sql.SQLException;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
-import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
-
-import java.sql.Array;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * {@link RelationalConverter} that uses a {@link MappingContext} to apply basic conversion of relational values to
@@ -54,14 +52,45 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 	private static final Logger LOG = LoggerFactory.getLogger(BasicJdbcConverter.class);
 
+	private final JdbcTypeFactory typeFactory;
+
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
 	 *
 	 * @param context must not be {@literal null}. org.springframework.data.jdbc.core.DefaultDataAccessStrategyUnitTests
+	 * @param typeFactory
 	 */
 	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			JdbcTypeFactory typeFactory) {
 		super(context);
+		this.typeFactory = typeFactory;
+	}
+
+	/**
+	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and {@link CustomConversions}.
+	 * 
+	 * @param context must not be {@literal null}.
+	 * @param conversions must not be {@literal null}.
+	 * @param typeFactory
+	 */
+	public BasicJdbcConverter(
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			CustomConversions conversions, JdbcTypeFactory typeFactory) {
+		super(context, conversions);
+		this.typeFactory = typeFactory;
+	}
+
+	/**
+	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
+	 *
+	 * @param context must not be {@literal null}. org.springframework.data.jdbc.core.DefaultDataAccessStrategyUnitTests
+	 * @deprecated use one of the constructors with {@link JdbcTypeFactory} parameter.
+	 */
+	@Deprecated
+	public BasicJdbcConverter(
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
+		this(context, JdbcTypeFactory.unsupported());
 	}
 
 	/**
@@ -69,11 +98,13 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 *
 	 * @param context must not be {@literal null}.
 	 * @param conversions must not be {@literal null}.
+	 * @deprecated use one of the constructors with {@link JdbcTypeFactory} parameter.
 	 */
+	@Deprecated
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			CustomConversions conversions) {
-		super(context, conversions);
+		this(context, conversions, JdbcTypeFactory.unsupported());
 	}
 
 	/*
@@ -102,7 +133,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		if (value instanceof Array) {
 			try {
 				return readValue(((Array) value).getArray(), type);
-			} catch (SQLException | ConverterNotFoundException e ) {
+			} catch (SQLException | ConverterNotFoundException e) {
 				LOG.info("Failed to extract a value of type %s from an Array. Attempting to use standard conversions.", e);
 			}
 		}
@@ -129,5 +160,65 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return super.writeValue(value, type);
 	}
 
+	private boolean canWriteAsJdbcValue(@Nullable Object value) {
 
+		if (value == null) {
+			return true;
+		}
+
+		if (AggregateReference.class.isAssignableFrom(value.getClass())) {
+			return canWriteAsJdbcValue(((AggregateReference) value).getId());
+		}
+
+		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(value.getClass());
+
+		if (persistentEntity != null) {
+
+			Object id = persistentEntity.getIdentifierAccessor(value).getIdentifier();
+			return canWriteAsJdbcValue(id);
+		}
+
+		if (value instanceof JdbcValue) {
+			return true;
+		}
+
+		Optional<Class<?>> customWriteTarget = getConversions().getCustomWriteTarget(value.getClass());
+		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
+	}
+
+	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
+
+		JdbcValue jdbcValue = tryToConvertToJdbcValue(value);
+		if (jdbcValue != null) {
+			return jdbcValue;
+		}
+
+		Object convertedValue = writeValue(value, ClassTypeInformation.from(columnType));
+
+		if (convertedValue == null || !convertedValue.getClass().isArray()) {
+			return JdbcValue.of(convertedValue, JdbcUtil.jdbcTypeFor(sqlType));
+		}
+
+		Class<?> componentType = convertedValue.getClass().getComponentType();
+		if (componentType != byte.class && componentType != Byte.class) {
+			return JdbcValue.of(typeFactory.createArray((Object[]) convertedValue), JDBCType.ARRAY);
+		}
+
+		if (componentType == Byte.class) {
+			convertedValue = ArrayUtil.toPrimitiveByteArray((Byte[]) convertedValue);
+		}
+
+		return JdbcValue.of(convertedValue, JDBCType.BINARY);
+
+	}
+
+	private JdbcValue tryToConvertToJdbcValue(@Nullable Object value) {
+
+		JdbcValue jdbcValue = null;
+		if (canWriteAsJdbcValue(value)) {
+			jdbcValue = (JdbcValue) writeValue(value, ClassTypeInformation.from(JdbcValue.class));
+		}
+
+		return jdbcValue;
+	}
 }

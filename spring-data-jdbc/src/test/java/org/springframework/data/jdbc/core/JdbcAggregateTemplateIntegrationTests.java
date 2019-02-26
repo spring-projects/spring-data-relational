@@ -419,6 +419,21 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(new HashSet<>(Arrays.asList("one", "two", "three")));
 	}
 
+	@Test // DATAJDBC-327
+	public void saveAndLoadAnEntityWithByteArray() {
+		ByteArrayOwner owner = new ByteArrayOwner();
+		owner.binaryData = new byte[]{1, 23, 42};
+
+		ByteArrayOwner saved = template.save(owner);
+
+		ByteArrayOwner reloaded = template.findById(saved.id, ByteArrayOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+		assertThat(reloaded.binaryData).isEqualTo(new byte[]{1, 23, 42});
+	}
+
+
 	private static void assumeNot(String dbProfileName) {
 
 		Assume.assumeTrue("true"
@@ -431,6 +446,12 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		String[] digits;
 		String[][] multidimensional;
+	}
+
+	private static class ByteArrayOwner {
+		@Id Long id;
+
+		byte[] binaryData;
 	}
 
 	@Table("ARRAY_OWNER")

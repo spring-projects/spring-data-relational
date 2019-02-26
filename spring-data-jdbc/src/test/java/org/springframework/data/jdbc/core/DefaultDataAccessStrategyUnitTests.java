@@ -16,8 +16,7 @@
 package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
@@ -32,10 +31,11 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -54,7 +54,8 @@ public class DefaultDataAccessStrategyUnitTests {
 
 	NamedParameterJdbcOperations jdbcOperations = mock(NamedParameterJdbcOperations.class);
 	RelationalMappingContext context = new JdbcMappingContext();
-	RelationalConverter converter = new BasicRelationalConverter(context, new JdbcCustomConversions());
+	JdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions(),
+			new DefaultJdbcTypeFactory(jdbcOperations.getJdbcOperations()));
 	HashMap<String, Object> additionalParameters = new HashMap<>();
 	ArgumentCaptor<SqlParameterSource> paramSourceCaptor = ArgumentCaptor.forClass(SqlParameterSource.class);
 
@@ -95,8 +96,9 @@ public class DefaultDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-235
 	public void considersConfiguredWriteConverter() {
 
-		RelationalConverter converter = new BasicRelationalConverter(context,
-				new JdbcCustomConversions(Arrays.asList(BooleanToStringConverter.INSTANCE, StringToBooleanConverter.INSTANCE)));
+		JdbcConverter converter = new BasicJdbcConverter(context,
+				new JdbcCustomConversions(Arrays.asList(BooleanToStringConverter.INSTANCE, StringToBooleanConverter.INSTANCE)),
+				new DefaultJdbcTypeFactory(jdbcOperations.getJdbcOperations()));
 
 		DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
 				new SqlGeneratorSource(context), //

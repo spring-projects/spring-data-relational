@@ -27,7 +27,9 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -42,7 +44,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Mark Paluch
  * @author Michael Simons
  * @author Christoph Strobl
- *
  * @deprecated Use {@link AbstractJdbcConfiguration} instead.
  */
 @Configuration
@@ -74,7 +75,8 @@ public class JdbcConfiguration {
 	 */
 	@Bean
 	public RelationalConverter relationalConverter(RelationalMappingContext mappingContext) {
-		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions());
+
+		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions(), JdbcTypeFactory.unsupported());
 	}
 
 	/**
@@ -101,7 +103,7 @@ public class JdbcConfiguration {
 	 */
 	@Bean
 	public JdbcAggregateOperations jdbcAggregateOperations(ApplicationEventPublisher publisher,
-			RelationalMappingContext context, RelationalConverter converter, NamedParameterJdbcOperations operations) {
+			RelationalMappingContext context, JdbcConverter converter, NamedParameterJdbcOperations operations) {
 		DataAccessStrategy dataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context,
 				converter, operations);
 		return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);

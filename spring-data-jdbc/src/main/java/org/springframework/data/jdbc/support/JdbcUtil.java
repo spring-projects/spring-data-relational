@@ -20,6 +20,7 @@ import lombok.experimental.UtilityClass;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
+import java.sql.JDBCType;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -27,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.jdbc.support.JdbcUtils;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Contains methods dealing with the quirks of JDBC, independent of any Entity, Aggregate or Repository abstraction.
@@ -64,11 +67,61 @@ public class JdbcUtil {
 		sqlTypeMappings.put(Timestamp.class, Types.TIMESTAMP);
 	}
 
+	/**
+	 * Returns the {@link Types} value suitable for passing a value of the provided type to a
+	 * {@link java.sql.PreparedStatement}.
+	 *
+	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
+	 * @return One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
+	 */
 	public static int sqlTypeFor(Class<?> type) {
+
+		Assert.notNull(type, "Type must not be null.");
+
 		return sqlTypeMappings.keySet().stream() //
 				.filter(k -> k.isAssignableFrom(type)) //
 				.findFirst() //
 				.map(sqlTypeMappings::get) //
 				.orElse(JdbcUtils.TYPE_UNKNOWN);
+	}
+
+	/**
+	 * Converts a {@link JDBCType} to an {@code int} value as defined in {@link Types}.
+	 * 
+	 * @param jdbcType value to be converted. May be {@literal null}.
+	 * @return One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
+	 */
+	public static int sqlTypeFor(@Nullable JDBCType jdbcType) {
+		return jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
+	}
+
+	/**
+	 * Converts a value defined in {@link Types} into a {@link JDBCType} instance or {@literal null} if the value is
+	 * {@link JdbcUtils#TYPE_UNKNOWN}
+	 * 
+	 * @param sqlType One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
+	 * @return a matching {@link JDBCType} instance or {@literal null}.
+	 */
+	@Nullable
+	public static JDBCType jdbcTypeFor(int sqlType) {
+
+		if (sqlType == JdbcUtils.TYPE_UNKNOWN) {
+			return null;
+		}
+
+		return JDBCType.valueOf(sqlType);
+	}
+
+	/**
+	 * Returns the {@link JDBCType} suitable for passing a value of the provided type to a
+	 * {@link java.sql.PreparedStatement}.
+	 *
+	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
+	 * @return a matching {@link JDBCType} instance or {@literal null}.
+	 */
+	@Nullable
+	public static JDBCType jdbcTypeFor(Class<?> type) {
+
+		return jdbcTypeFor(sqlTypeFor(type));
 	}
 }
