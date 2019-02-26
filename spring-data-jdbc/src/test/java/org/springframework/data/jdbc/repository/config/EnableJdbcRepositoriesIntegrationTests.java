@@ -34,6 +34,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
@@ -149,7 +150,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 		@Bean("qualifierDataAccessStrategy")
 		DataAccessStrategy defaultDataAccessStrategy(@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
-				RelationalMappingContext context, RelationalConverter converter) {
+				RelationalMappingContext context, JdbcConverter converter) {
 			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter, template);
 		}
 	}

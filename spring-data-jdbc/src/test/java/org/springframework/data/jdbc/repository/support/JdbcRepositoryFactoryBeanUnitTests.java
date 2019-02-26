@@ -33,9 +33,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcTypeFactory;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -82,7 +83,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		factoryBean.setDataAccessStrategy(dataAccessStrategy);
 		factoryBean.setMappingContext(mappingContext);
-		factoryBean.setConverter(new BasicRelationalConverter(mappingContext));
+		factoryBean.setConverter(new BasicJdbcConverter(mappingContext, JdbcTypeFactory.DUMMY_JDBC_TYPE_FACTORY));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.setBeanFactory(beanFactory);
 		factoryBean.afterPropertiesSet();
@@ -109,7 +110,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	public void afterPropertiesSetDefaultsNullablePropertiesCorrectly() {
 
 		factoryBean.setMappingContext(mappingContext);
-		factoryBean.setConverter(new BasicRelationalConverter(mappingContext));
+		factoryBean.setConverter(new BasicJdbcConverter(mappingContext, JdbcTypeFactory.DUMMY_JDBC_TYPE_FACTORY));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.setBeanFactory(beanFactory);
 		factoryBean.afterPropertiesSet();

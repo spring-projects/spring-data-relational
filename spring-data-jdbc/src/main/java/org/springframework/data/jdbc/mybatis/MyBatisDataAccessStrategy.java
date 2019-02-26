@@ -28,9 +28,9 @@ import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
@@ -61,7 +61,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
 	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
-			RelationalConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession) {
+			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession) {
 		return createCombinedAccessStrategy(context, converter, operations, sqlSession, NamespaceStrategy.DEFAULT_INSTANCE);
 	}
 
@@ -70,7 +70,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
 	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
-			RelationalConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession,
+			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession,
 			NamespaceStrategy namespaceStrategy) {
 
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
@@ -104,7 +104,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * transaction. Note that the resulting {@link DataAccessStrategy} only handles MyBatis. It does not include the
 	 * functionality of the {@link org.springframework.data.jdbc.core.DefaultDataAccessStrategy} which one normally still
 	 * wants. Use
-	 * {@link #createCombinedAccessStrategy(RelationalMappingContext, RelationalConverter, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy)}
+	 * {@link #createCombinedAccessStrategy(RelationalMappingContext, JdbcConverter, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy)}
 	 * to create such a {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.

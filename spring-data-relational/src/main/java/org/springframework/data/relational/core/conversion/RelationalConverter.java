@@ -92,4 +92,8 @@ public interface RelationalConverter {
 	 */
 	@Nullable
 	Object writeValue(@Nullable Object value, TypeInformation<?> type);
+
+	default boolean canWriteValue(@Nullable Object value, TypeInformation<?> type) {
+		return true;
+	}
 }

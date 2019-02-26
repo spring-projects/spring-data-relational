@@ -7,8 +7,8 @@
 		</encoder>
 	</appender>
 
-	<!--<logger name="org.springframework.data" level="info" />-->
-	<!--<logger name="org.springframework.jdbc.core" level="trace" />-->
+	<logger name="org.springframework.data" level="info" />
+	<logger name="org.springframework.jdbc.core" level="trace" />
 	<!--<logger name="org.springframework.data.jdbc.mybatis.DummyEntityMapper" level="trace" />-->
 
 	<root level="warn">
