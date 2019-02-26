@@ -43,48 +43,6 @@ public class DefaultReactiveDataAccessStrategyUnitTests {
 	}
 
 	@Test // gh-20
-	public void shouldRenderSelectByIdQuery() {
-
-		BindableOperation operation = strategy.selectById("table", new HashSet<>(Arrays.asList("firstname", "lastname")),
-				"id");
-
-		assertThat(operation.toQuery()).isEqualTo("SELECT firstname, lastname FROM table WHERE id = $1");
-	}
-
-	@Test // gh-20
-	public void shouldRenderSelectByIdQueryWithLimit() {
-
-		BindableOperation operation = strategy.selectById("table", new HashSet<>(Arrays.asList("firstname", "lastname")),
-				"id", 10);
-
-		assertThat(operation.toQuery())
-				.isEqualTo("SELECT firstname, lastname FROM table WHERE id = $1 ORDER BY id LIMIT 10");
-	}
-
-	@Test // gh-20
-	public void shouldFailRenderingSelectByIdInQueryWithoutBindings() {
-
-		BindableOperation operation = strategy.selectByIdIn("table", new HashSet<>(Arrays.asList("firstname", "lastname")),
-				"id");
-
-		assertThatThrownBy(operation::toQuery).isInstanceOf(UnsupportedOperationException.class);
-	}
-
-	@Test // gh-20
-	public void shouldRenderSelectByIdInQuery() {
-
-		Statement statement = mock(Statement.class);
-		BindIdOperation operation = strategy.selectByIdIn("table", new HashSet<>(Arrays.asList("firstname", "lastname")),
-				"id");
-
-		operation.bindId(statement, Collections.singleton("foo"));
-		assertThat(operation.toQuery()).isEqualTo("SELECT firstname, lastname FROM table WHERE id IN ($1)");
-
-		operation.bindId(statement, "bar");
-		assertThat(operation.toQuery()).isEqualTo("SELECT firstname, lastname FROM table WHERE id IN ($1, $2)");
-	}
-
-	@Test // gh-20
 	public void shouldRenderDeleteByIdQuery() {
 
 		BindableOperation operation = strategy.deleteById("table", "id");

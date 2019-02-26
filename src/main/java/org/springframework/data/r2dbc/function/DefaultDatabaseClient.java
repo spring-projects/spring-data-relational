@@ -703,17 +703,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			Set<String> columns;
+			String select = dataAccessStrategy.select(table, new LinkedHashSet<>(this.projectedFields), sort, page);
 
-			if (this.projectedFields.isEmpty()) {
-				columns = Collections.singleton("*");
-			} else {
-				columns = new LinkedHashSet<>(this.projectedFields);
-			}
-
-			QueryOperation select = dataAccessStrategy.select(table, columns, sort, page);
-
-			return execute(select.toQuery(), mappingFunction);
+			return execute(select, mappingFunction);
 		}
 
 		@Override
@@ -797,11 +789,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			} else {
 				columns = this.projectedFields;
 			}
-			Sort sortToUse = sort.isSorted() ? dataAccessStrategy.getMappedSort(typeToRead, sort) : Sort.unsorted();
 
-			QueryOperation select = dataAccessStrategy.select(table, new LinkedHashSet<>(columns), sortToUse, page);
+			String select = dataAccessStrategy.select(table, new LinkedHashSet<>(columns), sort, page);
 
-			return execute(select.get(), mappingFunction);
+			return execute(select, mappingFunction);
 		}
 
 		@Override

@@ -108,42 +108,7 @@ public interface ReactiveDataAccessStrategy {
 	 * @param page
 	 * @return
 	 */
-	QueryOperation select(String table, Set<String> columns, Sort sort, Pageable page);
-
-	/**
-	 * Create a {@code SELECT … WHERE id = ?} operation for the given {@code table} using {@code columns} to project and
-	 * {@code idColumn}.
-	 *
-	 * @param table the table to insert data to.
-	 * @param columns columns to return.
-	 * @param idColumn name of the primary key.
-	 * @return
-	 */
-	BindIdOperation selectById(String table, Set<String> columns, String idColumn);
-
-	/**
-	 * Create a {@code SELECT … WHERE id = ?} operation for the given {@code table} using {@code columns} to project and
-	 * {@code idColumn} applying a limit (TOP, LIMIT, …).
-	 *
-	 * @param table the table to insert data to.
-	 * @param columns columns to return.
-	 * @param idColumn name of the primary key.
-	 * @param limit number of rows to return.
-	 * @return
-	 */
-	BindIdOperation selectById(String table, Set<String> columns, String idColumn, int limit);
-
-	/**
-	 * Create a {@code SELECT … WHERE id IN (?)} operation for the given {@code table} using {@code columns} to project
-	 * and {@code idColumn}. The actual {@link BindableOperation#toQuery() query} string depends on
-	 * {@link BindIdOperation#bindIds(Statement, Iterable) bound parameters}.
-	 *
-	 * @param table the table to insert data to.
-	 * @param columns columns to return.
-	 * @param idColumn name of the primary key.
-	 * @return
-	 */
-	BindIdOperation selectByIdIn(String table, Set<String> columns, String idColumn);
+	String select(String table, Set<String> columns, Sort sort, Pageable page);
 
 	/**
 	 * Create a {@code UPDATE … SET … WHERE id = ?} operation for the given {@code table} updating {@code columns} and

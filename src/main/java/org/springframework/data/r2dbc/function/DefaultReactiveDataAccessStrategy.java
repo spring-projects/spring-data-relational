@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -43,16 +44,20 @@ import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.Dialect;
-import org.springframework.data.r2dbc.dialect.LimitClause;
-import org.springframework.data.r2dbc.dialect.LimitClause.Position;
 import org.springframework.data.r2dbc.function.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.function.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.function.convert.SettableValue;
+import org.springframework.data.r2dbc.support.StatementRenderUtil;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy;
+import org.springframework.data.relational.core.sql.StatementBuilder;
+import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -312,94 +317,47 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#select(java.lang.String, java.util.Set, org.springframework.data.domain.Sort, org.springframework.data.domain.Pageable)
 	 */
 	@Override
-	public QueryOperation select(String table, Set<String> columns, Sort sort, Pageable page) {
+	public String select(String table, Set<String> columns, Sort sort, Pageable page) {
 
-		StringBuilder selectBuilder = new StringBuilder();
+		Table tableToUse = Table.create(table);
 
-		selectBuilder.append("SELECT").append(' ') //
-				.append(StringUtils.collectionToDelimitedString(columns, ", ")).append(' ') //
-				.append("FROM").append(' ').append(table);
+		Collection<? extends Expression> selectList;
 
-		if (sort.isSorted()) {
-			selectBuilder.append(' ').append("ORDER BY").append(' ').append(getSortClause(sort));
+		if (columns.isEmpty()) {
+			selectList = Collections.singletonList(tableToUse.asterisk());
+		} else {
+			selectList = tableToUse.columns(columns);
 		}
+
+		SelectFromAndOrderBy selectBuilder = StatementBuilder.select(selectList).from(table)
+				.orderBy(createOrderByFields(tableToUse, sort));
+		OptionalLong limit = OptionalLong.empty();
+		OptionalLong offset = OptionalLong.empty();
 
 		if (page.isPaged()) {
+			limit = OptionalLong.of(page.getPageSize());
+			offset = OptionalLong.of(page.getOffset());
+		}
 
-			LimitClause limitClause = dialect.limit();
+		return StatementRenderUtil.render(selectBuilder.build(), limit, offset, this.dialect);
+	}
 
-			if (limitClause.getClausePosition() == Position.END) {
+	private Collection<? extends OrderByField> createOrderByFields(Table table, Sort sortToUse) {
 
-				selectBuilder.append(' ').append(limitClause.getClause(page.getPageSize(), page.getOffset()));
+		List<OrderByField> fields = new ArrayList<>();
+
+		for (Order order : sortToUse) {
+
+			OrderByField orderByField = OrderByField.from(table.column(order.getProperty()));
+
+			if (order.getDirection() != null) {
+				fields.add(order.isAscending() ? orderByField.asc() : orderByField.desc());
+			} else {
+				fields.add(orderByField);
 			}
 		}
 
-		return selectBuilder::toString;
-	}
-
-	private StringBuilder getSortClause(Sort sort) {
-
-		StringBuilder sortClause = new StringBuilder();
-
-		for (Order order : sort) {
-
-			if (sortClause.length() != 0) {
-				sortClause.append(',').append(' ');
-			}
-
-			sortClause.append(order.getProperty()).append(' ').append(order.getDirection().isAscending() ? "ASC" : "DESC");
-		}
-		return sortClause;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#selectById(java.lang.String, java.util.Set, java.lang.String)
-	 */
-	@Override
-	public BindIdOperation selectById(String table, Set<String> columns, String idColumn) {
-
-		return new DefaultBindIdOperation(dialect.getBindMarkersFactory().create(), marker -> {
-
-			String columnClause = StringUtils.collectionToDelimitedString(columns, ", ");
-
-			return String.format("SELECT %s FROM %s WHERE %s = %s", columnClause, table, idColumn, marker.getPlaceholder());
-		});
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#selectById(java.lang.String, java.util.Set, java.lang.String, int)
-	 */
-	@Override
-	public BindIdOperation selectById(String table, Set<String> columns, String idColumn, int limit) {
-
-		LimitClause limitClause = dialect.limit();
-
-		return new DefaultBindIdOperation(dialect.getBindMarkersFactory().create(), marker -> {
-
-			String columnClause = StringUtils.collectionToDelimitedString(columns, ", ");
-
-			if (limitClause.getClausePosition() == Position.END) {
-
-				return String.format("SELECT %s FROM %s WHERE %s = %s ORDER BY %s %s", columnClause, table, idColumn,
-						marker.getPlaceholder(), idColumn, limitClause.getClause(limit));
-			}
-
-			throw new UnsupportedOperationException(
-					String.format("Limit clause position %s not supported!", limitClause.getClausePosition()));
-		});
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#selectByIdIn(java.lang.String, java.util.Set, java.lang.String)
-	 */
-	@Override
-	public BindIdOperation selectByIdIn(String table, Set<String> columns, String idColumn) {
-
-		String query = String.format("SELECT %s FROM %s", StringUtils.collectionToDelimitedString(columns, ", "), table);
-		return new DefaultBindIdIn(dialect.getBindMarkersFactory().create(), query, idColumn);
+		return fields;
 	}
 
 	/*
