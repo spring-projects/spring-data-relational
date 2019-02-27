@@ -19,13 +19,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Map;
-
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.ParentKeys.ParentKey;
+import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.Identifier.SingleIdentifierValue;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
@@ -68,10 +66,10 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<ParentKeys> argumentCaptor = ArgumentCaptor.forClass(ParentKeys.class);
+		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new ParentKey(BACK_REFERENCE, CONTAINER_ID, Long.class));
+		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new SingleIdentifierValue(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	@Test // DATAJDBC-251
@@ -81,10 +79,10 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<ParentKeys> argumentCaptor = ArgumentCaptor.forClass(ParentKeys.class);
+		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new ParentKey(BACK_REFERENCE, CONTAINER_ID, Long.class));
+		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new SingleIdentifierValue(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	@Test // DATAJDBC-251
@@ -94,10 +92,10 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		interpreter.interpret(insert);
 
-		ArgumentCaptor<ParentKeys> argumentCaptor = ArgumentCaptor.forClass(ParentKeys.class);
+		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new ParentKey(BACK_REFERENCE, CONTAINER_ID, Long.class));
+		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new SingleIdentifierValue(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	static class Container {

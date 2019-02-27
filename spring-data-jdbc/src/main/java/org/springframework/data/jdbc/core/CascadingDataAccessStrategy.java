@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
@@ -52,8 +53,8 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, org.springframework.data.jdbc.core.ParentKeys)
 	 */
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, ParentKeys parentKeys) {
-		return collect(das -> das.insert(instance, domainType, parentKeys));
+	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
+		return collect(das -> das.insert(instance, domainType, identifier));
 	}
 
 	/* 

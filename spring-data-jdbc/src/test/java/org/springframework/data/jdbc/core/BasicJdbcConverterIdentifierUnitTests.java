@@ -26,14 +26,18 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
+ * Unit tests for the {@link Identifier} creating methods in the {@link BasicJdbcConverter}.
+ *
  * @author Jens Schauder
  */
-public class ParentKeysUnitTests {
+public class BasicJdbcConverterIdentifierUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
 
@@ -44,11 +48,11 @@ public class ParentKeysUnitTests {
 		parameters.put("one", "eins");
 		parameters.put("two", 2L);
 
-		ParentKeys parentKeys = ParentKeys.fromNamedValues(parameters);
+		Identifier identifier = BasicJdbcConverter.fromNamedValues(parameters);
 
-		assertThat(parentKeys.getParameters()).containsExactlyInAnyOrder( //
-				new ParentKeys.ParentKey("one", "eins", String.class), //
-				new ParentKeys.ParentKey("two", 2L, Long.class) //
+		assertThat(identifier.getParameters()).containsExactlyInAnyOrder( //
+				new Identifier.SingleIdentifierValue("one", "eins", String.class), //
+				new Identifier.SingleIdentifierValue("two", 2L, Long.class) //
 		);
 	}
 
@@ -58,20 +62,20 @@ public class ParentKeysUnitTests {
 		HashMap<String, Object> parameters = new HashMap<>();
 		parameters.put("one", null);
 
-		ParentKeys parentKeys = ParentKeys.fromNamedValues(parameters);
+		Identifier identifier = BasicJdbcConverter.fromNamedValues(parameters);
 
-		assertThat(parentKeys.getParameters()).containsExactly( //
-				new ParentKeys.ParentKey("one", null, Object.class) //
+		assertThat(identifier.getParameters()).containsExactly( //
+				new Identifier.SingleIdentifierValue("one", null, Object.class) //
 		);
 	}
 
 	@Test // DATAJDBC-326
 	public void parametersWithPropertyKeysUseTheParentPropertyJdbcType() {
 
-		ParentKeys parentKeys = ParentKeys.forBackReferences(getPath("child"), "eins");
+		Identifier identifier = BasicJdbcConverter.forBackReferences(getPath("child"), "eins");
 
-		assertThat(parentKeys.getParameters()).containsExactly( //
-				new ParentKeys.ParentKey("dummy_entity", "eins", UUID.class) //
+		assertThat(identifier.getParameters()).containsExactly( //
+				new Identifier.SingleIdentifierValue("dummy_entity", "eins", UUID.class) //
 		);
 	}
 
@@ -80,13 +84,13 @@ public class ParentKeysUnitTests {
 
 		PersistentPropertyPath<RelationalPersistentProperty> path = getPath("children");
 
-		ParentKeys parentKeys = ParentKeys //
+		Identifier identifier = BasicJdbcConverter //
 				.forBackReferences(path, "parent-eins") //
 				.withQualifier(path, "map-key-eins");
 
-		assertThat(parentKeys.getParameters()).containsExactlyInAnyOrder( //
-				new ParentKeys.ParentKey("dummy_entity", "parent-eins", UUID.class), //
-				new ParentKeys.ParentKey("dummy_entity_key", "map-key-eins", String.class) //
+		assertThat(identifier.getParameters()).containsExactlyInAnyOrder( //
+				new Identifier.SingleIdentifierValue("dummy_entity", "parent-eins", UUID.class), //
+				new Identifier.SingleIdentifierValue("dummy_entity_key", "map-key-eins", String.class) //
 		);
 	}
 
@@ -95,23 +99,23 @@ public class ParentKeysUnitTests {
 
 		PersistentPropertyPath<RelationalPersistentProperty> path = getPath("moreChildren");
 
-		ParentKeys parentKeys = ParentKeys //
+		Identifier identifier = BasicJdbcConverter //
 				.forBackReferences(path, "parent-eins") //
 				.withQualifier(path, "list-index-eins");
 
-		assertThat(parentKeys.getParameters()).containsExactlyInAnyOrder( //
-				new ParentKeys.ParentKey("dummy_entity", "parent-eins", UUID.class), //
-				new ParentKeys.ParentKey("dummy_entity_key", "list-index-eins", Integer.class) //
+		assertThat(identifier.getParameters()).containsExactlyInAnyOrder( //
+				new Identifier.SingleIdentifierValue("dummy_entity", "parent-eins", UUID.class), //
+				new Identifier.SingleIdentifierValue("dummy_entity_key", "list-index-eins", Integer.class) //
 		);
 	}
 
 	@Test // DATAJDBC-326
 	public void backreferenceAcrossEmbeddable() {
 
-		ParentKeys parentKeys = ParentKeys.forBackReferences(getPath("embeddable.child"), "parent-eins");
+		Identifier identifier = BasicJdbcConverter.forBackReferences(getPath("embeddable.child"), "parent-eins");
 
-		assertThat(parentKeys.getParameters()).containsExactly( //
-				new ParentKeys.ParentKey("embeddable", "parent-eins", UUID.class) //
+		assertThat(identifier.getParameters()).containsExactly( //
+				new Identifier.SingleIdentifierValue("embeddable", "parent-eins", UUID.class) //
 		);
 	}
 

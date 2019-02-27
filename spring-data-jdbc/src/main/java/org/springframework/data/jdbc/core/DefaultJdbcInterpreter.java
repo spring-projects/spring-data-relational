@@ -16,11 +16,12 @@
 package org.springframework.data.jdbc.core;
 
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 
 import java.util.Collections;
 import java.util.Map;
 
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
@@ -37,7 +38,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * {@link Interpreter} for {@link DbAction}s using a {@link DataAccessStrategy} for performing actual database
@@ -142,14 +142,14 @@ class DefaultJdbcInterpreter implements Interpreter {
 		accessStrategy.deleteAll(deleteAllRoot.getEntityType());
 	}
 
-	private <T> ParentKeys getParentKeys(DbAction.WithDependingOn<?> action) {
+	private <T> Identifier getParentKeys(DbAction.WithDependingOn<?> action) {
 
 		DbAction.WithEntity<?> dependingOn = action.getDependingOn();
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
 
 		Object identifier = getIdFromEntityDependingOn(dependingOn, persistentEntity);
-		ParentKeys parentKeys = ParentKeys //
+		Identifier parentKeys = BasicJdbcConverter //
 				.forBackReferences(action.getPropertyPath(), identifier);
 
 		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers().entrySet()) {

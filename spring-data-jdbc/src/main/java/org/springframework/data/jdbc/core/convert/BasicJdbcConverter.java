@@ -20,17 +20,23 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 
 import java.sql.Array;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * {@link RelationalConverter} that uses a {@link MappingContext} to apply basic conversion of relational values to
@@ -68,6 +74,34 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			CustomConversions conversions) {
 		super(context, conversions);
+	}
+
+	/**
+	 * Only provided as a bridge to the old way of passing additional parameters to an insert statement.
+	 *
+	 * @param additionalParameters
+	 */
+	public static Identifier fromNamedValues(Map<String, Object> additionalParameters) {
+
+		List<Identifier.SingleIdentifierValue> keys = new ArrayList<>();
+		additionalParameters.forEach((k, v) -> keys.add(new Identifier.SingleIdentifierValue(k, v, v == null ? Object.class : v.getClass())));
+
+		Identifier identifier = new Identifier(keys);
+		return identifier;
+	}
+
+	/**
+	 * Creates ParentKeys with backreference for the given path and value of the parents id.
+	 */
+	public static Identifier forBackReferences(PersistentPropertyPath<RelationalPersistentProperty> path, @Nullable Object value) {
+
+		Identifier.SingleIdentifierValue singleIdentifierValue = new Identifier.SingleIdentifierValue( //
+				path.getRequiredLeafProperty().getReverseColumnName(), //
+				value, //
+				getLastIdProperty(path).getColumnType() //
+		);
+
+		return new Identifier(Collections.singletonList(singleIdentifierValue));
 	}
 
 	/*
@@ -122,4 +156,18 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		return super.writeValue(value, type);
 	}
+
+
+	private static RelationalPersistentProperty getLastIdProperty(
+			PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+		RelationalPersistentProperty idProperty = path.getRequiredLeafProperty().getOwner().getIdProperty();
+
+		if (idProperty != null) {
+			return idProperty;
+		}
+
+		return getLastIdProperty(path.getParentPath());
+	}
+
 }
