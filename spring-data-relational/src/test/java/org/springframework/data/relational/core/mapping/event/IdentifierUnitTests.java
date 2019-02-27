@@ -26,7 +26,7 @@ import org.junit.Test;
  *
  * @author Jens Schauder
  */
-public class IdentifierTest {
+public class IdentifierUnitTests {
 
 	@SuppressWarnings("unchecked")
 	@Test
