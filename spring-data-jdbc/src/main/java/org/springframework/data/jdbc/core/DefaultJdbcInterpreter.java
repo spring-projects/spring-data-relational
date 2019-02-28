@@ -148,15 +148,15 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
 
-		Object identifier = getIdFromEntityDependingOn(dependingOn, persistentEntity);
-		Identifier parentKeys = BasicJdbcConverter //
-				.forBackReferences(action.getPropertyPath(), identifier);
+		Object id = getIdFromEntityDependingOn(dependingOn, persistentEntity);
+		Identifier identifier = BasicJdbcConverter //
+				.forBackReferences(action.getPropertyPath(), id);
 
 		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers().entrySet()) {
-			parentKeys = parentKeys.withQualifier(qualifier.getKey(), qualifier.getValue());
+			identifier = identifier.withQualifier(qualifier.getKey(), qualifier.getValue());
 		}
 
-		return parentKeys;
+		return identifier;
 	}
 
 	@Nullable
