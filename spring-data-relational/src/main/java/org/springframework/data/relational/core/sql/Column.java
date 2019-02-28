@@ -200,6 +200,20 @@ public class Column extends AbstractSegment implements Expression, Named {
 		return isNull().not();
 	}
 
+	// -------------------------------------------------------------------------
+	// Methods for Assignment creation.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Creates a value {@link AssignValue assignment}.
+	 *
+	 * @param value the value to assign.
+	 * @return the {@link AssignValue} assignment.
+	 */
+	public AssignValue set(Expression value) {
+		return Assignments.value(this, value);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.Named#getName()

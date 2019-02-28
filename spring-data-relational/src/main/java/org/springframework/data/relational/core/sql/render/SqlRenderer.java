@@ -15,49 +15,48 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.springframework.data.relational.core.sql.Delete;
+import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.Update;
 import org.springframework.util.Assert;
 
 /**
- * Naive SQL renderer that does not consider dialect specifics. This class is to evaluate requirements of a SQL
- * renderer.
+ * SQL renderer for {@link Select} and {@link Delete} statements.
  *
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 1.1
+ * @see RenderContext
  */
-public class SqlRenderer {
+public class SqlRenderer implements Renderer {
 
-	private final Select select;
 	private final RenderContext context;
 
-	private SqlRenderer(Select select, RenderContext context) {
+	private SqlRenderer(RenderContext context) {
+
+		Assert.notNull(context, "RenderContext must not be null!");
+
 		this.context = context;
-
-		Assert.notNull(select, "Select must not be null!");
-
-		this.select = select;
 	}
 
 	/**
 	 * Creates a new {@link SqlRenderer}.
 	 *
-	 * @param select must not be {@literal null}.
 	 * @return the renderer.
 	 */
-	public static SqlRenderer create(Select select) {
-		return new SqlRenderer(select, new SimpleRenderContext(NamingStrategies.asIs()));
+	public static SqlRenderer create() {
+		return new SqlRenderer(new SimpleRenderContext(NamingStrategies.asIs()));
 	}
 
 	/**
 	 * Creates a new {@link SqlRenderer} using a {@link RenderContext}.
 	 *
-	 * @param select must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @return the renderer.
 	 */
-	public static SqlRenderer create(Select select, RenderContext context) {
-		return new SqlRenderer(select, context);
+	public static SqlRenderer create(RenderContext context) {
+		return new SqlRenderer(context);
 	}
 
 	/**
@@ -66,8 +65,38 @@ public class SqlRenderer {
 	 * @param select must not be {@literal null}.
 	 * @return the rendered statement.
 	 */
-	public static String render(Select select) {
-		return create(select).render();
+	public static String toString(Select select) {
+		return create().render(select);
+	}
+
+	/**
+	 * Renders a {@link Insert} statement into its SQL representation.
+	 *
+	 * @param insert must not be {@literal null}.
+	 * @return the rendered statement.
+	 */
+	public static String toString(Insert insert) {
+		return create().render(insert);
+	}
+
+	/**
+	 * Renders a {@link Update} statement into its SQL representation.
+	 *
+	 * @param update must not be {@literal null}.
+	 * @return the rendered statement.
+	 */
+	public static String toString(Update update) {
+		return create().render(update);
+	}
+
+	/**
+	 * Renders a {@link Delete} statement into its SQL representation.
+	 *
+	 * @param delete must not be {@literal null}.
+	 * @return the rendered statement.
+	 */
+	public static String toString(Delete delete) {
+		return create().render(delete);
 	}
 
 	/**
@@ -75,10 +104,53 @@ public class SqlRenderer {
 	 *
 	 * @return the rendered statement.
 	 */
-	public String render() {
+	@Override
+	public String render(Select select) {
 
 		SelectStatementVisitor visitor = new SelectStatementVisitor(context);
 		select.visit(visitor);
+
+		return visitor.getRenderedPart().toString();
+	}
+
+	/**
+	 * Render the {@link Insert} AST into a SQL statement.
+	 *
+	 * @return the rendered statement.
+	 */
+	@Override
+	public String render(Insert insert) {
+
+		InsertStatementVisitor visitor = new InsertStatementVisitor(context);
+		insert.visit(visitor);
+
+		return visitor.getRenderedPart().toString();
+	}
+
+	/**
+	 * Render the {@link Update} AST into a SQL statement.
+	 *
+	 * @return the rendered statement.
+	 */
+	@Override
+	public String render(Update update) {
+
+		UpdateStatementVisitor visitor = new UpdateStatementVisitor(context);
+		update.visit(visitor);
+
+		return visitor.getRenderedPart().toString();
+	}
+
+	/**
+	 * Render the {@link Delete} AST into a SQL statement.
+	 *
+	 * @return the rendered statement.
+	 */
+	@Override
+	public String render(Delete delete) {
+
+		DeleteStatementVisitor visitor = new DeleteStatementVisitor(context);
+		delete.visit(visitor);
 
 		return visitor.getRenderedPart().toString();
 	}
