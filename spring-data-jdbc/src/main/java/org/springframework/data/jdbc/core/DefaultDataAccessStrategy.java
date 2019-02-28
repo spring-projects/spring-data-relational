@@ -29,7 +29,7 @@ import java.util.stream.StreamSupport;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -89,7 +89,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
-		return insert(instance, domainType, BasicJdbcConverter.fromNamedValues(additionalParameters));
+		return insert(instance, domainType, JdbcIdentifierBuilder.from(additionalParameters).build());
 	}
 
 	/*

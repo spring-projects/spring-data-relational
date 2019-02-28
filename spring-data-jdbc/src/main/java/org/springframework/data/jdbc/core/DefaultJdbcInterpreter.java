@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.Collections;
 import java.util.Map;
 
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
@@ -149,14 +149,14 @@ class DefaultJdbcInterpreter implements Interpreter {
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(dependingOn.getEntityType());
 
 		Object id = getIdFromEntityDependingOn(dependingOn, persistentEntity);
-		Identifier identifier = BasicJdbcConverter //
+		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
 				.forBackReferences(action.getPropertyPath(), id);
 
 		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers().entrySet()) {
 			identifier = identifier.withQualifier(qualifier.getKey(), qualifier.getValue());
 		}
 
-		return identifier;
+		return identifier.build();
 	}
 
 	@Nullable

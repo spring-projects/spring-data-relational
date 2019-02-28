@@ -16,20 +16,19 @@
 package org.springframework.data.jdbc.core;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.domain.Identifier.SingleIdentifierValue;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 
 /**
  * Unit tests for {@link DefaultJdbcInterpreter}
@@ -69,7 +68,9 @@ public class DefaultJdbcInterpreterUnitTests {
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new SingleIdentifierValue(BACK_REFERENCE, CONTAINER_ID, Long.class));
+		assertThat(argumentCaptor.getValue().getParameters()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	@Test // DATAJDBC-251
@@ -82,7 +83,9 @@ public class DefaultJdbcInterpreterUnitTests {
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new SingleIdentifierValue(BACK_REFERENCE, CONTAINER_ID, Long.class));
+		assertThat(argumentCaptor.getValue().getParameters()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	@Test // DATAJDBC-251
@@ -95,7 +98,9 @@ public class DefaultJdbcInterpreterUnitTests {
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()).containsExactly(new SingleIdentifierValue(BACK_REFERENCE, CONTAINER_ID, Long.class));
+		assertThat(argumentCaptor.getValue().getParameters()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
 	static class Container {

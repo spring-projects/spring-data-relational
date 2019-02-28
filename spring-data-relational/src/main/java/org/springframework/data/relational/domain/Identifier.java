@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.domain;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 
 import java.util.ArrayList;
@@ -25,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-
 /**
  * {@literal Identifier} represents a multi part id of an entity. Parts or all of the entity might not have a
  * representation as a property in the entity but might only be derived from other entities referencing it.
@@ -35,28 +34,35 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Jens Schauder
  * @since 1.1
  */
-public class Identifier {
+public final class Identifier {
 
 	private final List<SingleIdentifierValue> keys;
 
-	public Identifier(List<SingleIdentifierValue> keys) {
-
-		this.keys = Collections.unmodifiableList(keys);
+	private Identifier(List<SingleIdentifierValue> keys) {
+		this.keys = keys;
 	}
 
-	public Identifier withQualifier(PersistentPropertyPath<RelationalPersistentProperty> path, Object value) {
+	static public Identifier empty() {
+		return new Identifier(Collections.emptyList());
+	}
+
+	static public Identifier simple(String name, Object value, Class<?> targetType) {
+		return new Identifier(Collections.singletonList(new SingleIdentifierValue(name, value, targetType)));
+	}
+
+	public Identifier add(String name, Object value, Class<?> targetType) {
 
 		List<SingleIdentifierValue> keys = new ArrayList<>(this.keys);
-
-		RelationalPersistentProperty leafProperty = path.getRequiredLeafProperty();
-		keys.add(new SingleIdentifierValue(leafProperty.getKeyColumn(), value, leafProperty.getQualifierColumnType()));
-
+		keys.add(new SingleIdentifierValue(name, value, targetType));
 		return new Identifier(keys);
 	}
 
 	@Deprecated
 	public Map<String, Object> getParametersByName() {
-		return new HashMap<>();
+
+		HashMap<String, Object> result = new HashMap<>();
+		forEach(v -> result.put(v.name, v.value));
+		return result;
 	}
 
 	public Collection<SingleIdentifierValue> getParameters() {
@@ -75,7 +81,9 @@ public class Identifier {
 	 * @since 1.1
 	 */
 	@Value
+	@AllArgsConstructor(access = AccessLevel.PRIVATE)
 	public static class SingleIdentifierValue {
+
 		String name;
 		Object value;
 		Class<?> targetType;

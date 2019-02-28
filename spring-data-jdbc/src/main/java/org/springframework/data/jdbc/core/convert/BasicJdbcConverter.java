@@ -76,34 +76,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		super(context, conversions);
 	}
 
-	/**
-	 * Only provided as a bridge to the old way of passing additional parameters to an insert statement.
-	 *
-	 * @param additionalParameters
-	 */
-	public static Identifier fromNamedValues(Map<String, Object> additionalParameters) {
-
-		List<Identifier.SingleIdentifierValue> keys = new ArrayList<>();
-		additionalParameters.forEach((k, v) -> keys.add(new Identifier.SingleIdentifierValue(k, v, v == null ? Object.class : v.getClass())));
-
-		Identifier identifier = new Identifier(keys);
-		return identifier;
-	}
-
-	/**
-	 * Creates ParentKeys with backreference for the given path and value of the parents id.
-	 */
-	public static Identifier forBackReferences(PersistentPropertyPath<RelationalPersistentProperty> path, @Nullable Object value) {
-
-		Identifier.SingleIdentifierValue singleIdentifierValue = new Identifier.SingleIdentifierValue( //
-				path.getRequiredLeafProperty().getReverseColumnName(), //
-				value, //
-				getLastIdProperty(path).getColumnType() //
-		);
-
-		return new Identifier(Collections.singletonList(singleIdentifierValue));
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.conversion.RelationalConverter#readValue(java.lang.Object, org.springframework.data.util.TypeInformation)
@@ -157,17 +129,5 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return super.writeValue(value, type);
 	}
 
-
-	private static RelationalPersistentProperty getLastIdProperty(
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
-
-		RelationalPersistentProperty idProperty = path.getRequiredLeafProperty().getOwner().getIdProperty();
-
-		if (idProperty != null) {
-			return idProperty;
-		}
-
-		return getLastIdProperty(path.getParentPath());
-	}
 
 }
