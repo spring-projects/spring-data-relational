@@ -17,4 +17,4 @@ caches:
 - path: maven
 
 run:
-  path: spring-data-jdbc-github/ci/deploy.sh
+  path: spring-data-jdbc-github/ci/build.sh
