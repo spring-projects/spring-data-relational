@@ -42,7 +42,7 @@ public class SelectBuilderUnitTests {
 
 		Select select = builder.select(foo, bar).from(table).build();
 
-		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
+		CapturingVisitor visitor = new CapturingVisitor();
 		select.visit(visitor);
 
 		assertThat(visitor.enter).containsSequence(foo, table, bar, table, new From(table), table);
@@ -58,7 +58,7 @@ public class SelectBuilderUnitTests {
 
 		Select select = builder.top(10).select(foo).from(table).build();
 
-		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
+		CapturingVisitor visitor = new CapturingVisitor();
 		select.visit(visitor);
 
 		assertThat(visitor.enter).containsSequence(foo, table, new From(table), table);
@@ -78,7 +78,7 @@ public class SelectBuilderUnitTests {
 
 		Select select = builder.select(foo, bar).from(table1, table2).build();
 
-		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
+		CapturingVisitor visitor = new CapturingVisitor();
 		select.visit(visitor);
 
 		assertThat(visitor.enter).containsSequence(foo, table1, bar, table2, new From(table1, table2), table1, table2);
@@ -96,7 +96,7 @@ public class SelectBuilderUnitTests {
 		OrderByField orderByField = OrderByField.from(foo).asc();
 		Select select = builder.select(foo).from(table).orderBy(orderByField).build();
 
-		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
+		CapturingVisitor visitor = new CapturingVisitor();
 		select.visit(visitor);
 
 		assertThat(visitor.enter).containsSequence(foo, table, new From(table), table, orderByField, foo);
@@ -118,7 +118,7 @@ public class SelectBuilderUnitTests {
 				.and(SQL.column("tenant", employee)).equals(SQL.column("tenant", department))
 				.orderBy(OrderByField.from(name).asc()).build();
 
-		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
+		CapturingVisitor visitor = new CapturingVisitor();
 		select.visit(visitor);
 
 		assertThat(visitor.enter).filteredOn(Join.class::isInstance).hasSize(1);
@@ -131,20 +131,4 @@ public class SelectBuilderUnitTests {
 		assertThat(join.getType()).isEqualTo(JoinType.JOIN);
 	}
 
-	static class CapturingSelectVisitor implements Visitor {
-
-		final List<Visitable> enter = new ArrayList<>();
-
-		@Override
-		public void enter(Visitable segment) {
-			enter.add(segment);
-		}
-
-		@Override
-		public void leave(Visitable segment) {
-			leave.add(segment);
-		}
-
-		final List<Visitable> leave = new ArrayList<>();
-	}
 }

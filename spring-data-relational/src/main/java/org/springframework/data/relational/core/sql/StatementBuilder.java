@@ -15,8 +15,12 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import static org.springframework.data.relational.core.sql.UpdateBuilder.*;
+
 import java.util.Collection;
 
+import org.springframework.data.relational.core.sql.DeleteBuilder.DeleteWhere;
+import org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValues;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 
 /**
@@ -32,7 +36,7 @@ import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 public abstract class StatementBuilder {
 
 	/**
-	 * Creates a new {@link SelectBuilder} by specifying a {@code SELECT} column.
+	 * Creates a new {@link SelectBuilder} and includes the {@code SELECT} columns.
 	 *
 	 * @param expression the select list expression.
 	 * @return the {@link SelectBuilder} containing {@link Expression}.
@@ -43,7 +47,7 @@ public abstract class StatementBuilder {
 	}
 
 	/**
-	 * Creates a new {@link SelectBuilder} by specifying one or more {@code SELECT} columns.
+	 * Creates a new {@link SelectBuilder} and includes one or more {@code SELECT} columns.
 	 *
 	 * @param expressions the select list expressions.
 	 * @return the {@link SelectBuilder} containing {@link Expression}s.
@@ -54,10 +58,10 @@ public abstract class StatementBuilder {
 	}
 
 	/**
-	 * Include one or more {@link Expression}s in the select list.
+	 * Creates a new {@link SelectBuilder} and includes one or more {@link Expression}s in the select list.
 	 *
 	 * @param expressions the expressions to include.
-	 * @return {@code this} builder.
+	 * @return the {@link SelectBuilder} containing {@link Expression}s.
 	 * @see Table#columns(String...)
 	 */
 	public static SelectAndFrom select(Collection<? extends Expression> expressions) {
@@ -74,7 +78,68 @@ public abstract class StatementBuilder {
 		return Select.builder();
 	}
 
-	private StatementBuilder() {
-
+	/**
+	 * Creates a new {@link InsertBuilder} and declare the {@link Table} to insert into.
+	 *
+	 * @param table the table to insert into.
+	 * @return the new {@link InsertBuilder}.
+	 * @see Table#create(String)
+	 */
+	public static InsertIntoColumnsAndValues insert(Table table) {
+		return insert().into(table);
 	}
+
+	/**
+	 * Creates a new {@link InsertBuilder}.
+	 *
+	 * @return the new {@link InsertBuilder}.
+	 * @see InsertBuilder
+	 */
+	public static InsertBuilder insert() {
+		return Insert.builder();
+	}
+
+	/**
+	 * Creates a new {@link UpdateBuilder} and declare the {@link Table} for the update.
+	 *
+	 * @param table the table for the update.
+	 * @return the new {@link UpdateBuilder}.
+	 * @see Table#create(String)
+	 */
+	public static UpdateAssign update(Table table) {
+		return update().table(table);
+	}
+
+	/**
+	 * Creates a new {@link UpdateBuilder}.
+	 *
+	 * @return the new {@link UpdateBuilder}.
+	 * @see UpdateBuilder
+	 */
+	public static UpdateBuilder update() {
+		return Update.builder();
+	}
+
+	/**
+	 * Creates a new {@link DeleteBuilder} and declares the {@link Table} to delete from.
+	 *
+	 * @param table the table to delete from.
+	 * @return {@code this} builder.
+	 * @see Table#columns(String...)
+	 */
+	public static DeleteWhere delete(Table table) {
+		return delete().from(table);
+	}
+
+	/**
+	 * Creates a new {@link DeleteBuilder}.
+	 *
+	 * @return the new {@link DeleteBuilder}.
+	 * @see DeleteBuilder
+	 */
+	public static DeleteBuilder delete() {
+		return Delete.builder();
+	}
+
+	private StatementBuilder() {}
 }

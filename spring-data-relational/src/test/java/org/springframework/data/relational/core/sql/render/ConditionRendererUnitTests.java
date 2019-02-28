@@ -38,7 +38,7 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderEquals() {
 
 		String sql = SqlRenderer
-				.render(StatementBuilder.select(left).from(table).where(left.isEqualTo(right)).build());
+				.toString(StatementBuilder.select(left).from(table).where(left.isEqualTo(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left = my_table.right");
 	}
@@ -47,11 +47,11 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderNotEquals() {
 
 		String sql = SqlRenderer
-				.render(StatementBuilder.select(left).from(table).where(left.isNotEqualTo(right)).build());
+				.toString(StatementBuilder.select(left).from(table).where(left.isNotEqualTo(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left != my_table.right");
 
-		sql = SqlRenderer.render(StatementBuilder.select(left).from(table).where(left.isEqualTo(right).not()).build());
+		sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.isEqualTo(right).not()).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left != my_table.right");
 	}
@@ -59,7 +59,7 @@ public class ConditionRendererUnitTests {
 	@Test // DATAJDBC-309
 	public void shouldRenderIsLess() {
 
-		String sql = SqlRenderer.render(StatementBuilder.select(left).from(table).where(left.isLess(right)).build());
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.isLess(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left < my_table.right");
 	}
@@ -68,7 +68,7 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderIsLessOrEqualTo() {
 
 		String sql = SqlRenderer
-				.render(StatementBuilder.select(left).from(table).where(left.isLessOrEqualTo(right)).build());
+				.toString(StatementBuilder.select(left).from(table).where(left.isLessOrEqualTo(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left <= my_table.right");
 	}
@@ -77,7 +77,7 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderIsGreater() {
 
 		String sql = SqlRenderer
-				.render(StatementBuilder.select(left).from(table).where(left.isGreater(right)).build());
+				.toString(StatementBuilder.select(left).from(table).where(left.isGreater(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left > my_table.right");
 	}
@@ -86,7 +86,7 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderIsGreaterOrEqualTo() {
 
 		String sql = SqlRenderer
-				.render(StatementBuilder.select(left).from(table).where(left.isGreaterOrEqualTo(right)).build());
+				.toString(StatementBuilder.select(left).from(table).where(left.isGreaterOrEqualTo(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left >= my_table.right");
 	}
@@ -94,7 +94,7 @@ public class ConditionRendererUnitTests {
 	@Test // DATAJDBC-309
 	public void shouldRenderIn() {
 
-		String sql = SqlRenderer.render(StatementBuilder.select(left).from(table).where(left.in(right)).build());
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.in(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left IN (my_table.right)");
 	}
@@ -102,7 +102,7 @@ public class ConditionRendererUnitTests {
 	@Test // DATAJDBC-309
 	public void shouldRenderLike() {
 
-		String sql = SqlRenderer.render(StatementBuilder.select(left).from(table).where(left.like(right)).build());
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.like(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left LIKE my_table.right");
 	}
@@ -110,7 +110,7 @@ public class ConditionRendererUnitTests {
 	@Test // DATAJDBC-309
 	public void shouldRenderIsNull() {
 
-		String sql = SqlRenderer.render(StatementBuilder.select(left).from(table).where(left.isNull()).build());
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.isNull()).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left IS NULL");
 	}
@@ -118,11 +118,11 @@ public class ConditionRendererUnitTests {
 	@Test // DATAJDBC-309
 	public void shouldRenderIsNotNull() {
 
-		String sql = SqlRenderer.render(StatementBuilder.select(left).from(table).where(left.isNotNull()).build());
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.isNotNull()).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left IS NOT NULL");
 
-		sql = SqlRenderer.render(StatementBuilder.select(left).from(table).where(left.isNull().not()).build());
+		sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.isNull().not()).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left IS NOT NULL");
 	}

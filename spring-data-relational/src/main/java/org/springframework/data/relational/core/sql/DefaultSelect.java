@@ -44,7 +44,7 @@ class DefaultSelect implements Select {
 
 		this.distinct = distinct;
 		this.selectList = new SelectList(new ArrayList<>(selectList));
-		this.from = new From(from);
+		this.from = new From(new ArrayList<>(from));
 		this.limit = limit;
 		this.offset = offset;
 		this.joins = new ArrayList<>(joins);

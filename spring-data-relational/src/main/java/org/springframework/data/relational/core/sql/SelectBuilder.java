@@ -22,6 +22,7 @@ import java.util.Collection;
  *
  * @author Mark Paluch
  * @since 1.1
+ * @see StatementBuilder
  */
 public interface SelectBuilder {
 

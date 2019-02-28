@@ -27,17 +27,13 @@ import java.util.Set;
  * @author Mark Paluch
  * @since 1.1
  */
-class SelectValidator implements Visitor {
+class SelectValidator extends AbstractImportValidator {
 
 	private int selectFieldCount;
 	private Set<Table> requiredBySelect = new HashSet<>();
-	private Set<Table> requiredByWhere = new HashSet<>();
 	private Set<Table> requiredByOrderBy = new HashSet<>();
 
-	private Set<Table> from = new HashSet<>();
 	private Set<Table> join = new HashSet<>();
-
-	private Visitable parent;
 
 	public static void validate(Select select) {
 		new SelectValidator().doValidate(select);
@@ -80,6 +76,8 @@ class SelectValidator implements Visitor {
 	@Override
 	public void enter(Visitable segment) {
 
+		super.enter(segment);
+
 		if (segment instanceof AsteriskFromTable && parent instanceof Select) {
 
 			Table table = ((AsteriskFromTable) segment).getTable();
@@ -95,10 +93,6 @@ class SelectValidator implements Visitor {
 			if (table != null) {
 				requiredBySelect.add(table);
 			}
-		}
-
-		if (segment instanceof Table && parent instanceof From) {
-			from.add((Table) segment);
 		}
 
 		if (segment instanceof Column && parent instanceof OrderByField) {
@@ -123,17 +117,5 @@ class SelectValidator implements Visitor {
 				}
 			});
 		}
-
-		if (segment instanceof Join || segment instanceof OrderByField || segment instanceof From
-				|| segment instanceof Select || segment instanceof Where || segment instanceof SimpleFunction) {
-			parent = segment;
-		}
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitor#leave(org.springframework.data.relational.core.sql.Visitable)
-	 */
-	@Override
-	public void leave(Visitable segment) {}
 }

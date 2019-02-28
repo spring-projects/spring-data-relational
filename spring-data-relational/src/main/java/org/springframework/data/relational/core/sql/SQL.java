@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql;
 
 import org.springframework.data.relational.core.sql.BindMarker.NamedBindMarker;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -75,6 +76,45 @@ public abstract class SQL {
 		Assert.hasText(name, "Name must not be null or empty!");
 
 		return new NamedBindMarker(name);
+	}
+
+	/**
+	 * Creates a new {@link StringLiteral} from the {@code content}.
+	 *
+	 * @param content the literal content.
+	 * @return a new {@link StringLiteral}.
+	 */
+	public static StringLiteral literalOf(@Nullable CharSequence content) {
+		return new StringLiteral(content);
+	}
+
+	/**
+	 * Creates a new {@link NumericLiteral} from the {@code content}.
+	 *
+	 * @param content the literal content.
+	 * @return a new {@link NumericLiteral}.
+	 */
+	public static NumericLiteral literalOf(@Nullable Number content) {
+		return new NumericLiteral(content);
+	}
+
+	/**
+	 * Creates a new {@link Literal} from the {@code content}.
+	 *
+	 * @param content the literal content.
+	 * @return a new {@link Literal}.
+	 */
+	public static <T> Literal<T> literalOf(@Nullable T content) {
+		return new Literal<>(content);
+	}
+
+	/**
+	 * Creates a new {@code NULL} {@link Literal}.
+	 *
+	 * @return a new {@link Literal}.
+	 */
+	public static <T> Literal<T> nullLiteral() {
+		return new Literal<>(null);
 	}
 
 	// Utility constructor.
