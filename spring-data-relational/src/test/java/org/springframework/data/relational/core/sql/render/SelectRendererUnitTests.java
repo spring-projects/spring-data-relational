@@ -118,8 +118,9 @@ public class SelectRendererUnitTests {
 				.and(employee.column("tenant")).equals(department.column("tenant")) //
 				.build();
 
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
-				+ "JOIN department ON employee.department_id = department.id " + "AND employee.tenant = department.tenant");
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
+				+ "JOIN department ON employee.department_id = department.id "  //
+				+ "AND employee.tenant = department.tenant");
 	}
 
 	@Test // DATAJDBC-309
