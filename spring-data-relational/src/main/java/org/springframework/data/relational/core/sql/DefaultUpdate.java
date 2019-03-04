@@ -40,7 +40,7 @@ class DefaultUpdate implements Update {
 		this.where = where != null ? new Where(where) : null;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
 	 */
@@ -61,14 +61,14 @@ class DefaultUpdate implements Update {
 		visitor.leave(this);
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
 
-		StringBuilder builder = new StringBuilder(32);
+		StringBuilder builder = new StringBuilder();
 		builder.append("UPDATE ").append(table);
 
 		if (!assignments.isEmpty()) {
@@ -76,7 +76,7 @@ class DefaultUpdate implements Update {
 		}
 
 		if (this.where != null) {
-			builder.append(" WHERE ").append(this.where);
+			builder.append(" ").append(this.where);
 		}
 
 		return builder.toString();

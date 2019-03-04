@@ -18,6 +18,8 @@ package org.springframework.data.relational.core.sql;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.springframework.lang.Nullable;
+
 /**
  * Validator for statements to import columns.
  *
@@ -42,13 +44,7 @@ abstract class AbstractImportValidator implements Visitor {
 		}
 
 		if (segment instanceof Where) {
-
-			segment.visit(item -> {
-
-				if (item instanceof Table) {
-					requiredByWhere.add((Table) item);
-				}
-			});
+			segment.visit(new SubselectFilteringWhereVisitor());
 		}
 
 		if (segment instanceof Join || segment instanceof OrderByField || segment instanceof From
@@ -63,4 +59,45 @@ abstract class AbstractImportValidator implements Visitor {
 	 */
 	@Override
 	public void leave(Visitable segment) {}
+
+	/**
+	 * {@link Visitor} that skips sub-{@link Select} and collects columns within a {@link Where} clause.
+	 */
+	class SubselectFilteringWhereVisitor implements Visitor {
+
+		private @Nullable Select selectFilter;
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.sql.Visitor#enter(org.springframework.data.relational.core.sql.Visitable)
+		 */
+		@Override
+		public void enter(Visitable segment) {
+
+			if (selectFilter != null) {
+				return;
+			}
+
+			if (segment instanceof Select) {
+				this.selectFilter = (Select) segment;
+				return;
+			}
+
+			if (segment instanceof Table) {
+				requiredByWhere.add((Table) segment);
+			}
+		}
+
+		/* 
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.sql.Visitor#leave(org.springframework.data.relational.core.sql.Visitable)
+		 */
+		@Override
+		public void leave(Visitable segment) {
+
+			if (this.selectFilter == segment) {
+				this.selectFilter = null;
+			}
+		}
+	}
 }

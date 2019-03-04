@@ -55,7 +55,7 @@ public class UpdateBuilderUnitTests {
 		update.visit(visitor);
 
 		assertThat(visitor.enter).containsSequence(update, table, Assignments.value(column, SQL.bindMarker()), column,
-				table, SQL.bindMarker(), column.isNull());
+				table, SQL.bindMarker(), new Where(column.isNull()));
 
 		assertThat(update.toString()).isEqualTo("UPDATE mytable SET mytable.foo = ? WHERE mytable.foo IS NULL");
 	}

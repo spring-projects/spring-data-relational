@@ -65,14 +65,14 @@ public class AssignValue extends AbstractSegment implements Assignment {
 		return value;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
 
-		StringBuilder builder = new StringBuilder(32);
+		StringBuilder builder = new StringBuilder();
 		return builder.append(this.column).append(" = ").append(this.value).toString();
 	}
 }
