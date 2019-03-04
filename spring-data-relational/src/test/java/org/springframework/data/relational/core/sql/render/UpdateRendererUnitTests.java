@@ -44,6 +44,21 @@ public class UpdateRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-335
+	public void shouldRenderMultipleColumnUpdate() {
+
+		Table table = SQL.table("mytable");
+		Column foo = table.column("foo");
+		Column bar = table.column("bar");
+
+		Update update = StatementBuilder.update(table) //
+				.set(foo.set(SQL.bindMarker())) //
+				.and(bar.set(SQL.bindMarker())) //
+				.build();
+
+		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET mytable.foo = ?, mytable.bar = ?");
+	}
+
+	@Test // DATAJDBC-335
 	public void shouldRenderUpdateWithLiteral() {
 
 		Table table = SQL.table("mytable");

@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.sql.render;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
-
 import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Table;
@@ -45,7 +44,8 @@ public class DeleteRendererUnitTests {
 
 		Table table = Table.create("bar");
 
-		Delete delete = Delete.builder().from(table).where(table.column("foo").isEqualTo(table.column("baz")))
+		Delete delete = Delete.builder().from(table) //
+				.where(table.column("foo").isEqualTo(table.column("baz"))) //
 				.and(table.column("doe").isNull()).build();
 
 		assertThat(SqlRenderer.toString(delete)).isEqualTo("DELETE FROM bar WHERE bar.foo = bar.baz AND bar.doe IS NULL");
@@ -56,7 +56,9 @@ public class DeleteRendererUnitTests {
 
 		Table table = Table.create("bar").as("my_bar");
 
-		Delete delete = Delete.builder().from(table).where(table.column("foo").isEqualTo(table.column("baz"))).build();
+		Delete delete = Delete.builder().from(table) //
+				.where(table.column("foo").isEqualTo(table.column("baz"))) //
+				.build();
 
 		assertThat(SqlRenderer.toString(delete)).isEqualTo("DELETE FROM bar AS my_bar WHERE my_bar.foo = my_bar.baz");
 	}
