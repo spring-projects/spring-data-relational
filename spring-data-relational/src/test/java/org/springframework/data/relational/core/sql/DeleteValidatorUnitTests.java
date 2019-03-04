@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link SelectValidator}.
+ * Unit tests for {@link DeleteValidator}.
  *
  * @author Mark Paluch
  */
@@ -39,5 +39,19 @@ public class DeleteValidatorUnitTests {
 					.build();
 		}).isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Required table [table] by a WHERE predicate not imported by FROM [bar]");
+	}
+
+	@Test // DATAJDBC-335
+	public void shouldIgnoreImportsFromSubselectsInWhereClause() {
+
+		Table foo = SQL.table("foo");
+		Column bar = foo.column("bar");
+
+		Table floo = SQL.table("floo");
+		Column bah = floo.column("bah");
+
+		Select subselect = Select.builder().select(bah).from(floo).build();
+
+		assertThat(Delete.builder().from(foo).where(Conditions.in(bar, subselect)).build()).isNotNull();
 	}
 }

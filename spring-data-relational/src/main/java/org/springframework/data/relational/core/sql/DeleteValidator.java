@@ -25,8 +25,14 @@ package org.springframework.data.relational.core.sql;
  */
 class DeleteValidator extends AbstractImportValidator {
 
-	public static void validate(Delete select) {
-		new DeleteValidator().doValidate(select);
+	/**
+	 * Validates a {@link Delete} statement.
+	 *
+	 * @param delete the {@link Delete} statement.
+	 * @throws IllegalStateException if the statement is not valid.
+	 */
+	public static void validate(Delete delete) {
+		new DeleteValidator().doValidate(delete);
 	}
 
 	private void doValidate(Delete select) {

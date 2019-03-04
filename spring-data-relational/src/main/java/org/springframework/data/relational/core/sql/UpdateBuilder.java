@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Collection;
+
 /**
  * Entry point to construct an {@link Update} statement.
  *
@@ -44,22 +46,25 @@ public interface UpdateBuilder {
 		 * @return {@code this} builder.
 		 * @see Assignment
 		 */
-		UpdateAssignAnd set(Assignment assignment);
-	}
-
-	/**
-	 * Interface exposing {@code SET} methods.
-	 */
-	interface UpdateAssignAnd extends UpdateWhere {
+		UpdateWhere set(Assignment assignment);
 
 		/**
-		 * Apply a {@link Assignment SET assignment}.
+		 * Apply one or more {@link Assignment SET assignments}.
 		 *
-		 * @param assignment a single {@link Assignment column assignment}.
+		 * @param assignments the {@link Assignment column assignments}.
 		 * @return {@code this} builder.
 		 * @see Assignment
 		 */
-		UpdateAssignAnd and(Assignment assignment);
+		UpdateWhere set(Assignment... assignments);
+
+		/**
+		 * Apply one or more {@link Assignment SET assignments}.
+		 *
+		 * @param assignments the {@link Assignment column assignments}.
+		 * @return {@code this} builder.
+		 * @see Assignment
+		 */
+		UpdateWhere set(Collection<? extends Assignment> assignments);
 	}
 
 	/**

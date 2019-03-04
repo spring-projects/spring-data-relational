@@ -16,10 +16,11 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssign;
-import org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssignAnd;
 import org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhere;
 import org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhereAndOr;
 import org.springframework.lang.Nullable;
@@ -31,13 +32,13 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 1.1
  */
-class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAndOr, UpdateAssign, UpdateAssignAnd {
+class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAndOr, UpdateAssign {
 
 	private Table table;
 	private List<Assignment> assignments = new ArrayList<>();
 	private @Nullable Condition where;
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.UpdateBuilder#table(org.springframework.data.relational.core.sql.Table)
 	 */
@@ -51,7 +52,7 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssign#set(org.springframework.data.relational.core.sql.Assignment)
 	 */
@@ -65,16 +66,33 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssignAnd#and(org.springframework.data.relational.core.sql.Assignment)
+	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssign#set(org.springframework.data.relational.core.sql.Assignment...)
 	 */
 	@Override
-	public DefaultUpdateBuilder and(Assignment assignment) {
-		return set(assignment);
+	public UpdateWhere set(Assignment... assignments) {
+
+		Assert.notNull(assignments, "Assignment must not be null!");
+
+		return set(Arrays.asList(assignments));
 	}
 
-	/* 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssign#set(java.util.Collection)
+	 */
+	@Override
+	public UpdateWhere set(Collection<? extends Assignment> assignments) {
+
+		Assert.notNull(assignments, "Assignment must not be null!");
+
+		this.assignments.addAll(assignments);
+
+		return this;
+	}
+
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhere#where(org.springframework.data.relational.core.sql.Condition)
 	 */
@@ -88,7 +106,7 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhereAndOr#and(org.springframework.data.relational.core.sql.Condition)
 	 */
@@ -102,7 +120,7 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhereAndOr#or(org.springframework.data.relational.core.sql.Condition)
 	 */
@@ -116,7 +134,7 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.BuildUpdate#build()
 	 */

@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Stack;
 
 /**
  * Validator for {@link Select} statements.
@@ -29,12 +30,20 @@ import java.util.Set;
  */
 class SelectValidator extends AbstractImportValidator {
 
+	private final Stack<Select> selects = new Stack<>();
+
 	private int selectFieldCount;
 	private Set<Table> requiredBySelect = new HashSet<>();
 	private Set<Table> requiredByOrderBy = new HashSet<>();
 
 	private Set<Table> join = new HashSet<>();
 
+	/**
+	 * Validates a {@link Select} statement.
+	 *
+	 * @param select the {@link Select} statement.
+	 * @throws IllegalStateException if the statement is not valid.
+	 */
 	public static void validate(Select select) {
 		new SelectValidator().doValidate(select);
 	}
@@ -76,6 +85,14 @@ class SelectValidator extends AbstractImportValidator {
 	@Override
 	public void enter(Visitable segment) {
 
+		if (segment instanceof Select) {
+			selects.push((Select) segment);
+		}
+
+		if (selects.size() > 1) {
+			return;
+		}
+
 		super.enter(segment);
 
 		if (segment instanceof AsteriskFromTable && parent instanceof Select) {
@@ -107,15 +124,23 @@ class SelectValidator extends AbstractImportValidator {
 		if (segment instanceof Table && parent instanceof Join) {
 			join.add((Table) segment);
 		}
+	}
 
-		if (segment instanceof Where) {
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.AbstractImportValidator#leave(org.springframework.data.relational.core.sql.Visitable)
+	 */
+	@Override
+	public void leave(Visitable segment) {
 
-			segment.visit(item -> {
-
-				if (item instanceof Table) {
-					requiredByWhere.add((Table) item);
-				}
-			});
+		if (segment instanceof Select) {
+			selects.remove(segment);
 		}
+
+		if (selects.size() > 1) {
+			return;
+		}
+
+		super.leave(segment);
 	}
 }

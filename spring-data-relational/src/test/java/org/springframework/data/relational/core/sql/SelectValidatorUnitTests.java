@@ -88,4 +88,22 @@ public class SelectValidatorUnitTests {
 		}).isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Required table [table] by a WHERE predicate not imported by FROM [bar] or JOIN []");
 	}
+
+	@Test // DATAJDBC-309
+	public void shouldIgnoreImportsFromSubselectsInWhereClause() {
+
+		Table foo = SQL.table("foo");
+		Column bar = foo.column("bar");
+
+		Table floo = SQL.table("floo");
+		Column bah = floo.column("bah");
+
+		Select subselect = Select.builder().select(bah).from(floo).build();
+
+		assertThatThrownBy(() -> {
+			Select.builder().select(bah).from(foo).where(Conditions.in(bar, subselect)).build();
+		}).isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("Required table [floo] by a SELECT column not imported by FROM [foo] or JOIN []");
+	}
+
 }

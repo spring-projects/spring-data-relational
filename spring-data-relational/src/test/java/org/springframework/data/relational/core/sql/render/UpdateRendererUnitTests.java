@@ -51,8 +51,7 @@ public class UpdateRendererUnitTests {
 		Column bar = table.column("bar");
 
 		Update update = StatementBuilder.update(table) //
-				.set(foo.set(SQL.bindMarker())) //
-				.and(bar.set(SQL.bindMarker())) //
+				.set(foo.set(SQL.bindMarker()), bar.set(SQL.bindMarker())) //
 				.build();
 
 		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET mytable.foo = ?, mytable.bar = ?");
