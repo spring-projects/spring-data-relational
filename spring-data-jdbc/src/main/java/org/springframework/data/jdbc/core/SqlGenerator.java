@@ -45,6 +45,7 @@ import org.springframework.util.Assert;
  * @author Yoichi Imai
  * @author Bastian Wilhelm
  * @author Oleksandr Kucher
+ * @author Tom Hombergs
  */
 class SqlGenerator {
 
@@ -174,6 +175,10 @@ class SqlGenerator {
 
 	String getUpdate() {
 		return updateSql.get();
+	}
+
+	String getUpdateWithVersion(Number version) {
+		return String.format("%s AND %s = %s", updateSql.get(), entity.getVersionProperty().getColumnName(), version);
 	}
 
 	String getCount() {
@@ -343,8 +348,8 @@ class SqlGenerator {
 		String tableColumns = String.join(", ", columnNamesForInsert);
 
 		String parameterNames = columnNamesForInsert.stream()//
-				.map(this::columnNameToParameterName)
-				.map(n -> String.format(":%s", n))//
+				.map(this::columnNameToParameterName) //
+				.map(n -> String.format(":%s", n)) //
 				.collect(Collectors.joining(", "));
 
 		return String.format(insertTemplate, entity.getTableName(), tableColumns, parameterNames);
@@ -458,7 +463,7 @@ class SqlGenerator {
 		);
 	}
 
-	private String columnNameToParameterName(String columnName){
+	private String columnNameToParameterName(String columnName) {
 		return parameterPattern.matcher(columnName).replaceAll("");
 	}
 }

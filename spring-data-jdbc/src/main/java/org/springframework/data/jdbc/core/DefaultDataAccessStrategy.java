@@ -29,6 +29,7 @@ import java.util.stream.StreamSupport;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -54,6 +55,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Thomas Lang
  * @author Bastian Wilhelm
+ * @author Tom Hombergs
  */
 @RequiredArgsConstructor
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -96,7 +98,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
-
 		Map<String, Object> parameters = new LinkedHashMap<>(identifier.size());
 		identifier.forEach((name, value, type) -> {
 			parameters.put(name, converter.writeValue(value, ClassTypeInformation.from(type)));
@@ -113,6 +114,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 			parameters.put(idProperty.getColumnName(),
 					converter.writeValue(idValue, ClassTypeInformation.from(idProperty.getColumnType())));
+		}
+
+		if (persistentEntity.hasVersionProperty()) {
+			VersionAccessor versionAccessor = new VersionAccessor<>(instance, persistentEntity);
+			Number newVersion = versionAccessor.nextVersion();
+			versionAccessor.setVersion(newVersion);
+			parameters.put(persistentEntity.getVersionProperty().getColumnName(), converter.writeValue(newVersion,
+					ClassTypeInformation.from(persistentEntity.getVersionProperty().getColumnType())));
 		}
 
 		parameters.forEach(parameterSource::addValue);
@@ -132,10 +141,41 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
-
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
+		if (persistentEntity.hasVersionProperty()) {
+			return updateWithVersion(instance, domainType);
+		} else {
+			return updateWithoutVersion(instance, domainType);
+		}
+	}
+
+	private <S> boolean updateWithoutVersion(S instance, Class<S> domainType) {
+
+		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 		return operations.update(sql(domainType).getUpdate(), getPropertyMap(instance, persistentEntity, "")) != 0;
+	}
+
+	private <S> boolean updateWithVersion(S instance, Class<S> domainType) {
+
+		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
+		VersionAccessor<S> versionAccessor = new VersionAccessor<>(instance, persistentEntity);
+
+		Number oldVersion = versionAccessor.currentVersion();
+		Number newVersion = versionAccessor.nextVersion();
+		versionAccessor.setVersion(newVersion);
+
+		int affectedRows = operations.update(sql(domainType).getUpdateWithVersion(oldVersion),
+				getPropertyMap(instance, persistentEntity, ""));
+
+		if (affectedRows == 0) {
+			// reverting version update on entity
+			versionAccessor.setVersion(oldVersion);
+			throw new OptimisticLockingFailureException(
+					String.format("Optimistic lock exception on saving entity of type %s.", persistentEntity.getName()));
+		}
+
+		return true;
 	}
 
 	/*
@@ -343,6 +383,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		return operations.getJdbcOperations()
 				.execute((Connection c) -> c.createArrayOf(typeName, (Object[]) convertedValue));
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -410,4 +451,5 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private SqlGenerator sql(Class<?> domainType) {
 		return sqlGeneratorSource.getSqlGenerator(domainType);
 	}
+
 }

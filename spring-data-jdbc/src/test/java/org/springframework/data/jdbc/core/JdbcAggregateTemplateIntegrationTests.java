@@ -36,7 +36,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -57,6 +59,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Thomas Lang
  * @author Mark Paluch
+ * @author Tom Hombergs
  */
 @ContextConfiguration
 @Transactional
@@ -419,6 +422,33 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(new HashSet<>(Arrays.asList("one", "two", "three")));
 	}
 
+	@Test // DATAJDBC-219
+	public void saveAndUpdateVersionedAggregate() {
+		SoftAssertions softly = new SoftAssertions();
+
+		VersionedAggregate aggregate = new VersionedAggregate();
+		template.save(aggregate);
+
+		VersionedAggregate reloadedAggregate = template.findById(aggregate.getId(), VersionedAggregate.class);
+		assertThat(reloadedAggregate.version).isEqualTo(1)
+				.withFailMessage("version field should increment by one with each save");
+		template.save(reloadedAggregate);
+
+		VersionedAggregate updatedAggregate = template.findById(aggregate.getId(), VersionedAggregate.class);
+		assertThat(updatedAggregate.version).isEqualTo(2)
+				.withFailMessage("version field should increment by one with each save");
+
+		reloadedAggregate.setVersion(1);
+		assertThatThrownBy(() -> template.save(reloadedAggregate))
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+				.withFailMessage("saving an aggregate with an outdated version should raise an exception");
+
+		reloadedAggregate.setVersion(3);
+		assertThatThrownBy(() -> template.save(reloadedAggregate))
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+				.withFailMessage("saving an aggregate with an non-existent version should raise an exception");
+	}
+
 	private static void assumeNot(String dbProfileName) {
 
 		Assume.assumeTrue("true"
@@ -499,6 +529,14 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	static class ElementNoId {
 		private String content;
+	}
+
+	@Data
+	static class VersionedAggregate {
+
+		@Id private Long id;
+		@Version private Integer version;
+
 	}
 
 	@Configuration

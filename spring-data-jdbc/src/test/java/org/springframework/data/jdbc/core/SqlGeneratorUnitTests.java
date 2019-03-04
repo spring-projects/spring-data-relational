@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
@@ -43,6 +44,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Greg Turnquist
  * @author Oleksandr Kucher
  * @author Bastian Wilhelm
+ * @author Tom Hombergs
  */
 public class SqlGeneratorUnitTests {
 
@@ -214,9 +216,8 @@ public class SqlGeneratorUnitTests {
 
 		String insert = sqlGenerator.getInsert(emptySet());
 
-		assertThat(insert).isEqualTo("INSERT INTO entity_with_quoted_column_name " +
-				"(\"test_@123\") " +
-				"VALUES (:test_123)");
+		assertThat(insert)
+				.isEqualTo("INSERT INTO entity_with_quoted_column_name " + "(\"test_@123\") " + "VALUES (:test_123)");
 	}
 
 	@Test // DATAJDBC-266
@@ -241,6 +242,21 @@ public class SqlGeneratorUnitTests {
 				"id1 = :id");
 	}
 
+	@Test // DATAJDBC-219
+	public void updateWithVersion() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class);
+
+		assertThat(sqlGenerator.getUpdateWithVersion(2)).containsSequence( //
+				"UPDATE", //
+				"versioned_entity", //
+				"SET", //
+				"WHERE", //
+				"id1 = :id", //
+				"AND", //
+				"version = 2");
+	}
+
 	@Test // DATAJDBC-324
 	public void readOnlyPropertyExcludedFromQuery_when_generateUpdateSql() {
 
@@ -260,9 +276,10 @@ public class SqlGeneratorUnitTests {
 
 		String update = sqlGenerator.getUpdate();
 
-		assertThat(update).isEqualTo("UPDATE entity_with_quoted_column_name " +
-				"SET \"test_@123\" = :test_123 " +
-				"WHERE \"test_@id\" = :test_id");
+		assertThat(update).isEqualTo( //
+				"UPDATE entity_with_quoted_column_name " //
+						+ "SET \"test_@123\" = :test_123 " //
+						+ "WHERE \"test_@id\" = :test_id");
 	}
 
 	@Test // DATAJDBC-324
@@ -294,13 +311,13 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sqlGenerator.getFindAllByProperty("back-ref", "key-column", true)).isEqualToIgnoringCase( //
 				"SELECT " //
-				+ "entity_with_read_only_property.x_id AS x_id, " //
-				+ "entity_with_read_only_property.x_name AS x_name, " //
-				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value, " //
-				+ "entity_with_read_only_property.key-column AS key-column " //
-				+ "FROM entity_with_read_only_property " //
-				+ "WHERE back-ref = :back-ref " //
-				+ "ORDER BY key-column" //
+						+ "entity_with_read_only_property.x_id AS x_id, " //
+						+ "entity_with_read_only_property.x_name AS x_name, " //
+						+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value, " //
+						+ "entity_with_read_only_property.key-column AS key-column " //
+						+ "FROM entity_with_read_only_property " //
+						+ "WHERE back-ref = :back-ref " //
+						+ "ORDER BY key-column" //
 		);
 	}
 
@@ -311,11 +328,11 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sqlGenerator.getFindAllInList()).isEqualToIgnoringCase( //
 				"SELECT " //
-				+ "entity_with_read_only_property.x_id AS x_id, " //
-				+ "entity_with_read_only_property.x_name AS x_name, " //
-				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value " //
-				+ "FROM entity_with_read_only_property " //
-				+ "WHERE entity_with_read_only_property.x_id in(:ids)" //
+						+ "entity_with_read_only_property.x_id AS x_id, " //
+						+ "entity_with_read_only_property.x_name AS x_name, " //
+						+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value " //
+						+ "FROM entity_with_read_only_property " //
+						+ "WHERE entity_with_read_only_property.x_id in(:ids)" //
 		);
 	}
 
@@ -326,11 +343,11 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sqlGenerator.getFindOne()).isEqualToIgnoringCase( //
 				"SELECT " //
-				+ "entity_with_read_only_property.x_id AS x_id, " //
-				+ "entity_with_read_only_property.x_name AS x_name, " //
-				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value " //
-				+ "FROM entity_with_read_only_property " //
-				+ "WHERE entity_with_read_only_property.x_id = :id" //
+						+ "entity_with_read_only_property.x_id AS x_id, " //
+						+ "entity_with_read_only_property.x_name AS x_name, " //
+						+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value " //
+						+ "FROM entity_with_read_only_property " //
+						+ "WHERE entity_with_read_only_property.x_id = :id" //
 		);
 	}
 
@@ -341,13 +358,16 @@ public class SqlGeneratorUnitTests {
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
-		@Column("id1")
-		@Id Long id;
+		@Column("id1") @Id Long id;
 		String name;
 		ReferencedEntity ref;
 		Set<Element> elements;
 		Map<Integer, Element> mappedElements;
 		AggregateReference<OtherAggregate, Long> other;
+	}
+
+	static class VersionedEntity extends DummyEntity {
+		@Version Integer version;
 	}
 
 	@SuppressWarnings("unused")
