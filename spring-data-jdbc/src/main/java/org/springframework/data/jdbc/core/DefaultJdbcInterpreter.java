@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
@@ -37,6 +36,7 @@ import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -142,7 +142,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 		accessStrategy.deleteAll(deleteAllRoot.getEntityType());
 	}
 
-	private <T> Identifier getParentKeys(DbAction.WithDependingOn<?> action) {
+	private Identifier getParentKeys(DbAction.WithDependingOn<?> action) {
 
 		DbAction.WithEntity<?> dependingOn = action.getDependingOn();
 
@@ -152,7 +152,8 @@ class DefaultJdbcInterpreter implements Interpreter {
 		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
 				.forBackReferences(action.getPropertyPath(), id);
 
-		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers().entrySet()) {
+		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
+				.entrySet()) {
 			identifier = identifier.withQualifier(qualifier.getKey(), qualifier.getValue());
 		}
 

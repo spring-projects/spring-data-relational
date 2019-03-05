@@ -15,23 +15,90 @@
  */
 package org.springframework.data.relational.domain;
 
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+
 import org.junit.Test;
 
-import java.util.AbstractMap;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
+ * Unit tests for {@link Identifier}.
+ *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class IdentifierUnitTests {
 
 	@Test // DATAJDBC-326
 	public void getParametersByName() {
 
-		Identifier identifier = Identifier.simple("aName", "aValue", String.class);;
+		Identifier identifier = Identifier.of("aName", "aValue", String.class);
 
-		assertThat(identifier.getParametersByName())
-				.containsExactly(new AbstractMap.SimpleEntry<>("aName", "aValue"));
+		assertThat(identifier.toMap()).hasSize(1).containsEntry("aName", "aValue");
+	}
+
+	@Test // DATAJDBC-326
+	public void parametersWithStringKeysUseObjectAsTypeForNull() {
+
+		HashMap<String, Object> parameters = new HashMap<>();
+		parameters.put("one", null);
+
+		Identifier identifier = Identifier.from(parameters);
+
+		assertThat(identifier.getParts()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly( //
+						tuple("one", null, Object.class) //
+				);
+	}
+
+	@Test // DATAJDBC-326
+	public void createsIdentifierFromMap() {
+
+		Identifier identifier = Identifier.from(Collections.singletonMap("aName", "aValue"));
+
+		assertThat(identifier.toMap()).hasSize(1).containsEntry("aName", "aValue");
+	}
+
+	@Test // DATAJDBC-326
+	public void withAddsNewEntries() {
+
+		Identifier identifier = Identifier.from(Collections.singletonMap("aName", "aValue")).withPart("foo", "bar",
+				String.class);
+
+		assertThat(identifier.toMap()).hasSize(2).containsEntry("aName", "aValue").containsEntry("foo", "bar");
+	}
+
+	@Test // DATAJDBC-326
+	public void withOverridesExistingEntries() {
+
+		Identifier identifier = Identifier.from(Collections.singletonMap("aName", "aValue")).withPart("aName", "bar",
+				String.class);
+
+		assertThat(identifier.toMap()).hasSize(1).containsEntry("aName", "bar");
+	}
+
+	@Test // DATAJDBC-326
+	public void forEachIteratesOverKeys() {
+
+		List<String> keys = new ArrayList<>();
+
+		Identifier.from(Collections.singletonMap("aName", "aValue")).forEach((name, value, targetType) -> keys.add(name));
+
+		assertThat(keys).containsOnly("aName");
+	}
+
+	@Test // DATAJDBC-326
+	public void equalsConsidersEquality() {
+
+		Identifier one = Identifier.from(Collections.singletonMap("aName", "aValue"));
+		Identifier two = Identifier.from(Collections.singletonMap("aName", "aValue"));
+		Identifier three = Identifier.from(Collections.singletonMap("aName", "different"));
+
+		assertThat(one).isEqualTo(two);
+		assertThat(one).isNotEqualTo(three);
 	}
 }

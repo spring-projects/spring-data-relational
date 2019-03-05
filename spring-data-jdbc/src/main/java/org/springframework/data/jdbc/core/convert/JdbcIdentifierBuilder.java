@@ -15,14 +15,14 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.Map;
-
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
 
 /**
+ * Builder for {@link Identifier}. Mainly for internal use within the framework
+ *
  * @author Jens Schauder
  * @since 1.1
  */
@@ -38,23 +38,13 @@ public class JdbcIdentifierBuilder {
 		return new JdbcIdentifierBuilder(Identifier.empty());
 	}
 
-	public static JdbcIdentifierBuilder from(Map<String, Object> additionalParameters) {
-
-		Identifier[] identifier = new Identifier[] { Identifier.empty() };
-
-		additionalParameters
-				.forEach((k, v) -> identifier[0] = identifier[0].add(k, v, v == null ? Object.class : v.getClass()));
-
-		return new JdbcIdentifierBuilder(identifier[0]);
-	}
-
 	/**
 	 * Creates ParentKeys with backreference for the given path and value of the parents id.
 	 */
 	public static JdbcIdentifierBuilder forBackReferences(PersistentPropertyPath<RelationalPersistentProperty> path,
 			@Nullable Object value) {
 
-		Identifier identifier = Identifier.simple( //
+		Identifier identifier = Identifier.of( //
 				path.getRequiredLeafProperty().getReverseColumnName(), //
 				value, //
 				getLastIdProperty(path).getColumnType() //
@@ -66,7 +56,7 @@ public class JdbcIdentifierBuilder {
 	public JdbcIdentifierBuilder withQualifier(PersistentPropertyPath<RelationalPersistentProperty> path, Object value) {
 
 		RelationalPersistentProperty leafProperty = path.getRequiredLeafProperty();
-		identifier = identifier.add(leafProperty.getKeyColumn(), value, leafProperty.getQualifierColumnType());
+		identifier = identifier.withPart(leafProperty.getKeyColumn(), value, leafProperty.getQualifierColumnType());
 
 		return this;
 	}
