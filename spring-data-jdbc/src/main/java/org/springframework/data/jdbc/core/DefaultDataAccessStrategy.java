@@ -29,7 +29,6 @@ import java.util.stream.StreamSupport;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -59,10 +58,6 @@ import org.springframework.util.Assert;
 @RequiredArgsConstructor
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
-	private static final String ENTITY_NEW_AFTER_INSERT = "Entity [%s] still 'new' after insert. Please set either"
-			+ " the id property in a BeforeInsert event handler, or ensure the database creates a value and your "
-			+ "JDBC driver returns it.";
-
 	private final @NonNull SqlGeneratorSource sqlGeneratorSource;
 	private final @NonNull RelationalMappingContext context;
 	private final @NonNull RelationalConverter converter;
@@ -89,7 +84,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
-		return insert(instance, domainType, JdbcIdentifierBuilder.from(additionalParameters).build());
+		return insert(instance, domainType, Identifier.from(additionalParameters));
 	}
 
 	/*
@@ -102,10 +97,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		Map<String, Object> parameters = new LinkedHashMap<>();
-		identifier.forEach(identifierValue -> {
-			parameters.put(identifierValue.getName(),
-					converter.writeValue(identifierValue.getValue(), ClassTypeInformation.from(identifierValue.getTargetType())));
+		Map<String, Object> parameters = new LinkedHashMap<>(identifier.size());
+		identifier.forEach((name, value, type) -> {
+			parameters.put(name, converter.writeValue(value, ClassTypeInformation.from(type)));
 		});
 
 		MapSqlParameterSource parameterSource = getPropertyMap(instance, persistentEntity, "");
@@ -298,7 +292,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	private <S, T> MapSqlParameterSource getPropertyMap(final S instance, RelationalPersistentEntity<S> persistentEntity,
+	private <S, T> MapSqlParameterSource getPropertyMap(S instance, RelationalPersistentEntity<S> persistentEntity,
 			String prefix) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
@@ -314,8 +308,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			if (property.isEmbedded()) {
 
 				Object value = propertyAccessor.getProperty(property);
-				final RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getType());
-				final MapSqlParameterSource additionalParameters = getPropertyMap((T) value,
+				RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getType());
+				MapSqlParameterSource additionalParameters = getPropertyMap((T) value,
 						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix());
 				parameters.addValues(additionalParameters.getValues());
 			} else {

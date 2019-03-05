@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
@@ -68,7 +69,7 @@ public class DefaultJdbcInterpreterUnitTests {
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()) //
+		assertThat(argumentCaptor.getValue().getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
@@ -83,7 +84,7 @@ public class DefaultJdbcInterpreterUnitTests {
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()) //
+		assertThat(argumentCaptor.getValue().getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
@@ -98,7 +99,7 @@ public class DefaultJdbcInterpreterUnitTests {
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
 
-		assertThat(argumentCaptor.getValue().getParameters()) //
+		assertThat(argumentCaptor.getValue().getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}

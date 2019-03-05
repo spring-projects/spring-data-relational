@@ -18,16 +18,13 @@ package org.springframework.data.jdbc.core;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.core.PropertyPathUtils.*;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.assertj.core.groups.Tuple;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -45,43 +42,11 @@ public class JdbcIdentifierBuilderUnitTests {
 	JdbcMappingContext context = new JdbcMappingContext();
 
 	@Test // DATAJDBC-326
-	public void parametersWithStringKeysUseTheValuesType() {
-
-		HashMap<String, Object> parameters = new HashMap<>();
-		parameters.put("one", "eins");
-		parameters.put("two", 2L);
-
-		Identifier identifier = JdbcIdentifierBuilder.from(parameters).build();
-
-		assertThat(identifier.getParameters()) //
-				.extracting("name", "value", "targetType") //
-				.containsExactlyInAnyOrder( //
-				tuple("one", "eins", String.class), //
-				tuple("two", 2L, Long.class) //
-		);
-	}
-
-	@Test // DATAJDBC-326
-	public void parametersWithStringKeysUseObjectAsTypeForNull() {
-
-		HashMap<String, Object> parameters = new HashMap<>();
-		parameters.put("one", null);
-
-		Identifier identifier = JdbcIdentifierBuilder.from(parameters).build();
-
-		assertThat(identifier.getParameters()) //
-				.extracting("name", "value", "targetType") //
-				.containsExactly( //
-				tuple("one", null, Object.class) //
-		);
-	}
-
-	@Test // DATAJDBC-326
 	public void parametersWithPropertyKeysUseTheParentPropertyJdbcType() {
 
 		Identifier identifier = JdbcIdentifierBuilder.forBackReferences(getPath("child"), "eins").build();
 
-		assertThat(identifier.getParameters()) //
+		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
 				tuple("dummy_entity", "eins", UUID.class) //
@@ -98,7 +63,7 @@ public class JdbcIdentifierBuilderUnitTests {
 				.withQualifier(path, "map-key-eins") //
 				.build();
 
-		assertThat(identifier.getParameters()) //
+		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactlyInAnyOrder( //
 				tuple("dummy_entity", "parent-eins", UUID.class), //
@@ -116,7 +81,7 @@ public class JdbcIdentifierBuilderUnitTests {
 				.withQualifier(path, "list-index-eins") //
 				.build();
 
-		assertThat(identifier.getParameters()) //
+		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactlyInAnyOrder( //
 				tuple("dummy_entity", "parent-eins", UUID.class), //
@@ -131,7 +96,7 @@ public class JdbcIdentifierBuilderUnitTests {
 				.forBackReferences(getPath("embeddable.child"), "parent-eins") //
 				.build();
 
-		assertThat(identifier.getParameters()) //
+		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
 				tuple("embeddable", "parent-eins", UUID.class) //

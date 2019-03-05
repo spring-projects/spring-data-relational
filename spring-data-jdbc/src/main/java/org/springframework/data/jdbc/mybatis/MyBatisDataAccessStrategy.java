@@ -22,17 +22,18 @@ import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
+
 import org.springframework.data.jdbc.core.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -124,7 +125,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		this.namespaceStrategy = namespaceStrategy;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
@@ -144,13 +145,13 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 
-		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType, identifier.getParametersByName());
+		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType, identifier.toMap());
 		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
 
 		return myBatisContext.getId();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
 	 */
@@ -161,7 +162,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(null, instance, domainType, Collections.emptyMap())) != 0;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, java.lang.Class)
 	 */
@@ -172,7 +173,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PersistentPropertyPath)
 	 */
@@ -185,7 +186,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 						Collections.emptyMap()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(java.lang.Class)
 	 */
@@ -198,7 +199,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		);
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(org.springframework.data.mapping.PersistentPropertyPath)
 	 */
@@ -214,7 +215,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		);
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, java.lang.Class)
 	 */
@@ -224,7 +225,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAll(java.lang.Class)
 	 */
@@ -234,7 +235,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(null, null, domainType, Collections.emptyMap()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllById(java.lang.Iterable, java.lang.Class)
 	 */
@@ -244,7 +245,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(ids, null, domainType, Collections.emptyMap()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllByProperty(java.lang.Object, org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
 	 */
@@ -255,7 +256,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#existsById(java.lang.Object, java.lang.Class)
 	 */
@@ -265,7 +266,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
 	 */
