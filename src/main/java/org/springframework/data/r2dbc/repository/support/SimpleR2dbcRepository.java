@@ -135,10 +135,13 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		BindMarker bindMarker = bindMarkers.next("id");
 
 		Table table = Table.create(entity.getTableName());
-		Select select = StatementBuilder.select(table.columns(columns)).from(table)
-				.where(Conditions.isEqual(table.column(idColumnName), SQL.bindMarker(bindMarker.getPlaceholder()))).build();
+		Select select = StatementBuilder //
+				.select(table.columns(columns)) //
+				.from(table) //
+				.where(Conditions.isEqual(table.column(idColumnName), SQL.bindMarker(bindMarker.getPlaceholder()))) //
+				.build();
 
-		return databaseClient.execute().sql(SqlRenderer.render(select)) //
+		return databaseClient.execute().sql(SqlRenderer.toString(select)) //
 				.bind(0, id) //
 				.as(entity.getJavaType()) //
 				.fetch() //
@@ -167,10 +170,13 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		BindMarker bindMarker = bindMarkers.next("id");
 
 		Table table = Table.create(entity.getTableName());
-		Select select = StatementBuilder.select(table.column(idColumnName)).from(table)
-				.where(Conditions.isEqual(table.column(idColumnName), SQL.bindMarker(bindMarker.getPlaceholder()))).build();
+		Select select = StatementBuilder //
+				.select(table.column(idColumnName)) //
+				.from(table) //
+				.where(Conditions.isEqual(table.column(idColumnName), SQL.bindMarker(bindMarker.getPlaceholder()))) //
+				.build();
 
-		return databaseClient.execute().sql(SqlRenderer.render(select)) //
+		return databaseClient.execute().sql(SqlRenderer.toString(select)) //
 				.bind(0, id) //
 				.map((r, md) -> r) //
 				.first() //
@@ -230,10 +236,13 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			}
 
 			Table table = Table.create(entity.getTableName());
-			Select select = StatementBuilder.select(table.columns(columns)).from(table)
-					.where(Conditions.in(table.column(idColumnName), markers)).build();
+			Select select = StatementBuilder
+					.select(table.columns(columns))
+					.from(table)
+					.where(Conditions.in(table.column(idColumnName), markers))
+					.build();
 
-			GenericExecuteSpec executeSpec = databaseClient.execute().sql(SqlRenderer.render(select));
+			GenericExecuteSpec executeSpec = databaseClient.execute().sql(SqlRenderer.toString(select));
 
 			for (int i = 0; i < ids.size(); i++) {
 				executeSpec = executeSpec.bind(i, ids.get(i));
@@ -250,9 +259,12 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	public Mono<Long> count() {
 
 		Table table = Table.create(entity.getTableName());
-		Select select = StatementBuilder.select(Functions.count(table.column(getIdColumnName()))).from(table).build();
+		Select select = StatementBuilder //
+				.select(Functions.count(table.column(getIdColumnName()))) //
+				.from(table) //
+				.build();
 
-		return databaseClient.execute().sql(SqlRenderer.render(select)) //
+		return databaseClient.execute().sql(SqlRenderer.toString(select)) //
 				.map((r, md) -> r.get(0, Long.class)) //
 				.first() //
 				.defaultIfEmpty(0L);

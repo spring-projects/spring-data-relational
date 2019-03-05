@@ -229,6 +229,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getRowMapper(java.lang.Class)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead) {
 		return new EntityRowMapper<T>((RelationalPersistentEntity) getRequiredPersistentEntity(typeToRead),
@@ -262,6 +263,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		return mappingContext.getPersistentEntity(typeToRead);
 	}
 
+	@SuppressWarnings("unchecked")
 	private Object getWriteValue(PersistentPropertyAccessor propertyAccessor, RelationalPersistentProperty property) {
 
 		TypeInformation<?> type = property.getTypeInformation();
@@ -317,20 +319,23 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#select(java.lang.String, java.util.Set, org.springframework.data.domain.Sort, org.springframework.data.domain.Pageable)
 	 */
 	@Override
-	public String select(String table, Set<String> columns, Sort sort, Pageable page) {
+	public String select(String tableName, Set<String> columns, Sort sort, Pageable page) {
 
-		Table tableToUse = Table.create(table);
+		Table table = Table.create(tableName);
 
 		Collection<? extends Expression> selectList;
 
 		if (columns.isEmpty()) {
-			selectList = Collections.singletonList(tableToUse.asterisk());
+			selectList = Collections.singletonList(table.asterisk());
 		} else {
-			selectList = tableToUse.columns(columns);
+			selectList = table.columns(columns);
 		}
 
-		SelectFromAndOrderBy selectBuilder = StatementBuilder.select(selectList).from(table)
-				.orderBy(createOrderByFields(tableToUse, sort));
+		SelectFromAndOrderBy selectBuilder = StatementBuilder //
+				.select(selectList) //
+				.from(tableName) //
+				.orderBy(createOrderByFields(table, sort));
+
 		OptionalLong limit = OptionalLong.empty();
 		OptionalLong offset = OptionalLong.empty();
 
@@ -508,7 +513,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */
 		@Override
-		public void bindIds(Statement statement, Iterable<? extends Object> values) {
+		public void bindIds(Statement statement, Iterable<?> values) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -569,7 +574,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */
 		@Override
-		public void bindIds(Statement statement, Iterable<? extends Object> values) {
+		public void bindIds(Statement statement, Iterable<?> values) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -636,7 +641,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
 		 */
 		@Override
-		public void bindIds(Statement statement, Iterable<? extends Object> values) {
+		public void bindIds(Statement statement, Iterable<?> values) {
 
 			for (Object value : values) {
 				bindId(statement, value);

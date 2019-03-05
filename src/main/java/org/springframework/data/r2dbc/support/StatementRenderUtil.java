@@ -40,7 +40,7 @@ public abstract class StatementRenderUtil {
 	 */
 	public static String render(Select select, OptionalLong limit, OptionalLong offset, Dialect dialect) {
 
-		String sql = SqlRenderer.render(select);
+		String sql = SqlRenderer.toString(select);
 
 		// TODO: Replace with proper {@link Dialect} rendering for limit/offset.
 		if (limit.isPresent()) {
