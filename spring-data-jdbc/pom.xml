@@ -9,7 +9,7 @@
 
 	<name>Spring Data JDBC</name>
 	<description>Spring Data module for JDBC repositories.</description>
-	<url>http://projects.spring.io/spring-data-jdbc</url>
+	<url>https://projects.spring.io/spring-data-jdbc</url>
 
 	<parent>
 		<groupId>org.springframework.data</groupId>

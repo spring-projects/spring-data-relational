@@ -10,7 +10,7 @@
 
 	<name>Spring Data Relational Parent</name>
 	<description>Parent module for Spring Data Relational repositories.</description>
-	<url>http://projects.spring.io/spring-data-jdbc</url>
+	<url>https://projects.spring.io/spring-data-jdbc</url>
 
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
