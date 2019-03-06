@@ -11,7 +11,7 @@
 
 	<name>Spring Data R2DBC</name>
 	<description>Spring Data module for R2DBC.</description>
-	<url>http://projects.spring.io/spring-data-r2dbc</url>
+	<url>https://projects.spring.io/spring-data-r2dbc</url>
 
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
