@@ -1,6 +1,33 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.0.M2 (2019-03-07)
+----------------------------------------
+* DATAJDBC-335 - Add StatementBuilder's for INSERT, UPDATE, and DELETE.
+* DATAJDBC-334 - How to escape case sensitive identifiers?.
+* DATAJDBC-331 - Introduce @MappedCollection annotation replacing @Column(keyColumn).
+* DATAJDBC-330 - JdbcRepositoryConfigExtension looks up beans before they get registered.
+* DATAJDBC-329 - Fix accidentially broken API.
+* DATAJDBC-326 - ID of one-to-many relationship not properly converted.
+* DATAJDBC-325 - SqlGeneratorSource needs thread safety.
+* DATAJDBC-324 - Implement support of ReadOnlyProperty annotation.
+* DATAJDBC-322 - Update Mybatis dependencies.
+* DATAJDBC-316 - Introduce Concourse CI.
+* DATAJDBC-313 - Update copyright years to 2019.
+* DATAJDBC-309 - Add infrastructure for semantic SQL generation.
+* DATAJDBC-308 - Release 1.1 M2 (Moore).
+* DATAJDBC-307 - Add distribution module for Spring Data JDBC.
+* DATAJDBC-303 - Fix flaky test.
+* DATAJDBC-296 - Allow plain @Table use without providing a table name.
+* DATAJDBC-293 - @EnableJdbcRepositories support multi jdbcTemplate.
+* DATAJDBC-290 - Support ResultSetExtractor as an alternative to RowMapper.
+* DATAJDBC-287 - Document the usage of JdbcConfiguration.
+* DATAJDBC-285 - Add description for `@Table` and `@Column` to the reference documentation.
+* DATAJDBC-282 - Dedicated insert and update methods in the JdbcRepository.
+* DATAJDBC-259 - Store collections and arrays of simple types in an ARRAY column.
+* DATAJDBC-111 - Support for ValueObjects/Embedded.
+
+
 Changes in version 1.0.5.RELEASE (2019-02-13)
 ---------------------------------------------
 * DATAJDBC-325 - SqlGeneratorSource needs thread safety.
