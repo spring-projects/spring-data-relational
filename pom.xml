@@ -19,6 +19,7 @@
 	</parent>
 
 	<properties>
+		<dist.id>spring-data-jdbc</dist.id>
 		<springdata.commons>2.2.0.BUILD-SNAPSHOT</springdata.commons>
 		<assertj>3.6.2</assertj>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
