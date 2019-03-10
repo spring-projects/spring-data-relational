@@ -16,7 +16,9 @@
 package org.springframework.data.r2dbc.function.convert;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.Row;
 import lombok.AllArgsConstructor;
 
 import org.junit.Test;
@@ -43,6 +45,27 @@ public class MappingR2dbcConverterUnitTests {
 		assertThat(row).containsEntry("id", new SettableValue("id", String.class));
 		assertThat(row).containsEntry("firstname", new SettableValue("Walter", String.class));
 		assertThat(row).containsEntry("lastname", new SettableValue("White", String.class));
+	}
+
+	@Test // gh-41
+	public void shouldPassThroughRow() {
+
+		Row rowMock = mock(Row.class);
+
+		Row result = converter.read(Row.class, rowMock);
+
+		assertThat(result).isSameAs(rowMock);
+	}
+
+	@Test // gh-41
+	public void shouldConvertRowToNumber() {
+
+		Row rowMock = mock(Row.class);
+		when(rowMock.get(0, Integer.class)).thenReturn(42);
+
+		Integer result = converter.read(Integer.class, rowMock);
+
+		assertThat(result).isEqualTo(42);
 	}
 
 	@AllArgsConstructor

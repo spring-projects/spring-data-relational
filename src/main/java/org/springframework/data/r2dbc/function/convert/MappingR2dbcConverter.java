@@ -42,6 +42,7 @@ import org.springframework.data.relational.core.conversion.BasicRelationalConver
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -61,7 +62,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	 */
 	public MappingR2dbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
-		super(context, new R2dbcCustomConversions(CustomConversions.StoreConversions.NONE, Collections.emptyList()));
+		super(context, new R2dbcCustomConversions(Collections.emptyList()));
 	}
 
 	/**
@@ -81,6 +82,19 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 	@Override
 	public <R> R read(Class<R> type, Row row) {
+
+		TypeInformation<? extends R> typeInfo = ClassTypeInformation.from(type);
+		Class<? extends R> rawType = typeInfo.getType();
+
+		if (Row.class.isAssignableFrom(rawType)) {
+			return type.cast(row);
+		}
+
+		if (getConversions().hasCustomReadTarget(Row.class, rawType)
+				|| getConversionService().canConvert(Row.class, rawType)) {
+			return getConversionService().convert(row, rawType);
+		}
+
 		return read(getRequiredPersistentEntity(type), row);
 	}
 

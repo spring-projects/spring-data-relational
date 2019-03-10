@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
+
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -90,5 +91,9 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 		@Override
 		@Query("SELECT * FROM legoset WHERE manual = :manual")
 		Mono<LegoSet> findByManual(int manual);
+
+		@Override
+		@Query("SELECT id FROM legoset")
+		Flux<Integer> findAllIds();
 	}
 }

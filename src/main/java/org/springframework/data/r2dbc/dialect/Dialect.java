@@ -3,6 +3,7 @@ package org.springframework.data.r2dbc.dialect;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.r2dbc.dialect.ArrayColumns.Unsupported;
@@ -40,7 +41,11 @@ public interface Dialect {
 	 * @see #getSimpleTypes()
 	 */
 	default SimpleTypeHolder getSimpleTypeHolder() {
-		return new SimpleTypeHolder(new HashSet<>(getSimpleTypes()), true);
+
+		Set<Class<?>> simpleTypes = new HashSet<>(getSimpleTypes());
+		simpleTypes.addAll(R2dbcSimpleTypeHolder.R2DBC_SIMPLE_TYPES);
+
+		return new SimpleTypeHolder(simpleTypes, true);
 	}
 
 	/**

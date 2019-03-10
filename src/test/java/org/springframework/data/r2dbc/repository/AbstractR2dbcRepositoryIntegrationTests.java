@@ -157,6 +157,19 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
+	@Test // gh-41
+	public void shouldFindApplyingSimpleTypeProjection() {
+
+		shouldInsertNewItems();
+
+		repository.findAllIds() //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual).hasSize(2).allMatch(Integer.class::isInstance);
+				}).verifyComplete();
+	}
+
 	@Test
 	public void shouldInsertItemsTransactional() {
 
@@ -196,6 +209,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Flux<Named> findAsProjection();
 
 		Mono<LegoSet> findByManual(int manual);
+
+		Flux<Integer> findAllIds();
 	}
 
 	@Data

@@ -24,6 +24,7 @@ import javax.sql.DataSource;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
+
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -95,5 +96,9 @@ public class SqlServerR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepos
 		@Override
 		@Query("SELECT * FROM legoset WHERE manual = :manual")
 		Mono<LegoSet> findByManual(int manual);
+
+		@Override
+		@Query("SELECT id FROM legoset")
+		Flux<Integer> findAllIds();
 	}
 }

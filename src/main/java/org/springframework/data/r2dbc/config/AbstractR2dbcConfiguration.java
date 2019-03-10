@@ -17,7 +17,6 @@ package org.springframework.data.r2dbc.config;
 
 import io.r2dbc.spi.ConnectionFactory;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Bean;
@@ -153,7 +152,7 @@ public abstract class AbstractR2dbcConfiguration {
 
 		Dialect dialect = getDialect(connectionFactory());
 		StoreConversions storeConversions = StoreConversions.of(dialect.getSimpleTypeHolder());
-		return new R2dbcCustomConversions(storeConversions, Collections.emptyList());
+		return new R2dbcCustomConversions(storeConversions, R2dbcCustomConversions.STORE_CONVERTERS);
 	}
 
 	/**
