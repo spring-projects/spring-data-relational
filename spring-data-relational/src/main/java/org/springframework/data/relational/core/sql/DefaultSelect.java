@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
 
@@ -48,8 +49,17 @@ class DefaultSelect implements Select {
 		this.limit = limit;
 		this.offset = offset;
 		this.joins = new ArrayList<>(joins);
-		this.orderBy = new ArrayList<>(orderBy);
+		this.orderBy = Collections.unmodifiableList(new ArrayList<>(orderBy));
 		this.where = where != null ? new Where(where) : null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.Select#getOrderBy()
+	 */
+	@Override
+	public List<OrderByField> getOrderBy() {
+		return this.orderBy;
 	}
 
 	/*

@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.List;
 import java.util.OptionalLong;
 
 /**
@@ -44,6 +45,11 @@ public interface Select extends Segment, Visitable {
 	static SelectBuilder builder() {
 		return new DefaultSelectBuilder();
 	}
+
+	/**
+	 * @return the {@link List} of {@link OrderByField ORDER BY} fields.
+	 */
+	List<OrderByField> getOrderBy();
 
 	/**
 	 * Optional limit. Used for limit/offset paging.
