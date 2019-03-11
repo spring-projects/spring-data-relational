@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import java.util.OptionalLong;
-
 import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.Join;
 import org.springframework.data.relational.core.sql.OrderByField;
@@ -35,6 +33,7 @@ import org.springframework.data.relational.core.sql.Where;
 class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 	private final RenderContext context;
+	private final SelectRenderContext selectRenderContext;
 
 	private StringBuilder builder = new StringBuilder();
 	private StringBuilder selectList = new StringBuilder();
@@ -50,6 +49,7 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	SelectStatementVisitor(RenderContext context) {
 
 		this.context = context;
+		this.selectRenderContext = context.getSelect();
 		this.selectListVisitor = new SelectListVisitor(context, selectList::append);
 		this.orderByClauseVisitor = new OrderByClauseVisitor(context);
 		this.fromClauseVisitor = new FromClauseVisitor(context, it -> {
@@ -110,12 +110,16 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 		if (segment instanceof Select) {
 
+			Select select = (Select) segment;
+
 			builder.append("SELECT ");
-			if (((Select) segment).isDistinct()) {
+
+			if (select.isDistinct()) {
 				builder.append("DISTINCT ");
 			}
 
 			builder.append(selectList);
+			builder.append(selectRenderContext.afterSelectList().apply(select));
 
 			if (from.length() != 0) {
 				builder.append(" FROM ").append(from);
@@ -130,18 +134,11 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 			}
 
 			CharSequence orderBy = orderByClauseVisitor.getRenderedPart();
-			if (orderBy.length() != 0)
+			if (orderBy.length() != 0) {
 				builder.append(" ORDER BY ").append(orderBy);
-
-			OptionalLong limit = ((Select) segment).getLimit();
-			if (limit.isPresent()) {
-				builder.append(" LIMIT ").append(limit.getAsLong());
 			}
 
-			OptionalLong offset = ((Select) segment).getOffset();
-			if (offset.isPresent()) {
-				builder.append(" OFFSET ").append(offset.getAsLong());
-			}
+			builder.append(selectRenderContext.afterOrderBy(orderBy.length() != 0).apply(select));
 
 			return Delegation.leave();
 		}
