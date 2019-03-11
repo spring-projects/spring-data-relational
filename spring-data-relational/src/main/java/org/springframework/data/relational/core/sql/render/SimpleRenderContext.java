@@ -28,4 +28,13 @@ class SimpleRenderContext implements RenderContext {
 
 	private final RenderNamingStrategy namingStrategy;
 
+	@Override
+	public SelectRenderContext getSelect() {
+		return DefaultSelectRenderContext.INSTANCE;
+	}
+
+	enum DefaultSelectRenderContext implements SelectRenderContext {
+		INSTANCE;
+	}
+
 }

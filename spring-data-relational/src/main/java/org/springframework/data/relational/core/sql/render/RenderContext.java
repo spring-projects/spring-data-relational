@@ -29,4 +29,9 @@ public interface RenderContext {
 	 * @return the {@link RenderNamingStrategy}.
 	 */
 	RenderNamingStrategy getNamingStrategy();
+
+	/**
+	 * @return the {@link SelectRenderContext}.
+	 */
+	SelectRenderContext getSelect();
 }

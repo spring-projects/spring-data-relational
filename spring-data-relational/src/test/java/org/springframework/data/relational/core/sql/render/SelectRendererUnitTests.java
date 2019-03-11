@@ -37,13 +37,13 @@ import org.springframework.util.StringUtils;
  */
 public class SelectRendererUnitTests {
 
-	@Test // DATAJDBC-309
+	@Test // DATAJDBC-309, DATAJDBC-278
 	public void shouldRenderSingleColumn() {
 
 		Table bar = SQL.table("bar");
 		Column foo = bar.column("foo");
 
-		Select select = Select.builder().select(foo).from(bar).build();
+		Select select = Select.builder().select(foo).from(bar).limitOffset(1, 2).build();
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT bar.foo FROM bar");
 	}
@@ -178,17 +178,6 @@ public class SelectRendererUnitTests {
 
 		assertThat(SqlRenderer.toString(select))
 				.isEqualTo("SELECT emp.name AS emp_name FROM employee AS emp ORDER BY emp_name ASC");
-	}
-
-	@Test // DATAJDBC-309
-	public void shouldRenderOrderLimitOffset() {
-
-		Table table = SQL.table("foo");
-		Column bar = table.column("bar");
-
-		Select select = Select.builder().select(bar).from("foo").limitOffset(10, 20).build();
-
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT foo.bar FROM foo LIMIT 10 OFFSET 20");
 	}
 
 	@Test // DATAJDBC-309
