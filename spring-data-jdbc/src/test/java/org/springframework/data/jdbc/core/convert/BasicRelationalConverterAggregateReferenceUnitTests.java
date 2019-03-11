@@ -43,7 +43,7 @@ public class BasicRelationalConverterAggregateReferenceUnitTests {
 	ConversionService conversionService = new DefaultConversionService();
 
 	JdbcMappingContext context = new JdbcMappingContext();
-	RelationalConverter converter = new BasicJdbcConverter(context, JdbcTypeFactory.DUMMY_JDBC_TYPE_FACTORY);
+	RelationalConverter converter = new BasicJdbcConverter(context, JdbcTypeFactory.unsupported());
 
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 

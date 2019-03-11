@@ -34,7 +34,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.JdbcTypeAware;
+import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
@@ -83,19 +83,18 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	/**
 	 * In PostrgreSQL this fails if a simple converter like the following is used.
 	 *
-	 * <pre>
+	 * <pre class="code">
 	 * {@code
-	 &#64;WritingConverter
-	 enum PlainStringToBigDecimalConverter implements Converter<String, BigDecimal> {
+	 &#64;WritingConverter enum PlainStringToBigDecimalConverter implements Converter<String, BigDecimal> {
 	
-	 INSTANCE;
+	 	INSTANCE;
 	
-	 &#64;Override
-	 &#64;Nullable
-	 public BigDecimal convert(@Nullable String source) {
+	 	&#64;Override
+	 	&#64;Nullable
+	 	public BigDecimal convert(@Nullable String source) {
 	
-	 return source == null ? null : new BigDecimal(source);
-	 }
+	 		return source == null ? null : new BigDecimal(source);
+	 	}
 	
 	 }
 	}
@@ -127,15 +126,15 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	}
 
 	@WritingConverter
-	enum StringToBigDecimalConverter implements Converter<String, JdbcTypeAware> {
+	enum StringToBigDecimalConverter implements Converter<String, JdbcValue> {
 
 		INSTANCE;
 
 		@Override
-		public JdbcTypeAware convert(@Nullable String source) {
+		public JdbcValue convert(@Nullable String source) {
 
 			Object value = source == null ? null : new BigDecimal(source);
-			return JdbcTypeAware.of(value, JDBCType.DECIMAL);
+			return JdbcValue.of(value, JDBCType.DECIMAL);
 		}
 
 	}

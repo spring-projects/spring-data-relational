@@ -40,6 +40,8 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 	@Override
 	public Array createArray(Object[] value) {
 
+		Assert.notNull(value, "Value must not be null.");
+
 		Class<?> componentType = innermostComponentType(value);
 
 		JDBCType jdbcType = JdbcUtil.jdbcTypeFor(componentType);

@@ -22,16 +22,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcTypeAware;
+import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
+import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
@@ -39,7 +40,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -104,7 +104,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "", true);
+		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "", PersistentProperty::isIdProperty);
 
 		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
 
@@ -134,7 +134,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
 		return operations.update(sql(domainType).getUpdate(),
-				getParameterSource(instance, persistentEntity, "", false)) != 0;
+				getParameterSource(instance, persistentEntity, "", property -> false)) != 0;
 	}
 
 	/*
@@ -289,7 +289,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private <S, T> MapSqlParameterSource getParameterSource(S instance, RelationalPersistentEntity<S> persistentEntity,
-			String prefix, boolean skipId) {
+															String prefix, Predicate<RelationalPersistentProperty> skipProperty) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
@@ -297,7 +297,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
-			if (skipId && property.isIdProperty()) {
+			if (skipProperty.test(property)) {
 				return;
 			}
 			if (property.isEntity() && !property.isEmbedded()) {
@@ -309,7 +309,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				Object value = propertyAccessor.getProperty(property);
 				RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getType());
 				MapSqlParameterSource additionalParameters = getParameterSource((T) value,
-						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipId);
+						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
 				parameters.addValues(additionalParameters.getValues());
 			} else {
 
@@ -390,19 +390,19 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private void addConvertedPropertyValue(MapSqlParameterSource parameterSource, RelationalPersistentProperty property,
 			Object value, String paramName) {
 
-		JdbcTypeAware jdbcTypeAware = converter.writeTypeAware( //
+		JdbcValue jdbcValue = converter.writeJdbcValue( //
 				value, //
 				property.getColumnType(), //
 				property.getSqlType() //
 		);
 
-		parameterSource.addValue(paramName, jdbcTypeAware.getValue(), JdbcUtil.sqlTypeFor(jdbcTypeAware.getJdbcType()));
+		parameterSource.addValue(paramName, jdbcValue.getValue(), JdbcUtil.sqlTypeFor(jdbcValue.getJdbcType()));
 	}
 
 	private void addConvertedPropertyValue(MapSqlParameterSource parameterSource, String name, Object value,
 			Class<?> type) {
 
-		JdbcTypeAware jdbcTypeAware = converter.writeTypeAware( //
+		JdbcValue jdbcValue = converter.writeJdbcValue( //
 				value, //
 				type, //
 				JdbcUtil.sqlTypeFor(type) //
@@ -410,8 +410,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		parameterSource.addValue( //
 				name, //
-				jdbcTypeAware.getValue(), //
-				JdbcUtil.sqlTypeFor(jdbcTypeAware.getJdbcType()) //
+				jdbcValue.getValue(), //
+				JdbcUtil.sqlTypeFor(jdbcValue.getJdbcType()) //
 		);
 	}
 
@@ -419,19 +419,19 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			RelationalPersistentProperty property, Iterable<?> values, String paramName) {
 
 		List<Object> convertedIds = new ArrayList<>();
-		JdbcTypeAware jdbcTypeAware = null;
+		JdbcValue jdbcValue = null;
 		for (Object id : values) {
 
 			Class<?> columnType = property.getColumnType();
 			int sqlType = property.getSqlType();
 
-			jdbcTypeAware = converter.writeTypeAware(id, columnType, sqlType);
-			convertedIds.add(jdbcTypeAware.getValue());
+			jdbcValue = converter.writeJdbcValue(id, columnType, sqlType);
+			convertedIds.add(jdbcValue.getValue());
 		}
 
-		Assert.notNull(jdbcTypeAware, "JdbcTypeAware must be not null at this point. Please report this as a bug.");
+		Assert.notNull(jdbcValue, "JdbcValue must be not null at this point. Please report this as a bug.");
 
-		JDBCType jdbcType = jdbcTypeAware.getJdbcType();
+		JDBCType jdbcType = jdbcValue.getJdbcType();
 		int typeNumber = jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
 
 		parameterSource.addValue(paramName, convertedIds, typeNumber);

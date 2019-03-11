@@ -188,11 +188,11 @@ Converters should be annotated with `@ReadingConverter` or `@WritingConverter` i
 
 `TIMESTAMPTZ` in the example is a database specific data type that needs conversion into something more suitable for a domain model.
 
-==== JdbcTypeAware
+==== JdbcValue
 
 When setting bind parameters with a JDBC driver one may opt to provide a `java.sql.Types` constant value to denote the type of the parameter.
 If for a value this type need to be specified this can be done by using a writing converter as described in the previous section.
-This converter should convert to `JdbcTypeAware` which has a field for the value and one of for the `JDBCType`.
+This converter should convert to `JdbcValue` which has a field for the value and one of for the `JDBCType`.
 
 [[jdbc.entity-persistence.naming-strategy]]
 === `NamingStrategy`

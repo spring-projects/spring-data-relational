@@ -29,13 +29,13 @@ import org.springframework.lang.Nullable;
 public interface JdbcConverter extends RelationalConverter {
 
 	/**
-	 * Convert a property value into a {@link JdbcTypeAware} that contains the converted value and information how to bind
+	 * Convert a property value into a {@link JdbcValue} that contains the converted value and information how to bind
 	 * it to JDBC parameters.
 	 *
 	 * @param value a value as it is used in the object model. May be {@code null}.
 	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
 	 * @param sqlType the type constant from {@link java.sql.Types} to be used if non is specified by a converter.
-	 * @return The converted value wrapped in a {@link JdbcTypeAware}. Guaranteed to be not {@literal null}.
+	 * @return The converted value wrapped in a {@link JdbcValue}. Guaranteed to be not {@literal null}.
 	 */
-	JdbcTypeAware writeTypeAware(@Nullable Object value, Class<?> type, int sqlType);
+	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, int sqlType);
 }

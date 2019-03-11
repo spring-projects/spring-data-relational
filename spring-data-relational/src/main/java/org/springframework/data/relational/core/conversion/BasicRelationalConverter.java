@@ -193,30 +193,6 @@ public class BasicRelationalConverter implements RelationalConverter {
 		return conversionService.convert(value, rawType);
 	}
 
-
-	@Override
-	public boolean canWriteValue(Object value, TypeInformation<?> type) {
-
-		if (value == null) {
-			return true;
-		}
-
-		Class<?> rawType = type.getType();
-		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(value.getClass());
-
-		if (persistentEntity != null) {
-
-			Object id = persistentEntity.getIdentifierAccessor(value).getIdentifier();
-			return canWriteValue(id, type);
-		}
-
-		if (rawType.isInstance(value)) {
-			return true;
-		}
-
-		return conversionService.canConvert(value.getClass(), rawType);
-	}
-
 	/**
 	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple JDBC type.
 	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.

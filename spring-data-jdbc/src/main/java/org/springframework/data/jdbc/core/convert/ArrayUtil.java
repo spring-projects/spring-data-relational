@@ -15,21 +15,28 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.Value;
-
-import java.sql.JDBCType;
+import lombok.experimental.UtilityClass;
 
 /**
- * Wraps a value with the JDBCType that should be used to pass it as a bind parameter to a
- * {@link java.sql.PreparedStatement}. Register a converter from any type to {@link JdbcTypeAware} in order to control
- * the value and the {@link JDBCType} as which a value should get passed to the JDBC driver.
+ * A collection of utility methods for dealing with arrays.
  *
  * @author Jens Schauder
- * @since 1.1
  */
-@Value(staticConstructor = "of")
-public class JdbcTypeAware {
+@UtilityClass
+class ArrayUtil {
 
-	Object value;
-	JDBCType jdbcType;
+	/**
+	 * Convertes an {@code Byte[]} into a {@code byte[]}
+	 * @param byteArray the array to be converted. Must not be {@literal null}.
+	 *
+	 * @return a {@code byte[]} of same size with the unboxed values of the input array. Guaranteed to be not {@literal null}.
+	 */
+	static Object toPrimitiveByteArray(Byte[] byteArray) {
+
+		byte[] bytes = new byte[byteArray.length];
+		for (int i = 0; i < byteArray.length; i++) {
+			bytes[i] = byteArray[i];
+		}
+		return bytes;
+	}
 }

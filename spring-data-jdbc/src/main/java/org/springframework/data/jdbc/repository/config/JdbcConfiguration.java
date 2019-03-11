@@ -76,7 +76,7 @@ public class JdbcConfiguration {
 	@Bean
 	public RelationalConverter relationalConverter(RelationalMappingContext mappingContext) {
 
-		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions(), JdbcTypeFactory.DUMMY_JDBC_TYPE_FACTORY);
+		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions(), JdbcTypeFactory.unsupported());
 	}
 
 	/**

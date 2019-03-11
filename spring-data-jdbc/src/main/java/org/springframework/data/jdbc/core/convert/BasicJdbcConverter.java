@@ -18,11 +18,10 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.Array;
 import java.sql.JDBCType;
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.convert.ConversionException;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -91,7 +90,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	@Deprecated
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
-		this(context, JdbcTypeFactory.DUMMY_JDBC_TYPE_FACTORY);
+		this(context, JdbcTypeFactory.unsupported());
 	}
 
 	/**
@@ -105,7 +104,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			CustomConversions conversions) {
-		this(context, conversions, JdbcTypeFactory.DUMMY_JDBC_TYPE_FACTORY);
+		this(context, conversions, JdbcTypeFactory.unsupported());
 	}
 
 	/*
@@ -161,65 +160,65 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return super.writeValue(value, type);
 	}
 
-	@Override
-	public boolean canWriteValue(@Nullable Object value, TypeInformation<?> type) {
+	private boolean canWriteAsJdbcValue(@Nullable Object value) {
 
 		if (value == null) {
 			return true;
 		}
 
 		if (AggregateReference.class.isAssignableFrom(value.getClass())) {
-			return canWriteValue(((AggregateReference) value).getId(), type);
+			return canWriteAsJdbcValue(((AggregateReference) value).getId());
 		}
-		return super.canWriteValue(value, type);
+
+		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(value.getClass());
+
+		if (persistentEntity != null) {
+
+			Object id = persistentEntity.getIdentifierAccessor(value).getIdentifier();
+			return canWriteAsJdbcValue(id);
+		}
+
+		if (value instanceof JdbcValue) {
+			return true;
+		}
+
+		Optional<Class<?>> customWriteTarget = getConversions().getCustomWriteTarget(value.getClass());
+		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
 	}
 
-	public JdbcTypeAware writeTypeAware(@Nullable Object value, Class<?> columnType, int sqlType) {
+	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
 
-		JdbcTypeAware jdbcTypeAware = tryToConvertToJdbcTypeAware(value);
-		if (jdbcTypeAware != null) {
-			return jdbcTypeAware;
+		JdbcValue jdbcValue = tryToConvertToJdbcValue(value);
+		if (jdbcValue != null) {
+			return jdbcValue;
 		}
 
 		Object convertedValue = writeValue(value, ClassTypeInformation.from(columnType));
 
 		if (convertedValue == null || !convertedValue.getClass().isArray()) {
-			return JdbcTypeAware.of(convertedValue, JdbcUtil.jdbcTypeFor(sqlType));
+			return JdbcValue.of(convertedValue, JdbcUtil.jdbcTypeFor(sqlType));
 		}
 
 		Class<?> componentType = convertedValue.getClass().getComponentType();
 		if (componentType != byte.class && componentType != Byte.class) {
-			return JdbcTypeAware.of(typeFactory.createArray((Object[]) convertedValue), JDBCType.ARRAY);
+			return JdbcValue.of(typeFactory.createArray((Object[]) convertedValue), JDBCType.ARRAY);
 		}
 
 		if (componentType == Byte.class) {
-			Byte[] boxedBytes = (Byte[]) convertedValue;
-			byte[] bytes = new byte[boxedBytes.length];
-			for (int i = 0; i < boxedBytes.length; i++) {
-				bytes[i] = boxedBytes[i];
-			}
-			convertedValue = bytes;
+			convertedValue = ArrayUtil.toPrimitiveByteArray((Byte[]) convertedValue);
 		}
 
-		return JdbcTypeAware.of(convertedValue, JDBCType.BINARY);
+		return JdbcValue.of(convertedValue, JDBCType.BINARY);
 
 	}
 
-	private JdbcTypeAware tryToConvertToJdbcTypeAware(@Nullable Object value) {
+	private JdbcValue tryToConvertToJdbcValue(@Nullable Object value) {
 
-		JdbcTypeAware jdbcTypeAware = null;
-		ClassTypeInformation<JdbcTypeAware> jdbcTypeAwareClassTypeInformation = ClassTypeInformation
-				.from(JdbcTypeAware.class);
-		if (canWriteValue(value, jdbcTypeAwareClassTypeInformation)) {
-
-			try {
-
-				jdbcTypeAware = (JdbcTypeAware) writeValue(value, jdbcTypeAwareClassTypeInformation);
-
-			} catch (ConversionException __) {
-				// a conversion may still fail
-			}
+		JdbcValue jdbcValue = null;
+		if (canWriteAsJdbcValue(value)) {
+			jdbcValue = (JdbcValue) writeValue(value, ClassTypeInformation.from(JdbcValue.class));
 		}
-		return jdbcTypeAware;
+
+		return jdbcValue;
 	}
 }

@@ -26,13 +26,16 @@ import java.sql.Array;
 public interface JdbcTypeFactory {
 
 	/**
-	 * A dummy implementation used in places where a proper {@code JdbcTypeFactory} can not be provided but an instance
-	 * needs to be provided anyway, mostly for providing backward compatibility. Calling it will result in an exception.
-	 * The features normally supported by a {@link JdbcTypeFactory} will not work.
+	 * An implementation used in places where a proper {@code JdbcTypeFactory} can not be provided but an instance needs
+	 * to be provided anyway, mostly for providing backward compatibility. Calling it will result in an exception. The
+	 * features normally supported by a {@link JdbcTypeFactory} will not work.
 	 */
-	JdbcTypeFactory DUMMY_JDBC_TYPE_FACTORY = value -> {
-		throw new UnsupportedOperationException("This JdbcTypeFactory does not support Array creation");
-	};
+	static JdbcTypeFactory unsupported() {
+
+		return value -> {
+			throw new UnsupportedOperationException("This JdbcTypeFactory does not support Array creation");
+		};
+	}
 
 	/**
 	 * Converts the provided value in a {@link Array} instance.
