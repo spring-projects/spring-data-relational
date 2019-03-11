@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.AsteriskFromTable;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SelectList;
 import org.springframework.data.relational.core.sql.SimpleFunction;
@@ -88,6 +89,9 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 
 		if (segment instanceof SimpleFunction) {
 			builder.append(")");
+			requiresComma = true;
+		} else if (segment instanceof AsteriskFromTable) {
+			builder.append("*");
 			requiresComma = true;
 		} else if (segment instanceof Column) {
 			builder.append(context.getNamingStrategy().getName((Column) segment));
