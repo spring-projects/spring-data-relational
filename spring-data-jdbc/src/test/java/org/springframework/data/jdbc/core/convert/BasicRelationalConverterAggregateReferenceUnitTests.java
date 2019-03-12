@@ -38,12 +38,8 @@ import org.springframework.data.util.ClassTypeInformation;
  */
 public class BasicRelationalConverterAggregateReferenceUnitTests {
 
-	SoftAssertions softly = new SoftAssertions();
-
-	ConversionService conversionService = new DefaultConversionService();
-
 	JdbcMappingContext context = new JdbcMappingContext();
-	RelationalConverter converter = new BasicJdbcConverter(context, JdbcTypeFactory.unsupported());
+	RelationalConverter converter = new BasicJdbcConverter(context);
 
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 

@@ -27,6 +27,7 @@ import java.util.HashMap;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
@@ -37,6 +38,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
@@ -52,10 +54,11 @@ public class DefaultDataAccessStrategyUnitTests {
 	public static final long ID_FROM_ADDITIONAL_VALUES = 23L;
 	public static final long ORIGINAL_ID = 4711L;
 
-	NamedParameterJdbcOperations jdbcOperations = mock(NamedParameterJdbcOperations.class);
+	NamedParameterJdbcOperations namedJdbcOperations = mock(NamedParameterJdbcOperations.class);
+	JdbcOperations jdbcOperations = mock(JdbcOperations.class);
 	RelationalMappingContext context = new JdbcMappingContext();
 	JdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions(),
-			new DefaultJdbcTypeFactory(jdbcOperations.getJdbcOperations()));
+			new DefaultJdbcTypeFactory(jdbcOperations));
 	HashMap<String, Object> additionalParameters = new HashMap<>();
 	ArgumentCaptor<SqlParameterSource> paramSourceCaptor = ArgumentCaptor.forClass(SqlParameterSource.class);
 
@@ -63,7 +66,7 @@ public class DefaultDataAccessStrategyUnitTests {
 			new SqlGeneratorSource(context), //
 			context, //
 			converter, //
-			jdbcOperations);
+			namedJdbcOperations);
 
 	@Test // DATAJDBC-146
 	public void additionalParameterForIdDoesNotLeadToDuplicateParameters() {
@@ -72,7 +75,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
-		verify(jdbcOperations).update(eq("INSERT INTO dummy_entity (id) VALUES (:id)"), paramSourceCaptor.capture(),
+		verify(namedJdbcOperations).update(eq("INSERT INTO dummy_entity (id) VALUES (:id)"), paramSourceCaptor.capture(),
 				any(KeyHolder.class));
 	}
 
@@ -85,7 +88,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
-		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
+		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
 		assertThat(sqlCaptor.getValue()) //
 				.containsSequence("INSERT INTO dummy_entity (", "id", ") VALUES (", ":id", ")") //
@@ -98,13 +101,13 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		JdbcConverter converter = new BasicJdbcConverter(context,
 				new JdbcCustomConversions(Arrays.asList(BooleanToStringConverter.INSTANCE, StringToBooleanConverter.INSTANCE)),
-				new DefaultJdbcTypeFactory(jdbcOperations.getJdbcOperations()));
+				new DefaultJdbcTypeFactory(jdbcOperations));
 
 		DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
 				new SqlGeneratorSource(context), //
 				context, //
 				converter, //
-				jdbcOperations);
+				namedJdbcOperations);
 
 		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -112,7 +115,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(entity, EntityWithBoolean.class, new HashMap<>());
 
-		verify(jdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
+		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");

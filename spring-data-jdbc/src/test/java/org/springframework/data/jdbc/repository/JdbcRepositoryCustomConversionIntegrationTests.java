@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.Optional;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -84,23 +85,21 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	 * In PostrgreSQL this fails if a simple converter like the following is used.
 	 *
 	 * <pre class="code">
-	 * {@code
-	 &#64;WritingConverter enum PlainStringToBigDecimalConverter implements Converter<String, BigDecimal> {
-	
-	 	INSTANCE;
-	
-	 	&#64;Override
-	 	&#64;Nullable
-	 	public BigDecimal convert(@Nullable String source) {
-	
-	 		return source == null ? null : new BigDecimal(source);
-	 	}
-	
-	 }
-	}
+	 *
+	 * &#64;WritingConverter
+	 * enum PlainStringToBigDecimalConverter implements Converter<String, BigDecimal> {
+	 *
+	 * 	INSTANCE;
+	 *
+	 * 	&#64;Override
+	 * 	&#64;Nullable
+	 * 	public BigDecimal convert(@Nullable String source) {
+	 *
+	 * 		return source == null ? null : new BigDecimal(source);
+	 * 	}
+	 * }
 	 * </pre>
 	 */
-
 	@Test // DATAJDBC-327
 	public void saveAndLoadAnEntity() {
 

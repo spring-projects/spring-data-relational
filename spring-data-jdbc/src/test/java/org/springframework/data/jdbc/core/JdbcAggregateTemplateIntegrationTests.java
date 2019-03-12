@@ -31,6 +31,7 @@ import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -422,7 +423,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@Test // DATAJDBC-327
 	public void saveAndLoadAnEntityWithByteArray() {
 		ByteArrayOwner owner = new ByteArrayOwner();
-		owner.binaryData = new byte[]{1, 23, 42};
+		owner.binaryData = new byte[] { 1, 23, 42 };
 
 		ByteArrayOwner saved = template.save(owner);
 
@@ -430,9 +431,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-		assertThat(reloaded.binaryData).isEqualTo(new byte[]{1, 23, 42});
+		assertThat(reloaded.binaryData).isEqualTo(new byte[] { 1, 23, 42 });
 	}
-
 
 	private static void assumeNot(String dbProfileName) {
 

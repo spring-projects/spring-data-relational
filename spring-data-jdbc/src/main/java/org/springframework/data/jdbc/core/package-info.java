@@ -1,3 +1,6 @@
+/**
+ * Core JDBC implementation.
+ */
 @NonNullApi
 package org.springframework.data.jdbc.core;
 

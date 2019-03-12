@@ -15,16 +15,17 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.Array;
+import java.sql.JDBCType;
+
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.util.Assert;
 
-import java.sql.Array;
-import java.sql.JDBCType;
-
 /**
- * A {@link JdbcTypeFactory} that performs the conversion by utilizing {@link JdbcOperations#execute(ConnectionCallback)}.
+ * A {@link JdbcTypeFactory} that performs the conversion by utilizing
+ * {@link JdbcOperations#execute(ConnectionCallback)}.
  *
  * @author Jens Schauder
  * @since 1.1
@@ -33,7 +34,15 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 
 	private final JdbcOperations operations;
 
+	/**
+	 * Creates a new {@link DefaultJdbcTypeFactory}.
+	 *
+	 * @param operations must not be {@literal null}.
+	 */
 	public DefaultJdbcTypeFactory(JdbcOperations operations) {
+
+		Assert.notNull(operations, "JdbcOperations must not be null");
+
 		this.operations = operations;
 	}
 

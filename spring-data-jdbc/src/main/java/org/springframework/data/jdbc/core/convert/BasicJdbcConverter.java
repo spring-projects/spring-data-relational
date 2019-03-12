@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -35,6 +36,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * {@link RelationalConverter} that uses a {@link MappingContext} to apply basic conversion of relational values to
@@ -55,42 +57,53 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	private final JdbcTypeFactory typeFactory;
 
 	/**
+	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and a
+	 * {@link JdbcTypeFactory#unsupported() no-op type factory} throwing {@link UnsupportedOperationException} on type
+	 * creation. Use {@link #BasicJdbcConverter(MappingContext, JdbcTypeFactory)} to convert arrays and large objects into
+	 * JDBC-specific types.
+	 *
+	 * @param context must not be {@literal null}.
+	 */
+	public BasicJdbcConverter(
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
+		this(context, JdbcTypeFactory.unsupported());
+	}
+
+	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
 	 *
-	 * @param context must not be {@literal null}. org.springframework.data.jdbc.core.DefaultDataAccessStrategyUnitTests
-	 * @param typeFactory
+	 * @param context must not be {@literal null}.
+	 * @param typeFactory must not be {@literal null}
+	 * @since 1.1
 	 */
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			JdbcTypeFactory typeFactory) {
+
 		super(context);
+
+		Assert.notNull(typeFactory, "JdbcTypeFactory must not be null");
+
 		this.typeFactory = typeFactory;
 	}
 
 	/**
-	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and {@link CustomConversions}.
-	 * 
+	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}, {@link CustomConversions}, and
+	 * {@link JdbcTypeFactory}.
+	 *
 	 * @param context must not be {@literal null}.
 	 * @param conversions must not be {@literal null}.
-	 * @param typeFactory
+	 * @param typeFactory must not be {@literal null}
+	 * @since 1.1
 	 */
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			CustomConversions conversions, JdbcTypeFactory typeFactory) {
-		super(context, conversions);
-		this.typeFactory = typeFactory;
-	}
 
-	/**
-	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
-	 *
-	 * @param context must not be {@literal null}. org.springframework.data.jdbc.core.DefaultDataAccessStrategyUnitTests
-	 * @deprecated use one of the constructors with {@link JdbcTypeFactory} parameter.
-	 */
-	@Deprecated
-	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
-		this(context, JdbcTypeFactory.unsupported());
+		super(context, conversions);
+
+		Assert.notNull(typeFactory, "JdbcTypeFactory must not be null");
+		this.typeFactory = typeFactory;
 	}
 
 	/**
@@ -186,6 +199,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#writeValue(java.lang.Object, java.lang.Class, int)
+	 */
+	@Override
 	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
 
 		JdbcValue jdbcValue = tryToConvertToJdbcValue(value);
@@ -209,16 +227,15 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		return JdbcValue.of(convertedValue, JDBCType.BINARY);
-
 	}
 
+	@Nullable
 	private JdbcValue tryToConvertToJdbcValue(@Nullable Object value) {
 
-		JdbcValue jdbcValue = null;
 		if (canWriteAsJdbcValue(value)) {
-			jdbcValue = (JdbcValue) writeValue(value, ClassTypeInformation.from(JdbcValue.class));
+			return (JdbcValue) writeValue(value, ClassTypeInformation.from(JdbcValue.class));
 		}
 
-		return jdbcValue;
+		return null;
 	}
 }

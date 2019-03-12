@@ -87,7 +87,7 @@ public class JdbcUtil {
 
 	/**
 	 * Converts a {@link JDBCType} to an {@code int} value as defined in {@link Types}.
-	 * 
+	 *
 	 * @param jdbcType value to be converted. May be {@literal null}.
 	 * @return One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
 	 */
@@ -98,7 +98,7 @@ public class JdbcUtil {
 	/**
 	 * Converts a value defined in {@link Types} into a {@link JDBCType} instance or {@literal null} if the value is
 	 * {@link JdbcUtils#TYPE_UNKNOWN}
-	 * 
+	 *
 	 * @param sqlType One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
 	 * @return a matching {@link JDBCType} instance or {@literal null}.
 	 */
@@ -121,7 +121,6 @@ public class JdbcUtil {
 	 */
 	@Nullable
 	public static JDBCType jdbcTypeFor(Class<?> type) {
-
 		return jdbcTypeFor(sqlTypeFor(type));
 	}
 }

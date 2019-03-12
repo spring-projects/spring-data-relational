@@ -65,24 +65,44 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private final @NonNull NamedParameterJdbcOperations operations;
 	private final @NonNull DataAccessStrategy accessStrategy;
 
+	/**
+	 * Creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
+	 * Only suitable if this is the only access strategy in use.
+	 *
+	 * @param sqlGeneratorSource must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 */
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
-			JdbcConverter converter, NamedParameterJdbcOperations operations, @Nullable DataAccessStrategy accessStrategy) {
+			JdbcConverter converter, NamedParameterJdbcOperations operations) {
+		this(sqlGeneratorSource, context, converter, operations, null);
+	}
+
+	/**
+	 * Creates a {@link DefaultDataAccessStrategy}
+	 *
+	 * @param sqlGeneratorSource must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param mappingAccessStrategy can be {@literal null}.
+	 * @since 1.1
+	 */
+	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
+			JdbcConverter converter, NamedParameterJdbcOperations operations,
+			@Nullable DataAccessStrategy mappingAccessStrategy) {
+
+		Assert.notNull(sqlGeneratorSource, "SqlGeneratorSource must not be null");
+		Assert.notNull(context, "RelationalMappingContext must not be null");
+		Assert.notNull(converter, "JdbcConverter must not be null");
+		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
 
 		this.sqlGeneratorSource = sqlGeneratorSource;
 		this.context = context;
 		this.converter = converter;
 		this.operations = operations;
-		this.accessStrategy = accessStrategy == null ? this : accessStrategy;
-	}
-
-	/**
-	 * Creates a {@link DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
-	 * Only suitable if this is the only access strategy in use.
-	 */
-	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
-			JdbcConverter converter, NamedParameterJdbcOperations operations) {
-
-		this(sqlGeneratorSource, context, converter, operations, null);
+		this.accessStrategy = mappingAccessStrategy == null ? this : mappingAccessStrategy;
 	}
 
 	/*
@@ -104,7 +124,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "", PersistentProperty::isIdProperty);
+		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
+				PersistentProperty::isIdProperty);
 
 		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
 
@@ -134,7 +155,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
 		return operations.update(sql(domainType).getUpdate(),
-				getParameterSource(instance, persistentEntity, "", property -> false)) != 0;
+				getParameterSource(instance, persistentEntity, "", Predicates.includeAll())) != 0;
 	}
 
 	/*
@@ -289,7 +310,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private <S, T> MapSqlParameterSource getParameterSource(S instance, RelationalPersistentEntity<S> persistentEntity,
-															String prefix, Predicate<RelationalPersistentProperty> skipProperty) {
+			String prefix, Predicate<RelationalPersistentProperty> skipProperty) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
@@ -444,5 +465,20 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private SqlGenerator sql(Class<?> domainType) {
 		return sqlGeneratorSource.getSqlGenerator(domainType);
+	}
+
+	/**
+	 * Utility to create {@link Predicate}s.
+	 */
+	static class Predicates {
+
+		/**
+		 * Include all {@link Predicate} returning {@literal false} to never skip a property.
+		 *
+		 * @return the include all {@link Predicate}.
+		 */
+		static Predicate<RelationalPersistentProperty> includeAll() {
+			return it -> false;
+		}
 	}
 }

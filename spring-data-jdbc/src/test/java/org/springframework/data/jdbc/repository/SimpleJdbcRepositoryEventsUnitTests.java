@@ -33,6 +33,7 @@ import org.assertj.core.groups.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
@@ -53,6 +54,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.relational.core.mapping.event.RelationalEvent;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
@@ -224,6 +226,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 		when(operations.update(anyString(), any(SqlParameterSource.class), any(KeyHolder.class)))
 				.thenAnswer(setIdInKeyHolder);
+		when(operations.getJdbcOperations()).thenReturn(mock(JdbcOperations.class));
 		return operations;
 	}
 
