@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.function.convert;
+package org.springframework.data.r2dbc.domain;
 
 import io.r2dbc.spi.Row;
 

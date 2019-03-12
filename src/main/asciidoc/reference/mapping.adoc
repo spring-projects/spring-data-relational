@@ -28,6 +28,47 @@ Public `JavaBean` properties are not used.
 Otherwise, the zero-argument constructor is used.
 If there is more than one non-zero-argument constructor, an exception will be thrown.
 
+[[mapping-configuration]]
+== Mapping Configuration
+
+Unless explicitly configured, an instance of `MappingR2dbcConverter` is created by default when you create a `DatabaseClient`.
+You can create your own instance of the `MappingR2dbcConverter`.
+By creating your own instance, you can register Spring converters to map specific classes to and from the database.
+
+You can configure the `MappingR2dbcConverter` as well as `DatabaseClient` and `ConnectionFactory` by using  Java-based metadata. The following example uses Spring's Java-based configuration:
+
+.@Configuration class to configure R2DBC mapping support
+====
+[source,java]
+----
+@Configuration
+public class MyAppConfig extends AbstractR2dbcConfiguration {
+
+  public ConnectionFactory connectionFactory() {
+    return ConnectionFactories.get("r2dbc:…");
+  }
+
+  // the following are optional
+
+  @Bean
+  @Override
+  public R2dbcCustomConversions r2dbcCustomConversions() {
+
+    List<Converter<?, ?>> converterList = new ArrayList<Converter<?, ?>>();
+    converterList.add(new org.springframework.data.r2dbc.test.PersonReadConverter());
+    converterList.add(new org.springframework.data.r2dbc.test.PersonWriteConverter());
+    return new R2dbcCustomConversions(getStoreConversions(), converterList);
+  }
+}
+----
+====
+
+`AbstractR2dbcConfiguration` requires you to implement a method that defines a `ConnectionFactory`.
+
+You can add additional converters to the converter by overriding the `r2dbcCustomConversions` method.
+
+NOTE: `AbstractR2dbcConfiguration` creates a `DatabaseClient` instance and registers it with the container under the name `databaseClient`.
+
 [[mapping-usage]]
 == Metadata-based Mapping
 
@@ -52,7 +93,6 @@ public class Person {
 
   private String firstName;
 
-  @Indexed
   private String lastName;
 }
 ----
@@ -103,3 +143,47 @@ class OrderItem {
 
 ----
 
+[[mapping-explicit-converters]]
+=== Overriding Mapping with Explicit Converters
+
+When storing and querying your objects, it is convenient to have a `R2dbcConverter` instance handle the mapping of all Java types to `OutboundRow` instances.
+However, sometimes you may want the `R2dbcConverter` instances do most of the work but let you selectively handle the conversion for a particular type -- perhaps to optimize performance.
+
+To selectively handle the conversion yourself, register one or more one or more `org.springframework.core.convert.converter.Converter` instances with the `R2dbcConverter`.
+
+You can use the `r2dbcCustomConversions` method in `AbstractR2dbcConfiguration` to configure converters. The examples <<mapping-configuration, at the beginning of this chapter>> show how to perform the configuration using Java.
+
+NOTE: Custom top-level entity conversion requires asymmetric types for conversion. Inbound data is extracted from R2DBC's `Row`.
+Outbound data (to be used with `INSERT`/`UPDATE` statements) is represented as `OutboundRow` and later assembled to a statement.
+
+The following example of a Spring Converter implementation converts from a `Row` to a `Person` POJO:
+
+[source,java]
+----
+@ReadingConverter
+ public class PersonReadConverter implements Converter<Row, Person> {
+
+  public Person convert(Row source) {
+    Person p = new Person(source.get("id", String.class),source.get("name", String.class));
+    p.setAge(source.get("age", Integer.class));
+    return p;
+  }
+}
+----
+
+The following example converts from a `Person` to a `OutboundRow`:
+
+[source,java]
+----
+@WritingConverter
+public class PersonWriteConverter implements Converter<Person, OutboundRow> {
+
+  public OutboundRow convert(Person source) {
+    OutboundRow row = new OutboundRow();
+    row.put("_d", source.getId());
+    row.put("name", source.getFirstName());
+    row.put("age", source.getAge());
+    return row;
+  }
+}
+----

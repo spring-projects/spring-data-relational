@@ -26,9 +26,9 @@ import java.util.function.BiFunction;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
-import org.springframework.data.r2dbc.function.convert.OutboundRow;
+import org.springframework.data.r2dbc.domain.OutboundRow;
+import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.function.convert.SettableValue;
 
 /**
  * Draft of a data access strategy that generalizes convenience operations using mapped entities. Typically used

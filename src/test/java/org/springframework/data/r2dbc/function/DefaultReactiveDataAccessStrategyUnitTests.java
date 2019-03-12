@@ -14,7 +14,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
-import org.springframework.data.r2dbc.function.convert.SettableValue;
+import org.springframework.data.r2dbc.domain.SettableValue;
 
 /**
  * Unit tests for {@link DefaultReactiveDataAccessStrategy}.

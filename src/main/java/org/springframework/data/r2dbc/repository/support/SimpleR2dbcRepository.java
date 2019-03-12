@@ -30,12 +30,12 @@ import org.reactivestreams.Publisher;
 
 import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
+import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.BindIdOperation;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.function.convert.SettableValue;
 import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;

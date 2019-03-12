@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.function.convert;
+package org.springframework.data.r2dbc.domain;
 
 import java.util.Objects;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 /**
  * A database value that can be set in a statement.
@@ -31,18 +32,48 @@ public class SettableValue {
 	private final @Nullable Object value;
 	private final Class<?> type;
 
-	/**
-	 * Create a {@link SettableValue}.
-	 *
-	 * @param value
-	 * @param type
-	 */
-	public SettableValue(@Nullable Object value, Class<?> type) {
+	private SettableValue(@Nullable Object value, Class<?> type) {
 
 		Assert.notNull(type, "Type must not be null");
 
 		this.value = value;
 		this.type = type;
+	}
+
+	/**
+	 * Creates a new {@link SettableValue} from {@code value}.
+	 *
+	 * @param value must not be {@literal null}.
+	 * @return the {@link SettableValue} value for {@code value}.
+	 */
+	public static SettableValue from(Object value) {
+
+		Assert.notNull(value, "Value must not be null");
+
+		return new SettableValue(value, ClassUtils.getUserClass(value));
+	}
+
+	/**
+	 * Creates a new {@link SettableValue} from {@code value} and {@code type}.
+	 *
+	 * @param value can be {@literal null}.
+	 * @param type must not be {@literal null}.
+	 * @return the {@link SettableValue} value for {@code value}.
+	 */
+	public static SettableValue fromOrEmpty(@Nullable Object value, Class<?> type) {
+		return value == null ? empty(type) : new SettableValue(value, ClassUtils.getUserClass(value));
+	}
+
+	/**
+	 * Creates a new empty {@link SettableValue} for {@code type}.
+	 *
+	 * @return the empty {@link SettableValue} value for {@code type}.
+	 */
+	public static SettableValue empty(Class<?> type) {
+
+		Assert.notNull(type, "Type must not be null");
+
+		return new SettableValue(null, type);
 	}
 
 	/**
@@ -74,6 +105,15 @@ public class SettableValue {
 		return value != null;
 	}
 
+	/**
+	 * Returns whether this {@link SettableValue} has a empty.
+	 *
+	 * @return whether this {@link SettableValue} is empty. {@literal true} if {@link #getValue()} is {@literal null}.
+	 */
+	public boolean isEmpty() {
+		return value == null;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o)
@@ -92,8 +132,8 @@ public class SettableValue {
 	@Override
 	public String toString() {
 		final StringBuffer sb = new StringBuffer();
-		sb.append(getClass().getSimpleName());
-		sb.append(" [value=").append(value);
+		sb.append("SettableValue");
+		sb.append("[value=").append(value);
 		sb.append(", type=").append(type);
 		sb.append(']');
 		return sb.toString();

@@ -25,6 +25,7 @@ import org.springframework.data.convert.EntityReader;
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.dialect.ArrayColumns;
+import org.springframework.data.r2dbc.domain.OutboundRow;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;

@@ -41,12 +41,12 @@ import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.domain.OutboundRow;
+import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
-import org.springframework.data.r2dbc.function.convert.OutboundRow;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcCustomConversions;
-import org.springframework.data.r2dbc.function.convert.SettableValue;
 import org.springframework.data.r2dbc.support.StatementRenderUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -182,7 +182,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 					"Dialect " + dialect.getClass().getName() + " does not support array columns");
 		}
 
-		return new SettableValue(converter.getArrayValue(arrayColumns, property, value.getValue()),
+		return SettableValue.fromOrEmpty(converter.getArrayValue(arrayColumns, property, value.getValue()),
 				property.getActualType());
 	}
 

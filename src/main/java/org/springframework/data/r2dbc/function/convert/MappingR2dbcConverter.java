@@ -25,6 +25,7 @@ import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 import org.springframework.core.convert.ConversionService;
@@ -38,6 +39,8 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.r2dbc.dialect.ArrayColumns;
+import org.springframework.data.r2dbc.domain.OutboundRow;
+import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -135,11 +138,38 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			}
 
 			Object value = row.get(prefix + property.getColumnName());
-			return readValue(value, property.getTypeInformation());
+			return getPotentiallyConvertedSimpleRead(value, property.getTypeInformation().getType());
 
 		} catch (Exception o_O) {
 			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
 		}
+	}
+
+	/**
+	 * Checks whether we have a custom conversion for the given simple object. Converts the given value if so, applies
+	 * {@link Enum} handling or returns the value as is.
+	 *
+	 * @param value
+	 * @param target must not be {@literal null}.
+	 * @return
+	 */
+	@Nullable
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Object getPotentiallyConvertedSimpleRead(@Nullable Object value, @Nullable Class<?> target) {
+
+		if (value == null || target == null || ClassUtils.isAssignableValue(target, value)) {
+			return value;
+		}
+
+		if (getConversions().hasCustomReadTarget(value.getClass(), target)) {
+			return getConversionService().convert(value, target);
+		}
+
+		if (Enum.class.isAssignableFrom(target)) {
+			return Enum.valueOf((Class<Enum>) target, value.toString());
+		}
+
+		return getConversionService().convert(value, target);
 	}
 
 	private <S> S readEntityFrom(Row row, PersistentProperty<?> property) {
@@ -182,33 +212,101 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	public void write(Object source, OutboundRow sink) {
 
 		Class<?> userClass = ClassUtils.getUserClass(source);
-		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(userClass);
 
-		PersistentPropertyAccessor propertyAccessor = entity.getPropertyAccessor(source);
+		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(userClass, OutboundRow.class);
+		if (customTarget.isPresent()) {
+
+			OutboundRow result = getConversionService().convert(source, OutboundRow.class);
+			sink.putAll(result);
+			return;
+		}
+
+		writeInternal(source, sink, userClass);
+	}
+
+	private void writeInternal(Object source, OutboundRow sink, Class<?> userClass) {
+
+		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(userClass);
+		PersistentPropertyAccessor<?> propertyAccessor = entity.getPropertyAccessor(source);
+
+		writeProperties(sink, entity, propertyAccessor);
+	}
+
+	private void writeProperties(OutboundRow sink, RelationalPersistentEntity<?> entity,
+			PersistentPropertyAccessor<?> accessor) {
 
 		for (RelationalPersistentProperty property : entity) {
 
-			Object writeValue = getWriteValue(propertyAccessor, property);
+			if (!property.isWritable()) {
+				continue;
+			}
 
-			sink.put(property.getColumnName(), new SettableValue(writeValue, property.getType()));
+			Object value = accessor.getProperty(property);
+
+			if (value == null) {
+				writeNullInternal(sink, property);
+				continue;
+			}
+
+			if (!getConversions().isSimpleType(value.getClass())) {
+
+				RelationalPersistentEntity<?> nestedEntity = getMappingContext().getPersistentEntity(property.getActualType());
+				if (nestedEntity != null) {
+					throw new InvalidDataAccessApiUsageException("Nested entities are not supported");
+				}
+			}
+
+			writeSimpleInternal(sink, value, property);
 		}
-
 	}
 
-	@SuppressWarnings("unchecked")
-	private Object getWriteValue(PersistentPropertyAccessor propertyAccessor, RelationalPersistentProperty property) {
+	private void writeSimpleInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
+		sink.put(property.getColumnName(), SettableValue.from(getPotentiallyConvertedSimpleWrite(value)));
+	}
 
-		TypeInformation<?> type = property.getTypeInformation();
-		Object value = propertyAccessor.getProperty(property);
+	private void writeNullInternal(OutboundRow sink, RelationalPersistentProperty property) {
 
-		RelationalPersistentEntity<?> nestedEntity = getMappingContext()
-				.getPersistentEntity(type.getRequiredActualType().getType());
+		sink.put(property.getColumnName(),
+				SettableValue.empty(getPotentiallyConvertedSimpleNullType(property.getType())));
+	}
 
-		if (nestedEntity != null) {
-			throw new InvalidDataAccessApiUsageException("Nested entities are not supported");
+	private Class<?> getPotentiallyConvertedSimpleNullType(Class<?> type) {
+
+		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(type);
+
+		if (customTarget.isPresent()) {
+			return customTarget.get();
+
 		}
 
-		return value;
+		if (type.isEnum()) {
+			return String.class;
+		}
+
+		return type;
+	}
+
+	/**
+	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple Mongo type.
+	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.
+	 *
+	 * @param value
+	 * @return
+	 */
+	@Nullable
+	private Object getPotentiallyConvertedSimpleWrite(@Nullable Object value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(value.getClass());
+
+		if (customTarget.isPresent()) {
+			return getConversionService().convert(value, customTarget.get());
+		}
+
+		return Enum.class.isAssignableFrom(value.getClass()) ? ((Enum<?>) value).name() : value;
 	}
 
 	public Object getArrayValue(ArrayColumns arrayColumns, RelationalPersistentProperty property, Object value) {

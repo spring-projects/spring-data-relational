@@ -17,10 +17,13 @@ package org.springframework.data.r2dbc.dialect;
 
 import io.r2dbc.spi.Row;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.r2dbc.domain.OutboundRow;
 
 /**
  * Simple constant holder for a {@link SimpleTypeHolder} enriched with R2DBC specific simple types.
@@ -32,7 +35,8 @@ public class R2dbcSimpleTypeHolder extends SimpleTypeHolder {
 	/**
 	 * Set of R2DBC simple types.
 	 */
-	public static final Set<Class<?>> R2DBC_SIMPLE_TYPES = Collections.singleton(Row.class);
+	public static final Set<Class<?>> R2DBC_SIMPLE_TYPES = Collections
+			.unmodifiableSet(new HashSet<>(Arrays.asList(OutboundRow.class, Row.class)));
 
 	public static final SimpleTypeHolder HOLDER = new R2dbcSimpleTypeHolder();
 

@@ -2,7 +2,7 @@ package org.springframework.data.r2dbc.function;
 
 import io.r2dbc.spi.Statement;
 
-import org.springframework.data.r2dbc.function.convert.SettableValue;
+import org.springframework.data.r2dbc.domain.SettableValue;
 
 /**
  * Extension to {@link QueryOperation} for operations that allow parameter substitution by binding parameter values.

@@ -18,7 +18,7 @@ package org.springframework.data.r2dbc.function;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.springframework.data.r2dbc.function.convert.SettableValue;
+import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.util.Assert;
 
 /**
@@ -65,7 +65,7 @@ class MapBindParameterSource implements BindParameterSource {
 		Assert.notNull(paramName, "Parameter name must not be null!");
 		Assert.notNull(value, "Value must not be null!");
 
-		this.values.put(paramName, new SettableValue(value, value.getClass()));
+		this.values.put(paramName, SettableValue.fromOrEmpty(value, value.getClass()));
 		return this;
 	}
 
