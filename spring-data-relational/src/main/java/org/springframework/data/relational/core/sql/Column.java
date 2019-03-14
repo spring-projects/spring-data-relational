@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
  * Renders to: {@code <name>} or {@code <table(alias)>.<name>}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 public class Column extends AbstractSegment implements Expression, Named {
@@ -180,6 +181,16 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 */
 	public In in(Expression... expression) {
 		return Conditions.in(this, expression);
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given a subselects.
+	 *
+	 * @param subselect right side of the comparison.
+	 * @return the {@link In} condition.
+	 */
+	public In in(Select subselect) {
+		return Conditions.in(this, subselect);
 	}
 
 	/**

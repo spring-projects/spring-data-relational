@@ -25,6 +25,7 @@ import org.springframework.util.Assert;
  * Factory for common {@link Expression function expressions}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  * @see SQL
  * @see Expressions
@@ -38,7 +39,7 @@ public class Functions {
 	 * @param columns columns to apply count, must not be {@literal null}.
 	 * @return the new {@link SimpleFunction count function} for {@code columns}.
 	 */
-	public static SimpleFunction count(Column... columns) {
+	public static SimpleFunction count(Expression... columns) {
 
 		Assert.notNull(columns, "Columns must not be null!");
 		Assert.notEmpty(columns, "Columns must contains at least one column");

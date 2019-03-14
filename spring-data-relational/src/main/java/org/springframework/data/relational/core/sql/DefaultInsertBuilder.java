@@ -40,7 +40,7 @@ class DefaultInsertBuilder
 	 * @see org.springframework.data.relational.core.sql.InsertBuilder#into(org.springframework.data.relational.core.sql.Table)
 	 */
 	@Override
-	public InsertIntoColumnsAndValues into(Table table) {
+	public InsertIntoColumnsAndValuesWithBuild into(Table table) {
 
 		Assert.notNull(table, "Insert Into Table must not be null!");
 

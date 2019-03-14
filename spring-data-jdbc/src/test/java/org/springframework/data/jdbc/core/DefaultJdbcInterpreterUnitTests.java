@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
@@ -55,7 +54,7 @@ public class DefaultJdbcInterpreterUnitTests {
 	Element element = new Element();
 
 	InsertRoot<Container> containerInsert = new InsertRoot<>(container);
-	Insert<?> insert = new Insert<>(element, PropertyPathUtils.toPath("element", Container.class, context),
+	Insert<?> insert = new Insert<>(element, PropertyPathTestingUtils.toPath("element", Container.class, context),
 			containerInsert);
 
 	@Test // DATAJDBC-145
@@ -104,6 +103,7 @@ public class DefaultJdbcInterpreterUnitTests {
 				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
 	}
 
+	@SuppressWarnings("unused")
 	static class Container {
 
 		@Id Long id;

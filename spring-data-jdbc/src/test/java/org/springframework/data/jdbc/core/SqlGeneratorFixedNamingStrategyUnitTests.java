@@ -112,10 +112,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
-		String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref"));
 
-		assertThat(sql).isEqualTo(
-				"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " + "WHERE dummy_entity = :rootId");
+		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.dummy_entity = :rootId");
 	}
 
 	@Test // DATAJDBC-107
@@ -123,11 +123,13 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
-		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further"));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
-				+ "WHERE referenced_entity IN " + "(SELECT FixedCustomPropertyPrefix_l1id "
-				+ "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " + "WHERE dummy_entity = :rootId)");
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity.referenced_entity IN "
+				+ "(SELECT FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.FixedCustomPropertyPrefix_l1id "
+				+ "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.dummy_entity = :rootId)");
 	}
 
 	@Test // DATAJDBC-107
@@ -145,10 +147,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
-		String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref"));
 
-		assertThat(sql).isEqualTo(
-				"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " + "WHERE dummy_entity IS NOT NULL");
+		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.dummy_entity IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-107
@@ -156,11 +158,13 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		SqlGenerator sqlGenerator = configureSqlGenerator(fixedCustomTablePrefixStrategy);
 
-		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further"));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
-				+ "WHERE referenced_entity IN " + "(SELECT FixedCustomPropertyPrefix_l1id "
-				+ "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity " + "WHERE dummy_entity IS NOT NULL)");
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity.referenced_entity IN "
+				+ "(SELECT FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.FixedCustomPropertyPrefix_l1id "
+				+ "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.dummy_entity IS NOT NULL)");
 	}
 
 	@Test // DATAJDBC-113
@@ -171,17 +175,15 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.getDeleteByList();
 
 		assertThat(sql).isEqualTo(
-				"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_DummyEntity WHERE FixedCustomPropertyPrefix_id IN (:ids)");
+				"DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_DummyEntity WHERE FixedCustomSchema.FixedCustomTablePrefix_DummyEntity.FixedCustomPropertyPrefix_id IN (:ids)");
 	}
 
-	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> baseType) {
-		return PersistentPropertyPathTestUtils.getPath(context, path, baseType);
+	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path) {
+		return PersistentPropertyPathTestUtils.getPath(context, path, DummyEntity.class);
 	}
 
 	/**
 	 * Plug in a custom {@link NamingStrategy} for this test case.
-	 *
-	 * @param namingStrategy
 	 */
 	private SqlGenerator configureSqlGenerator(NamingStrategy namingStrategy) {
 
@@ -190,6 +192,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}
 
+	@SuppressWarnings("unused")
 	static class DummyEntity {
 
 		@Id Long id;
@@ -197,6 +200,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		ReferencedEntity ref;
 	}
 
+	@SuppressWarnings("unused")
 	static class ReferencedEntity {
 
 		@Id Long l1id;
@@ -204,6 +208,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		SecondLevelReferencedEntity further;
 	}
 
+	@SuppressWarnings("unused")
 	static class SecondLevelReferencedEntity {
 
 		@Id Long l2id;

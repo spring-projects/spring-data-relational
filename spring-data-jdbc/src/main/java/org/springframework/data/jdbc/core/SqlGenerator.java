@@ -15,13 +15,15 @@
  */
 package org.springframework.data.jdbc.core;
 
+import lombok.Value;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,6 +35,8 @@ import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.lang.Nullable;
@@ -49,12 +53,12 @@ import org.springframework.util.Assert;
 class SqlGenerator {
 
 	private final RelationalPersistentEntity<?> entity;
-	private final RelationalMappingContext context;
+	private final RelationalMappingContext mappingContext;
 	private final List<String> columnNames = new ArrayList<>();
 	private final List<String> nonIdColumnNames = new ArrayList<>();
 	private final Set<String> readOnlyColumnNames = new HashSet<>();
 
-	private final Lazy<String> findOneSql = Lazy.of(this::createFindOneSelectSql);
+	private final Lazy<String> findOneSql = Lazy.of(this::createFindOneSql);
 	private final Lazy<String> findAllSql = Lazy.of(this::createFindAllSql);
 	private final Lazy<String> findAllInListSql = Lazy.of(this::createFindAllInListSql);
 
@@ -68,13 +72,15 @@ class SqlGenerator {
 	private final SqlGeneratorSource sqlGeneratorSource;
 
 	private final Pattern parameterPattern = Pattern.compile("\\W");
+	private final SqlContext sqlContext;
 
-	SqlGenerator(RelationalMappingContext context, RelationalPersistentEntity<?> entity,
+	SqlGenerator(RelationalMappingContext mappingContext, RelationalPersistentEntity<?> entity,
 			SqlGeneratorSource sqlGeneratorSource) {
 
-		this.context = context;
+		this.mappingContext = mappingContext;
 		this.entity = entity;
 		this.sqlGeneratorSource = sqlGeneratorSource;
+		this.sqlContext = new SqlContext(entity);
 		initColumnNames(entity, "");
 	}
 
@@ -109,7 +115,8 @@ class SqlGenerator {
 
 		final String embeddedPrefix = property.getEmbeddedPrefix();
 
-		final RelationalPersistentEntity<?> embeddedEntity = context.getRequiredPersistentEntity(property.getColumnType());
+		final RelationalPersistentEntity<?> embeddedEntity = mappingContext
+				.getRequiredPersistentEntity(property.getColumnType());
 
 		initColumnNames(embeddedEntity, prefix + embeddedPrefix);
 	}
@@ -150,14 +157,20 @@ class SqlGenerator {
 		Assert.isTrue(keyColumn != null || !ordered,
 				"If the SQL statement should be ordered a keyColumn to order by must be provided.");
 
-		String baseSelect = (keyColumn != null) //
-				? createSelectBuilder().column(cb -> cb.tableAlias(entity.getTableName()).column(keyColumn).as(keyColumn))
-						.build()
-				: getFindAll();
+		SelectBuilder.SelectWhere baseSelect = createBaseSelect(keyColumn);
 
-		String orderBy = ordered ? " ORDER BY " + keyColumn : "";
+		Table table = Table.create(entity.getTableName());
+		SelectBuilder.SelectWhereAndOr withWhereClause = baseSelect
+				.where(table.column(columnName).isEqualTo(SQL.bindMarker(":" + columnName)));
 
-		return String.format("%s WHERE %s = :%s%s", baseSelect, columnName, columnName, orderBy);
+		SelectBuilder.BuildSelect select;
+		if (ordered) {
+			select = withWhereClause.orderBy(table.column(keyColumn).as(keyColumn));
+		} else {
+			select = withWhereClause;
+		}
+
+		return render(select);
 	}
 
 	String getExists() {
@@ -188,114 +201,12 @@ class SqlGenerator {
 		return deleteByListSql.get();
 	}
 
-	private String createFindOneSelectSql() {
+	private String createFindOneSql() {
 
-		return createSelectBuilder() //
-				.where(wb -> wb.tableAlias(entity.getTableName()).column(entity.getIdColumn()).eq().variable("id")) //
-				.build();
-	}
+		SelectBuilder.SelectWhereAndOr withCondition = createBaseSelect()
+				.where(sqlContext.getIdColumn().isEqualTo(SQL.bindMarker(":id")));
 
-	private SelectBuilder createSelectBuilder() {
-
-		SelectBuilder builder = new SelectBuilder(entity.getTableName());
-		addColumnsForSimpleProperties(entity, "", "", entity, builder);
-		addColumnsForEmbeddedProperties(entity, "", "", entity, builder);
-		addColumnsAndJoinsForOneToOneReferences(entity, "", "", entity, builder);
-
-		return builder;
-	}
-
-	/**
-	 * Adds the columns to the provided {@link SelectBuilder} representing simple properties, including those from
-	 * one-to-one relationships.
-	 *
-	 * @param rootEntity the root entity for which to add the columns.
-	 * @param builder The {@link SelectBuilder} to be modified.
-	 */
-	private void addColumnsAndJoinsForOneToOneReferences(RelationalPersistentEntity<?> entity, String prefix,
-			String tableAlias, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
-
-		for (RelationalPersistentProperty property : entity) {
-			if (!property.isEntity() //
-					|| property.isEmbedded() //
-					|| Collection.class.isAssignableFrom(property.getType()) //
-					|| Map.class.isAssignableFrom(property.getType()) //
-			) {
-				continue;
-			}
-
-			final RelationalPersistentEntity<?> refEntity = context.getRequiredPersistentEntity(property.getActualType());
-			final String joinAlias;
-
-			if (tableAlias.isEmpty()) {
-				if (prefix.isEmpty()) {
-					joinAlias = property.getName();
-				} else {
-					joinAlias = prefix + property.getName();
-				}
-			} else {
-				if (prefix.isEmpty()) {
-					joinAlias = tableAlias + "_" + property.getName();
-				} else {
-					joinAlias = tableAlias + "_" + prefix + property.getName();
-				}
-			}
-
-			// final String joinAlias = tableAlias.isEmpty() ? property.getName() : tableAlias + "_" + property.getName();
-			builder.join(jb -> jb.leftOuter().table(refEntity.getTableName()).as(joinAlias) //
-					.where(property.getReverseColumnName()).eq().column(rootEntity.getTableName(), rootEntity.getIdColumn()));
-
-			addColumnsForSimpleProperties(refEntity, "", joinAlias, refEntity, builder);
-			addColumnsForEmbeddedProperties(refEntity, "", joinAlias, refEntity, builder);
-			addColumnsAndJoinsForOneToOneReferences(refEntity, "", joinAlias, refEntity, builder);
-
-			// if the referenced property doesn't have an id, include the back reference in the select list.
-			// this enables determining if the referenced entity is present or null.
-			if (!refEntity.hasIdProperty()) {
-
-				builder.column( //
-						cb -> cb.tableAlias(joinAlias) //
-								.column(property.getReverseColumnName()) //
-								.as(joinAlias + "_" + property.getReverseColumnName()) //
-				);
-			}
-		}
-	}
-
-	private void addColumnsForEmbeddedProperties(RelationalPersistentEntity<?> currentEntity, String prefix,
-			String tableAlias, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
-		for (RelationalPersistentProperty property : currentEntity) {
-			if (!property.isEmbedded()) {
-				continue;
-			}
-
-			final String embeddedPrefix = prefix + property.getEmbeddedPrefix();
-			final RelationalPersistentEntity<?> embeddedEntity = context
-					.getRequiredPersistentEntity(property.getColumnType());
-
-			addColumnsForSimpleProperties(embeddedEntity, embeddedPrefix, tableAlias, rootEntity, builder);
-			addColumnsForEmbeddedProperties(embeddedEntity, embeddedPrefix, tableAlias, rootEntity, builder);
-			addColumnsAndJoinsForOneToOneReferences(embeddedEntity, embeddedPrefix, tableAlias, rootEntity, builder);
-		}
-	}
-
-	private void addColumnsForSimpleProperties(RelationalPersistentEntity<?> currentEntity, String prefix,
-			String tableAlias, RelationalPersistentEntity<?> rootEntity, SelectBuilder builder) {
-
-		for (RelationalPersistentProperty property : currentEntity) {
-
-			if (property.isEntity()) {
-				continue;
-			}
-
-			final String column = prefix + property.getColumnName();
-			final String as = tableAlias.isEmpty() ? column : tableAlias + "_" + column;
-
-			builder.column(cb -> cb //
-					.tableAlias(tableAlias.isEmpty() ? rootEntity.getTableName() : tableAlias) //
-					.column(column) //
-					.as(as));
-		}
+		return render(withCondition);
 	}
 
 	private Stream<String> getColumnNameStream(String prefix) {
@@ -314,151 +225,287 @@ class SqlGenerator {
 	}
 
 	private String createFindAllSql() {
-		return createSelectBuilder().build();
+		return render(createBaseSelect());
+	}
+
+	private SelectBuilder.SelectWhere createBaseSelect() {
+
+		return createBaseSelect(null);
+	}
+
+	private SelectBuilder.SelectWhere createBaseSelect(@Nullable String keyColumn) {
+
+		Table table = SQL.table(entity.getTableName());
+
+		List<Expression> columnExpressions = new ArrayList<>();
+
+		List<Join> joinTables = new ArrayList<>();
+		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
+				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+
+			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(mappingContext, path);
+
+			// add a join if necessary
+			Join join = getJoin(extPath);
+			if (join != null) {
+				joinTables.add(join);
+			}
+
+			Column column = getColumn(extPath);
+			if (column != null) {
+				columnExpressions.add(column);
+			}
+		}
+
+		if (keyColumn != null) {
+			columnExpressions.add(table.column(keyColumn).as(keyColumn));
+		}
+
+		SelectBuilder.SelectAndFrom selectBuilder = StatementBuilder.select(columnExpressions);
+
+		SelectBuilder.SelectJoin baseSelect = selectBuilder.from(table);
+
+		for (Join join : joinTables) {
+			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
+		}
+
+		return (SelectBuilder.SelectWhere) baseSelect;
+	}
+
+	@Nullable
+	Column getColumn(PersistentPropertyPathExtension path) {
+
+		// an embedded itself doesn't give an column, its members will though.
+		// if there is a collection or map on the path it won't get selected at all, but it will get loaded with a separate
+		// select
+		// only the parent path is considered in order to handle arrays that get stored as BINARY properly
+		if (path.isEmbedded() || path.getParentPath().isMultiValued()) {
+			return null;
+		}
+
+		if (path.isEntity()) {
+
+			// Simple entities without id include there backreference as an synthetic id in order to distinguish null entities
+			// from entities with only null values.
+
+			if (path.isQualified() //
+					|| path.isCollectionLike() //
+					|| path.hasIdProperty() //
+			) {
+				return null;
+			}
+
+			return sqlContext.getReverseColumn(path);
+
+		}
+
+		return sqlContext.getColumn(path);
+
+	}
+
+	@Nullable
+	Join getJoin(PersistentPropertyPathExtension path) {
+
+		if (!path.isEntity() || path.isEmbedded() || path.isMultiValued()) {
+			return null;
+		}
+
+		Table currentTable = sqlContext.getTable(path);
+
+		PersistentPropertyPathExtension idDefiningParentPath = path.getIdDefiningParentPath();
+		Table parentTable = sqlContext.getTable(idDefiningParentPath);
+
+		return new Join( //
+				currentTable, //
+				currentTable.column(path.getReverseColumnName()), //
+				parentTable.column(idDefiningParentPath.getIdColumnName()) //
+		);
 	}
 
 	private String createFindAllInListSql() {
 
-		return createSelectBuilder() //
-				.where(wb -> wb.tableAlias(entity.getTableName()).column(entity.getIdColumn()).in().variable("ids")) //
-				.build();
+		SelectBuilder.SelectWhereAndOr withCondition = createBaseSelect()
+				.where(sqlContext.getIdColumn().in(SQL.bindMarker(":ids")));
+
+		return render(withCondition);
+	}
+
+	private String render(SelectBuilder.BuildSelect select) {
+		return SqlRenderer.create().render(select.build());
+	}
+
+	private String render(InsertBuilder.BuildInsert insert) {
+		return SqlRenderer.create().render(insert.build());
+	}
+
+	private String render(DeleteBuilder.BuildDelete delete) {
+		return SqlRenderer.create().render(delete.build());
+	}
+
+	private String render(UpdateBuilder.BuildUpdate update) {
+		return SqlRenderer.create().render(update.build());
 	}
 
 	private String createExistsSql() {
-		return String.format("SELECT COUNT(*) FROM %s WHERE %s = :id", entity.getTableName(), entity.getIdColumn());
+
+		Table table = sqlContext.getTable();
+		Column idColumn = table.column(entity.getIdColumn());
+
+		SelectBuilder.BuildSelect select = StatementBuilder //
+				.select(Functions.count(idColumn)) //
+				.from(table) //
+				.where(idColumn.isEqualTo(SQL.bindMarker(":id")));
+
+		return render(select);
 	}
 
 	private String createCountSql() {
-		return String.format("select count(*) from %s", entity.getTableName());
+
+		Table table = SQL.table(entity.getTableName());
+
+		SelectBuilder.BuildSelect select = StatementBuilder //
+				.select(Functions.count(Expressions.asterisk())) //
+				.from(table);
+
+		return render(select);
 	}
 
 	private String createInsertSql(Set<String> additionalColumns) {
 
-		String insertTemplate = "INSERT INTO %s (%s) VALUES (%s)";
+		Table table = SQL.table(entity.getTableName());
 
 		LinkedHashSet<String> columnNamesForInsert = new LinkedHashSet<>(nonIdColumnNames);
 		columnNamesForInsert.addAll(additionalColumns);
 		columnNamesForInsert.removeIf(readOnlyColumnNames::contains);
 
-		String tableColumns = String.join(", ", columnNamesForInsert);
+		InsertBuilder.InsertIntoColumnsAndValuesWithBuild insert = Insert.builder().into(table);
 
-		String parameterNames = columnNamesForInsert.stream()//
-				.map(this::columnNameToParameterName)
-				.map(n -> String.format(":%s", n))//
-				.collect(Collectors.joining(", "));
+		for (String cn : columnNamesForInsert) {
+			insert = insert.column(table.column(cn));
+		}
 
-		return String.format(insertTemplate, entity.getTableName(), tableColumns, parameterNames);
+		InsertBuilder.InsertValuesWithBuild insertWithValues = null;
+		for (String cn : columnNamesForInsert) {
+			insertWithValues = (insertWithValues == null ? insert : insertWithValues)
+					.values(SQL.bindMarker(":" + columnNameToParameterName(cn)));
+		}
+
+		return render(insertWithValues == null ? insert : insertWithValues);
 	}
 
 	private String createUpdateSql() {
 
-		String updateTemplate = "UPDATE %s SET %s WHERE %s = :%s";
+		Table table = SQL.table(entity.getTableName());
 
-		String setClause = columnNames.stream() //
+		List<AssignValue> assignments = columnNames.stream() //
 				.filter(s -> !s.equals(entity.getIdColumn())) //
 				.filter(s -> !readOnlyColumnNames.contains(s)) //
-				.map(n -> String.format("%s = :%s", n, columnNameToParameterName(n))) //
-				.collect(Collectors.joining(", "));
+				.map(columnName -> Assignments.value( //
+						table.column(columnName), //
+						SQL.bindMarker(":" + columnNameToParameterName(columnName)))) //
+				.collect(Collectors.toList());
 
-		return String.format( //
-				updateTemplate, //
-				entity.getTableName(), //
-				setClause, //
-				entity.getIdColumn(), //
-				columnNameToParameterName(entity.getIdColumn()) //
-		);
+		UpdateBuilder.UpdateWhereAndOr update = Update.builder() //
+				.table(table) //
+				.set(assignments) //
+				.where(table.column(entity.getIdColumn())
+						.isEqualTo(SQL.bindMarker(":" + columnNameToParameterName(entity.getIdColumn())))) //
+		;
+
+		return render(update);
 	}
 
 	private String createDeleteSql() {
-		return String.format("DELETE FROM %s WHERE %s = :id", entity.getTableName(), entity.getIdColumn());
+
+		Table table = SQL.table(entity.getTableName());
+
+		DeleteBuilder.DeleteWhereAndOr delete = Delete.builder().from(table)
+				.where(table.column(entity.getIdColumn()).isEqualTo(SQL.bindMarker(":id")));
+
+		return render(delete);
 	}
 
 	String createDeleteAllSql(@Nullable PersistentPropertyPath<RelationalPersistentProperty> path) {
 
+		Table table = SQL.table(entity.getTableName());
+
+		DeleteBuilder.DeleteWhere deleteAll = Delete.builder().from(table);
+
 		if (path == null) {
-			return String.format("DELETE FROM %s", entity.getTableName());
+			return render(deleteAll);
 		}
-
-		RelationalPersistentEntity<?> entityToDelete = context
-				.getRequiredPersistentEntity(path.getRequiredLeafProperty().getActualType());
-
-		final String innerMostCondition1 = createInnerMostCondition("%s IS NOT NULL", path);
-		String condition = cascadeConditions(innerMostCondition1, getSubPath(path));
-
-		return String.format("DELETE FROM %s WHERE %s", entityToDelete.getTableName(), condition);
+		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path), Column::isNotNull);
 	}
 
 	private String createDeleteByListSql() {
-		return String.format("DELETE FROM %s WHERE %s IN (:ids)", entity.getTableName(), entity.getIdColumn());
+
+		Table table = SQL.table(entity.getTableName());
+
+		DeleteBuilder.DeleteWhereAndOr delete = Delete.builder() //
+				.from(table) //
+				.where(table.column(entity.getIdColumn()).in(SQL.bindMarker(":ids")));
+
+		return render(delete);
 	}
 
 	String createDeleteByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
-
-		RelationalPersistentEntity<?> entityToDelete = context
-				.getRequiredPersistentEntity(path.getRequiredLeafProperty().getActualType());
-
-		final String innerMostCondition = createInnerMostCondition("%s = :rootId", path);
-		String condition = cascadeConditions(innerMostCondition, getSubPath(path));
-
-		return String.format("DELETE FROM %s WHERE %s", entityToDelete.getTableName(), condition);
+		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
+				filterColumn -> filterColumn.isEqualTo(SQL.bindMarker(":rootId")));
 	}
 
-	private String createInnerMostCondition(String template, PersistentPropertyPath<RelationalPersistentProperty> path) {
-		PersistentPropertyPath<RelationalPersistentProperty> currentPath = path;
-		while (!currentPath.getParentPath().isEmpty()
-				&& !currentPath.getParentPath().getRequiredLeafProperty().isEmbedded()) {
-			currentPath = currentPath.getParentPath();
-		}
+	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
+			Function<Column, Condition> rootCondition) {
 
-		RelationalPersistentProperty property = currentPath.getRequiredLeafProperty();
-		return String.format(template, property.getReverseColumnName());
+		Table table = SQL.table(path.getTableName());
+
+		DeleteBuilder.DeleteWhere delete = Delete.builder() //
+				.from(table);
+
+		DeleteBuilder.DeleteWhereAndOr deleteWithWhere;
+
+		Column filterColumn = table.column(path.getReverseColumnName());
+
+		if (path.getLength() == 1) {
+
+			deleteWithWhere = delete //
+					.where(rootCondition.apply(filterColumn));
+		} else {
+
+			Condition condition = getSubselectCondition(path, rootCondition, filterColumn);
+			deleteWithWhere = delete.where(condition);
+		}
+		return render(deleteWithWhere);
 	}
 
-	private PersistentPropertyPath<RelationalPersistentProperty> getSubPath(
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
+	private Condition getSubselectCondition(PersistentPropertyPathExtension path,
+			Function<Column, Condition> rootCondition, Column filterColumn) {
 
-		int pathLength = path.getLength();
+		PersistentPropertyPathExtension parentPath = path.getParentPath();
 
-		PersistentPropertyPath<RelationalPersistentProperty> ancestor = path;
+		Table subSelectTable = SQL.table(parentPath.getTableName());
+		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
+		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
 
-		int embeddedDepth = 0;
-		while (!ancestor.getParentPath().isEmpty() && ancestor.getParentPath().getRequiredLeafProperty().isEmbedded()) {
-			embeddedDepth++;
-			ancestor = ancestor.getParentPath();
-		}
+		Condition innerCondition = parentPath.getLength() == 1 ? rootCondition.apply(selectFilterColumn)
+				: getSubselectCondition(parentPath, rootCondition, selectFilterColumn);
 
-		ancestor = path;
+		Select select = Select.builder() //
+				.select(idColumn) //
+				.from(subSelectTable) //
+				.where(innerCondition).build();
 
-		for (int i = pathLength - 1 + embeddedDepth; i > 0; i--) {
-			ancestor = ancestor.getParentPath();
-		}
-
-		return path.getExtensionForBaseOf(ancestor);
+		return filterColumn.in(select);
 	}
 
-	private String cascadeConditions(String innerCondition, PersistentPropertyPath<RelationalPersistentProperty> path) {
-
-		if (path.getLength() == 0) {
-			return innerCondition;
-		}
-
-		PersistentPropertyPath<RelationalPersistentProperty> rootPath = path;
-		while (rootPath.getLength() > 1) {
-			rootPath = rootPath.getParentPath();
-		}
-
-		RelationalPersistentEntity<?> entity = context
-				.getRequiredPersistentEntity(rootPath.getBaseProperty().getOwner().getTypeInformation());
-		RelationalPersistentProperty property = path.getRequiredLeafProperty();
-
-		return String.format("%s IN (SELECT %s FROM %s WHERE %s)", //
-				property.getReverseColumnName(), //
-				entity.getIdColumn(), //
-				entity.getTableName(), innerCondition //
-		);
-	}
-
-	private String columnNameToParameterName(String columnName){
+	private String columnNameToParameterName(String columnName) {
 		return parameterPattern.matcher(columnName).replaceAll("");
 	}
+
+	@Value
+	class Join {
+		Table joinTable;
+		Column joinColumn;
+		Column parentId;
+	}
+
 }

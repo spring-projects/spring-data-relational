@@ -21,6 +21,7 @@ import java.util.Collection;
  * Entry point to construct a {@link Select} statement.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  * @see StatementBuilder
  */
@@ -460,6 +461,16 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		SelectOn join(Table table);
+
+		/**
+		 * Declare a {@code LEFT OUTER JOIN} {@link Table}.
+		 *
+		 * @param table name of the table, must not be {@literal null}.
+		 * @return {@code this} builder.
+		 * @see Join
+		 * @see SQL#table(String)
+		 */
+		SelectOn leftOuterJoin(Table table);
 	}
 
 	/**

@@ -26,6 +26,7 @@ import java.util.Stack;
  * {@code JOIN} clause.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 class SelectValidator extends AbstractImportValidator {
@@ -93,18 +94,18 @@ class SelectValidator extends AbstractImportValidator {
 			return;
 		}
 
-		super.enter(segment);
+		if (segment instanceof Expression && parent instanceof Select) {
+			selectFieldCount++;
+		}
 
 		if (segment instanceof AsteriskFromTable && parent instanceof Select) {
 
 			Table table = ((AsteriskFromTable) segment).getTable();
 			requiredBySelect.add(table);
-			selectFieldCount++;
 		}
 
 		if (segment instanceof Column && (parent instanceof Select || parent instanceof SimpleFunction)) {
 
-			selectFieldCount++;
 			Table table = ((Column) segment).getTable();
 
 			if (table != null) {
@@ -124,6 +125,7 @@ class SelectValidator extends AbstractImportValidator {
 		if (segment instanceof Table && parent instanceof Join) {
 			join.add((Table) segment);
 		}
+		super.enter(segment);
 	}
 
 	/*

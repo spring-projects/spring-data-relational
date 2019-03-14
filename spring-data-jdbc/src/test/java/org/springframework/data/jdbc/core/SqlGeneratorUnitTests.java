@@ -35,6 +35,8 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.Table;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -46,19 +48,17 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  */
 public class SqlGeneratorUnitTests {
 
-	private SqlGenerator sqlGenerator;
-	private RelationalMappingContext context = new JdbcMappingContext();
+	SqlGenerator sqlGenerator;
+	NamingStrategy namingStrategy = new PrefixingNamingStrategy();
+	RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
 
 	@Before
 	public void setUp() {
-
 		this.sqlGenerator = createSqlGenerator(DummyEntity.class);
 	}
 
 	SqlGenerator createSqlGenerator(Class<?> type) {
 
-		NamingStrategy namingStrategy = new PrefixingNamingStrategy();
-		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
 
 		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
@@ -87,18 +87,18 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteFirstLevel() {
 
-		String sql = sqlGenerator.createDeleteByPath(getPath("ref"));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE dummy_entity = :rootId");
+		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE referenced_entity.dummy_entity = :rootId");
 	}
 
 	@Test // DATAJDBC-112
-	public void cascadingDeleteAllSecondLevel() {
+	public void cascadingDeleteByPathSecondLevel() {
 
-		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further"));
+		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo(
-				"DELETE FROM second_level_referenced_entity WHERE referenced_entity IN (SELECT x_l1id FROM referenced_entity WHERE dummy_entity = :rootId)");
+				"DELETE FROM second_level_referenced_entity WHERE second_level_referenced_entity.referenced_entity IN (SELECT referenced_entity.x_l1id FROM referenced_entity WHERE referenced_entity.dummy_entity = :rootId)");
 	}
 
 	@Test // DATAJDBC-112
@@ -112,34 +112,34 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-112
 	public void cascadingDeleteAllFirstLevel() {
 
-		String sql = sqlGenerator.createDeleteAllSql(getPath("ref"));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE dummy_entity IS NOT NULL");
+		assertThat(sql).isEqualTo("DELETE FROM referenced_entity WHERE referenced_entity.dummy_entity IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-112
-	public void cascadingDeleteSecondLevel() {
+	public void cascadingDeleteAllSecondLevel() {
 
-		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further"));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
 
 		assertThat(sql).isEqualTo(
-				"DELETE FROM second_level_referenced_entity WHERE referenced_entity IN (SELECT x_l1id FROM referenced_entity WHERE dummy_entity IS NOT NULL)");
+				"DELETE FROM second_level_referenced_entity WHERE second_level_referenced_entity.referenced_entity IN (SELECT referenced_entity.x_l1id FROM referenced_entity WHERE referenced_entity.dummy_entity IS NOT NULL)");
 	}
 
 	@Test // DATAJDBC-227
 	public void deleteAllMap() {
 
-		String sql = sqlGenerator.createDeleteAllSql(getPath("mappedElements"));
+		String sql = sqlGenerator.createDeleteAllSql(getPath("mappedElements", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM element WHERE dummy_entity IS NOT NULL");
+		assertThat(sql).isEqualTo("DELETE FROM element WHERE element.dummy_entity IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-227
 	public void deleteMapByPath() {
 
-		String sql = sqlGenerator.createDeleteByPath(getPath("mappedElements"));
+		String sql = sqlGenerator.createDeleteByPath(getPath("mappedElements", DummyEntity.class));
 
-		assertThat(sql).isEqualTo("DELETE FROM element WHERE dummy_entity = :rootId");
+		assertThat(sql).isEqualTo("DELETE FROM element WHERE element.dummy_entity = :rootId");
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
@@ -148,14 +148,18 @@ public class SqlGeneratorUnitTests {
 		// this would get called when ListParent is the element type of a Set
 		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, false);
 
-		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
-				+ "dummy_entity.x_other AS x_other, " //
-				+ "ref.x_l1id AS ref_x_l1id, ref.x_content AS ref_x_content, "
-				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something " //
-				+ "FROM dummy_entity " //
-				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
-				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
-				+ "WHERE back-ref = :back-ref");
+		assertThat(sql).contains("SELECT", //
+				"dummy_entity.id1 AS id1", //
+				"dummy_entity.x_name AS x_name", //
+				"dummy_entity.x_other AS x_other", //
+				"ref.x_l1id AS ref_x_l1id", //
+				"ref.x_content AS ref_x_content", //
+				"ref_further.x_l2id AS ref_further_x_l2id", //
+				"ref_further.x_something AS ref_further_x_something", //
+				"FROM dummy_entity ", //
+				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
+				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
+				"WHERE dummy_entity.back-ref = :back-ref");
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
@@ -170,9 +174,9 @@ public class SqlGeneratorUnitTests {
 				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something, " //
 				+ "dummy_entity.key-column AS key-column " //
 				+ "FROM dummy_entity " //
-				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
-				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
-				+ "WHERE back-ref = :back-ref");
+				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
+				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id " //
+				+ "WHERE dummy_entity.back-ref = :back-ref");
 	}
 
 	@Test(expected = IllegalArgumentException.class) // DATAJDBC-130
@@ -192,9 +196,9 @@ public class SqlGeneratorUnitTests {
 				+ "ref_further.x_l2id AS ref_further_x_l2id, ref_further.x_something AS ref_further_x_something, " //
 				+ "dummy_entity.key-column AS key-column " //
 				+ "FROM dummy_entity " //
-				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1  " //
-				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = referenced_entity.x_l1id " //
-				+ "WHERE back-ref = :back-ref " + "ORDER BY key-column");
+				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
+				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id " //
+				+ "WHERE dummy_entity.back-ref = :back-ref " + "ORDER BY key-column");
 	}
 
 	@Test // DATAJDBC-264
@@ -214,9 +218,8 @@ public class SqlGeneratorUnitTests {
 
 		String insert = sqlGenerator.getInsert(emptySet());
 
-		assertThat(insert).isEqualTo("INSERT INTO entity_with_quoted_column_name " +
-				"(\"test_@123\") " +
-				"VALUES (:test_123)");
+		assertThat(insert)
+				.isEqualTo("INSERT INTO entity_with_quoted_column_name " + "(\"test_@123\") " + "VALUES (:test_123)");
 	}
 
 	@Test // DATAJDBC-266
@@ -249,7 +252,7 @@ public class SqlGeneratorUnitTests {
 		assertThat(sqlGenerator.getUpdate()).isEqualToIgnoringCase( //
 				"UPDATE entity_with_read_only_property " //
 						+ "SET x_name = :x_name " //
-						+ "WHERE x_id = :x_id" //
+						+ "WHERE entity_with_read_only_property.x_id = :x_id" //
 		);
 	}
 
@@ -260,9 +263,8 @@ public class SqlGeneratorUnitTests {
 
 		String update = sqlGenerator.getUpdate();
 
-		assertThat(update).isEqualTo("UPDATE entity_with_quoted_column_name " +
-				"SET \"test_@123\" = :test_123 " +
-				"WHERE \"test_@id\" = :test_id");
+		assertThat(update).isEqualTo("UPDATE entity_with_quoted_column_name " + "SET \"test_@123\" = :test_123 "
+				+ "WHERE entity_with_quoted_column_name.\"test_@id\" = :test_id");
 	}
 
 	@Test // DATAJDBC-324
@@ -294,13 +296,13 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sqlGenerator.getFindAllByProperty("back-ref", "key-column", true)).isEqualToIgnoringCase( //
 				"SELECT " //
-				+ "entity_with_read_only_property.x_id AS x_id, " //
-				+ "entity_with_read_only_property.x_name AS x_name, " //
-				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value, " //
-				+ "entity_with_read_only_property.key-column AS key-column " //
-				+ "FROM entity_with_read_only_property " //
-				+ "WHERE back-ref = :back-ref " //
-				+ "ORDER BY key-column" //
+						+ "entity_with_read_only_property.x_id AS x_id, " //
+						+ "entity_with_read_only_property.x_name AS x_name, " //
+						+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value, " //
+						+ "entity_with_read_only_property.key-column AS key-column " //
+						+ "FROM entity_with_read_only_property " //
+						+ "WHERE entity_with_read_only_property.back-ref = :back-ref " //
+						+ "ORDER BY key-column" //
 		);
 	}
 
@@ -311,11 +313,11 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sqlGenerator.getFindAllInList()).isEqualToIgnoringCase( //
 				"SELECT " //
-				+ "entity_with_read_only_property.x_id AS x_id, " //
-				+ "entity_with_read_only_property.x_name AS x_name, " //
-				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value " //
-				+ "FROM entity_with_read_only_property " //
-				+ "WHERE entity_with_read_only_property.x_id in(:ids)" //
+						+ "entity_with_read_only_property.x_id AS x_id, " //
+						+ "entity_with_read_only_property.x_name AS x_name, " //
+						+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value " //
+						+ "FROM entity_with_read_only_property " //
+						+ "WHERE entity_with_read_only_property.x_id IN (:ids)" //
 		);
 	}
 
@@ -326,23 +328,158 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(sqlGenerator.getFindOne()).isEqualToIgnoringCase( //
 				"SELECT " //
-				+ "entity_with_read_only_property.x_id AS x_id, " //
-				+ "entity_with_read_only_property.x_name AS x_name, " //
-				+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value " //
-				+ "FROM entity_with_read_only_property " //
-				+ "WHERE entity_with_read_only_property.x_id = :id" //
+						+ "entity_with_read_only_property.x_id AS x_id, " //
+						+ "entity_with_read_only_property.x_name AS x_name, " //
+						+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value " //
+						+ "FROM entity_with_read_only_property " //
+						+ "WHERE entity_with_read_only_property.x_id = :id" //
 		);
 	}
 
-	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path) {
-		return PersistentPropertyPathTestUtils.getPath(context, path, DummyEntity.class);
+	@Test // DATAJDBC-340
+	public void deletingLongChain() {
+
+		assertThat(
+				createSqlGenerator(Chain4.class).createDeleteByPath(getPath("chain3.chain2.chain1.chain0", Chain4.class))) //
+						.isEqualTo("DELETE FROM chain0 " + //
+								"WHERE chain0.chain1 IN (" + //
+								"SELECT chain1.x_one " + //
+								"FROM chain1 " + //
+								"WHERE chain1.chain2 IN (" + //
+								"SELECT chain2.x_two " + //
+								"FROM chain2 " + //
+								"WHERE chain2.chain3 IN (" + //
+								"SELECT chain3.x_three " + //
+								"FROM chain3 " + //
+								"WHERE chain3.chain4 = :rootId" + //
+								")))");
+	}
+
+	@Test // DATAJDBC-340
+	public void noJoinForSimpleColumn() {
+		assertThat(generateJoin("id", DummyEntity.class)).isNull();
+	}
+
+	@Test // DATAJDBC-340
+	public void joinForSimpleReference() {
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			SqlGenerator.Join join = generateJoin("ref", DummyEntity.class);
+			softly.assertThat(join.getJoinTable().getName()).isEqualTo("referenced_entity");
+			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("dummy_entity");
+			softly.assertThat(join.getParentId().getName()).isEqualTo("id1");
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("dummy_entity");
+		});
+	}
+
+	@Test // DATAJDBC-340
+	public void noJoinForCollectionReference() {
+
+		SqlGenerator.Join join = generateJoin("elements", DummyEntity.class);
+
+		assertThat(join).isNull();
+
+	}
+
+	@Test // DATAJDBC-340
+	public void noJoinForMappedReference() {
+
+		SqlGenerator.Join join = generateJoin("mappedElements", DummyEntity.class);
+
+		assertThat(join).isNull();
+	}
+
+	@Test // DATAJDBC-340
+	public void joinForSecondLevelReference() {
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			SqlGenerator.Join join = generateJoin("ref.further", DummyEntity.class);
+			softly.assertThat(join.getJoinTable().getName()).isEqualTo("second_level_referenced_entity");
+			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("referenced_entity");
+			softly.assertThat(join.getParentId().getName()).isEqualTo("x_l1id");
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("referenced_entity");
+		});
+	}
+
+	@Test // DATAJDBC-340
+	public void joinForOneToOneWithoutId() {
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			SqlGenerator.Join join = generateJoin("child", ParentOfNoIdChild.class);
+			Table joinTable = join.getJoinTable();
+			softly.assertThat(joinTable.getName()).isEqualTo("no_id_child");
+			softly.assertThat(joinTable).isInstanceOf(Aliased.class);
+			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo("child");
+			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(joinTable);
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("parent_of_no_id_child");
+			softly.assertThat(join.getParentId().getName()).isEqualTo("x_id");
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("parent_of_no_id_child");
+
+		});
+	}
+
+	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
+		return createSqlGenerator(type)
+				.getJoin(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
+	}
+
+	@Test // DATAJDBC-340
+	public void simpleColumn() {
+
+		assertThat(generatedColumn("id", DummyEntity.class)) //
+				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
+				.containsExactly("id1", "dummy_entity", null, "id1");
+	}
+
+	@Test // DATAJDBC-340
+	public void columnForIndirectProperty() {
+
+		assertThat(generatedColumn("ref.l1id", DummyEntity.class)) //
+				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
+				.containsExactly("x_l1id", "referenced_entity", "ref", "ref_x_l1id");
+	}
+
+	@Test // DATAJDBC-340
+	public void noColumnForReferencedEntity() {
+
+		assertThat(generatedColumn("ref", DummyEntity.class)).isNull();
+	}
+
+	@Test // DATAJDBC-340
+	public void columnForReferencedEntityWithoutId() {
+
+		assertThat(generatedColumn("child", ParentOfNoIdChild.class)) //
+				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
+				.containsExactly("parent_of_no_id_child", "no_id_child", "child", "child_parent_of_no_id_child");
+	}
+
+	private String getAlias(Object maybeAliased) {
+
+		if (maybeAliased instanceof Aliased) {
+			return ((Aliased) maybeAliased).getAlias();
+		}
+		return null;
+	}
+
+	private org.springframework.data.relational.core.sql.Column generatedColumn(String path, Class<?> type) {
+
+		return createSqlGenerator(type)
+				.getColumn(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
+	}
+
+	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<?> baseType) {
+		return PersistentPropertyPathTestUtils.getPath(context, path, baseType);
 	}
 
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
-		@Column("id1")
-		@Id Long id;
+		@Column("id1") @Id Long id;
 		String name;
 		ReferencedEntity ref;
 		Set<Element> elements;
@@ -411,5 +548,39 @@ public class SqlGeneratorUnitTests {
 
 		@Id @Column("\"test_@id\"") Long id;
 		@Column("\"test_@123\"") String name;
+	}
+
+	@SuppressWarnings("unused")
+	static class Chain0 {
+		@Id Long zero;
+		String zeroValue;
+	}
+
+	@SuppressWarnings("unused")
+	static class Chain1 {
+		@Id Long one;
+		String oneValue;
+		Chain0 chain0;
+	}
+
+	@SuppressWarnings("unused")
+	static class Chain2 {
+		@Id Long two;
+		String twoValue;
+		Chain1 chain1;
+	}
+
+	@SuppressWarnings("unused")
+	static class Chain3 {
+		@Id Long three;
+		String threeValue;
+		Chain2 chain2;
+	}
+
+	@SuppressWarnings("unused")
+	static class Chain4 {
+		@Id Long four;
+		String fourValue;
+		Chain3 chain3;
 	}
 }

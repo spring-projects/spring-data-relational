@@ -84,9 +84,10 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
-			String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
+			String sql = sqlGenerator.createDeleteByPath(getPath("ref"));
 
-			assertThat(sql).isEqualTo("DELETE FROM " + user + ".referenced_entity WHERE " + "dummy_entity = :rootId");
+			assertThat(sql).isEqualTo(
+					"DELETE FROM " + user + ".referenced_entity WHERE " + user + ".referenced_entity.dummy_entity = :rootId");
 		});
 	}
 
@@ -97,13 +98,13 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
-			String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
+			String sql = sqlGenerator.createDeleteByPath(getPath("ref.further"));
 
 			assertThat(sql).isEqualTo( //
 					"DELETE FROM " + user + ".second_level_referenced_entity " //
-							+ "WHERE " + "referenced_entity IN " //
-							+ "(SELECT l1id FROM " + user + ".referenced_entity " //
-							+ "WHERE " + "dummy_entity = :rootId)");
+							+ "WHERE " + user + ".second_level_referenced_entity.referenced_entity IN " //
+							+ "(SELECT " + user + ".referenced_entity.l1id FROM " + user + ".referenced_entity " //
+							+ "WHERE " + user + ".referenced_entity.dummy_entity = :rootId)");
 		});
 	}
 
@@ -127,10 +128,10 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
-			String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
+			String sql = sqlGenerator.createDeleteAllSql(getPath("ref"));
 
 			assertThat(sql).isEqualTo( //
-					"DELETE FROM " + user + ".referenced_entity WHERE " + "dummy_entity IS NOT NULL");
+					"DELETE FROM " + user + ".referenced_entity WHERE " + user + ".referenced_entity.dummy_entity IS NOT NULL");
 		});
 	}
 
@@ -141,18 +142,18 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			SqlGenerator sqlGenerator = configureSqlGenerator(contextualNamingStrategy);
 
-			String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
+			String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further"));
 
 			assertThat(sql).isEqualTo( //
 					"DELETE FROM " + user + ".second_level_referenced_entity " //
-							+ "WHERE " + "referenced_entity IN " //
-							+ "(SELECT l1id FROM " + user + ".referenced_entity " //
-							+ "WHERE " + "dummy_entity IS NOT NULL)");
+							+ "WHERE " + user + ".second_level_referenced_entity.referenced_entity IN " //
+							+ "(SELECT " + user + ".referenced_entity.l1id FROM " + user + ".referenced_entity " //
+							+ "WHERE " + user + ".referenced_entity.dummy_entity IS NOT NULL)");
 		});
 	}
 
-	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path, Class<DummyEntity> baseType) {
-		return PersistentPropertyPathTestUtils.getPath(this.context, path, baseType);
+	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String path) {
+		return PersistentPropertyPathTestUtils.getPath(this.context, path, DummyEntity.class);
 	}
 
 	/**
@@ -214,6 +215,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
 	}
 
+	@SuppressWarnings("unused")
 	static class DummyEntity {
 
 		@Id Long id;
@@ -221,6 +223,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		ReferencedEntity ref;
 	}
 
+	@SuppressWarnings("unused")
 	static class ReferencedEntity {
 
 		@Id Long l1id;
@@ -228,6 +231,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		SecondLevelReferencedEntity further;
 	}
 
+	@SuppressWarnings("unused")
 	static class SecondLevelReferencedEntity {
 
 		@Id Long l2id;

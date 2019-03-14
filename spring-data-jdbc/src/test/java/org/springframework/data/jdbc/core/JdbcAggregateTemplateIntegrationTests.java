@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -31,7 +33,6 @@ import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -44,6 +45,9 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.annotation.IfProfileValue;
 import org.springframework.test.annotation.ProfileValueSourceConfiguration;
 import org.springframework.test.annotation.ProfileValueUtils;
@@ -67,7 +71,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 	@Autowired JdbcAggregateOperations template;
-
+	@Autowired
+	NamedParameterJdbcOperations jdbcTemplate;
 	LegoSet legoSet = createLegoSet();
 
 	@Test // DATAJDBC-112
@@ -422,6 +427,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-327
 	public void saveAndLoadAnEntityWithByteArray() {
+
 		ByteArrayOwner owner = new ByteArrayOwner();
 		owner.binaryData = new byte[] { 1, 23, 42 };
 
@@ -432,6 +438,35 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
 		assertThat(reloaded.binaryData).isEqualTo(new byte[] { 1, 23, 42 });
+	}
+
+	@Test
+	public void saveAndLoadLongChain() {
+
+		Chain4 chain4 = new Chain4();
+		chain4.fourValue = "omega";
+		chain4.chain3 = new Chain3();
+		chain4.chain3.threeValue = "delta";
+		chain4.chain3.chain2 = new Chain2();
+		chain4.chain3.chain2.twoValue = "gamma";
+		chain4.chain3.chain2.chain1 = new Chain1();
+		chain4.chain3.chain2.chain1.oneValue = "beta";
+		chain4.chain3.chain2.chain1.chain0 = new Chain0();
+		chain4.chain3.chain2.chain1.chain0.zeroValue = "alpha";
+
+		template.save(chain4);
+
+		Chain4 reloaded = template.findById(chain4.four, Chain4.class);
+
+		assertThat(reloaded).isNotNull();
+
+		assertThat(reloaded.four).isEqualTo(chain4.four);
+		assertThat(reloaded.chain3.chain2.chain1.chain0.zeroValue).isEqualTo(chain4.chain3.chain2.chain1.chain0.zeroValue);
+
+		template.delete(chain4, Chain4.class);
+
+		String countSelect = "SELECT COUNT(*) FROM %s";
+		jdbcTemplate.queryForObject(String.format(countSelect, "CHAIN0"),emptyMap(), Long.class);
 	}
 
 	private static void assumeNot(String dbProfileName) {
@@ -536,5 +571,34 @@ public class JdbcAggregateTemplateIntegrationTests {
 				DataAccessStrategy dataAccessStrategy, RelationalConverter converter) {
 			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 		}
+	}
+
+	static class Chain0 {
+		@Id Long zero;
+		String zeroValue;
+	}
+
+	static class Chain1 {
+		@Id Long one;
+		String oneValue;
+		Chain0 chain0;
+	}
+
+	static class Chain2 {
+		@Id Long two;
+		String twoValue;
+		Chain1 chain1;
+	}
+
+	static class Chain3 {
+		@Id Long three;
+		String threeValue;
+		Chain2 chain2;
+	}
+
+	static class Chain4 {
+		@Id Long four;
+		String fourValue;
+		Chain3 chain3;
 	}
 }

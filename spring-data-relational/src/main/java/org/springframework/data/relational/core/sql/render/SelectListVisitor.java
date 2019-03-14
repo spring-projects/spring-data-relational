@@ -16,7 +16,9 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.AsteriskFromTable;
 import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SelectList;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Table;
@@ -38,6 +40,7 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	private boolean insideFunction = false; // this is hackery and should be fix with a proper visitor for
 	// subelements.
 
+
 	SelectListVisitor(RenderContext context, RenderTarget target) {
 		this.context = context;
 		this.target = target;
@@ -57,8 +60,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 		if (segment instanceof SimpleFunction) {
 			builder.append(((SimpleFunction) segment).getFunctionName()).append("(");
 			insideFunction = true;
-		} else {
-			insideFunction = false;
 		}
 
 		return super.enterNested(segment);
@@ -87,14 +88,26 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 		}
 
 		if (segment instanceof SimpleFunction) {
+
 			builder.append(")");
-			requiresComma = true;
-		} else if (segment instanceof Column) {
-			builder.append(context.getNamingStrategy().getName((Column) segment));
 			if (segment instanceof Aliased) {
 				builder.append(" AS ").append(((Aliased) segment).getAlias());
 			}
+
+			insideFunction = false;
 			requiresComma = true;
+		} else if (segment instanceof Column) {
+
+			builder.append(context.getNamingStrategy().getName((Column) segment));
+			if (segment instanceof Aliased && !insideFunction) {
+				builder.append(" AS ").append(((Aliased) segment).getAlias());
+			}
+			requiresComma = true;
+		} else if (segment instanceof AsteriskFromTable) {
+			// the toString of AsteriskFromTable includes the table name, which would cause it to appear twice.
+			builder.append("*");
+		} else if (segment instanceof Expression) {
+			builder.append(segment.toString());
 		}
 
 		return super.leaveNested(segment);

@@ -17,10 +17,11 @@ package org.springframework.data.relational.core.sql.render;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.junit.Ignore;
 import org.junit.Test;
-
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Conditions;
+import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.SQL;
@@ -93,6 +94,17 @@ public class SelectRendererUnitTests {
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT COUNT(bar.foo), bar.bar FROM bar");
 	}
 
+	@Test // DATAJDBC-340
+	public void shouldRenderCountFunctionWithAliasedColumn() {
+
+		Table table = SQL.table("bar");
+		Column foo = table.column("foo").as("foo_bar");
+
+		Select select = Select.builder().select(Functions.count(foo), foo).from(table).build();
+
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT COUNT(bar.foo), bar.foo AS foo_bar FROM bar");
+	}
+
 	@Test // DATAJDBC-309
 	public void shouldRenderSimpleJoin() {
 
@@ -107,6 +119,21 @@ public class SelectRendererUnitTests {
 				+ "JOIN department ON employee.department_id = department.id");
 	}
 
+	@Test // DATAJDBC-340
+	public void shouldRenderOuterJoin() {
+
+		Table employee = SQL.table("employee");
+		Table department = SQL.table("department");
+
+		Select select = Select.builder().select(employee.column("id"), department.column("name")) //
+				.from(employee) //
+				.leftOuterJoin(department).on(employee.column("department_id")).equals(department.column("id")) //
+				.build();
+
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+				+ "LEFT OUTER JOIN department ON employee.department_id = department.id");
+	}
+
 	@Test // DATAJDBC-309
 	public void shouldRenderSimpleJoinWithAnd() {
 
@@ -119,7 +146,7 @@ public class SelectRendererUnitTests {
 				.build();
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
-				+ "JOIN department ON employee.department_id = department.id "  //
+				+ "JOIN department ON employee.department_id = department.id " //
 				+ "AND employee.tenant = department.tenant");
 	}
 
@@ -246,7 +273,7 @@ public class SelectRendererUnitTests {
 
 		Select subselect = Select.builder().select(bah).from(floo).build();
 
-		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, subselect)).build();
+		Select select = Select.builder().select(bar).from(foo).where(bar.in(subselect)).build();
 
 		assertThat(SqlRenderer.toString(select))
 				.isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (SELECT floo.bah FROM floo)");
@@ -272,4 +299,44 @@ public class SelectRendererUnitTests {
 		assertThat(mapped).isEqualTo("SELECT foo.baR FROM foo WHERE foo.baR = foo.baZ");
 	}
 
+	@Test // DATAJDBC-340
+	public void shouldRenderCountStar() {
+
+		Select select = Select.builder() //
+				.select(Functions.count(Expressions.asterisk())) //
+				.from(SQL.table("foo")) //
+				.build();
+
+		String rendered = SqlRenderer.toString(select);
+
+		assertThat(rendered).isEqualTo("SELECT COUNT(*) FROM foo");
+	}
+
+	@Test // DATAJDBC-340
+	public void shouldRenderCountTableStar() {
+
+		Table foo = SQL.table("foo");
+		Select select = Select.builder() //
+				.select(Functions.count(foo.asterisk())) //
+				.from(foo) //
+				.build();
+
+		String rendered = SqlRenderer.toString(select);
+
+		assertThat(rendered).isEqualTo("SELECT COUNT(foo.*) FROM foo");
+	}
+
+	@Test // DATAJDBC-340
+	public void shouldRenderFunctionWithAlias() {
+
+		Table foo = SQL.table("foo");
+		Select select = Select.builder() //
+				.select(Functions.count(foo.asterisk()).as("counter")) //
+				.from(foo) //
+				.build();
+
+		String rendered = SqlRenderer.toString(select);
+
+		assertThat(rendered).isEqualTo("SELECT COUNT(foo.*) AS counter FROM foo");
+	}
 }
