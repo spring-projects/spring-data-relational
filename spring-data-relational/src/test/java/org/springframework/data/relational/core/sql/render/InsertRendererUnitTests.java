@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.sql.render;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
-
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Table;
@@ -27,6 +26,7 @@ import org.springframework.data.relational.core.sql.Table;
  * Unit tests for {@link SqlRenderer}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class InsertRendererUnitTests {
 
@@ -37,7 +37,7 @@ public class InsertRendererUnitTests {
 
 		Insert insert = Insert.builder().into(bar).values(SQL.bindMarker()).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar VALUES(?)");
+		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar VALUES (?)");
 	}
 
 	@Test // DATAJDBC-335
@@ -47,7 +47,7 @@ public class InsertRendererUnitTests {
 
 		Insert insert = Insert.builder().into(bar).column(bar.column("foo")).values(SQL.bindMarker()).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (foo) VALUES(?)");
+		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (foo) VALUES (?)");
 	}
 
 	@Test // DATAJDBC-335
@@ -58,6 +58,17 @@ public class InsertRendererUnitTests {
 		Insert insert = Insert.builder().into(bar).columns(bar.columns("foo", "baz")).value(SQL.bindMarker())
 				.value(SQL.literalOf("foo")).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (foo, baz) VALUES(?, 'foo')");
+		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (foo, baz) VALUES (?, 'foo')");
 	}
+
+	@Test // DATAJDBC-340
+	public void shouldRenderInsertWithZeroColumns() {
+
+		Table bar = SQL.table("bar");
+
+		Insert insert = Insert.builder().into(bar).build();
+
+		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar VALUES ()");
+	}
+
 }

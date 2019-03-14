@@ -30,6 +30,7 @@ import org.springframework.lang.Nullable;
  * Default {@link SelectBuilder} implementation.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAndJoin, SelectWhereAndOr {
@@ -249,6 +250,15 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return new JoinBuilder(table, this);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin#join(org.springframework.data.relational.core.sql.Table)
+	 */
+	@Override
+	public SelectOn leftOuterJoin(Table table) {
+		return new JoinBuilder(table, this, JoinType.LEFT_OUTER_JOIN);
+	}
+
 	public DefaultSelectBuilder join(Join join) {
 		this.joins.add(join);
 
@@ -273,13 +283,21 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 
 		private final Table table;
 		private final DefaultSelectBuilder selectBuilder;
+		private final JoinType joinType;
 		private Expression from;
 		private Expression to;
 		private @Nullable Condition condition;
 
-		JoinBuilder(Table table, DefaultSelectBuilder selectBuilder) {
+
+		JoinBuilder(Table table, DefaultSelectBuilder selectBuilder, JoinType joinType) {
 			this.table = table;
 			this.selectBuilder = selectBuilder;
+
+			this.joinType = joinType;
+		}
+
+		JoinBuilder(Table table, DefaultSelectBuilder selectBuilder) {
+			this(table, selectBuilder, JoinType.JOIN);
 		}
 
 		/*
@@ -328,7 +346,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		private Join finishJoin() {
 
 			finishCondition();
-			return new Join(JoinType.JOIN, table, condition);
+			return new Join(joinType, table, condition);
 		}
 
 		/*
@@ -389,6 +407,16 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		public SelectOn join(Table table) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.join(table);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin#leftOuterJoin(org.springframework.data.relational.core.sql.Table)
+		 */
+		@Override
+		public SelectOn leftOuterJoin(Table table) {
+			selectBuilder.join(finishJoin());
+			return selectBuilder.leftOuterJoin(table);
 		}
 
 		/*

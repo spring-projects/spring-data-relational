@@ -21,6 +21,7 @@ import java.util.Collection;
  * Entry point to construct an {@link Insert} statement.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  * @see StatementBuilder
  */
@@ -34,7 +35,7 @@ public interface InsertBuilder {
 	 * @see Into
 	 * @see SQL#table(String)
 	 */
-	InsertIntoColumnsAndValues into(Table table);
+	InsertIntoColumnsAndValuesWithBuild into(Table table);
 
 	/**
 	 * Interface exposing {@code WHERE} methods.

@@ -139,7 +139,7 @@ public abstract class Conditions {
 	 * @param arg IN argument.
 	 * @return the {@link In} condition.
 	 */
-	public static Condition in(Expression columnOrExpression, Expression arg) {
+	public static In in(Expression columnOrExpression, Expression arg) {
 
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(arg, "Expression argument must not be null");
@@ -184,7 +184,7 @@ public abstract class Conditions {
 	 * @param subselect the subselect.
 	 * @return the {@link In} condition.
 	 */
-	public static Condition in(Column column, Select subselect) {
+	public static In in(Column column, Select subselect) {
 
 		Assert.notNull(column, "Column must not be null");
 		Assert.notNull(subselect, "Subselect must not be null");

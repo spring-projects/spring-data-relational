@@ -47,11 +47,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session);
 
-	PersistentPropertyPath<RelationalPersistentProperty> path(String path, Class source) {
-
-		RelationalMappingContext context = this.context;
-		return PropertyPathUtils.toPath(path, source, context);
-	}
+	PersistentPropertyPath<RelationalPersistentProperty> path = PropertyPathTestingUtils.toPath("one.two", DummyEntity.class, context);
 
 	@Before
 	public void before() {
@@ -128,7 +124,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void deleteAllByPath() {
 
-		accessStrategy.deleteAll(path("one.two", DummyEntity.class));
+		accessStrategy.deleteAll(path);
 
 		verify(session).delete(
 				eq("org.springframework.data.jdbc.core.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.deleteAll-one-two"),
@@ -174,7 +170,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void deleteByPath() {
 
-		accessStrategy.delete("rootid", path("one.two", DummyEntity.class));
+		accessStrategy.delete("rootid", path);
 
 		verify(session).delete(
 				eq("org.springframework.data.jdbc.core.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.delete-one-two"),
@@ -334,10 +330,12 @@ public class MyBatisDataAccessStrategyUnitTests {
 				);
 	}
 
+	@SuppressWarnings("unused")
 	private static class DummyEntity {
 		ChildOne one;
 	}
 
+	@SuppressWarnings("unused")
 	private static class ChildOne {
 		ChildTwo two;
 	}

@@ -25,6 +25,7 @@ import org.springframework.data.relational.core.sql.Visitable;
  * {@link PartRenderer} for {@link Insert} statements.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
@@ -94,17 +95,13 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 			builder.append("INSERT");
 
-			if (into.length() != 0) {
-				builder.append(" INTO ").append(into);
-			}
+			builder.append(" INTO ").append(into);
 
 			if (columns.length() != 0) {
 				builder.append(" (").append(columns).append(")");
 			}
 
-			if (values.length() != 0) {
-				builder.append(" VALUES(").append(values).append(")");
-			}
+			builder.append(" VALUES (").append(values).append(")");
 
 			return Delegation.leave();
 		}
