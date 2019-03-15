@@ -45,8 +45,11 @@ import org.springframework.util.Assert;
  * @author Yoichi Imai
  * @author Bastian Wilhelm
  * @author Oleksandr Kucher
+ * @author Tom Hombergs
  */
 class SqlGenerator {
+
+	static final String VERSION_PARAMETER = "___oldOptimisticLockingVersion";
 
 	private final RelationalPersistentEntity<?> entity;
 	private final RelationalMappingContext context;
@@ -62,6 +65,7 @@ class SqlGenerator {
 	private final Lazy<String> countSql = Lazy.of(this::createCountSql);
 
 	private final Lazy<String> updateSql = Lazy.of(this::createUpdateSql);
+	private final Lazy<String> updateWithVersionSql = Lazy.of(this::createUpdateWithVersionSql);
 
 	private final Lazy<String> deleteByIdSql = Lazy.of(this::createDeleteSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
@@ -174,6 +178,10 @@ class SqlGenerator {
 
 	String getUpdate() {
 		return updateSql.get();
+	}
+
+	String getUpdateWithVersion() {
+		return updateWithVersionSql.get();
 	}
 
 	String getCount() {
@@ -343,8 +351,8 @@ class SqlGenerator {
 		String tableColumns = String.join(", ", columnNamesForInsert);
 
 		String parameterNames = columnNamesForInsert.stream()//
-				.map(this::columnNameToParameterName)
-				.map(n -> String.format(":%s", n))//
+				.map(this::columnNameToParameterName) //
+				.map(n -> String.format(":%s", n)) //
 				.collect(Collectors.joining(", "));
 
 		return String.format(insertTemplate, entity.getTableName(), tableColumns, parameterNames);
@@ -367,6 +375,18 @@ class SqlGenerator {
 				entity.getIdColumn(), //
 				columnNameToParameterName(entity.getIdColumn()) //
 		);
+	}
+
+	private String createUpdateWithVersionSql() {
+		String whereConditionTemplate = " AND %s = :%s";
+
+		String whereCondition = String.format( //
+				whereConditionTemplate, //
+				entity.getVersionProperty().getColumnName(), //
+				VERSION_PARAMETER //
+		);
+
+		return createUpdateSql() + whereCondition;
 	}
 
 	private String createDeleteSql() {
@@ -458,7 +478,7 @@ class SqlGenerator {
 		);
 	}
 
-	private String columnNameToParameterName(String columnName){
+	private String columnNameToParameterName(String columnName) {
 		return parameterPattern.matcher(columnName).replaceAll("");
 	}
 }

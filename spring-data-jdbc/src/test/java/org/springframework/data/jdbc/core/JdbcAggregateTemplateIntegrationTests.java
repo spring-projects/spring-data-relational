@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Assume;
@@ -37,7 +38,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -58,6 +61,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Thomas Lang
  * @author Mark Paluch
+ * @author Tom Hombergs
  */
 @ContextConfiguration
 @Transactional
@@ -434,6 +438,60 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.binaryData).isEqualTo(new byte[] { 1, 23, 42 });
 	}
 
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithLongVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithLongVersion(), Number::longValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithPrimitiveLongVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithPrimitiveLongVersion(), Number::longValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithIntegerVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithIntegerVersion(), Number::intValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithPrimitiveIntegerVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithPrimitiveIntegerVersion(), Number::intValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithShortVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithShortVersion(), Number::shortValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithPrimitiveShortVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithPrimitiveShortVersion(), Number::shortValue);
+	}
+
+	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate, Function<Number, T> toConcreteNumber) {
+
+		template.save(aggregate);
+
+		VersionedAggregate reloadedAggregate = template.findById(aggregate.getId(), aggregate.getClass());
+		assertThat(reloadedAggregate.getVersion()).isEqualTo(toConcreteNumber.apply(1))
+				.withFailMessage("version field should initially have the value 1");
+		template.save(reloadedAggregate);
+
+		VersionedAggregate updatedAggregate = template.findById(aggregate.getId(), aggregate.getClass());
+		assertThat(updatedAggregate.getVersion()).isEqualTo(toConcreteNumber.apply(2))
+				.withFailMessage("version field should increment by one with each save");
+
+		reloadedAggregate.setVersion(toConcreteNumber.apply(1));
+		assertThatThrownBy(() -> template.save(reloadedAggregate))
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+				.withFailMessage("saving an aggregate with an outdated version should raise an exception");
+
+		reloadedAggregate.setVersion(toConcreteNumber.apply(3));
+		assertThatThrownBy(() -> template.save(reloadedAggregate))
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+				.withFailMessage("saving an aggregate with a future version should raise an exception");
+	}
+
 	private static void assumeNot(String dbProfileName) {
 
 		Assume.assumeTrue("true"
@@ -521,6 +579,103 @@ public class JdbcAggregateTemplateIntegrationTests {
 	static class ElementNoId {
 		private String content;
 	}
+
+	@Data
+	static abstract class VersionedAggregate {
+
+		@Id private Long id;
+
+		abstract Number getVersion();
+
+		abstract void setVersion(Number newVersion);
+	}
+
+	@Data
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithLongVersion extends VersionedAggregate {
+
+		@Version private Long version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (Long) newVersion;
+		}
+	}
+
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithPrimitiveLongVersion extends VersionedAggregate {
+
+		@Version private long version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (long) newVersion;
+		}
+
+		@Override
+		Number getVersion(){
+			return this.version;
+		}
+	}
+
+	@Data
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithIntegerVersion extends VersionedAggregate {
+
+		@Version private Integer version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (Integer) newVersion;
+		}
+	}
+
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithPrimitiveIntegerVersion extends VersionedAggregate {
+
+		@Version private int version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (int) newVersion;
+		}
+
+		@Override
+		Number getVersion(){
+			return this.version;
+		}
+	}
+
+	@Data
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithShortVersion extends VersionedAggregate {
+
+		@Version private Short version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (Short) newVersion;
+		}
+	}
+
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithPrimitiveShortVersion extends VersionedAggregate {
+
+		@Version
+		private short version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (short) newVersion;
+		}
+
+		@Override
+		Number getVersion(){
+			return this.version;
+		}
+
+	}
+
 
 	@Configuration
 	@Import(TestConfiguration.class)

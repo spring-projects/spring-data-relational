@@ -26,9 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
@@ -36,6 +38,8 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -48,6 +52,7 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import static org.springframework.data.jdbc.core.SqlGenerator.*;
 
 /**
  * The default {@link DataAccessStrategy} is to generate SQL statements based on meta data from the entity.
@@ -56,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Thomas Lang
  * @author Bastian Wilhelm
+ * @author Tom Hombergs
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
@@ -124,6 +130,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		KeyHolder holder = new GeneratedKeyHolder();
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
+		if (persistentEntity.hasVersionProperty()) {
+
+			Number newVersion = getNextVersion(instance, persistentEntity, converter.getConversionService());
+			setVersion(instance, persistentEntity, newVersion);
+		}
+
 		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
 				PersistentProperty::isIdProperty);
 
@@ -151,11 +163,44 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
+		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
+
+		if (persistentEntity.hasVersionProperty()) {
+			return updateWithVersion(instance, domainType);
+		} else {
+			return updateWithoutVersion(instance, domainType);
+		}
+	}
+
+	private <S> boolean updateWithoutVersion(S instance, Class<S> domainType) {
 
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
 		return operations.update(sql(domainType).getUpdate(),
 				getParameterSource(instance, persistentEntity, "", Predicates.includeAll())) != 0;
+	}
+
+	private <S> boolean updateWithVersion(S instance, Class<S> domainType) {
+
+		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
+
+		Number oldVersion = getVersion(instance, persistentEntity, converter.getConversionService());
+		Number newVersion = getNextVersion(instance, persistentEntity, converter.getConversionService());
+		setVersion(instance, persistentEntity, newVersion);
+
+		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "", Predicates.includeAll());
+		parameterSource.addValue(VERSION_PARAMETER, oldVersion);
+		int affectedRows = operations.update(sql(domainType).getUpdateWithVersion(),
+				parameterSource);
+
+		if (affectedRows == 0) {
+			// reverting version update on entity
+			setVersion(instance, persistentEntity, oldVersion);
+			throw new OptimisticLockingFailureException(
+					String.format("Optimistic lock exception on saving entity of type %s.", persistentEntity.getName()));
+		}
+
+		return true;
 	}
 
 	/*
@@ -354,7 +399,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private static <S, ID> boolean isIdPropertyNullOrScalarZero(@Nullable ID idValue,
-			RelationalPersistentEntity<S> persistentEntity) {
+					RelationalPersistentEntity<S> persistentEntity) {
 
 		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
 		return idValue == null //
@@ -481,4 +526,31 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			return it -> false;
 		}
 	}
+	@Nullable
+	private <T> Number getVersion(T instance, RelationalPersistentEntity<T> entity, ConversionService conversionService) {
+		RelationalPersistentProperty versionProperty = entity.getRequiredVersionProperty();
+		PersistentPropertyAccessor<T> propertyAccessor = entity.getPropertyAccessor(instance);
+		ConvertingPropertyAccessor<T> convertingPropertyAccessor = new ConvertingPropertyAccessor<>(propertyAccessor, conversionService);
+		return convertingPropertyAccessor.getProperty(versionProperty, Number.class);
+	}
+
+	private <T> Number getNextVersion(T instance, RelationalPersistentEntity<T> entity, ConversionService conversionService) {
+		Number version = getVersion(instance, entity, conversionService);
+		Class<?> versionType = entity.getRequiredVersionProperty().getType();
+		if (versionType == Integer.class || versionType == int.class) {
+			return version == null ? 1 : version.intValue() + 1;
+		} else if (versionType == Long.class || versionType == long.class) {
+			return version == null ? 1L : version.longValue() + 1;
+		} else if (versionType == Short.class || versionType == short.class) {
+			return version == null ? (short) 1 : (short) (version.shortValue() + 1);
+		}
+		throw new IllegalStateException(String.format("Entity '%s' has version property of invalid type '%s'.", entity.getType().getName(), entity.getVersionProperty().getType().getName()));
+	}
+
+	private <T> void setVersion(T instance, RelationalPersistentEntity<T> entity, Number newVersion) {
+		RelationalPersistentProperty versionProperty = entity.getRequiredVersionProperty();
+		PersistentPropertyAccessor<T> accessor = versionProperty.getOwner().getPropertyAccessor(instance);
+		accessor.setProperty(versionProperty, newVersion);
+	}
+
 }

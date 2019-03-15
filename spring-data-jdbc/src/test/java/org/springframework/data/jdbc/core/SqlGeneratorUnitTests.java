@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
@@ -43,6 +44,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Greg Turnquist
  * @author Oleksandr Kucher
  * @author Bastian Wilhelm
+ * @author Tom Hombergs
  */
 public class SqlGeneratorUnitTests {
 
@@ -241,6 +243,21 @@ public class SqlGeneratorUnitTests {
 				"id1 = :id");
 	}
 
+	@Test // DATAJDBC-219
+	public void updateWithVersion() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class);
+
+		assertThat(sqlGenerator.getUpdateWithVersion()).containsSequence( //
+				"UPDATE", //
+				"versioned_entity", //
+				"SET", //
+				"WHERE", //
+				"id1 = :id", //
+				"AND", //
+				"version = :___oldOptimisticLockingVersion");
+	}
+
 	@Test // DATAJDBC-324
 	public void readOnlyPropertyExcludedFromQuery_when_generateUpdateSql() {
 
@@ -348,6 +365,10 @@ public class SqlGeneratorUnitTests {
 		Set<Element> elements;
 		Map<Integer, Element> mappedElements;
 		AggregateReference<OtherAggregate, Long> other;
+	}
+
+	static class VersionedEntity extends DummyEntity {
+		@Version Integer version;
 	}
 
 	@SuppressWarnings("unused")
