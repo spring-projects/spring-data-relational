@@ -23,8 +23,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
+
 import org.springframework.data.r2dbc.function.connectionfactory.TransactionResources;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import org.springframework.util.Assert;
 
 /**
@@ -77,7 +79,9 @@ import org.springframework.util.Assert;
  * @see org.springframework.data.r2dbc.function.connectionfactory.ReactiveTransactionSynchronization
  * @see TransactionResources
  * @see org.springframework.data.r2dbc.function.connectionfactory.ConnectionFactoryUtils
+ * @deprecated Use {@link DatabaseClient} in combination with {@link TransactionalOperator}.
  */
+@Deprecated
 public interface TransactionalDatabaseClient extends DatabaseClient {
 
 	/**

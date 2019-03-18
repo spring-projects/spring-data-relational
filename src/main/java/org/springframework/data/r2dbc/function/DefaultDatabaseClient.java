@@ -25,6 +25,7 @@ import io.r2dbc.spi.Statement;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -55,6 +56,7 @@ import org.springframework.data.r2dbc.domain.BindableOperation;
 import org.springframework.data.r2dbc.domain.OutboundRow;
 import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.SettableValue;
+import org.springframework.data.r2dbc.function.connectionfactory.ConnectionFactoryUtils;
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
 import org.springframework.data.r2dbc.function.query.Criteria;
@@ -186,7 +188,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * @return a {@link Mono} able to emit a {@link Connection}.
 	 */
 	protected Mono<Connection> getConnection() {
-		return Mono.from(obtainConnectionFactory().create());
+		return ConnectionFactoryUtils.getConnection(obtainConnectionFactory()).map(Tuple2::getT1);
 	}
 
 	/**
@@ -196,7 +198,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * @return a {@link Publisher} that completes successfully when the connection is closed.
 	 */
 	protected Publisher<Void> closeConnection(Connection connection) {
-		return connection.close();
+
+		return ConnectionFactoryUtils.currentConnectionFactory(obtainConnectionFactory()).then()
+				.onErrorResume(Exception.class, e -> Mono.from(connection.close()));
 	}
 
 	/**

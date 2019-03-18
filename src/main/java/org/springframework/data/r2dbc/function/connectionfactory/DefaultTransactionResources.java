@@ -29,7 +29,8 @@ class DefaultTransactionResources implements TransactionResources {
 
 	private Map<Class<?>, Object> items = new ConcurrentHashMap<>();
 
-	/* (non-Javadoc)
+	/* 
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.connectionfactory.TransactionResources#registerResource(java.lang.Class, java.lang.Object)
 	 */
 	@Override
@@ -40,7 +41,8 @@ class DefaultTransactionResources implements TransactionResources {
 		items.put(key, value);
 	}
 
-	/* (non-Javadoc)
+	/* 
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.connectionfactory.TransactionResources#getResource(java.lang.Class)
 	 */
 	@SuppressWarnings("unchecked")

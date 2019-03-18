@@ -23,9 +23,14 @@ import reactor.util.function.Tuples;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import org.springframework.core.Ordered;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.NoTransactionException;
+import org.springframework.transaction.reactive.TransactionSynchronization;
+import org.springframework.transaction.reactive.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
@@ -37,9 +42,18 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  */
-public class ConnectionFactoryUtils {
+public abstract class ConnectionFactoryUtils {
+
+	/**
+	 * Order value for ReactiveTransactionSynchronization objects that clean up R2DBC Connections.
+	 */
+	public static final int CONNECTION_SYNCHRONIZATION_ORDER = 1000;
 
 	private static final Log logger = LogFactory.getLog(ConnectionFactoryUtils.class);
+
+	private ConnectionFactoryUtils() {
+
+	}
 
 	/**
 	 * Obtain a {@link io.r2dbc.spi.Connection} from the given {@link io.r2dbc.spi.ConnectionFactory}. Translates
@@ -73,18 +87,70 @@ public class ConnectionFactoryUtils {
 
 		Assert.notNull(connectionFactory, "ConnectionFactory must not be null!");
 
-		return Mono.subscriberContext().flatMap(it -> {
+		return TransactionSynchronizationManager.currentTransaction().flatMap(synchronizationManager -> {
 
-			if (it.hasKey(ReactiveTransactionSynchronization.class)) {
-
-				ReactiveTransactionSynchronization synchronization = it.get(ReactiveTransactionSynchronization.class);
-
-				return obtainConnection(synchronization, connectionFactory);
+			ConnectionHolder conHolder = (ConnectionHolder) synchronizationManager.getResource(connectionFactory);
+			if (conHolder != null && (conHolder.hasConnection() || conHolder.isSynchronizedWithTransaction())) {
+				conHolder.requested();
+				if (!conHolder.hasConnection()) {
+					logger.debug("Fetching resumed R2DBC Connection from ConnectionFactory");
+					return fetchConnection(connectionFactory).doOnNext(conHolder::setConnection);
+				}
+				return Mono.just(conHolder.getConnection());
 			}
-			return Mono.empty();
-		}).switchIfEmpty(Mono.defer(() -> {
-			return Mono.from(connectionFactory.create()).map(it -> Tuples.of(it, connectionFactory));
-		}));
+			// Else we either got no holder or an empty thread-bound holder here.
+
+			logger.debug("Fetching R2DBC Connection from ConnectionFactory");
+			Mono<Connection> con = fetchConnection(connectionFactory);
+
+			if (synchronizationManager.isSynchronizationActive()) {
+
+				return con.flatMap(it -> {
+
+					return Mono.just(it).doOnNext(conn -> {
+
+						// Use same Connection for further R2DBC actions within the transaction.
+						// Thread-bound object will get removed by synchronization at transaction completion.
+						ConnectionHolder holderToUse = conHolder;
+						if (holderToUse == null) {
+							holderToUse = new ConnectionHolder(conn);
+						} else {
+							holderToUse.setConnection(conn);
+						}
+						holderToUse.requested();
+						synchronizationManager
+								.registerSynchronization(new ConnectionSynchronization(holderToUse, connectionFactory));
+						holderToUse.setSynchronizedWithTransaction(true);
+						if (holderToUse != conHolder) {
+							synchronizationManager.bindResource(connectionFactory, holderToUse);
+						}
+
+					}).onErrorResume(e -> {
+						// Unexpected exception from external delegation call -> close Connection and rethrow.
+						return releaseConnection(it, connectionFactory).then(Mono.error(e));
+
+					});
+				});
+			}
+
+			return con;
+		}) //
+				.map(conn -> Tuples.of(conn, connectionFactory)) //
+				.onErrorResume(NoTransactionException.class, e -> {
+
+					return Mono.subscriberContext().flatMap(it -> {
+
+						if (it.hasKey(ReactiveTransactionSynchronization.class)) {
+
+							ReactiveTransactionSynchronization synchronization = it.get(ReactiveTransactionSynchronization.class);
+
+							return obtainConnection(synchronization, connectionFactory);
+						}
+						return Mono.empty();
+					}).switchIfEmpty(Mono.defer(() -> {
+						return Mono.from(connectionFactory.create()).map(it -> Tuples.of(it, connectionFactory));
+					}));
+				});
 	}
 
 	private static Mono<Tuple2<Connection, ConnectionFactory>> obtainConnection(
@@ -122,6 +188,24 @@ public class ConnectionFactoryUtils {
 	}
 
 	/**
+	 * Actually fetch a {@link Connection} from the given {@link ConnectionFactory}, defensively turning an unexpected
+	 * {@code null} return value from {@link ConnectionFactory#create()} into an {@link IllegalStateException}.
+	 *
+	 * @param connectionFactory the {@link ConnectionFactory} to obtain {@link Connection}s from
+	 * @return a R2DBC {@link Connection} from the given {@link ConnectionFactory} (never {@code null})
+	 * @throws IllegalStateException if the {@link ConnectionFactory} returned a {@literal null} value.
+	 * @see ConnectionFactory#create()
+	 */
+	private static Mono<Connection> fetchConnection(ConnectionFactory connectionFactory) {
+
+		Publisher<? extends Connection> con = connectionFactory.create();
+		if (con == null) {
+			throw new IllegalStateException("ConnectionFactory returned null from getConnection(): " + connectionFactory);
+		}
+		return Mono.from(con);
+	}
+
+	/**
 	 * Close the given {@link io.r2dbc.spi.Connection}, obtained from the given {@link ConnectionFactory}, if it is not
 	 * managed externally (that is, not bound to the thread).
 	 *
@@ -149,18 +233,29 @@ public class ConnectionFactoryUtils {
 	public static Mono<Void> doReleaseConnection(@Nullable io.r2dbc.spi.Connection con,
 			@Nullable ConnectionFactory connectionFactory) {
 
-		if (connectionFactory instanceof SingletonConnectionFactory) {
+		return TransactionSynchronizationManager.currentTransaction().flatMap(it -> {
 
-			SingletonConnectionFactory factory = (SingletonConnectionFactory) connectionFactory;
+			ConnectionHolder conHolder = (ConnectionHolder) it.getResource(connectionFactory);
+			if (conHolder != null && connectionEquals(conHolder, con)) {
+				// It's the transactional Connection: Don't close it.
+				conHolder.released();
+			}
+			return Mono.from(con.close());
+		}).onErrorResume(NoTransactionException.class, e -> {
 
-			logger.debug("Releasing R2DBC Connection");
+			if (connectionFactory instanceof SingletonConnectionFactory) {
 
-			return factory.close(con);
-		}
+				SingletonConnectionFactory factory = (SingletonConnectionFactory) connectionFactory;
 
-		logger.debug("Closing R2DBC Connection");
+				logger.debug("Releasing R2DBC Connection");
 
-		return Mono.from(con.close());
+				return factory.close(con);
+			}
+
+			logger.debug("Closing R2DBC Connection");
+
+			return Mono.from(con.close());
+		});
 	}
 
 	/**
@@ -236,14 +331,196 @@ public class ConnectionFactoryUtils {
 	 * @see ReactiveTransactionSynchronization
 	 * @see TransactionResources
 	 */
-	public static Mono<ConnectionFactory> currentConnectionFactory() {
+	public static Mono<ConnectionFactory> currentConnectionFactory(ConnectionFactory connectionFactory) {
 
-		return currentActiveReactiveTransactionSynchronization() //
-				.map(synchronization -> {
+		return TransactionSynchronizationManager.currentTransaction()
+				.filter(TransactionSynchronizationManager::isSynchronizationActive).filter(it -> {
 
-					TransactionResources currentSynchronization = synchronization.getCurrentTransaction();
-					return currentSynchronization.getResource(ConnectionFactory.class);
-				}).switchIfEmpty(Mono.error(new DataAccessResourceFailureException(
-						"Cannot extract ConnectionFactory from current TransactionContext!")));
+					ConnectionHolder conHolder = (ConnectionHolder) it.getResource(connectionFactory);
+					if (conHolder != null && (conHolder.hasConnection() || conHolder.isSynchronizedWithTransaction())) {
+						return true;
+					}
+					return false;
+				}).map(it -> connectionFactory).onErrorResume(NoTransactionException.class, e -> {
+
+					return currentActiveReactiveTransactionSynchronization().map(synchronization -> {
+
+						TransactionResources currentSynchronization = synchronization.getCurrentTransaction();
+						return currentSynchronization.getResource(ConnectionFactory.class);
+					}).switchIfEmpty(Mono.error(new DataAccessResourceFailureException(
+							"Cannot extract ConnectionFactory from current TransactionContext!")));
+
+				});
 	}
+
+	/**
+	 * Determine whether the given two {@link Connection}s are equal, asking the target {@link Connection} in case of a
+	 * proxy. Used to detect equality even if the user passed in a raw target Connection while the held one is a proxy.
+	 *
+	 * @param conHolder the {@link ConnectionHolder} for the held Connection (potentially a proxy)
+	 * @param passedInCon the {@link Connection} passed-in by the user (potentially a target {@link Connection} without
+	 *          proxy)
+	 * @return whether the given Connections are equal
+	 * @see #getTargetConnection
+	 */
+	private static boolean connectionEquals(ConnectionHolder conHolder, Connection passedInCon) {
+
+		if (!conHolder.hasConnection()) {
+			return false;
+		}
+		Connection heldCon = conHolder.getConnection();
+		// Explicitly check for identity too: for Connection handles that do not implement
+		// "equals" properly).
+		return (heldCon == passedInCon || heldCon.equals(passedInCon) || getTargetConnection(heldCon).equals(passedInCon));
+	}
+
+	/**
+	 * Return the innermost target {@link Connection} of the given {@link Connection}. If the given {@link Connection} is
+	 * a proxy, it will be unwrapped until a non-proxy {@link Connection} is found. Otherwise, the passed-in Connection
+	 * will be returned as-is.
+	 *
+	 * @param con the {@link Connection} proxy to unwrap
+	 * @return the innermost target Connection, or the passed-in one if no proxy
+	 * @see ConnectionProxy#getTargetConnection()
+	 */
+	public static Connection getTargetConnection(Connection con) {
+
+		Connection conToUse = con;
+		while (conToUse instanceof ConnectionProxy) {
+			conToUse = ((ConnectionProxy) conToUse).getTargetConnection();
+		}
+		return conToUse;
+	}
+
+	/**
+	 * Determine the connection synchronization order to use for the given {@link ConnectionFactory}. Decreased for every
+	 * level of nesting that a {@link ConnectionFactory} has, checked through the level of
+	 * {@link DelegatingConnectionFactory} nesting.
+	 *
+	 * @param connectionFactory the {@link ConnectionFactory} to check.
+	 * @return the connection synchronization order to use.
+	 * @see #CONNECTION_SYNCHRONIZATION_ORDER
+	 */
+	private static int getConnectionSynchronizationOrder(ConnectionFactory connectionFactory) {
+		int order = CONNECTION_SYNCHRONIZATION_ORDER;
+		ConnectionFactory current = connectionFactory;
+		while (current instanceof DelegatingConnectionFactory) {
+			order--;
+			current = ((DelegatingConnectionFactory) current).getTargetConnectionFactory();
+		}
+		return order;
+	}
+
+	/**
+	 * Callback for resource cleanup at the end of a non-native R2DBC transaction.
+	 */
+	private static class ConnectionSynchronization implements TransactionSynchronization, Ordered {
+
+		private final ConnectionHolder connectionHolder;
+
+		private final ConnectionFactory connectionFactory;
+
+		private int order;
+
+		private boolean holderActive = true;
+
+		ConnectionSynchronization(ConnectionHolder connectionHolder, ConnectionFactory connectionFactory) {
+			this.connectionHolder = connectionHolder;
+			this.connectionFactory = connectionFactory;
+			this.order = getConnectionSynchronizationOrder(connectionFactory);
+		}
+
+		@Override
+		public int getOrder() {
+			return this.order;
+		}
+
+		@Override
+		public Mono<Void> suspend() {
+			if (this.holderActive) {
+
+				return TransactionSynchronizationManager.currentTransaction().flatMap(it -> {
+
+					it.unbindResource(this.connectionFactory);
+					if (this.connectionHolder.hasConnection() && !this.connectionHolder.isOpen()) {
+						// Release Connection on suspend if the application doesn't keep
+						// a handle to it anymore. We will fetch a fresh Connection if the
+						// application accesses the ConnectionHolder again after resume,
+						// assuming that it will participate in the same transaction.
+						return releaseConnection(this.connectionHolder.getConnection(), this.connectionFactory)
+								.doOnTerminate(() -> this.connectionHolder.setConnection(null));
+					}
+					return Mono.empty();
+				});
+			}
+
+			return Mono.empty();
+		}
+
+		@Override
+		public Mono<Void> resume() {
+			if (this.holderActive) {
+				return TransactionSynchronizationManager.currentTransaction().doOnNext(it -> {
+					it.bindResource(this.connectionFactory, this.connectionHolder);
+				}).then();
+			}
+			return Mono.empty();
+
+		}
+
+		@Override
+		public Mono<Void> beforeCompletion() {
+
+			// Release Connection early if the holder is not open anymore
+			// (that is, not used by another resource
+			// that has its own cleanup via transaction synchronization),
+			// to avoid issues with strict transaction implementations that expect
+			// the close call before transaction completion.
+			if (!this.connectionHolder.isOpen()) {
+				return TransactionSynchronizationManager.currentTransaction().flatMap(it -> {
+
+					it.unbindResource(this.connectionFactory);
+					this.holderActive = false;
+					if (this.connectionHolder.hasConnection()) {
+						return releaseConnection(this.connectionHolder.getConnection(), this.connectionFactory);
+					}
+					return Mono.empty();
+				});
+			}
+
+			return Mono.empty();
+		}
+
+		@Override
+		public Mono<Void> afterCompletion(int status) {
+
+			// If we haven't closed the Connection in beforeCompletion,
+			// close it now. The holder might have been used for other
+			// cleanup in the meantime, for example by a Hibernate Session.
+			if (this.holderActive) {
+				// The thread-bound ConnectionHolder might not be available anymore,
+				// since afterCompletion might get called from a different thread.
+				return TransactionSynchronizationManager.currentTransaction().flatMap(it -> {
+
+					it.unbindResourceIfPossible(this.connectionFactory);
+					this.holderActive = false;
+					if (this.connectionHolder.hasConnection()) {
+						return releaseConnection(this.connectionHolder.getConnection(), this.connectionFactory)
+								.doOnTerminate(() -> {
+									// Reset the ConnectionHolder: It might remain bound to the context.
+									this.connectionHolder.setConnection(null);
+								});
+
+					}
+
+					return Mono.empty();
+				});
+
+			}
+
+			this.connectionHolder.reset();
+			return Mono.empty();
+		}
+	}
+
 }

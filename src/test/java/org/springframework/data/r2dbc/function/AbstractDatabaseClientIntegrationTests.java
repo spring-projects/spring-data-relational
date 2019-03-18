@@ -21,7 +21,6 @@ import static org.springframework.data.r2dbc.function.query.Criteria.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Data;
-import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
 
 import javax.sql.DataSource;
@@ -53,8 +52,6 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 	@Before
 	public void before() {
-
-		Hooks.onOperatorDebug();
 
 		connectionFactory = createConnectionFactory();
 

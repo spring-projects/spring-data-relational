@@ -44,7 +44,8 @@ class SingletonConnectionFactory implements SmartConnectionFactory {
 		this.connectionMono = Mono.just(connection);
 	}
 
-	/* (non-Javadoc)
+	/* 
+	 * (non-Javadoc)
 	 * @see io.r2dbc.spi.ConnectionFactory#create()
 	 */
 	@Override
@@ -57,7 +58,8 @@ class SingletonConnectionFactory implements SmartConnectionFactory {
 		return connectionMono.doOnSubscribe(s -> refCount.incrementAndGet());
 	}
 
-	/* (non-Javadoc)
+	/* 
+	 * (non-Javadoc)
 	 * @see io.r2dbc.spi.ConnectionFactory#getMetadata()
 	 */
 	@Override
@@ -69,6 +71,10 @@ class SingletonConnectionFactory implements SmartConnectionFactory {
 		return this.connection == connection;
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.connectionfactory.SmartConnectionFactory#shouldClose(io.r2dbc.spi.Connection)
+	 */
 	@Override
 	public boolean shouldClose(Connection connection) {
 		return refCount.get() == 1;

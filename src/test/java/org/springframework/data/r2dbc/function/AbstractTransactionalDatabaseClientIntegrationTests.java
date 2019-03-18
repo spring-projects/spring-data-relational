@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -34,9 +33,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.r2dbc.function.connectionfactory.ConnectionFactoryTransactionManager;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.NoTransactionException;
+import org.springframework.transaction.reactive.TransactionalOperator;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 /**
  * Abstract base class for integration tests for {@link TransactionalDatabaseClient}.
@@ -51,8 +53,6 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 	@Before
 	public void before() {
-
-		Hooks.onOperatorDebug();
 
 		connectionFactory = createConnectionFactory();
 
@@ -205,25 +205,27 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2, gh-75
 	public void emitTransactionIds() {
 
-		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 
-		Flux<Object> transactionIds = databaseClient.inTransaction(db -> {
+		TransactionalOperator transactionalOperator = TransactionalOperator
+				.create(new ConnectionFactoryTransactionManager(connectionFactory), new DefaultTransactionDefinition());
 
-			// We have to execute a sql statement first.
-			// Otherwise some databases (MySql) don't have a transaction id.
-			Mono<Integer> insert = db.execute().sql(getInsertIntoLegosetStatement()) //
-					.bind(0, 42055) //
-					.bind(1, "SCHAUFELRADBAGGER") //
-					.bindNull(2, Integer.class) //
-					.fetch().rowsUpdated();
+		// We have to execute a sql statement first.
+		// Otherwise some databases (MySql) don't have a transaction id.
+		Mono<Integer> insert = databaseClient.execute().sql(getInsertIntoLegosetStatement()) //
+				.bind(0, 42055) //
+				.bind(1, "SCHAUFELRADBAGGER") //
+				.bindNull(2, Integer.class) //
+				.fetch().rowsUpdated();
 
-			Flux<Object> txId = db.execute() //
-					.sql(getCurrentTransactionIdStatement()) //
-					.map((row, md) -> row.get(0)) //
-					.all();
+		Flux<Object> txId = databaseClient.execute() //
+				.sql(getCurrentTransactionIdStatement()) //
+				.map((row, md) -> row.get(0)) //
+				.all();
 
-			return insert.thenMany(txId.concatWith(txId));
-		});
+		// insert.thenMany fails because of a cancel signal. Probably a consequence of dematerialize
+		// in TransactionalOperator.execute.
+		Flux<Object> transactionIds = txId.concatWith(txId).as(transactionalOperator::transactional);
 
 		transactionIds.collectList().as(StepVerifier::create) //
 				.consumeNextWith(actual -> {

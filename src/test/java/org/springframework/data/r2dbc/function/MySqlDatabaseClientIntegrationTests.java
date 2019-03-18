@@ -54,4 +54,5 @@ public class MySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientI
 	@Ignore("Jasync currently uses its own exceptions, see jasync-sql/jasync-sql#106")
 	@Test
 	public void shouldTranslateDuplicateKeyException() {}
+
 }

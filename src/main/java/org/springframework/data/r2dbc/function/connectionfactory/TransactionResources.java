@@ -17,6 +17,8 @@ package org.springframework.data.r2dbc.function.connectionfactory;
 
 import reactor.core.publisher.Mono;
 
+import org.springframework.data.r2dbc.function.TransactionalDatabaseClient;
+
 /**
  * Transaction context for an ongoing transaction synchronization allowing to register transactional resources.
  * <p>
@@ -27,6 +29,7 @@ import reactor.core.publisher.Mono;
  * should be bound to a transaction.
  *
  * @author Mark Paluch
+ * @see TransactionalDatabaseClient
  */
 public interface TransactionResources {
 

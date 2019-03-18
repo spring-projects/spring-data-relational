@@ -4,18 +4,19 @@
 A common pattern when using relational databases is grouping multiple queries within a unit of work that is guarded by a transaction.
 Relational databases typically associate a transaction with a single transport connection.
 Using different connections hence results in utilizing different transactions.
-Spring Data R2DBC includes a transactional `DatabaseClient` implementation with `TransactionalDatabaseClient` that allows you to group multiple statements within the same transaction.
-`TransactionalDatabaseClient` is a extension of `DatabaseClient` that exposes the same functionality as `DatabaseClient` and adds transaction-management methods.
+Spring Data R2DBC includes transaction-awareness in `DatabaseClient` that allows you to group multiple statements within the same transaction using https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction[Spring's Transaction Management].
+Spring Data R2DBC provides a implementation for `ReactiveTransactionManager` with `ConnectionFactoryTransactionManager`.
+See <<r2dbc.connections.ConnectionFactoryTransactionManager>> for further details.
 
-You can run multiple statements within a transaction using the `inTransaction(Function)` closure:
-
+.Programmatic Transaction Management
+====
 [source,java]
 ----
-TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
+ConnectionFactoryTransactionManager tm = new ConnectionFactoryTransactionManager(connectionFactory);
+TransactionalOperator operator = TransactionalOperator.create(tm);
+DatabaseClient db = DatabaseClient.create(connectionFactory);
 
-Flux<Void> completion = databaseClient.inTransaction(db -> {
-
-    return db.execute().sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+Mono<Void> atomicOperation = db.execute().sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
             .bind("id", "joe")
             .bind("name", "Joe")
             .bind("age", 34)
@@ -24,6 +25,41 @@ Flux<Void> completion = databaseClient.inTransaction(db -> {
                     .bind("id", "joe")
                     .bind("name", "Joe")
                     .fetch().rowsUpdated())
-            .then();
+            .then()
+            .as(operator::transactional);
 });
 ----
+====
+
+https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction-declarative[Spring's declarative Transaction Management] is a less invasive, annotation-based approach to transaction demarcation.
+
+.Declarative Transaction Management
+====
+[source,java]
+----
+class MyService {
+
+  private final DatabaseClient db;
+
+  MyService(DatabaseClient db) {
+    this.db = db;
+  }
+
+
+  @Transactional
+  public Mono<Void> insertPerson() {
+
+    return db.execute().sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+      .bind("id", "joe")
+      .bind("name", "Joe")
+      .bind("age", 34)
+      .fetch().rowsUpdated()
+      .then(db.execute().sql("INSERT INTO contacts (id, name) VALUES(:id, :name)")
+                    .bind("id", "joe")
+                    .bind("name", "Joe")
+                    .fetch().rowsUpdated())
+            .then();
+  }
+}
+----
+====

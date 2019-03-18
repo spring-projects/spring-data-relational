@@ -21,6 +21,7 @@ import io.r2dbc.spi.ConnectionFactory;
 import reactor.test.StepVerifier;
 
 import org.junit.Test;
+
 import org.springframework.transaction.NoTransactionException;
 
 /**
@@ -30,7 +31,7 @@ import org.springframework.transaction.NoTransactionException;
  */
 public class ConnectionFactoryUtilsUnitTests {
 
-	@Test
+	@Test // gh-107
 	public void currentReactiveTransactionSynchronizationShouldReportSynchronization() {
 
 		ConnectionFactoryUtils.currentReactiveTransactionSynchronization() //
@@ -41,7 +42,7 @@ public class ConnectionFactoryUtilsUnitTests {
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // gh-107
 	public void currentReactiveTransactionSynchronizationShouldFailWithoutTxMgmt() {
 
 		ConnectionFactoryUtils.currentReactiveTransactionSynchronization() //
@@ -50,7 +51,7 @@ public class ConnectionFactoryUtilsUnitTests {
 				.verify();
 	}
 
-	@Test
+	@Test // gh-107
 	public void currentActiveReactiveTransactionSynchronizationShouldReportSynchronization() {
 
 		ConnectionFactoryUtils.currentActiveReactiveTransactionSynchronization() //
@@ -63,7 +64,7 @@ public class ConnectionFactoryUtilsUnitTests {
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // gh-107
 	public void currentActiveReactiveTransactionSynchronization() {
 
 		ConnectionFactoryUtils.currentActiveReactiveTransactionSynchronization() //
@@ -74,12 +75,12 @@ public class ConnectionFactoryUtilsUnitTests {
 				.verify();
 	}
 
-	@Test
+	@Test // gh-107
 	public void currentConnectionFactoryShouldReportConnectionFactory() {
 
 		ConnectionFactory factoryMock = mock(ConnectionFactory.class);
 
-		ConnectionFactoryUtils.currentConnectionFactory() //
+		ConnectionFactoryUtils.currentConnectionFactory(factoryMock) //
 				.subscriberContext(it -> {
 					ReactiveTransactionSynchronization sync = new ReactiveTransactionSynchronization();
 					TransactionResources resources = TransactionResources.create();

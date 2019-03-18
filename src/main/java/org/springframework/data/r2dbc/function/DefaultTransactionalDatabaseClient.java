@@ -25,6 +25,7 @@ import reactor.util.function.Tuple2;
 import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
+
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionFactoryUtils;
 import org.springframework.data.r2dbc.function.connectionfactory.ReactiveTransactionSynchronization;
 import org.springframework.data.r2dbc.function.connectionfactory.TransactionResources;
@@ -104,24 +105,6 @@ class DefaultTransactionalDatabaseClient extends DefaultDatabaseClient implement
 	@Override
 	protected Mono<Connection> getConnection() {
 		return ConnectionFactoryUtils.getConnection(obtainConnectionFactory()).map(Tuple2::getT1);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.DefaultDatabaseClient#closeConnection(io.r2dbc.spi.Connection)
-	 */
-	@Override
-	protected Publisher<Void> closeConnection(Connection connection) {
-
-		return Mono.subscriberContext().flatMap(context -> {
-
-			if (context.hasKey(ReactiveTransactionSynchronization.class)) {
-
-				return ConnectionFactoryUtils.currentConnectionFactory()
-						.flatMap(it -> ConnectionFactoryUtils.releaseConnection(connection, it));
-			}
-
-			return Mono.from(connection.close());
-		});
 	}
 
 	/**

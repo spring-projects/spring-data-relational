@@ -22,7 +22,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -64,8 +63,6 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 	@Before
 	public void before() {
-
-		Hooks.onOperatorDebug();
 
 		this.jdbc = createJdbcTemplate(createDataSource());
 
