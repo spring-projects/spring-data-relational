@@ -30,12 +30,14 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 
 	private final RenderContext context;
 	private final RenderTarget target;
+	private final boolean considerTablePrefix;
 
 	private @Nullable String tableName;
 
-	ColumnVisitor(RenderContext context, RenderTarget target) {
+	ColumnVisitor(RenderContext context, boolean considerTablePrefix, RenderTarget target) {
 		this.context = context;
 		this.target = target;
+		this.considerTablePrefix = considerTablePrefix;
 	}
 
 	/*
@@ -48,7 +50,7 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 		String column = context.getNamingStrategy().getName(segment);
 		StringBuilder builder = new StringBuilder(
 				tableName != null ? tableName.length() + column.length() : column.length());
-		if (tableName != null) {
+		if (considerTablePrefix && tableName != null) {
 			builder.append(tableName);
 		}
 		builder.append(column);

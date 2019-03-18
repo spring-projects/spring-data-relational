@@ -36,7 +36,7 @@ class AssignmentVisitor extends TypedSubtreeVisitor<Assignment> {
 	private final StringBuilder part = new StringBuilder();
 
 	AssignmentVisitor(RenderContext context, RenderTarget target) {
-		this.columnVisitor = new ColumnVisitor(context, part::append);
+		this.columnVisitor = new ColumnVisitor(context, false, part::append);
 		this.expressionVisitor = new ExpressionVisitor(context);
 		this.target = target;
 	}

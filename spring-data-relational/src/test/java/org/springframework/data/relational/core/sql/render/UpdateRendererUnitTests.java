@@ -40,7 +40,7 @@ public class UpdateRendererUnitTests {
 
 		Update update = StatementBuilder.update(table).set(column.set(SQL.bindMarker())).build();
 
-		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET mytable.foo = ?");
+		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET foo = ?");
 	}
 
 	@Test // DATAJDBC-335
@@ -54,7 +54,7 @@ public class UpdateRendererUnitTests {
 				.set(foo.set(SQL.bindMarker()), bar.set(SQL.bindMarker())) //
 				.build();
 
-		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET mytable.foo = ?, mytable.bar = ?");
+		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET foo = ?, bar = ?");
 	}
 
 	@Test // DATAJDBC-335
@@ -65,7 +65,7 @@ public class UpdateRendererUnitTests {
 
 		Update update = StatementBuilder.update(table).set(column.set(SQL.literalOf(20))).build();
 
-		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET mytable.foo = 20");
+		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET foo = 20");
 	}
 
 	@Test // DATAJDBC-335
@@ -76,6 +76,6 @@ public class UpdateRendererUnitTests {
 
 		Update update = StatementBuilder.update(table).set(column.set(SQL.bindMarker())).where(column.isNull()).build();
 
-		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET mytable.foo = ? WHERE mytable.foo IS NULL");
+		assertThat(SqlRenderer.toString(update)).isEqualTo("UPDATE mytable SET foo = ? WHERE mytable.foo IS NULL");
 	}
 }

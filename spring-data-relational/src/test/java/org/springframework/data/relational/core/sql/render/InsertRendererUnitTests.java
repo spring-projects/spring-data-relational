@@ -47,7 +47,7 @@ public class InsertRendererUnitTests {
 
 		Insert insert = Insert.builder().into(bar).column(bar.column("foo")).values(SQL.bindMarker()).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (bar.foo) VALUES(?)");
+		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (foo) VALUES(?)");
 	}
 
 	@Test // DATAJDBC-335
@@ -58,6 +58,6 @@ public class InsertRendererUnitTests {
 		Insert insert = Insert.builder().into(bar).columns(bar.columns("foo", "baz")).value(SQL.bindMarker())
 				.value(SQL.literalOf("foo")).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (bar.foo, bar.baz) VALUES(?, 'foo')");
+		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (foo, baz) VALUES(?, 'foo')");
 	}
 }

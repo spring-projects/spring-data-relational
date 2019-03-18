@@ -49,7 +49,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 			into.append(it);
 		});
 
-		this.columnVisitor = new ColumnVisitor(context, it -> {
+		this.columnVisitor = new ColumnVisitor(context, false, it -> {
 
 			if (columns.length() != 0) {
 				columns.append(", ");
