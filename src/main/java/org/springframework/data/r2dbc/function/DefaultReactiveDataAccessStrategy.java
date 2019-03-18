@@ -17,14 +17,11 @@ package org.springframework.data.r2dbc.function;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
-import io.r2dbc.spi.Statement;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -37,8 +34,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.dialect.ArrayColumns;
-import org.springframework.data.r2dbc.dialect.BindMarker;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.domain.OutboundRow;
@@ -53,13 +48,17 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.OrderByField;
+import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.render.NamingStrategies;
+import org.springframework.data.relational.core.sql.render.RenderContext;
+import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
+import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * Default {@link ReactiveDataAccessStrategy} implementation.
@@ -71,6 +70,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	private final Dialect dialect;
 	private final R2dbcConverter converter;
 	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+	private final StatementFactory statements;
 
 	/**
 	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect}.
@@ -118,6 +118,30 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		this.mappingContext = (MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty>) this.converter
 				.getMappingContext();
 		this.dialect = dialect;
+
+		RenderContext renderContext = new RenderContext() {
+			@Override
+			public RenderNamingStrategy getNamingStrategy() {
+				return NamingStrategies.asIs();
+			}
+
+			@Override
+			public SelectRenderContext getSelect() {
+				return new SelectRenderContext() {
+					@Override
+					public Function<Select, ? extends CharSequence> afterSelectList() {
+						return it -> "";
+					}
+
+					@Override
+					public Function<Select, ? extends CharSequence> afterOrderBy(boolean hasOrderBy) {
+						return it -> "";
+					}
+				};
+			}
+		};
+
+		this.statements = new DefaultStatementFactory(this.dialect, renderContext);
 	}
 
 	/*
@@ -218,7 +242,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getRowMapper(java.lang.Class)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead) {
 		return new EntityRowMapper<>(typeToRead, converter);
@@ -231,6 +254,15 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Override
 	public String getTableName(Class<?> type) {
 		return getRequiredPersistentEntity(type).getTableName();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getStatements()
+	 */
+	@Override
+	public StatementFactory getStatements() {
+		return this.statements;
 	}
 
 	/*
@@ -249,15 +281,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Nullable
 	private RelationalPersistentEntity<?> getPersistentEntity(Class<?> typeToRead) {
 		return mappingContext.getPersistentEntity(typeToRead);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#insertAndReturnGeneratedKeys(java.lang.String, java.util.Set)
-	 */
-	@Override
-	public BindableOperation insertAndReturnGeneratedKeys(String table, Set<String> columns) {
-		return new DefaultBindableInsert(dialect.getBindMarkersFactory().create(), table, columns);
 	}
 
 	/*
@@ -290,6 +313,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			offset = OptionalLong.of(page.getOffset());
 		}
 
+		// See https://github.com/spring-projects/spring-data-r2dbc/issues/55
 		return StatementRenderUtil.render(selectBuilder.build(), limit, offset, this.dialect);
 	}
 
@@ -309,305 +333,5 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		}
 
 		return fields;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#updateById(java.lang.String, java.util.Set, java.lang.String)
-	 */
-	@Override
-	public BindIdOperation updateById(String table, Set<String> columns, String idColumn) {
-		return new DefaultBindableUpdate(dialect.getBindMarkersFactory().create(), table, columns, idColumn);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#deleteById(java.lang.String, java.lang.String)
-	 */
-	@Override
-	public BindIdOperation deleteById(String table, String idColumn) {
-
-		return new DefaultBindIdOperation(dialect.getBindMarkersFactory().create(),
-				marker -> String.format("DELETE FROM %s WHERE %s = %s", table, idColumn, marker.getPlaceholder()));
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#deleteByIdIn(java.lang.String, java.lang.String)
-	 */
-	@Override
-	public BindIdOperation deleteByIdIn(String table, String idColumn) {
-
-		String query = String.format("DELETE FROM %s", table);
-		return new DefaultBindIdIn(dialect.getBindMarkersFactory().create(), query, idColumn);
-	}
-
-	/**
-	 * Default {@link BindableOperation} implementation for a {@code INSERT} operation.
-	 */
-	static class DefaultBindableInsert implements BindableOperation {
-
-		private final Map<String, BindMarker> markers = new LinkedHashMap<>();
-		private final String query;
-
-		DefaultBindableInsert(BindMarkers bindMarkers, String table, Collection<String> columns) {
-
-			StringBuilder builder = new StringBuilder();
-			List<String> placeholders = new ArrayList<>(columns.size());
-
-			for (String column : columns) {
-				BindMarker marker = markers.computeIfAbsent(column, bindMarkers::next);
-				placeholders.add(marker.getPlaceholder());
-			}
-
-			String columnsString = StringUtils.collectionToDelimitedString(columns, ", ");
-			String placeholdersString = StringUtils.collectionToDelimitedString(placeholders, ", ");
-
-			builder.append("INSERT INTO ").append(table).append(" (").append(columnsString).append(")").append(" VALUES(")
-					.append(placeholdersString).append(")");
-
-			this.query = builder.toString();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
-		 */
-		@Override
-		public void bind(Statement statement, String identifier, Object value) {
-			markers.get(identifier).bind(statement, value);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
-		 */
-		@Override
-		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
-			markers.get(identifier).bindNull(statement, valueType);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.QueryOperation#toQuery()
-		 */
-		@Override
-		public String toQuery() {
-			return this.query;
-		}
-	}
-
-	/**
-	 * Default {@link BindIdOperation} implementation for a {@code UPDATE} operation using a single key.
-	 */
-	static class DefaultBindableUpdate implements BindIdOperation {
-
-		private final Map<String, BindMarker> markers = new LinkedHashMap<>();
-		private final BindMarker idMarker;
-		private final String query;
-
-		DefaultBindableUpdate(BindMarkers bindMarkers, String tableName, Set<String> columns, String idColumnName) {
-
-			this.idMarker = bindMarkers.next();
-
-			StringBuilder setClause = new StringBuilder();
-
-			for (String column : columns) {
-
-				BindMarker marker = markers.computeIfAbsent(column, bindMarkers::next);
-
-				if (setClause.length() != 0) {
-					setClause.append(", ");
-				}
-
-				setClause.append(column).append(" = ").append(marker.getPlaceholder());
-			}
-
-			this.query = String.format("UPDATE %s SET %s WHERE %s = %s", tableName, setClause, idColumnName,
-					idMarker.getPlaceholder());
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
-		 */
-		@Override
-		public void bind(Statement statement, String identifier, Object value) {
-			markers.get(identifier).bind(statement, value);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
-		 */
-		@Override
-		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
-			markers.get(identifier).bindNull(statement, valueType);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindId(io.r2dbc.spi.Statement, java.lang.Object)
-		 */
-		@Override
-		public void bindId(Statement statement, Object value) {
-			idMarker.bind(statement, value);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
-		 */
-		@Override
-		public void bindIds(Statement statement, Iterable<?> values) {
-			throw new UnsupportedOperationException();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.QueryOperation#toQuery()
-		 */
-		@Override
-		public String toQuery() {
-			return this.query;
-		}
-	}
-
-	/**
-	 * Default {@link BindIdOperation} implementation for a {@code SELECT} or {@code DELETE} operation using a single key
-	 * in the {@code WHERE} predicate.
-	 */
-	static class DefaultBindIdOperation implements BindIdOperation {
-
-		private final BindMarker idMarker;
-		private final String query;
-
-		DefaultBindIdOperation(BindMarkers bindMarkers, Function<BindMarker, String> queryFunction) {
-
-			this.idMarker = bindMarkers.next();
-			this.query = queryFunction.apply(this.idMarker);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
-		 */
-		@Override
-		public void bind(Statement statement, String identifier, Object value) {
-			throw new UnsupportedOperationException();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
-		 */
-		@Override
-		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
-			throw new UnsupportedOperationException();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindId(io.r2dbc.spi.Statement, java.lang.Object)
-		 */
-		@Override
-		public void bindId(Statement statement, Object value) {
-			idMarker.bind(statement, value);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
-		 */
-		@Override
-		public void bindIds(Statement statement, Iterable<?> values) {
-			throw new UnsupportedOperationException();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.QueryOperation#toQuery()
-		 */
-		@Override
-		public String toQuery() {
-			return this.query;
-		}
-	}
-
-	/**
-	 * Default {@link BindIdOperation} implementation for a {@code SELECT … WHERE id IN (…)} or
-	 * {@code DELETE … WHERE id IN (…)}.
-	 */
-	static class DefaultBindIdIn implements BindIdOperation {
-
-		private final List<String> markers = new ArrayList<>();
-		private final BindMarkers bindMarkers;
-		private final String baseQuery;
-		private final String idColumnName;
-
-		DefaultBindIdIn(BindMarkers bindMarkers, String baseQuery, String idColumnName) {
-
-			this.bindMarkers = bindMarkers;
-			this.baseQuery = baseQuery;
-			this.idColumnName = idColumnName;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
-		 */
-		@Override
-		public void bind(Statement statement, String identifier, Object value) {
-			throw new UnsupportedOperationException();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
-		 */
-		@Override
-		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
-			throw new UnsupportedOperationException();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindId(io.r2dbc.spi.Statement, java.lang.Object)
-		 */
-		@Override
-		public void bindId(Statement statement, Object value) {
-
-			BindMarker bindMarker = bindMarkers.next();
-			markers.add(bindMarker.getPlaceholder());
-			bindMarker.bind(statement, value);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindIdOperation#bindIds(io.r2dbc.spi.Statement, java.lang.Iterable)
-		 */
-		@Override
-		public void bindIds(Statement statement, Iterable<?> values) {
-
-			for (Object value : values) {
-				bindId(statement, value);
-			}
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.QueryOperation#toQuery()
-		 */
-		@Override
-		public String toQuery() {
-
-			if (this.markers.isEmpty()) {
-				throw new UnsupportedOperationException();
-			}
-
-			String in = StringUtils.collectionToDelimitedString(this.markers, ", ");
-
-			return String.format("%s WHERE %s IN (%s)", this.baseQuery, this.idColumnName, in);
-		}
 	}
 }

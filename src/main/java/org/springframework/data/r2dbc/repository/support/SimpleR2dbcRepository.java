@@ -20,29 +20,25 @@ import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.reactivestreams.Publisher;
 
-import org.springframework.data.r2dbc.dialect.BindMarker;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.domain.SettableValue;
-import org.springframework.data.r2dbc.function.BindIdOperation;
 import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
+import org.springframework.data.r2dbc.function.PreparedOperation;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.function.StatementFactory;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
-import org.springframework.data.relational.core.sql.Conditions;
-import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.Update;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -83,15 +79,13 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		Map<String, SettableValue> columns = accessStrategy.getOutboundRow(objectToSave);
 		columns.remove(getIdColumnName()); // do not update the Id column.
 		String idColumnName = getIdColumnName();
-		BindIdOperation update = accessStrategy.updateById(entity.getTableName(), columns.keySet(), idColumnName);
 
-		GenericExecuteSpec exec = databaseClient.execute().sql(update);
+		PreparedOperation<Update> operation = accessStrategy.getStatements().update(entity.getTableName(), binder -> {
+			columns.forEach(binder::bind);
+			binder.filterBy(idColumnName, SettableValue.from(id));
+		});
 
-		BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(exec);
-		columns.forEach((k, v) -> update.bind(wrapper, k, v));
-		update.bindId(wrapper, id);
-
-		return wrapper.getBoundOperation().as(entity.getJavaType()) //
+		return databaseClient.execute().sql(operation).as(entity.getJavaType()) //
 				.then() //
 				.thenReturn(objectToSave);
 	}
@@ -129,18 +123,14 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		Set<String> columns = new LinkedHashSet<>(accessStrategy.getAllColumns(entity.getJavaType()));
 		String idColumnName = getIdColumnName();
 
-		BindMarkers bindMarkers = accessStrategy.getBindMarkersFactory().create();
-		BindMarker bindMarker = bindMarkers.next("id");
+		StatementFactory statements;
 
-		Table table = Table.create(entity.getTableName());
-		Select select = StatementBuilder //
-				.select(table.columns(columns)) //
-				.from(table) //
-				.where(Conditions.isEqual(table.column(idColumnName), SQL.bindMarker(bindMarker.getPlaceholder()))) //
-				.build();
+		PreparedOperation<Select> operation = accessStrategy.getStatements().select(entity.getTableName(), columns,
+				binder -> {
+					binder.filterBy(idColumnName, SettableValue.from(id));
+				});
 
-		return databaseClient.execute().sql(SqlRenderer.toString(select)) //
-				.bind(0, id) //
+		return databaseClient.execute().sql(operation) //
 				.as(entity.getJavaType()) //
 				.fetch() //
 				.one();
@@ -164,18 +154,12 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		String idColumnName = getIdColumnName();
 
-		BindMarkers bindMarkers = accessStrategy.getBindMarkersFactory().create();
-		BindMarker bindMarker = bindMarkers.next("id");
+		PreparedOperation<Select> operation = accessStrategy.getStatements().select(entity.getTableName(),
+				Collections.singleton(idColumnName), binder -> {
+					binder.filterBy(idColumnName, SettableValue.from(id));
+				});
 
-		Table table = Table.create(entity.getTableName());
-		Select select = StatementBuilder //
-				.select(table.column(idColumnName)) //
-				.from(table) //
-				.where(Conditions.isEqual(table.column(idColumnName), SQL.bindMarker(bindMarker.getPlaceholder()))) //
-				.build();
-
-		return databaseClient.execute().sql(SqlRenderer.toString(select)) //
-				.bind(0, id) //
+		return databaseClient.execute().sql(operation) //
 				.map((r, md) -> r) //
 				.first() //
 				.hasElement();
@@ -225,25 +209,12 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			Set<String> columns = new LinkedHashSet<>(accessStrategy.getAllColumns(entity.getJavaType()));
 			String idColumnName = getIdColumnName();
 
-			BindMarkers bindMarkers = accessStrategy.getBindMarkersFactory().create();
+			PreparedOperation<Select> operation = accessStrategy.getStatements().select(entity.getTableName(), columns,
+					binder -> {
+						binder.filterBy(idColumnName, SettableValue.from(ids));
+					});
 
-			List<Expression> markers = new ArrayList<>();
-
-			for (int i = 0; i < ids.size(); i++) {
-				markers.add(SQL.bindMarker(bindMarkers.next("id").getPlaceholder()));
-			}
-
-			Table table = Table.create(entity.getTableName());
-			Select select = StatementBuilder.select(table.columns(columns)).from(table)
-					.where(Conditions.in(table.column(idColumnName), markers)).build();
-
-			GenericExecuteSpec executeSpec = databaseClient.execute().sql(SqlRenderer.toString(select));
-
-			for (int i = 0; i < ids.size(); i++) {
-				executeSpec = executeSpec.bind(i, ids.get(i));
-			}
-
-			return executeSpec.as(entity.getJavaType()).fetch().all();
+			return databaseClient.execute().sql(operation).as(entity.getJavaType()).fetch().all();
 		});
 	}
 
@@ -274,12 +245,11 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(id, "Id must not be null!");
 
-		BindIdOperation delete = accessStrategy.deleteById(entity.getTableName(), getIdColumnName());
-		BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(databaseClient.execute().sql(delete));
+		PreparedOperation<Delete> delete = accessStrategy.getStatements().delete(entity.getTableName(), binder -> {
+			binder.filterBy(getIdColumnName(), SettableValue.from(id));
+		});
 
-		delete.bindId(wrapper, id);
-
-		return wrapper.getBoundOperation() //
+		return databaseClient.execute().sql(delete) //
 				.fetch() //
 				.rowsUpdated() //
 				.then();
@@ -299,13 +269,11 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				return Flux.empty();
 			}
 
-			String idColumnName = getIdColumnName();
-			BindIdOperation delete = accessStrategy.deleteByIdIn(entity.getTableName(), idColumnName);
+			PreparedOperation<Delete> delete = accessStrategy.getStatements().delete(entity.getTableName(), binder -> {
+				binder.filterBy(getIdColumnName(), SettableValue.from(ids));
+			});
 
-			BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(databaseClient.execute().sql(delete));
-			delete.bindIds(wrapper, ids);
-
-			return wrapper.getBoundOperation().as(entity.getJavaType()).fetch().rowsUpdated();
+			return databaseClient.execute().sql(delete).then();
 		}).then();
 	}
 

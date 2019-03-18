@@ -17,7 +17,6 @@ package org.springframework.data.r2dbc.function;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
-import io.r2dbc.spi.Statement;
 
 import java.util.List;
 import java.util.Set;
@@ -72,6 +71,8 @@ public interface ReactiveDataAccessStrategy {
 	 */
 	String getTableName(Class<?> type);
 
+	StatementFactory getStatements();
+
 	/**
 	 * Returns the configured {@link BindMarkersFactory} to create native parameter placeholder markers.
 	 *
@@ -92,15 +93,6 @@ public interface ReactiveDataAccessStrategy {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Create an {@code INSERT} operation for the given {@code table} to insert {@code columns}.
-	 *
-	 * @param table the table to insert data to.
-	 * @param columns column names that will be bound.
-	 * @return the {@link BindableOperation} representing the {@code INSERT} statement.
-	 */
-	BindableOperation insertAndReturnGeneratedKeys(String table, Set<String> columns);
-
-	/**
 	 * Create a {@code SELECT … ORDER BY … LIMIT …} operation for the given {@code table} using {@code columns} to
 	 * project.
 	 *
@@ -111,35 +103,4 @@ public interface ReactiveDataAccessStrategy {
 	 * @return
 	 */
 	String select(String table, Set<String> columns, Sort sort, Pageable page);
-
-	/**
-	 * Create a {@code UPDATE … SET … WHERE id = ?} operation for the given {@code table} updating {@code columns} and
-	 * {@code idColumn}.
-	 *
-	 * @param table the table to insert data to.
-	 * @param columns columns to update.
-	 * @param idColumn name of the primary key.
-	 * @return
-	 */
-	BindIdOperation updateById(String table, Set<String> columns, String idColumn);
-
-	/**
-	 * Create a {@code DELETE … WHERE id = ?} operation for the given {@code table} and {@code idColumn}.
-	 *
-	 * @param table the table to insert data to.
-	 * @param idColumn name of the primary key.
-	 * @return
-	 */
-	BindIdOperation deleteById(String table, String idColumn);
-
-	/**
-	 * Create a {@code DELETE … WHERE id IN (?)} operation for the given {@code table} and {@code idColumn}. The actual
-	 * {@link BindableOperation#toQuery() query} string depends on {@link BindIdOperation#bindIds(Statement, Iterable)
-	 * bound parameters}.
-	 *
-	 * @param table the table to insert data to.
-	 * @param idColumn name of the primary key.
-	 * @return
-	 */
-	BindIdOperation deleteByIdIn(String table, String idColumn);
 }

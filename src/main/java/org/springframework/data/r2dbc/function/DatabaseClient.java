@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
@@ -137,6 +138,9 @@ public interface DatabaseClient {
 	 * Contract for specifying a SQL call along with options leading to the exchange. The SQL string can contain either
 	 * native parameter bind markers (e.g. {@literal $1, $2} for Postgres, {@literal @P0, @P1} for SQL Server) or named
 	 * parameters (e.g. {@literal :foo, :bar}) when {@link NamedParameterExpander} is enabled.
+	 * <p>
+	 * Accepts {@link PreparedOperation} as SQL and binding {@link Supplier}.
+	 * </p>
 	 *
 	 * @see NamedParameterExpander
 	 * @see DatabaseClient.Builder#namedParameters(NamedParameterExpander)
@@ -156,6 +160,7 @@ public interface DatabaseClient {
 		 *
 		 * @param sqlSupplier must not be {@literal null}.
 		 * @return a new {@link GenericExecuteSpec}.
+		 * @see PreparedOperation
 		 */
 		GenericExecuteSpec sql(Supplier<String> sqlSupplier);
 	}

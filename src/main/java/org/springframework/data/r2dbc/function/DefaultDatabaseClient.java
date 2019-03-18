@@ -37,7 +37,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -49,6 +48,7 @@ import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.UncategorizedR2dbcException;
@@ -57,6 +57,7 @@ import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -336,8 +337,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					logger.debug("Executing SQL statement [" + sql + "]");
 				}
 
+				if (sqlSupplier instanceof PreparedOperation<?>) {
+					return ((PreparedOperation<?>) sqlSupplier).bind(it.createStatement(sql));
+				}
+
 				BindableOperation operation = namedParameters.expand(sql, dataAccessStrategy.getBindMarkersFactory(),
 						new MapBindParameterSource(byName));
+
+				if (logger.isTraceEnabled()) {
+					logger.trace("Expanded SQL [" + operation.toQuery() + "]");
+				}
 
 				Statement statement = it.createStatement(operation.toQuery());
 
@@ -366,6 +375,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		public ExecuteSpecSupport bind(int index, Object value) {
 
+			assertNotPreparedOperation();
 			Assert.notNull(value, () -> String.format("Value at index %d must not be null. Use bindNull(…) instead.", index));
 
 			Map<Integer, SettableValue> byIndex = new LinkedHashMap<>(this.byIndex);
@@ -376,6 +386,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		public ExecuteSpecSupport bindNull(int index, Class<?> type) {
 
+			assertNotPreparedOperation();
+
 			Map<Integer, SettableValue> byIndex = new LinkedHashMap<>(this.byIndex);
 			byIndex.put(index, SettableValue.empty(type));
 
@@ -383,6 +395,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		public ExecuteSpecSupport bind(String name, Object value) {
+
+			assertNotPreparedOperation();
 
 			Assert.hasText(name, "Parameter name must not be null or empty!");
 			Assert.notNull(value,
@@ -396,12 +410,19 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		public ExecuteSpecSupport bindNull(String name, Class<?> type) {
 
+			assertNotPreparedOperation();
 			Assert.hasText(name, "Parameter name must not be null or empty!");
 
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
 			byName.put(name, SettableValue.empty(type));
 
 			return createInstance(this.byIndex, byName, this.sqlSupplier);
+		}
+
+		private void assertNotPreparedOperation() {
+			if (sqlSupplier instanceof PreparedOperation<?>) {
+				throw new InvalidDataAccessApiUsageException("Cannot add bindings to a PreparedOperation");
+			}
 		}
 
 		protected ExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
@@ -881,20 +902,19 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				throw new IllegalStateException("Insert fields is empty!");
 			}
 
-			BindableOperation bindableInsert = dataAccessStrategy.insertAndReturnGeneratedKeys(table, byName.keySet());
+			PreparedOperation<Insert> operation = dataAccessStrategy.getStatements().insert(table, Collections.emptyList(),
+					it -> {
+						byName.forEach(it::bind);
+					});
 
-			String sql = bindableInsert.toQuery();
+			String sql = operation.toQuery();
 			Function<Connection, Statement> insertFunction = it -> {
 
 				if (logger.isDebugEnabled()) {
 					logger.debug("Executing SQL statement [" + sql + "]");
 				}
 
-				Statement statement = it.createStatement(sql).returnGeneratedValues();
-
-				byName.forEach((k, v) -> bindableInsert.bind(statement, k, v));
-
-				return statement;
+				return operation.bind(it.createStatement(sql));
 			};
 
 			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(insertFunction.apply(it).execute());
@@ -998,18 +1018,17 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(toInsert);
 
-			Set<String> columns = new LinkedHashSet<>();
+			PreparedOperation<Insert> operation = dataAccessStrategy.getStatements().insert(table, Collections.emptyList(),
+					it -> {
+						outboundRow.forEach((k, v) -> {
 
-			outboundRow.forEach((k, v) -> {
+							if (v.hasValue()) {
+								it.bind(k, v);
+							}
+						});
+					});
 
-				if (v.hasValue()) {
-					columns.add(k);
-				}
-			});
-
-			BindableOperation bindableInsert = dataAccessStrategy.insertAndReturnGeneratedKeys(table, columns);
-
-			String sql = bindableInsert.toQuery();
+			String sql = operation.toQuery();
 
 			Function<Connection, Statement> insertFunction = it -> {
 
@@ -1017,15 +1036,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					logger.debug("Executing SQL statement [" + sql + "]");
 				}
 
-				Statement statement = it.createStatement(sql).returnGeneratedValues();
-
-				outboundRow.forEach((k, v) -> {
-					if (v.hasValue()) {
-						bindableInsert.bind(statement, k, v);
-					}
-				});
-
-				return statement;
+				return operation.bind(it.createStatement(sql));
 			};
 
 			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(insertFunction.apply(it).execute());

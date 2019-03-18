@@ -43,6 +43,7 @@ public abstract class StatementRenderUtil {
 		String sql = SqlRenderer.toString(select);
 
 		// TODO: Replace with proper {@link Dialect} rendering for limit/offset.
+		// See https://github.com/spring-projects/spring-data-r2dbc/issues/55
 		if (limit.isPresent()) {
 
 			LimitClause limitClause = dialect.limit();
