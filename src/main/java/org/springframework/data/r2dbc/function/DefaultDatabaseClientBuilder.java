@@ -23,8 +23,8 @@ import java.util.function.Consumer;
 import org.springframework.data.r2dbc.dialect.Database;
 import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.function.DatabaseClient.Builder;
+import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
-import org.springframework.data.r2dbc.support.SqlErrorCodeR2dbcExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -114,7 +114,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		R2dbcExceptionTranslator exceptionTranslator = this.exceptionTranslator;
 
 		if (exceptionTranslator == null) {
-			exceptionTranslator = new SqlErrorCodeR2dbcExceptionTranslator(connectionFactory);
+			exceptionTranslator = new R2dbcExceptionSubclassTranslator();
 		}
 
 		ReactiveDataAccessStrategy accessStrategy = this.accessStrategy;

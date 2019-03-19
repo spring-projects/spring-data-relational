@@ -27,8 +27,9 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
@@ -125,7 +126,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectErrorSatisfies(exception -> assertThat(exception) //
-						.isInstanceOf(DuplicateKeyException.class) //
+						.isInstanceOf(DataIntegrityViolationException.class) //
 						.hasMessageContaining("execute; SQL [INSERT INTO legoset")) //
 				.verify();
 	}

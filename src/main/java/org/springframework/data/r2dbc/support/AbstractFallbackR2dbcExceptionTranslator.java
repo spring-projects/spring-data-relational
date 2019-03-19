@@ -19,6 +19,7 @@ import io.r2dbc.spi.R2dbcException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.UncategorizedR2dbcException;
 import org.springframework.lang.NonNull;
@@ -99,7 +100,7 @@ public abstract class AbstractFallbackR2dbcExceptionTranslator implements R2dbcE
 	protected abstract DataAccessException doTranslate(String task, @Nullable String sql, R2dbcException ex);
 
 	/**
-	 * Build a message {@code String} for the given {@link java.sql.R2dbcException}.
+	 * Build a message {@code String} for the given {@link R2dbcException}.
 	 * <p>
 	 * To be called by translator subclasses when creating an instance of a generic
 	 * {@link org.springframework.dao.DataAccessException} class.
@@ -110,6 +111,6 @@ public abstract class AbstractFallbackR2dbcExceptionTranslator implements R2dbcE
 	 * @return the message {@code String} to use.
 	 */
 	protected String buildMessage(String task, @Nullable String sql, R2dbcException ex) {
-		return task + "; " + (sql != null ? "SQL [" + sql : "]; " + "") + ex.getMessage();
+		return task + "; " + (sql != null ? "SQL [" + sql + "]; " : "") + ex.getMessage();
 	}
 }

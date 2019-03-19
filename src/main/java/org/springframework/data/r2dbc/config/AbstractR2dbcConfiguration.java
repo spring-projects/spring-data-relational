@@ -35,8 +35,9 @@ import org.springframework.data.r2dbc.function.DefaultReactiveDataAccessStrategy
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
-import org.springframework.data.r2dbc.support.SqlErrorCodeR2dbcExceptionTranslator;
+import org.springframework.data.r2dbc.support.SqlStateR2dbcExceptionTranslator;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -186,10 +187,12 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 *
 	 * @return must not be {@literal null}.
 	 * @see #connectionFactory()
+	 * @see R2dbcExceptionSubclassTranslator
+	 * @see SqlStateR2dbcExceptionTranslator
 	 */
 	@Bean
 	public R2dbcExceptionTranslator exceptionTranslator() {
-		return new SqlErrorCodeR2dbcExceptionTranslator(lookupConnectionFactory());
+		return new R2dbcExceptionSubclassTranslator();
 	}
 
 	ConnectionFactory lookupConnectionFactory() {
