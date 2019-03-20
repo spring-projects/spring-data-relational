@@ -3,7 +3,7 @@ image:https://spring.io/badges/spring-data-jdbc/snapshot.svg["Spring Data JDBC",
 
 = Spring Data Relational
 
-The primary goal of the http://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data Relational* offers the popular Repository abstraction based on link:spring-data-jdbc[JDBC].
+The primary goal of the https://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data Relational* offers the popular Repository abstraction based on link:spring-data-jdbc[JDBC].
 
 It aims at being conceptually easy.
 In order to achieve this it does NOT offer caching, lazy loading, write behind or many other features of JPA.
@@ -104,10 +104,10 @@ This will execute the unit tests, and all the integration tests with all the dat
 
 Here are some ways for you to get involved in the community:
 
-* Get involved with the Spring community by helping out on Stackoverflow for http://stackoverflow.com/questions/tagged/spring-data-jdbc[Spring Data JDBC] by responding to questions and joining the debate.
+* Get involved with the Spring community by helping out on Stackoverflow for https://stackoverflow.com/questions/tagged/spring-data-jdbc[Spring Data JDBC] by responding to questions and joining the debate.
 * Create https://jira.spring.io/browse/DATAJDBC[JIRA] tickets for bugs and new features and comment and vote on the ones that you are interested in.
-* Github is for social coding: if you want to write code, we encourage contributions through pull requests from http://help.github.com/forking/[forks of this repository]. If you want to contribute code this way, please reference a JIRA ticket as well, covering the specific issue you are addressing.
-* Watch for upcoming articles on Spring by http://spring.io/blog[subscribing] to spring.io.
+* Github is for social coding: if you want to write code, we encourage contributions through pull requests from https://help.github.com/forking/[forks of this repository]. If you want to contribute code this way, please reference a JIRA ticket as well, covering the specific issue you are addressing.
+* Watch for upcoming articles on Spring by https://spring.io/blog[subscribing] to spring.io.
 
 Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement]. Signing the contributor’s agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. If you forget to do so, you'll be reminded when you submit a pull request. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
 
