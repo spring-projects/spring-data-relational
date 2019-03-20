@@ -53,6 +53,18 @@ public enum Database {
 		public Dialect defaultDialect() {
 			return H2Dialect.INSTANCE;
 		}
+	},
+
+	MYSQL {
+		@Override
+		public String driverName() {
+			return "MySQL";
+		}
+
+		@Override
+		public Dialect defaultDialect() {
+			return MySqlDialect.INSTANCE;
+		}
 	};
 
 	/**

@@ -32,6 +32,7 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -201,15 +202,21 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		assertThat(count).isEqualTo(0);
 	}
 
-	@Test // gh-2
+	@Test // gh-2, gh-75
 	public void emitTransactionIds() {
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
 		Flux<Object> transactionIds = databaseClient.inTransaction(db -> {
 
+			Mono<Integer> insert = db.execute().sql(getInsertIntoLegosetStatement()) //
+					.bind(0, 42055) //
+					.bind(1, "SCHAUFELRADBAGGER") //
+					.bindNull(2, Integer.class) //
+					.fetch().rowsUpdated();
+
 			Flux<Object> txId = db.execute().sql(getCurrentTransactionIdStatement()).map((r, md) -> r.get(0)).all();
-			return txId.concatWith(txId);
+			return insert.thenMany(txId.concatWith(txId));
 		});
 
 		transactionIds.collectList().as(StepVerifier::create) //

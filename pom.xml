@@ -31,6 +31,8 @@
 		<degraph-check.version>0.1.4</degraph-check.version>
 		<hsqldb.version>2.4.1</hsqldb.version>
 		<postgresql.version>42.2.5</postgresql.version>
+		<mysql.version>5.1.47</mysql.version>
+		<jasync.version>0.9.38</jasync.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
 		<r2dbc-releasetrain.version>Arabba-M7</r2dbc-releasetrain.version>
 		<reactive-streams.version>1.0.1</reactive-streams.version>
@@ -174,6 +176,13 @@
 		</dependency>
 
 		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>${mysql.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
 			<version>${mssql-jdbc.version}</version>
@@ -195,6 +204,13 @@
 		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-mssql</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.jasync-sql</groupId>
+			<artifactId>jasync-r2dbc-mysql</artifactId>
+			<version>${jasync.version}</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -295,7 +311,8 @@
 						<querydslVersion>${querydsl}</querydslVersion>
 						<springVersion>${spring}</springVersion>
 						<r2dbcVersion>${r2dbc-spi.version}</r2dbcVersion>
-						<reactiveStreamsVersion>${reactive-streams.version}</reactiveStreamsVersion>
+						<reactiveStreamsVersion>${reactive-streams.version}
+						</reactiveStreamsVersion>
 						<releasetrainVersion>${releasetrain}</releasetrainVersion>
 						<allow-uri-read>true</allow-uri-read>
 						<toclevels>3</toclevels>
@@ -415,6 +432,10 @@
 		<repository>
 			<id>spring-libs-snapshot</id>
 			<url>https://repo.spring.io/libs-snapshot</url>
+		</repository>
+		<repository>
+			<id>jcenter</id>
+			<url>https://jcenter.bintray.com/</url>
 		</repository>
 	</repositories>
 
