@@ -1,7 +1,5 @@
 package org.springframework.data.r2dbc.dialect;
 
-import io.r2dbc.spi.Statement;
-
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 /**
@@ -44,47 +42,5 @@ class IndexedBindMarkers implements BindMarkers {
 		int index = COUNTER_INCREMENTER.getAndIncrement(this);
 
 		return new IndexedBindMarker(prefix + "" + (index + offset), index);
-	}
-
-	/**
-	 * A single indexed bind marker.
-	 */
-	static class IndexedBindMarker implements BindMarker {
-
-		private final String placeholder;
-
-		private int index;
-
-		IndexedBindMarker(String placeholder, int index) {
-			this.placeholder = placeholder;
-			this.index = index;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.BindMarker#getPlaceholder()
-		 */
-		@Override
-		public String getPlaceholder() {
-			return placeholder;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindValue(io.r2dbc.spi.Statement, java.lang.Object)
-		 */
-		@Override
-		public void bind(Statement statement, Object value) {
-			statement.bind(this.index, value);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindNull(io.r2dbc.spi.Statement, java.lang.Class)
-		 */
-		@Override
-		public void bindNull(Statement statement, Class<?> valueType) {
-			statement.bindNull(this.index, valueType);
-		}
 	}
 }

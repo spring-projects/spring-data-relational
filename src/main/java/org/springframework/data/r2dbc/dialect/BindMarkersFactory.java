@@ -44,6 +44,22 @@ public interface BindMarkersFactory {
 	}
 
 	/**
+	 * Creates anonymous, index-based bind marker using a static placeholder. Instances are bound by the ordinal position
+	 * ordered by the appearance of the placeholder. This implementation creates indexed bind markers using an anonymous
+	 * placeholder that correlates with an index.
+	 *
+	 * @param placeholder parameter placeholder.
+	 * @return a {@link BindMarkersFactory} using {@code placeholder}.
+	 * @see io.r2dbc.spi.Statement#bindNull(int, Class)
+	 * @see io.r2dbc.spi.Statement#bind(int, Object)
+	 */
+	static BindMarkersFactory anonymous(String placeholder) {
+
+		Assert.hasText(placeholder, "Placeholder must not be empty!");
+		return () -> new AnonymousBindMarkers(placeholder);
+	}
+
+	/**
 	 * Create named {@link BindMarkers} using identifiers to bind parameters. Named bind markers can support
 	 * {@link BindMarkers#next(String) name hints}. If no {@link BindMarkers#next(String) hint} is given, named bind
 	 * markers can use a counter or a random value source to generate unique bind markers.
