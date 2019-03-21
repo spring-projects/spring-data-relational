@@ -319,7 +319,7 @@ The following table describes the strategies that Spring Data JDBC offers for de
 |Id-Property inspection (the default)|By default, Spring Data JDBC inspects the identifier property of the given entity.
 If the identifier property is `null`, then the entity is assumed to be new. Otherwise, it is assumed to not be new.
 |Implementing `Persistable`|If an entity implements `Persistable`, Spring Data JDBC delegates the new detection to the `isNew(…)` method of the entity.
-See the link:$$http://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[Javadoc] for details.
+See the link:$$https://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[Javadoc] for details.
 |Implementing `EntityInformation`|You can customize the `EntityInformation` abstraction used in the `SimpleJdbcRepository` implementation by creating a subclass of `JdbcRepositoryFactory` and overriding the `getEntityInformation(…)` method.
 You then have to register the custom implementation of `JdbcRepositoryFactory` as a Spring bean.
 Note that this should rarely be necessary. See the link:{javadoc-base}org/springframework/data/jdbc/repository/support/JdbcRepositoryFactory.html[Javadoc] for details.

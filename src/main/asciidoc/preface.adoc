@@ -7,7 +7,7 @@ Spring Data JDBC offers a repository abstraction based on JDBC.
 [preface]
 == Project Metadata
 
-* Version control: http://github.com/spring-projects/spring-data-jdbc
+* Version control: https://github.com/spring-projects/spring-data-jdbc
 * Bugtracker: https://jira.spring.io/browse/DATAJDBC
 * Release repository: https://repo.spring.io/libs-release
 * Milestone repository: https://repo.spring.io/libs-milestone
