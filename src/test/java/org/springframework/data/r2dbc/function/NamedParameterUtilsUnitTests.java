@@ -27,6 +27,7 @@ import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.dialect.SqlServerDialect;
 import org.springframework.data.r2dbc.domain.BindTarget;
+import org.springframework.data.r2dbc.domain.BindableOperation;
 
 /**
  * Unit tests for {@link NamedParameterUtils}.

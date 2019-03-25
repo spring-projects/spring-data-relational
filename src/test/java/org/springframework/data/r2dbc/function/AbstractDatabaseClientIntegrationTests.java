@@ -32,6 +32,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.r2dbc.function.query.Criteria;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -204,6 +205,43 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
 
+	@Test // gh-64
+	public void deleteUntyped() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42064, 'FORSCHUNGSSCHIFF', 13)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.delete() //
+				.from("legoset") //
+				.where(Criteria.of("id").is(42055)) //
+				.fetch() //
+				.rowsUpdated() //
+				.as(StepVerifier::create) //
+				.expectNext(1).verifyComplete();
+
+		assertThat(jdbc.queryForList("SELECT id AS count FROM legoset")).hasSize(1);
+	}
+
+	@Test // gh-64
+	public void deleteTyped() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42064, 'FORSCHUNGSSCHIFF', 13)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.delete() //
+				.from(LegoSet.class) //
+				.where(Criteria.of("id").is(42055)) //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		assertThat(jdbc.queryForList("SELECT id AS count FROM legoset")).hasSize(1);
+	}
+
 	@Test // gh-2
 	public void selectAsMap() {
 
@@ -238,6 +276,44 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.all() //
 				.as(StepVerifier::create) //
 				.expectNext(42055) //
+				.verifyComplete();
+	}
+
+	@Test // gh-8
+	public void selectWithCriteria() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.select().from("legoset") //
+				.project("id", "name", "manual") //
+				.orderBy(Sort.by("id")) //
+				.where(Criteria.of("id").greaterThanOrEquals(42055).and("id").lessThanOrEquals(42055))
+				.map((r, md) -> r.get("id", Integer.class)) //
+				.all() //
+				.as(StepVerifier::create) //
+				.expectNext(42055) //
+				.verifyComplete();
+	}
+
+	@Test // gh-64
+	public void selectWithCriteriaIn() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42064, 'FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42068, 'FLUGHAFEN-LÖSCHFAHRZEUG', 13)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.select().from(LegoSet.class) //
+				.orderBy(Sort.by("id")) //
+				.where(Criteria.of("id").in(42055, 42064)) //
+				.map((r, md) -> r.get("id", Integer.class)) //
+				.all() //
+				.as(StepVerifier::create) //
+				.expectNext(42055) //
+				.expectNext(42064) //
 				.verifyComplete();
 	}
 

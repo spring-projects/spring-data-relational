@@ -31,7 +31,6 @@ import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.function.StatementFactory;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Functions;
@@ -122,8 +121,6 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Set<String> columns = new LinkedHashSet<>(accessStrategy.getAllColumns(entity.getJavaType()));
 		String idColumnName = getIdColumnName();
-
-		StatementFactory statements;
 
 		PreparedOperation<Select> operation = accessStrategy.getStatements().select(entity.getTableName(), columns,
 				binder -> {

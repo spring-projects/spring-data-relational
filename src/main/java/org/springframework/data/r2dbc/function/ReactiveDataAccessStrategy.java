@@ -19,15 +19,19 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
 import java.util.List;
-import java.util.Set;
 import java.util.function.BiFunction;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
+import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.domain.BindableOperation;
+import org.springframework.data.r2dbc.domain.Bindings;
 import org.springframework.data.r2dbc.domain.OutboundRow;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.function.query.BoundCondition;
+import org.springframework.data.r2dbc.function.query.Criteria;
+import org.springframework.data.relational.core.sql.Table;
 
 /**
  * Draft of a data access strategy that generalizes convenience operations using mapped entities. Typically used
@@ -56,11 +60,30 @@ public interface ReactiveDataAccessStrategy {
 	/**
 	 * Map the {@link Sort} object to apply field name mapping using {@link Class the type to read}.
 	 *
-	 * @param typeToRead
-	 * @param sort
+	 * @param sort must not be {@literal null}.
+	 * @param typeToRead must not be {@literal null}.
 	 * @return
 	 */
-	Sort getMappedSort(Class<?> typeToRead, Sort sort);
+	Sort getMappedSort(Sort sort, Class<?> typeToRead);
+
+	/**
+	 * Map the {@link Criteria} object to apply value mapping and return a {@link BoundCondition} with {@link Bindings}.
+	 *
+	 * @param criteria must not be {@literal null}.
+	 * @param table must not be {@literal null}.
+	 * @return
+	 */
+	BoundCondition getMappedCriteria(Criteria criteria, Table table);
+
+	/**
+	 * Map the {@link Criteria} object to apply value and field name mapping and return a {@link BoundCondition} with
+	 * {@link Bindings}.
+	 *
+	 * @param criteria must not be {@literal null}.
+	 * @param table must not be {@literal null}.
+	 * @return
+	 */
+	BoundCondition getMappedCriteria(Criteria criteria, Table table, Class<?> typeToRead);
 
 	// TODO: Broaden T to Mono<T>/Flux<T> for reactive relational data access?
 	<T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead);
@@ -71,6 +94,11 @@ public interface ReactiveDataAccessStrategy {
 	 */
 	String getTableName(Class<?> type);
 
+	/**
+	 * Returns the {@link Dialect}-specific {@link StatementFactory}.
+	 *
+	 * @return the {@link Dialect}-specific {@link StatementFactory}.
+	 */
 	StatementFactory getStatements();
 
 	/**
@@ -87,20 +115,4 @@ public interface ReactiveDataAccessStrategy {
 	 */
 	R2dbcConverter getConverter();
 
-	// -------------------------------------------------------------------------
-	// Methods creating SQL operations.
-	// Subject to be moved into a SQL creation DSL.
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Create a {@code SELECT … ORDER BY … LIMIT …} operation for the given {@code table} using {@code columns} to
-	 * project.
-	 *
-	 * @param table the table to insert data to.
-	 * @param columns columns to return.
-	 * @param sort
-	 * @param page
-	 * @return
-	 */
-	String select(String table, Set<String> columns, Sort sort, Pageable page);
 }

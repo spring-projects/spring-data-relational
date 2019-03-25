@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,13 +52,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.UncategorizedR2dbcException;
 import org.springframework.data.r2dbc.domain.BindTarget;
+import org.springframework.data.r2dbc.domain.BindableOperation;
 import org.springframework.data.r2dbc.domain.OutboundRow;
 import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
+import org.springframework.data.r2dbc.function.operation.BindableOperation;
+import org.springframework.data.r2dbc.function.query.BoundCondition;
+import org.springframework.data.r2dbc.function.query.Criteria;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Insert;
+import org.springframework.data.relational.core.sql.Select;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -112,6 +117,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	@Override
 	public InsertIntoSpec insert() {
 		return new DefaultInsertIntoSpec();
+	}
+
+	@Override
+	public DeleteFromSpec delete() {
+		return new DefaultDeleteFromSpec();
 	}
 
 	/**
@@ -624,6 +634,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		final String table;
 		final List<String> projectedFields;
+		final @Nullable Criteria criteria;
 		final Sort sort;
 		final Pageable page;
 
@@ -633,6 +644,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			this.table = table;
 			this.projectedFields = Collections.emptyList();
+			this.criteria = null;
 			this.sort = Sort.unsorted();
 			this.page = Pageable.unpaged();
 		}
@@ -644,51 +656,50 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			projectedFields.addAll(this.projectedFields);
 			projectedFields.addAll(Arrays.asList(selectedFields));
 
-			return createInstance(table, projectedFields, sort, page);
+			return createInstance(table, projectedFields, criteria, sort, page);
+		}
+
+		public DefaultSelectSpecSupport where(Criteria whereCriteria) {
+
+			Assert.notNull(whereCriteria, "Criteria must not be null!");
+
+			return createInstance(table, projectedFields, whereCriteria, sort, page);
 		}
 
 		public DefaultSelectSpecSupport orderBy(Sort sort) {
 
 			Assert.notNull(sort, "Sort must not be null!");
 
-			return createInstance(table, projectedFields, sort, page);
+			return createInstance(table, projectedFields, criteria, sort, page);
 		}
 
 		public DefaultSelectSpecSupport page(Pageable page) {
 
 			Assert.notNull(page, "Pageable must not be null!");
 
-			return createInstance(table, projectedFields, sort, page);
+			return createInstance(table, projectedFields, criteria, sort, page);
 		}
 
-		<R> FetchSpec<R> execute(String sql, BiFunction<Row, RowMetadata, R> mappingFunction) {
+		<R> FetchSpec<R> execute(PreparedOperation<?> preparedOperation, BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			Function<Connection, Statement> selectFunction = it -> {
-
-				if (logger.isDebugEnabled()) {
-					logger.debug("Executing SQL statement [" + sql + "]");
-				}
-
-				return it.createStatement(sql);
-			};
-
+			Function<Connection, Statement> selectFunction = wrapPreparedOperation(preparedOperation);
 			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(selectFunction.apply(it).execute());
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					sql, //
+					preparedOperation.toQuery(), //
 					resultFunction, //
 					it -> Mono.error(new UnsupportedOperationException("Not available for SELECT")), //
 					mappingFunction);
 		}
 
-		protected abstract DefaultSelectSpecSupport createInstance(String table, List<String> projectedFields, Sort sort,
-				Pageable page);
+		protected abstract DefaultSelectSpecSupport createInstance(String table, List<String> projectedFields,
+				Criteria criteria, Sort sort, Pageable page);
 	}
 
 	private class DefaultGenericSelectSpec extends DefaultSelectSpecSupport implements GenericSelectSpec {
 
-		DefaultGenericSelectSpec(String table, List<String> projectedFields, Sort sort, Pageable page) {
-			super(table, projectedFields, sort, page);
+		DefaultGenericSelectSpec(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page) {
+			super(table, projectedFields, criteria, sort, page);
 		}
 
 		DefaultGenericSelectSpec(String table) {
@@ -700,7 +711,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
-			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, resultType,
+			return new DefaultTypedSelectSpec<>(table, projectedFields, criteria, sort, page, resultType,
 					dataAccessStrategy.getRowMapper(resultType));
 		}
 
@@ -715,6 +726,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		public DefaultGenericSelectSpec project(String... selectedFields) {
 			return (DefaultGenericSelectSpec) super.project(selectedFields);
+		}
+
+		@Override
+		public DefaultGenericSelectSpec where(Criteria criteria) {
+			return (DefaultGenericSelectSpec) super.where(criteria);
 		}
 
 		@Override
@@ -734,15 +750,26 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			String select = dataAccessStrategy.select(table, new LinkedHashSet<>(this.projectedFields), sort, page);
+			PreparedOperation<Select> operation = dataAccessStrategy.getStatements().select(table, this.projectedFields,
+					(t, configurer) -> {
 
-			return execute(select, mappingFunction);
+						configurer.withPageRequest(page).withSort(sort);
+
+						if (criteria != null) {
+
+							BoundCondition boundCondition = dataAccessStrategy.getMappedCriteria(criteria, t);
+							configurer.withWhere(boundCondition.getCondition()).withBindings(boundCondition.getBindings());
+						}
+
+					});
+
+			return execute(operation, mappingFunction);
 		}
 
 		@Override
-		protected DefaultGenericSelectSpec createInstance(String table, List<String> projectedFields, Sort sort,
-				Pageable page) {
-			return new DefaultGenericSelectSpec(table, projectedFields, sort, page);
+		protected DefaultGenericSelectSpec createInstance(String table, List<String> projectedFields, Criteria criteria,
+				Sort sort, Pageable page) {
+			return new DefaultGenericSelectSpec(table, projectedFields, criteria, sort, page);
 		}
 	}
 
@@ -763,14 +790,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
 		}
 
-		DefaultTypedSelectSpec(String table, List<String> projectedFields, Sort sort, Pageable page,
+		DefaultTypedSelectSpec(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page,
 				BiFunction<Row, RowMetadata, T> mappingFunction) {
-			this(table, projectedFields, sort, page, null, mappingFunction);
+			this(table, projectedFields, criteria, sort, page, null, mappingFunction);
 		}
 
-		DefaultTypedSelectSpec(String table, List<String> projectedFields, Sort sort, Pageable page, Class<T> typeToRead,
-				BiFunction<Row, RowMetadata, T> mappingFunction) {
-			super(table, projectedFields, sort, page);
+		DefaultTypedSelectSpec(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page,
+				Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
+			super(table, projectedFields, criteria, sort, page);
 			this.typeToRead = typeToRead;
 			this.mappingFunction = mappingFunction;
 		}
@@ -794,6 +821,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		public DefaultTypedSelectSpec<T> project(String... selectedFields) {
 			return (DefaultTypedSelectSpec<T>) super.project(selectedFields);
+		}
+
+		@Override
+		public DefaultTypedSelectSpec<T> where(Criteria criteria) {
+			return (DefaultTypedSelectSpec<T>) super.where(criteria);
 		}
 
 		@Override
@@ -821,15 +853,31 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				columns = this.projectedFields;
 			}
 
-			String select = dataAccessStrategy.select(table, new LinkedHashSet<>(columns), sort, page);
+			PreparedOperation<Select> operation = dataAccessStrategy.getStatements().select(table, columns,
+					(table, configurer) -> {
 
-			return execute(select, mappingFunction);
+						Sort sortToUse;
+						if (this.sort.isSorted()) {
+							sortToUse = dataAccessStrategy.getMappedSort(this.sort, this.typeToRead);
+						} else {
+							sortToUse = this.sort;
+						}
+
+						configurer.withPageRequest(page).withSort(sortToUse);
+
+						if (criteria != null) {
+							BoundCondition boundCondition = dataAccessStrategy.getMappedCriteria(criteria, table, this.typeToRead);
+							configurer.withWhere(boundCondition.getCondition()).withBindings(boundCondition.getBindings());
+						}
+					});
+
+			return execute(operation, mappingFunction);
 		}
 
 		@Override
-		protected DefaultTypedSelectSpec<T> createInstance(String table, List<String> projectedFields, Sort sort,
-				Pageable page) {
-			return new DefaultTypedSelectSpec<>(table, projectedFields, sort, page, typeToRead, mappingFunction);
+		protected DefaultTypedSelectSpec<T> createInstance(String table, List<String> projectedFields, Criteria criteria,
+				Sort sort, Pageable page) {
+			return new DefaultTypedSelectSpec<>(table, projectedFields, criteria, sort, page, typeToRead, mappingFunction);
 		}
 	}
 
@@ -923,7 +971,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			};
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					sql, //
+					operation.toQuery(), //
 					resultFunction, //
 					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
 					mappingFunction);
@@ -1042,7 +1090,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			};
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					sql, //
+					operation.toQuery(), //
 					resultFunction, //
 					it -> resultFunction //
 							.apply(it) //
@@ -1050,6 +1098,103 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 							.collect(Collectors.summingInt(Integer::intValue)), //
 					mappingFunction);
 		}
+	}
+
+	/**
+	 * Default {@link DatabaseClient.DeleteFromSpec} implementation.
+	 */
+	class DefaultDeleteFromSpec implements DeleteFromSpec {
+
+		@Override
+		public DeleteSpec from(String table) {
+			return new DefaultDeleteSpec(null, table, null);
+		}
+
+		@Override
+		public DeleteSpec from(Class<?> table) {
+			return new DefaultDeleteSpec(table, null, null);
+		}
+	}
+
+	/**
+	 * Default implementation of {@link DatabaseClient.TypedInsertSpec}.
+	 */
+	@RequiredArgsConstructor
+	class DefaultDeleteSpec implements DeleteSpec {
+
+		private final @Nullable Class<?> typeToDelete;
+		private final @Nullable String table;
+		private final Criteria where;
+
+		@Override
+		public DeleteSpec where(Criteria criteria) {
+			return new DefaultDeleteSpec(this.typeToDelete, this.table, criteria);
+		}
+
+		@Override
+		public UpdatedRowsFetchSpec fetch() {
+
+			String table;
+
+			if (StringUtils.isEmpty(this.table)) {
+				table = dataAccessStrategy.getTableName(this.typeToDelete);
+			} else {
+				table = this.table;
+			}
+
+			return exchange(table);
+		}
+
+		@Override
+		public Mono<Void> then() {
+			return fetch().rowsUpdated().then();
+		}
+
+		private UpdatedRowsFetchSpec exchange(String table) {
+
+			PreparedOperation<Delete> operation = dataAccessStrategy.getStatements().delete(table, (t, configurer) -> {
+
+				if (this.where != null) {
+
+					BoundCondition condition;
+					if (this.table != null) {
+						condition = dataAccessStrategy.getMappedCriteria(this.where, t);
+					} else {
+						condition = dataAccessStrategy.getMappedCriteria(this.where, t, this.typeToDelete);
+					}
+
+					configurer.withWhere(condition.getCondition()).withBindings(condition.getBindings());
+				}
+			});
+
+			Function<Connection, Statement> deleteFunction = wrapPreparedOperation(operation);
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(deleteFunction.apply(it).execute());
+
+			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
+					operation.toQuery(), //
+					resultFunction, //
+					it -> resultFunction //
+							.apply(it) //
+							.flatMap(Result::getRowsUpdated) //
+							.collect(Collectors.summingInt(Integer::intValue)), //
+					(row, rowMetadata) -> rowMetadata);
+		}
+	}
+
+	private Function<Connection, Statement> wrapPreparedOperation(PreparedOperation<?> operation) {
+
+		return it -> {
+
+			String sql = operation.toQuery();
+			if (logger.isDebugEnabled()) {
+				logger.debug("Executing SQL statement [" + sql + "]");
+			}
+
+			Statement statement = it.createStatement(sql);
+			operation.bindTo(new StatementWrapper(statement));
+
+			return statement;
+		};
 	}
 
 	private static <T> Flux<T> doInConnectionMany(Connection connection, Function<Connection, Flux<T>> action) {

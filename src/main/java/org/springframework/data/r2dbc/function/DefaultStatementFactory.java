@@ -24,18 +24,23 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.domain.Bindings;
+import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.BindTarget;
 import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.SettableValue;
+import org.springframework.data.r2dbc.support.StatementRenderUtil;
 import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Assignment;
 import org.springframework.data.relational.core.sql.Column;
@@ -44,6 +49,7 @@ import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.DeleteBuilder;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Insert;
+import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder;
@@ -89,6 +95,7 @@ class DefaultStatementFactory implements StatementFactory {
 		binderConsumer.accept(binderBuilder);
 
 		return withDialect((dialect, renderContext) -> {
+
 			Table table = Table.create(tableName);
 			List<Column> columns = table.columns(columnNames);
 			SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder.select(columns).from(table);
@@ -109,6 +116,63 @@ class DefaultStatementFactory implements StatementFactory {
 					binding //
 			);
 		});
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.StatementFactory#select(java.lang.String, java.util.Collection, java.util.function.BiConsumer)
+	 */
+	@Override
+	public PreparedOperation<Select> select(String tableName, Collection<String> columnNames,
+			BiConsumer<Table, SelectConfigurer> configurerConsumer) {
+
+		Assert.hasText(tableName, "Table must not be empty");
+		Assert.notEmpty(columnNames, "Columns must not be empty");
+		Assert.notNull(configurerConsumer, "Configurer Consumer must not be null");
+
+		return withDialect((dialect, renderContext) -> {
+
+			DefaultSelectConfigurer configurer = new DefaultSelectConfigurer(dialect.getBindMarkersFactory().create());
+			Table table = Table.create(tableName);
+			configurerConsumer.accept(table, configurer);
+
+			List<Column> columns = table.columns(columnNames);
+			SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder.select(columns).from(table);
+
+			if (configurer.condition != null) {
+				selectBuilder.where(configurer.condition);
+			}
+
+			if (configurer.sort != null) {
+				selectBuilder.orderBy(createOrderByFields(table, configurer.sort));
+			}
+
+			Select select = selectBuilder.build();
+			return new DefaultPreparedOperation<Select>(select, renderContext, configurer.bindings) {
+				@Override
+				public String toQuery() {
+					return StatementRenderUtil.render(select, configurer.limit, configurer.offset, dialect);
+				}
+			};
+		});
+	}
+
+	private Collection<? extends OrderByField> createOrderByFields(Table table, Sort sortToUse) {
+
+		List<OrderByField> fields = new ArrayList<>();
+
+		for (Sort.Order order : sortToUse) {
+
+			OrderByField orderByField = OrderByField.from(table.column(order.getProperty()));
+
+			if (order.getDirection() != null) {
+				fields.add(order.isAscending() ? orderByField.asc() : orderByField.desc());
+			} else {
+				fields.add(orderByField);
+			}
+		}
+
+		return fields;
 	}
 
 	/*
@@ -155,7 +219,7 @@ class DefaultStatementFactory implements StatementFactory {
 			Insert insert = StatementBuilder.insert().into(table).columns(table.columns(binderBuilder.bindings.keySet()))
 					.values(expressions).build();
 
-			return new DefaultPreparedOperation<Insert>(insert, renderContext, binding);
+			return new DefaultPreparedOperation<Insert>(insert, renderContext, binding.toBindings());
 		});
 	}
 
@@ -204,7 +268,7 @@ class DefaultStatementFactory implements StatementFactory {
 				update = updateBuilder.build();
 			}
 
-			return new DefaultPreparedOperation<>(update, renderContext, binding);
+			return new DefaultPreparedOperation<>(update, renderContext, binding.toBindings());
 		});
 	}
 
@@ -242,7 +306,35 @@ class DefaultStatementFactory implements StatementFactory {
 				delete = deleteBuilder.build();
 			}
 
-			return new DefaultPreparedOperation<>(delete, renderContext, binding);
+			return new DefaultPreparedOperation<>(delete, renderContext, binding.toBindings());
+		});
+	}
+
+	@Override
+	public PreparedOperation<Delete> delete(String tableName, BiConsumer<Table, BindConfigurer> configurerConsumer) {
+
+		Assert.hasText(tableName, "Table must not be empty");
+		Assert.notNull(configurerConsumer, "Configurer Consumer must not be null");
+
+		return withDialect((dialect, renderContext) -> {
+
+			Table table = Table.create(tableName);
+			DeleteBuilder.DeleteWhere deleteBuilder = StatementBuilder.delete().from(table);
+
+			BindMarkers bindMarkers = dialect.getBindMarkersFactory().create();
+			DefaultBindConfigurer configurer = new DefaultBindConfigurer(bindMarkers);
+
+			configurerConsumer.accept(table, configurer);
+
+			Delete delete;
+
+			if (configurer.condition != null) {
+				delete = deleteBuilder.where(configurer.condition).build();
+			} else {
+				delete = deleteBuilder.build();
+			}
+
+			return new DefaultPreparedOperation<>(delete, renderContext, configurer.bindings);
 		});
 	}
 
@@ -325,7 +417,6 @@ class DefaultStatementFactory implements StatementFactory {
 			});
 
 			return new Binding(values, nulls, conditionRef.get());
-
 		}
 
 		private static Condition toCondition(BindMarkers bindMarkers, Column column, SettableValue value,
@@ -410,6 +501,16 @@ class DefaultStatementFactory implements StatementFactory {
 			values.forEach((marker, value) -> marker.bind(to, value));
 			nulls.forEach((marker, value) -> marker.bindNull(to, value.getType()));
 		}
+
+		Bindings toBindings() {
+
+			List<Bindings.Binding> bindings = new ArrayList<>(values.size() + nulls.size());
+
+			values.forEach((marker, value) -> bindings.add(new Bindings.ValueBinding(marker, value)));
+			nulls.forEach((marker, value) -> bindings.add(new Bindings.NullBinding(marker, value.getType())));
+
+			return new Bindings(bindings);
+		}
 	}
 
 	/**
@@ -422,7 +523,7 @@ class DefaultStatementFactory implements StatementFactory {
 
 		private final T source;
 		private final RenderContext renderContext;
-		private final Binding binding;
+		private final Bindings bindings;
 
 		/*
 		 * (non-Javadoc)
@@ -463,7 +564,129 @@ class DefaultStatementFactory implements StatementFactory {
 
 		@Override
 		public void bindTo(BindTarget target) {
-			binding.apply(target);
+			bindings.apply(target);
+		}
+	}
+
+	/**
+	 * Default {@link SelectConfigurer} implementation.
+	 */
+	static class DefaultSelectConfigurer extends DefaultBindConfigurer implements SelectConfigurer {
+
+		OptionalLong limit = OptionalLong.empty();
+		OptionalLong offset = OptionalLong.empty();
+
+		Sort sort = Sort.unsorted();
+
+		DefaultSelectConfigurer(BindMarkers bindMarkers) {
+			super(bindMarkers);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.StatementFactory.SelectConfigurer#withBindings(org.springframework.data.r2dbc.function.Bindings)
+		 */
+		@Override
+		public SelectConfigurer withBindings(Bindings bindings) {
+
+			super.withBindings(bindings);
+			return this;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.StatementFactory.SelectConfigurer#withWhere(org.springframework.data.relational.core.sql.Condition)
+		 */
+		@Override
+		public SelectConfigurer withWhere(Condition condition) {
+
+			super.withWhere(condition);
+			return this;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.StatementFactory.SelectConfigurer#withLimit(long)
+		 */
+		@Override
+		public SelectConfigurer withLimit(long limit) {
+
+			this.limit = OptionalLong.of(limit);
+			return this;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.StatementFactory.SelectConfigurer#withOffset(long)
+		 */
+		@Override
+		public SelectConfigurer withOffset(long offset) {
+
+			this.offset = OptionalLong.of(offset);
+			return this;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.StatementFactory.SelectConfigurer#withSort(org.springframework.data.domain.Sort)
+		 */
+		@Override
+		public SelectConfigurer withSort(Sort sort) {
+
+			Assert.notNull(sort, "Sort must not be null");
+
+			this.sort = sort;
+			return this;
+		}
+	}
+
+	/**
+	 * Default {@link SelectConfigurer} implementation.
+	 */
+	static class DefaultBindConfigurer implements BindConfigurer {
+
+		private final BindMarkers bindMarkers;
+
+		@Nullable Condition condition;
+		Bindings bindings = new Bindings();
+
+		DefaultBindConfigurer(BindMarkers bindMarkers) {
+			this.bindMarkers = bindMarkers;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.StatementFactory.SelectConfigurer#bindMarkers()
+		 */
+		@Override
+		public BindMarkers bindMarkers() {
+			return this.bindMarkers;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.StatementFactory.SelectConfigurer#withBindings(org.springframework.data.r2dbc.function.Bindings)
+		 */
+		@Override
+		public BindConfigurer withBindings(Bindings bindings) {
+
+			Assert.notNull(bindings, "Bindings must not be null");
+
+			this.bindings = Bindings.merge(this.bindings, bindings);
+			return this;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.StatementFactory.SelectConfigurer#withWhere(org.springframework.data.relational.core.sql.Condition)
+		 */
+		@Override
+		public BindConfigurer withWhere(Condition condition) {
+
+			Assert.notNull(condition, "Condition must not be null");
+
+			this.condition = condition;
+			return this;
 		}
 	}
 }

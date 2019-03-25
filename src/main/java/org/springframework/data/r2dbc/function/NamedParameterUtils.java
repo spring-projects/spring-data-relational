@@ -31,6 +31,7 @@ import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.domain.BindTarget;
+import org.springframework.data.r2dbc.domain.BindableOperation;
 import org.springframework.util.Assert;
 
 /**

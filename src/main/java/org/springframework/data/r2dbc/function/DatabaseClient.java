@@ -30,6 +30,7 @@ import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.domain.PreparedOperation;
+import org.springframework.data.r2dbc.function.query.Criteria;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 
 /**
@@ -57,6 +58,11 @@ public interface DatabaseClient {
 	 * Prepare an SQL INSERT call.
 	 */
 	InsertIntoSpec insert();
+
+	/**
+	 * Prepare an SQL DELETE call.
+	 */
+	DeleteFromSpec delete();
 
 	/**
 	 * Return a builder to mutate properties of this database client.
@@ -262,7 +268,7 @@ public interface DatabaseClient {
 	}
 
 	/**
-	 * Contract for specifying {@code SELECT} options leading to the exchange.
+	 * Contract for specifying {@code INSERT} options leading to the exchange.
 	 */
 	interface InsertIntoSpec {
 
@@ -282,6 +288,29 @@ public interface DatabaseClient {
 		 * @return a {@link TypedInsertSpec} for further configuration of the insert. Guaranteed to be not {@literal null}.
 		 */
 		<T> TypedInsertSpec<T> into(Class<T> table);
+	}
+
+	/**
+	 * Contract for specifying {@code DELETE} options leading to the exchange.
+	 */
+	interface DeleteFromSpec {
+
+		/**
+		 * Specify the source {@literal table} to delete from.
+		 *
+		 * @param table must not be {@literal null} or empty.
+		 * @return a {@link GenericSelectSpec} for further configuration of the delete. Guaranteed to be not
+		 *         {@literal null}.
+		 */
+		DeleteSpec from(String table);
+
+		/**
+		 * Specify the source table to delete from to using the {@link Class entity class}.
+		 *
+		 * @param table must not be {@literal null}.
+		 * @return a {@link DeleteSpec} for further configuration of the delete. Guaranteed to be not {@literal null}.
+		 */
+		DeleteSpec from(Class<?> table);
 	}
 
 	/**
@@ -353,6 +382,13 @@ public interface DatabaseClient {
 		 * @param selectedFields must not be {@literal null}.
 		 */
 		S project(String... selectedFields);
+
+		/**
+		 * Configure a filter {@link Criteria}.
+		 *
+		 * @param criteria must not be {@literal null}.
+		 */
+		S where(Criteria criteria);
 
 		/**
 		 * Configure {@link Sort}.
@@ -447,6 +483,31 @@ public interface DatabaseClient {
 		 * Perform the SQL call and retrieve the result.
 		 */
 		FetchSpec<T> fetch();
+
+		/**
+		 * Perform the SQL call and return a {@link Mono} that completes without result on statement completion.
+		 *
+		 * @return a {@link Mono} ignoring its payload (actively dropping).
+		 */
+		Mono<Void> then();
+	}
+
+	/**
+	 * Contract for specifying {@code DELETE} options leading to the exchange.
+	 */
+	interface DeleteSpec {
+
+		/**
+		 * Configure a filter {@link Criteria}.
+		 *
+		 * @param criteria must not be {@literal null}.
+		 */
+		DeleteSpec where(Criteria criteria);
+
+		/**
+		 * Perform the SQL call and retrieve the result.
+		 */
+		UpdatedRowsFetchSpec fetch();
 
 		/**
 		 * Perform the SQL call and return a {@link Mono} that completes without result on statement completion.
