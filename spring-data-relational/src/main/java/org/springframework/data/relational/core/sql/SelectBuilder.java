@@ -114,6 +114,18 @@ public interface SelectBuilder {
 		 * Declare a {@link Table} to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods keep
 		 * adding items to the select list and do not replace previously contained items.
 		 *
+		 * @param table the table name to {@code SELECT … FROM} must not be {@literal null} or empty.
+		 * @return {@code this} builder.
+		 * @see From
+		 * @see SQL#table(String)
+		 */
+		@Override
+		SelectFromAndJoin from(String table);
+
+		/**
+		 * Declare a {@link Table} to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods keep
+		 * adding items to the select list and do not replace previously contained items.
+		 *
 		 * @param table the table to {@code SELECT … FROM} must not be {@literal null}.
 		 * @return {@code this} builder.
 		 * @see From

@@ -17,11 +17,10 @@ package org.springframework.data.relational.core.sql;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.OptionalLong;
 
 import org.junit.Test;
+
 import org.springframework.data.relational.core.sql.Join.JoinType;
 
 /**
@@ -63,6 +62,23 @@ public class SelectBuilderUnitTests {
 
 		assertThat(visitor.enter).containsSequence(foo, table, new From(table), table);
 		assertThat(select.getLimit()).isEqualTo(OptionalLong.of(10));
+	}
+
+	@Test // DATAJDBC-347
+	public void selectWithWhere() {
+
+		SelectBuilder builder = StatementBuilder.select();
+
+		Table table = SQL.table("mytable");
+		Column foo = table.column("foo");
+
+		Comparison condition = foo.isEqualTo(SQL.literalOf("bar"));
+		Select select = builder.select(foo).from(table.getName()).where(condition).build();
+
+		CapturingVisitor visitor = new CapturingVisitor();
+		select.visit(visitor);
+
+		assertThat(visitor.enter).containsSequence(foo, table, new From(table), table, new Where(condition));
 	}
 
 	@Test // DATAJDBC-309
