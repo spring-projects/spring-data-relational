@@ -193,8 +193,10 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 		return (Consumer<R> test) -> {
 
-			try (ConfigurableApplicationContext context = new AnnotationConfigApplicationContext(configurationClasses)) {
-
+			try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+                context.getEnvironment().setActiveProfiles("hsql");
+                context.register(configurationClasses);
+                context.refresh();
 				test.accept(context.getBean(repositoryType));
 
 				softly.assertAll();
@@ -236,6 +238,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 	@ComponentScan("org.springframework.data.jdbc.testing")
 	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@ActiveProfiles("hsql")
 	static class TestConfiguration {
 
 		@Bean
