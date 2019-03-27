@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  */
 public abstract class AbstractDialect implements Dialect {
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.dialect.Dialect#getSelectContext()
 	 */
@@ -78,7 +78,7 @@ public abstract class AbstractDialect implements Dialect {
 			this.afterOrderBy = afterOrderBy;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.relational.core.sql.render.SelectRenderContext#afterOrderBy(boolean)
 		 */
@@ -96,7 +96,7 @@ public abstract class AbstractDialect implements Dialect {
 
 		private final LimitClause clause;
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see java.util.function.Function#apply(java.lang.Object)
 		 */
@@ -130,7 +130,7 @@ public abstract class AbstractDialect implements Dialect {
 
 		INSTANCE;
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see java.util.function.Function#apply(java.lang.Object)
 		 */
