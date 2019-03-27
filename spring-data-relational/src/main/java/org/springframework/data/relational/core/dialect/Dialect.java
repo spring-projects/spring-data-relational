@@ -18,7 +18,9 @@ package org.springframework.data.relational.core.dialect;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
 /**
- * Represents a dialect that is implemented by a particular database.
+ * Represents a dialect that is implemented by a particular database. Please note that not all features are supported by
+ * all vendors. Dialects typically express this with feature flags. Methods for unsupported functionality may throw
+ * {@link UnsupportedOperationException}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -42,5 +44,10 @@ public interface Dialect {
 		return ArrayColumns.Unsupported.INSTANCE;
 	}
 
+	/**
+	 * Obtain the {@link SelectRenderContext}.
+	 *
+	 * @return the {@link SelectRenderContext}.
+	 */
 	SelectRenderContext getSelectContext();
 }
