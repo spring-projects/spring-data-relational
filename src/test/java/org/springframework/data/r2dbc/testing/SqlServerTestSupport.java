@@ -1,7 +1,5 @@
 package org.springframework.data.r2dbc.testing;
 
-import io.r2dbc.mssql.MssqlConnectionConfiguration;
-import io.r2dbc.mssql.MssqlConnectionFactory;
 import io.r2dbc.spi.ConnectionFactory;
 
 import javax.sql.DataSource;
@@ -53,16 +51,10 @@ public class SqlServerTestSupport {
 	}
 
 	/**
-	 * Creates a new {@link ConnectionFactory} configured from the {@link ExternalDatabase}..
+	 * Creates a new {@link ConnectionFactory} configured from the {@link ExternalDatabase}.
 	 */
 	public static ConnectionFactory createConnectionFactory(ExternalDatabase database) {
-
-		return new MssqlConnectionFactory(MssqlConnectionConfiguration.builder().host(database.getHostname()) //
-				.database(database.getDatabase()) //
-				.username(database.getUsername()) //
-				.password(database.getPassword()) //
-				.port(database.getPort()) //
-				.build());
+		return ConnectionUtils.getConnectionFactory("mssql", database);
 	}
 
 	/**
@@ -74,9 +66,7 @@ public class SqlServerTestSupport {
 
 		dataSource.setUser(database.getUsername());
 		dataSource.setPassword(database.getPassword());
-		dataSource.setDatabaseName(database.getDatabase());
-		dataSource.setServerName(database.getHostname());
-		dataSource.setPortNumber(database.getPort());
+		dataSource.setURL(database.getJdbcUrl());
 
 		return dataSource;
 	}

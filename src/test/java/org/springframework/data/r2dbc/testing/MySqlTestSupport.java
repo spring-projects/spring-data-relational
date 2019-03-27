@@ -26,9 +26,6 @@ import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
 
 import org.testcontainers.containers.MySQLContainer;
 
-import com.github.jasync.r2dbc.mysql.JasyncConnectionFactory;
-import com.github.jasync.sql.db.Configuration;
-import com.github.jasync.sql.db.mysql.pool.MySQLConnectionFactory;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
 /**
@@ -104,15 +101,12 @@ public class MySqlTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				MySQLContainer mySQLContainer = new MySQLContainer("mysql:5.6.43");
-				mySQLContainer.start();
+				MySQLContainer container = new MySQLContainer("mysql:5.6.43");
+				container.start();
 
-				testContainerDatabase = ProvidedDatabase.builder() //
-						.hostname("localhost") //
-						.port(mySQLContainer.getFirstMappedPort()) //
-						.database(mySQLContainer.getDatabaseName()) //
+				testContainerDatabase = ProvidedDatabase.builder(container) //
 						.username("root") //
-						.password(mySQLContainer.getPassword()).build();
+						.build();
 			} catch (IllegalStateException ise) {
 				// docker not available.
 				testContainerDatabase = ExternalDatabase.unavailable();
@@ -126,10 +120,7 @@ public class MySqlTestSupport {
 	 * Creates a new {@link ConnectionFactory} configured from the {@link ExternalDatabase}..
 	 */
 	public static ConnectionFactory createConnectionFactory(ExternalDatabase database) {
-
-		MySQLConnectionFactory jasync = new MySQLConnectionFactory(new Configuration(database.getUsername(),
-				database.getHostname(), database.getPort(), database.getPassword(), database.getDatabase()));
-		return new JasyncConnectionFactory(jasync);
+		return ConnectionUtils.getConnectionFactory("mysql", database);
 	}
 
 	/**
@@ -141,11 +132,8 @@ public class MySqlTestSupport {
 
 		dataSource.setUser(database.getUsername());
 		dataSource.setPassword(database.getPassword());
-		dataSource.setDatabaseName(database.getDatabase());
-		dataSource.setServerName(database.getHostname());
-		dataSource.setPortNumber(database.getPort());
+		dataSource.setURL(database.getJdbcUrl());
 
 		return dataSource;
 	}
-
 }

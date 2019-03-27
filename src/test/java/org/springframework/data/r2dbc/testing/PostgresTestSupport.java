@@ -1,7 +1,5 @@
 package org.springframework.data.r2dbc.testing;
 
-import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
-import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.spi.ConnectionFactory;
 
 import java.util.function.Supplier;
@@ -10,7 +8,9 @@ import java.util.stream.Stream;
 import javax.sql.DataSource;
 
 import org.postgresql.ds.PGSimpleDataSource;
+
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
+
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
@@ -87,15 +87,10 @@ public class PostgresTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer();
-				postgreSQLContainer.start();
+				PostgreSQLContainer container = new PostgreSQLContainer();
+				container.start();
 
-				testContainerDatabase = ProvidedDatabase.builder() //
-						.hostname("localhost") //
-						.port(postgreSQLContainer.getFirstMappedPort()) //
-						.database(postgreSQLContainer.getDatabaseName()) //
-						.username(postgreSQLContainer.getUsername()) //
-						.password(postgreSQLContainer.getPassword()).build();
+				testContainerDatabase = ProvidedDatabase.from(container);
 
 			} catch (IllegalStateException ise) {
 				// docker not available.
@@ -111,14 +106,7 @@ public class PostgresTestSupport {
 	 * Creates a new {@link ConnectionFactory} configured from the {@link ExternalDatabase}..
 	 */
 	public static ConnectionFactory createConnectionFactory(ExternalDatabase database) {
-
-		return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder() //
-				.host(database.getHostname()) //
-				.database(database.getDatabase()) //
-				.port(database.getPort()) //
-				.username(database.getUsername()) //
-				.password(database.getPassword()) //
-				.build());
+		return ConnectionUtils.getConnectionFactory("postgresql", database);
 	}
 
 	/**
@@ -130,11 +118,8 @@ public class PostgresTestSupport {
 
 		dataSource.setUser(database.getUsername());
 		dataSource.setPassword(database.getPassword());
-		dataSource.setDatabaseName(database.getDatabase());
-		dataSource.setServerName(database.getHostname());
-		dataSource.setPortNumber(database.getPort());
+		dataSource.setURL(database.getJdbcUrl());
 
 		return dataSource;
 	}
-
 }
