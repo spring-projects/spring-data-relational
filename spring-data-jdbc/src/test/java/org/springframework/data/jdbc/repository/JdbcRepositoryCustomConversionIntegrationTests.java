@@ -39,7 +39,6 @@ import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.lang.Nullable;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -49,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Tests storing and retrieving data types that get processed by custom conversions.
  *
  * @author Jens Schauder
+ * @author Sanghyuk Jung
  */
 @ContextConfiguration
 @Transactional
@@ -93,9 +93,9 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	 *
 	 * 	&#64;Override
 	 * 	&#64;Nullable
-	 * 	public BigDecimal convert(@Nullable String source) {
+	 * 	public BigDecimal convert(String source) {
 	 *
-	 * 		return source == null ? null : new BigDecimal(source);
+	 * 		return source == new BigDecimal(source);
 	 * 	}
 	 * }
 	 * </pre>
@@ -130,9 +130,9 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		INSTANCE;
 
 		@Override
-		public JdbcValue convert(@Nullable String source) {
+		public JdbcValue convert(String source) {
 
-			Object value = source == null ? null : new BigDecimal(source);
+			Object value = new BigDecimal(source);
 			return JdbcValue.of(value, JDBCType.DECIMAL);
 		}
 
@@ -144,11 +144,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		INSTANCE;
 
 		@Override
-		public String convert(@Nullable BigDecimal source) {
-
-			if (source == null) {
-				return null;
-			}
+		public String convert(BigDecimal source) {
 
 			return source.toString();
 		}
