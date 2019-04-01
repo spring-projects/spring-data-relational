@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.6.RELEASE (2019-04-01)
+---------------------------------------------
+* DATAJDBC-334 - How to escape case sensitive identifiers?.
+* DATAJDBC-333 - Release 1.0.6 (Lovelace SR6).
+
+
 Changes in version 1.1.0.M2 (2019-03-07)
 ----------------------------------------
 * DATAJDBC-335 - Add StatementBuilder's for INSERT, UPDATE, and DELETE.
