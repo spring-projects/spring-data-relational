@@ -30,6 +30,12 @@ import java.util.UUID;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterFactory;
+import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.convert.Jsr310Converters;
+import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverters.RowToNumberConverterFactory.LocalDateConverterOverride;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverters.RowToNumberConverterFactory.LocalDateTimeConverterOverride;
+import org.springframework.data.r2dbc.function.convert.R2dbcConverters.RowToNumberConverterFactory.LocalTimeConverterOverride;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverters.RowToNumberConverterFactory.RowToOffsetDateTimeConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverters.RowToNumberConverterFactory.RowToStringConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverters.RowToNumberConverterFactory.RowToUuidConverter;
@@ -63,6 +69,22 @@ abstract class R2dbcConverters {
 		converters.add(RowToStringConverter.INSTANCE);
 		converters.add(RowToUuidConverter.INSTANCE);
 		converters.add(RowToZonedDateTimeConverter.INSTANCE);
+
+		return converters;
+	}
+
+	/**
+	 * @return A list of the registered converters to enforce JSR-310 type usage.
+	 * @see CustomConversions#DEFAULT_CONVERTERS
+	 * @see Jsr310Converters
+	 */
+	public static Collection<Object> getOverrideConvertersToRegister() {
+
+		List<Object> converters = new ArrayList<>();
+
+		converters.add(LocalDateConverterOverride.INSTANCE);
+		converters.add(LocalDateTimeConverterOverride.INSTANCE);
+		converters.add(LocalTimeConverterOverride.INSTANCE);
 
 		return converters;
 	}
@@ -227,6 +249,54 @@ abstract class R2dbcConverters {
 			@Override
 			public ZonedDateTime convert(Row row) {
 				return row.get(0, ZonedDateTime.class);
+			}
+		}
+
+		/**
+		 * {@link Converter} override that forces {@link LocalDate} to stay on {@link LocalDate}.
+		 *
+		 * @author Mark Paluch
+		 */
+		@WritingConverter
+		public enum LocalDateConverterOverride implements Converter<LocalDate, LocalDate> {
+
+			INSTANCE;
+
+			@Override
+			public LocalDate convert(LocalDate value) {
+				return value;
+			}
+		}
+
+		/**
+		 * {@link Converter} override that forces {@link LocalDateTime} to stay on {@link LocalDateTime}.
+		 *
+		 * @author Mark Paluch
+		 */
+		@WritingConverter
+		public enum LocalDateTimeConverterOverride implements Converter<LocalDateTime, LocalDateTime> {
+
+			INSTANCE;
+
+			@Override
+			public LocalDateTime convert(LocalDateTime value) {
+				return value;
+			}
+		}
+
+		/**
+		 * {@link Converter} override that forces {@link LocalTime} to stay on {@link LocalTime}.
+		 *
+		 * @author Mark Paluch
+		 */
+		@WritingConverter
+		public enum LocalTimeConverterOverride implements Converter<LocalTime, LocalTime> {
+
+			INSTANCE;
+
+			@Override
+			public LocalTime convert(LocalTime value) {
+				return value;
 			}
 		}
 	}

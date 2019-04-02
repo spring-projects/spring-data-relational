@@ -40,7 +40,7 @@ public class R2dbcCustomConversions extends CustomConversions {
 	 * @param converters must not be {@literal null}.
 	 */
 	public R2dbcCustomConversions(Collection<?> converters) {
-		super(STORE_CONVERSIONS, converters);
+		super(STORE_CONVERSIONS, appendOverriddes(converters));
 	}
 
 	/**
@@ -50,6 +50,14 @@ public class R2dbcCustomConversions extends CustomConversions {
 	 * @param converters must not be {@literal null}.
 	 */
 	public R2dbcCustomConversions(StoreConversions storeConversions, Collection<?> converters) {
-		super(storeConversions, converters);
+		super(storeConversions, appendOverriddes(converters));
+	}
+
+	private static Collection<?> appendOverriddes(Collection<?> converters) {
+
+		List<Object> objects = new ArrayList<>(converters);
+		objects.addAll(R2dbcConverters.getOverrideConvertersToRegister());
+
+		return objects;
 	}
 }

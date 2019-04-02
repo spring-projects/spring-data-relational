@@ -17,6 +17,8 @@ package org.springframework.data.r2dbc.dialect;
 
 import io.r2dbc.spi.Row;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,7 +38,7 @@ public class R2dbcSimpleTypeHolder extends SimpleTypeHolder {
 	 * Set of R2DBC simple types.
 	 */
 	public static final Set<Class<?>> R2DBC_SIMPLE_TYPES = Collections
-			.unmodifiableSet(new HashSet<>(Arrays.asList(OutboundRow.class, Row.class)));
+			.unmodifiableSet(new HashSet<>(Arrays.asList(OutboundRow.class, Row.class, BigInteger.class, BigDecimal.class)));
 
 	public static final SimpleTypeHolder HOLDER = new R2dbcSimpleTypeHolder();
 

@@ -114,7 +114,11 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 				continue;
 			}
 
-			propertyAccessor.setProperty(property, readFrom(row, property, ""));
+			Object value = readFrom(row, property, "");
+
+			if (value != null) {
+				propertyAccessor.setProperty(property, value);
+			}
 		}
 
 		return result;
@@ -266,8 +270,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 	private void writeNullInternal(OutboundRow sink, RelationalPersistentProperty property) {
 
-		sink.put(property.getColumnName(),
-				SettableValue.empty(getPotentiallyConvertedSimpleNullType(property.getType())));
+		sink.put(property.getColumnName(), SettableValue.empty(getPotentiallyConvertedSimpleNullType(property.getType())));
 	}
 
 	private Class<?> getPotentiallyConvertedSimpleNullType(Class<?> type) {
@@ -419,7 +422,14 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			String column = prefix + property.getColumnName();
 
 			try {
-				return converter.getConversionService().convert(resultSet.get(column), parameter.getType().getType());
+
+				Object value = resultSet.get(column);
+
+				if (value == null) {
+					return null;
+				}
+
+				return converter.getConversionService().convert(value, parameter.getType().getType());
 			} catch (Exception o_O) {
 				throw new MappingException(String.format("Couldn't read column %s from Row.", column), o_O);
 			}
