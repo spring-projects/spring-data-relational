@@ -23,32 +23,32 @@ import kotlinx.coroutines.reactive.awaitSingle
  *
  * @author Sebastien Deleuze
  */
-suspend fun <T> RowsFetchSpec<T>.awaitOne(): T
-		= one().awaitSingle()
+suspend fun <T> RowsFetchSpec<T>.awaitOne(): T =
+		one().awaitSingle()
 
 /**
  * Nullable Coroutines variant of [RowsFetchSpec.one].
  *
  * @author Sebastien Deleuze
  */
-suspend fun <T> RowsFetchSpec<T>.awaitOneOrNull(): T?
-        = one().awaitFirstOrNull()
+suspend fun <T> RowsFetchSpec<T>.awaitOneOrNull(): T? =
+		one().awaitFirstOrNull()
 
 /**
  * Non-nullable Coroutines variant of [RowsFetchSpec.first].
  *
  * @author Sebastien Deleuze
  */
-suspend fun <T> RowsFetchSpec<T>.awaitFirst(): T
-        = first().awaitSingle()
+suspend fun <T> RowsFetchSpec<T>.awaitFirst(): T =
+		first().awaitSingle()
 
 /**
  * Nullable Coroutines variant of [RowsFetchSpec.first].
  *
  * @author Sebastien Deleuze
  */
-suspend fun <T> RowsFetchSpec<T>.awaitFirstOrNull(): T?
-		= first().awaitFirstOrNull()
+suspend fun <T> RowsFetchSpec<T>.awaitFirstOrNull(): T? =
+		first().awaitFirstOrNull()
 
 // TODO Coroutines variant of [RowsFetchSpec.all], depends on [kotlinx.coroutines#254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
 // suspend fun <T> RowsFetchSpec<T>.awaitAll() = all()...
