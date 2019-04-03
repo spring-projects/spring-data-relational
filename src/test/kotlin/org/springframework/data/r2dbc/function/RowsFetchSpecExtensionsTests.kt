@@ -23,7 +23,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.Test
 import reactor.core.publisher.Mono
-import java.lang.NullPointerException
 
 /**
  * Unit tests for [RowsFetchSpec] extensions.
