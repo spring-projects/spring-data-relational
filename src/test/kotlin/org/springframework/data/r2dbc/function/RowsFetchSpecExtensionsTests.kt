@@ -18,10 +18,13 @@ package org.springframework.data.r2dbc.function
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.Test
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 /**
@@ -148,6 +151,22 @@ class RowsFetchSpecExtensionsTests {
 
 		verify {
 			spec.first()
+		}
+	}
+
+	@Test // gh-91
+	@FlowPreview
+	fun allAsFlow() {
+
+		val spec = mockk<RowsFetchSpec<String>>()
+		every { spec.all() } returns Flux.just("foo", "bar", "baz")
+
+		runBlocking {
+			assertThat(spec.flow().toList()).contains("foo", "bar", "baz")
+		}
+
+		verify {
+			spec.all()
 		}
 	}
 }

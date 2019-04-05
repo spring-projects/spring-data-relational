@@ -15,8 +15,11 @@
  */
 package org.springframework.data.r2dbc.function
 
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactive.flow.asFlow
 
 /**
  * Non-nullable Coroutines variant of [RowsFetchSpec.one].
@@ -50,5 +53,13 @@ suspend fun <T> RowsFetchSpec<T>.awaitFirst(): T =
 suspend fun <T> RowsFetchSpec<T>.awaitFirstOrNull(): T? =
 		first().awaitFirstOrNull()
 
-// TODO Coroutines variant of [RowsFetchSpec.all], depends on [kotlinx.coroutines#254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
-// suspend fun <T> RowsFetchSpec<T>.awaitAll() = all()...
+/**
+ * Coroutines [Flow] variant of [RowsFetchSpec.all].
+ *
+ * Backpressure is controlled by [batchSize] parameter that controls the size of in-flight elements
+ * and [org.reactivestreams.Subscription.request] size.
+ *
+ * @author Sebastien Deleuze
+ */
+@FlowPreview
+fun <T: Any> RowsFetchSpec<T>.flow(batchSize: Int = 1): Flow<T> = all().asFlow(batchSize)
