@@ -44,6 +44,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Very simple use cases for creation and usage of JdbcRepositories.
  *
  * @author Jens Schauder
+ * @author Salim Achouche
+ * @author Salim Achouche
  */
 @ContextConfiguration
 @Transactional
