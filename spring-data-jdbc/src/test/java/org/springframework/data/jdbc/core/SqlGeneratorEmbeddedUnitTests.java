@@ -47,7 +47,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 	SqlGenerator createSqlGenerator(Class<?> type) {
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
-		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
+		return new SqlGenerator(context, persistentEntity);
 	}
 
 	@Test // DATAJDBC-111

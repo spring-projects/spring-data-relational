@@ -189,7 +189,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
+		return new SqlGenerator(context, persistentEntity);
 	}
 
 	@SuppressWarnings("unused")

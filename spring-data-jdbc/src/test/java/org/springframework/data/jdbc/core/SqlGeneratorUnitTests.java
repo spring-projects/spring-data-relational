@@ -24,6 +24,7 @@ import java.util.Set;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -45,6 +46,7 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Greg Turnquist
  * @author Oleksandr Kucher
  * @author Bastian Wilhelm
+ * @author Mark Paluch
  */
 public class SqlGeneratorUnitTests {
 
@@ -61,7 +63,7 @@ public class SqlGeneratorUnitTests {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
 
-		return new SqlGenerator(context, persistentEntity, new SqlGeneratorSource(context));
+		return new SqlGenerator(context, persistentEntity);
 	}
 
 	@Test // DATAJDBC-112
@@ -146,7 +148,7 @@ public class SqlGeneratorUnitTests {
 	public void findAllByProperty() {
 
 		// this would get called when ListParent is the element type of a Set
-		String sql = sqlGenerator.getFindAllByProperty("back-ref", null, false);
+		String sql = sqlGenerator.getFindAllByProperty("backref", null, false);
 
 		assertThat(sql).contains("SELECT", //
 				"dummy_entity.id1 AS id1", //
@@ -159,14 +161,14 @@ public class SqlGeneratorUnitTests {
 				"FROM dummy_entity ", //
 				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
-				"WHERE dummy_entity.back-ref = :back-ref");
+				"WHERE dummy_entity.backref = :backref");
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
 	public void findAllByPropertyWithKey() {
 
 		// this would get called when ListParent is th element type of a Map
-		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", false);
+		String sql = sqlGenerator.getFindAllByProperty("backref", "key-column", false);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
@@ -176,7 +178,7 @@ public class SqlGeneratorUnitTests {
 				+ "FROM dummy_entity " //
 				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id " //
-				+ "WHERE dummy_entity.back-ref = :back-ref");
+				+ "WHERE dummy_entity.backref = :backref");
 	}
 
 	@Test(expected = IllegalArgumentException.class) // DATAJDBC-130
@@ -188,7 +190,7 @@ public class SqlGeneratorUnitTests {
 	public void findAllByPropertyWithKeyOrdered() {
 
 		// this would get called when ListParent is th element type of a Map
-		String sql = sqlGenerator.getFindAllByProperty("back-ref", "key-column", true);
+		String sql = sqlGenerator.getFindAllByProperty("backref", "key-column", true);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
@@ -198,7 +200,7 @@ public class SqlGeneratorUnitTests {
 				+ "FROM dummy_entity " //
 				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id " //
-				+ "WHERE dummy_entity.back-ref = :back-ref " + "ORDER BY key-column");
+				+ "WHERE dummy_entity.backref = :backref " + "ORDER BY key-column");
 	}
 
 	@Test // DATAJDBC-264
@@ -294,14 +296,14 @@ public class SqlGeneratorUnitTests {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
 
-		assertThat(sqlGenerator.getFindAllByProperty("back-ref", "key-column", true)).isEqualToIgnoringCase( //
+		assertThat(sqlGenerator.getFindAllByProperty("backref", "key-column", true)).isEqualToIgnoringCase( //
 				"SELECT " //
 						+ "entity_with_read_only_property.x_id AS x_id, " //
 						+ "entity_with_read_only_property.x_name AS x_name, " //
 						+ "entity_with_read_only_property.x_read_only_value AS x_read_only_value, " //
 						+ "entity_with_read_only_property.key-column AS key-column " //
 						+ "FROM entity_with_read_only_property " //
-						+ "WHERE entity_with_read_only_property.back-ref = :back-ref " //
+						+ "WHERE entity_with_read_only_property.backref = :backref " //
 						+ "ORDER BY key-column" //
 		);
 	}

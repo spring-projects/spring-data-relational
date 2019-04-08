@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,18 +24,25 @@ import org.springframework.data.relational.core.sql.Table;
  * Utility to get from path to SQL DSL elements.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 1.1
  */
 class SqlContext {
 
 	private final RelationalPersistentEntity<?> entity;
+	private final Table table;
 
 	SqlContext(RelationalPersistentEntity<?> entity) {
 		this.entity = entity;
+		this.table = SQL.table(entity.getTableName());
 	}
 
 	Column getIdColumn() {
-		return getTable().column(entity.getIdColumn());
+		return table.column(entity.getIdColumn());
+	}
+
+	Table getTable() {
+		return table;
 	}
 
 	Table getTable(PersistentPropertyPathExtension path) {
@@ -43,10 +50,6 @@ class SqlContext {
 		String tableAlias = path.getTableAlias();
 		Table table = SQL.table(path.getTableName());
 		return tableAlias == null ? table : table.as(tableAlias);
-	}
-
-	Table getTable() {
-		return SQL.table(entity.getTableName());
 	}
 
 	Column getColumn(PersistentPropertyPathExtension path) {
