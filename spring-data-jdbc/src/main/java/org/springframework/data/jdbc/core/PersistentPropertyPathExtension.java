@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,8 @@
  */
 package org.springframework.data.jdbc.core;
 
-import java.util.Objects;
-
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
@@ -34,10 +32,11 @@ import org.springframework.util.Assert;
 class PersistentPropertyPathExtension {
 
 	private final RelationalPersistentEntity<?> entity;
-	private final PersistentPropertyPath<RelationalPersistentProperty> path;
-	private final RelationalMappingContext context;
+	private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
+	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context;
 
-	PersistentPropertyPathExtension(RelationalMappingContext context, RelationalPersistentEntity<?> entity) {
+	PersistentPropertyPathExtension(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
+			RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(context, "Context must not be null.");
 		Assert.notNull(entity, "Entity must not be null.");
@@ -47,15 +46,15 @@ class PersistentPropertyPathExtension {
 		this.path = null;
 	}
 
-	PersistentPropertyPathExtension(RelationalMappingContext context,
+	PersistentPropertyPathExtension(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
 			PersistentPropertyPath<RelationalPersistentProperty> path) {
 
 		Assert.notNull(context, "Context must not be null.");
 		Assert.notNull(path, "Path must not be null.");
-		Assert.isTrue(!path.isEmpty(), "Path must not be empty.");
+		Assert.notNull(path.getBaseProperty(), "Path must not be empty.");
 
 		this.context = context;
-		this.entity = Objects.requireNonNull(path.getBaseProperty()).getOwner();
+		this.entity = path.getBaseProperty().getOwner();
 		this.path = path;
 	}
 
@@ -140,6 +139,8 @@ class PersistentPropertyPathExtension {
 	 */
 	String getReverseColumnName() {
 
+		Assert.state(path != null, "Path is null");
+
 		return path.getRequiredLeafProperty().getReverseColumnName();
 	}
 
@@ -159,6 +160,8 @@ class PersistentPropertyPathExtension {
 	 * @throws IllegalStateException when called on an empty path.
 	 */
 	String getColumnName() {
+
+		Assert.state(path != null, "Path is null");
 
 		return assembleColumnName(path.getRequiredLeafProperty().getColumnName());
 	}
@@ -212,11 +215,9 @@ class PersistentPropertyPathExtension {
 	String getTableAlias() {
 
 		PersistentPropertyPathExtension tableOwner = getTableOwningAncestor();
-		if (tableOwner.path == null) {
-			return null;
-		}
 
-		return tableOwner.assembleTableAlias();
+		return tableOwner.path == null ? null : tableOwner.assembleTableAlias();
+
 	}
 
 	/**
@@ -251,13 +252,12 @@ class PersistentPropertyPathExtension {
 	 */
 	private PersistentPropertyPathExtension getTableOwningAncestor() {
 
-		if (isEntity() && !isEmbedded()) {
-			return this;
-		}
-		return getParentPath().getTableOwningAncestor();
+		return isEntity() && !isEmbedded() ? this : getParentPath().getTableOwningAncestor();
 	}
 
 	private String assembleTableAlias() {
+
+		Assert.state(path != null, "Path is null");
 
 		RelationalPersistentProperty leafProperty = path.getRequiredLeafProperty();
 		String prefix = isEmbedded() ? leafProperty.getEmbeddedPrefix() : leafProperty.getName();
@@ -274,6 +274,8 @@ class PersistentPropertyPathExtension {
 
 	private String assembleColumnName(String suffix) {
 
+		Assert.state(path != null, "Path is null");
+
 		if (path.getLength() <= 1) {
 			return suffix;
 		}
@@ -286,10 +288,10 @@ class PersistentPropertyPathExtension {
 		return getParentPath().assembleColumnName(embeddedPrefix + suffix);
 	}
 
+	@SuppressWarnings("unchecked")
 	private RelationalPersistentEntity<?> getRequiredLeafEntity() {
 		return path == null ? entity : context.getRequiredPersistentEntity(path.getRequiredLeafProperty().getActualType());
 	}
-
 
 	private String prefixWithTableAlias(String columnName) {
 

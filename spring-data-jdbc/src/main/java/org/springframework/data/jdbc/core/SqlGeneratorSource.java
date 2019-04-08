@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,7 +37,6 @@ public class SqlGeneratorSource {
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
 
 		return sqlGeneratorCache.computeIfAbsent(domainType,
-				t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t), this));
-
+				t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t)));
 	}
 }
