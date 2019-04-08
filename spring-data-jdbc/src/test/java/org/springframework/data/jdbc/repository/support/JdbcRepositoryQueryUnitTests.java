@@ -47,6 +47,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
  * @author Oliver Gierke
  * @author Maciej Walkowiak
  * @author Evgeni Dimitrov
+ * @author Mark Paluch
  */
 public class JdbcRepositoryQueryUnitTests {
 
@@ -153,7 +154,7 @@ public class JdbcRepositoryQueryUnitTests {
 				.matches(crse -> crse.rowMapper != null, "RowMapper is not expected to be null");
 	}
 
-	@Test // DATAJDBC-263
+	@Test // DATAJDBC-263, DATAJDBC-354
 	public void publishesSingleEventWhenQueryReturnsSingleAggregate() {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
@@ -161,7 +162,7 @@ public class JdbcRepositoryQueryUnitTests {
 		doReturn(new DummyEntity(1L)).when(operations).queryForObject(anyString(), any(SqlParameterSource.class),
 				any(RowMapper.class));
 		doReturn(true).when(context).hasPersistentEntityFor(DummyEntity.class);
-		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getRequiredIdentifier())
+		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getIdentifier())
 				.thenReturn("some identifier");
 
 		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
@@ -169,7 +170,7 @@ public class JdbcRepositoryQueryUnitTests {
 		verify(publisher).publishEvent(any(AfterLoadEvent.class));
 	}
 
-	@Test // DATAJDBC-263
+	@Test // DATAJDBC-263, DATAJDBC-354
 	public void publishesAsManyEventsAsReturnedAggregates() {
 
 		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
@@ -177,7 +178,7 @@ public class JdbcRepositoryQueryUnitTests {
 		doReturn(Arrays.asList(new DummyEntity(1L), new DummyEntity(1L))).when(operations).query(anyString(),
 				any(SqlParameterSource.class), any(RowMapper.class));
 		doReturn(true).when(context).hasPersistentEntityFor(DummyEntity.class);
-		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getRequiredIdentifier())
+		when(context.getRequiredPersistentEntity(DummyEntity.class).getIdentifierAccessor(any()).getIdentifier())
 				.thenReturn("some identifier");
 
 		new JdbcRepositoryQuery(publisher, context, queryMethod, operations, defaultRowMapper).execute(new Object[] {});
