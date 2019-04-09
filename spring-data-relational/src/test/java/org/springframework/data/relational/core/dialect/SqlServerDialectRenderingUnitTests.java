@@ -30,8 +30,9 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
  * Tests for {@link SqlServerDialect}-specific rendering.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class SqlServerDialectRenderingTests {
+public class SqlServerDialectRenderingUnitTests {
 
 	private final RenderContextFactory factory = new RenderContextFactory(SqlServerDialect.INSTANCE);
 
@@ -73,7 +74,7 @@ public class SqlServerDialectRenderingTests {
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo(
-				"SELECT foo.*, ROW_NUMBER() over (ORDER BY CURRENT_TIMESTAMP) AS __relational_row_number__ FROM foo ORDER BY __relational_row_number__ OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY");
+				"SELECT foo.*, ROW_NUMBER() over (ORDER BY (SELECT 1)) AS __relational_row_number__ FROM foo ORDER BY __relational_row_number__ OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 
 	@Test // DATAJDBC-278
@@ -85,7 +86,7 @@ public class SqlServerDialectRenderingTests {
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo(
-				"SELECT foo.*, ROW_NUMBER() over (ORDER BY CURRENT_TIMESTAMP) AS __relational_row_number__ FROM foo ORDER BY __relational_row_number__ OFFSET 10 ROWS");
+				"SELECT foo.*, ROW_NUMBER() over (ORDER BY (SELECT 1)) AS __relational_row_number__ FROM foo ORDER BY __relational_row_number__ OFFSET 10 ROWS");
 	}
 
 	@Test // DATAJDBC-278
@@ -97,7 +98,7 @@ public class SqlServerDialectRenderingTests {
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo(
-				"SELECT foo.*, ROW_NUMBER() over (ORDER BY CURRENT_TIMESTAMP) AS __relational_row_number__ FROM foo ORDER BY __relational_row_number__ OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+				"SELECT foo.*, ROW_NUMBER() over (ORDER BY (SELECT 1)) AS __relational_row_number__ FROM foo ORDER BY __relational_row_number__ OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 
 	@Test // DATAJDBC-278

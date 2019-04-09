@@ -27,17 +27,42 @@ import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
 /**
- * Tests for {@link MySqlDialect}-specific rendering.
+ * Tests for {@link PostgresDialect}-specific rendering.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class MySqlDialectRenderingTests {
+public class PostgresDialectRenderingUnitTests {
 
-	private final RenderContextFactory factory = new RenderContextFactory(MySqlDialect.INSTANCE);
+	private final RenderContextFactory factory = new RenderContextFactory(PostgresDialect.INSTANCE);
 
 	@Before
-	public void before() {
+	public void before() throws Exception {
 		factory.setNamingStrategy(NamingStrategies.asIs());
+	}
+
+	@Test // DATAJDBC-278
+	public void shouldRenderSimpleSelect() {
+
+		Table table = Table.create("foo");
+		Select select = StatementBuilder.select(table.asterisk()).from(table).build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
+
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo");
+	}
+
+	@Test // DATAJDBC-278
+	public void shouldApplyNamingStrategy() {
+
+		factory.setNamingStrategy(NamingStrategies.toUpper());
+
+		Table table = Table.create("foo");
+		Select select = StatementBuilder.select(table.asterisk()).from(table).build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
+
+		assertThat(sql).isEqualTo("SELECT FOO.* FROM FOO");
 	}
 
 	@Test // DATAJDBC-278
@@ -57,8 +82,9 @@ public class MySqlDialectRenderingTests {
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk()).from(table).offset(10).build();
 
-		assertThatThrownBy(() -> SqlRenderer.create(factory.createRenderContext()).render(select))
-				.isInstanceOf(UnsupportedOperationException.class);
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
+
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo OFFSET 10");
 	}
 
 	@Test // DATAJDBC-278
@@ -69,6 +95,6 @@ public class MySqlDialectRenderingTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 20, 10");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10 OFFSET 20");
 	}
 }

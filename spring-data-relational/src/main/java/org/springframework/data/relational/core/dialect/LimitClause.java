@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.dialect;
  * A clause representing Dialect-specific {@code LIMIT}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 public interface LimitClause {
@@ -26,7 +27,7 @@ public interface LimitClause {
 	/**
 	 * Returns the {@code LIMIT} clause to limit results.
 	 *
-	 * @param limit the actual limit to use.
+	 * @param limit the maximum number of lines returned when the resulting SQL snippet is used.
 	 * @return rendered limit clause.
 	 * @see #getLimitOffset(long, long)
 	 */
@@ -35,19 +36,21 @@ public interface LimitClause {
 	/**
 	 * Returns the {@code OFFSET} clause to consume rows at a given offset.
 	 *
-	 * @param limit the actual limit to use.
-	 * @return rendered limit clause.
+	 * @param offset the numbers of rows that get skipped when the resulting SQL snippet is used.
+	 * @return rendered offset clause.
 	 * @see #getLimitOffset(long, long)
 	 */
-	String getOffset(long limit);
+	String getOffset(long offset);
 
 	/**
 	 * Returns a combined {@code LIMIT/OFFSET} clause that limits results and starts consumption at the given
 	 * {@code offset}.
 	 *
-	 * @param limit the actual limit to use.
-	 * @param offset the offset to start from.
+	 * @param limit  the maximum number of lines returned when the resulting SQL snippet is used.
+	 * @param offset the numbers of rows that get skipped when the resulting SQL snippet is used.
 	 * @return rendered limit clause.
+	 * @see #getLimit(long)
+	 * @see #getOffset(long)
 	 */
 	String getLimitOffset(long limit, long offset);
 

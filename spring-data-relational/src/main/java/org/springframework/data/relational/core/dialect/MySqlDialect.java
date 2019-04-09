@@ -19,6 +19,7 @@ package org.springframework.data.relational.core.dialect;
  * An SQL dialect for MySQL.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 public class MySqlDialect extends AbstractDialect {
@@ -45,7 +46,9 @@ public class MySqlDialect extends AbstractDialect {
 		 */
 		@Override
 		public String getOffset(long offset) {
-			throw new UnsupportedOperationException("MySQL does not support OFFSET without LIMIT");
+			// Ugly but the official workaround for offset without limit
+			// see: https://stackoverflow.com/a/271650
+			return String.format("LIMIT %d, 18446744073709551615", offset);
 		}
 
 		/*
@@ -56,7 +59,7 @@ public class MySqlDialect extends AbstractDialect {
 		public String getLimitOffset(long limit, long offset) {
 
 			// LIMIT {[offset,] row_count}
-			return String.format("LIMIT %d, %d", offset, limit);
+			return String.format("LIMIT %s, %s", offset, limit);
 		}
 
 		/*

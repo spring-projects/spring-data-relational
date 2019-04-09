@@ -23,6 +23,7 @@ import org.junit.Test;
  * Unit tests for {@link MySqlDialect}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class MySqlDialectUnitTests {
 
@@ -48,7 +49,7 @@ public class MySqlDialectUnitTests {
 
 		LimitClause limit = MySqlDialect.INSTANCE.limit();
 
-		assertThatThrownBy(() -> limit.getOffset(10)).isInstanceOf(UnsupportedOperationException.class);
+		assertThat(limit.getOffset(10)).isEqualTo("LIMIT 10, 18446744073709551615");
 	}
 
 	@Test // DATAJDBC-278

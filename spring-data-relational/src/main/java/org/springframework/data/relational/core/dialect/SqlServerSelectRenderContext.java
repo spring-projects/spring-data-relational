@@ -33,7 +33,7 @@ public class SqlServerSelectRenderContext implements SelectRenderContext {
 
 	private static final String SYNTHETIC_ORDER_BY_FIELD = "__relational_row_number__";
 
-	private static final String SYNTHETIC_SELECT_LIST = ", ROW_NUMBER() over (ORDER BY CURRENT_TIMESTAMP) AS "
+	private static final String SYNTHETIC_SELECT_LIST = ", ROW_NUMBER() over (ORDER BY (SELECT 1)) AS "
 			+ SYNTHETIC_ORDER_BY_FIELD;
 
 	private final Function<Select, CharSequence> afterOrderBy;

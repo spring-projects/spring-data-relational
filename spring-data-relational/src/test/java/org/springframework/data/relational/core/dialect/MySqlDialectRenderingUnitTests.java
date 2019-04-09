@@ -27,41 +27,18 @@ import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 
 /**
- * Tests for {@link PostgresDialect}-specific rendering.
+ * Tests for {@link MySqlDialect}-specific rendering.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class PostgresDialectRenderingTests {
+public class MySqlDialectRenderingUnitTests {
 
-	private final RenderContextFactory factory = new RenderContextFactory(PostgresDialect.INSTANCE);
+	private final RenderContextFactory factory = new RenderContextFactory(MySqlDialect.INSTANCE);
 
 	@Before
-	public void before() throws Exception {
+	public void before() {
 		factory.setNamingStrategy(NamingStrategies.asIs());
-	}
-
-	@Test // DATAJDBC-278
-	public void shouldRenderSimpleSelect() {
-
-		Table table = Table.create("foo");
-		Select select = StatementBuilder.select(table.asterisk()).from(table).build();
-
-		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
-
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo");
-	}
-
-	@Test // DATAJDBC-278
-	public void shouldApplyNamingStrategy() {
-
-		factory.setNamingStrategy(NamingStrategies.toUpper());
-
-		Table table = Table.create("foo");
-		Select select = StatementBuilder.select(table.asterisk()).from(table).build();
-
-		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
-
-		assertThat(sql).isEqualTo("SELECT FOO.* FROM FOO");
 	}
 
 	@Test // DATAJDBC-278
@@ -83,7 +60,7 @@ public class PostgresDialectRenderingTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo OFFSET 10");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10, 18446744073709551615");
 	}
 
 	@Test // DATAJDBC-278
@@ -94,6 +71,6 @@ public class PostgresDialectRenderingTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10 OFFSET 20");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 20, 10");
 	}
 }
