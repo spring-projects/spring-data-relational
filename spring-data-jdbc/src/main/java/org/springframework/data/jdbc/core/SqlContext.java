@@ -19,6 +19,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 
 /**
  * Utility to get from path to SQL DSL elements.

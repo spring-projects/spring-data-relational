@@ -20,11 +20,13 @@ import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 
 /**
  * @author Jens Schauder
@@ -41,7 +43,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 			softly.assertThat(extPath(entity).isEmbedded()).isFalse();
 			softly.assertThat(extPath("second").isEmbedded()).isFalse();
-			softly.assertThat(extPath("second.third").isEmbedded()).isTrue();
+			softly.assertThat(extPath("second.third2").isEmbedded()).isTrue();
 		});
 	}
 
@@ -52,8 +54,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 			softly.assertThat(extPath(entity).isMultiValued()).isFalse();
 			softly.assertThat(extPath("second").isMultiValued()).isFalse();
-			softly.assertThat(extPath("second.third").isMultiValued()).isFalse();
-			softly.assertThat(extPath("secondList.third").isMultiValued()).isTrue();
+			softly.assertThat(extPath("second.third2").isMultiValued()).isFalse();
+			softly.assertThat(extPath("secondList.third2").isMultiValued()).isTrue();
 			softly.assertThat(extPath("secondList").isMultiValued()).isTrue();
 		});
 	}
@@ -68,8 +70,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 			softly.assertThat(extPath(entity).getLeafEntity()).isEqualTo(entity);
 			softly.assertThat(extPath("second").getLeafEntity()).isEqualTo(second);
-			softly.assertThat(extPath("second.third").getLeafEntity()).isEqualTo(third);
-			softly.assertThat(extPath("secondList.third").getLeafEntity()).isEqualTo(third);
+			softly.assertThat(extPath("second.third2").getLeafEntity()).isEqualTo(third);
+			softly.assertThat(extPath("secondList.third2").getLeafEntity()).isEqualTo(third);
 			softly.assertThat(extPath("secondList").getLeafEntity()).isEqualTo(second);
 		});
 	}
@@ -82,10 +84,10 @@ public class PersistentPropertyPathExtensionUnitTests {
 			softly.assertThat(extPath(entity).isEntity()).isTrue();
 			String path = "second";
 			softly.assertThat(extPath(path).isEntity()).isTrue();
-			softly.assertThat(extPath("second.third").isEntity()).isTrue();
-			softly.assertThat(extPath("second.third.value").isEntity()).isFalse();
-			softly.assertThat(extPath("secondList.third").isEntity()).isTrue();
-			softly.assertThat(extPath("secondList.third.value").isEntity()).isFalse();
+			softly.assertThat(extPath("second.third2").isEntity()).isTrue();
+			softly.assertThat(extPath("second.third2.value").isEntity()).isFalse();
+			softly.assertThat(extPath("secondList.third2").isEntity()).isTrue();
+			softly.assertThat(extPath("secondList.third2.value").isEntity()).isFalse();
 			softly.assertThat(extPath("secondList").isEntity()).isTrue();
 		});
 	}
@@ -97,10 +99,10 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 			softly.assertThat(extPath(entity).getTableName()).isEqualTo("dummy_entity");
 			softly.assertThat(extPath("second").getTableName()).isEqualTo("second");
-			softly.assertThat(extPath("second.third").getTableName()).isEqualTo("second");
-			softly.assertThat(extPath("second.third.value").getTableName()).isEqualTo("second");
-			softly.assertThat(extPath("secondList.third").getTableName()).isEqualTo("second");
-			softly.assertThat(extPath("secondList.third.value").getTableName()).isEqualTo("second");
+			softly.assertThat(extPath("second.third2").getTableName()).isEqualTo("second");
+			softly.assertThat(extPath("second.third2.value").getTableName()).isEqualTo("second");
+			softly.assertThat(extPath("secondList.third2").getTableName()).isEqualTo("second");
+			softly.assertThat(extPath("secondList.third2.value").getTableName()).isEqualTo("second");
 			softly.assertThat(extPath("secondList").getTableName()).isEqualTo("second");
 		});
 	}
@@ -112,16 +114,16 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 			softly.assertThat(extPath(entity).getTableAlias()).isEqualTo(null);
 			softly.assertThat(extPath("second").getTableAlias()).isEqualTo("second");
-			softly.assertThat(extPath("second.third").getTableAlias()).isEqualTo("second");
-			softly.assertThat(extPath("second.third.value").getTableAlias()).isEqualTo("second");
-			softly.assertThat(extPath("second.third2").getTableAlias()).isEqualTo("second_third2");
-			softly.assertThat(extPath("second.third2.value").getTableAlias()).isEqualTo("second_third2");
-			softly.assertThat(extPath("secondList.third").getTableAlias()).isEqualTo("secondList");
-			softly.assertThat(extPath("secondList.third.value").getTableAlias()).isEqualTo("secondList");
-			softly.assertThat(extPath("secondList.third2").getTableAlias()).isEqualTo("secondList_third2");
-			softly.assertThat(extPath("secondList.third2.value").getTableAlias()).isEqualTo("secondList_third2");
+			softly.assertThat(extPath("second.third2").getTableAlias()).isEqualTo("second");
+			softly.assertThat(extPath("second.third2.value").getTableAlias()).isEqualTo("second");
+			softly.assertThat(extPath("second.third").getTableAlias()).isEqualTo("second_third");
+			softly.assertThat(extPath("second.third.value").getTableAlias()).isEqualTo("second_third");
+			softly.assertThat(extPath("secondList.third2").getTableAlias()).isEqualTo("secondList");
+			softly.assertThat(extPath("secondList.third2.value").getTableAlias()).isEqualTo("secondList");
+			softly.assertThat(extPath("secondList.third").getTableAlias()).isEqualTo("secondList_third");
+			softly.assertThat(extPath("secondList.third.value").getTableAlias()).isEqualTo("secondList_third");
 			softly.assertThat(extPath("secondList").getTableAlias()).isEqualTo("secondList");
-			softly.assertThat(extPath("second2.third2").getTableAlias()).isEqualTo("secthird2");
+			softly.assertThat(extPath("second2.third").getTableAlias()).isEqualTo("secthird");
 		});
 	}
 
@@ -130,12 +132,67 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 		SoftAssertions.assertSoftly(softly -> {
 
-			softly.assertThat(extPath("second.third.value").getColumnName()).isEqualTo("thrdvalue");
-			softly.assertThat(extPath("second.third2.value").getColumnName()).isEqualTo("value");
-			softly.assertThat(extPath("secondList.third.value").getColumnName()).isEqualTo("thrdvalue");
-			softly.assertThat(extPath("secondList.third2.value").getColumnName()).isEqualTo("value");
-			softly.assertThat(extPath("second2.third.value").getColumnName()).isEqualTo("secthrdvalue");
-			softly.assertThat(extPath("second2.third2.value").getColumnName()).isEqualTo("value");
+			softly.assertThat(extPath("second.third2.value").getColumnName()).isEqualTo("thrdvalue");
+			softly.assertThat(extPath("second.third.value").getColumnName()).isEqualTo("value");
+			softly.assertThat(extPath("secondList.third2.value").getColumnName()).isEqualTo("thrdvalue");
+			softly.assertThat(extPath("secondList.third.value").getColumnName()).isEqualTo("value");
+			softly.assertThat(extPath("second2.third2.value").getColumnName()).isEqualTo("secthrdvalue");
+			softly.assertThat(extPath("second2.third.value").getColumnName()).isEqualTo("value");
+		});
+	}
+
+	@Test // DATAJDBC-359
+	public void idDefiningPath() {
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(extPath("second.third2.value").getIdDefiningParentPath().getLength()).isEqualTo(0);
+			softly.assertThat(extPath("second.third.value").getIdDefiningParentPath().getLength()).isEqualTo(0);
+			softly.assertThat(extPath("secondList.third2.value").getIdDefiningParentPath().getLength()).isEqualTo(0);
+			softly.assertThat(extPath("secondList.third.value").getIdDefiningParentPath().getLength()).isEqualTo(0);
+			softly.assertThat(extPath("second2.third2.value").getIdDefiningParentPath().getLength()).isEqualTo(0);
+			softly.assertThat(extPath("second2.third.value").getIdDefiningParentPath().getLength()).isEqualTo(0);
+			softly.assertThat(extPath("withId.second.third2.value").getIdDefiningParentPath().getLength()).isEqualTo(1);
+			softly.assertThat(extPath("withId.second.third.value").getIdDefiningParentPath().getLength()).isEqualTo(1);
+		});
+	}
+
+	@Test // DATAJDBC-359
+	public void reverseColumnName() {
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(extPath("second.third2").getReverseColumnName()).isEqualTo("dummy_entity");
+			softly.assertThat(extPath("second.third").getReverseColumnName()).isEqualTo("dummy_entity");
+			softly.assertThat(extPath("secondList.third2").getReverseColumnName()).isEqualTo("dummy_entity");
+			softly.assertThat(extPath("secondList.third").getReverseColumnName()).isEqualTo("dummy_entity");
+			softly.assertThat(extPath("second2.third2").getReverseColumnName()).isEqualTo("dummy_entity");
+			softly.assertThat(extPath("second2.third").getReverseColumnName()).isEqualTo("dummy_entity");
+			softly.assertThat(extPath("withId.second.third2.value").getReverseColumnName()).isEqualTo("with_id");
+			softly.assertThat(extPath("withId.second.third").getReverseColumnName()).isEqualTo("with_id");
+			softly.assertThat(extPath("withId.second2.third").getReverseColumnName()).isEqualTo("with_id");
+		});
+	}
+
+	@Test // DATAJDBC-359
+	public void getRequiredIdProperty() {
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(extPath(entity).getRequiredIdProperty().getName()).isEqualTo("entityId");
+			softly.assertThat(extPath("withId").getRequiredIdProperty().getName()).isEqualTo("withIdId");
+			softly.assertThatThrownBy(()->extPath("second").getRequiredIdProperty()).isInstanceOf(IllegalStateException.class);
+		});
+	}
+
+	@Test // DATAJDBC-359
+	public void extendBy() {
+
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(extPath(entity).extendBy(entity.getRequiredPersistentProperty("withId"))).isEqualTo(extPath("withId"));
+			softly.assertThat(extPath("withId").extendBy(extPath("withId").getRequiredIdProperty())).isEqualTo(extPath("withId.withIdId"));
 		});
 	}
 
@@ -155,20 +212,28 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 	@SuppressWarnings("unused")
 	static class DummyEntity {
+		@Id Long entityId;
 		Second second;
-		List<Second> secondList;
 		@Embedded("sec") Second second2;
+		List<Second> secondList;
+		WithId withId;
 	}
 
 	@SuppressWarnings("unused")
 	static class Second {
-		@Embedded("thrd") Third third;
-		Third third2;
+		Third third;
+		@Embedded("thrd") Third third2;
 	}
 
 	@SuppressWarnings("unused")
 	static class Third {
 		String value;
+	}
+	@SuppressWarnings("unused")
+	static class WithId {
+		@Id Long withIdId;
+		Second second;
+		@Embedded("sec") Second second2;
 	}
 
 }

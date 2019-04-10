@@ -28,6 +28,7 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -70,27 +71,27 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	@Override
 	public T mapRow(ResultSet resultSet, int rowNumber) {
 
-		String prefix = "";
+		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, entity);
 
 		RelationalPersistentProperty idProperty = entity.getIdProperty();
 
 		Object idValue = null;
 		if (idProperty != null) {
-			idValue = readFrom(resultSet, idProperty, prefix);
+			idValue = readFrom(resultSet, idProperty, path);
 		}
 
-		T result = createInstance(entity, resultSet, idValue, prefix);
+		T result = createInstance(entity, resultSet, idValue, path);
 
 		return entity.requiresPropertyPopulation() //
-				? populateProperties(result, resultSet) //
+				? populateProperties(result, resultSet, path) //
 				: result;
 	}
 
-	private T populateProperties(T result, ResultSet resultSet) {
+	private T populateProperties(T result, ResultSet resultSet, PersistentPropertyPathExtension path) {
 
 		PersistentPropertyAccessor<T> propertyAccessor = converter.getPropertyAccessor(entity, result);
 
-		Object id = idProperty == null ? null : readFrom(resultSet, idProperty, "");
+		Object id = idProperty == null ? null : readFrom(resultSet, idProperty, path);
 
 		PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
 
@@ -100,7 +101,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 				continue;
 			}
 
-			propertyAccessor.setProperty(property, readOrLoadProperty(resultSet, id, property, ""));
+			propertyAccessor.setProperty(property, readOrLoadProperty(resultSet, id, property, path));
 		}
 
 		return propertyAccessor.getBean();
@@ -108,16 +109,16 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 	@Nullable
 	private Object readOrLoadProperty(ResultSet resultSet, @Nullable Object id, RelationalPersistentProperty property,
-			String prefix) {
+			PersistentPropertyPathExtension path) {
 
 		if (property.isCollectionLike() && property.isEntity() && id != null) {
 			return accessStrategy.findAllByProperty(id, property);
 		} else if (property.isMap() && id != null) {
 			return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(accessStrategy.findAllByProperty(id, property));
 		} else if (property.isEmbedded()) {
-			return readEmbeddedEntityFrom(resultSet, id, property, prefix);
+			return readEmbeddedEntityFrom(resultSet, id, property, path);
 		} else {
-			return readFrom(resultSet, property, prefix);
+			return readFrom(resultSet, property, path);
 		}
 	}
 
@@ -126,45 +127,47 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	 *
 	 * @param resultSet the {@link ResultSet} to extract the value from. Must not be {@code null}.
 	 * @param property the {@link RelationalPersistentProperty} for which the value is intended. Must not be {@code null}.
-	 * @param prefix to be used for all column names accessed by this method. Must not be {@code null}.
+	 * @param path
 	 * @return the value read from the {@link ResultSet}. May be {@code null}.
 	 */
 	@Nullable
-	private Object readFrom(ResultSet resultSet, RelationalPersistentProperty property, String prefix) {
+	private Object readFrom(ResultSet resultSet, RelationalPersistentProperty property,
+			PersistentPropertyPathExtension path) {
 
 		if (property.isEntity()) {
-			return readEntityFrom(resultSet, property, prefix);
+			return readEntityFrom(resultSet, property, path);
 		}
 
-		Object value = getObjectFromResultSet(resultSet, prefix + property.getColumnName());
+		Object value = getObjectFromResultSet(resultSet, path.extendBy(property).getColumnAlias());
 		return converter.readValue(value, property.getTypeInformation());
 
 	}
 
 	private Object readEmbeddedEntityFrom(ResultSet rs, @Nullable Object id, RelationalPersistentProperty property,
-			String prefix) {
+			PersistentPropertyPathExtension path) {
 
-		String newPrefix = prefix + property.getEmbeddedPrefix();
+		PersistentPropertyPathExtension newPath = path.extendBy(property);
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(property.getActualType());
 
-		Object instance = createInstance(entity, rs, null, newPrefix);
+		Object instance = createInstance(entity, rs, null, newPath);
 
 		@SuppressWarnings("unchecked")
 		PersistentPropertyAccessor<?> accessor = converter.getPropertyAccessor((PersistentEntity<Object, ?>) entity,
 				instance);
 
 		for (RelationalPersistentProperty p : entity) {
-			accessor.setProperty(p, readOrLoadProperty(rs, id, p, newPrefix));
+			accessor.setProperty(p, readOrLoadProperty(rs, id, p, newPath));
 		}
 
 		return instance;
 	}
 
 	@Nullable
-	private <S> S readEntityFrom(ResultSet rs, RelationalPersistentProperty property, String prefix) {
+	private <S> S readEntityFrom(ResultSet rs, RelationalPersistentProperty property,
+			PersistentPropertyPathExtension path) {
 
-		String newPrefix = prefix + property.getName() + "_";
+		PersistentPropertyPathExtension newPath = path.extendBy(property);
 
 		@SuppressWarnings("unchecked")
 		RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) context
@@ -175,22 +178,22 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		Object idValue = null;
 
 		if (idProperty != null) {
-			idValue = readFrom(rs, idProperty, newPrefix);
+			idValue = readFrom(rs, idProperty, newPath);
 		}
 
 		if ((idProperty != null //
 				? idValue //
-				: getObjectFromResultSet(rs, newPrefix + property.getReverseColumnName()) //
+				: getObjectFromResultSet(rs, newPath.getReverseColumnNameAlias()) //
 		) == null) {
 			return null;
 		}
 
-		S instance = createInstance(entity, rs, idValue, newPrefix);
+		S instance = createInstance(entity, rs, idValue, newPath);
 
 		PersistentPropertyAccessor<S> accessor = converter.getPropertyAccessor(entity, instance);
 
 		for (RelationalPersistentProperty p : entity) {
-			accessor.setProperty(p, readOrLoadProperty(rs, idValue, p, newPrefix));
+			accessor.setProperty(p, readOrLoadProperty(rs, idValue, p, newPath));
 		}
 
 		return instance;
@@ -207,7 +210,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	}
 
 	private <S> S createInstance(RelationalPersistentEntity<S> entity, ResultSet rs, @Nullable Object idValue,
-			String prefix) {
+			PersistentPropertyPathExtension path) {
 
 		return converter.createInstance(entity, parameter -> {
 
@@ -217,7 +220,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 
 			RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
 
-			return readOrLoadProperty(rs, idValue, property, prefix);
+			return readOrLoadProperty(rs, idValue, property, path);
 		});
 	}
 }

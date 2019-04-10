@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 import org.springframework.lang.Nullable;
 
 /**
@@ -56,7 +57,16 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	@Override
 	RelationalPersistentEntity<?> getOwner();
 
+	/**
+	 * @return
+	 * @deprecated Use {@link #getReverseColumnName(PersistentPropertyPathExtension)} instead.
+	 */
+	@Deprecated
 	String getReverseColumnName();
+
+	default String getReverseColumnName(PersistentPropertyPathExtension path) {
+		return getReverseColumnName();
+	}
 
 	@Nullable
 	String getKeyColumn();

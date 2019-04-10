@@ -24,7 +24,6 @@ import java.util.Set;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -38,6 +37,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -357,6 +357,30 @@ public class SqlGeneratorUnitTests {
 								")))");
 	}
 
+	@Test // DATAJDBC-359
+	public void deletingLongChainNoId() {
+
+		assertThat(
+				createSqlGenerator(NoIdChain4.class).createDeleteByPath(getPath("chain3.chain2.chain1.chain0", NoIdChain4.class))) //
+						.isEqualTo("DELETE FROM no_id_chain0 WHERE no_id_chain0.no_id_chain4 = :rootId");
+	}
+
+	@Test // DATAJDBC-359
+	public void deletingLongChainNoIdWithBackreferenceNotReferencingTheRoot() {
+
+		assertThat(
+				createSqlGenerator(IdIdNoIdChain.class).createDeleteByPath(getPath("idNoIdChain.chain4.chain3.chain2.chain1.chain0", IdIdNoIdChain.class))) //
+						.isEqualTo("DELETE FROM no_id_chain0 " +
+								"WHERE no_id_chain0.no_id_chain4 IN (" +
+								"SELECT no_id_chain4.x_four " +
+								"FROM no_id_chain4 " +
+								"WHERE no_id_chain4.id_no_id_chain IN (" +
+								"SELECT id_no_id_chain.x_id " +
+								"FROM id_no_id_chain " +
+								"WHERE id_no_id_chain.id_id_no_id_chain = :rootId" +
+								"))");
+	}
+
 	@Test // DATAJDBC-340
 	public void noJoinForSimpleColumn() {
 		assertThat(generateJoin("id", DummyEntity.class)).isNull();
@@ -584,5 +608,40 @@ public class SqlGeneratorUnitTests {
 		@Id Long four;
 		String fourValue;
 		Chain3 chain3;
+	}
+
+	static class NoIdChain0 {
+		String zeroValue;
+	}
+
+	static class NoIdChain1 {
+		String oneValue;
+		NoIdChain0 chain0;
+	}
+
+	static class NoIdChain2 {
+		String twoValue;
+		NoIdChain1 chain1;
+	}
+
+	static class NoIdChain3 {
+		String threeValue;
+		NoIdChain2 chain2;
+	}
+
+	static class NoIdChain4 {
+		@Id Long four;
+		String fourValue;
+		NoIdChain3 chain3;
+	}
+
+	static class IdNoIdChain {
+		@Id Long id;
+		NoIdChain4 chain4;
+	}
+
+	static class IdIdNoIdChain {
+		@Id Long id;
+		IdNoIdChain idNoIdChain;
 	}
 }

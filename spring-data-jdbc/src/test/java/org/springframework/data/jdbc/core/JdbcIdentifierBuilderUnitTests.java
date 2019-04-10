@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
@@ -30,6 +29,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 
 /**
  * Unit tests for the {@link JdbcIdentifierBuilder}.
@@ -55,7 +55,7 @@ public class JdbcIdentifierBuilderUnitTests {
 	@Test // DATAJDBC-326
 	public void qualifiersForMaps() {
 
-		PersistentPropertyPath<RelationalPersistentProperty> path = getPath("children");
+		PersistentPropertyPathExtension path = getPath("children");
 
 		Identifier identifier = JdbcIdentifierBuilder //
 				.forBackReferences(path, "parent-eins") //
@@ -73,7 +73,7 @@ public class JdbcIdentifierBuilderUnitTests {
 	@Test // DATAJDBC-326
 	public void qualifiersForLists() {
 
-		PersistentPropertyPath<RelationalPersistentProperty> path = getPath("moreChildren");
+		PersistentPropertyPathExtension path = getPath("moreChildren");
 
 		Identifier identifier = JdbcIdentifierBuilder //
 				.forBackReferences(path, "parent-eins") //
@@ -98,13 +98,26 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						tuple("embeddable", "parent-eins", UUID.class) //
+						tuple("dummy_entity", "parent-eins", UUID.class) //
 				);
 	}
 
-	@NotNull
-	private PersistentPropertyPath<RelationalPersistentProperty> getPath(String dotPath) {
-		return toPath(dotPath, DummyEntity.class, context);
+	@Test // DATAJDBC-326
+	public void backreferenceAcrossNoId() {
+
+		Identifier identifier = JdbcIdentifierBuilder //
+				.forBackReferences(getPath("noId.child"), "parent-eins") //
+				.build();
+
+		assertThat(identifier.getParts()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly( //
+						tuple("dummy_entity", "parent-eins", UUID.class) //
+				);
+	}
+
+	private PersistentPropertyPathExtension getPath(String dotPath) {
+		return new PersistentPropertyPathExtension(context, toPath(dotPath, DummyEntity.class, context));
 	}
 
 	@SuppressWarnings("unused")
@@ -120,10 +133,17 @@ public class JdbcIdentifierBuilderUnitTests {
 		List<Child> moreChildren;
 
 		Embeddable embeddable;
+
+		NoId noId;
 	}
 
 	@SuppressWarnings("unused")
 	static class Embeddable {
+		Child child;
+	}
+
+	@SuppressWarnings("unused")
+	static class NoId {
 		Child child;
 	}
 

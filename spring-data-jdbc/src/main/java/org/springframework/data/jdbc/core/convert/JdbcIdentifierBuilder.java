@@ -18,7 +18,9 @@ package org.springframework.data.jdbc.core.convert;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Builder for {@link Identifier}. Mainly for internal use within the framework
@@ -41,22 +43,33 @@ public class JdbcIdentifierBuilder {
 	/**
 	 * Creates ParentKeys with backreference for the given path and value of the parents id.
 	 */
-	public static JdbcIdentifierBuilder forBackReferences(PersistentPropertyPath<RelationalPersistentProperty> path,
-			@Nullable Object value) {
+	public static JdbcIdentifierBuilder forBackReferences(PersistentPropertyPathExtension path,
+														  @Nullable Object value) {
 
 		Identifier identifier = Identifier.of( //
-				path.getRequiredLeafProperty().getReverseColumnName(), //
+				path.getReverseColumnName(), //
 				value, //
-				getLastIdProperty(path).getColumnType() //
+				path.getIdDefiningParentPath().getRequiredIdProperty().getColumnType() //
 		);
 
 		return new JdbcIdentifierBuilder(identifier);
 	}
 
-	public JdbcIdentifierBuilder withQualifier(PersistentPropertyPath<RelationalPersistentProperty> path, Object value) {
+	/**
+	 * Adds a qualifier to the identifier to build.
+	 *
+	 * A qualifier is a map key or a list index.
+	 *
+	 * @param path path to the map that gets qualified by {@code value}. Must not be {@literal null}.
+	 * @param value map key or list index qualifying the map identified by {@code path}. Must not be {@literal null}.
+	 * @return this builder. Guaranteed to be not {@literal null}.
+	 */
+	public JdbcIdentifierBuilder withQualifier(PersistentPropertyPathExtension path, Object value) {
 
-		RelationalPersistentProperty leafProperty = path.getRequiredLeafProperty();
-		identifier = identifier.withPart(leafProperty.getKeyColumn(), value, leafProperty.getQualifierColumnType());
+		Assert.notNull(path, "Path must not be null");
+		Assert.notNull(value, "Value must not be null");
+
+		identifier = identifier.withPart(path.getKeyColumn(), value, path.getQualifierColumnType());
 
 		return this;
 	}

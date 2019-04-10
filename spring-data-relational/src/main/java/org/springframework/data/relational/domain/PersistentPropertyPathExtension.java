@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.relational.domain;
+
+import lombok.EqualsAndHashCode;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
@@ -29,13 +31,15 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @since 1.1
  */
-class PersistentPropertyPathExtension {
+@EqualsAndHashCode
+public class PersistentPropertyPathExtension {
 
 	private final RelationalPersistentEntity<?> entity;
 	private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context;
 
-	PersistentPropertyPathExtension(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
+	public PersistentPropertyPathExtension(
+			MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
 			RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(context, "Context must not be null.");
@@ -46,7 +50,8 @@ class PersistentPropertyPathExtension {
 		this.path = null;
 	}
 
-	PersistentPropertyPathExtension(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
+	public PersistentPropertyPathExtension(
+			MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
 			PersistentPropertyPath<RelationalPersistentProperty> path) {
 
 		Assert.notNull(context, "Context must not be null.");
@@ -63,7 +68,7 @@ class PersistentPropertyPathExtension {
 	 *
 	 * @return if the leaf property is embedded.
 	 */
-	boolean isEmbedded() {
+	public boolean isEmbedded() {
 		return path != null && path.getRequiredLeafProperty().isEmbedded();
 	}
 
@@ -73,7 +78,7 @@ class PersistentPropertyPathExtension {
 	 * @return the parent path. Guaranteed to be not {@literal null}.
 	 * @throws IllegalStateException when called on an empty path.
 	 */
-	PersistentPropertyPathExtension getParentPath() {
+	public PersistentPropertyPathExtension getParentPath() {
 
 		if (path == null) {
 			throw new IllegalStateException("The parent path of a root path is not defined.");
@@ -92,7 +97,7 @@ class PersistentPropertyPathExtension {
 	 *
 	 * @return {@literal true} if the path contains a multivalued element.
 	 */
-	boolean isMultiValued() {
+	public boolean isMultiValued() {
 
 		return path != null && //
 				(path.getRequiredLeafProperty().isCollectionLike() //
@@ -107,28 +112,28 @@ class PersistentPropertyPathExtension {
 	 * @return Might return {@literal null} when called on a path that does not represent an entity.
 	 */
 	@Nullable
-	RelationalPersistentEntity<?> getLeafEntity() {
+	public RelationalPersistentEntity<?> getLeafEntity() {
 		return path == null ? entity : context.getPersistentEntity(path.getRequiredLeafProperty().getActualType());
 	}
 
 	/**
 	 * @return {@literal true} when this is an empty path or the path references an entity.
 	 */
-	boolean isEntity() {
+	public boolean isEntity() {
 		return path == null || path.getRequiredLeafProperty().isEntity();
 	}
 
 	/**
 	 * @return {@literal true} when this is references a {@link java.util.List} or {@link java.util.Map}.
 	 */
-	boolean isQualified() {
+	public boolean isQualified() {
 		return path != null && path.getRequiredLeafProperty().isQualified();
 	}
 
 	/**
 	 * @return {@literal true} when this is references a {@link java.util.Collection} or an array.
 	 */
-	boolean isCollectionLike() {
+	public boolean isCollectionLike() {
 		return path != null && path.getRequiredLeafProperty().isCollectionLike();
 	}
 
@@ -137,11 +142,11 @@ class PersistentPropertyPathExtension {
 	 *
 	 * @throws IllegalStateException when called on an empty path.
 	 */
-	String getReverseColumnName() {
+	public String getReverseColumnName() {
 
-		Assert.state(path != null, "Path is null");
+		Assert.state(path != null, "Empty paths don't have a reverse column name");
 
-		return path.getRequiredLeafProperty().getReverseColumnName();
+		return path.getRequiredLeafProperty().getReverseColumnName(this);
 	}
 
 	/**
@@ -149,7 +154,7 @@ class PersistentPropertyPathExtension {
 	 *
 	 * @throws IllegalStateException when called on an empty path.
 	 */
-	String getReverseColumnNameAlias() {
+	public String getReverseColumnNameAlias() {
 
 		return prefixWithTableAlias(getReverseColumnName());
 	}
@@ -159,7 +164,7 @@ class PersistentPropertyPathExtension {
 	 *
 	 * @throws IllegalStateException when called on an empty path.
 	 */
-	String getColumnName() {
+	public String getColumnName() {
 
 		Assert.state(path != null, "Path is null");
 
@@ -171,7 +176,7 @@ class PersistentPropertyPathExtension {
 	 *
 	 * @throws IllegalStateException when called on an empty path.
 	 */
-	String getColumnAlias() {
+	public String getColumnAlias() {
 
 		return prefixWithTableAlias(getColumnName());
 	}
@@ -179,20 +184,20 @@ class PersistentPropertyPathExtension {
 	/**
 	 * @return {@literal true} if this path represents an entity which has an Id attribute.
 	 */
-	boolean hasIdProperty() {
+	public boolean hasIdProperty() {
 
 		RelationalPersistentEntity<?> leafEntity = getLeafEntity();
 		return leafEntity != null && leafEntity.hasIdProperty();
 	}
 
-	PersistentPropertyPathExtension getIdDefiningParentPath() {
+	public PersistentPropertyPathExtension getIdDefiningParentPath() {
 
 		PersistentPropertyPathExtension parent = getParentPath();
 		if (parent.path == null) {
 			return parent;
 		}
-		if (parent.isEmbedded()) {
-			return getParentPath().getIdDefiningParentPath();
+		if (!parent.hasIdProperty()) {
+			return parent.getIdDefiningParentPath();
 		}
 		return parent;
 	}
@@ -202,7 +207,7 @@ class PersistentPropertyPathExtension {
 	 *
 	 * @return the name of the table. Guaranteed to be not {@literal null}.
 	 */
-	String getTableName() {
+	public String getTableName() {
 		return getTableOwningAncestor().getRequiredLeafEntity().getTableName();
 	}
 
@@ -212,7 +217,7 @@ class PersistentPropertyPathExtension {
 	 * @return a table alias, {@literal null} if the table owning path is the empty path.
 	 */
 	@Nullable
-	String getTableAlias() {
+	public String getTableAlias() {
 
 		PersistentPropertyPathExtension tableOwner = getTableOwningAncestor();
 
@@ -223,7 +228,7 @@ class PersistentPropertyPathExtension {
 	/**
 	 * The column name of the id column of the ancestor path that represents an actual table.
 	 */
-	String getIdColumnName() {
+	public String getIdColumnName() {
 		return getTableOwningAncestor().getRequiredLeafEntity().getIdColumn();
 	}
 
@@ -231,7 +236,7 @@ class PersistentPropertyPathExtension {
 	 * If the table owning ancestor has an id the column name of that id property is returned. Otherwise the reverse
 	 * column is returned.
 	 */
-	String getEffectiveIdColumnName() {
+	public String getEffectiveIdColumnName() {
 
 		PersistentPropertyPathExtension owner = getTableOwningAncestor();
 		return owner.path == null ? owner.getRequiredLeafEntity().getIdColumn() : owner.getReverseColumnName();
@@ -240,7 +245,7 @@ class PersistentPropertyPathExtension {
 	/**
 	 * The length of the path.
 	 */
-	int getLength() {
+	public int getLength() {
 		return path == null ? 0 : path.getLength();
 	}
 
@@ -299,4 +304,36 @@ class PersistentPropertyPathExtension {
 		return tableAlias == null ? columnName : tableAlias + "_" + columnName;
 	}
 
+	public boolean matches(PersistentPropertyPath<RelationalPersistentProperty> path) {
+		return this.path == null ? path.isEmpty() : this.path.equals(path);
+	}
+
+	public RelationalPersistentProperty getRequiredIdProperty() {
+		return this.path == null ? entity.getRequiredIdProperty() : getLeafEntity().getRequiredIdProperty();
+	}
+
+	public String getKeyColumn() {
+		return path == null ? "" : path.getRequiredLeafProperty().getKeyColumn();
+	}
+
+	public Class<?> getQualifierColumnType() {
+		return path == null ? null : path.getRequiredLeafProperty().getQualifierColumnType();
+	}
+
+	public PersistentPropertyPathExtension extendBy(RelationalPersistentProperty property) {
+
+		PersistentPropertyPath<RelationalPersistentProperty> newPath;
+		if (path == null) {
+			newPath = context.getPersistentPropertyPath(property.getName(), entity.getType());
+		} else {
+			newPath = context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(), entity.getType());
+		}
+
+		return new PersistentPropertyPathExtension(context,  newPath);
+	}
+
+	@Override
+	public String toString() {
+		return String.format("PersistentPropertyPathExtension[%s, %s]", entity.getName(), path == null ? "-" : path.toDotPath() );
+	}
 }

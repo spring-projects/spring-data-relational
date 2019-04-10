@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -45,8 +43,6 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.annotation.IfProfileValue;
 import org.springframework.test.annotation.ProfileValueSourceConfiguration;
@@ -71,8 +67,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 	@Autowired JdbcAggregateOperations template;
-	@Autowired
-	NamedParameterJdbcOperations jdbcTemplate;
+	@Autowired NamedParameterJdbcOperations jdbcTemplate;
 	LegoSet legoSet = createLegoSet();
 
 	@Test // DATAJDBC-112
@@ -466,7 +461,38 @@ public class JdbcAggregateTemplateIntegrationTests {
 		template.delete(chain4, Chain4.class);
 
 		String countSelect = "SELECT COUNT(*) FROM %s";
-		jdbcTemplate.queryForObject(String.format(countSelect, "CHAIN0"),emptyMap(), Long.class);
+		jdbcTemplate.queryForObject(String.format(countSelect, "CHAIN0"), emptyMap(), Long.class);
+	}
+
+	@Test // DATAJDBC-359
+	public void saveAndLoadLongChainWithoutIds() {
+
+		NoIdChain4 chain4 = new NoIdChain4();
+		chain4.fourValue = "omega";
+		chain4.chain3 = new NoIdChain3();
+		chain4.chain3.threeValue = "delta";
+		chain4.chain3.chain2 = new NoIdChain2();
+		chain4.chain3.chain2.twoValue = "gamma";
+		chain4.chain3.chain2.chain1 = new NoIdChain1();
+		chain4.chain3.chain2.chain1.oneValue = "beta";
+		chain4.chain3.chain2.chain1.chain0 = new NoIdChain0();
+		chain4.chain3.chain2.chain1.chain0.zeroValue = "alpha";
+
+		template.save(chain4);
+
+		assertThat(chain4.four).isNotNull();
+
+		NoIdChain4 reloaded = template.findById(chain4.four, NoIdChain4.class);
+
+		assertThat(reloaded).isNotNull();
+
+		assertThat(reloaded.four).isEqualTo(chain4.four);
+		assertThat(reloaded.chain3.chain2.chain1.chain0.zeroValue).isEqualTo(chain4.chain3.chain2.chain1.chain0.zeroValue);
+
+		template.delete(chain4, NoIdChain4.class);
+
+		String countSelect = "SELECT COUNT(*) FROM %s";
+		jdbcTemplate.queryForObject(String.format(countSelect, "CHAIN0"), emptyMap(), Long.class);
 	}
 
 	private static void assumeNot(String dbProfileName) {
@@ -600,5 +626,30 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long four;
 		String fourValue;
 		Chain3 chain3;
+	}
+
+	static class NoIdChain0 {
+		String zeroValue;
+	}
+
+	static class NoIdChain1 {
+		String oneValue;
+		NoIdChain0 chain0;
+	}
+
+	static class NoIdChain2 {
+		String twoValue;
+		NoIdChain1 chain1;
+	}
+
+	static class NoIdChain3 {
+		String threeValue;
+		NoIdChain2 chain2;
+	}
+
+	static class NoIdChain4 {
+		@Id Long four;
+		String fourValue;
+		NoIdChain3 chain3;
 	}
 }

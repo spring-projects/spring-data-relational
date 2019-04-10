@@ -16,9 +16,9 @@
 package org.springframework.data.jdbc.core;
 
 import static java.util.Arrays.*;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
@@ -213,7 +213,7 @@ public class EntityRowMapperUnitTests {
 	@Test // DATAJDBC-252
 	public void doesNotTryToSetPropertiesThatAreSetViaConstructor() throws SQLException {
 
-		ResultSet rs = mockResultSet(asList("value"), //
+		ResultSet rs = mockResultSet(singletonList("value"), //
 				"value-from-resultSet");
 		rs.next();
 
@@ -240,13 +240,61 @@ public class EntityRowMapperUnitTests {
 	@Test // DATAJDBC-273
 	public void handlesNonSimplePropertyInConstructor() throws SQLException {
 
-		ResultSet rs = mockResultSet(asList("id"), //
+		ResultSet rs = mockResultSet(singletonList("id"), //
 				ID_FOR_ENTITY_REFERENCING_LIST);
 		rs.next();
 
 		EntityWithListInConstructor extracted = createRowMapper(EntityWithListInConstructor.class).mapRow(rs, 1);
 
 		assertThat(extracted.content).hasSize(2);
+	}
+
+	@Test // DATAJDBC-359
+	public void chainedEntitiesWithoutId() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("four", //
+				"four_value", //
+				"chain3_no_id_chain4", //
+				"chain3_three_value", //
+				"chain3_chain2_no_id_chain4", //
+				"chain3_chain2_two_value", //
+				"chain3_chain2_chain1_no_id_chain4", //
+				"chain3_chain2_chain1_one_value", //
+				"chain3_chain2_chain1_chain0_no_id_chain4", //
+				"chain3_chain2_chain1_chain0_zero_value" //
+		), //
+				4, //
+				"four_value", //
+				4, //
+				"three_value", //
+				4, //
+				"two_value", //
+				4, //
+				"one_value", //
+				4, //
+				"zero_value" //
+		);
+		rs.next();
+
+		NoIdChain4 extracted = createRowMapper(NoIdChain4.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.extracting( //
+						e -> e.four, //
+						e -> e.fourValue, //
+						e -> e.chain3.threeValue, //
+						e -> e.chain3.chain2.twoValue, //
+						e -> e.chain3.chain2.chain1.oneValue, //
+						e -> e.chain3.chain2.chain1.chain0.zeroValue //
+				) //
+				.isEqualTo(new Object[] { //
+						4L, //
+						"four_value", //
+						"three_value", //
+						"two_value", //
+						"one_value", //
+						"zero_value" //
+				});
 	}
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
@@ -335,27 +383,22 @@ public class EntityRowMapperUnitTests {
 
 			switch (invocation.getMethod().getName()) {
 				case "next":
+					return next();
+				case "getObject":
+					return getObject(invocation.getArgument(0));
+				case "isAfterLast":
+					return isAfterLast();
+				case "isBeforeFirst":
+					return isBeforeFirst();
+				case "getRow":
+					return isAfterLast() || isBeforeFirst() ? 0 : index + 1;
+				case "toString":
+					return this.toString();
+				default:
+					throw new OperationNotSupportedException(invocation.getMethod().getName());
+
 			}
 
-			if (invocation.getMethod().getName().equals("next"))
-				return next();
-
-			if (invocation.getMethod().getName().equals("getObject"))
-				return getObject(invocation.getArgument(0));
-
-			if (invocation.getMethod().getName().equals("isAfterLast"))
-				return isAfterLast();
-
-			if (invocation.getMethod().getName().equals("isBeforeFirst"))
-				return isBeforeFirst();
-
-			if (invocation.getMethod().getName().equals("getRow"))
-				return isAfterLast() || isBeforeFirst() ? 0 : index + 1;
-
-			if (invocation.getMethod().getName().equals("toString"))
-				return this.toString();
-
-			throw new OperationNotSupportedException(invocation.getMethod().getName());
 		}
 
 		private boolean isAfterLast() {
@@ -480,5 +523,30 @@ public class EntityRowMapperUnitTests {
 		@Id final Long id;
 
 		final List<Trivial> content;
+	}
+
+	static class NoIdChain0 {
+		String zeroValue;
+	}
+
+	static class NoIdChain1 {
+		String oneValue;
+		NoIdChain0 chain0;
+	}
+
+	static class NoIdChain2 {
+		String twoValue;
+		NoIdChain1 chain1;
+	}
+
+	static class NoIdChain3 {
+		String threeValue;
+		NoIdChain2 chain2;
+	}
+
+	static class NoIdChain4 {
+		@Id Long four;
+		String fourValue;
+		NoIdChain3 chain3;
 	}
 }

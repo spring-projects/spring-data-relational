@@ -27,6 +27,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -106,6 +107,8 @@ public class AggregateChange<T> {
 			PersistentPropertyAccessor<?> propertyAccessor, DbAction.WithDependingOn<?> action, Object generatedId) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPathToEntity = action.getPropertyPath();
+		PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(context, propertyPathToEntity);
+
 
 		RelationalPersistentProperty leafProperty = propertyPathToEntity.getRequiredLeafProperty();
 
@@ -130,7 +133,7 @@ public class AggregateChange<T> {
 			} else {
 				throw new IllegalStateException("Can't handle " + currentPropertyValue);
 			}
-		} else {
+		} else if (extPath.hasIdProperty()){
 
 			RelationalPersistentProperty requiredIdProperty = context
 					.getRequiredPersistentEntity(propertyPathToEntity.getRequiredLeafProperty().getActualType())
