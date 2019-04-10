@@ -181,6 +181,12 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Override
+	public String getReverseColumnName(PersistentPropertyPathExtension path) {
+
+		return collectionIdColumnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(path));
+	}
+
+	@Override
 	public String getKeyColumn() {
 
 		if (isQualified()) {

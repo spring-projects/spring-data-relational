@@ -19,10 +19,10 @@ import java.lang.reflect.Method;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.EntityRowMapper;
+import org.springframework.data.jdbc.core.convert.EntityRowMapper;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.repository.core.NamedQueries;
@@ -47,7 +47,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 	private final ApplicationEventPublisher publisher;
 	private final RelationalMappingContext context;
-	private final RelationalConverter converter;
+	private final JdbcConverter converter;
 	private final DataAccessStrategy accessStrategy;
 	private final QueryMappingConfiguration queryMappingConfiguration;
 	private final NamedParameterJdbcOperations operations;
@@ -63,8 +63,8 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * @param queryMappingConfiguration must not be {@literal null}.
 	 */
 	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			RelationalConverter converter, DataAccessStrategy accessStrategy,
-			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations) {
+			JdbcConverter converter, DataAccessStrategy accessStrategy, QueryMappingConfiguration queryMappingConfiguration,
+			NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
@@ -118,7 +118,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
 				context.getRequiredPersistentEntity(domainType), //
-				context, //
+				//
 				converter, //
 				accessStrategy);
 

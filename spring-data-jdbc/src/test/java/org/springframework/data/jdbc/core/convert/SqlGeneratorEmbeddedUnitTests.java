@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
@@ -23,9 +23,11 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Aliased;
@@ -206,7 +208,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 			softly.assertThat(join.getJoinTable().getName()).isEqualTo("other_entity");
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("embedded_with_reference");
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("dummy_entity2");
 			softly.assertThat(join.getParentId().getName()).isEqualTo("id");
 			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("dummy_entity2");
 		});

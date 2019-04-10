@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.degraph;
+package org.springframework.data.relational.degraph;
 
 import static de.schauderhaft.degraph.check.JCheck.*;
 import static org.junit.Assert.*;
@@ -36,12 +36,9 @@ public class DependencyTests {
 		assertThat( //
 				classpath() //
 						.noJars() //
-						.including("org.springframework.data.jdbc.**") //
-						// the following exclusion exclude deprecated classes necessary for backward compatibility.
-						.excluding("org.springframework.data.jdbc.core.EntityRowMapper") //
-						.excluding("org.springframework.data.jdbc.core.DefaultDataAccessStrategy") //
+						.including("org.springframework.data.relational.**") //
 						.filterClasspath("*target/classes") // exclude test code
-						.printOnFailure("degraph-jdbc.graphml"),
+						.printOnFailure("degraph-relational.graphml"),
 				JCheck.violationFree());
 	}
 
@@ -52,9 +49,6 @@ public class DependencyTests {
 				classpath() //
 						// include only Spring Data related classes (for example no JDK code)
 						.including("org.springframework.data.**") //
-						// the following exclusion exclude deprecated classes necessary for backward compatibility.
-						.excluding("org.springframework.data.jdbc.core.EntityRowMapper") //
-						.excluding("org.springframework.data.jdbc.core.DefaultDataAccessStrategy") //
 						.filterClasspath(new AbstractFunction1<String, Object>() {
 							@Override
 							public Object apply(String s) { //
@@ -63,7 +57,7 @@ public class DependencyTests {
 							}
 						}) // exclude test code
 						.withSlicing("sub-modules", // sub-modules are defined by any of the following pattern.
-								"org.springframework.data.jdbc.(**).*", //
+								"org.springframework.data.relational.(**).*", //
 								"org.springframework.data.(**).*") //
 						.printTo("degraph-across-modules.graphml"), // writes a graphml to this location
 				JCheck.violationFree());

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.core.convert;
 
 import lombok.Value;
 
@@ -34,27 +34,11 @@ import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.AssignValue;
-import org.springframework.data.relational.core.sql.Assignments;
-import org.springframework.data.relational.core.sql.BindMarker;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.Delete;
-import org.springframework.data.relational.core.sql.DeleteBuilder;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Expressions;
-import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.Insert;
-import org.springframework.data.relational.core.sql.InsertBuilder;
-import org.springframework.data.relational.core.sql.SQL;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SelectBuilder;
-import org.springframework.data.relational.core.sql.StatementBuilder;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.Update;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
@@ -103,6 +87,48 @@ class SqlGenerator {
 		this.entity = entity;
 		this.sqlContext = new SqlContext(entity);
 		this.columns = new Columns(entity, mappingContext);
+	}
+
+	/**
+	 * Construct a IN-condition based on a {@link Select Sub-Select} which selects the ids (or stand ins for ids) of the
+	 * given {@literal path} to those that reference the root entities specified by the {@literal rootCondition}.
+	 *
+	 * @param path specifies the table and id to select
+	 * @param rootCondition the condition on the root of the path determining what to select
+	 * @param filterColumn the column to apply the IN-condition to.
+	 * @return the IN condition
+	 */
+	private static Condition getSubselectCondition(PersistentPropertyPathExtension path,
+			Function<Column, Condition> rootCondition, Column filterColumn) {
+
+		PersistentPropertyPathExtension parentPath = path.getParentPath();
+
+		if (!parentPath.hasIdProperty()) {
+			if (parentPath.getLength() > 1) {
+				return getSubselectCondition(parentPath, rootCondition, filterColumn);
+			}
+			return rootCondition.apply(filterColumn);
+		}
+
+		Table subSelectTable = SQL.table(parentPath.getTableName());
+		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
+		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
+
+		Condition innerCondition = parentPath.getLength() == 1 // if the parent is the root of the path
+				? rootCondition.apply(selectFilterColumn) // apply the rootCondition
+				: getSubselectCondition(parentPath, rootCondition, selectFilterColumn); // otherwise we need another layer of
+																																								// subselect
+
+		Select select = Select.builder() //
+				.select(idColumn) //
+				.from(subSelectTable) //
+				.where(innerCondition).build();
+
+		return filterColumn.in(select);
+	}
+
+	private static BindMarker getBindMarker(String columnName) {
+		return SQL.bindMarker(":" + parameterPattern.matcher(columnName).replaceAll(""));
 	}
 
 	/**
@@ -467,34 +493,6 @@ class SqlGenerator {
 		return render(delete);
 	}
 
-	/**
-	 * Construct a {@link Select Sub-Select}.
-	 *
-	 * @param path
-	 * @param rootCondition
-	 * @param filterColumn
-	 * @return
-	 */
-	private static Condition getSubselectCondition(PersistentPropertyPathExtension path,
-			Function<Column, Condition> rootCondition, Column filterColumn) {
-
-		PersistentPropertyPathExtension parentPath = path.getParentPath();
-
-		Table subSelectTable = SQL.table(parentPath.getTableName());
-		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
-		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
-
-		Condition innerCondition = parentPath.getLength() == 1 ? rootCondition.apply(selectFilterColumn)
-				: getSubselectCondition(parentPath, rootCondition, selectFilterColumn);
-
-		Select select = Select.builder() //
-				.select(idColumn) //
-				.from(subSelectTable) //
-				.where(innerCondition).build();
-
-		return filterColumn.in(select);
-	}
-
 	private String createDeleteByListSql() {
 
 		Table table = getTable();
@@ -529,10 +527,6 @@ class SqlGenerator {
 
 	private Column getIdColumn() {
 		return sqlContext.getIdColumn();
-	}
-
-	private static BindMarker getBindMarker(String columnName) {
-		return SQL.bindMarker(":" + parameterPattern.matcher(columnName).replaceAll(""));
 	}
 
 	/**

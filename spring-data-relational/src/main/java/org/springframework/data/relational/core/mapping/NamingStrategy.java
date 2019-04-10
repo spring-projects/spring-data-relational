@@ -88,6 +88,11 @@ public interface NamingStrategy {
 		return property.getOwner().getTableName();
 	}
 
+	default String getReverseColumnName(PersistentPropertyPathExtension path) {
+
+		return getTableName(path.getIdDefiningParentPath().getLeafEntity().getType());
+	}
+
 	/**
 	 * For a map valued reference A -> Map&gt;X,B&lt; this is the name of the column in the table for B holding the key of
 	 * the map.

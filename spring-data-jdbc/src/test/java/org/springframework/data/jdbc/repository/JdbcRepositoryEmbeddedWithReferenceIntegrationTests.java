@@ -242,6 +242,7 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 	@Data
 	private static class Embeddable {
+
 		@Column("id")
 		DummyEntity2 dummyEntity2;
 

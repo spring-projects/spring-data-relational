@@ -56,7 +56,16 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	@Override
 	RelationalPersistentEntity<?> getOwner();
 
+	/**
+	 * @return
+	 * @deprecated Use {@link #getReverseColumnName(PersistentPropertyPathExtension)} instead.
+	 */
+	@Deprecated
 	String getReverseColumnName();
+
+	default String getReverseColumnName(PersistentPropertyPathExtension path) {
+		return getReverseColumnName();
+	}
 
 	@Nullable
 	String getKeyColumn();

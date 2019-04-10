@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Arrays.*;
 import static java.util.Collections.*;

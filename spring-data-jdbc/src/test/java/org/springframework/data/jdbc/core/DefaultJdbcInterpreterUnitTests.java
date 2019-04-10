@@ -25,9 +25,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
 
 /**
@@ -38,14 +36,9 @@ import org.springframework.data.relational.domain.Identifier;
 public class DefaultJdbcInterpreterUnitTests {
 
 	static final long CONTAINER_ID = 23L;
-	static final String BACK_REFERENCE = "back-reference";
+	static final String BACK_REFERENCE = "container";
 
-	RelationalMappingContext context = new JdbcMappingContext(new NamingStrategy() {
-		@Override
-		public String getReverseColumnName(RelationalPersistentProperty property) {
-			return BACK_REFERENCE;
-		}
-	});
+	RelationalMappingContext context = new JdbcMappingContext();
 
 	DataAccessStrategy dataAccessStrategy = mock(DataAccessStrategy.class);
 	DefaultJdbcInterpreter interpreter = new DefaultJdbcInterpreter(context, dataAccessStrategy);
@@ -54,8 +47,10 @@ public class DefaultJdbcInterpreterUnitTests {
 	Element element = new Element();
 
 	InsertRoot<Container> containerInsert = new InsertRoot<>(container);
-	Insert<?> insert = new Insert<>(element, PropertyPathTestingUtils.toPath("element", Container.class, context),
+	Insert<?> elementInsert = new Insert<>(element, PropertyPathTestingUtils.toPath("element", Container.class, context),
 			containerInsert);
+	Insert<?> element1Insert = new Insert<>(element, PropertyPathTestingUtils.toPath("element.element1", Container.class, context),
+			elementInsert);
 
 	@Test // DATAJDBC-145
 	public void insertDoesHonourNamingStrategyForBackReference() {
@@ -63,7 +58,7 @@ public class DefaultJdbcInterpreterUnitTests {
 		container.id = CONTAINER_ID;
 		containerInsert.setGeneratedId(CONTAINER_ID);
 
-		interpreter.interpret(insert);
+		interpreter.interpret(elementInsert);
 
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
@@ -78,7 +73,7 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		container.id = CONTAINER_ID;
 
-		interpreter.interpret(insert);
+		interpreter.interpret(elementInsert);
 
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
@@ -93,7 +88,22 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		containerInsert.setGeneratedId(CONTAINER_ID);
 
-		interpreter.interpret(insert);
+		interpreter.interpret(elementInsert);
+
+		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
+		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
+
+		assertThat(argumentCaptor.getValue().getParts()) //
+				.extracting("name", "value", "targetType") //
+				.containsExactly(tuple(BACK_REFERENCE, CONTAINER_ID, Long.class));
+	}
+
+	@Test // DATAJDBC-359
+	public void generatedIdOfParentsParentGetsPassedOnAsAdditionalParameter() {
+
+		containerInsert.setGeneratedId(CONTAINER_ID);
+
+		interpreter.interpret(element1Insert);
 
 		ArgumentCaptor<Identifier> argumentCaptor = ArgumentCaptor.forClass(Identifier.class);
 		verify(dataAccessStrategy).insert(eq(element), eq(Element.class), argumentCaptor.capture());
@@ -111,5 +121,11 @@ public class DefaultJdbcInterpreterUnitTests {
 		Element element;
 	}
 
-	static class Element {}
+	@SuppressWarnings("unused")
+	static class Element {
+		Element1 element1;
+	}
+
+	static class Element1 {
+	}
 }
