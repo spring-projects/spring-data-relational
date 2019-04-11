@@ -1,6 +1,19 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.0.M3 (2019-04-11)
+----------------------------------------
+* DATAJDBC-357 - Introduce dialect support to render paginated queries.
+* DATAJDBC-355 - Remove unnecessary null check in converters.
+* DATAJDBC-354 - Fix test fixture after Mockito upgrade.
+* DATAJDBC-347 - SelectBuilder (SelectAndFrom) does not override from(String).
+* DATAJDBC-346 - HSQLDB integration tests fail when the MSSQL database is used.
+* DATAJDBC-343 - INSERT and UPDATE statement assignments contain table prefix.
+* DATAJDBC-340 - Use infrastructure for semantic SQL generation in Spring Data JDBC.
+* DATAJDBC-337 - Release 1.1 M3 (Moore).
+* DATAJDBC-327 - Add support for conversion to JdbcValue and store byte[] as binary.
+
+
 Changes in version 1.0.6.RELEASE (2019-04-01)
 ---------------------------------------------
 * DATAJDBC-334 - How to escape case sensitive identifiers?.
