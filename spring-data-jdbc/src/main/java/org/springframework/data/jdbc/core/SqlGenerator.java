@@ -106,7 +106,7 @@ class SqlGenerator {
 	}
 
 	/**
-	 * Returns a query for selecting all simple properties of an entitty, including those for one-to-one relationhships.
+	 * Returns a query for selecting all simple properties of an entity, including those for one-to-one relationships.
 	 * Results are filtered using an {@code IN}-clause on the id column.
 	 *
 	 * @return a SQL statement. Guaranteed to be not {@code null}.
@@ -116,7 +116,7 @@ class SqlGenerator {
 	}
 
 	/**
-	 * Returns a query for selecting all simple properties of an entitty, including those for one-to-one relationhships.
+	 * Returns a query for selecting all simple properties of an entity, including those for one-to-one relationships.
 	 *
 	 * @return a SQL statement. Guaranteed to be not {@code null}.
 	 */
