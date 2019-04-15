@@ -20,6 +20,9 @@ import io.r2dbc.spi.ConnectionFactory;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -37,6 +40,7 @@ import org.springframework.data.r2dbc.support.SqlErrorCodeR2dbcExceptionTranslat
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -48,8 +52,21 @@ import org.springframework.util.Assert;
  * @see DatabaseClient
  * @see org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
  */
-@Configuration
-public abstract class AbstractR2dbcConfiguration {
+@Configuration(proxyBeanMethods = false)
+public abstract class AbstractR2dbcConfiguration implements ApplicationContextAware {
+
+	private static final String CONNECTION_FACTORY_BEAN_NAME = "connectionFactory";
+
+	private @Nullable ApplicationContext context;
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
+	 */
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.context = applicationContext;
+	}
 
 	/**
 	 * Return a R2DBC {@link ConnectionFactory}. Annotate with {@link Bean} in case you want to expose a
@@ -91,7 +108,7 @@ public abstract class AbstractR2dbcConfiguration {
 		Assert.notNull(exceptionTranslator, "ExceptionTranslator must not be null!");
 
 		return DatabaseClient.builder() //
-				.connectionFactory(connectionFactory()) //
+				.connectionFactory(lookupConnectionFactory()) //
 				.dataAccessStrategy(dataAccessStrategy) //
 				.exceptionTranslator(exceptionTranslator) //
 				.build();
@@ -137,7 +154,7 @@ public abstract class AbstractR2dbcConfiguration {
 
 		MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext, r2dbcCustomConversions);
 
-		return new DefaultReactiveDataAccessStrategy(getDialect(connectionFactory()), converter);
+		return new DefaultReactiveDataAccessStrategy(getDialect(lookupConnectionFactory()), converter);
 	}
 
 	/**
@@ -160,7 +177,7 @@ public abstract class AbstractR2dbcConfiguration {
 	 */
 	protected StoreConversions getStoreConversions() {
 
-		Dialect dialect = getDialect(connectionFactory());
+		Dialect dialect = getDialect(lookupConnectionFactory());
 		return StoreConversions.of(dialect.getSimpleTypeHolder(), R2dbcCustomConversions.STORE_CONVERTERS);
 	}
 
@@ -172,6 +189,23 @@ public abstract class AbstractR2dbcConfiguration {
 	 */
 	@Bean
 	public R2dbcExceptionTranslator exceptionTranslator() {
-		return new SqlErrorCodeR2dbcExceptionTranslator(connectionFactory());
+		return new SqlErrorCodeR2dbcExceptionTranslator(lookupConnectionFactory());
+	}
+
+	ConnectionFactory lookupConnectionFactory() {
+
+		ApplicationContext context = this.context;
+		Assert.notNull(context, "ApplicationContext is not yet initialized");
+
+		String[] beanNamesForType = context.getBeanNamesForType(ConnectionFactory.class);
+
+		for (String beanName : beanNamesForType) {
+
+			if (beanName.equals(CONNECTION_FACTORY_BEAN_NAME)) {
+				return context.getBean(CONNECTION_FACTORY_BEAN_NAME, ConnectionFactory.class);
+			}
+		}
+
+		return connectionFactory();
 	}
 }
