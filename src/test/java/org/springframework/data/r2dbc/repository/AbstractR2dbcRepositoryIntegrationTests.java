@@ -188,16 +188,16 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Flux<Map<String, Object>> transactional = client.inTransaction(db -> {
 
 			return transactionalRepository.save(legoSet1) //
-					.map(it -> jdbc.queryForMap("SELECT count(*) FROM legoset"));
+					.map(it -> jdbc.queryForMap("SELECT count(*) as count FROM legoset"));
 		});
 
 		Mono<Map<String, Object>> nonTransactional = transactionalRepository.save(legoSet2) //
-				.map(it -> jdbc.queryForMap("SELECT count(*) FROM legoset"));
+				.map(it -> jdbc.queryForMap("SELECT count(*) as count FROM legoset"));
 
 		transactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 0L)).verifyComplete();
 		nonTransactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 2L)).verifyComplete();
 
-		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) FROM legoset");
+		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) as count FROM legoset");
 		assertThat(count).containsEntry("count", 2L);
 	}
 
