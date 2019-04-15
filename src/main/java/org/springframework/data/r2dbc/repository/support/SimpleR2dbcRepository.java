@@ -75,7 +75,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 					.into(entity.getJavaType()) //
 					.using(objectToSave) //
 					.map(converter.populateIdIfNecessary(objectToSave)) //
-					.one();
+					.first() //
+					.defaultIfEmpty(objectToSave);
 		}
 
 		Object id = entity.getRequiredId(objectToSave);

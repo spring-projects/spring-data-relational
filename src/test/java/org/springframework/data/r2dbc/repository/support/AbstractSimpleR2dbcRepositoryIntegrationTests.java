@@ -38,6 +38,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
@@ -62,8 +63,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 
 	@Autowired private ReactiveDataAccessStrategy strategy;
 
-	private SimpleR2dbcRepository<LegoSet, Integer> repository;
-	private JdbcTemplate jdbc;
+	SimpleR2dbcRepository<LegoSet, Integer> repository;
+	JdbcTemplate jdbc;
 
 	@Before
 	public void before() {
@@ -372,9 +373,26 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Table("legoset")
 	@AllArgsConstructor
 	@NoArgsConstructor
-	static class LegoSet {
+	static class LegoSet implements Persistable<Integer> {
 		@Id Integer id;
 		String name;
 		Integer manual;
+
+		@Override
+		public boolean isNew() {
+			return id == null;
+		}
+	}
+
+	static class AlwaysNewLegoSet extends LegoSet {
+
+		AlwaysNewLegoSet(Integer id, String name, Integer manual) {
+			super(id, name, manual);
+		}
+
+		@Override
+		public boolean isNew() {
+			return true;
+		}
 	}
 }
