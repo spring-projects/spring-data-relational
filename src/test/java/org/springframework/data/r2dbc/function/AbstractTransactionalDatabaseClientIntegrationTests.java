@@ -209,13 +209,19 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 		Flux<Object> transactionIds = databaseClient.inTransaction(db -> {
 
+			// We have to execute a sql statement first.
+			// Otherwise some databases (MySql) don't have a transaction id.
 			Mono<Integer> insert = db.execute().sql(getInsertIntoLegosetStatement()) //
 					.bind(0, 42055) //
 					.bind(1, "SCHAUFELRADBAGGER") //
 					.bindNull(2, Integer.class) //
 					.fetch().rowsUpdated();
 
-			Flux<Object> txId = db.execute().sql(getCurrentTransactionIdStatement()).map((r, md) -> r.get(0)).all();
+			Flux<Object> txId = db.execute() //
+					.sql(getCurrentTransactionIdStatement()) //
+					.map((row, md) -> row.get(0)) //
+					.all();
+
 			return insert.thenMany(txId.concatWith(txId));
 		});
 
@@ -223,7 +229,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 				.consumeNextWith(actual -> {
 
 					assertThat(actual).hasSize(2);
-					assertThat(actual).containsExactly(actual.get(1), actual.get(0));
+					assertThat(actual.get(0)).isEqualTo(actual.get(1));
 				}) //
 				.verifyComplete();
 	}
