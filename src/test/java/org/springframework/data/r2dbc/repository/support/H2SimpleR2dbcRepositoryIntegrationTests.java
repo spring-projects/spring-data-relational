@@ -75,10 +75,9 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 
 		repository.save(legoSet) //
 				.as(StepVerifier::create) //
-				.consumeNextWith(actual -> {
-
-					assertThat(actual.getId()).isEqualTo(9999);
-				}).verifyComplete();
+				.consumeNextWith( //
+						actual -> assertThat(actual.getId()).isEqualTo(9999) //
+				).verifyComplete();
 
 		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
 		assertThat(map).containsEntry("name", "SCHAUFELRADBAGGER").containsEntry("manual", 12).containsKey("id");

@@ -88,10 +88,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		GenericExecuteSpec exec = databaseClient.execute().sql(update);
 
 		BindSpecAdapter<GenericExecuteSpec> wrapper = BindSpecAdapter.create(exec);
-		columns.forEach((k, v) -> {
-			update.bind(wrapper, k, v);
-
-		});
+		columns.forEach((k, v) -> update.bind(wrapper, k, v));
 		update.bindId(wrapper, id);
 
 		return wrapper.getBoundOperation().as(entity.getJavaType()) //
