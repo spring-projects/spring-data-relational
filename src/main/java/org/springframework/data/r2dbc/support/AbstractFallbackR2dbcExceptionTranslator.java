@@ -111,6 +111,11 @@ public abstract class AbstractFallbackR2dbcExceptionTranslator implements R2dbcE
 	 * @return the message {@code String} to use.
 	 */
 	protected String buildMessage(String task, @Nullable String sql, R2dbcException ex) {
-		return task + "; " + (sql != null ? "SQL [" + sql + "]; " : "") + ex.getMessage();
+
+		return task + "; " + //
+				(sql != null //
+						? "SQL [" + sql + "]; " //
+						: "" //
+				) + ex.getMessage();
 	}
 }
