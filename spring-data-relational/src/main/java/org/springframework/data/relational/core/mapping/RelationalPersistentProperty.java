@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 import org.springframework.lang.Nullable;
 
 /**

@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.domain;
+package org.springframework.data.relational.core.mapping;
 
 import lombok.EqualsAndHashCode;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -329,11 +327,12 @@ public class PersistentPropertyPathExtension {
 			newPath = context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(), entity.getType());
 		}
 
-		return new PersistentPropertyPathExtension(context,  newPath);
+		return new PersistentPropertyPathExtension(context, newPath);
 	}
 
 	@Override
 	public String toString() {
-		return String.format("PersistentPropertyPathExtension[%s, %s]", entity.getName(), path == null ? "-" : path.toDotPath() );
+		return String.format("PersistentPropertyPathExtension[%s, %s]", entity.getName(),
+				path == null ? "-" : path.toDotPath());
 	}
 }

@@ -15,11 +15,11 @@
  */
 package org.springframework.data.jdbc.core;
 
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 
 /**
  * Utility to get from path to SQL DSL elements.

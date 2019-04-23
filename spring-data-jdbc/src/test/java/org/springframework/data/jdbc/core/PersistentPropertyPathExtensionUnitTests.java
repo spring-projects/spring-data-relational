@@ -24,9 +24,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 
 /**
  * @author Jens Schauder
@@ -181,18 +181,20 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 			softly.assertThat(extPath(entity).getRequiredIdProperty().getName()).isEqualTo("entityId");
 			softly.assertThat(extPath("withId").getRequiredIdProperty().getName()).isEqualTo("withIdId");
-			softly.assertThatThrownBy(()->extPath("second").getRequiredIdProperty()).isInstanceOf(IllegalStateException.class);
+			softly.assertThatThrownBy(() -> extPath("second").getRequiredIdProperty())
+					.isInstanceOf(IllegalStateException.class);
 		});
 	}
 
 	@Test // DATAJDBC-359
 	public void extendBy() {
 
-
 		SoftAssertions.assertSoftly(softly -> {
 
-			softly.assertThat(extPath(entity).extendBy(entity.getRequiredPersistentProperty("withId"))).isEqualTo(extPath("withId"));
-			softly.assertThat(extPath("withId").extendBy(extPath("withId").getRequiredIdProperty())).isEqualTo(extPath("withId.withIdId"));
+			softly.assertThat(extPath(entity).extendBy(entity.getRequiredPersistentProperty("withId")))
+					.isEqualTo(extPath("withId"));
+			softly.assertThat(extPath("withId").extendBy(extPath("withId").getRequiredIdProperty()))
+					.isEqualTo(extPath("withId.withIdId"));
 		});
 	}
 
@@ -229,6 +231,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	static class Third {
 		String value;
 	}
+
 	@SuppressWarnings("unused")
 	static class WithId {
 		@Id Long withIdId;

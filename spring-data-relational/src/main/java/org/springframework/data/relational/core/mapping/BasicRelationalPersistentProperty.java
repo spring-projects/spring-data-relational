@@ -29,7 +29,6 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Optionals;
 import org.springframework.lang.Nullable;
@@ -186,8 +185,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		return collectionIdColumnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(path));
 	}
-
-
 
 	@Override
 	public String getKeyColumn() {

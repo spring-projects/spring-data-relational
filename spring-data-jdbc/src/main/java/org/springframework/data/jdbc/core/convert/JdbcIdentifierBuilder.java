@@ -16,9 +16,9 @@
 package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -43,8 +43,7 @@ public class JdbcIdentifierBuilder {
 	/**
 	 * Creates ParentKeys with backreference for the given path and value of the parents id.
 	 */
-	public static JdbcIdentifierBuilder forBackReferences(PersistentPropertyPathExtension path,
-														  @Nullable Object value) {
+	public static JdbcIdentifierBuilder forBackReferences(PersistentPropertyPathExtension path, @Nullable Object value) {
 
 		Identifier identifier = Identifier.of( //
 				path.getReverseColumnName(), //
@@ -55,10 +54,20 @@ public class JdbcIdentifierBuilder {
 		return new JdbcIdentifierBuilder(identifier);
 	}
 
+	private static RelationalPersistentProperty getLastIdProperty(
+			PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+		RelationalPersistentProperty idProperty = path.getRequiredLeafProperty().getOwner().getIdProperty();
+
+		if (idProperty != null) {
+			return idProperty;
+		}
+
+		return getLastIdProperty(path.getParentPath());
+	}
+
 	/**
-	 * Adds a qualifier to the identifier to build.
-	 *
-	 * A qualifier is a map key or a list index.
+	 * Adds a qualifier to the identifier to build. A qualifier is a map key or a list index.
 	 *
 	 * @param path path to the map that gets qualified by {@code value}. Must not be {@literal null}.
 	 * @param value map key or list index qualifying the map identified by {@code path}. Must not be {@literal null}.
@@ -76,17 +85,5 @@ public class JdbcIdentifierBuilder {
 
 	public Identifier build() {
 		return identifier;
-	}
-
-	private static RelationalPersistentProperty getLastIdProperty(
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
-
-		RelationalPersistentProperty idProperty = path.getRequiredLeafProperty().getOwner().getIdProperty();
-
-		if (idProperty != null) {
-			return idProperty;
-		}
-
-		return getLastIdProperty(path.getParentPath());
 	}
 }

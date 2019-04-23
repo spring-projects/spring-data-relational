@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 import org.springframework.data.util.ParsingUtils;
 import org.springframework.util.Assert;
 
@@ -89,12 +88,10 @@ public interface NamingStrategy {
 		return property.getOwner().getTableName();
 	}
 
-
 	default String getReverseColumnName(PersistentPropertyPathExtension path) {
 
 		return getTableName(path.getIdDefiningParentPath().getLeafEntity().getType());
 	}
-
 
 	/**
 	 * For a map valued reference A -> Map&gt;X,B&lt; this is the name of the column in the table for B holding the key of

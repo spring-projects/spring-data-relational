@@ -32,12 +32,12 @@ import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtil
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.domain.PersistentPropertyPathExtension;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -360,25 +360,20 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-359
 	public void deletingLongChainNoId() {
 
-		assertThat(
-				createSqlGenerator(NoIdChain4.class).createDeleteByPath(getPath("chain3.chain2.chain1.chain0", NoIdChain4.class))) //
+		assertThat(createSqlGenerator(NoIdChain4.class)
+				.createDeleteByPath(getPath("chain3.chain2.chain1.chain0", NoIdChain4.class))) //
 						.isEqualTo("DELETE FROM no_id_chain0 WHERE no_id_chain0.no_id_chain4 = :rootId");
 	}
 
 	@Test // DATAJDBC-359
 	public void deletingLongChainNoIdWithBackreferenceNotReferencingTheRoot() {
 
-		assertThat(
-				createSqlGenerator(IdIdNoIdChain.class).createDeleteByPath(getPath("idNoIdChain.chain4.chain3.chain2.chain1.chain0", IdIdNoIdChain.class))) //
-						.isEqualTo("DELETE FROM no_id_chain0 " +
-								"WHERE no_id_chain0.no_id_chain4 IN (" +
-								"SELECT no_id_chain4.x_four " +
-								"FROM no_id_chain4 " +
-								"WHERE no_id_chain4.id_no_id_chain IN (" +
-								"SELECT id_no_id_chain.x_id " +
-								"FROM id_no_id_chain " +
-								"WHERE id_no_id_chain.id_id_no_id_chain = :rootId" +
-								"))");
+		assertThat(createSqlGenerator(IdIdNoIdChain.class)
+				.createDeleteByPath(getPath("idNoIdChain.chain4.chain3.chain2.chain1.chain0", IdIdNoIdChain.class))) //
+						.isEqualTo(
+								"DELETE FROM no_id_chain0 " + "WHERE no_id_chain0.no_id_chain4 IN (" + "SELECT no_id_chain4.x_four "
+										+ "FROM no_id_chain4 " + "WHERE no_id_chain4.id_no_id_chain IN (" + "SELECT id_no_id_chain.x_id "
+										+ "FROM id_no_id_chain " + "WHERE id_no_id_chain.id_id_no_id_chain = :rootId" + "))");
 	}
 
 	@Test // DATAJDBC-340
