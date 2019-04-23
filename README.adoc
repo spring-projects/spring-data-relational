@@ -46,7 +46,7 @@ There are also examples in the https://github.com/spring-projects/spring-data-ex
 A very good source of information is the source code in this repository.
 Especially the integration tests (if you are reading this on github, type `t` and then `IntegrationTests.java`)
 
-We are keeping an eye on the (soon to be created) https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on stackoverflow].
+We are keeping an eye on the https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on stackoverflow].
 
 If you think you found a bug, or have a feature request please https://jira.spring.io/browse/DATAJDBC/?selectedTab=com.atlassian.jira.jira-projects-plugin:summary-panel[create a ticket in our issue tracker].
 
@@ -113,4 +113,4 @@ Before we accept a non-trivial patch or pull request we will need you to https:/
 
 == License
 
-link:src/main/resources/license.txt[The license und which Spring Data Relational is published can be found here].
+link:src/main/resources/license.txt[The license under which Spring Data Relational is published can be found here].
