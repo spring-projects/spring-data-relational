@@ -49,7 +49,7 @@ interface R2dbcQueryExecution {
 		private final @NonNull Converter<Object, Object> converter;
 
 		/* (non-Javadoc)
-		 * @see org.springframework.data.jdbc.repository.query.R2dbcQueryExecution#execute(org.springframework.data.jdbc.core.function.FetchSpec, java.lang.Class, java.lang.String)
+		 * @see org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution#execute(org.springframework.data.r2dbc.function.FetchSpec, java.lang.Class, java.lang.String)
 		 */
 		@Override
 		public Object execute(FetchSpec<?> query, Class<?> type, String tableName) {

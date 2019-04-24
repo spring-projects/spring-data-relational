@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Holds information about a parsed SQL statement.
  * <p>
- * This is a copy of Spring Frameworks's {@code org.springframework.jdbc.core.namedparam.ParsedSql}.
+ * This is a copy of Spring Frameworks's {@code org.springframework.r2dbc.namedparam.ParsedSql}.
  *
  * @author Thomas Risberg
  * @author Juergen Hoeller

@@ -39,7 +39,7 @@ import org.springframework.util.Assert;
  * Only intended for internal use within Spring's Data's R2DBC framework. Partially extracted from Spring's JDBC named
  * parameter support.
  * <p>
- * This is a subset of Spring Frameworks's {@code org.springframework.jdbc.core.namedparam.NamedParameterUtils}.
+ * This is a subset of Spring Frameworks's {@code org.springframework.r2dbc.namedparam.NamedParameterUtils}.
  *
  * @author Thomas Risberg
  * @author Juergen Hoeller

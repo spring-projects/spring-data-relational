@@ -57,7 +57,6 @@ import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
-import org.springframework.jdbc.core.SqlProvider;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 

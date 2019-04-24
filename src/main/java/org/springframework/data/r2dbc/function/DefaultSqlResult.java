@@ -25,7 +25,6 @@ import reactor.core.publisher.Mono;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.springframework.jdbc.core.SqlProvider;
 
 /**
  * Default {@link SqlResult} implementation.
@@ -110,7 +109,7 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.SqlResult#map(java.util.function.BiFunction)
+	 * @see org.springframework.data.r2dbc.function.SqlResult#map(java.util.function.BiFunction)
 	 */
 	@Override
 	public <R> SqlResult<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
@@ -118,7 +117,7 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.FetchSpec#one()
+	 * @see org.springframework.data.r2dbc.function.FetchSpec#one()
 	 */
 	@Override
 	public Mono<T> one() {
@@ -126,7 +125,7 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.FetchSpec#first()
+	 * @see org.springframework.data.r2dbc.function.FetchSpec#first()
 	 */
 	@Override
 	public Mono<T> first() {
@@ -134,7 +133,7 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.FetchSpec#all()
+	 * @see org.springframework.data.r2dbc.function.FetchSpec#all()
 	 */
 	@Override
 	public Flux<T> all() {
@@ -142,7 +141,7 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.FetchSpec#rowsUpdated()
+	 * @see org.springframework.data.r2dbc.function.FetchSpec#rowsUpdated()
 	 */
 	@Override
 	public Mono<Integer> rowsUpdated() {

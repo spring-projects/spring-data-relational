@@ -79,7 +79,7 @@ class R2dbcParameterAccessor extends RelationalParametersParameterAccessor {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.repository.query.JdbcParametersParameterAccessor#getValues()
+	 * @see org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor#getValues()
 	 */
 	@Override
 	public Object[] getValues() {

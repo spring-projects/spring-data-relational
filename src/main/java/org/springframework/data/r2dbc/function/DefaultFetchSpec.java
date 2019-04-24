@@ -38,7 +38,7 @@ class DefaultFetchSpec<T> implements FetchSpec<T> {
 	private final Function<Connection, Mono<Integer>> updatedRowsFunction;
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.FetchSpec#one()
+	 * @see org.springframework.data.r2dbc.function.FetchSpec#one()
 	 */
 	@Override
 	public Mono<T> one() {
@@ -60,7 +60,7 @@ class DefaultFetchSpec<T> implements FetchSpec<T> {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.FetchSpec#first()
+	 * @see org.springframework.data.r2dbc.function.FetchSpec#first()
 	 */
 	@Override
 	public Mono<T> first() {
@@ -68,7 +68,7 @@ class DefaultFetchSpec<T> implements FetchSpec<T> {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.FetchSpec#all()
+	 * @see org.springframework.data.r2dbc.function.FetchSpec#all()
 	 */
 	@Override
 	public Flux<T> all() {
@@ -76,7 +76,7 @@ class DefaultFetchSpec<T> implements FetchSpec<T> {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.function.FetchSpec#rowsUpdated()
+	 * @see org.springframework.data.r2dbc.function.FetchSpec#rowsUpdated()
 	 */
 	@Override
 	public Mono<Integer> rowsUpdated() {

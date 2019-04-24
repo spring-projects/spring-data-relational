@@ -18,7 +18,6 @@ package org.springframework.data.r2dbc;
 import io.r2dbc.spi.R2dbcException;
 
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.lang.Nullable;
 
 /**

@@ -75,7 +75,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.jdbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.jdbc.repository.query.JdbcParameterAccessor)
+	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
 	 */
 	@Override
 	protected BindableQuery createQuery(RelationalParameterAccessor accessor) {
