@@ -331,40 +331,15 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		<T> FetchSpec<T> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
-			Function<Connection, Statement> executeFunction = it -> {
+				PreparedOperation pop;
 
-				if (logger.isDebugEnabled()) {
-					logger.debug("Executing SQL statement [" + sql + "]");
-				}
+			if (sqlSupplier instanceof PreparedOperation<?>) {
+				pop = ((PreparedOperation<?>) sqlSupplier);
+			} else {
+				pop = new ExpandedPreparedOperation(sql, namedParameters, dataAccessStrategy, byName, byIndex);
+			}
 
-				if (sqlSupplier instanceof PreparedOperation<?>) {
-					return ((PreparedOperation<?>) sqlSupplier).bind(it.createStatement(sql));
-				}
-
-				BindableOperation operation = namedParameters.expand(sql, dataAccessStrategy.getBindMarkersFactory(),
-						new MapBindParameterSource(byName));
-
-				if (logger.isTraceEnabled()) {
-					logger.trace("Expanded SQL [" + operation.toQuery() + "]");
-				}
-
-				Statement statement = it.createStatement(operation.toQuery());
-
-				byName.forEach((name, o) -> {
-
-					if (o.getValue() != null) {
-						operation.bind(statement, name, o.getValue());
-					} else {
-						operation.bindNull(statement, name, o.getType());
-					}
-				});
-
-				bindByIndex(statement, byIndex);
-
-				return statement;
-			};
-
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(executeFunction.apply(it).execute());
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(pop.createBoundStatement(it).execute());
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
@@ -907,20 +882,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 						byName.forEach(it::bind);
 					});
 
-			String sql = operation.toQuery();
-			Function<Connection, Statement> insertFunction = it -> {
-
-				if (logger.isDebugEnabled()) {
-					logger.debug("Executing SQL statement [" + sql + "]");
-				}
-
-				return operation.bind(it.createStatement(sql));
-			};
-
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(insertFunction.apply(it).execute());
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(operation.createBoundStatement(it).execute());
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					sql, //
+					operation.toQuery(), //
 					resultFunction, //
 					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
 					mappingFunction);
@@ -1028,21 +993,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 						});
 					});
 
-			String sql = operation.toQuery();
-
-			Function<Connection, Statement> insertFunction = it -> {
-
-				if (logger.isDebugEnabled()) {
-					logger.debug("Executing SQL statement [" + sql + "]");
-				}
-
-				return operation.bind(it.createStatement(sql));
-			};
-
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(insertFunction.apply(it).execute());
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(operation.createBoundStatement(it).execute());
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					sql, //
+					operation.toQuery(), //
 					resultFunction, //
 					it -> resultFunction //
 							.apply(it) //

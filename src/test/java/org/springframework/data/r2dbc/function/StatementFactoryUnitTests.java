@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.function;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Statement;
 
 import java.util.Arrays;
@@ -46,6 +47,11 @@ public class StatementFactoryUnitTests {
 					.createRenderContext());
 
 	Statement statementMock = mock(Statement.class);
+	Connection connectionMock = mock(Connection.class);
+
+	{
+		when(connectionMock.createStatement(anyString())).thenReturn(statementMock);
+	}
 
 	@Test
 	public void shouldToQuerySimpleSelectWithoutBindings() {
@@ -55,7 +61,8 @@ public class StatementFactoryUnitTests {
 		assertThat(select.getSource()).isInstanceOf(Select.class);
 		assertThat(select.toQuery()).isEqualTo("SELECT foo.bar, foo.baz FROM foo");
 
-		select.bind(statementMock);
+		select.createBoundStatement(connectionMock);
+
 		verifyZeroInteractions(statementMock);
 	}
 
@@ -69,7 +76,8 @@ public class StatementFactoryUnitTests {
 		assertThat(select.getSource()).isInstanceOf(Select.class);
 		assertThat(select.toQuery()).isEqualTo("SELECT foo.bar, foo.baz FROM foo WHERE foo.doe = $1");
 
-		select.bind(statementMock);
+		select.createBoundStatement(connectionMock);
+
 		verify(statementMock).bind(0, "John");
 		verifyNoMoreInteractions(statementMock);
 	}
@@ -85,7 +93,8 @@ public class StatementFactoryUnitTests {
 		assertThat(select.getSource()).isInstanceOf(Select.class);
 		assertThat(select.toQuery()).isEqualTo("SELECT foo.bar, foo.baz FROM foo WHERE foo.doe = $1 AND foo.baz = $2");
 
-		select.bind(statementMock);
+		select.createBoundStatement(connectionMock);
+
 		verify(statementMock).bind(0, "John");
 		verify(statementMock).bind(1, "Jake");
 		verifyNoMoreInteractions(statementMock);
@@ -101,7 +110,7 @@ public class StatementFactoryUnitTests {
 		assertThat(select.getSource()).isInstanceOf(Select.class);
 		assertThat(select.toQuery()).isEqualTo("SELECT foo.bar, foo.baz FROM foo WHERE foo.doe IS NULL");
 
-		select.bind(statementMock);
+		select.createBoundStatement(connectionMock);
 		verifyZeroInteractions(statementMock);
 	}
 
@@ -115,7 +124,7 @@ public class StatementFactoryUnitTests {
 		assertThat(select.getSource()).isInstanceOf(Select.class);
 		assertThat(select.toQuery()).isEqualTo("SELECT foo.bar, foo.baz FROM foo WHERE foo.doe IN ($1, $2)");
 
-		select.bind(statementMock);
+		select.createBoundStatement(connectionMock);
 		verify(statementMock).bind(0, "John");
 		verify(statementMock).bind(1, "Jake");
 		verifyNoMoreInteractions(statementMock);
@@ -138,7 +147,7 @@ public class StatementFactoryUnitTests {
 		assertThat(insert.getSource()).isInstanceOf(Insert.class);
 		assertThat(insert.toQuery()).isEqualTo("INSERT INTO foo (bar) VALUES ($1)");
 
-		insert.bind(statementMock);
+		insert.createBoundStatement(connectionMock);
 		verify(statementMock).bind(0, "Foo");
 		verify(statementMock).returnGeneratedValues(any(String[].class));
 		verifyNoMoreInteractions(statementMock);
@@ -161,7 +170,7 @@ public class StatementFactoryUnitTests {
 		assertThat(update.getSource()).isInstanceOf(Update.class);
 		assertThat(update.toQuery()).isEqualTo("UPDATE foo SET bar = $1");
 
-		update.bind(statementMock);
+		update.createBoundStatement(connectionMock);
 		verify(statementMock).bind(0, "Foo");
 		verifyNoMoreInteractions(statementMock);
 	}
@@ -176,7 +185,7 @@ public class StatementFactoryUnitTests {
 		assertThat(update.getSource()).isInstanceOf(Update.class);
 		assertThat(update.toQuery()).isEqualTo("UPDATE foo SET bar = $1");
 
-		update.bind(statementMock);
+		update.createBoundStatement(connectionMock);
 		verify(statementMock).bindNull(0, String.class);
 
 		verifyNoMoreInteractions(statementMock);
@@ -193,7 +202,7 @@ public class StatementFactoryUnitTests {
 		assertThat(update.getSource()).isInstanceOf(Update.class);
 		assertThat(update.toQuery()).isEqualTo("UPDATE foo SET bar = $1 WHERE foo.baz = $2");
 
-		update.bind(statementMock);
+		update.createBoundStatement(connectionMock);
 		verify(statementMock).bind(0, "Foo");
 		verify(statementMock).bind(1, "Baz");
 		verifyNoMoreInteractions(statementMock);
@@ -209,7 +218,7 @@ public class StatementFactoryUnitTests {
 		assertThat(delete.getSource()).isInstanceOf(Delete.class);
 		assertThat(delete.toQuery()).isEqualTo("DELETE FROM foo WHERE foo.doe = $1");
 
-		delete.bind(statementMock);
+		delete.createBoundStatement(connectionMock);
 		verify(statementMock).bind(0, "John");
 		verifyNoMoreInteractions(statementMock);
 	}
@@ -225,7 +234,7 @@ public class StatementFactoryUnitTests {
 		assertThat(delete.getSource()).isInstanceOf(Delete.class);
 		assertThat(delete.toQuery()).isEqualTo("DELETE FROM foo WHERE foo.doe = $1 AND foo.baz = $2");
 
-		delete.bind(statementMock);
+		delete.createBoundStatement(connectionMock);
 		verify(statementMock).bind(0, "John");
 		verify(statementMock).bind(1, "Jake");
 		verifyNoMoreInteractions(statementMock);
@@ -241,7 +250,7 @@ public class StatementFactoryUnitTests {
 		assertThat(delete.getSource()).isInstanceOf(Delete.class);
 		assertThat(delete.toQuery()).isEqualTo("DELETE FROM foo WHERE foo.doe IS NULL");
 
-		delete.bind(statementMock);
+		delete.createBoundStatement(connectionMock);
 		verifyZeroInteractions(statementMock);
 	}
 }

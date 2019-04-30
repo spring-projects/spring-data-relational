@@ -20,11 +20,11 @@ import io.r2dbc.spi.Statement;
 /**
  * A single indexed bind marker.
  */
-class IndexedBindMarker implements BindMarker {
+public class IndexedBindMarker implements BindMarker {
 
 	private final String placeholder;
 
-	private int index;
+	private final int index;
 
 	IndexedBindMarker(String placeholder, int index) {
 		this.placeholder = placeholder;
@@ -57,4 +57,10 @@ class IndexedBindMarker implements BindMarker {
 	public void bindNull(Statement statement, Class<?> valueType) {
 		statement.bindNull(this.index, valueType);
 	}
+
+
+	public int getIndex() {
+		return index;
+	}
+
 }
