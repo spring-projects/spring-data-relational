@@ -1,0 +1,163 @@
+[[r2dbc.datbaseclient.statements]]
+= Running Statements
+
+Running a statement is the basic functionality that is covered by `DatabaseClient`.
+The following example shows what you need to include for a minimal but fully functional class that creates a new table:
+
+[source,java]
+----
+Mono<Void> completion = client.execute()
+        .sql("CREATE TABLE person (id VARCHAR(255) PRIMARY KEY, name VARCHAR(255), age INTEGER);")
+        .then();
+----
+
+`DatabaseClient` is designed for a convenient fluent usage.
+It exposes intermediate, continuation, and terminal methods at each stage of the execution specification.
+The example above uses `then()` to return a completion `Publisher` that completes as soon as the query (or queries, if the SQL query contains multiple statements) completes.
+
+NOTE: `execute().sql(…)` accepts either the SQL query string or a query `Supplier<String>` to defer the actual query creation until execution.
+
+[[r2dbc.datbaseclient.queries]]
+== Running Queries
+
+SQL queries can return values or the number of affected rows.
+`DatabaseClient` can return the number of updated rows or the rows themselves, depending on the issued query.
+
+The following example shows an `UPDATE` statement that returns the number of updated rows:
+
+[source,java]
+----
+Mono<Integer> affectedRows = client.execute()
+        .sql("UPDATE person SET name = 'Joe'")
+        .fetch().rowsUpdated();
+----
+
+Running a `SELECT` query returns a different type of result, in particular tabular results. Tabular data is typically consumes by streaming each `Row`.
+You might have noticed the use of `fetch()` in the previous example.
+`fetch()` is a continuation operator that allows you to specify how much data you want to consume.
+
+[source,java]
+----
+Mono<Map<String, Object>> first = client.execute()
+        .sql("SELECT id, name FROM person")
+        .fetch().first();
+----
+
+Calling `first()` returns the first row from the result and discards remaining rows.
+You can consume data with the following operators:
+
+* `first()` return the first row of the entire result
+* `one()` returns exactly one result and fails if the result contains more rows.
+* `all()` returns all rows of the result
+* `rowsUpdated()` returns the number of affected rows (`INSERT` count, `UPDATE` count)
+
+`DatabaseClient` queries return their results by default as `Map` of column name to value. You can customize type mapping by applying an `as(Class<T>)` operator.
+
+[source,java]
+----
+Flux<Person> all = client.execute()
+        .sql("SELECT id, name FROM mytable")
+        .as(Person.class)
+        .fetch().all();
+----
+
+`as(…)` applies <<mapping-conventions,Convention-based Object Mapping>> and maps the resulting columns to your POJO.
+
+[[r2dbc.datbaseclient.mapping]]
+== Mapping Results
+
+You can customize result extraction beyond `Map` and POJO result extraction by providing an extractor `BiFunction<Row, RowMetadata, T>`.
+The extractor function interacts directly with R2DBC's `Row` and `RowMetadata` objects and can return arbitrary values (singular values, collections/maps, objects).
+
+The following example extracts the `id` column and emits its value:
+
+[source,java]
+----
+Flux<String> names= client.execute()
+        .sql("SELECT name FROM person")
+        .map((row, rowMetadata) -> row.get("id", String.class))
+        .all();
+----
+
+[[r2dbc.datbaseclient.mapping.null]]
+.What about `null`?
+****
+Relational database results may contain `null` values.
+Reactive Streams forbids emission of `null` values which requires a proper `null` handling in the extractor function.
+While you can obtain `null` values from a `Row`, you must not emit a `null` value.
+You must wrap any `null` values in an object (e.g. `Optional` for singular values) to make sure a `null` value is never returned directly by your extractor function.
+****
+
+[[r2dbc.datbaseclient.binding]]
+== Binding Values to Queries
+
+A typical application requires parameterized SQL statements to select or update rows according to some input.
+These are typically `SELECT` statements  constrained by a `WHERE` clause or `INSERT`/`UPDATE` statements accepting input parameters.
+Parameterized statements bear the risk of SQL injection if parameters are not escaped properly.
+`DatabaseClient` leverages R2DBC's Bind API to eliminate the risk of SQL injection for query parameters.
+You can provide a parameterized SQL statement with the `sql(…)` operator and bind parameters to the actual `Statement`.
+Your R2DBC driver then executes the statement using prepared statements and parameter substitution.
+
+Parameter binding supports various binding strategies:
+
+* By Index using zero-based parameter indexes.
+* By Name using the placeholder name.
+
+The following example shows parameter binding for a query:
+
+[source,java]
+----
+db.execute()
+    .sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+    .bind("id", "joe")
+    .bind("name", "Joe")
+    .bind("age", 34);
+----
+
+.R2DBC Native Bind Markers
+****
+R2DBC uses database-native bind markers that depend on the actual database vendor.
+As an example, Postgres uses indexed markers such as `$1`, `$2`, `$n`.
+Another example is SQL Server that uses named bind markers prefixed with `@` (at).
+
+This is different from JDBC which requires `?` (question mark) as bind markers.
+In JDBC, the actual drivers translate question mark bind markers to database-native markers as part of their statement execution.
+
+Spring Data R2DBC allows you to use native bind markers or named bind markers with the `:name` syntax.
+
+Named parameter support leverages ``Dialect``s  to expand named parameters to native bind markers at the time of query execution which gives you a certain degree of query portability across various database vendors.
+****
+
+The query-preprocessor unrolls named `Collection` parameters into a series of bind markers to remove the need of dynamic query creation based on the number of arguments.
+Nested object arrays are expanded to allow usage of e.g. select lists.
+
+Consider the following query:
+
+[source,sql]
+----
+SELECT id, name, state FROM table WHERE (name, age) IN (('John', 35), ('Ann', 50))
+----
+
+This query can be parametrized and executed as:
+
+[source,java]
+----
+List<Object[]> tuples = new ArrayList<>();
+tuples.add(new Object[] {"John", 35});
+tuples.add(new Object[] {"Ann",  50});
+
+db.execute()
+    .sql("SELECT id, name, state FROM table WHERE (name, age) IN (:tuples)")
+    .bind("tuples", tuples);
+----
+
+NOTE: Usage of select lists is vendor-dependent.
+
+A simpler variant using `IN` predicates:
+
+[source,java]
+----
+db.execute()
+    .sql("SELECT id, name, state FROM table WHERE age IN (:ages)")
+    .bind("ages", Arrays.asList(35, 50));
+----
