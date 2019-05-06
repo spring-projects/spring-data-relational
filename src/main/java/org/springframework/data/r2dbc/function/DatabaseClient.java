@@ -30,7 +30,9 @@ import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.domain.PreparedOperation;
+import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.query.Criteria;
+import org.springframework.data.r2dbc.function.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 
 /**
@@ -58,6 +60,11 @@ public interface DatabaseClient {
 	 * Prepare an SQL INSERT call.
 	 */
 	InsertIntoSpec insert();
+
+	/**
+	 * Prepare an SQL UPDATE call.
+	 */
+	UpdateTableSpec update();
 
 	/**
 	 * Prepare an SQL DELETE call.
@@ -291,6 +298,29 @@ public interface DatabaseClient {
 	}
 
 	/**
+	 * Contract for specifying {@code UPDATE} options leading to the exchange.
+	 */
+	interface UpdateTableSpec {
+
+		/**
+		 * Specify the target {@literal table} to update.
+		 *
+		 * @param table must not be {@literal null} or empty.
+		 * @return a {@link GenericUpdateSpec} for further configuration of the update. Guaranteed to be not
+		 *         {@literal null}.
+		 */
+		GenericUpdateSpec table(String table);
+
+		/**
+		 * Specify the target table to update to using the {@link Class entity class}.
+		 *
+		 * @param table must not be {@literal null}.
+		 * @return a {@link TypedUpdateSpec} for further configuration of the update. Guaranteed to be not {@literal null}.
+		 */
+		<T> TypedUpdateSpec<T> table(Class<T> table);
+	}
+
+	/**
 	 * Contract for specifying {@code DELETE} options leading to the exchange.
 	 */
 	interface DeleteFromSpec {
@@ -299,18 +329,18 @@ public interface DatabaseClient {
 		 * Specify the source {@literal table} to delete from.
 		 *
 		 * @param table must not be {@literal null} or empty.
-		 * @return a {@link GenericSelectSpec} for further configuration of the delete. Guaranteed to be not
+		 * @return a {@link DeleteMatchingSpec} for further configuration of the delete. Guaranteed to be not
 		 *         {@literal null}.
 		 */
-		DeleteSpec from(String table);
+		DeleteMatchingSpec from(String table);
 
 		/**
 		 * Specify the source table to delete from to using the {@link Class entity class}.
 		 *
 		 * @param table must not be {@literal null}.
-		 * @return a {@link DeleteSpec} for further configuration of the delete. Guaranteed to be not {@literal null}.
+		 * @return a {@link TypedDeleteSpec} for further configuration of the delete. Guaranteed to be not {@literal null}.
 		 */
-		DeleteSpec from(Class<?> table);
+		<T> TypedDeleteSpec<T> from(Class<T> table);
 	}
 
 	/**
@@ -388,7 +418,7 @@ public interface DatabaseClient {
 		 *
 		 * @param criteria must not be {@literal null}.
 		 */
-		S where(Criteria criteria);
+		S matching(Criteria criteria);
 
 		/**
 		 * Configure {@link Sort}.
@@ -398,11 +428,20 @@ public interface DatabaseClient {
 		S orderBy(Sort sort);
 
 		/**
+		 * Configure {@link Sort}.
+		 *
+		 * @param orders must not be {@literal null}.
+		 */
+		default S orderBy(Sort.Order... orders) {
+			return orderBy(Sort.by(orders));
+		}
+
+		/**
 		 * Configure pagination. Overrides {@link Sort} if the {@link Pageable} contains a {@link Sort} object.
 		 *
-		 * @param page must not be {@literal null}.
+		 * @param pageable must not be {@literal null}.
 		 */
-		S page(Pageable page);
+		S page(Pageable pageable);
 	}
 
 	/**
@@ -425,12 +464,23 @@ public interface DatabaseClient {
 		 *
 		 * @param field must not be {@literal null} or empty.
 		 * @param type must not be {@literal null}.
+		 * @deprecated will be removed soon. Use {@link #nullValue(String)}.
 		 */
-		GenericInsertSpec<T> nullValue(String field, Class<?> type);
+		@Deprecated
+		default GenericInsertSpec<T> nullValue(String field, Class<?> type) {
+			return value(field, SettableValue.empty(type));
+		}
+
+		/**
+		 * Specify a {@literal null} value to insert.
+		 *
+		 * @param field must not be {@literal null} or empty.
+		 */
+		GenericInsertSpec<T> nullValue(String field);
 	}
 
 	/**
-	 * Contract for specifying {@code SELECT} options leading the exchange.
+	 * Contract for specifying {@code INSERT} options leading the exchange.
 	 */
 	interface TypedInsertSpec<T> {
 
@@ -473,7 +523,7 @@ public interface DatabaseClient {
 		/**
 		 * Configure a result mapping {@link java.util.function.BiFunction function}.
 		 *
-		 * @param mappwingFunction must not be {@literal null}.
+		 * @param mappingFunction must not be {@literal null}.
 		 * @param <R> result type.
 		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
 		 */
@@ -493,16 +543,110 @@ public interface DatabaseClient {
 	}
 
 	/**
-	 * Contract for specifying {@code DELETE} options leading to the exchange.
+	 * Contract for specifying {@code UPDATE} options leading to the exchange.
 	 */
-	interface DeleteSpec {
+	interface GenericUpdateSpec {
+
+		/**
+		 * Specify an {@link Update} object containing assignments.
+		 *
+		 * @param update must not be {@literal null}.
+		 */
+		UpdateMatchingSpec using(Update update);
+	}
+
+	/**
+	 * Contract for specifying {@code UPDATE} options leading to the exchange.
+	 */
+	interface TypedUpdateSpec<T> {
+
+		/**
+		 * Update the given {@code objectToUpdate}.
+		 *
+		 * @param objectToUpdate the object of which the attributes will provide the values for the update and the primary
+		 *          key. Must not be {@literal null}.
+		 * @return a {@link UpdateSpec} for further configuration of the update. Guaranteed to be not {@literal null}.
+		 */
+		UpdateSpec using(T objectToUpdate);
+
+		/**
+		 * Use the given {@code tableName} as update target.
+		 *
+		 * @param tableName must not be {@literal null} or empty.
+		 * @return a {@link TypedUpdateSpec} for further configuration of the update. Guaranteed to be not {@literal null}.
+		 */
+		TypedUpdateSpec<T> table(String tableName);
+	}
+
+	/**
+	 * Contract for specifying {@code UPDATE} options leading to the exchange.
+	 */
+	interface UpdateMatchingSpec extends UpdateSpec {
 
 		/**
 		 * Configure a filter {@link Criteria}.
 		 *
 		 * @param criteria must not be {@literal null}.
 		 */
-		DeleteSpec where(Criteria criteria);
+		UpdateSpec matching(Criteria criteria);
+	}
+
+	/**
+	 * Contract for specifying {@code UPDATE} options leading to the exchange.
+	 */
+	interface UpdateSpec {
+
+		/**
+		 * Perform the SQL call and retrieve the result.
+		 */
+		UpdatedRowsFetchSpec fetch();
+
+		/**
+		 * Perform the SQL call and return a {@link Mono} that completes without result on statement completion.
+		 *
+		 * @return a {@link Mono} ignoring its payload (actively dropping).
+		 */
+		Mono<Void> then();
+	}
+
+	/**
+	 * Contract for specifying {@code DELETE} options leading to the exchange.
+	 */
+	interface TypedDeleteSpec<T> extends DeleteSpec {
+
+		/**
+		 * Use the given {@code tableName} as delete target.
+		 *
+		 * @param tableName must not be {@literal null} or empty.
+		 * @return a {@link TypedDeleteSpec} for further configuration of the delete. Guaranteed to be not {@literal null}.
+		 */
+		TypedDeleteSpec<T> table(String tableName);
+
+		/**
+		 * Configure a filter {@link Criteria}.
+		 *
+		 * @param criteria must not be {@literal null}.
+		 */
+		DeleteSpec matching(Criteria criteria);
+	}
+
+	/**
+	 * Contract for specifying {@code DELETE} options leading to the exchange.
+	 */
+	interface DeleteMatchingSpec extends DeleteSpec {
+
+		/**
+		 * Configure a filter {@link Criteria}.
+		 *
+		 * @param criteria must not be {@literal null}.
+		 */
+		DeleteSpec matching(Criteria criteria);
+	}
+
+	/**
+	 * Contract for specifying {@code DELETE} options leading to the exchange.
+	 */
+	interface DeleteSpec {
 
 		/**
 		 * Perform the SQL call and retrieve the result.

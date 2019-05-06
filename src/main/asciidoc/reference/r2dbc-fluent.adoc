@@ -1,0 +1,239 @@
+[[r2dbc.datbaseclient.fluent-api]]
+= Fluent Data Access API
+
+You have already seen ``DatabaseClient``s SQL API that offers you maximum flexibility to execute any type of SQL.
+`DatabaseClient` provides a more narrow interface for typical ad-hoc use-cases such as querying, inserting, updating, and deleting data.
+
+The entry points (`insert()`, `select()`, `update()`, and others) follow a natural naming schema based on the operation to be run. Moving on from the entry point, the API is designed to offer only context-dependent methods that lead to a terminating method that creates and runs a SQL statement. Spring Data R2DBC uses a `Dialect` abstraction to determine bind markers, pagination support and  data types natively supported by the underlying driver.
+
+Let's take a look at a simple query:
+
+====
+[source,java]
+----
+Flux<Person> people = databaseClient.select()
+        .from(Person.class)                       <1>
+        .fetch()
+        .all();                                   <2>
+----
+<1> Using `Person` with the `from(…)` method sets the `FROM` table based on mapping metadata. It also maps tabular results on `Person` result objects.
+<2> Fetching `all()` rows returns a `Flux<Person>` without limiting results.
+====
+
+The following example declares a more complex query that specifies the table name by name, a `WHERE` condition and `ORDER BY` clause:
+
+====
+[source,java]
+----
+Mono<Person> first = databaseClient.select()
+        .from("legoset")                                  <1>
+        .matching(where("firstname").is("John")           <2>
+                .and("lastname").in("Doe", "White"))
+        .orderBy(desc("id"))                              <3>
+        .as(Person.class)
+        .fetch()
+        .one();                                           <4>
+----
+<1> Selecting from a table by name returns row results as `Map<String, Object>` with case-insensitive column name matching.
+<2> The issued query declares a `WHERE` condition on `firstname` and `lastname` columns to filter results.
+<3> Results can be ordered by individual column names resulting in an `ORDER BY` clause.
+<4> Selecting the one result fetches just a single row. This way of consuming rows expects the query to return exactly a single result. `Mono` emits a `IncorrectResultSizeDataAccessException` if the query yields more than a single result.
+====
+
+You can consume Query results in three ways:
+
+* Through object mapping (e.g. `as(Class<T>)`) using Spring Data's mapping-metadata.
+* As `Map<String, Object>` where column names are mapped to their value. Column names are looked up case-insensitive.
+* By supplying a mapping `BiFunction` for direct access to R2DBC `Row` and `RowMetadata`
+
+You can switch between retrieving a single entity and retrieving multiple entities as through the terminating methods:
+
+* `first()`: Consume only the first row returning a `Mono`. The returned `Mono` completes without emitting an object if the query returns no results.
+* `one()`: Consume exactly one row returning a `Mono`. The returned `Mono` completes without emitting an object if the query returns no results. If the query returns more than row then `Mono` completes exceptionally emitting `IncorrectResultSizeDataAccessException`.
+* `all()`: Consume all returned rows returning a `Flux`.
+* `rowsUpdated`: Consume the number of affected rows. Typically used with `INSERT`/`UPDATE`/`DELETE`  statements.
+
+[[r2dbc.datbaseclient.fluent-api.select]]
+== Selecting Data
+
+Use the `select()` entry point to express your `SELECT` queries.
+The resulting `SELECT` queries support the commonly used clauses `WHERE`, `ORDER BY` and support pagination.
+The fluent API style allows you to chain together multiple methods while having easy-to-understand code.
+To improve readability, use static imports that allow you avoid using the 'new' keyword for creating `Criteria` instances.
+
+[r2dbc.datbaseclient.fluent-api.criteria]]
+==== Methods for the Criteria Class
+
+The `Criteria` class provides the following methods, all of which correspond to SQL operators:
+
+* `Criteria` *and* `(String column)` Adds a chained `Criteria` with the specified `property` to the current `Criteria` and returns the newly created one.
+* `Criteria` *or* `(String column)` Adds a chained `Criteria` with the specified `property` to the current `Criteria` and returns the newly created one.
+* `Criteria` *greaterThan* `(Object o)` Creates a criterion using the `>` operator.
+* `Criteria` *greaterThanOrEquals* `(Object o)` Creates a criterion using the `>=` operator.
+* `Criteria` *in* `(Object... o)` Creates a criterion using the `IN` operator for a varargs argument.
+* `Criteria` *in* `(Collection<?> collection)` Creates a criterion using the `IN` operator using a collection.
+* `Criteria` *is* `(Object o)` Creates a criterion using column matching (`property = value`).
+* `Criteria` *isNull* `()` Creates a criterion using the `IS NULL` operator.
+* `Criteria` *isNotNull* `()` Creates a criterion using the `IS NOT NULL` operator.
+* `Criteria` *lessThan* `(Object o)` Creates a criterion using the `<` operator.
+* `Criteria` *lessThanOrEquals* `(Object o)` Creates a criterion using the `<=` operator.
+* `Criteria` *like* `(Object o)` Creates a criterion using the `LIKE` operator without escape character processing.
+* `Criteria` *not* `(Object o)` Creates a criterion using the `!=` operator.
+* `Criteria` *notIn* `(Object... o)` Creates a criterion using the `NOT IN` operator for a varargs argument.
+* `Criteria` *notIn* `(Collection<?> collection)` Creates a criterion using the `NOT IN` operator using a collection.
+
+You can use `Criteria` with `SELECT`, `UPDATE`, and `DELETE` queries.
+
+[r2dbc.datbaseclient.fluent-api.select.methods]]
+==== Methods for SELECT operations
+
+The `select()` entry point exposes some additional methods that provide options for the query:
+
+* *from* `(Class<T>)` used to specify the source table using a mapped object. Returns results by default as `T`.
+* *from* `(String)` used to specify the source table name. Returns results by default as `Map<String, Object>`.
+* *as* `(Class<T>)` used to map results to `T`.
+* *map* `(BiFunction<Row, RowMetadata, T>)` used to supply a mapping function to extract results.
+* *project* `(String... columns)` used to specify which columns to return.
+* *matching* `(Criteria)` used to declare a `WHERE` condition to filter results.
+* *orderBy* `(Order)` used to declare a `ORDER BY` clause to sort results.
+* *page* `(Page pageable)` used to retrieve a particular page within the result. Limits the size of the returned results and reads from a  offset.
+* *fetch* `()` transition call declaration to the fetch stage to declare result consumption multiplicity.
+
+[[r2dbc.datbaseclient.fluent-api.insert]]
+== Inserting Data
+
+Use the `insert()` entry point to insert data. Similar to `select()`, `insert()` allows free-form and mapped object inserts.
+
+Take a look at a simple typed insert operation:
+
+====
+[source,java]
+----
+Mono<Void> insert = databaseClient.insert()
+        .into(Person.class)                       <1>
+        .using(new Person(…))                     <2>
+        .then();                                  <3>
+----
+<1> Using `Person` with the `into(…)` method sets the `INTO` table based on mapping metadata. It also prepares the insert statement to accept `Person` objects for inserting.
+<2> Provide a scalar `Person` object. Alternatively, you can supply a `Publisher` to execute a stream of `INSERT` statements. This method extracts all non-``null`` values and inserts these.
+<3> Use `then()` to just insert an object without consuming further details. Modifying statements allow consumption of the number of affected rows or tabular results for consuming generated keys.
+====
+
+Inserts also support untyped operations:
+
+====
+[source,java]
+----
+Mono<Void> insert = databaseClient.insert()
+        .into("person")                           <1>
+        .value("firstname", "John")               <2>
+        .nullValue("lastname")                    <3>
+        .then();                                  <4>
+----
+<1> Start an insert into the `person` table.
+<2> Provide a non-null value for  `firstname`.
+<3> Set `lastname` to `null`.
+<3> Use `then()` to just insert an object without consuming further details. Modifying statements allow consumption of the number of affected rows or tabular results for consuming generated keys.
+====
+
+[r2dbc.datbaseclient.fluent-api.insert.methods]]
+==== Methods for INSERT operations
+
+The `insert()` entry point exposes some additional methods that provide options for the operation:
+
+* *into* `(Class<T>)` used to specify the target table using a mapped object. Returns results by default as `T`.
+* *into* `(String)` used to specify the target table name. Returns results by default as `Map<String, Object>`.
+* *using* `(T)` used to specify the object to insert.
+* *using* `(Publisher<T>)` used to accept a stream of objects to insert.
+* *table* `(String)` used to override the target table name.
+* *value* `(String, Object)` used to provide a column value to insert.
+* *nullValue* `(String)` used to provide a null value to insert.
+* *map* `(BiFunction<Row, RowMetadata, T>)` used to supply a mapping function to extract results.
+* *then* `()` execute `INSERT` without consuming any results.
+* *fetch* `()` transition call declaration to the fetch stage to declare result consumption multiplicity.
+
+[[r2dbc.datbaseclient.fluent-api.update]]
+== Updating Data
+
+Use the `update()` entry point to update rows.
+Updating data starts with a specification of the table to update accepting `Update` specifying assignments. It also accepts `Criteria` to create a `WHERE` clause.
+
+Take a look at a simple typed update operation:
+
+====
+[source,java]
+----
+Person modified = …
+
+Mono<Void> update = databaseClient.update()
+        .table(Person.class)                              <1>
+        .using(modified)                                  <2>
+        .then();                                          <3>
+----
+<1> Using `Person` with the `table(…)` method sets the table to update based on mapping metadata.
+<2> Provide a scalar `Person` object value. `using(…)` accepts the modified object and derives primary keys and updates all column values.
+<3> Use `then()` to just update rows an object without consuming further details. Modifying statements allow also consumption of the number of affected rows.
+====
+
+Update also support untyped operations:
+
+====
+[source,java]
+----
+Mono<Void> update = databaseClient.update()
+        .table("person")                                  <1>
+        .using(Update.update("firstname", "Jane"))        <2>
+        .matching(where("firstname").is("John"))          <3>
+        .then();                                          <4>
+----
+<1> Update table `person`.
+<2> Provide a `Update` definition, which columns to update.
+<3> The issued query declares a `WHERE` condition on `firstname` columns to filter rows to update.
+<4> Use `then()` to just update rows an object without consuming further details. Modifying statements allow also consumption of the number of affected rows.
+====
+
+[r2dbc.datbaseclient.fluent-api.delete.methods]]
+==== Methods for DELETE operations
+
+The `delete()` entry point exposes some additional methods that provide options for the operation:
+
+* *table* `(Class<T>)` used to specify the target table using a mapped object. Returns results by default as `T`.
+* *table* `(String)` used to specify the target table name. Returns results by default as `Map<String, Object>`.
+* *using* `(T)` used to specify the object to update. Derives criteria itself.
+* *using* `(Update)` used to specify the update definition.
+* *matching* `(Criteria)` used to declare a `WHERE` condition to rows to update.
+* *then* `()` execute `UPDATE` without consuming any results.
+* *fetch* `()` transition call declaration to the fetch stage to fetch the number of updated rows.
+
+[[r2dbc.datbaseclient.fluent-api.delete]]
+== Deleting Data
+
+Use the `delete()` entry point to delete rows.
+Removing data starts with a specification of the table to delete from and optionally accepts a `Criteria` to create a `WHERE` clause.
+
+Take a look at a simple insert operation:
+
+====
+[source,java]
+----
+Mono<Void> delete = databaseClient.delete()
+        .from(Person.class)                               <1>
+        .matching(where("firstname").is("John")           <2>
+                .and("lastname").in("Doe", "White"))
+        .then();                                          <3>
+----
+<1> Using `Person` with the `from(…)` method sets the `FROM` table based on mapping metadata.
+<2> The issued query declares a `WHERE` condition on `firstname` and `lastname` columns to filter rows to delete.
+<3> Use `then()` to just delete rows an object without consuming further details. Modifying statements allow also consumption of the number of affected rows.
+====
+
+[r2dbc.datbaseclient.fluent-api.delete.methods]]
+==== Methods for DELETE operations
+
+The `delete()` entry point exposes some additional methods that provide options for the operation:
+
+* *from* `(Class<T>)` used to specify the target table using a mapped object. Returns results by default as `T`.
+* *from* `(String)` used to specify the target table name. Returns results by default as `Map<String, Object>`.
+* *matching* `(Criteria)` used to declare a `WHERE` condition to rows to delete.
+* *then* `()` execute `DELETE` without consuming any results.
+* *fetch* `()` transition call declaration to the fetch stage to fetch the number of deleted rows.

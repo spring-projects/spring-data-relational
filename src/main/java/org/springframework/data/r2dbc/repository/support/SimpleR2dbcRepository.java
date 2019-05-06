@@ -21,23 +21,20 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 import org.reactivestreams.Publisher;
 
 import org.springframework.data.r2dbc.domain.PreparedOperation;
-import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.function.StatementMapper;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
-import org.springframework.data.relational.core.sql.Delete;
+import org.springframework.data.r2dbc.function.query.Criteria;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.Update;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -64,27 +61,19 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(objectToSave, "Object to save must not be null!");
 
-		if (entity.isNew(objectToSave)) {
+		if (this.entity.isNew(objectToSave)) {
 
-			return databaseClient.insert() //
-					.into(entity.getJavaType()) //
-					.using(objectToSave) //
-					.map(converter.populateIdIfNecessary(objectToSave)) //
+			return this.databaseClient.insert() //
+					.into(this.entity.getJavaType()) //
+					.table(this.entity.getTableName()).using(objectToSave) //
+					.map(this.converter.populateIdIfNecessary(objectToSave)) //
 					.first() //
 					.defaultIfEmpty(objectToSave);
 		}
 
-		Object id = entity.getRequiredId(objectToSave);
-		Map<String, SettableValue> columns = accessStrategy.getOutboundRow(objectToSave);
-		columns.remove(getIdColumnName()); // do not update the Id column.
-		String idColumnName = getIdColumnName();
-
-		PreparedOperation<Update> operation = accessStrategy.getStatements().update(entity.getTableName(), binder -> {
-			columns.forEach(binder::bind);
-			binder.filterBy(idColumnName, SettableValue.from(id));
-		});
-
-		return databaseClient.execute().sql(operation).as(entity.getJavaType()) //
+		return this.databaseClient.update() //
+				.table(this.entity.getJavaType()) //
+				.table(this.entity.getTableName()).using(objectToSave) //
 				.then() //
 				.thenReturn(objectToSave);
 	}
@@ -119,16 +108,18 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(id, "Id must not be null!");
 
-		Set<String> columns = new LinkedHashSet<>(accessStrategy.getAllColumns(entity.getJavaType()));
+		List<String> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
 		String idColumnName = getIdColumnName();
 
-		PreparedOperation<Select> operation = accessStrategy.getStatements().select(entity.getTableName(), columns,
-				binder -> {
-					binder.filterBy(idColumnName, SettableValue.from(id));
-				});
+		StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
+		StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName()) //
+				.withProjection(columns) //
+				.withCriteria(Criteria.where(idColumnName).is(id));
 
-		return databaseClient.execute().sql(operation) //
-				.as(entity.getJavaType()) //
+		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
+
+		return this.databaseClient.execute().sql(operation) //
+				.as(this.entity.getJavaType()) //
 				.fetch() //
 				.one();
 	}
@@ -151,12 +142,14 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		String idColumnName = getIdColumnName();
 
-		PreparedOperation<Select> operation = accessStrategy.getStatements().select(entity.getTableName(),
-				Collections.singleton(idColumnName), binder -> {
-					binder.filterBy(idColumnName, SettableValue.from(id));
-				});
+		StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
+		StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName())
+				.withProjection(Collections.singletonList(idColumnName)) //
+				.withCriteria(Criteria.where(idColumnName).is(id));
 
-		return databaseClient.execute().sql(operation) //
+		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
+
+		return this.databaseClient.execute().sql(operation) //
 				.map((r, md) -> r) //
 				.first() //
 				.hasElement();
@@ -175,7 +168,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 */
 	@Override
 	public Flux<T> findAll() {
-		return databaseClient.select().from(entity.getJavaType()).fetch().all();
+		return this.databaseClient.select().from(this.entity.getJavaType()).fetch().all();
 	}
 
 	/* (non-Javadoc)
@@ -203,15 +196,17 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				return Flux.empty();
 			}
 
-			Set<String> columns = new LinkedHashSet<>(accessStrategy.getAllColumns(entity.getJavaType()));
+			List<String> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
 			String idColumnName = getIdColumnName();
 
-			PreparedOperation<Select> operation = accessStrategy.getStatements().select(entity.getTableName(), columns,
-					binder -> {
-						binder.filterBy(idColumnName, SettableValue.from(ids));
-					});
+			StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
+			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName()) //
+					.withProjection(columns) //
+					.withCriteria(Criteria.where(idColumnName).in(ids));
 
-			return databaseClient.execute().sql(operation).as(entity.getJavaType()).fetch().all();
+			PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
+
+			return this.databaseClient.execute().sql(operation).as(this.entity.getJavaType()).fetch().all();
 		});
 	}
 
@@ -221,17 +216,16 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	@Override
 	public Mono<Long> count() {
 
-		Table table = Table.create(entity.getTableName());
+		Table table = Table.create(this.entity.getTableName());
 		Select select = StatementBuilder //
 				.select(Functions.count(table.column(getIdColumnName()))) //
 				.from(table) //
 				.build();
 
-		return databaseClient.execute().sql(SqlRenderer.toString(select)) //
+		return this.databaseClient.execute().sql(SqlRenderer.toString(select)) //
 				.map((r, md) -> r.get(0, Long.class)) //
 				.first() //
 				.defaultIfEmpty(0L);
-
 	}
 
 	/* (non-Javadoc)
@@ -242,11 +236,10 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(id, "Id must not be null!");
 
-		PreparedOperation<Delete> delete = accessStrategy.getStatements().delete(entity.getTableName(), binder -> {
-			binder.filterBy(getIdColumnName(), SettableValue.from(id));
-		});
-
-		return databaseClient.execute().sql(delete) //
+		return this.databaseClient.delete() //
+				.from(this.entity.getJavaType()) //
+				.table(this.entity.getTableName()) //
+				.matching(Criteria.where(getIdColumnName()).is(id)) //
 				.fetch() //
 				.rowsUpdated() //
 				.then();
@@ -259,6 +252,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	public Mono<Void> deleteById(Publisher<ID> idPublisher) {
 
 		Assert.notNull(idPublisher, "The Id Publisher must not be null!");
+		StatementMapper statementMapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
 
 		return Flux.from(idPublisher).buffer().filter(ids -> !ids.isEmpty()).concatMap(ids -> {
 
@@ -266,11 +260,12 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				return Flux.empty();
 			}
 
-			PreparedOperation<Delete> delete = accessStrategy.getStatements().delete(entity.getTableName(), binder -> {
-				binder.filterBy(getIdColumnName(), SettableValue.from(ids));
-			});
-
-			return databaseClient.execute().sql(delete).then();
+			return this.databaseClient.delete() //
+					.from(this.entity.getJavaType()) //
+					.table(this.entity.getTableName()) //
+					.matching(Criteria.where(getIdColumnName()).in(ids)) //
+					.fetch() //
+					.rowsUpdated();
 		}).then();
 	}
 
@@ -282,7 +277,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(objectToDelete, "Object to delete must not be null!");
 
-		return deleteById(entity.getRequiredId(objectToDelete));
+		return deleteById(this.entity.getRequiredId(objectToDelete));
 	}
 
 	/* (non-Javadoc)
@@ -305,7 +300,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		Assert.notNull(objectPublisher, "The Object Publisher must not be null!");
 
 		Flux<ID> idPublisher = Flux.from(objectPublisher) //
-				.map(entity::getRequiredId);
+				.map(this.entity::getRequiredId);
 
 		return deleteById(idPublisher);
 	}
@@ -315,16 +310,14 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 */
 	@Override
 	public Mono<Void> deleteAll() {
-
-		return databaseClient.execute().sql(String.format("DELETE FROM %s", entity.getTableName())) //
-				.then();
+		return this.databaseClient.delete().from(this.entity.getTableName()).then();
 	}
 
 	private String getIdColumnName() {
 
-		return converter //
+		return this.converter //
 				.getMappingContext() //
-				.getRequiredPersistentEntity(entity.getJavaType()) //
+				.getRequiredPersistentEntity(this.entity.getJavaType()) //
 				.getRequiredIdProperty() //
 				.getColumnName();
 	}

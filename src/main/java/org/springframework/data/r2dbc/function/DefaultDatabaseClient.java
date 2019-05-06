@@ -58,13 +58,9 @@ import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
-import org.springframework.data.r2dbc.function.operation.BindableOperation;
-import org.springframework.data.r2dbc.function.query.BoundCondition;
 import org.springframework.data.r2dbc.function.query.Criteria;
+import org.springframework.data.r2dbc.function.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
-import org.springframework.data.relational.core.sql.Delete;
-import org.springframework.data.relational.core.sql.Insert;
-import org.springframework.data.relational.core.sql.Select;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -101,7 +97,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	@Override
 	public Builder mutate() {
-		return builder;
+		return this.builder;
 	}
 
 	@Override
@@ -117,6 +113,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	@Override
 	public InsertIntoSpec insert() {
 		return new DefaultInsertIntoSpec();
+	}
+
+	@Override
+	public UpdateTableSpec update() {
+		return new DefaultUpdateTableSpec();
 	}
 
 	@Override
@@ -206,7 +207,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * @throws IllegalStateException in case of no DataSource set
 	 */
 	protected ConnectionFactory obtainConnectionFactory() {
-		return connector;
+		return this.connector;
 	}
 
 	/**
@@ -230,7 +231,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 */
 	protected DataAccessException translateException(String task, @Nullable String sql, R2dbcException ex) {
 
-		DataAccessException dae = exceptionTranslator.translate(task, sql, ex);
+		DataAccessException dae = this.exceptionTranslator.translate(task, sql, ex);
 		return (dae != null ? dae : new UncategorizedR2dbcException(task, sql, ex));
 	}
 
@@ -355,9 +356,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				}
 
 				BindableOperation operation = namedParameters.expand(sql, dataAccessStrategy.getBindMarkersFactory(),
-						new MapBindParameterSource(byName));
+						new MapBindParameterSource(this.byName));
 
-				String expanded = operation.toQuery();
+				String expanded = getRequiredSql(operation);
 				if (logger.isTraceEnabled()) {
 					logger.trace("Expanded SQL [" + expanded + "]");
 				}
@@ -365,7 +366,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				Statement statement = it.createStatement(expanded);
 				BindTarget bindTarget = new StatementWrapper(statement);
 
-				byName.forEach((name, o) -> {
+				this.byName.forEach((name, o) -> {
 
 					if (o.getValue() != null) {
 						operation.bind(bindTarget, name, o.getValue());
@@ -374,7 +375,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					}
 				});
 
-				bindByIndex(statement, byIndex);
+				bindByIndex(statement, this.byIndex);
 
 				return statement;
 			};
@@ -570,7 +571,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public FetchSpec<T> fetch() {
-			return exchange(this.sqlSupplier, mappingFunction);
+			return exchange(this.sqlSupplier, this.mappingFunction);
 		}
 
 		@Override
@@ -606,7 +607,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		protected DefaultTypedExecuteSpec<T> createInstance(Map<Integer, SettableValue> byIndex,
 				Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
-			return createTypedExecuteSpec(byIndex, byName, sqlSupplier, typeToRead);
+			return createTypedExecuteSpec(byIndex, byName, sqlSupplier, this.typeToRead);
 		}
 	}
 
@@ -656,37 +657,38 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			projectedFields.addAll(this.projectedFields);
 			projectedFields.addAll(Arrays.asList(selectedFields));
 
-			return createInstance(table, projectedFields, criteria, sort, page);
+			return createInstance(this.table, projectedFields, this.criteria, this.sort, this.page);
 		}
 
 		public DefaultSelectSpecSupport where(Criteria whereCriteria) {
 
 			Assert.notNull(whereCriteria, "Criteria must not be null!");
 
-			return createInstance(table, projectedFields, whereCriteria, sort, page);
+			return createInstance(this.table, this.projectedFields, whereCriteria, this.sort, this.page);
 		}
 
 		public DefaultSelectSpecSupport orderBy(Sort sort) {
 
 			Assert.notNull(sort, "Sort must not be null!");
 
-			return createInstance(table, projectedFields, criteria, sort, page);
+			return createInstance(this.table, this.projectedFields, this.criteria, sort, this.page);
 		}
 
 		public DefaultSelectSpecSupport page(Pageable page) {
 
 			Assert.notNull(page, "Pageable must not be null!");
 
-			return createInstance(table, projectedFields, criteria, sort, page);
+			return createInstance(this.table, this.projectedFields, this.criteria, this.sort, page);
 		}
 
 		<R> FetchSpec<R> execute(PreparedOperation<?> preparedOperation, BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			Function<Connection, Statement> selectFunction = wrapPreparedOperation(preparedOperation);
+			String sql = getRequiredSql(preparedOperation);
+			Function<Connection, Statement> selectFunction = wrapPreparedOperation(sql, preparedOperation);
 			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(selectFunction.apply(it).execute());
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					preparedOperation.toQuery(), //
+					sql, //
 					resultFunction, //
 					it -> Mono.error(new UnsupportedOperationException("Not available for SELECT")), //
 					mappingFunction);
@@ -711,8 +713,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
-			return new DefaultTypedSelectSpec<>(table, projectedFields, criteria, sort, page, resultType,
-					dataAccessStrategy.getRowMapper(resultType));
+			return new DefaultTypedSelectSpec<>(this.table, this.projectedFields, this.criteria, this.sort, this.page,
+					resultType, dataAccessStrategy.getRowMapper(resultType));
 		}
 
 		@Override
@@ -729,7 +731,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultGenericSelectSpec where(Criteria criteria) {
+		public DefaultGenericSelectSpec matching(Criteria criteria) {
 			return (DefaultGenericSelectSpec) super.where(criteria);
 		}
 
@@ -739,8 +741,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultGenericSelectSpec page(Pageable page) {
-			return (DefaultGenericSelectSpec) super.page(page);
+		public DefaultGenericSelectSpec page(Pageable pageable) {
+			return (DefaultGenericSelectSpec) super.page(pageable);
 		}
 
 		@Override
@@ -750,19 +752,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			PreparedOperation<Select> operation = dataAccessStrategy.getStatements().select(table, this.projectedFields,
-					(t, configurer) -> {
+			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 
-						configurer.withPageRequest(page).withSort(sort);
+			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.table).withProjection(this.projectedFields)
+					.withSort(this.sort).withPage(this.page);
 
-						if (criteria != null) {
+			if (this.criteria != null) {
+				selectSpec = selectSpec.withCriteria(this.criteria);
+			}
 
-							BoundCondition boundCondition = dataAccessStrategy.getMappedCriteria(criteria, t);
-							configurer.withWhere(boundCondition.getCondition()).withBindings(boundCondition.getBindings());
-						}
-
-					});
-
+			PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
 			return execute(operation, mappingFunction);
 		}
 
@@ -824,7 +823,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultTypedSelectSpec<T> where(Criteria criteria) {
+		public DefaultTypedSelectSpec<T> matching(Criteria criteria) {
 			return (DefaultTypedSelectSpec<T>) super.where(criteria);
 		}
 
@@ -834,42 +833,34 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultTypedSelectSpec<T> page(Pageable page) {
-			return (DefaultTypedSelectSpec<T>) super.page(page);
+		public DefaultTypedSelectSpec<T> page(Pageable pageable) {
+			return (DefaultTypedSelectSpec<T>) super.page(pageable);
 		}
 
 		@Override
 		public FetchSpec<T> fetch() {
-			return exchange(mappingFunction);
+			return exchange(this.mappingFunction);
 		}
 
 		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			List<String> columns;
+			StatementMapper mapper = dataAccessStrategy.getStatementMapper().forType(this.typeToRead);
 
 			if (this.projectedFields.isEmpty()) {
-				columns = dataAccessStrategy.getAllColumns(typeToRead);
+				columns = dataAccessStrategy.getAllColumns(this.typeToRead);
 			} else {
 				columns = this.projectedFields;
 			}
 
-			PreparedOperation<Select> operation = dataAccessStrategy.getStatements().select(table, columns,
-					(table, configurer) -> {
+			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.table).withProjection(columns)
+					.withPage(this.page).withSort(this.sort);
 
-						Sort sortToUse;
-						if (this.sort.isSorted()) {
-							sortToUse = dataAccessStrategy.getMappedSort(this.sort, this.typeToRead);
-						} else {
-							sortToUse = this.sort;
-						}
+			if (this.criteria != null) {
+				selectSpec = selectSpec.withCriteria(this.criteria);
+			}
 
-						configurer.withPageRequest(page).withSort(sortToUse);
-
-						if (criteria != null) {
-							BoundCondition boundCondition = dataAccessStrategy.getMappedCriteria(criteria, table, this.typeToRead);
-							configurer.withWhere(boundCondition.getCondition()).withBindings(boundCondition.getBindings());
-						}
-					});
+			PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
 
 			return execute(operation, mappingFunction);
 		}
@@ -877,7 +868,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		protected DefaultTypedSelectSpec<T> createInstance(String table, List<String> projectedFields, Criteria criteria,
 				Sort sort, Pageable page) {
-			return new DefaultTypedSelectSpec<>(table, projectedFields, criteria, sort, page, typeToRead, mappingFunction);
+			return new DefaultTypedSelectSpec<>(table, projectedFields, criteria, sort, page, this.typeToRead,
+					this.mappingFunction);
 		}
 	}
 
@@ -915,18 +907,22 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					() -> String.format("Value for field %s must not be null. Use nullValue(…) instead.", field));
 
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
-			byName.put(field, SettableValue.fromOrEmpty(value, value.getClass()));
+			if (value instanceof SettableValue) {
+				byName.put(field, (SettableValue) value);
+			} else {
+				byName.put(field, SettableValue.fromOrEmpty(value, value.getClass()));
+			}
 
 			return new DefaultGenericInsertSpec<>(this.table, byName, this.mappingFunction);
 		}
 
 		@Override
-		public GenericInsertSpec nullValue(String field, Class<?> type) {
+		public GenericInsertSpec nullValue(String field) {
 
 			Assert.notNull(field, "Field must not be null!");
 
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
-			byName.put(field, SettableValue.empty(type));
+			byName.put(field, null);
 
 			return new DefaultGenericInsertSpec<>(this.table, byName, this.mappingFunction);
 		}
@@ -951,30 +947,19 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			if (byName.isEmpty()) {
+			if (this.byName.isEmpty()) {
 				throw new IllegalStateException("Insert fields is empty!");
 			}
 
-			PreparedOperation<Insert> operation = dataAccessStrategy.getStatements().insert(table, Collections.emptyList(),
-					it -> {
-						byName.forEach(it::bind);
-					});
+			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+			StatementMapper.InsertSpec insert = mapper.createInsert(this.table);
 
-			String sql = getRequiredSql(operation);
+			for (String column : this.byName.keySet()) {
+				insert = insert.withColumn(column, this.byName.get(column));
+			}
 
-			Function<Connection, Flux<Result>> resultFunction = it -> {
-
-				Statement statement = it.createStatement(sql);
-				operation.bindTo(new StatementWrapper(statement));
-
-				return Flux.from(statement.execute());
-			};
-
-			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					operation.toQuery(), //
-					resultFunction, //
-					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
-					mappingFunction);
+			PreparedOperation<?> operation = mapper.getMappedObject(insert);
+			return exchangeInsert(mappingFunction, operation);
 		}
 	}
 
@@ -1002,7 +987,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.hasText(tableName, "Table name must not be null or empty!");
 
-			return new DefaultTypedInsertSpec<>(typeToInsert, tableName, objectToInsert, this.mappingFunction);
+			return new DefaultTypedInsertSpec<>(this.typeToInsert, tableName, this.objectToInsert, this.mappingFunction);
 		}
 
 		@Override
@@ -1010,7 +995,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(objectToInsert, "Object to insert must not be null!");
 
-			return new DefaultTypedInsertSpec<>(typeToInsert, table, Mono.just(objectToInsert), this.mappingFunction);
+			return new DefaultTypedInsertSpec<>(this.typeToInsert, this.table, Mono.just(objectToInsert),
+					this.mappingFunction);
 		}
 
 		@Override
@@ -1018,7 +1004,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(objectToInsert, "Publisher to insert must not be null!");
 
-			return new DefaultTypedInsertSpec<>(typeToInsert, table, objectToInsert, this.mappingFunction);
+			return new DefaultTypedInsertSpec<>(this.typeToInsert, this.table, objectToInsert, this.mappingFunction);
 		}
 
 		@Override
@@ -1036,7 +1022,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public Mono<Void> then() {
-			return Mono.from(objectToInsert).flatMapMany(toInsert -> exchange(toInsert, (row, md) -> row).all()).then();
+			return Mono.from(this.objectToInsert).flatMapMany(toInsert -> exchange(toInsert, (row, md) -> row).all()).then();
 		}
 
 		private <MR> FetchSpec<MR> exchange(BiFunction<Row, RowMetadata, MR> mappingFunction) {
@@ -1069,34 +1055,167 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(toInsert);
 
-			PreparedOperation<Insert> operation = dataAccessStrategy.getStatements().insert(table, Collections.emptyList(),
-					it -> {
-						outboundRow.forEach((k, v) -> {
+			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+			StatementMapper.InsertSpec insert = mapper.createInsert(this.table);
 
-							if (v.hasValue()) {
-								it.bind(k, v);
-							}
-						});
-					});
+			for (String column : outboundRow.keySet()) {
+				SettableValue settableValue = outboundRow.get(column);
+				if (settableValue.hasValue()) {
+					insert = insert.withColumn(column, settableValue);
+				}
+			}
 
-			String sql = getRequiredSql(operation);
-			Function<Connection, Flux<Result>> resultFunction = it -> {
+			PreparedOperation<?> operation = mapper.getMappedObject(insert);
+			return exchangeInsert(mappingFunction, operation);
+		}
+	}
 
-				Statement statement = it.createStatement(sql);
-				operation.bindTo(new StatementWrapper(statement));
-				statement.returnGeneratedValues();
+	/**
+	 * Default {@link DatabaseClient.UpdateTableSpec} implementation.
+	 */
+	class DefaultUpdateTableSpec implements UpdateTableSpec {
 
-				return Flux.from(statement.execute());
-			};
+		@Override
+		public GenericUpdateSpec table(String table) {
+			return new DefaultGenericUpdateSpec(null, table, null, null);
+		}
 
-			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					operation.toQuery(), //
-					resultFunction, //
-					it -> resultFunction //
-							.apply(it) //
-							.flatMap(Result::getRowsUpdated) //
-							.collect(Collectors.summingInt(Integer::intValue)), //
-					mappingFunction);
+		@Override
+		public <T> TypedUpdateSpec<T> table(Class<T> table) {
+			return new DefaultTypedUpdateSpec<>(table, null, null);
+		}
+	}
+
+	@RequiredArgsConstructor
+	class DefaultGenericUpdateSpec implements GenericUpdateSpec, UpdateMatchingSpec {
+
+		private final @Nullable Class<?> typeToUpdate;
+		private final @Nullable String table;
+		private final Update assignments;
+		private final Criteria where;
+
+		@Override
+		public UpdateMatchingSpec using(Update update) {
+
+			Assert.notNull(update, "Update must not be null");
+
+			return new DefaultGenericUpdateSpec(this.typeToUpdate, this.table, update, this.where);
+		}
+
+		@Override
+		public UpdateSpec matching(Criteria criteria) {
+
+			Assert.notNull(criteria, "Criteria must not be null");
+
+			return new DefaultGenericUpdateSpec(this.typeToUpdate, this.table, this.assignments, criteria);
+		}
+
+		@Override
+		public UpdatedRowsFetchSpec fetch() {
+
+			String table;
+
+			if (StringUtils.isEmpty(this.table)) {
+				table = dataAccessStrategy.getTableName(this.typeToUpdate);
+			} else {
+				table = this.table;
+			}
+
+			return exchange(table);
+		}
+
+		@Override
+		public Mono<Void> then() {
+			return fetch().rowsUpdated().then();
+		}
+
+		private UpdatedRowsFetchSpec exchange(String table) {
+
+			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+
+			if (this.typeToUpdate != null) {
+				mapper = mapper.forType(this.typeToUpdate);
+			}
+
+			StatementMapper.UpdateSpec update = mapper.createUpdate(table, this.assignments);
+
+			if (this.where != null) {
+				update = update.withCriteria(this.where);
+			}
+
+			PreparedOperation<?> operation = mapper.getMappedObject(update);
+
+			return exchangeUpdate(operation);
+		}
+	}
+
+	@RequiredArgsConstructor
+	class DefaultTypedUpdateSpec<T> implements TypedUpdateSpec<T>, UpdateSpec {
+
+		private final @Nullable Class<T> typeToUpdate;
+		private final @Nullable String table;
+		private final T objectToUpdate;
+
+		@Override
+		public UpdateSpec using(T objectToUpdate) {
+
+			Assert.notNull(objectToUpdate, "Object to update must not be null");
+
+			return new DefaultTypedUpdateSpec<>(this.typeToUpdate, this.table, objectToUpdate);
+		}
+
+		@Override
+		public TypedUpdateSpec<T> table(String tableName) {
+
+			Assert.hasText(tableName, "Table name must not be null or empty!");
+
+			return new DefaultTypedUpdateSpec<>(this.typeToUpdate, tableName, this.objectToUpdate);
+		}
+
+		@Override
+		public UpdatedRowsFetchSpec fetch() {
+
+			String table;
+
+			if (StringUtils.isEmpty(this.table)) {
+				table = dataAccessStrategy.getTableName(this.typeToUpdate);
+			} else {
+				table = this.table;
+			}
+
+			return exchange(table);
+		}
+
+		@Override
+		public Mono<Void> then() {
+			return fetch().rowsUpdated().then();
+		}
+
+		private UpdatedRowsFetchSpec exchange(String table) {
+
+			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+			Map<String, SettableValue> columns = dataAccessStrategy.getOutboundRow(this.objectToUpdate);
+			List<String> ids = dataAccessStrategy.getIdentifierColumns(this.typeToUpdate);
+
+			if (ids.isEmpty()) {
+				throw new IllegalStateException("No identifier columns in " + this.typeToUpdate.getName() + "!");
+			}
+			Object id = columns.remove(ids.get(0)); // do not update the Id column.
+
+			Update update = null;
+
+			for (String column : columns.keySet()) {
+				if (update == null) {
+					update = Update.update(column, columns.get(column));
+				} else {
+					update = update.set(column, columns.get(column));
+				}
+			}
+
+			PreparedOperation<?> operation = mapper
+					.getMappedObject(mapper.createUpdate(table, update).withCriteria(Criteria.where(ids.get(0)).is(id)));
+
+			return exchangeUpdate(operation);
 		}
 	}
 
@@ -1106,13 +1225,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultDeleteFromSpec implements DeleteFromSpec {
 
 		@Override
-		public DeleteSpec from(String table) {
-			return new DefaultDeleteSpec(null, table, null);
+		public DefaultDeleteSpec<?> from(String table) {
+			return new DefaultDeleteSpec<>(null, table, null);
 		}
 
 		@Override
-		public DeleteSpec from(Class<?> table) {
-			return new DefaultDeleteSpec(table, null, null);
+		public <T> DefaultDeleteSpec<T> from(Class<T> table) {
+			return new DefaultDeleteSpec<>(table, null, null);
 		}
 	}
 
@@ -1120,15 +1239,26 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * Default implementation of {@link DatabaseClient.TypedInsertSpec}.
 	 */
 	@RequiredArgsConstructor
-	class DefaultDeleteSpec implements DeleteSpec {
+	class DefaultDeleteSpec<T> implements DeleteMatchingSpec, TypedDeleteSpec<T> {
 
-		private final @Nullable Class<?> typeToDelete;
+		private final @Nullable Class<T> typeToDelete;
 		private final @Nullable String table;
 		private final Criteria where;
 
 		@Override
-		public DeleteSpec where(Criteria criteria) {
-			return new DefaultDeleteSpec(this.typeToDelete, this.table, criteria);
+		public DeleteSpec matching(Criteria criteria) {
+
+			Assert.notNull(criteria, "Criteria must not be null!");
+
+			return new DefaultDeleteSpec<>(this.typeToDelete, this.table, criteria);
+		}
+
+		@Override
+		public TypedDeleteSpec<T> table(String tableName) {
+
+			Assert.hasText(tableName, "Table name must not be null or empty!");
+
+			return new DefaultDeleteSpec<>(this.typeToDelete, tableName, this.where);
 		}
 
 		@Override
@@ -1152,42 +1282,65 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private UpdatedRowsFetchSpec exchange(String table) {
 
-			PreparedOperation<Delete> operation = dataAccessStrategy.getStatements().delete(table, (t, configurer) -> {
+			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 
-				if (this.where != null) {
+			if (this.typeToDelete != null) {
+				mapper = mapper.forType(this.typeToDelete);
+			}
 
-					BoundCondition condition;
-					if (this.table != null) {
-						condition = dataAccessStrategy.getMappedCriteria(this.where, t);
-					} else {
-						condition = dataAccessStrategy.getMappedCriteria(this.where, t, this.typeToDelete);
-					}
+			StatementMapper.DeleteSpec delete = mapper.createDelete(table);
 
-					configurer.withWhere(condition.getCondition()).withBindings(condition.getBindings());
-				}
-			});
+			if (this.where != null) {
+				delete = delete.withCriteria(this.where);
+			}
 
-			Function<Connection, Statement> deleteFunction = wrapPreparedOperation(operation);
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(deleteFunction.apply(it).execute());
+			PreparedOperation<?> operation = mapper.getMappedObject(delete);
 
-			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					operation.toQuery(), //
-					resultFunction, //
-					it -> resultFunction //
-							.apply(it) //
-							.flatMap(Result::getRowsUpdated) //
-							.collect(Collectors.summingInt(Integer::intValue)), //
-					(row, rowMetadata) -> rowMetadata);
+			return exchangeUpdate(operation);
 		}
 	}
 
-	private Function<Connection, Statement> wrapPreparedOperation(PreparedOperation<?> operation) {
+	private <R> FetchSpec<R> exchangeInsert(BiFunction<Row, RowMetadata, R> mappingFunction,
+			PreparedOperation<?> operation) {
+
+		String sql = getRequiredSql(operation);
+		Function<Connection, Statement> insertFunction = wrapPreparedOperation(sql, operation)
+				.andThen(statement -> statement.returnGeneratedValues());
+		Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(insertFunction.apply(it).execute());
+
+		return new DefaultSqlResult<>(this, //
+				sql, //
+				resultFunction, //
+				it -> sumRowsUpdated(resultFunction, it), //
+				mappingFunction);
+	}
+
+	private UpdatedRowsFetchSpec exchangeUpdate(PreparedOperation<?> operation) {
+
+		String sql = getRequiredSql(operation);
+		Function<Connection, Statement> executeFunction = wrapPreparedOperation(sql, operation);
+		Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(executeFunction.apply(it).execute());
+
+		return new DefaultSqlResult<>(this, //
+				sql, //
+				resultFunction, //
+				it -> sumRowsUpdated(resultFunction, it), //
+				(row, rowMetadata) -> rowMetadata);
+	}
+
+	private static Mono<Integer> sumRowsUpdated(Function<Connection, Flux<Result>> resultFunction, Connection it) {
+
+		return resultFunction.apply(it) //
+				.flatMap(Result::getRowsUpdated) //
+				.collect(Collectors.summingInt(Integer::intValue));
+	}
+
+	private Function<Connection, Statement> wrapPreparedOperation(String sql, PreparedOperation<?> operation) {
 
 		return it -> {
 
-			String sql = operation.toQuery();
-			if (logger.isDebugEnabled()) {
-				logger.debug("Executing SQL statement [" + sql + "]");
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug("Executing SQL statement [" + sql + "]");
 			}
 
 			Statement statement = it.createStatement(sql);
@@ -1309,7 +1462,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return Mono.defer(() -> {
 
 				if (compareAndSet(false, true)) {
-					return Mono.from(closeFunction.apply(connection));
+					return Mono.from(this.closeFunction.apply(this.connection));
 				}
 
 				return Mono.empty();

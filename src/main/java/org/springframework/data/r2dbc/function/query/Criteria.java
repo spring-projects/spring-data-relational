@@ -36,68 +36,68 @@ public class Criteria {
 	private final @Nullable Criteria previous;
 	private final Combinator combinator;
 
-	private final String property;
+	private final String column;
 	private final Comparator comparator;
 	private final @Nullable Object value;
 
-	private Criteria(String property, Comparator comparator, @Nullable Object value) {
-		this(null, Combinator.INITIAL, property, comparator, value);
+	private Criteria(String column, Comparator comparator, @Nullable Object value) {
+		this(null, Combinator.INITIAL, column, comparator, value);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, String property, Comparator comparator,
+	private Criteria(@Nullable Criteria previous, Combinator combinator, String column, Comparator comparator,
 			@Nullable Object value) {
 		this.previous = previous;
 		this.combinator = combinator;
-		this.property = property;
+		this.column = column;
 		this.comparator = comparator;
 		this.value = value;
 	}
 
 	/**
-	 * Static factory method to create a Criteria using the provided {@code property} name.
+	 * Static factory method to create a Criteria using the provided {@code column} name.
 	 *
-	 * @param property
+	 * @param column
 	 * @return a new {@link CriteriaStep} object to complete the first {@link Criteria}.
 	 */
-	public static CriteriaStep of(String property) {
+	public static CriteriaStep where(String column) {
 
-		Assert.notNull(property, "Property name must not be null!");
+		Assert.hasText(column, "Column name must not be null or empty!");
 
-		return new DefaultCriteriaStep(property);
+		return new DefaultCriteriaStep(column);
 	}
 
 	/**
-	 * Create a new {@link Criteria} and combine it with {@code AND} using the provided {@code property} name.
+	 * Create a new {@link Criteria} and combine it with {@code AND} using the provided {@code column} name.
 	 *
-	 * @param property
+	 * @param column
 	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
 	 */
-	public CriteriaStep and(String property) {
+	public CriteriaStep and(String column) {
 
-		Assert.notNull(property, "Property name must not be null!");
+		Assert.hasText(column, "Column name must not be null or empty!");
 
-		return new DefaultCriteriaStep(property) {
+		return new DefaultCriteriaStep(column) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, Object value) {
-				return new Criteria(Criteria.this, Combinator.AND, property, comparator, value);
+				return new Criteria(Criteria.this, Combinator.AND, column, comparator, value);
 			}
 		};
 	}
 
 	/**
-	 * Create a new {@link Criteria} and combine it with {@code OR} using the provided {@code property} name.
+	 * Create a new {@link Criteria} and combine it with {@code OR} using the provided {@code column} name.
 	 *
-	 * @param property
+	 * @param column
 	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
 	 */
-	public CriteriaStep or(String property) {
+	public CriteriaStep or(String column) {
 
-		Assert.notNull(property, "Property name must not be null!");
+		Assert.hasText(column, "Column name must not be null or empty!");
 
-		return new DefaultCriteriaStep(property) {
+		return new DefaultCriteriaStep(column) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, Object value) {
-				return new Criteria(Criteria.this, Combinator.OR, property, comparator, value);
+				return new Criteria(Criteria.this, Combinator.OR, column, comparator, value);
 			}
 		};
 	}
@@ -128,8 +128,8 @@ public class Criteria {
 	/**
 	 * @return the property name.
 	 */
-	String getProperty() {
-		return property;
+	String getColumn() {
+		return column;
 	}
 
 	/**
@@ -273,31 +273,31 @@ public class Criteria {
 
 		private final String property;
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#is(java.lang.Object)
 		 */
 		@Override
 		public Criteria is(Object value) {
 
-			Assert.notNull(value, "Value must not be null");
+			Assert.notNull(value, "Value must not be null!");
 
 			return createCriteria(Comparator.EQ, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#not(java.lang.Object)
 		 */
 		@Override
 		public Criteria not(Object value) {
 
-			Assert.notNull(value, "Value must not be null");
+			Assert.notNull(value, "Value must not be null!");
 
 			return createCriteria(Comparator.NEQ, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#in(java.lang.Object[])
 		 */
@@ -326,7 +326,7 @@ public class Criteria {
 			return createCriteria(Comparator.IN, values);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#notIn(java.lang.Object[])
 		 */
@@ -355,67 +355,67 @@ public class Criteria {
 			return createCriteria(Comparator.NOT_IN, values);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#lessThan(java.lang.Object)
 		 */
 		@Override
 		public Criteria lessThan(Object value) {
 
-			Assert.notNull(value, "Value must not be null");
+			Assert.notNull(value, "Value must not be null!");
 
 			return createCriteria(Comparator.LT, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#lessThanOrEquals(java.lang.Object)
 		 */
 		@Override
 		public Criteria lessThanOrEquals(Object value) {
 
-			Assert.notNull(value, "Value must not be null");
+			Assert.notNull(value, "Value must not be null!");
 
 			return createCriteria(Comparator.LTE, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#greaterThan(java.lang.Object)
 		 */
 		@Override
 		public Criteria greaterThan(Object value) {
 
-			Assert.notNull(value, "Value must not be null");
+			Assert.notNull(value, "Value must not be null!");
 
 			return createCriteria(Comparator.GT, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#greaterThanOrEquals(java.lang.Object)
 		 */
 		@Override
 		public Criteria greaterThanOrEquals(Object value) {
 
-			Assert.notNull(value, "Value must not be null");
+			Assert.notNull(value, "Value must not be null!");
 
 			return createCriteria(Comparator.GTE, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#like(java.lang.Object)
 		 */
 		@Override
 		public Criteria like(Object value) {
 
-			Assert.notNull(value, "Value must not be null");
+			Assert.notNull(value, "Value must not be null!");
 
 			return createCriteria(Comparator.LIKE, value);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#isNull()
 		 */
@@ -424,7 +424,7 @@ public class Criteria {
 			return createCriteria(Comparator.IS_NULL, null);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#isNotNull()
 		 */

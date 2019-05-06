@@ -15,35 +15,37 @@
  */
 package org.springframework.data.r2dbc.function.query;
 
+import java.util.List;
+
 import org.springframework.data.r2dbc.dialect.Bindings;
-import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.Assignment;
 import org.springframework.util.Assert;
 
 /**
- * Value object representing a {@link Condition} with its {@link Bindings}.
+ * Value object representing {@link Assignment}s with their {@link Bindings}.
  *
  * @author Mark Paluch
  */
-public class BoundCondition {
+public class BoundAssignments {
 
 	private final Bindings bindings;
 
-	private final Condition condition;
+	private final List<Assignment> assignments;
 
-	public BoundCondition(Bindings bindings, Condition condition) {
+	public BoundAssignments(Bindings bindings, List<Assignment> assignments) {
 
 		Assert.notNull(bindings, "Bindings must not be null!");
-		Assert.notNull(condition, "Condition must not be null!");
+		Assert.notNull(assignments, "Assignments must not be null!");
 
 		this.bindings = bindings;
-		this.condition = condition;
+		this.assignments = assignments;
 	}
 
 	public Bindings getBindings() {
 		return bindings;
 	}
 
-	public Condition getCondition() {
-		return condition;
+	public List<Assignment> getAssignments() {
+		return assignments;
 	}
 }

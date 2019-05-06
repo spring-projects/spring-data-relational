@@ -1,5 +1,5 @@
 [[r2dbc.datbaseclient.statements]]
-= Running Statements
+= Executing Statements
 
 Running a statement is the basic functionality that is covered by `DatabaseClient`.
 The following example shows what you need to include for a minimal but fully functional class that creates a new table:

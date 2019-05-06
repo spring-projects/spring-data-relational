@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.domain;
+package org.springframework.data.r2dbc.dialect;
 
 import io.r2dbc.spi.Statement;
 
 import java.util.LinkedHashMap;
 
-import org.springframework.data.r2dbc.dialect.BindMarker;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.util.Assert;
 
 /**

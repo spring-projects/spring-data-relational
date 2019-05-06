@@ -1,5 +1,5 @@
 [[r2dbc.datbaseclient.transactions]]
-== Transactions
+= Transactions
 
 A common pattern when using relational databases is grouping multiple queries within a unit of work that is guarded by a transaction.
 Relational databases typically associate a transaction with a single transport connection.

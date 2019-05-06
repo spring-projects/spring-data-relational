@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.domain;
+package org.springframework.data.r2dbc.dialect;
 
 import io.r2dbc.spi.Statement;
 
@@ -27,18 +27,20 @@ import java.util.Map;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
-import org.springframework.data.r2dbc.dialect.BindMarker;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
+import org.springframework.data.r2dbc.domain.BindTarget;
 import org.springframework.data.util.Streamable;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Value object representing value and {@code NULL} bindings for a {@link Statement} using {@link BindMarkers}.
+ * Value object representing value and {@code NULL} bindings for a {@link Statement} using {@link BindMarkers}. Bindings
+ * are typically immutable.
  *
  * @author Mark Paluch
  */
 public class Bindings implements Streamable<Bindings.Binding> {
+
+	private static final Bindings EMPTY = new Bindings();
 
 	private final Map<BindMarker, Binding> bindings;
 
@@ -67,8 +69,17 @@ public class Bindings implements Streamable<Bindings.Binding> {
 		this.bindings = bindings;
 	}
 
+	/**
+	 * Create a new, empty {@link Bindings} object.
+	 *
+	 * @return a new, empty {@link Bindings} object.
+	 */
+	public static Bindings empty() {
+		return EMPTY;
+	}
+
 	protected Map<BindMarker, Binding> getBindings() {
-		return bindings;
+		return this.bindings;
 	}
 
 	/**
@@ -92,14 +103,24 @@ public class Bindings implements Streamable<Bindings.Binding> {
 	}
 
 	/**
-	 * Apply the bindings to a {@link Statement}.
+	 * Merge this bindings with an other {@link Bindings} object and create a new merged {@link Bindings} object.
 	 *
-	 * @param statement the statement to apply to.
+	 * @param other the object to merge with.
+	 * @return a new, merged {@link Bindings} object.
 	 */
-	public void apply(Statement statement) {
+	public Bindings and(Bindings other) {
+		return merge(this, other);
+	}
 
-		Assert.notNull(statement, "Statement must not be null");
-		this.bindings.forEach((marker, binding) -> binding.apply(statement));
+	/**
+	 * Apply the bindings to a {@link BindTarget}.
+	 *
+	 * @param bindTarget the target to apply bindings to.
+	 */
+	public void apply(BindTarget bindTarget) {
+
+		Assert.notNull(bindTarget, "BindTarget must not be null");
+		this.bindings.forEach((marker, binding) -> binding.apply(bindTarget));
 	}
 
 	/**
@@ -146,7 +167,7 @@ public class Bindings implements Streamable<Bindings.Binding> {
 		 * @return the associated {@link BindMarker}.
 		 */
 		public BindMarker getBindMarker() {
-			return marker;
+			return this.marker;
 		}
 
 		/**
@@ -174,11 +195,11 @@ public class Bindings implements Streamable<Bindings.Binding> {
 		public abstract Object getValue();
 
 		/**
-		 * Applies the binding to a {@link Statement}.
+		 * Applies the binding to a {@link BindTarget}.
 		 *
-		 * @param statement the statement to apply to.
+		 * @param bindTarget the target to apply bindings to.
 		 */
-		public abstract void apply(Statement statement);
+		public abstract void apply(BindTarget bindTarget);
 	}
 
 	/**
@@ -206,7 +227,7 @@ public class Bindings implements Streamable<Bindings.Binding> {
 		 * @see org.springframework.data.r2dbc.function.query.Bindings.Binding#getValue()
 		 */
 		public Object getValue() {
-			return value;
+			return this.value;
 		}
 
 		/*
@@ -214,8 +235,8 @@ public class Bindings implements Streamable<Bindings.Binding> {
 		 * @see org.springframework.data.r2dbc.function.query.Bindings.Binding#apply(io.r2dbc.spi.Statement)
 		 */
 		@Override
-		public void apply(Statement statement) {
-			getBindMarker().bind(statement, getValue());
+		public void apply(BindTarget bindTarget) {
+			getBindMarker().bind(bindTarget, getValue());
 		}
 	}
 
@@ -249,16 +270,16 @@ public class Bindings implements Streamable<Bindings.Binding> {
 		}
 
 		public Class<?> getValueType() {
-			return valueType;
+			return this.valueType;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Bindings.Binding#apply(io.r2dbc.spi.Statement)
+		 * @see org.springframework.data.r2dbc.function.query.Bindings.Binding#apply(BindTarget)
 		 */
 		@Override
-		public void apply(Statement statement) {
-			getBindMarker().bindNull(statement, getValueType());
+		public void apply(BindTarget bindTarget) {
+			getBindMarker().bindNull(bindTarget, getValueType());
 		}
 	}
 }

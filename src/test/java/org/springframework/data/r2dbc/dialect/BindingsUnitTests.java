@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.domain;
+package org.springframework.data.r2dbc.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
-import io.r2dbc.spi.Statement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import org.springframework.data.r2dbc.dialect.BindMarker;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
-import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
+import org.springframework.data.r2dbc.domain.BindTarget;
 
 /**
  * Unit tests for {@link Bindings}.
@@ -38,7 +34,7 @@ import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 public class BindingsUnitTests {
 
 	BindMarkersFactory markersFactory = BindMarkersFactory.indexed("$", 1);
-	Statement statementMock = mock(Statement.class);
+	BindTarget bindTarget = mock(BindTarget.class);
 
 	@Test // gh-64
 	public void shouldCreateBindings() {
@@ -57,9 +53,9 @@ public class BindingsUnitTests {
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
 		bindings.bind(bindings.nextMarker(), "foo");
-		bindings.apply(statementMock);
+		bindings.apply(bindTarget);
 
-		verify(statementMock).bind(0, "foo");
+		verify(bindTarget).bind(0, "foo");
 	}
 
 	@Test // gh-64
@@ -68,10 +64,10 @@ public class BindingsUnitTests {
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
 		BindMarker marker = bindings.bind("foo");
-		bindings.apply(statementMock);
+		bindings.apply(bindTarget);
 
 		assertThat(marker.getPlaceholder()).isEqualTo("$1");
-		verify(statementMock).bind(0, "foo");
+		verify(bindTarget).bind(0, "foo");
 	}
 
 	@Test // gh-64
@@ -81,9 +77,9 @@ public class BindingsUnitTests {
 
 		bindings.bindNull(bindings.nextMarker(), String.class);
 
-		bindings.apply(statementMock);
+		bindings.apply(bindTarget);
 
-		verify(statementMock).bindNull(0, String.class);
+		verify(bindTarget).bindNull(0, String.class);
 	}
 
 	@Test // gh-64
@@ -92,10 +88,10 @@ public class BindingsUnitTests {
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
 		BindMarker marker = bindings.bindNull(String.class);
-		bindings.apply(statementMock);
+		bindings.apply(bindTarget);
 
 		assertThat(marker.getPlaceholder()).isEqualTo("$1");
-		verify(statementMock).bindNull(0, String.class);
+		verify(bindTarget).bindNull(0, String.class);
 	}
 
 	@Test // gh-64
@@ -147,10 +143,10 @@ public class BindingsUnitTests {
 
 		assertThat(merged).hasSize(3);
 
-		merged.apply(statementMock);
-		verify(statementMock).bind(0, "override");
-		verify(statementMock).bind(1, "left");
-		verify(statementMock).bind(2, "right");
+		merged.apply(bindTarget);
+		verify(bindTarget).bind(0, "override");
+		verify(bindTarget).bind(1, "left");
+		verify(bindTarget).bind(2, "right");
 	}
 
 }

@@ -34,9 +34,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void andChainedCriteria() {
 
-		Criteria criteria = of("foo").is("bar").and("baz").isNotNull();
+		Criteria criteria = where("foo").is("bar").and("baz").isNotNull();
 
-		assertThat(criteria.getProperty()).isEqualTo("baz");
+		assertThat(criteria.getColumn()).isEqualTo("baz");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IS_NOT_NULL);
 		assertThat(criteria.getValue()).isNull();
 		assertThat(criteria.getPrevious()).isNotNull();
@@ -44,7 +44,7 @@ public class CriteriaUnitTests {
 
 		criteria = criteria.getPrevious();
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.EQ);
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
@@ -52,9 +52,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void orChainedCriteria() {
 
-		Criteria criteria = of("foo").is("bar").or("baz").isNotNull();
+		Criteria criteria = where("foo").is("bar").or("baz").isNotNull();
 
-		assertThat(criteria.getProperty()).isEqualTo("baz");
+		assertThat(criteria.getColumn()).isEqualTo("baz");
 		assertThat(criteria.getCombinator()).isEqualTo(Combinator.OR);
 
 		criteria = criteria.getPrevious();
@@ -66,9 +66,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildEqualsCriteria() {
 
-		Criteria criteria = of("foo").is("bar");
+		Criteria criteria = where("foo").is("bar");
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.EQ);
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
@@ -76,9 +76,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildNotEqualsCriteria() {
 
-		Criteria criteria = of("foo").not("bar");
+		Criteria criteria = where("foo").not("bar");
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.NEQ);
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
@@ -86,9 +86,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildInCriteria() {
 
-		Criteria criteria = of("foo").in("bar", "baz");
+		Criteria criteria = where("foo").in("bar", "baz");
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IN);
 		assertThat(criteria.getValue()).isEqualTo(Arrays.asList("bar", "baz"));
 	}
@@ -96,9 +96,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildNotInCriteria() {
 
-		Criteria criteria = of("foo").notIn("bar", "baz");
+		Criteria criteria = where("foo").notIn("bar", "baz");
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.NOT_IN);
 		assertThat(criteria.getValue()).isEqualTo(Arrays.asList("bar", "baz"));
 	}
@@ -106,9 +106,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildGtCriteria() {
 
-		Criteria criteria = of("foo").greaterThan(1);
+		Criteria criteria = where("foo").greaterThan(1);
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.GT);
 		assertThat(criteria.getValue()).isEqualTo(1);
 	}
@@ -116,9 +116,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildGteCriteria() {
 
-		Criteria criteria = of("foo").greaterThanOrEquals(1);
+		Criteria criteria = where("foo").greaterThanOrEquals(1);
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.GTE);
 		assertThat(criteria.getValue()).isEqualTo(1);
 	}
@@ -126,9 +126,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildLtCriteria() {
 
-		Criteria criteria = of("foo").lessThan(1);
+		Criteria criteria = where("foo").lessThan(1);
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.LT);
 		assertThat(criteria.getValue()).isEqualTo(1);
 	}
@@ -136,9 +136,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildLteCriteria() {
 
-		Criteria criteria = of("foo").lessThanOrEquals(1);
+		Criteria criteria = where("foo").lessThanOrEquals(1);
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.LTE);
 		assertThat(criteria.getValue()).isEqualTo(1);
 	}
@@ -146,9 +146,9 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildLikeCriteria() {
 
-		Criteria criteria = of("foo").like("hello%");
+		Criteria criteria = where("foo").like("hello%");
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.LIKE);
 		assertThat(criteria.getValue()).isEqualTo("hello%");
 	}
@@ -156,18 +156,18 @@ public class CriteriaUnitTests {
 	@Test // gh-64
 	public void shouldBuildIsNullCriteria() {
 
-		Criteria criteria = of("foo").isNull();
+		Criteria criteria = where("foo").isNull();
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IS_NULL);
 	}
 
 	@Test // gh-64
 	public void shouldBuildIsNotNullCriteria() {
 
-		Criteria criteria = of("foo").isNotNull();
+		Criteria criteria = where("foo").isNotNull();
 
-		assertThat(criteria.getProperty()).isEqualTo("foo");
+		assertThat(criteria.getColumn()).isEqualTo("foo");
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IS_NOT_NULL);
 	}
 }

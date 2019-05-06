@@ -21,22 +21,17 @@ import io.r2dbc.spi.RowMetadata;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.domain.BindableOperation;
-import org.springframework.data.r2dbc.domain.Bindings;
 import org.springframework.data.r2dbc.domain.OutboundRow;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.function.query.BoundCondition;
-import org.springframework.data.r2dbc.function.query.Criteria;
-import org.springframework.data.relational.core.sql.Table;
 
 /**
- * Draft of a data access strategy that generalizes convenience operations using mapped entities. Typically used
- * internally by {@link DatabaseClient} and repository support. SQL creation is limited to single-table operations and
- * single-column primary keys.
+ * Data access strategy that generalizes convenience operations using mapped entities. Typically used internally by
+ * {@link DatabaseClient} and repository support. SQL creation is limited to single-table operations and single-column
+ * primary keys.
  *
  * @author Mark Paluch
  * @see BindableOperation
@@ -44,10 +39,16 @@ import org.springframework.data.relational.core.sql.Table;
 public interface ReactiveDataAccessStrategy {
 
 	/**
-	 * @param typeToRead
-	 * @return all field names for a specific type.
+	 * @param entityType
+	 * @return all column names for a specific type.
 	 */
-	List<String> getAllColumns(Class<?> typeToRead);
+	List<String> getAllColumns(Class<?> entityType);
+
+	/**
+	 * @param entityType
+	 * @return all Id column names for a specific type.
+	 */
+	List<String> getIdentifierColumns(Class<?> entityType);
 
 	/**
 	 * Returns a {@link OutboundRow} that maps column names to a {@link SettableValue} value.
@@ -56,34 +57,6 @@ public interface ReactiveDataAccessStrategy {
 	 * @return
 	 */
 	OutboundRow getOutboundRow(Object object);
-
-	/**
-	 * Map the {@link Sort} object to apply field name mapping using {@link Class the type to read}.
-	 *
-	 * @param sort must not be {@literal null}.
-	 * @param typeToRead must not be {@literal null}.
-	 * @return
-	 */
-	Sort getMappedSort(Sort sort, Class<?> typeToRead);
-
-	/**
-	 * Map the {@link Criteria} object to apply value mapping and return a {@link BoundCondition} with {@link Bindings}.
-	 *
-	 * @param criteria must not be {@literal null}.
-	 * @param table must not be {@literal null}.
-	 * @return
-	 */
-	BoundCondition getMappedCriteria(Criteria criteria, Table table);
-
-	/**
-	 * Map the {@link Criteria} object to apply value and field name mapping and return a {@link BoundCondition} with
-	 * {@link Bindings}.
-	 *
-	 * @param criteria must not be {@literal null}.
-	 * @param table must not be {@literal null}.
-	 * @return
-	 */
-	BoundCondition getMappedCriteria(Criteria criteria, Table table, Class<?> typeToRead);
 
 	// TODO: Broaden T to Mono<T>/Flux<T> for reactive relational data access?
 	<T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead);
@@ -95,11 +68,11 @@ public interface ReactiveDataAccessStrategy {
 	String getTableName(Class<?> type);
 
 	/**
-	 * Returns the {@link Dialect}-specific {@link StatementFactory}.
+	 * Returns the {@link Dialect}-specific {@link StatementMapper}.
 	 *
-	 * @return the {@link Dialect}-specific {@link StatementFactory}.
+	 * @return the {@link Dialect}-specific {@link StatementMapper}.
 	 */
-	StatementFactory getStatements();
+	StatementMapper getStatementMapper();
 
 	/**
 	 * Returns the configured {@link BindMarkersFactory} to create native parameter placeholder markers.

@@ -17,12 +17,14 @@ package org.springframework.data.r2dbc.function.query;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
-import io.r2dbc.spi.Statement;
+import static org.springframework.data.domain.Sort.Order.*;
 
 import org.junit.Test;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
+import org.springframework.data.r2dbc.domain.BindTarget;
+import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.relational.core.mapping.Column;
@@ -30,33 +32,46 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.sql.Table;
 
 /**
- * Unit tests for {@link CriteriaMapper}.
+ * Unit tests for {@link QueryMapper}.
  *
  * @author Mark Paluch
  */
-public class CriteriaMapperUnitTests {
+public class QueryMapperUnitTests {
 
 	R2dbcConverter converter = new MappingR2dbcConverter(new RelationalMappingContext());
-	CriteriaMapper mapper = new CriteriaMapper(converter);
-	Statement statementMock = mock(Statement.class);
+	QueryMapper mapper = new QueryMapper(converter);
+	BindTarget bindTarget = mock(BindTarget.class);
 
 	@Test // gh-64
 	public void shouldMapSimpleCriteria() {
 
-		Criteria criteria = Criteria.of("name").is("foo");
+		Criteria criteria = Criteria.where("name").is("foo");
 
 		BoundCondition bindings = map(criteria);
 
 		assertThat(bindings.getCondition().toString()).isEqualTo("person.name = ?[$1]");
 
-		bindings.getBindings().apply(statementMock);
-		verify(statementMock).bind(0, "foo");
+		bindings.getBindings().apply(bindTarget);
+		verify(bindTarget).bind(0, "foo");
+	}
+
+	@Test // gh-64
+	public void shouldMapSimpleNullableCriteria() {
+
+		Criteria criteria = Criteria.where("name").is(SettableValue.empty(Integer.class));
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition().toString()).isEqualTo("person.name = ?[$1]");
+
+		bindings.getBindings().apply(bindTarget);
+		verify(bindTarget).bindNull(0, Integer.class);
 	}
 
 	@Test // gh-64
 	public void shouldConsiderColumnName() {
 
-		Criteria criteria = Criteria.of("alternative").is("foo");
+		Criteria criteria = Criteria.where("alternative").is("foo");
 
 		BoundCondition bindings = map(criteria);
 
@@ -66,21 +81,21 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapAndCriteria() {
 
-		Criteria criteria = Criteria.of("name").is("foo").and("bar").is("baz");
+		Criteria criteria = Criteria.where("name").is("foo").and("bar").is("baz");
 
 		BoundCondition bindings = map(criteria);
 
 		assertThat(bindings.getCondition().toString()).isEqualTo("person.name = ?[$1] AND person.bar = ?[$2]");
 
-		bindings.getBindings().apply(statementMock);
-		verify(statementMock).bind(0, "foo");
-		verify(statementMock).bind(1, "baz");
+		bindings.getBindings().apply(bindTarget);
+		verify(bindTarget).bind(0, "foo");
+		verify(bindTarget).bind(1, "baz");
 	}
 
 	@Test // gh-64
 	public void shouldMapOrCriteria() {
 
-		Criteria criteria = Criteria.of("name").is("foo").or("bar").is("baz");
+		Criteria criteria = Criteria.where("name").is("foo").or("bar").is("baz");
 
 		BoundCondition bindings = map(criteria);
 
@@ -90,7 +105,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapAndOrCriteria() {
 
-		Criteria criteria = Criteria.of("name").is("foo") //
+		Criteria criteria = Criteria.where("name").is("foo") //
 				.and("name").isNotNull() //
 				.or("bar").is("baz") //
 				.and("anotherOne").is("alternative");
@@ -104,7 +119,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapNeq() {
 
-		Criteria criteria = Criteria.of("name").not("foo");
+		Criteria criteria = Criteria.where("name").not("foo");
 
 		BoundCondition bindings = map(criteria);
 
@@ -114,7 +129,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsNull() {
 
-		Criteria criteria = Criteria.of("name").isNull();
+		Criteria criteria = Criteria.where("name").isNull();
 
 		BoundCondition bindings = map(criteria);
 
@@ -124,7 +139,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsNotNull() {
 
-		Criteria criteria = Criteria.of("name").isNotNull();
+		Criteria criteria = Criteria.where("name").isNotNull();
 
 		BoundCondition bindings = map(criteria);
 
@@ -134,7 +149,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsIn() {
 
-		Criteria criteria = Criteria.of("name").in("a", "b", "c");
+		Criteria criteria = Criteria.where("name").in("a", "b", "c");
 
 		BoundCondition bindings = map(criteria);
 
@@ -144,7 +159,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsNotIn() {
 
-		Criteria criteria = Criteria.of("name").notIn("a", "b", "c");
+		Criteria criteria = Criteria.where("name").notIn("a", "b", "c");
 
 		BoundCondition bindings = map(criteria);
 
@@ -154,7 +169,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsGt() {
 
-		Criteria criteria = Criteria.of("name").greaterThan("a");
+		Criteria criteria = Criteria.where("name").greaterThan("a");
 
 		BoundCondition bindings = map(criteria);
 
@@ -164,7 +179,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsGte() {
 
-		Criteria criteria = Criteria.of("name").greaterThanOrEquals("a");
+		Criteria criteria = Criteria.where("name").greaterThanOrEquals("a");
 
 		BoundCondition bindings = map(criteria);
 
@@ -174,7 +189,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsLt() {
 
-		Criteria criteria = Criteria.of("name").lessThan("a");
+		Criteria criteria = Criteria.where("name").lessThan("a");
 
 		BoundCondition bindings = map(criteria);
 
@@ -184,7 +199,7 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsLte() {
 
-		Criteria criteria = Criteria.of("name").lessThanOrEquals("a");
+		Criteria criteria = Criteria.where("name").lessThanOrEquals("a");
 
 		BoundCondition bindings = map(criteria);
 
@@ -194,11 +209,22 @@ public class CriteriaMapperUnitTests {
 	@Test // gh-64
 	public void shouldMapIsLike() {
 
-		Criteria criteria = Criteria.of("name").like("a");
+		Criteria criteria = Criteria.where("name").like("a");
 
 		BoundCondition bindings = map(criteria);
 
 		assertThat(bindings.getCondition().toString()).isEqualTo("person.name LIKE ?[$1]");
+	}
+
+	@Test // gh-64
+	public void shouldMapSort() {
+
+		Sort sort = Sort.by(desc("alternative"));
+
+		Sort mapped = mapper.getMappedObject(sort, converter.getMappingContext().getRequiredPersistentEntity(Person.class));
+
+		assertThat(mapped.getOrderFor("another_name")).isEqualTo(desc("another_name"));
+		assertThat(mapped.getOrderFor("alternative")).isNull();
 	}
 
 	@SuppressWarnings("unchecked")

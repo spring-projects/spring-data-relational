@@ -26,11 +26,8 @@ import java.util.function.Function;
 
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.dialect.ArrayColumns;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.domain.OutboundRow;
@@ -39,14 +36,11 @@ import org.springframework.data.r2dbc.function.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.function.convert.R2dbcCustomConversions;
-import org.springframework.data.r2dbc.function.query.BoundCondition;
-import org.springframework.data.r2dbc.function.query.Criteria;
-import org.springframework.data.r2dbc.function.query.CriteriaMapper;
+import org.springframework.data.r2dbc.function.query.UpdateMapper;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
@@ -64,9 +58,9 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	private final Dialect dialect;
 	private final R2dbcConverter converter;
-	private final CriteriaMapper criteriaMapper;
+	private final UpdateMapper updateMapper;
 	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
-	private final StatementFactory statements;
+	private final StatementMapper statementMapper;
 
 	/**
 	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect}.
@@ -103,7 +97,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		Assert.notNull(converter, "RelationalConverter must not be null");
 
 		this.converter = converter;
-		this.criteriaMapper = new CriteriaMapper(converter);
+		this.updateMapper = new UpdateMapper(converter);
 		this.mappingContext = (MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty>) this.converter
 				.getMappingContext();
 		this.dialect = dialect;
@@ -130,17 +124,17 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			}
 		};
 
-		this.statements = new DefaultStatementFactory(this.dialect, renderContext);
+		this.statementMapper = new DefaultStatementMapper(dialect, renderContext, this.updateMapper, this.mappingContext);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getAllFields(java.lang.Class)
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getAllColumns(java.lang.Class)
 	 */
 	@Override
-	public List<String> getAllColumns(Class<?> typeToRead) {
+	public List<String> getAllColumns(Class<?> entityType) {
 
-		RelationalPersistentEntity<?> persistentEntity = getPersistentEntity(typeToRead);
+		RelationalPersistentEntity<?> persistentEntity = getPersistentEntity(entityType);
 
 		if (persistentEntity == null) {
 			return Collections.singletonList("*");
@@ -156,6 +150,26 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getIdentifierColumns(java.lang.Class)
+	 */
+	@Override
+	public List<String> getIdentifierColumns(Class<?> entityType) {
+
+		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(entityType);
+
+		List<String> columnNames = new ArrayList<>();
+		for (RelationalPersistentProperty property : persistentEntity) {
+
+			if (property.isIdProperty()) {
+				columnNames.add(property.getColumnName());
+			}
+		}
+
+		return columnNames;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getOutboundRow(java.lang.Object)
 	 */
 	public OutboundRow getOutboundRow(Object object) {
@@ -164,7 +178,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		OutboundRow row = new OutboundRow();
 
-		converter.write(object, row);
+		this.converter.write(object, row);
 
 		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(ClassUtils.getUserClass(object));
 
@@ -187,68 +201,16 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	private SettableValue getArrayValue(SettableValue value, RelationalPersistentProperty property) {
 
-		ArrayColumns arrayColumns = dialect.getArraySupport();
+		ArrayColumns arrayColumns = this.dialect.getArraySupport();
 
 		if (!arrayColumns.isSupported()) {
 
 			throw new InvalidDataAccessResourceUsageException(
-					"Dialect " + dialect.getClass().getName() + " does not support array columns");
+					"Dialect " + this.dialect.getClass().getName() + " does not support array columns");
 		}
 
-		return SettableValue.fromOrEmpty(converter.getArrayValue(arrayColumns, property, value.getValue()),
+		return SettableValue.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value.getValue()),
 				property.getActualType());
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getMappedSort(java.lang.Class, org.springframework.data.domain.Sort)
-	 */
-	@Override
-	public Sort getMappedSort(Sort sort, Class<?> typeToRead) {
-
-		RelationalPersistentEntity<?> entity = getPersistentEntity(typeToRead);
-		if (entity == null) {
-			return sort;
-		}
-
-		List<Order> mappedOrder = new ArrayList<>();
-
-		for (Order order : sort) {
-
-			RelationalPersistentProperty persistentProperty = entity.getPersistentProperty(order.getProperty());
-			if (persistentProperty == null) {
-				mappedOrder.add(order);
-			} else {
-				mappedOrder
-						.add(Order.by(persistentProperty.getColumnName()).with(order.getNullHandling()).with(order.getDirection()));
-			}
-		}
-
-		return Sort.by(mappedOrder);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getMappedCriteria(org.springframework.data.r2dbc.function.query.Criteria, org.springframework.data.relational.core.sql.Table)
-	 */
-	@Override
-	public BoundCondition getMappedCriteria(Criteria criteria, Table table) {
-		return getMappedCriteria(criteria, table, null);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getMappedCriteria(org.springframework.data.r2dbc.function.query.Criteria, org.springframework.data.relational.core.sql.Table, java.lang.Class)
-	 */
-	@Override
-	public BoundCondition getMappedCriteria(Criteria criteria, Table table, @Nullable Class<?> typeToRead) {
-
-		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
-
-		RelationalPersistentEntity<?> entity = typeToRead != null ? mappingContext.getRequiredPersistentEntity(typeToRead)
-				: null;
-
-		return criteriaMapper.getMappedObject(bindMarkers, criteria, table, entity);
 	}
 
 	/*
@@ -257,7 +219,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 */
 	@Override
 	public <T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead) {
-		return new EntityRowMapper<>(typeToRead, converter);
+		return new EntityRowMapper<>(typeToRead, this.converter);
 	}
 
 	/*
@@ -271,11 +233,11 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getStatements()
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getStatementMapper()
 	 */
 	@Override
-	public StatementFactory getStatements() {
-		return this.statements;
+	public StatementMapper getStatementMapper() {
+		return this.statementMapper;
 	}
 
 	/*
@@ -284,7 +246,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 */
 	@Override
 	public BindMarkersFactory getBindMarkersFactory() {
-		return dialect.getBindMarkersFactory();
+		return this.dialect.getBindMarkersFactory();
 	}
 
 	/*
@@ -292,19 +254,19 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getConverter()
 	 */
 	public R2dbcConverter getConverter() {
-		return converter;
+		return this.converter;
 	}
 
 	public MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getMappingContext() {
-		return mappingContext;
+		return this.mappingContext;
 	}
 
 	private RelationalPersistentEntity<?> getRequiredPersistentEntity(Class<?> typeToRead) {
-		return mappingContext.getRequiredPersistentEntity(typeToRead);
+		return this.mappingContext.getRequiredPersistentEntity(typeToRead);
 	}
 
 	@Nullable
 	private RelationalPersistentEntity<?> getPersistentEntity(Class<?> typeToRead) {
-		return mappingContext.getPersistentEntity(typeToRead);
+		return this.mappingContext.getPersistentEntity(typeToRead);
 	}
 }

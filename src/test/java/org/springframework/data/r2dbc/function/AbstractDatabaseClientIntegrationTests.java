@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.function;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.domain.Sort.Order.*;
+import static org.springframework.data.r2dbc.function.query.Criteria.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Data;
@@ -30,9 +31,11 @@ import org.junit.Test;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.function.query.Criteria;
+import org.springframework.data.r2dbc.function.query.Update;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -159,11 +162,12 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		databaseClient.insert().into("legoset")//
 				.value("id", 42055) //
 				.value("name", "SCHAUFELRADBAGGER") //
-				.nullValue("manual", Integer.class) //
+				.nullValue("manual") //
 				.fetch() //
 				.rowsUpdated() //
 				.as(StepVerifier::create) //
-				.expectNext(1).verifyComplete();
+				.expectNext(1) //
+				.verifyComplete();
 
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
 	}
@@ -176,7 +180,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		databaseClient.insert().into("legoset")//
 				.value("id", 42055) //
 				.value("name", "SCHAUFELRADBAGGER") //
-				.nullValue("manual", Integer.class) //
+				.nullValue("manual") //
 				.then() //
 				.as(StepVerifier::create) //
 				.verifyComplete();
@@ -206,6 +210,65 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 	}
 
 	@Test // gh-64
+	public void update() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.update().table("legoset")//
+				.using(Update.update("name", "Lego")) //
+				.matching(Criteria.where("id").is(42055)) //
+				.fetch() //
+				.rowsUpdated() //
+				.as(StepVerifier::create) //
+				.expectNext(1) //
+				.verifyComplete();
+
+		assertThat(jdbc.queryForMap("SELECT name, manual FROM legoset")).containsEntry("name", "Lego");
+	}
+
+	@Test // gh-64
+	public void updateWithoutResult() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.update().table("legoset")//
+				.using(Update.update("name", "Lego")) //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		assertThat(jdbc.queryForMap("SELECT name, manual FROM legoset")).containsEntry("name", "Lego");
+	}
+
+	@Test // gh-64
+	public void updateTypedObject() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+
+		LegoSet legoSet = new LegoSet();
+		legoSet.setId(42055);
+		legoSet.setName("Lego");
+		legoSet.setManual(null);
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.update() //
+				.table(LegoSet.class) //
+				.using(legoSet) //
+				.fetch() //
+				.rowsUpdated() //
+				.as(StepVerifier::create) //
+				.expectNext(1) //
+				.verifyComplete();
+
+		assertThat(jdbc.queryForMap("SELECT name, manual FROM legoset")).containsEntry("name", "Lego");
+	}
+
+	@Test // gh-64
 	public void deleteUntyped() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
@@ -215,7 +278,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 		databaseClient.delete() //
 				.from("legoset") //
-				.where(Criteria.of("id").is(42055)) //
+				.matching(where("id").is(42055)) //
 				.fetch() //
 				.rowsUpdated() //
 				.as(StepVerifier::create) //
@@ -234,7 +297,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 		databaseClient.delete() //
 				.from(LegoSet.class) //
-				.where(Criteria.of("id").is(42055)) //
+				.matching(where("id").is(42055)) //
 				.then() //
 				.as(StepVerifier::create) //
 				.verifyComplete();
@@ -289,7 +352,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		databaseClient.select().from("legoset") //
 				.project("id", "name", "manual") //
 				.orderBy(Sort.by("id")) //
-				.where(Criteria.of("id").greaterThanOrEquals(42055).and("id").lessThanOrEquals(42055))
+				.matching(where("id").greaterThanOrEquals(42055).and("id").lessThanOrEquals(42055))
 				.map((r, md) -> r.get("id", Integer.class)) //
 				.all() //
 				.as(StepVerifier::create) //
@@ -308,7 +371,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 		databaseClient.select().from(LegoSet.class) //
 				.orderBy(Sort.by("id")) //
-				.where(Criteria.of("id").in(42055, 42064)) //
+				.matching(where("id").in(42055, 42064)) //
 				.map((r, md) -> r.get("id", Integer.class)) //
 				.all() //
 				.as(StepVerifier::create) //
@@ -376,7 +439,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 	@Table("legoset")
 	static class LegoSet {
 
-		int id;
+		@Id int id;
 		String name;
 		Integer manual;
 	}

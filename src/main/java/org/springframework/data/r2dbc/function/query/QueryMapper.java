@@ -15,14 +15,13 @@
  */
 package org.springframework.data.r2dbc.function.query;
 
-import static org.springframework.data.r2dbc.function.query.Criteria.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.PropertyReferenceException;
@@ -30,9 +29,12 @@ import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
-import org.springframework.data.r2dbc.domain.Bindings;
-import org.springframework.data.r2dbc.domain.MutableBindings;
+import org.springframework.data.r2dbc.dialect.Bindings;
+import org.springframework.data.r2dbc.dialect.MutableBindings;
+import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.function.query.Criteria.Combinator;
+import org.springframework.data.r2dbc.function.query.Criteria.Comparator;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Column;
@@ -44,24 +46,25 @@ import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 
 /**
- * Maps a {@link Criteria} to {@link Condition} considering mapping metadata.
+ * Maps {@link Criteria} and {@link Sort} objects considering mapping metadata and dialect-specific conversion.
  *
  * @author Mark Paluch
  */
-public class CriteriaMapper {
+public class QueryMapper {
 
 	private final R2dbcConverter converter;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 
 	/**
-	 * Creates a new {@link CriteriaMapper} with the given {@link R2dbcConverter}.
+	 * Creates a new {@link QueryMapper} with the given {@link R2dbcConverter}.
 	 *
 	 * @param converter must not be {@literal null}.
 	 */
-	@SuppressWarnings("unchecked")
-	public CriteriaMapper(R2dbcConverter converter) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public QueryMapper(R2dbcConverter converter) {
 
 		Assert.notNull(converter, "R2dbcConverter must not be null!");
 
@@ -70,19 +73,49 @@ public class CriteriaMapper {
 	}
 
 	/**
+	 * Map the {@link Sort} object to apply field name mapping using {@link Class the type to read}.
+	 *
+	 * @param sort must not be {@literal null}.
+	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
+	 * @return
+	 */
+	public Sort getMappedObject(Sort sort, @Nullable RelationalPersistentEntity<?> entity) {
+
+		if (entity == null) {
+			return sort;
+		}
+
+		List<Sort.Order> mappedOrder = new ArrayList<>();
+
+		for (Sort.Order order : sort) {
+
+			RelationalPersistentProperty persistentProperty = entity.getPersistentProperty(order.getProperty());
+			if (persistentProperty == null) {
+				mappedOrder.add(order);
+			} else {
+				mappedOrder.add(
+						Sort.Order.by(persistentProperty.getColumnName()).with(order.getNullHandling()).with(order.getDirection()));
+			}
+		}
+
+		return Sort.by(mappedOrder);
+	}
+
+	/**
 	 * Map a {@link Criteria} object into {@link Condition} and consider value/{@code NULL} {@link Bindings}.
 	 *
 	 * @param markers bind markers object, must not be {@literal null}.
-	 * @param criteria criteria to map, must not be {@literal null}.
+	 * @param criteria criteria definition to map, must not be {@literal null}.
 	 * @param table must not be {@literal null}.
-	 * @param entity related {@link RelationalPersistentEntity}.
-	 * @return the mapped bindings.
+	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
+	 * @return the mapped {@link BoundCondition}.
 	 */
 	public BoundCondition getMappedObject(BindMarkers markers, Criteria criteria, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(markers, "BindMarkers must not be null!");
 		Assert.notNull(criteria, "Criteria must not be null!");
+		Assert.notNull(table, "Table must not be null!");
 
 		Criteria current = criteria;
 		MutableBindings bindings = new MutableBindings(markers);
@@ -118,36 +151,53 @@ public class CriteriaMapper {
 	private Condition getCondition(Criteria criteria, MutableBindings bindings, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Field propertyField = createPropertyField(entity, criteria.getProperty(), this.mappingContext);
+		Field propertyField = createPropertyField(entity, criteria.getColumn(), this.mappingContext);
 		Column column = table.column(propertyField.getMappedColumnName());
-		Object mappedValue = convertValue(criteria.getValue(), propertyField.getTypeHint());
-
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
-		return createCondition(column, mappedValue, actualType.getType(), bindings, criteria.getComparator());
+
+		Object mappedValue;
+		Class<?> typeHint;
+
+		if (criteria.getValue() instanceof SettableValue) {
+
+			SettableValue settableValue = (SettableValue) criteria.getValue();
+
+			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
+			typeHint = getTypeHint(mappedValue, actualType.getType(), settableValue);
+
+		} else {
+			mappedValue = convertValue(criteria.getValue(), propertyField.getTypeHint());
+			typeHint = actualType.getType();
+		}
+
+		return createCondition(column, mappedValue, typeHint, bindings, criteria.getComparator());
 	}
 
 	@Nullable
-
-	private Object convertValue(@Nullable Object value, TypeInformation<?> typeInformation) {
+	protected Object convertValue(@Nullable Object value, TypeInformation<?> typeInformation) {
 
 		if (value == null) {
 			return null;
 		}
 
 		if (typeInformation.isCollectionLike()) {
-			converter.writeValue(value, typeInformation);
+			this.converter.writeValue(value, typeInformation);
 		} else if (value instanceof Iterable) {
 
 			List<Object> mapped = new ArrayList<>();
 
 			for (Object o : (Iterable<?>) value) {
 
-				mapped.add(converter.writeValue(o, typeInformation));
+				mapped.add(this.converter.writeValue(o, typeInformation));
 			}
 			return mapped;
 		}
 
-		return converter.writeValue(value, typeInformation);
+		return this.converter.writeValue(value, typeInformation);
+	}
+
+	protected MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> getMappingContext() {
+		return this.mappingContext;
 	}
 
 	private Condition createCondition(Column column, @Nullable Object mappedValue, Class<?> valueType,
@@ -213,9 +263,22 @@ public class CriteriaMapper {
 		throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
 	}
 
-	protected Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, String key,
+	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, String key,
 			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
 		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext);
+	}
+
+	Class<?> getTypeHint(Object mappedValue, Class<?> propertyType, SettableValue settableValue) {
+
+		if (mappedValue == null || propertyType.equals(Object.class)) {
+			return settableValue.getType();
+		}
+
+		if (mappedValue.getClass().equals(settableValue.getValue().getClass())) {
+			return settableValue.getType();
+		}
+
+		return propertyType;
 	}
 
 	private Expression bind(@Nullable Object mappedValue, Class<?> valueType, MutableBindings bindings,
@@ -249,34 +312,12 @@ public class CriteriaMapper {
 		}
 
 		/**
-		 * Returns the underlying {@link RelationalPersistentProperty} backing the field. For path traversals this will be
-		 * the property that represents the value to handle. This means it'll be the leaf property for plain paths or the
-		 * association property in case we refer to an association somewhere in the path.
-		 *
-		 * @return can be {@literal null}.
-		 */
-		@Nullable
-		public RelationalPersistentProperty getProperty() {
-			return null;
-		}
-
-		/**
-		 * Returns the {@link RelationalPersistentEntity} that field is owned by.
-		 *
-		 * @return can be {@literal null}.
-		 */
-		@Nullable
-		public RelationalPersistentEntity<?> getPropertyEntity() {
-			return null;
-		}
-
-		/**
 		 * Returns the key to be used in the mapped document eventually.
 		 *
 		 * @return
 		 */
 		public String getMappedColumnName() {
-			return name;
+			return this.name;
 		}
 
 		public TypeInformation<?> getTypeHint() {
@@ -288,8 +329,6 @@ public class CriteriaMapper {
 	 * Extension of {@link Field} to be backed with mapping metadata.
 	 */
 	protected static class MetadataBackedField extends Field {
-
-		private static final String INVALID_ASSOCIATION_REFERENCE = "Invalid path reference %s! Associations can only be pointed to directly or via their id property!";
 
 		private final RelationalPersistentEntity<?> entity;
 		private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
@@ -330,32 +369,12 @@ public class CriteriaMapper {
 			this.mappingContext = context;
 
 			this.path = getPath(name);
-			this.property = path == null ? property : path.getLeafProperty();
-		}
-
-		@Override
-		public RelationalPersistentProperty getProperty() {
-			return property;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.mongodb.core.convert.QueryMapper.Field#getEntity()
-		 */
-		@Override
-		public RelationalPersistentEntity<?> getPropertyEntity() {
-			RelationalPersistentProperty property = getProperty();
-			return property == null ? null : mappingContext.getPersistentEntity(property);
+			this.property = this.path == null ? property : this.path.getLeafProperty();
 		}
 
 		@Override
 		public String getMappedColumnName() {
-			return path == null ? name : path.toDotPath(RelationalPersistentProperty::getColumnName);
-		}
-
-		@Nullable
-		protected PersistentPropertyPath<RelationalPersistentProperty> getPath() {
-			return path;
+			return this.path == null ? this.name : this.path.toDotPath(RelationalPersistentProperty::getColumnName);
 		}
 
 		/**
@@ -369,24 +388,20 @@ public class CriteriaMapper {
 
 			try {
 
-				PropertyPath path = PropertyPath.from(pathExpression, entity.getTypeInformation());
+				PropertyPath path = PropertyPath.from(pathExpression, this.entity.getTypeInformation());
 
 				if (isPathToJavaLangClassProperty(path)) {
 					return null;
 				}
 
-				return mappingContext.getPersistentPropertyPath(path);
+				return this.mappingContext.getPersistentPropertyPath(path);
 			} catch (PropertyReferenceException | InvalidPersistentPropertyPath e) {
 				return null;
 			}
 		}
 
 		private boolean isPathToJavaLangClassProperty(PropertyPath path) {
-
-			if (path.getType().equals(Class.class) && path.getLeafProperty().getOwningType().getType().equals(Class.class)) {
-				return true;
-			}
-			return false;
+			return path.getType().equals(Class.class) && path.getLeafProperty().getOwningType().getType().equals(Class.class);
 		}
 
 		/*
@@ -396,18 +411,20 @@ public class CriteriaMapper {
 		@Override
 		public TypeInformation<?> getTypeHint() {
 
-			RelationalPersistentProperty property = getProperty();
-
-			if (property == null) {
+			if (this.property == null) {
 				return super.getTypeHint();
 			}
 
-			if (property.getActualType().isInterface()
-					|| java.lang.reflect.Modifier.isAbstract(property.getActualType().getModifiers())) {
+			if (this.property.getActualType().isPrimitive()) {
+				return ClassTypeInformation.from(ClassUtils.resolvePrimitiveIfNecessary(this.property.getActualType()));
+			}
+
+			if (this.property.getActualType().isInterface()
+					|| java.lang.reflect.Modifier.isAbstract(this.property.getActualType().getModifiers())) {
 				return ClassTypeInformation.OBJECT;
 			}
 
-			return property.getTypeInformation();
+			return this.property.getTypeInformation();
 		}
 	}
 }
