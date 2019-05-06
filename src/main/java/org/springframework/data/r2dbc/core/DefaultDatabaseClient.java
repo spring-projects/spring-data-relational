@@ -124,6 +124,22 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		return new DefaultDeleteFromSpec();
 	}
 
+	@Override
+	public GenericExecuteSpec execute(String sql) {
+
+		Assert.hasText(sql, "SQL must not be null or empty!");
+
+		return execute(() -> sql);
+	}
+
+	@Override
+	public GenericExecuteSpec execute(Supplier<String> sqlSupplier) {
+
+		Assert.notNull(sqlSupplier, "SQL Supplier must not be null!");
+
+		return createGenericExecuteSpec(sqlSupplier);
+	}
+
 	/**
 	 * Execute a callback {@link Function} within a {@link Connection} scope. The function is responsible for creating a
 	 * {@link Mono}. The connection is released after the {@link Mono} terminates (or the subscription is cancelled).

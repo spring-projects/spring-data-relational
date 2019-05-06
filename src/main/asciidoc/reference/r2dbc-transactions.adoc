@@ -18,12 +18,12 @@ TransactionalOperator operator = TransactionalOperator.create(tm); <1>
 
 DatabaseClient client = DatabaseClient.create(connectionFactory);
 
-Mono<Void> atomicOperation = client.execute().sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+Mono<Void> atomicOperation = client.sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
   .bind("id", "joe")
   .bind("name", "Joe")
   .bind("age", 34)
   .fetch().rowsUpdated()
-  .then(client.execute().sql("INSERT INTO contacts (id, name) VALUES(:id, :name)")
+  .then(client.sql("INSERT INTO contacts (id, name) VALUES(:id, :name)")
     .bind("id", "joe")
     .bind("name", "Joe")
     .fetch().rowsUpdated())
@@ -69,12 +69,12 @@ class MyService {
   @Transactional
   public Mono<Void> insertPerson() {
 
-    return client.execute().sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+    return client.sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
       .bind("id", "joe")
       .bind("name", "Joe")
       .bind("age", 34)
       .fetch().rowsUpdated()
-      .then(client.execute().sql("INSERT INTO contacts (id, name) VALUES(:id, :name)")
+      .then(client.sql("INSERT INTO contacts (id, name) VALUES(:id, :name)")
         .bind("id", "joe")
         .bind("name", "Joe")
         .fetch().rowsUpdated())

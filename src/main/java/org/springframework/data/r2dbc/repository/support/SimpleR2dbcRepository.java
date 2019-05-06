@@ -117,7 +117,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
 
-		return this.databaseClient.execute().sql(operation) //
+		return this.databaseClient.execute(operation) //
 				.as(this.entity.getJavaType()) //
 				.fetch() //
 				.one();
@@ -148,7 +148,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
 
-		return this.databaseClient.execute().sql(operation) //
+		return this.databaseClient.execute(operation) //
 				.map((r, md) -> r) //
 				.first() //
 				.hasElement();
@@ -205,7 +205,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 			PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
 
-			return this.databaseClient.execute().sql(operation).as(this.entity.getJavaType()).fetch().all();
+			return this.databaseClient.execute(operation).as(this.entity.getJavaType()).fetch().all();
 		});
 	}
 
@@ -221,7 +221,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				.from(table) //
 				.build();
 
-		return this.databaseClient.execute().sql(SqlRenderer.toString(select)) //
+		return this.databaseClient.execute(SqlRenderer.toString(select)) //
 				.map((r, md) -> r.get(0, Long.class)) //
 				.first() //
 				.defaultIfEmpty(0L);

@@ -6,8 +6,7 @@ The following example shows what you need to include for minimal but fully funct
 
 [source,java]
 ----
-Mono<Void> completion = client.execute()
-        .sql("CREATE TABLE person (id VARCHAR(255) PRIMARY KEY, name VARCHAR(255), age INTEGER);")
+Mono<Void> completion = client.sql("CREATE TABLE person (id VARCHAR(255) PRIMARY KEY, name VARCHAR(255), age INTEGER);")
         .then();
 ----
 
@@ -15,7 +14,7 @@ Mono<Void> completion = client.execute()
 It exposes intermediate, continuation, and terminal methods at each stage of the execution specification.
 The example above uses `then()` to return a completion `Publisher` that completes as soon as the query (or queries, if the SQL query contains multiple statements) completes.
 
-NOTE: `execute().sql(…)` accepts either the SQL query string or a query `Supplier<String>` to defer the actual query creation until execution.
+NOTE: `sql(…)` accepts either the SQL query string or a query `Supplier<String>` to defer the actual query creation until execution.
 
 [[r2dbc.datbaseclient.queries]]
 == Running Queries
@@ -27,8 +26,7 @@ The following example shows an `UPDATE` statement that returns the number of upd
 
 [source,java]
 ----
-Mono<Integer> affectedRows = client.execute()
-        .sql("UPDATE person SET name = 'Joe'")
+Mono<Integer> affectedRows = client.sql("UPDATE person SET name = 'Joe'")
         .fetch().rowsUpdated();
 ----
 
@@ -38,8 +36,7 @@ You might have noticed the use of `fetch()` in the previous example.
 
 [source,java]
 ----
-Mono<Map<String, Object>> first = client.execute()
-        .sql("SELECT id, name FROM person")
+Mono<Map<String, Object>> first = client.sql("SELECT id, name FROM person")
         .fetch().first();
 ----
 
@@ -55,8 +52,7 @@ You can consume data with the following operators:
 
 [source,java]
 ----
-Flux<Person> all = client.execute()
-        .sql("SELECT id, name FROM mytable")
+Flux<Person> all = client.sql("SELECT id, name FROM mytable")
         .as(Person.class)
         .fetch().all();
 ----
@@ -73,8 +69,7 @@ The following example extracts the `id` column and emits its value:
 
 [source,java]
 ----
-Flux<String> names= client.execute()
-        .sql("SELECT name FROM person")
+Flux<String> names = client.sql("SELECT name FROM person")
         .map((row, rowMetadata) -> row.get("id", String.class))
         .all();
 ----
@@ -107,8 +102,7 @@ The following example shows parameter binding for a query:
 
 [source,java]
 ----
-db.execute()
-    .sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+db.sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
     .bind("id", "joe")
     .bind("name", "Joe")
     .bind("age", 34);
@@ -146,8 +140,7 @@ List<Object[]> tuples = new ArrayList<>();
 tuples.add(new Object[] {"John", 35});
 tuples.add(new Object[] {"Ann",  50});
 
-db.execute()
-    .sql("SELECT id, name, state FROM table WHERE (name, age) IN (:tuples)")
+db.sql("SELECT id, name, state FROM table WHERE (name, age) IN (:tuples)")
     .bind("tuples", tuples);
 ----
 
@@ -157,7 +150,6 @@ A simpler variant using `IN` predicates:
 
 [source,java]
 ----
-db.execute()
-    .sql("SELECT id, name, state FROM table WHERE age IN (:ages)")
+db.sql("SELECT id, name, state FROM table WHERE age IN (:ages)")
     .bind("ages", Arrays.asList(35, 50));
 ----

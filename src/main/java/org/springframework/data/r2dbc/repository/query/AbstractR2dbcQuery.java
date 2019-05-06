@@ -103,7 +103,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		BindableQuery query = createQuery(parameterAccessor);
 
 		ResultProcessor processor = method.getResultProcessor().withDynamicProjection(parameterAccessor);
-		GenericExecuteSpec boundQuery = query.bind(databaseClient.execute().sql(query));
+		GenericExecuteSpec boundQuery = query.bind(databaseClient.execute(query));
 		FetchSpec<?> fetchSpec = boundQuery.as(resolveResultType(processor)).fetch();
 
 		String tableName = method.getEntityInformation().getTableName();

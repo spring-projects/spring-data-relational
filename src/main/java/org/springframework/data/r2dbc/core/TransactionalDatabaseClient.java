@@ -41,7 +41,7 @@ import org.springframework.util.Assert;
  * <pre class="code">
  * Flux<Integer> transactionalFlux = databaseClient.inTransaction(db -> {
  *
- * 	return db.execute().sql("INSERT INTO person (id, firstname, lastname) VALUES(:id, :firstname, :lastname)") //
+ * 	return db.execute("INSERT INTO person (id, firstname, lastname) VALUES(:id, :firstname, :lastname)") //
  * 			.bind("id", 1) //
  * 			.bind("firstname", "Walter") //
  * 			.bind("lastname", "White") //
@@ -56,7 +56,7 @@ import org.springframework.util.Assert;
  * <pre class="code">
  * Mono<Void> mono = databaseClient.beginTransaction()
  * 		.then(databaseClient.execute()
- * 				.sql("INSERT INTO person (id, firstname, lastname) VALUES(:id, :firstname, :lastname)") //
+ * 				.execute("INSERT INTO person (id, firstname, lastname) VALUES(:id, :firstname, :lastname)") //
  * 				.bind("id", 1) //
  * 				.bind("firstname", "Walter") //
  * 				.bind("lastname", "White") //

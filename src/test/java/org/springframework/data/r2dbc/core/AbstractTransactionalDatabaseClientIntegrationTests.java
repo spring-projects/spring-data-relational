@@ -145,8 +145,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
 		Flux<Integer> integerFlux = databaseClient.inTransaction(db -> db //
-				.execute() //
-				.sql(getInsertIntoLegosetStatement()) //
+				.execute(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
@@ -165,7 +164,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
-		Mono<Integer> integerFlux = databaseClient.execute().sql(getInsertIntoLegosetStatement()) //
+		Mono<Integer> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
@@ -185,8 +184,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
 
 		Flux<Long> txId = databaseClient //
-				.execute() //
-				.sql(getCurrentTransactionIdStatement()) //
+				.execute(getCurrentTransactionIdStatement()) //
 				.map((r, md) -> r.get(0, Long.class)) //
 				.all();
 
@@ -224,7 +222,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 		Flux<Integer> integerFlux = databaseClient.inTransaction(db -> {
 
-			return db.execute().sql(getInsertIntoLegosetStatement()) //
+			return db.execute(getInsertIntoLegosetStatement()) //
 					.bind(0, 42055) //
 					.bind(1, "SCHAUFELRADBAGGER") //
 					.bindNull(2, Integer.class) //
@@ -248,8 +246,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		TransactionalOperator transactionalOperator = TransactionalOperator
 				.create(new R2dbcTransactionManager(connectionFactory), new DefaultTransactionDefinition());
 
-		Flux<Object> txId = databaseClient.execute() //
-				.sql(getCurrentTransactionIdStatement()) //
+		Flux<Object> txId = databaseClient.execute(getCurrentTransactionIdStatement()) //
 				.map((row, md) -> row.get(0)) //
 				.all();
 
