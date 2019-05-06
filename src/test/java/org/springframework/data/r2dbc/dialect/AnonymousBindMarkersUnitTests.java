@@ -18,9 +18,9 @@ package org.springframework.data.r2dbc.dialect;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import io.r2dbc.spi.Statement;
-
 import org.junit.Test;
+
+import org.springframework.data.r2dbc.domain.BindTarget;
 
 /**
  * Unit tests for {@link AnonymousBindMarkers}.
@@ -44,17 +44,17 @@ public class AnonymousBindMarkersUnitTests {
 	@Test // gh-75
 	public void shouldBindByIndex() {
 
-		Statement statement = mock(Statement.class);
+		BindTarget bindTarget = mock(BindTarget.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.anonymous("?").create();
 
 		BindMarker first = bindMarkers.next();
 		BindMarker second = bindMarkers.next();
 
-		second.bind(statement, "foo");
-		first.bindNull(statement, Object.class);
+		second.bind(bindTarget, "foo");
+		first.bindNull(bindTarget, Object.class);
 
-		verify(statement).bindNull(0, Object.class);
-		verify(statement).bind(1, "foo");
+		verify(bindTarget).bindNull(0, Object.class);
+		verify(bindTarget).bind(1, "foo");
 	}
 }

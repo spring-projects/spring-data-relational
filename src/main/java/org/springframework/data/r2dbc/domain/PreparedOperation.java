@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.function;
+package org.springframework.data.r2dbc.domain;
 
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.Statement;
-
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * Extension to {@link QueryOperation} for a prepared SQL query {@link Supplier} with bound parameters. Contains
- * parameter bindings that can be {@link #bind(Statement)} bound to a {@link Statement}.
+ * parameter bindings that can be {@link #bindTo bound} bound to a {@link BindTarget}.
  * <p>
- * Can be executed with {@link DatabaseClient}.
+ * Can be executed with {@link org.springframework.data.r2dbc.function.DatabaseClient}.
  * </p>
  *
  * @param <T> underlying operation source.
  * @author Mark Paluch
- * @see DatabaseClient
- * @see DatabaseClient.SqlSpec#sql(Supplier)
+ * @see org.springframework.data.r2dbc.function.DatabaseClient
+ * @see org.springframework.data.r2dbc.function.DatabaseClient.SqlSpec#sql(Supplier)
  */
 public interface PreparedOperation<T> extends QueryOperation {
 
@@ -41,15 +37,10 @@ public interface PreparedOperation<T> extends QueryOperation {
 	T getSource();
 
 	/**
-	 * create a {@link Statement} from the generated SQL after applying the SQL filter and then applying the
-	 * {@link org.springframework.data.r2dbc.function.DefaultStatementFactory.Binding} after filtering those as well.
+	 * Apply bindings to {@link BindTarget}.
 	 *
-	 * @param connection the {@link Connection} used for constructing a statement
-	 * @return the bound statement.
+	 * @param target the target to apply bindings to.
 	 */
-	Statement createBoundStatement(Connection connection);
+	void bindTo(BindTarget target);
 
-	void addSqlFilter(Function<String, String> filter);
-
-	void addBindingFilter(Function<Bindings, Bindings> filter);
 }

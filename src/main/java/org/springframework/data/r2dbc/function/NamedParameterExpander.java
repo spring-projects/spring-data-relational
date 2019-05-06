@@ -15,14 +15,13 @@
  */
 package org.springframework.data.r2dbc.function;
 
-import io.r2dbc.spi.Statement;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
+import org.springframework.data.r2dbc.domain.BindTarget;
 
 /**
  * SQL translation support allowing the use of named parameters rather than native placeholders.
@@ -147,13 +146,13 @@ public class NamedParameterExpander {
 			return new BindableOperation() {
 
 				@Override
-				public void bind(Statement statement, String identifier, Object value) {
-					statement.bind(identifier, value);
+				public void bind(BindTarget target, String identifier, Object value) {
+					target.bind(identifier, value);
 				}
 
 				@Override
-				public void bindNull(Statement statement, String identifier, Class<?> valueType) {
-					statement.bindNull(identifier, valueType);
+				public void bindNull(BindTarget target, String identifier, Class<?> valueType) {
+					target.bindNull(identifier, valueType);
 				}
 
 				@Override

@@ -84,7 +84,7 @@ public class SettableValue {
 	 */
 	@Nullable
 	public Object getValue() {
-		return value;
+		return this.value;
 	}
 
 	/**
@@ -93,7 +93,7 @@ public class SettableValue {
 	 * @return the column value type
 	 */
 	public Class<?> getType() {
-		return type;
+		return this.type;
 	}
 
 	/**
@@ -102,7 +102,7 @@ public class SettableValue {
 	 * @return whether this {@link SettableValue} has a value. {@literal false} if {@link #getValue()} is {@literal null}.
 	 */
 	public boolean hasValue() {
-		return value != null;
+		return this.value != null;
 	}
 
 	/**
@@ -111,7 +111,7 @@ public class SettableValue {
 	 * @return whether this {@link SettableValue} is empty. {@literal true} if {@link #getValue()} is {@literal null}.
 	 */
 	public boolean isEmpty() {
-		return value == null;
+		return this.value == null;
 	}
 
 	@Override
@@ -121,20 +121,20 @@ public class SettableValue {
 		if (!(o instanceof SettableValue))
 			return false;
 		SettableValue value1 = (SettableValue) o;
-		return Objects.equals(value, value1.value) && Objects.equals(type, value1.type);
+		return Objects.equals(this.value, value1.value) && Objects.equals(this.type, value1.type);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(value, type);
+		return Objects.hash(this.value, this.type);
 	}
 
 	@Override
 	public String toString() {
 		final StringBuffer sb = new StringBuffer();
 		sb.append("SettableValue");
-		sb.append("[value=").append(value);
-		sb.append(", type=").append(type);
+		sb.append("[value=").append(this.value);
+		sb.append(", type=").append(this.type);
 		sb.append(']');
 		return sb.toString();
 	}

@@ -29,6 +29,7 @@ import org.reactivestreams.Publisher;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 
 /**

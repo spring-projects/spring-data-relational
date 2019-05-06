@@ -39,7 +39,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 * Creates an empty {@link OutboundRow} instance.
 	 */
 	public OutboundRow() {
-		rowAsMap = new LinkedHashMap<>();
+		this.rowAsMap = new LinkedHashMap<>();
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 
 		Assert.notNull(map, "Map must not be null");
 
-		rowAsMap = new LinkedHashMap<>(map);
+		this.rowAsMap = new LinkedHashMap<>(map);
 	}
 
 	/**
@@ -61,8 +61,8 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 * @param value value.
 	 */
 	public OutboundRow(String key, SettableValue value) {
-		rowAsMap = new LinkedHashMap<>();
-		rowAsMap.put(key, value);
+		this.rowAsMap = new LinkedHashMap<>();
+		this.rowAsMap.put(key, value);
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 * @return this
 	 */
 	public OutboundRow append(String key, SettableValue value) {
-		rowAsMap.put(key, value);
+		this.rowAsMap.put(key, value);
 		return this;
 	}
 
@@ -88,7 +88,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public int size() {
-		return rowAsMap.size();
+		return this.rowAsMap.size();
 	}
 
 	/*
@@ -97,7 +97,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public boolean isEmpty() {
-		return rowAsMap.isEmpty();
+		return this.rowAsMap.isEmpty();
 	}
 
 	/*
@@ -106,7 +106,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public boolean containsKey(Object key) {
-		return rowAsMap.containsKey(key);
+		return this.rowAsMap.containsKey(key);
 	}
 
 	/*
@@ -115,7 +115,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public boolean containsValue(Object value) {
-		return rowAsMap.containsValue(value);
+		return this.rowAsMap.containsValue(value);
 	}
 
 	/*
@@ -124,7 +124,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public SettableValue get(Object key) {
-		return rowAsMap.get(key);
+		return this.rowAsMap.get(key);
 	}
 
 	/*
@@ -133,7 +133,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public SettableValue put(String key, SettableValue value) {
-		return rowAsMap.put(key, value);
+		return this.rowAsMap.put(key, value);
 	}
 
 	/*
@@ -142,7 +142,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public SettableValue remove(Object key) {
-		return rowAsMap.remove(key);
+		return this.rowAsMap.remove(key);
 	}
 
 	/*
@@ -151,7 +151,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public void putAll(Map<? extends String, ? extends SettableValue> m) {
-		rowAsMap.putAll(m);
+		this.rowAsMap.putAll(m);
 	}
 
 	/*
@@ -160,7 +160,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public void clear() {
-		rowAsMap.clear();
+		this.rowAsMap.clear();
 	}
 
 	/*
@@ -169,7 +169,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public Set<String> keySet() {
-		return rowAsMap.keySet();
+		return this.rowAsMap.keySet();
 	}
 
 	/*
@@ -178,7 +178,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public Collection<SettableValue> values() {
-		return rowAsMap.values();
+		return this.rowAsMap.values();
 	}
 
 	/*
@@ -187,7 +187,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public Set<Entry<String, SettableValue>> entrySet() {
-		return rowAsMap.entrySet();
+		return this.rowAsMap.entrySet();
 	}
 
 	/*
@@ -207,7 +207,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 
 		OutboundRow row = (OutboundRow) o;
 
-		return rowAsMap.equals(row.rowAsMap);
+		return this.rowAsMap.equals(row.rowAsMap);
 	}
 
 	/*
@@ -216,7 +216,7 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public int hashCode() {
-		return rowAsMap.hashCode();
+		return this.rowAsMap.hashCode();
 	}
 
 	/*
@@ -225,11 +225,11 @@ public class OutboundRow implements Map<String, SettableValue> {
 	 */
 	@Override
 	public String toString() {
-		return "OutboundRow[" + rowAsMap + "]";
+		return "OutboundRow[" + this.rowAsMap + "]";
 	}
 
 	@Override
 	public void forEach(BiConsumer<? super String, ? super SettableValue> action) {
-		rowAsMap.forEach(action);
+		this.rowAsMap.forEach(action);
 	}
 }

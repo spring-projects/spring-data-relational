@@ -15,7 +15,6 @@
  */
 package org.springframework.data.r2dbc.function;
 
-import io.r2dbc.spi.Statement;
 import lombok.Value;
 
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
+import org.springframework.data.r2dbc.domain.BindTarget;
 import org.springframework.util.Assert;
 
 /**
@@ -391,22 +391,22 @@ abstract class NamedParameterUtils {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(io.r2dbc.spi.Statement, java.lang.String, java.lang.Object)
+		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(BindTarget, java.lang.String, java.lang.Object)
 		 */
 		@Override
 		@SuppressWarnings("unchecked")
-		public void bind(Statement statement, String identifier, Object value) {
+		public void bind(BindTarget target, String identifier, Object value) {
 
 			List<BindMarker> bindMarkers = getBindMarkers(identifier);
 
 			if (bindMarkers == null) {
 
-				statement.bind(identifier, value);
+				target.bind(identifier, value);
 				return;
 			}
 
 			if (bindMarkers.size() == 1) {
-				bindMarkers.get(0).bind(statement, value);
+				bindMarkers.get(0).bind(target, value);
 			} else {
 
 				Assert.isInstanceOf(Collection.class, value,
@@ -424,36 +424,36 @@ abstract class NamedParameterUtils {
 					if (valueToBind instanceof Object[]) {
 						Object[] objects = (Object[]) valueToBind;
 						for (Object object : objects) {
-							bind(statement, markers, object);
+							bind(target, markers, object);
 						}
 					} else {
-						bind(statement, markers, valueToBind);
+						bind(target, markers, valueToBind);
 					}
 				}
 			}
 		}
 
-		private void bind(Statement statement, Iterator<BindMarker> markers, Object valueToBind) {
+		private void bind(BindTarget target, Iterator<BindMarker> markers, Object valueToBind) {
 
 			Assert.isTrue(markers.hasNext(),
 					() -> String.format(
 							"No bind marker for value [%s] in SQL [%s]. Check that the query was expanded using the same arguments.",
 							valueToBind, toQuery()));
 
-			markers.next().bind(statement, valueToBind);
+			markers.next().bind(target, valueToBind);
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(io.r2dbc.spi.Statement, java.lang.String, java.lang.Class)
+		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(BindTarget, java.lang.String, java.lang.Class)
 		 */
 		@Override
-		public void bindNull(Statement statement, String identifier, Class<?> valueType) {
+		public void bindNull(BindTarget target, String identifier, Class<?> valueType) {
 
 			List<BindMarker> bindMarkers = getBindMarkers(identifier);
 
 			if (bindMarkers.size() == 1) {
-				bindMarkers.get(0).bindNull(statement, valueType);
+				bindMarkers.get(0).bindNull(target, valueType);
 				return;
 			}
 

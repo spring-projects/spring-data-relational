@@ -18,15 +18,15 @@ package org.springframework.data.r2dbc.function;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import io.r2dbc.spi.Statement;
-
 import java.util.Arrays;
 import java.util.HashMap;
 
 import org.junit.Test;
+
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.dialect.SqlServerDialect;
+import org.springframework.data.r2dbc.domain.BindTarget;
 
 /**
  * Unit tests for {@link NamedParameterUtils}.
@@ -94,15 +94,15 @@ public class NamedParameterUtilsUnitTests {
 		namedParams.addValue("a",
 				Arrays.asList(new Object[] { "Walter", "Heisenberg" }, new Object[] { "Walt Jr.", "Flynn" }));
 
-		Statement mockStatement = mock(Statement.class);
+		BindTarget bindTarget = mock(BindTarget.class);
 
 		BindableOperation operation = NamedParameterUtils.substituteNamedParameters("xxx :a", BIND_MARKERS, namedParams);
-		operation.bind(mockStatement, "a", namedParams.getValue("a"));
+		operation.bind(bindTarget, "a", namedParams.getValue("a"));
 
-		verify(mockStatement).bind(0, "Walter");
-		verify(mockStatement).bind(1, "Heisenberg");
-		verify(mockStatement).bind(2, "Walt Jr.");
-		verify(mockStatement).bind(3, "Flynn");
+		verify(bindTarget).bind(0, "Walter");
+		verify(bindTarget).bind(1, "Heisenberg");
+		verify(bindTarget).bind(2, "Walt Jr.");
+		verify(bindTarget).bind(3, "Flynn");
 	}
 
 	@Test // gh-23

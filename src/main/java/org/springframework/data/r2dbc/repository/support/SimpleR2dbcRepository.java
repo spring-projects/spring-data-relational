@@ -27,9 +27,9 @@ import java.util.Set;
 
 import org.reactivestreams.Publisher;
 
+import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.PreparedOperation;
 import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.function.StatementFactory;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;

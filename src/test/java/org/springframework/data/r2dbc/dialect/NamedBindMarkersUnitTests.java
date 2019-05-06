@@ -3,9 +3,9 @@ package org.springframework.data.r2dbc.dialect;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import io.r2dbc.spi.Statement;
-
 import org.junit.Test;
+
+import org.springframework.data.r2dbc.domain.BindTarget;
 
 /**
  * Unit tests for {@link NamedBindMarkers}.
@@ -85,27 +85,27 @@ public class NamedBindMarkersUnitTests {
 	@Test // gh-15
 	public void bindValueShouldBindByName() {
 
-		Statement statement = mock(Statement.class);
+		BindTarget bindTarget = mock(BindTarget.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32).create();
 
-		bindMarkers.next().bind(statement, "foo");
-		bindMarkers.next().bind(statement, "bar");
+		bindMarkers.next().bind(bindTarget, "foo");
+		bindMarkers.next().bind(bindTarget, "bar");
 
-		verify(statement).bind("p0", "foo");
-		verify(statement).bind("p1", "bar");
+		verify(bindTarget).bind("p0", "foo");
+		verify(bindTarget).bind("p1", "bar");
 	}
 
 	@Test // gh-15
 	public void bindNullShouldBindByName() {
 
-		Statement statement = mock(Statement.class);
+		BindTarget bindTarget = mock(BindTarget.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.named("@", "p", 32).create();
 
 		bindMarkers.next(); // ignore
-		bindMarkers.next().bindNull(statement, Integer.class);
+		bindMarkers.next().bindNull(bindTarget, Integer.class);
 
-		verify(statement).bindNull("p1", Integer.class);
+		verify(bindTarget).bindNull("p1", Integer.class);
 	}
 }

@@ -1,10 +1,9 @@
 package org.springframework.data.r2dbc.dialect;
 
-import io.r2dbc.spi.Statement;
-
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Function;
 
+import org.springframework.data.r2dbc.domain.BindTarget;
 import org.springframework.util.Assert;
 
 /**
@@ -98,20 +97,20 @@ class NamedBindMarkers implements BindMarkers {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindValue(io.r2dbc.spi.Statement, java.lang.Object)
+		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindValue(org.springframework.data.r2dbc.dialect.BindTarget, java.lang.Object)
 		 */
 		@Override
-		public void bind(Statement statement, Object value) {
-			statement.bind(this.identifier, value);
+		public void bind(BindTarget target, Object value) {
+			target.bind(this.identifier, value);
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindNull(io.r2dbc.spi.Statement, java.lang.Class)
+		 * @see org.springframework.data.r2dbc.dialect.BindMarker#bindNull(org.springframework.data.r2dbc.dialect.BindTarget, java.lang.Class)
 		 */
 		@Override
-		public void bindNull(Statement statement, Class<?> valueType) {
-			statement.bindNull(this.identifier, valueType);
+		public void bindNull(BindTarget target, Class<?> valueType) {
+			target.bindNull(this.identifier, valueType);
 		}
 	}
 }

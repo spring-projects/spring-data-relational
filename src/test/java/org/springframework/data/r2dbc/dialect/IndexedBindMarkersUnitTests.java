@@ -3,9 +3,9 @@ package org.springframework.data.r2dbc.dialect;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import io.r2dbc.spi.Statement;
-
 import org.junit.Test;
+
+import org.springframework.data.r2dbc.domain.BindTarget;
 
 /**
  * Unit tests for {@link IndexedBindMarkers}.
@@ -29,20 +29,20 @@ public class IndexedBindMarkersUnitTests {
 	@Test // gh-15
 	public void shouldCreateNewBindMarkersWithOffset() {
 
-		Statement statement = mock(Statement.class);
+		BindTarget bindTarget = mock(BindTarget.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 1).create();
 
 		BindMarker first = bindMarkers.next();
-		first.bind(statement, "foo");
+		first.bind(bindTarget, "foo");
 
 		BindMarker second = bindMarkers.next();
-		second.bind(statement, "bar");
+		second.bind(bindTarget, "bar");
 
 		assertThat(first.getPlaceholder()).isEqualTo("$1");
 		assertThat(second.getPlaceholder()).isEqualTo("$2");
-		verify(statement).bind(0, "foo");
-		verify(statement).bind(1, "bar");
+		verify(bindTarget).bind(0, "foo");
+		verify(bindTarget).bind(1, "bar");
 	}
 
 	@Test // gh-15
@@ -65,28 +65,28 @@ public class IndexedBindMarkersUnitTests {
 	@Test // gh-15
 	public void bindValueShouldBindByIndex() {
 
-		Statement statement = mock(Statement.class);
+		BindTarget bindTarget = mock(BindTarget.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 0).create();
 
-		bindMarkers.next().bind(statement, "foo");
-		bindMarkers.next().bind(statement, "bar");
+		bindMarkers.next().bind(bindTarget, "foo");
+		bindMarkers.next().bind(bindTarget, "bar");
 
-		verify(statement).bind(0, "foo");
-		verify(statement).bind(1, "bar");
+		verify(bindTarget).bind(0, "foo");
+		verify(bindTarget).bind(1, "bar");
 	}
 
 	@Test // gh-15
 	public void bindNullShouldBindByIndex() {
 
-		Statement statement = mock(Statement.class);
+		BindTarget bindTarget = mock(BindTarget.class);
 
 		BindMarkers bindMarkers = BindMarkersFactory.indexed("$", 0).create();
 
 		bindMarkers.next(); // ignore
 
-		bindMarkers.next().bindNull(statement, Integer.class);
+		bindMarkers.next().bindNull(bindTarget, Integer.class);
 
-		verify(statement).bindNull(1, Integer.class);
+		verify(bindTarget).bindNull(1, Integer.class);
 	}
 }

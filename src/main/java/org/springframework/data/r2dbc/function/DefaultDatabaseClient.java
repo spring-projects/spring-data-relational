@@ -52,7 +52,9 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.UncategorizedR2dbcException;
+import org.springframework.data.r2dbc.domain.BindTarget;
 import org.springframework.data.r2dbc.domain.OutboundRow;
+import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.connectionfactory.ConnectionProxy;
 import org.springframework.data.r2dbc.function.convert.ColumnMapRowMapper;
@@ -60,6 +62,7 @@ import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Default implementation of {@link DatabaseClient}.
@@ -322,24 +325,51 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.sqlSupplier = sqlSupplier;
 		}
 
-		protected String getSql() {
+		<T> FetchSpec<T> exchange(Supplier<String> sqlSupplier, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
-			String sql = sqlSupplier.get();
-			Assert.state(sql != null, "SQL supplier returned null!");
-			return sql;
-		}
+			String sql = getRequiredSql(sqlSupplier);
 
-		<T> FetchSpec<T> exchange(String sql, BiFunction<Row, RowMetadata, T> mappingFunction) {
+			Function<Connection, Statement> executeFunction = it -> {
 
-				PreparedOperation pop;
+				if (logger.isDebugEnabled()) {
+					logger.debug("Executing SQL statement [" + sql + "]");
+				}
 
-			if (sqlSupplier instanceof PreparedOperation<?>) {
-				pop = ((PreparedOperation<?>) sqlSupplier);
-			} else {
-				pop = new ExpandedPreparedOperation(sql, namedParameters, dataAccessStrategy, byName, byIndex);
-			}
+				if (sqlSupplier instanceof PreparedOperation<?>) {
 
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(pop.createBoundStatement(it).execute());
+					Statement statement = it.createStatement(sql);
+					BindTarget bindTarget = new StatementWrapper(statement);
+					((PreparedOperation<?>) sqlSupplier).bindTo(bindTarget);
+
+					return statement;
+				}
+
+				BindableOperation operation = namedParameters.expand(sql, dataAccessStrategy.getBindMarkersFactory(),
+						new MapBindParameterSource(byName));
+
+				String expanded = operation.toQuery();
+				if (logger.isTraceEnabled()) {
+					logger.trace("Expanded SQL [" + expanded + "]");
+				}
+
+				Statement statement = it.createStatement(expanded);
+				BindTarget bindTarget = new StatementWrapper(statement);
+
+				byName.forEach((name, o) -> {
+
+					if (o.getValue() != null) {
+						operation.bind(bindTarget, name, o.getValue());
+					} else {
+						operation.bindNull(bindTarget, name, o.getType());
+					}
+				});
+
+				bindByIndex(statement, byIndex);
+
+				return statement;
+			};
+
+			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(executeFunction.apply(it).execute());
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
@@ -395,7 +425,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		private void assertNotPreparedOperation() {
-			if (sqlSupplier instanceof PreparedOperation<?>) {
+			if (this.sqlSupplier instanceof PreparedOperation<?>) {
 				throw new InvalidDataAccessApiUsageException("Cannot add bindings to a PreparedOperation");
 			}
 		}
@@ -440,12 +470,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(mappingFunction, "Mapping function must not be null!");
 
-			return exchange(getSql(), mappingFunction);
+			return exchange(this.sqlSupplier, mappingFunction);
 		}
 
 		@Override
 		public FetchSpec<Map<String, Object>> fetch() {
-			return exchange(getSql(), ColumnMapRowMapper.INSTANCE);
+			return exchange(this.sqlSupplier, ColumnMapRowMapper.INSTANCE);
 		}
 
 		@Override
@@ -525,12 +555,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(mappingFunction, "Mapping function must not be null!");
 
-			return exchange(getSql(), mappingFunction);
+			return exchange(this.sqlSupplier, mappingFunction);
 		}
 
 		@Override
 		public FetchSpec<T> fetch() {
-			return exchange(getSql(), mappingFunction);
+			return exchange(this.sqlSupplier, mappingFunction);
 		}
 
 		@Override
@@ -882,10 +912,18 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 						byName.forEach(it::bind);
 					});
 
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(operation.createBoundStatement(it).execute());
+			String sql = getRequiredSql(operation);
+
+			Function<Connection, Flux<Result>> resultFunction = it -> {
+
+				Statement statement = it.createStatement(sql);
+				operation.bindTo(new StatementWrapper(statement));
+
+				return Flux.from(statement.execute());
+			};
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					operation.toQuery(), //
+					sql, //
 					resultFunction, //
 					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
 					mappingFunction);
@@ -993,10 +1031,18 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 						});
 					});
 
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(operation.createBoundStatement(it).execute());
+			String sql = getRequiredSql(operation);
+			Function<Connection, Flux<Result>> resultFunction = it -> {
+
+				Statement statement = it.createStatement(sql);
+				operation.bindTo(new StatementWrapper(statement));
+				statement.returnGeneratedValues();
+
+				return Flux.from(statement.execute());
+			};
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
-					operation.toQuery(), //
+					sql, //
 					resultFunction, //
 					it -> resultFunction //
 							.apply(it) //
@@ -1043,6 +1089,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		} else {
 			return null;
 		}
+	}
+
+	private static String getRequiredSql(Supplier<String> sqlSupplier) {
+
+		String sql = sqlSupplier.get();
+		Assert.state(StringUtils.hasText(sql), "SQL returned by SQL supplier must not be empty!");
+		return sql;
 	}
 
 	/**
@@ -1118,4 +1171,31 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			});
 		}
 	}
+
+	@RequiredArgsConstructor
+	static class StatementWrapper implements BindTarget {
+
+		final Statement statement;
+
+		@Override
+		public void bind(Object identifier, Object value) {
+			this.statement.bind(identifier, value);
+		}
+
+		@Override
+		public void bind(int index, Object value) {
+			this.statement.bind(index, value);
+		}
+
+		@Override
+		public void bindNull(Object identifier, Class<?> type) {
+			this.statement.bindNull(identifier, type);
+		}
+
+		@Override
+		public void bindNull(int index, Class<?> type) {
+			this.statement.bindNull(index, type);
+		}
+	}
+
 }

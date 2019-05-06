@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.function.Consumer;
 
 import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.domain.PreparedOperation;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Insert;
