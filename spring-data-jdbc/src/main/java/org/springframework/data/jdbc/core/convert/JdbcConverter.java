@@ -15,9 +15,13 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+
+import java.sql.ResultSet;
 
 /**
  * A {@link JdbcConverter} is responsible for converting for values to the native relational representation and vice
@@ -38,4 +42,10 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @return The converted value wrapped in a {@link JdbcValue}. Guaranteed to be not {@literal null}.
 	 */
 	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, int sqlType);
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.jdbc.core.RowMapper#mapRow(java.sql.ResultSet, int)
+	 */
+	<T> T mapRow(RelationalPersistentEntity<T> entity, DataAccessStrategy accessStrategy, ResultSet resultSet);
 }

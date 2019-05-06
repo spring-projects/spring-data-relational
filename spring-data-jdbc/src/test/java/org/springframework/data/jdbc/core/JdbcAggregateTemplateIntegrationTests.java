@@ -460,8 +460,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		template.delete(chain4, Chain4.class);
 
-		String countSelect = "SELECT COUNT(*) FROM %s";
-		jdbcTemplate.queryForObject(String.format(countSelect, "CHAIN0"), emptyMap(), Long.class);
+		assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM CHAIN0", emptyMap(), Long.class)) //
+				.isEqualTo(0);
 	}
 
 	@Test // DATAJDBC-359
@@ -491,8 +491,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		template.delete(chain4, NoIdChain4.class);
 
-		String countSelect = "SELECT COUNT(*) FROM %s";
-		jdbcTemplate.queryForObject(String.format(countSelect, "CHAIN0"), emptyMap(), Long.class);
+		assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM CHAIN0", emptyMap(), Long.class)) //
+				.isEqualTo(0);
 	}
 
 	private static void assumeNot(String dbProfileName) {
@@ -599,6 +599,9 @@ public class JdbcAggregateTemplateIntegrationTests {
 		}
 	}
 
+	/**
+	 * One may think of ChainN as a chain with N further elements
+	 */
 	static class Chain0 {
 		@Id Long zero;
 		String zeroValue;
@@ -628,6 +631,9 @@ public class JdbcAggregateTemplateIntegrationTests {
 		Chain3 chain3;
 	}
 
+	/**
+	 * One may think of ChainN as a chain with N further elements
+	 */
 	static class NoIdChain0 {
 		String zeroValue;
 	}

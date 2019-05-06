@@ -56,7 +56,7 @@ public class AggregateChange<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	static void setId(RelationalMappingContext context, RelationalConverter converter,
+	static void setIdOfNonRootEntity(RelationalMappingContext context, RelationalConverter converter,
 			PersistentPropertyAccessor<?> propertyAccessor, DbAction.WithDependingOn<?> action, Object generatedId) {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPathToEntity = action.getPropertyPath();
@@ -170,24 +170,7 @@ public class AggregateChange<T> {
 
 			a.executeWith(interpreter);
 
-			if (a instanceof DbAction.WithGeneratedId) {
-
-				Assert.notNull(persistentEntity,
-						"For statements triggering database side id generation a RelationalPersistentEntity must be provided.");
-				Assert.notNull(propertyAccessor, "propertyAccessor must not be null");
-
-				Object generatedId = ((DbAction.WithGeneratedId<?>) a).getGeneratedId();
-
-				if (generatedId != null) {
-
-					if (a instanceof DbAction.InsertRoot && a.getEntityType().equals(entityType)) {
-						propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
-					} else if (a instanceof DbAction.WithDependingOn) {
-
-						setId(context, converter, propertyAccessor, (DbAction.WithDependingOn<?>) a, generatedId);
-					}
-				}
-			}
+			processGeneratedId(context, converter, persistentEntity, propertyAccessor, a);
 		});
 
 		if (propertyAccessor != null) {
@@ -197,6 +180,29 @@ public class AggregateChange<T> {
 
 	public void addAction(DbAction<?> action) {
 		actions.add(action);
+	}
+
+	private void processGeneratedId(RelationalMappingContext context, RelationalConverter converter,
+			RelationalPersistentEntity<T> persistentEntity, PersistentPropertyAccessor<T> propertyAccessor, DbAction<?> a) {
+
+		if (a instanceof DbAction.WithGeneratedId) {
+
+			Assert.notNull(persistentEntity,
+					"For statements triggering database side id generation a RelationalPersistentEntity must be provided.");
+			Assert.notNull(propertyAccessor, "propertyAccessor must not be null");
+
+			Object generatedId = ((DbAction.WithGeneratedId<?>) a).getGeneratedId();
+
+			if (generatedId != null) {
+
+				if (a instanceof DbAction.InsertRoot && a.getEntityType().equals(entityType)) {
+					propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
+				} else if (a instanceof DbAction.WithDependingOn) {
+
+					setIdOfNonRootEntity(context, converter, propertyAccessor, (DbAction.WithDependingOn<?>) a, generatedId);
+				}
+			}
+		}
 	}
 
 	/**

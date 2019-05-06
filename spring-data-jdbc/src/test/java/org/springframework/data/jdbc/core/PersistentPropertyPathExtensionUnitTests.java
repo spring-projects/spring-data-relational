@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core;
 
 import java.util.List;
 
-import org.assertj.core.api.SoftAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
@@ -27,6 +26,8 @@ import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+
+import static org.assertj.core.api.SoftAssertions.*;
 
 /**
  * @author Jens Schauder
@@ -39,7 +40,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test
 	public void isEmbedded() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath(entity).isEmbedded()).isFalse();
 			softly.assertThat(extPath("second").isEmbedded()).isFalse();
@@ -50,7 +51,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test
 	public void isMultiValued() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath(entity).isMultiValued()).isFalse();
 			softly.assertThat(extPath("second").isMultiValued()).isFalse();
@@ -66,7 +67,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 		RelationalPersistentEntity<?> second = context.getRequiredPersistentEntity(Second.class);
 		RelationalPersistentEntity<?> third = context.getRequiredPersistentEntity(Third.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath(entity).getLeafEntity()).isEqualTo(entity);
 			softly.assertThat(extPath("second").getLeafEntity()).isEqualTo(second);
@@ -79,7 +80,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test
 	public void isEntity() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath(entity).isEntity()).isTrue();
 			String path = "second";
@@ -95,7 +96,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test
 	public void getTableName() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath(entity).getTableName()).isEqualTo("dummy_entity");
 			softly.assertThat(extPath("second").getTableName()).isEqualTo("second");
@@ -110,7 +111,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test
 	public void getTableAlias() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath(entity).getTableAlias()).isEqualTo(null);
 			softly.assertThat(extPath("second").getTableAlias()).isEqualTo("second");
@@ -130,7 +131,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test
 	public void getColumnName() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath("second.third2.value").getColumnName()).isEqualTo("thrdvalue");
 			softly.assertThat(extPath("second.third.value").getColumnName()).isEqualTo("value");
@@ -144,7 +145,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test // DATAJDBC-359
 	public void idDefiningPath() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath("second.third2.value").getIdDefiningParentPath().getLength()).isEqualTo(0);
 			softly.assertThat(extPath("second.third.value").getIdDefiningParentPath().getLength()).isEqualTo(0);
@@ -160,7 +161,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test // DATAJDBC-359
 	public void reverseColumnName() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath("second.third2").getReverseColumnName()).isEqualTo("dummy_entity");
 			softly.assertThat(extPath("second.third").getReverseColumnName()).isEqualTo("dummy_entity");
@@ -177,7 +178,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test // DATAJDBC-359
 	public void getRequiredIdProperty() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath(entity).getRequiredIdProperty().getName()).isEqualTo("entityId");
 			softly.assertThat(extPath("withId").getRequiredIdProperty().getName()).isEqualTo("withIdId");
@@ -189,7 +190,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@Test // DATAJDBC-359
 	public void extendBy() {
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(extPath(entity).extendBy(entity.getRequiredPersistentProperty("withId")))
 					.isEqualTo(extPath("withId"));

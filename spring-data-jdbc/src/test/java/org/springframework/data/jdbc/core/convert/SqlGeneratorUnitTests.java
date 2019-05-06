@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
+import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
@@ -370,10 +371,16 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(createSqlGenerator(IdIdNoIdChain.class)
 				.createDeleteByPath(getPath("idNoIdChain.chain4.chain3.chain2.chain1.chain0", IdIdNoIdChain.class))) //
-						.isEqualTo(
-								"DELETE FROM no_id_chain0 " + "WHERE no_id_chain0.no_id_chain4 IN (" + "SELECT no_id_chain4.x_four "
-										+ "FROM no_id_chain4 " + "WHERE no_id_chain4.id_no_id_chain IN (" + "SELECT id_no_id_chain.x_id "
-										+ "FROM id_no_id_chain " + "WHERE id_no_id_chain.id_id_no_id_chain = :rootId" + "))");
+						.isEqualTo( //
+								"DELETE FROM no_id_chain0 " //
+										+ "WHERE no_id_chain0.no_id_chain4 IN (" //
+										+ "SELECT no_id_chain4.x_four " //
+										+ "FROM no_id_chain4 " //
+										+ "WHERE no_id_chain4.id_no_id_chain IN (" //
+										+ "SELECT id_no_id_chain.x_id " //
+										+ "FROM id_no_id_chain " //
+										+ "WHERE id_no_id_chain.id_id_no_id_chain = :rootId" //
+										+ "))");
 	}
 
 	@Test // DATAJDBC-340

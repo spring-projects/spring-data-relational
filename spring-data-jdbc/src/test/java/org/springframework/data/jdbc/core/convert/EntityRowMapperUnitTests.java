@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
@@ -34,18 +34,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.naming.OperationNotSupportedException;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
-import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -252,49 +252,41 @@ public class EntityRowMapperUnitTests {
 	@Test // DATAJDBC-359
 	public void chainedEntitiesWithoutId() throws SQLException {
 
-		ResultSet rs = mockResultSet(asList("four", //
-				"four_value", //
-				"chain3_no_id_chain4", //
-				"chain3_three_value", //
-				"chain3_chain2_no_id_chain4", //
-				"chain3_chain2_two_value", //
-				"chain3_chain2_chain1_no_id_chain4", //
-				"chain3_chain2_chain1_one_value", //
-				"chain3_chain2_chain1_chain0_no_id_chain4", //
-				"chain3_chain2_chain1_chain0_zero_value" //
-		), //
-				4, //
-				"four_value", //
-				4, //
-				"three_value", //
-				4, //
-				"two_value", //
-				4, //
-				"one_value", //
-				4, //
-				"zero_value" //
-		);
+		// @formatter:off
+		Fixture<NoIdChain4> fixture = this.<NoIdChain4> buildFixture() //
+				// Id of the aggregate root and backreference to it from
+				// the various aggregate members.
+				.value(4L).inColumns("four", //
+						"chain3_no_id_chain4", //
+						"chain3_chain2_no_id_chain4", //
+						"chain3_chain2_chain1_no_id_chain4", //
+						"chain3_chain2_chain1_chain0_no_id_chain4") //
+				.endUpIn(e -> e.four)
+				// values for the different entities
+				.value("four_value").inColumns("four_value").endUpIn(e -> e.fourValue) //
+
+				.value("three_value").inColumns("chain3_three_value").endUpIn(e -> e.chain3.threeValue) //
+
+				.value("two_value").inColumns("chain3_chain2_two_value").endUpIn(e -> e.chain3.chain2.twoValue) //
+
+				.value("one_value").inColumns("chain3_chain2_chain1_one_value").endUpIn(e -> e.chain3.chain2.chain1.oneValue) //
+
+				.value("zero_value").inColumns("chain3_chain2_chain1_chain0_zero_value")
+				.endUpIn(e -> e.chain3.chain2.chain1.chain0.zeroValue) //
+				.build();
+		// @formatter:on
+
+		ResultSet rs = fixture.resultSet;
+
 		rs.next();
 
 		NoIdChain4 extracted = createRowMapper(NoIdChain4.class).mapRow(rs, 1);
 
-		assertThat(extracted) //
-				.extracting( //
-						e -> e.four, //
-						e -> e.fourValue, //
-						e -> e.chain3.threeValue, //
-						e -> e.chain3.chain2.twoValue, //
-						e -> e.chain3.chain2.chain1.oneValue, //
-						e -> e.chain3.chain2.chain1.chain0.zeroValue //
-				) //
-				.isEqualTo(new Object[] { //
-						4L, //
-						"four_value", //
-						"three_value", //
-						"two_value", //
-						"one_value", //
-						"zero_value" //
-				});
+		fixture.assertOn(extracted);
+	}
+
+	private <T> FixtureBuilder<T> buildFixture() {
+		return new FixtureBuilder<>();
 	}
 
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type) {
@@ -323,11 +315,11 @@ public class EntityRowMapperUnitTests {
 		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST),
 				any(RelationalPersistentProperty.class));
 
-		RelationalConverter converter = new BasicRelationalConverter(context, new JdbcCustomConversions());
+		JdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions());
 
 		return new EntityRowMapper<>( //
 				(RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type), //
-				context, //
+				//
 				converter, //
 				accessStrategy //
 		);
@@ -548,5 +540,97 @@ public class EntityRowMapperUnitTests {
 		@Id Long four;
 		String fourValue;
 		NoIdChain3 chain3;
+	}
+
+	private interface SetValue<T> {
+		SetColumns<T> value(Object value);
+
+		Fixture<T> build();
+	}
+
+	private interface SetColumns<T> {
+
+		SetExpectation<T> inColumns(String... columns);
+	}
+
+	private interface SetExpectation<T> {
+		SetValue<T> endUpIn(Function<T, Object> extractor);
+	}
+
+	private static class FixtureBuilder<T> implements SetValue<T>, SetColumns<T>, SetExpectation<T> {
+
+		private List<Object> values = new ArrayList<>();
+		private List<String> columns = new ArrayList<>();
+		private String explainingColumn;
+		private List<Expectation<T>> expectations = new ArrayList<>();
+
+		@Override
+		public SetColumns<T> value(Object value) {
+
+			values.add(value);
+
+			return this;
+		}
+
+		@Override
+		public SetExpectation<T> inColumns(String... columns) {
+
+			boolean isFirst = true;
+			for (String column : columns) {
+
+				// if more than one column is mentioned, we need to copy the value for all but the first column;
+				if (!isFirst) {
+
+					values.add(values.get(values.size() - 1));
+				} else {
+
+					explainingColumn = column;
+					isFirst = false;
+				}
+
+				this.columns.add(column);
+			}
+
+			return this;
+		}
+
+		@Override
+		public Fixture<T> build() {
+
+			return new Fixture<>(mockResultSet(columns, values.toArray()), expectations);
+		}
+
+		@Override
+		public SetValue<T> endUpIn(Function<T, Object> extractor) {
+
+			expectations.add(new Expectation<T>(extractor, values.get(values.size() - 1), explainingColumn));
+			return this;
+		}
+	}
+
+	@AllArgsConstructor
+	private static class Fixture<T> {
+		final ResultSet resultSet;
+		final List<Expectation<T>> expectations;
+
+		public void assertOn(T result) {
+
+			SoftAssertions.assertSoftly(softly -> {
+				expectations.forEach(expectation -> {
+
+					softly.assertThat(expectation.extractor.apply(result)).describedAs("From column: " + expectation.sourceColumn)
+							.isEqualTo(expectation.expectedValue);
+				});
+
+			});
+		}
+	}
+
+	@AllArgsConstructor
+	private static class Expectation<T> {
+
+		final Function<T, Object> extractor;
+		final Object expectedValue;
+		final String sourceColumn;
 	}
 }

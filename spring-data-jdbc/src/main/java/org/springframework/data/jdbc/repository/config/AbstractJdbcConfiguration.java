@@ -22,13 +22,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
-import org.springframework.data.jdbc.core.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -79,8 +79,9 @@ public abstract class AbstractJdbcConfiguration {
 
 	/**
 	 * Register custom {@link Converter}s in a {@link JdbcCustomConversions} object if required. These
-	 * {@link JdbcCustomConversions} will be registered with the {@link #jdbcConverter(RelationalMappingContext, JdbcOperations)}.
-	 * Returns an empty {@link JdbcCustomConversions} instance by default.
+	 * {@link JdbcCustomConversions} will be registered with the
+	 * {@link #jdbcConverter(RelationalMappingContext, JdbcOperations)}. Returns an empty {@link JdbcCustomConversions}
+	 * instance by default.
 	 *
 	 * @return must not be {@literal null}.
 	 */

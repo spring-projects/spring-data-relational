@@ -67,7 +67,7 @@ public class AggregateChangeUnitTests {
 
 		DbAction.Insert<?> insert = createInsert("single", content, null);
 
-		AggregateChange.setId(context, converter, propertyAccessor, insert, id);
+		AggregateChange.setIdOfNonRootEntity(context, converter, propertyAccessor, insert, id);
 
 		DummyEntity result = propertyAccessor.getBean();
 
@@ -81,7 +81,7 @@ public class AggregateChangeUnitTests {
 
 		DbAction.Insert<?> insert = createInsert("contentSet", content, null);
 
-		AggregateChange.setId(context, converter, propertyAccessor, insert, id);
+		AggregateChange.setIdOfNonRootEntity(context, converter, propertyAccessor, insert, id);
 
 		DummyEntity result = propertyAccessor.getBean();
 		assertThat(result.contentSet).isNotNull();
@@ -95,7 +95,7 @@ public class AggregateChangeUnitTests {
 
 		DbAction.Insert<?> insert = createInsert("contentList", content, 0);
 
-		AggregateChange.setId(context, converter, propertyAccessor, insert, id);
+		AggregateChange.setIdOfNonRootEntity(context, converter, propertyAccessor, insert, id);
 
 		DummyEntity result = propertyAccessor.getBean();
 		assertThat(result.contentList).extracting(c -> c.id).containsExactlyInAnyOrder(23);
@@ -108,7 +108,7 @@ public class AggregateChangeUnitTests {
 
 		DbAction.Insert<?> insert = createInsert("contentMap", content, "one");
 
-		AggregateChange.setId(context, converter, propertyAccessor, insert, id);
+		AggregateChange.setIdOfNonRootEntity(context, converter, propertyAccessor, insert, id);
 
 		DummyEntity result = propertyAccessor.getBean();
 		assertThat(result.contentMap.entrySet()).extracting(e -> e.getKey(), e -> e.getValue().id)

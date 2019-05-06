@@ -15,8 +15,10 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import lombok.Data;
 
 import java.lang.reflect.Field;
 
@@ -32,13 +34,12 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -48,8 +49,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ReflectionUtils;
-
-import lombok.Data;
 
 /**
  * Tests the {@link EnableJdbcRepositories} annotation.
@@ -66,7 +65,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	static final Field MAPPER_MAP = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class,
 			"queryMappingConfiguration");
 	static final Field OPERATIONS = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "operations");
-	static final Field DATA_ACCESS_STRATEGY = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "dataAccessStrategy");
+	static final Field DATA_ACCESS_STRATEGY = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class,
+			"dataAccessStrategy");
 	public static final RowMapper DUMMY_ENTITY_ROW_MAPPER = mock(RowMapper.class);
 	public static final RowMapper STRING_ROW_MAPPER = mock(RowMapper.class);
 	public static final ResultSetExtractor<Integer> INTEGER_RESULT_SET_EXTRACTOR = mock(ResultSetExtractor.class);
@@ -105,13 +105,15 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		assertThat(mapping.getRowMapper(DummyEntity.class)).isEqualTo(DUMMY_ENTITY_ROW_MAPPER);
 	}
 
- 	@Test // DATAJDBC-293
+	@Test // DATAJDBC-293
 	public void jdbcOperationsRef() {
 
-		NamedParameterJdbcOperations operations = (NamedParameterJdbcOperations) ReflectionUtils.getField(OPERATIONS, factoryBean);
+		NamedParameterJdbcOperations operations = (NamedParameterJdbcOperations) ReflectionUtils.getField(OPERATIONS,
+				factoryBean);
 		assertThat(operations).isNotSameAs(defaultOperations).isSameAs(qualifierJdbcOperations);
 
-		DataAccessStrategy dataAccessStrategy = (DataAccessStrategy) ReflectionUtils.getField(DATA_ACCESS_STRATEGY, factoryBean);
+		DataAccessStrategy dataAccessStrategy = (DataAccessStrategy) ReflectionUtils.getField(DATA_ACCESS_STRATEGY,
+				factoryBean);
 		assertThat(dataAccessStrategy).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierDataAccessStrategy);
 	}
 
@@ -149,7 +151,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		}
 
 		@Bean("qualifierDataAccessStrategy")
-		DataAccessStrategy defaultDataAccessStrategy(@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
+		DataAccessStrategy defaultDataAccessStrategy(
+				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 				RelationalMappingContext context, JdbcConverter converter) {
 			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter, template);
 		}

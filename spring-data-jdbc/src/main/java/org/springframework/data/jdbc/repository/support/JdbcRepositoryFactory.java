@@ -20,9 +20,9 @@ import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.RowMapperMap;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.repository.core.EntityInformation;
@@ -47,7 +47,7 @@ import org.springframework.util.Assert;
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 	private final RelationalMappingContext context;
-	private final RelationalConverter converter;
+	private final JdbcConverter converter;
 	private final ApplicationEventPublisher publisher;
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
@@ -57,15 +57,14 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
 	 * {@link RelationalMappingContext} and {@link ApplicationEventPublisher}.
-	 *
-	 * @param dataAccessStrategy must not be {@literal null}.
+	 *  @param dataAccessStrategy must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param publisher must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 */
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			RelationalConverter converter, ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
+								 JdbcConverter converter, ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
