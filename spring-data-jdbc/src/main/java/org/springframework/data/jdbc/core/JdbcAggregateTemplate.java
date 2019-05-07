@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;

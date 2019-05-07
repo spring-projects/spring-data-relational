@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.Value;
-
 import java.sql.Array;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
@@ -29,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.MappingException;
@@ -258,7 +255,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return new ReadingContext<T>(entity, accessStrategy, resultSet).mapRow();
 	}
 
-	@Value
 	private class ReadingContext<T> {
 
 		private final RelationalPersistentEntity<T> entity;
@@ -274,10 +270,12 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			this.idProperty = entity.getIdProperty();
 			this.accessStrategy = accessStrategy;
 			this.resultSet = resultSet;
-			this.path = new PersistentPropertyPathExtension((MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty>) getMappingContext(), entity);
+			this.path = new PersistentPropertyPathExtension(
+					(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty>) getMappingContext(), entity);
 		}
 
-		public ReadingContext(RelationalPersistentEntity<T> entity, DataAccessStrategy accessStrategy, ResultSet resultSet, PersistentPropertyPathExtension path) {
+		public ReadingContext(RelationalPersistentEntity<T> entity, DataAccessStrategy accessStrategy, ResultSet resultSet,
+				PersistentPropertyPathExtension path) {
 
 			this.entity = entity;
 			this.idProperty = entity.getIdProperty();
@@ -286,8 +284,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			this.path = path;
 		}
 
-		private ReadingContext extendBy(RelationalPersistentProperty property) {
-			return new ReadingContext(entity, accessStrategy, resultSet, path.extendBy(property));
+		private ReadingContext<?> extendBy(RelationalPersistentProperty property) {
+			return new ReadingContext<>(entity, accessStrategy, resultSet, path.extendBy(property));
 		}
 
 		T mapRow() {
@@ -359,6 +357,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		}
 
+		@SuppressWarnings("unchecked")
 		private Object readEmbeddedEntityFrom(@Nullable Object id, RelationalPersistentProperty property) {
 
 			ReadingContext newContext = extendBy(property);
@@ -367,7 +366,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 			Object instance = newContext.createInstanceInternal(entity, null);
 
-			@SuppressWarnings("unchecked")
 			PersistentPropertyAccessor<?> accessor = getPropertyAccessor((PersistentEntity<Object, ?>) entity, instance);
 
 			for (RelationalPersistentProperty p : entity) {
@@ -380,10 +378,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		@Nullable
 		private <S> S readEntityFrom(RelationalPersistentProperty property, PersistentPropertyPathExtension path) {
 
-			@SuppressWarnings("unchecked")
-			ReadingContext<S> newContext = extendBy(property);
+			ReadingContext<?> newContext = extendBy(property);
 
-			@SuppressWarnings("unchecked")
 			RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) getMappingContext()
 					.getRequiredPersistentEntity(property.getActualType());
 
@@ -425,7 +421,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		private <S> S createInstanceInternal(RelationalPersistentEntity<S> entity, @Nullable Object idValue) {
 
-			return createInstance(entity,parameter -> {
+			return createInstance(entity, parameter -> {
 
 				String parameterName = parameter.getName();
 

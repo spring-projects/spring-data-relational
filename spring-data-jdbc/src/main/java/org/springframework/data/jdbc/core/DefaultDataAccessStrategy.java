@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2017-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -22,25 +23,25 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * The default {@link DataAccessStrategy} is to generate SQL statements based on meta data from the entity.
- * 
+ *
  * @author Jens Schauder
- * @deprecated Use {@link org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy} instead.
+ * @deprecated since 1.1, use {@link org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy} instead.
  */
 @Deprecated
 public class DefaultDataAccessStrategy extends org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy {
 
 	/**
-		 * Creates a {@link org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy} which references it self for resolution of recursive data accesses.
-		 * Only suitable if this is the only access strategy in use.
-		 *
-		 * @param sqlGeneratorSource must not be {@literal null}.
-		 * @param context must not be {@literal null}.
-		 * @param converter must not be {@literal null}.
-		 * @param operations must not be {@literal null}.
-		 */
-		public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
-										 JdbcConverter converter, NamedParameterJdbcOperations operations) {
-			super(sqlGeneratorSource, context, converter, operations);
-		}
+	 * Creates a {@link org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy} which references it self for
+	 * resolution of recursive data accesses. Only suitable if this is the only access strategy in use.
+	 *
+	 * @param sqlGeneratorSource must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 */
+	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
+			JdbcConverter converter, NamedParameterJdbcOperations operations) {
+		super(sqlGeneratorSource, context, converter, operations);
+	}
 
 }

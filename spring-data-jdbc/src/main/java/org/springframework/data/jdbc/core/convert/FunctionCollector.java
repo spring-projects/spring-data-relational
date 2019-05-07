@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.core.convert;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -43,7 +43,7 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		this.method = method;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.util.stream.Collector#supplier()
 	 */
@@ -52,7 +52,7 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		return ResultOrException::new;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.util.stream.Collector#accumulator()
 	 */
@@ -72,7 +72,7 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		};
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.util.stream.Collector#combiner()
 	 */
@@ -84,7 +84,7 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		};
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.util.stream.Collector#finisher()
 	 */
@@ -101,7 +101,7 @@ class FunctionCollector<T> implements Collector<DataAccessStrategy, FunctionColl
 		};
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see java.util.stream.Collector#characteristics()
 	 */

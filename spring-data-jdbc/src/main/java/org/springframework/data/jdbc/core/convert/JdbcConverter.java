@@ -15,13 +15,12 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import org.springframework.data.jdbc.core.DataAccessStrategy;
+import java.sql.ResultSet;
+
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
-
-import java.sql.ResultSet;
 
 /**
  * A {@link JdbcConverter} is responsible for converting for values to the native relational representation and vice

@@ -17,8 +17,6 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.ResultSet;
 
-import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -31,6 +29,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Mark Paluch
  * @author Maciej Walkowiak
  * @author Bastian Wilhelm
+ * @since 1.1
  */
 public class EntityRowMapper<T> implements RowMapper<T> {
 
