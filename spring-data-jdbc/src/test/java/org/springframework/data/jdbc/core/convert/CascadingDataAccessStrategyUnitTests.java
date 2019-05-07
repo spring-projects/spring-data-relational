@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
@@ -24,7 +24,8 @@ import junit.framework.AssertionFailedError;
 import java.util.Collections;
 
 import org.junit.Test;
-import org.springframework.data.jdbc.core.FunctionCollector.CombinedDataAccessException;
+
+import org.springframework.data.jdbc.core.convert.FunctionCollector.CombinedDataAccessException;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**

@@ -114,10 +114,17 @@ class SqlGenerator {
 		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
 		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
 
-		Condition innerCondition = parentPath.getLength() == 1 // if the parent is the root of the path
-				? rootCondition.apply(selectFilterColumn) // apply the rootCondition
-				: getSubselectCondition(parentPath, rootCondition, selectFilterColumn); // otherwise we need another layer of
-																																								// subselect
+		Condition innerCondition;
+
+		if (parentPath.getLength() == 1) { // if the parent is the root of the path
+
+			// apply the rootCondition
+			innerCondition = rootCondition.apply(selectFilterColumn);
+		} else {
+
+			// otherwise we need another layer of subselect
+			innerCondition = getSubselectCondition(parentPath, rootCondition, selectFilterColumn);
+		}
 
 		Select select = Select.builder() //
 				.select(idColumn) //

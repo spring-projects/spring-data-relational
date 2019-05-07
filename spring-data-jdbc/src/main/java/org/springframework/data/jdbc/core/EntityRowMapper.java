@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2017-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package org.springframework.data.jdbc.core;
 
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 
 /**
  * @author Jens Schauder
- *
- * @deprecated Use {@link org.springframework.data.jdbc.core.convert.EntityRowMapper} instead.
+ * @deprecated since 1.1, use {@link org.springframework.data.jdbc.core.convert.EntityRowMapper} instead.
  */
 @Deprecated
 public class EntityRowMapper<T> extends org.springframework.data.jdbc.core.convert.EntityRowMapper<T> {
@@ -30,5 +30,4 @@ public class EntityRowMapper<T> extends org.springframework.data.jdbc.core.conve
 			DataAccessStrategy accessStrategy) {
 		super(entity, converter, accessStrategy);
 	}
-
 }

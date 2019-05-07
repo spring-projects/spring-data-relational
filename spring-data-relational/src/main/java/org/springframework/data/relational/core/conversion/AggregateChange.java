@@ -139,12 +139,12 @@ public class AggregateChange<T> {
 	private static <T> PersistentPropertyAccessor<T> setId(RelationalConverter converter,
 			DbAction.WithDependingOn<T> action, Object generatedId) {
 
-		Object originalElement = action.getEntity();
+		T originalElement = action.getEntity();
 
 		RelationalPersistentEntity<T> persistentEntity = (RelationalPersistentEntity<T>) converter.getMappingContext()
 				.getRequiredPersistentEntity(action.getEntityType());
 		PersistentPropertyAccessor<T> intermediateAccessor = converter.getPropertyAccessor(persistentEntity,
-				(T) originalElement);
+				originalElement);
 
 		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
 		if (idProperty != null) {
@@ -166,11 +166,11 @@ public class AggregateChange<T> {
 						? converter.getPropertyAccessor(persistentEntity, entity) //
 						: null;
 
-		actions.forEach(a -> {
+		actions.forEach(action -> {
 
-			a.executeWith(interpreter);
+			action.executeWith(interpreter);
 
-			processGeneratedId(context, converter, persistentEntity, propertyAccessor, a);
+			processGeneratedId(context, converter, persistentEntity, propertyAccessor, action);
 		});
 
 		if (propertyAccessor != null) {
@@ -183,25 +183,28 @@ public class AggregateChange<T> {
 	}
 
 	private void processGeneratedId(RelationalMappingContext context, RelationalConverter converter,
-			RelationalPersistentEntity<T> persistentEntity, PersistentPropertyAccessor<T> propertyAccessor, DbAction<?> a) {
+			@Nullable RelationalPersistentEntity<T> persistentEntity,
+			@Nullable PersistentPropertyAccessor<T> propertyAccessor, DbAction<?> action) {
 
-		if (a instanceof DbAction.WithGeneratedId) {
+		if (!(action instanceof DbAction.WithGeneratedId)) {
+			return;
+		}
 
-			Assert.notNull(persistentEntity,
-					"For statements triggering database side id generation a RelationalPersistentEntity must be provided.");
-			Assert.notNull(propertyAccessor, "propertyAccessor must not be null");
+		Assert.notNull(persistentEntity,
+				"For statements triggering database side id generation a RelationalPersistentEntity must be provided.");
+		Assert.notNull(propertyAccessor, "propertyAccessor must not be null");
 
-			Object generatedId = ((DbAction.WithGeneratedId<?>) a).getGeneratedId();
+		Object generatedId = ((DbAction.WithGeneratedId<?>) action).getGeneratedId();
 
-			if (generatedId != null) {
+		if (generatedId == null) {
+			return;
+		}
 
-				if (a instanceof DbAction.InsertRoot && a.getEntityType().equals(entityType)) {
-					propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
-				} else if (a instanceof DbAction.WithDependingOn) {
+		if (action instanceof DbAction.InsertRoot && action.getEntityType().equals(entityType)) {
+			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
+		} else if (action instanceof DbAction.WithDependingOn) {
 
-					setIdOfNonRootEntity(context, converter, propertyAccessor, (DbAction.WithDependingOn<?>) a, generatedId);
-				}
-			}
+			setIdOfNonRootEntity(context, converter, propertyAccessor, (DbAction.WithDependingOn<?>) action, generatedId);
 		}
 	}
 

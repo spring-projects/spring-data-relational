@@ -22,10 +22,11 @@ import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.data.jdbc.core.CascadingDataAccessStrategy;
-import org.springframework.data.jdbc.core.DataAccessStrategy;
-import org.springframework.data.jdbc.core.DelegatingDataAccessStrategy;
+
+import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -101,8 +102,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * <p>
 	 * Use a {@link SqlSessionTemplate} for {@link SqlSession} or a similar implementation tying the session to the proper
 	 * transaction. Note that the resulting {@link DataAccessStrategy} only handles MyBatis. It does not include the
-	 * functionality of the {@link DefaultDataAccessStrategy} which one normally still
-	 * wants. Use
+	 * functionality of the {@link DefaultDataAccessStrategy} which one normally still wants. Use
 	 * {@link #createCombinedAccessStrategy(RelationalMappingContext, JdbcConverter, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy)}
 	 * to create such a {@link DataAccessStrategy}.
 	 *

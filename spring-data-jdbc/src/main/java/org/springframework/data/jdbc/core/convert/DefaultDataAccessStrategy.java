@@ -29,7 +29,6 @@ import java.util.function.Predicate;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -55,6 +54,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Thomas Lang
  * @author Bastian Wilhelm
+ * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
 

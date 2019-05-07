@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core;
+package org.springframework.data.jdbc.mybatis;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
@@ -26,9 +26,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+
+import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.mybatis.MyBatisContext;
-import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -37,6 +37,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * Unit tests for the {@link MyBatisDataAccessStrategy}, mainly ensuring that the correct statements get's looked up.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class MyBatisDataAccessStrategyUnitTests {
 
@@ -127,7 +128,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 		accessStrategy.deleteAll(path);
 
 		verify(session).delete(
-				eq("org.springframework.data.jdbc.core.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.deleteAll-one-two"),
+				eq("org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.deleteAll-one-two"),
 				captor.capture());
 
 		assertThat(captor.getValue()) //
@@ -173,7 +174,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 		accessStrategy.delete("rootid", path);
 
 		verify(session).delete(
-				eq("org.springframework.data.jdbc.core.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.delete-one-two"),
+				eq("org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.delete-one-two"),
 				captor.capture());
 
 		assertThat(captor.getValue()) //

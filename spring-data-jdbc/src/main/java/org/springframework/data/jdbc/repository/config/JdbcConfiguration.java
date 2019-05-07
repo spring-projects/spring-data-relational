@@ -21,10 +21,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.jdbc.core.DataAccessStrategy;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
@@ -94,7 +94,7 @@ public class JdbcConfiguration {
 	/**
 	 * Register a {@link JdbcAggregateTemplate} as a bean for easy use in applications that need a lower level of
 	 * abstraction than the normal repository abstraction.
-	 * 
+	 *
 	 * @param publisher
 	 * @param context
 	 * @param converter
