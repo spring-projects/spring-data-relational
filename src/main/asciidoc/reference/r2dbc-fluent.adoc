@@ -192,10 +192,10 @@ Mono<Void> update = databaseClient.update()
 <4> Use `then()` to just update rows an object without consuming further details. Modifying statements allow also consumption of the number of affected rows.
 ====
 
-[r2dbc.datbaseclient.fluent-api.delete.methods]]
-==== Methods for DELETE operations
+[r2dbc.datbaseclient.fluent-api.update.methods]]
+==== Methods for UPDATE operations
 
-The `delete()` entry point exposes some additional methods that provide options for the operation:
+The `update()` entry point exposes some additional methods that provide options for the operation:
 
 * *table* `(Class<T>)` used to specify the target table using a mapped object. Returns results by default as `T`.
 * *table* `(String)` used to specify the target table name. Returns results by default as `Map<String, Object>`.

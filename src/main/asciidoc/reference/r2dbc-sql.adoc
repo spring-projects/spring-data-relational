@@ -2,7 +2,7 @@
 = Executing Statements
 
 Running a statement is the basic functionality that is covered by `DatabaseClient`.
-The following example shows what you need to include for a minimal but fully functional class that creates a new table:
+The following example shows what you need to include for minimal but fully functional code that creates a new table:
 
 [source,java]
 ----
@@ -32,7 +32,7 @@ Mono<Integer> affectedRows = client.execute()
         .fetch().rowsUpdated();
 ----
 
-Running a `SELECT` query returns a different type of result, in particular tabular results. Tabular data is typically consumes by streaming each `Row`.
+Running a `SELECT` query returns a different type of result, in particular tabular results. Tabular data is typically consumed by streaming each `Row`.
 You might have noticed the use of `fetch()` in the previous example.
 `fetch()` is a continuation operator that allows you to specify how much data you want to consume.
 

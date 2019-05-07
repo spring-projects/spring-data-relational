@@ -166,6 +166,7 @@ public class QueryMapper {
 			typeHint = getTypeHint(mappedValue, actualType.getType(), settableValue);
 
 		} else {
+
 			mappedValue = convertValue(criteria.getValue(), propertyField.getTypeHint());
 			typeHint = actualType.getType();
 		}
@@ -227,6 +228,7 @@ public class QueryMapper {
 				condition = column.in(expressions.toArray(new Expression[0]));
 
 			} else {
+
 				BindMarker bindMarker = bindings.nextMarker(column.getName());
 				Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 

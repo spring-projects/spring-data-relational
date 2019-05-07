@@ -229,7 +229,7 @@ This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instanc
 
 Spring Data R2DBC supports drivers by R2DBC's pluggable SPI mechanism. Any driver implementing the R2DBC spec can be used with Spring Data R2DBC.
 R2DBC is a relatively young initiative that gains significance by maturing through adoption.
-As of writing the following 3 drivers are available:
+As of writing the following drivers are available:
 
 * https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
 * https://github.com/r2dbc/r2dbc-h2[H2] (`io.r2dbc:r2dbc-h2`)

@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
+import org.springframework.data.r2dbc.dialect.Bindings;
 import org.springframework.data.r2dbc.dialect.MutableBindings;
 import org.springframework.data.r2dbc.domain.SettableValue;
 import org.springframework.data.r2dbc.function.convert.R2dbcConverter;

@@ -46,6 +46,7 @@ public class Criteria {
 
 	private Criteria(@Nullable Criteria previous, Combinator combinator, String column, Comparator comparator,
 			@Nullable Object value) {
+
 		this.previous = previous;
 		this.combinator = combinator;
 		this.column = column;
@@ -56,7 +57,7 @@ public class Criteria {
 	/**
 	 * Static factory method to create a Criteria using the provided {@code column} name.
 	 *
-	 * @param column
+	 * @param column Must not be {@literal null} or empty.
 	 * @return a new {@link CriteriaStep} object to complete the first {@link Criteria}.
 	 */
 	public static CriteriaStep where(String column) {
@@ -69,7 +70,7 @@ public class Criteria {
 	/**
 	 * Create a new {@link Criteria} and combine it with {@code AND} using the provided {@code column} name.
 	 *
-	 * @param column
+	 * @param column Must not be {@literal null} or empty.
 	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
 	 */
 	public CriteriaStep and(String column) {
@@ -87,7 +88,7 @@ public class Criteria {
 	/**
 	 * Create a new {@link Criteria} and combine it with {@code OR} using the provided {@code column} name.
 	 *
-	 * @param column
+	 * @param column Must not be {@literal null} or empty.
 	 * @return a new {@link CriteriaStep} object to complete the next {@link Criteria}.
 	 */
 	public CriteriaStep or(String column) {
@@ -179,7 +180,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code IN}.
 		 *
-		 * @param value
+		 * @param values
 		 * @return
 		 */
 		Criteria in(Object... values);
@@ -187,7 +188,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code IN}.
 		 *
-		 * @param value
+		 * @param values
 		 * @return
 		 */
 		Criteria in(Collection<? extends Object> values);
@@ -195,7 +196,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code NOT IN}.
 		 *
-		 * @param value
+		 * @param values
 		 * @return
 		 */
 		Criteria notIn(Object... values);
@@ -203,7 +204,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code NOT IN}.
 		 *
-		 * @param value
+		 * @param values
 		 * @return
 		 */
 		Criteria notIn(Collection<? extends Object> values);
@@ -251,7 +252,6 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code IS NULL}.
 		 *
-		 * @param value
 		 * @return
 		 */
 		Criteria isNull();
@@ -259,7 +259,6 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code IS NOT NULL}.
 		 *
-		 * @param value
 		 * @return
 		 */
 		Criteria isNotNull();
@@ -314,9 +313,9 @@ public class Criteria {
 			return createCriteria(Comparator.IN, Arrays.asList(values));
 		}
 
-		/**
-		 * @param values
-		 * @return
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#in(java.util.Collection)
 		 */
 		@Override
 		public Criteria in(Collection<?> values) {
@@ -343,9 +342,9 @@ public class Criteria {
 			return createCriteria(Comparator.NOT_IN, Arrays.asList(values));
 		}
 
-		/**
-		 * @param values
-		 * @return
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#notIn(java.util.Collection)
 		 */
 		@Override
 		public Criteria notIn(Collection<?> values) {
