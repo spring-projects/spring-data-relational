@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,18 +15,21 @@
  */
 package org.springframework.data.r2dbc.function.connectionfactory;
 
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.Wrapped;
-import reactor.core.publisher.Mono;
+import static org.springframework.util.ReflectionUtils.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Wrapped;
 import org.springframework.data.r2dbc.function.DatabaseClient;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ReflectionUtils;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 /**
  * Proxy for a target R2DBC {@link ConnectionFactory}, adding awareness of Spring-managed transactions.
@@ -54,6 +57,7 @@ import org.springframework.lang.Nullable;
  * the native R2DBC Connection.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  * @see ConnectionFactory#create
  * @see Connection#close
  * @see ConnectionFactoryUtils#doGetConnection
@@ -65,6 +69,7 @@ public class TransactionAwareConnectionFactoryProxy extends DelegatingConnection
 	 * Create a new {@link TransactionAwareConnectionFactoryProxy}.
 	 *
 	 * @param targetConnectionFactory the target {@link ConnectionFactory}.
+	 * @throws IllegalArgumentException if given {@link ConnectionFactory} is {@literal null}.
 	 */
 	public TransactionAwareConnectionFactoryProxy(ConnectionFactory targetConnectionFactory) {
 		super(targetConnectionFactory);
@@ -95,19 +100,21 @@ public class TransactionAwareConnectionFactoryProxy extends DelegatingConnection
 	 * @see ConnectionFactoryUtils#doReleaseConnection
 	 */
 	protected Mono<Connection> getTransactionAwareConnectionProxy(ConnectionFactory targetConnectionFactory) {
+		return ConnectionFactoryUtils.getConnection(targetConnectionFactory).map(TransactionAwareConnectionFactoryProxy::proxyConnection);
+	}
 
-		return ConnectionFactoryUtils.getConnection(targetConnectionFactory).map(tuple -> {
-			return (Connection) Proxy.newProxyInstance(ConnectionProxy.class.getClassLoader(),
-					new Class<?>[] { ConnectionProxy.class },
-					new TransactionAwareInvocationHandler(tuple.getT1(), targetConnectionFactory));
-		});
+	private static Connection proxyConnection(Tuple2<Connection, ConnectionFactory> connectionConnectionFactoryTuple) {
+
+		return (Connection) Proxy.newProxyInstance(ConnectionProxy.class.getClassLoader(),
+				new Class<?>[]{ConnectionProxy.class},
+				new TransactionAwareInvocationHandler(connectionConnectionFactoryTuple.getT1(), connectionConnectionFactoryTuple.getT2()));
 	}
 
 	/**
 	 * Invocation handler that delegates close calls on R2DBC Connections to {@link ConnectionFactoryUtils} for being
 	 * aware of context-bound transactions.
 	 */
-	private class TransactionAwareInvocationHandler implements InvocationHandler {
+	private static class TransactionAwareInvocationHandler implements InvocationHandler {
 
 		private final Connection connection;
 
@@ -116,11 +123,12 @@ public class TransactionAwareConnectionFactoryProxy extends DelegatingConnection
 		private boolean closed = false;
 
 		TransactionAwareInvocationHandler(Connection connection, ConnectionFactory targetConnectionFactory) {
+
 			this.connection = connection;
 			this.targetConnectionFactory = targetConnectionFactory;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see java.lang.reflect.InvocationHandler#invoke(java.lang.Object, java.lang.reflect.Method, java.lang.Object[])
 		 */
@@ -128,23 +136,24 @@ public class TransactionAwareConnectionFactoryProxy extends DelegatingConnection
 		@Nullable
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
+			if (ReflectionUtils.isObjectMethod(method)) {
+
+				if (ReflectionUtils.isToStringMethod(method)) {
+					return proxyToString(proxy);
+				}
+
+				if (ReflectionUtils.isEqualsMethod(method)) {
+					return (proxy == args[0]);
+				}
+
+				if (ReflectionUtils.isHashCodeMethod(method)) {
+					return System.identityHashCode(proxy);
+				}
+			}
+
 			// Invocation on ConnectionProxy interface coming in...
 			switch (method.getName()) {
-				case "equals":
-					// Only considered as equal when proxies are identical.
-					return (proxy == args[0]);
-				case "hashCode":
-					// Use hashCode of Connection proxy.
-					return System.identityHashCode(proxy);
-				case "toString":
-					// Allow for differentiating between the proxy and the raw Connection.
-					StringBuilder sb = new StringBuilder("Transaction-aware proxy for target Connection ");
-					if (this.connection != null) {
-						sb.append("[").append(this.connection.toString()).append("]");
-					} else {
-						sb.append(" from ConnectionFactory [").append(this.targetConnectionFactory).append("]");
-					}
-					return sb.toString();
+
 				case "unwrap":
 					return this.connection;
 				case "close":
@@ -170,6 +179,18 @@ public class TransactionAwareConnectionFactoryProxy extends DelegatingConnection
 			} catch (InvocationTargetException ex) {
 				throw ex.getTargetException();
 			}
+		}
+
+		private String proxyToString(@Nullable Object proxy) {
+
+			// Allow for differentiating between the proxy and the raw Connection.
+			StringBuilder sb = new StringBuilder("Transaction-aware proxy for target Connection ");
+			if (this.connection != null) {
+				sb.append("[").append(this.connection.toString()).append("]");
+			} else {
+				sb.append(" from ConnectionFactory [").append(this.targetConnectionFactory).append("]");
+			}
+			return sb.toString();
 		}
 	}
 }

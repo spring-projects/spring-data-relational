@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@ package org.springframework.data.r2dbc.function.connectionfactory;
 
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
-
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.support.ResourceHolderSupport;
 import org.springframework.util.Assert;
@@ -30,6 +29,8 @@ import org.springframework.util.Assert;
  * <p>
  * Note: This is an SPI class, not intended to be used by applications.
  *
+ * @author Mark Paluch
+ * @author Christoph Strobl
  * @see ConnectionFactoryTransactionManager
  * @see ConnectionFactoryUtils
  */
@@ -39,7 +40,7 @@ public class ConnectionHolder extends ResourceHolderSupport {
 
 	@Nullable private Connection currentConnection;
 
-	private boolean transactionActive = false;
+	private boolean transactionActive;
 
 	/**
 	 * Create a new ConnectionHolder for the given R2DBC {@link Connection}, wrapping it with a
@@ -50,7 +51,7 @@ public class ConnectionHolder extends ResourceHolderSupport {
 	 * @see #ConnectionHolder(Connection, boolean)
 	 */
 	public ConnectionHolder(Connection connection) {
-		this.connectionHandle = new SimpleConnectionHandle(connection);
+		this(connection, false);
 	}
 
 	/**
@@ -62,7 +63,8 @@ public class ConnectionHolder extends ResourceHolderSupport {
 	 * @see SimpleConnectionHandle
 	 */
 	public ConnectionHolder(Connection connection, boolean transactionActive) {
-		this(connection);
+
+		this.connectionHandle = new SimpleConnectionHandle(connection);
 		this.transactionActive = transactionActive;
 	}
 
@@ -127,6 +129,7 @@ public class ConnectionHolder extends ResourceHolderSupport {
 	 * @see #released()
 	 */
 	public Connection getConnection() {
+
 		Assert.notNull(this.connectionHandle, "Active Connection is required");
 		if (this.currentConnection == null) {
 			this.currentConnection = this.connectionHandle.getConnection();
@@ -152,7 +155,7 @@ public class ConnectionHolder extends ResourceHolderSupport {
 		}
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.transaction.support.ResourceHolderSupport#clear()
 	 */

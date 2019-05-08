@@ -17,17 +17,20 @@ package org.springframework.data.r2dbc.function.connectionfactory;
 
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
-import reactor.test.StepVerifier;
-
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
-
+import org.reactivestreams.Publisher;
 import org.springframework.transaction.NoTransactionException;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 /**
  * Unit tests for {@link ConnectionFactoryUtils}.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
 public class ConnectionFactoryUtilsUnitTests {
 
@@ -89,6 +92,23 @@ public class ConnectionFactoryUtilsUnitTests {
 					return it.put(ReactiveTransactionSynchronization.class, sync);
 				}).as(StepVerifier::create) //
 				.expectNext(factoryMock) //
+				.verifyComplete();
+	}
+
+	@Test // gh-107
+	public void connectionFactoryRetunsConnectionWhenNoSyncronisationActive() {
+
+		ConnectionFactory factoryMock = mock(ConnectionFactory.class);
+		Connection connection = mock(Connection.class);
+		Publisher<? extends Connection> p = Mono.just(connection);
+		doReturn(p).when(factoryMock).create();
+
+		ConnectionFactoryUtils.getConnection(factoryMock) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(it -> {
+					Assertions.assertThat(it.getT1()).isEqualTo(connection);
+					Assertions.assertThat(it.getT2()).isEqualTo(factoryMock);
+				})
 				.verifyComplete();
 	}
 }

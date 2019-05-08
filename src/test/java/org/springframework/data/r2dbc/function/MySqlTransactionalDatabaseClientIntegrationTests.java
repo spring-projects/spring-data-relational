@@ -15,16 +15,16 @@
  */
 package org.springframework.data.r2dbc.function;
 
-import io.r2dbc.spi.ConnectionFactory;
-
 import javax.sql.DataSource;
+import java.time.Duration;
 
+import io.r2dbc.spi.ConnectionFactory;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
+import reactor.core.publisher.Mono;
 
 /**
  * Integration tests for {@link TransactionalDatabaseClient} against MySQL.
@@ -52,6 +52,25 @@ public class MySqlTransactionalDatabaseClientIntegrationTests
 	}
 
 	@Override
+	protected Mono<Void> prepareForTransaction(DatabaseClient client) {
+
+		/*
+		 * We have to execute a sql statement first.
+		 * Otherwise MySql don't have a transaction id.
+		 * And we need to delay emitting the result so that MySql has time to write the transaction id, which is done in
+		 * batches every now and then.
+		 * @see: https://dev.mysql.com/doc/refman/5.7/en/innodb-information-schema-internal-data.html
+		 */
+		return client.execute().sql(getInsertIntoLegosetStatement()) //
+				.bind(0, 42055) //
+				.bind(1, "SCHAUFELRADBAGGER") //
+				.bindNull(2, Integer.class) //
+				.fetch().rowsUpdated() //
+				.delayElement(Duration.ofMillis(50)) //
+				.then();
+	}
+
+	@Override
 	protected String getCurrentTransactionIdStatement() {
 		return "SELECT tx.trx_id FROM information_schema.innodb_trx tx WHERE tx.trx_mysql_thread_id = connection_id()";
 	}
@@ -59,12 +78,6 @@ public class MySqlTransactionalDatabaseClientIntegrationTests
 	@Override
 	@Test
 	@Ignore("MySQL creates transactions only on interaction with transactional tables. BEGIN does not create a txid")
-	public void shouldManageUserTransaction() {}
-
-	@Override
-	@Test
-	@Ignore("Third element is cancelled, looks like a bug")
-	public void emitTransactionIds() {
-		super.emitTransactionIds();
+	public void shouldManageUserTransaction() {
 	}
 }

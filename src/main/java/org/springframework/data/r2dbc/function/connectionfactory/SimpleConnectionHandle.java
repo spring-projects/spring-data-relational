@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,8 +23,9 @@ import org.springframework.util.Assert;
  * Simple implementation of the {@link ConnectionHandle} interface, containing a given R2DBC Connection.
  *
  * @author Mark Paluch
+ * @author Christoph Strobl
  */
-public class SimpleConnectionHandle implements ConnectionHandle {
+class SimpleConnectionHandle implements ConnectionHandle {
 
 	private final Connection connection;
 
@@ -33,7 +34,8 @@ public class SimpleConnectionHandle implements ConnectionHandle {
 	 *
 	 * @param connection the R2DBC Connection
 	 */
-	public SimpleConnectionHandle(Connection connection) {
+	SimpleConnectionHandle(Connection connection) {
+
 		Assert.notNull(connection, "Connection must not be null");
 		this.connection = connection;
 	}

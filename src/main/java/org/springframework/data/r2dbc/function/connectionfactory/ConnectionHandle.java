@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,8 +38,8 @@ public interface ConnectionHandle {
 	 * <p>
 	 * The default implementation is empty, assuming that the lifecycle of the connection is managed externally.
 	 *
-	 * @param con the R2DBC Connection to release
+	 * @param connection the R2DBC Connection to release
 	 */
-	default void releaseConnection(Connection con) {}
-
+	default void releaseConnection(Connection connection) {
+	}
 }

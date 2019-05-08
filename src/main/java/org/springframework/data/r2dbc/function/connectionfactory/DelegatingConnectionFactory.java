@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,6 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
 import io.r2dbc.spi.Wrapped;
-
 import org.reactivestreams.Publisher;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -43,20 +42,13 @@ public class DelegatingConnectionFactory implements ConnectionFactory, Wrapped<C
 		this.targetConnectionFactory = targetConnectionFactory;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see io.r2dbc.spi.ConnectionFactory#create()
 	 */
 	@Override
 	public Publisher<? extends Connection> create() {
 		return targetConnectionFactory.create();
-	}
-
-	/**
-	 * Obtain the target {@link ConnectionFactory} for actual use (never {@code null}).
-	 */
-	protected ConnectionFactory obtainTargetConnectionFactory() {
-		return getTargetConnectionFactory();
 	}
 
 	/**
@@ -67,7 +59,7 @@ public class DelegatingConnectionFactory implements ConnectionFactory, Wrapped<C
 		return this.targetConnectionFactory;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see io.r2dbc.spi.ConnectionFactory#getMetadata()
 	 */
@@ -76,12 +68,19 @@ public class DelegatingConnectionFactory implements ConnectionFactory, Wrapped<C
 		return obtainTargetConnectionFactory().getMetadata();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see io.r2dbc.spi.Wrapped#unwrap()
 	 */
 	@Override
 	public ConnectionFactory unwrap() {
 		return obtainTargetConnectionFactory();
+	}
+
+	/**
+	 * Obtain the target {@link ConnectionFactory} for actual use (never {@code null}).
+	 */
+	protected ConnectionFactory obtainTargetConnectionFactory() {
+		return getTargetConnectionFactory();
 	}
 }
