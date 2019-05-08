@@ -51,7 +51,10 @@ import org.springframework.util.ClassUtils;
  */
 public class R2dbcQueryMethod extends QueryMethod {
 
+	@SuppressWarnings("rawtypes") //
 	private static final ClassTypeInformation<Page> PAGE_TYPE = ClassTypeInformation.from(Page.class);
+
+	@SuppressWarnings("rawtypes") //
 	private static final ClassTypeInformation<Slice> SLICE_TYPE = ClassTypeInformation.from(Slice.class);
 
 	private final Method method;

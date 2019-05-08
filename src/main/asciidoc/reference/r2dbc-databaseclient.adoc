@@ -24,10 +24,10 @@ DatabaseClient.create(ConnectionFactory connectionFactory)
 
 The above method creates a `DatabaseClient` with default settings.
 
-You can also use `DatabaseClient.builder()` with further options to customize the client:
+You can also obtain a `Builder` instance via `DatabaseClient.builder()` with further options to customize the client by calling the following methods:
 
-* `exceptionTranslator`: Supply a specific `R2dbcExceptionTranslator` to customize how R2DBC exceptions are translated into Spring's portable Data Access Exception hierarchy.  See "`<<r2dbc.exception>>`" for more information.
-* `dataAccessStrategy`: Strategy how SQL queries are generated and how objects are mapped.
+* `….exceptionTranslator(…)`: Supply a specific `R2dbcExceptionTranslator` to customize how R2DBC exceptions are translated into Spring's portable Data Access Exception hierarchy.  See "`<<r2dbc.exception>>`" for more information.
+* `….dataAccessStrategy(…)`: Strategy how SQL queries are generated and how objects are mapped.
 
 Once built, a `DatabaseClient` instance is immutable. However, you can clone it and build a modified copy without affecting the original instance, as the following example shows:
 
@@ -50,6 +50,19 @@ When you use Spring Data R2DBC, you can create a `ConnectionFactory` using your 
 `ConnectionFactory` implementations can either return the same connection, different connections or provide connection pooling.
 `DatabaseClient` uses `ConnectionFactory` to create and release connections per operation without affinity to a particular connection across multiple operations.
 
+Assuming you'd be using H2 as a database, a typical programmatic setup looks something like this:
+
+[source, java]
+----
+H2ConnectionConfiguration config = … <1>
+ConnectionFactory factory = new H2ConnectionFactory(config); <2>
+
+DatabaseClient client = DatabaseClient.create(factory); <3>
+----
+<1> Prepare the database specific configuration (host, port, credentials etc.)
+<2> Create a connection factory using that configuration.
+<3> Create a `DatabaseClient` to use that connection factory.
+
 [[r2dbc.exception]]
 = Exception Translation
 
@@ -66,7 +79,7 @@ It considers R2DBC's categorized exception hierarchy to translate these into Spr
 `SqlErrorCodeR2dbcExceptionTranslator` uses specific vendor codes using Spring JDBC's `SQLErrorCodes`.
 It is more precise than the SQLState implementation.
 The error code translations are based on codes held in a JavaBean type class called `SQLErrorCodes`.
-This class is created and populated by an `SQLErrorCodesFactory`, which (as the name suggests) is a factory for creating SQLErrorCodes based on the contents of a configuration file named `sql-error-codes.xml` from Spring's Data Access module.
+Instances of this class are created and populated by an `SQLErrorCodesFactory`, which (as the name suggests) is a factory for creating SQLErrorCodes based on the contents of a configuration file named `sql-error-codes.xml` from Spring's Data Access module.
 This file is populated with vendor codes and based on the `ConnectionFactoryName` taken from `ConnectionFactoryMetadata`.
 The codes for the actual database you are using are used.
 

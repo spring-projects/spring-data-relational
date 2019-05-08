@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
-
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.domain.BindTarget;
 import org.springframework.data.r2dbc.domain.SettableValue;
@@ -89,7 +88,6 @@ public class UpdateMapperUnitTests {
 		verifyZeroInteractions(bindTarget);
 	}
 
-	@SuppressWarnings("unchecked")
 	private BoundAssignments map(Update update) {
 
 		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);

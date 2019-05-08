@@ -30,6 +30,7 @@ import org.springframework.util.Assert;
  * {@code where(property(…).is(…)}.
  *
  * @author Mark Paluch
+ * @author Oliver Drotbohm
  */
 public class Criteria {
 
@@ -164,7 +165,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using equality.
 		 *
-		 * @param value
+		 * @param value must not be {@literal null}.
 		 * @return
 		 */
 		Criteria is(Object value);
@@ -172,7 +173,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using equality (is not).
 		 *
-		 * @param value
+		 * @param value must not be {@literal null}.
 		 * @return
 		 */
 		Criteria not(Object value);
@@ -180,7 +181,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code IN}.
 		 *
-		 * @param values
+		 * @param values must not be {@literal null}.
 		 * @return
 		 */
 		Criteria in(Object... values);
@@ -188,7 +189,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code IN}.
 		 *
-		 * @param values
+		 * @param values must not be {@literal null}.
 		 * @return
 		 */
 		Criteria in(Collection<? extends Object> values);
@@ -196,7 +197,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code NOT IN}.
 		 *
-		 * @param values
+		 * @param values must not be {@literal null}.
 		 * @return
 		 */
 		Criteria notIn(Object... values);
@@ -204,7 +205,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code NOT IN}.
 		 *
-		 * @param values
+		 * @param values must not be {@literal null}.
 		 * @return
 		 */
 		Criteria notIn(Collection<? extends Object> values);
@@ -212,7 +213,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using less-than ({@literal <}).
 		 *
-		 * @param value
+		 * @param value must not be {@literal null}.
 		 * @return
 		 */
 		Criteria lessThan(Object value);
@@ -220,7 +221,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using less-than or equal to ({@literal <=}).
 		 *
-		 * @param value
+		 * @param value must not be {@literal null}.
 		 * @return
 		 */
 		Criteria lessThanOrEquals(Object value);
@@ -228,7 +229,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using greater-than({@literal >}).
 		 *
-		 * @param value
+		 * @param value must not be {@literal null}.
 		 * @return
 		 */
 		Criteria greaterThan(Object value);
@@ -236,7 +237,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using greater-than or equal to ({@literal >=}).
 		 *
-		 * @param value
+		 * @param value must not be {@literal null}.
 		 * @return
 		 */
 		Criteria greaterThanOrEquals(Object value);
@@ -244,7 +245,7 @@ public class Criteria {
 		/**
 		 * Creates a {@link Criteria} using {@code LIKE}.
 		 *
-		 * @param value
+		 * @param value must not be {@literal null}.
 		 * @return
 		 */
 		Criteria like(Object value);
@@ -304,6 +305,7 @@ public class Criteria {
 		public Criteria in(Object... values) {
 
 			Assert.notNull(values, "Values must not be null!");
+			Assert.noNullElements(values, "Values must not contain a null value!");
 
 			if (values.length > 1 && values[1] instanceof Collection) {
 				throw new InvalidDataAccessApiUsageException(
@@ -321,6 +323,7 @@ public class Criteria {
 		public Criteria in(Collection<?> values) {
 
 			Assert.notNull(values, "Values must not be null!");
+			Assert.noNullElements(values.toArray(), "Values must not contain a null value!");
 
 			return createCriteria(Comparator.IN, values);
 		}
@@ -333,6 +336,7 @@ public class Criteria {
 		public Criteria notIn(Object... values) {
 
 			Assert.notNull(values, "Values must not be null!");
+			Assert.noNullElements(values, "Values must not contain a null value!");
 
 			if (values.length > 1 && values[1] instanceof Collection) {
 				throw new InvalidDataAccessApiUsageException(
@@ -350,6 +354,7 @@ public class Criteria {
 		public Criteria notIn(Collection<?> values) {
 
 			Assert.notNull(values, "Values must not be null!");
+			Assert.noNullElements(values.toArray(), "Values must not contain a null value!");
 
 			return createCriteria(Comparator.NOT_IN, values);
 		}

@@ -31,6 +31,8 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  */
 public class BadSqlGrammarException extends InvalidDataAccessResourceUsageException {
 
+	private static final long serialVersionUID = 3814579246913482054L;
+
 	private final String sql;
 
 	/**

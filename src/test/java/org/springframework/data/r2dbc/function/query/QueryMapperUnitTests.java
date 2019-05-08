@@ -20,7 +20,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
 import org.junit.Test;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.domain.BindTarget;
@@ -227,7 +226,6 @@ public class QueryMapperUnitTests {
 		assertThat(mapped.getOrderFor("alternative")).isNull();
 	}
 
-	@SuppressWarnings("unchecked")
 	private BoundCondition map(Criteria criteria) {
 
 		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);

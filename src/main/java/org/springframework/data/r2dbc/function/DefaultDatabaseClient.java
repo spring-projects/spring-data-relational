@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Pageable;
@@ -232,7 +231,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	protected DataAccessException translateException(String task, @Nullable String sql, R2dbcException ex) {
 
 		DataAccessException dae = this.exceptionTranslator.translate(task, sql, ex);
-		return (dae != null ? dae : new UncategorizedR2dbcException(task, sql, ex));
+		return dae != null ? dae : new UncategorizedR2dbcException(task, sql, ex);
 	}
 
 	/**
@@ -265,25 +264,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 */
 	protected DefaultGenericExecuteSpec createGenericExecuteSpec(Supplier<String> sqlSupplier) {
 		return new DefaultGenericExecuteSpec(sqlSupplier);
-	}
-
-	private static void doBind(Statement statement, Map<String, SettableValue> byName,
-			Map<Integer, SettableValue> byIndex) {
-
-		bindByIndex(statement, byIndex);
-		bindByName(statement, byName);
-	}
-
-	private static void bindByName(Statement statement, Map<String, SettableValue> byName) {
-
-		byName.forEach((name, o) -> {
-
-			if (o.getValue() != null) {
-				statement.bind(name, o.getValue());
-			} else {
-				statement.bindNull(name, o.getType());
-			}
-		});
 	}
 
 	private static void bindByIndex(Statement statement, Map<Integer, SettableValue> byIndex) {
@@ -591,7 +571,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public DefaultTypedExecuteSpec<T> bind(String name, Object value) {
-			return (DefaultTypedExecuteSpec) super.bind(name, value);
+			return (DefaultTypedExecuteSpec<T>) super.bind(name, value);
 		}
 
 		@Override
@@ -790,13 +770,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		DefaultTypedSelectSpec(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page,
-				BiFunction<Row, RowMetadata, T> mappingFunction) {
-			this(table, projectedFields, criteria, sort, page, null, mappingFunction);
-		}
-
-		DefaultTypedSelectSpec(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page,
 				Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
+
 			super(table, projectedFields, criteria, sort, page);
+
 			this.typeToRead = typeToRead;
 			this.mappingFunction = mappingFunction;
 		}
@@ -900,13 +877,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
 		@Override
-		public GenericInsertSpec value(String field, Object value) {
+		public GenericInsertSpec<T> value(String field, Object value) {
 
 			Assert.notNull(field, "Field must not be null!");
 			Assert.notNull(value,
 					() -> String.format("Value for field %s must not be null. Use nullValue(…) instead.", field));
 
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
+
 			if (value instanceof SettableValue) {
 				byName.put(field, (SettableValue) value);
 			} else {
@@ -917,7 +895,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public GenericInsertSpec nullValue(String field) {
+		public GenericInsertSpec<T> nullValue(String field) {
 
 			Assert.notNull(field, "Field must not be null!");
 
@@ -991,6 +969,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		@SuppressWarnings({ "rawtypes", "unchecked" })
 		public InsertSpec using(T objectToInsert) {
 
 			Assert.notNull(objectToInsert, "Object to insert must not be null!");
@@ -1000,6 +979,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		@SuppressWarnings({ "rawtypes", "unchecked" })
 		public InsertSpec using(Publisher<T> objectToInsert) {
 
 			Assert.notNull(objectToInsert, "Publisher to insert must not be null!");
@@ -1417,7 +1397,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			if (method.getName().equals("equals")) {
 				// Only consider equal when proxies are identical.
-				return (proxy == args[0]);
+				return proxy == args[0];
 			} else if (method.getName().equals("hashCode")) {
 				// Use hashCode of PersistenceManager proxy.
 				return System.identityHashCode(proxy);
@@ -1453,6 +1433,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 */
 	@RequiredArgsConstructor
 	static class ConnectionCloseHolder extends AtomicBoolean {
+
+		private static final long serialVersionUID = -8994138383301201380L;
 
 		final Connection connection;
 		final Function<Connection, Publisher<Void>> closeFunction;

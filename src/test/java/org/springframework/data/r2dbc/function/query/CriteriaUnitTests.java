@@ -21,8 +21,8 @@ import static org.springframework.data.r2dbc.function.query.Criteria.*;
 import java.util.Arrays;
 
 import org.junit.Test;
-
-import org.springframework.data.r2dbc.function.query.Criteria.*;
+import org.springframework.data.r2dbc.function.query.Criteria.Combinator;
+import org.springframework.data.r2dbc.function.query.Criteria.Comparator;
 
 /**
  * Unit tests for {@link Criteria}.

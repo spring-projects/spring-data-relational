@@ -18,7 +18,6 @@ package org.springframework.data.r2dbc.function.query;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -27,6 +26,7 @@ import org.springframework.util.Assert;
  * Class to easily construct SQL update assignments.
  *
  * @author Mark Paluch
+ * @author Oliver Drotbohm
  */
 public class Update {
 
@@ -41,8 +41,8 @@ public class Update {
 	/**
 	 * Static factory method to create an {@link Update} using the provided column.
 	 *
-	 * @param column
-	 * @param value
+	 * @param column must not be {@literal null}.
+	 * @param value can be {@literal null}.
 	 * @return
 	 */
 	public static Update update(String column, @Nullable Object value) {
@@ -52,12 +52,21 @@ public class Update {
 	/**
 	 * Update a column by assigning a value.
 	 *
-	 * @param column
-	 * @param value
+	 * @param column must not be {@literal null}.
+	 * @param value can be {@literal null}.
 	 * @return
 	 */
 	public Update set(String column, @Nullable Object value) {
 		return addMultiFieldOperation(column, value);
+	}
+
+	/**
+	 * Returns all assignments.
+	 *
+	 * @return
+	 */
+	public Map<String, Object> getAssignments() {
+		return Collections.unmodifiableMap(this.columnsToUpdate);
 	}
 
 	private Update addMultiFieldOperation(String key, Object value) {
@@ -68,19 +77,5 @@ public class Update {
 		updates.put(key, value);
 
 		return new Update(updates);
-	}
-
-	/**
-	 * Performs the given action for each column-value tuple in this {@link Update object} until all entries have been
-	 * processed or the action throws an exception.
-	 *
-	 * @param action must not be {@literal null}.
-	 */
-	void forEachColumn(BiConsumer<? super String, ? super Object> action) {
-		this.columnsToUpdate.forEach(action);
-	}
-
-	public Map<String, Object> getAssignments() {
-		return Collections.unmodifiableMap(this.columnsToUpdate);
 	}
 }

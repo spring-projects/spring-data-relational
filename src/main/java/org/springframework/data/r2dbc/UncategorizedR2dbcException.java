@@ -27,6 +27,8 @@ import org.springframework.lang.Nullable;
  */
 public class UncategorizedR2dbcException extends UncategorizedDataAccessException {
 
+	private static final long serialVersionUID = 361587356435210266L;
+
 	/**
 	 * SQL that led to the problem
 	 */

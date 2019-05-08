@@ -204,20 +204,22 @@ public class QueryMapper {
 	private Condition createCondition(Column column, @Nullable Object mappedValue, Class<?> valueType,
 			MutableBindings bindings, Comparator comparator) {
 
-		switch (comparator) {
-			case IS_NULL:
-				return column.isNull();
-			case IS_NOT_NULL:
-				return column.isNotNull();
+		if (comparator.equals(Comparator.IS_NULL)) {
+			return column.isNull();
+		}
+
+		if (comparator.equals(Comparator.IS_NOT_NULL)) {
+			return column.isNotNull();
 		}
 
 		if (comparator == Comparator.NOT_IN || comparator == Comparator.IN) {
 
 			Condition condition;
+
 			if (mappedValue instanceof Iterable) {
 
 				List<Expression> expressions = new ArrayList<>(
-						mappedValue instanceof Collection ? ((Collection) mappedValue).size() : 10);
+						mappedValue instanceof Collection ? ((Collection<?>) mappedValue).size() : 10);
 
 				for (Object o : (Iterable<?>) mappedValue) {
 
@@ -260,9 +262,9 @@ public class QueryMapper {
 				return column.isGreaterOrEqualTo(expression);
 			case LIKE:
 				return column.like(expression);
+			default:
+				throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
 		}
-
-		throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
 	}
 
 	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, String key,
