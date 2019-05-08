@@ -335,4 +335,33 @@ public class PersistentPropertyPathExtension {
 		return String.format("PersistentPropertyPathExtension[%s, %s]", entity.getName(),
 				path == null ? "-" : path.toDotPath());
 	}
+
+	public Class<?> getActualType() {
+
+		return path == null //
+				? entity.getType() //
+				: path.getRequiredLeafProperty().getActualType();
+	}
+
+	public boolean isOrdered() {
+		return path != null && path.getRequiredLeafProperty().isOrdered();
+	}
+
+	public boolean isMap() {
+		return path != null && path.getRequiredLeafProperty().isMap();
+	}
+
+	public RelationalPersistentProperty getRequiredLeafProperty() {
+
+		Assert.state(path != null, "An empty path doesn't have a leaf property.");
+
+		return path.getLeafProperty() ;
+	}
+
+	public PersistentPropertyPath<RelationalPersistentProperty> getRequiredPersistentPropertyPath() {
+
+		Assert.state(path != null, "No path.");
+
+		return path;
+	}
 }

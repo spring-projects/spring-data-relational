@@ -20,7 +20,6 @@ import java.util.Optional;
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
@@ -81,7 +80,15 @@ public class TestConfiguration {
 	DataAccessStrategy defaultDataAccessStrategy(
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
 			JdbcConverter converter) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter, template);
+
+		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context),
+				context, converter, template);
+
+		if (converter instanceof BasicJdbcConverter) {
+			((BasicJdbcConverter) converter).setRelationResolver(defaultDataAccessStrategy);
+		}
+
+		return defaultDataAccessStrategy;
 	}
 
 	@Bean
@@ -100,7 +107,11 @@ public class TestConfiguration {
 	@Bean
 	JdbcConverter relationalConverter(RelationalMappingContext mappingContext, CustomConversions conversions,
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template) {
-		return new BasicJdbcConverter(mappingContext, conversions,
-				new DefaultJdbcTypeFactory(template.getJdbcOperations()));
+
+		return new BasicJdbcConverter( //
+				mappingContext, //
+				conversions, //
+				new DefaultJdbcTypeFactory(template.getJdbcOperations()) //
+		);
 	}
 }

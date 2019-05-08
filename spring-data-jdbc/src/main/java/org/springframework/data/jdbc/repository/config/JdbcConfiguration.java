@@ -103,9 +103,31 @@ public class JdbcConfiguration {
 	 */
 	@Bean
 	public JdbcAggregateOperations jdbcAggregateOperations(ApplicationEventPublisher publisher,
-			RelationalMappingContext context, JdbcConverter converter, NamedParameterJdbcOperations operations) {
-		DataAccessStrategy dataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context,
-				converter, operations);
+			RelationalMappingContext context, JdbcConverter converter, NamedParameterJdbcOperations operations,
+			DataAccessStrategy dataAccessStrategy) {
 		return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
+	}
+
+	/**
+	 * Register a {@link DataAccessStrategy} as a bean for reuse in the {@link JdbcAggregateOperations} and the
+	 * {@link RelationalConverter}.
+	 *
+	 * @param context
+	 * @param converter
+	 * @param operations
+	 * @return
+	 */
+	@Bean
+	public DataAccessStrategy getDataAccessStrategy(RelationalMappingContext context, JdbcConverter converter,
+			NamedParameterJdbcOperations operations) {
+
+		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context),
+				context, converter, operations);
+
+		if (converter instanceof BasicJdbcConverter) {
+			((BasicJdbcConverter) converter).setRelationResolver(defaultDataAccessStrategy);
+		}
+
+		return defaultDataAccessStrategy;
 	}
 }

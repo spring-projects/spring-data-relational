@@ -142,6 +142,15 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.relational.domain.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
+	 */
+	@Override
+	public <T> Iterable<T> findAllByPath(Identifier identifier, PersistentPropertyPath<RelationalPersistentProperty> path) {
+		return collect(das -> das.findAllByPath(identifier, path));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllByProperty(java.lang.Object, org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
 	 */
 	@Override

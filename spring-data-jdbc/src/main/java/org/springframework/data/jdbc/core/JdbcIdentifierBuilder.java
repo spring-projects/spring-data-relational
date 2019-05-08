@@ -54,18 +54,6 @@ public class JdbcIdentifierBuilder {
 		return new JdbcIdentifierBuilder(identifier);
 	}
 
-	private static RelationalPersistentProperty getLastIdProperty(
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
-
-		RelationalPersistentProperty idProperty = path.getRequiredLeafProperty().getOwner().getIdProperty();
-
-		if (idProperty != null) {
-			return idProperty;
-		}
-
-		return getLastIdProperty(path.getParentPath());
-	}
-
 	/**
 	 * Adds a qualifier to the identifier to build. A qualifier is a map key or a list index.
 	 *

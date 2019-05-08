@@ -20,6 +20,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
 
@@ -32,22 +34,35 @@ import org.springframework.lang.NonNull;
  */
 class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 
-	private final RowMapper<T> delegate;
+	private final PersistentPropertyPathExtension path;
+	private final JdbcConverter converter;
+	private final Identifier identifier;
+
 	private final String keyColumn;
 
 	/**
-	 * @param delegate rowmapper used as a delegate for obtaining the map values.
+	 * @param path
+	 * @param converter
+	 * @param identifier
 	 * @param keyColumn the name of the key column.
 	 */
-	MapEntityRowMapper(RowMapper<T> delegate, String keyColumn) {
+	MapEntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter,
+					   Identifier identifier, String keyColumn) {
 
-		this.delegate = delegate;
+		this.path = path;
+		this.converter = converter;
+		this.identifier = identifier;
 		this.keyColumn = keyColumn;
 	}
 
 	@NonNull
 	@Override
 	public Map.Entry<Object, T> mapRow(ResultSet rs, int rowNum) throws SQLException {
-		return new HashMap.SimpleEntry<>(rs.getObject(keyColumn), delegate.mapRow(rs, rowNum));
+		Object key = rs.getObject(keyColumn);
+		return new HashMap.SimpleEntry<>(key, mapEntity(rs, key));
+	}
+
+	private T mapEntity(ResultSet resultSet, Object key) {
+		return converter.mapRow(path, resultSet, identifier, key);
 	}
 }

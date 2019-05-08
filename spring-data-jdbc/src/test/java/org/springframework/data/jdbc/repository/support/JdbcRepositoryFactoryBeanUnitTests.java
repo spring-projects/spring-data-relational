@@ -84,7 +84,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 		factoryBean.setDataAccessStrategy(dataAccessStrategy);
 		factoryBean.setMappingContext(mappingContext);
-		factoryBean.setConverter(new BasicJdbcConverter(mappingContext, JdbcTypeFactory.unsupported()));
+		factoryBean.setConverter(new BasicJdbcConverter(mappingContext, dataAccessStrategy, JdbcTypeFactory.unsupported()));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.setBeanFactory(beanFactory);
 		factoryBean.afterPropertiesSet();
@@ -111,7 +111,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	public void afterPropertiesSetDefaultsNullablePropertiesCorrectly() {
 
 		factoryBean.setMappingContext(mappingContext);
-		factoryBean.setConverter(new BasicJdbcConverter(mappingContext, JdbcTypeFactory.unsupported()));
+		factoryBean.setConverter(new BasicJdbcConverter(mappingContext, dataAccessStrategy, JdbcTypeFactory.unsupported()));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.setBeanFactory(beanFactory);
 		factoryBean.afterPropertiesSet();

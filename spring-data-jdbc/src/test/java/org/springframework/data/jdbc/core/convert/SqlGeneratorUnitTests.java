@@ -39,6 +39,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.domain.Identifier;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -50,6 +51,8 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Mark Paluch
  */
 public class SqlGeneratorUnitTests {
+
+	static final Identifier BACKREF = Identifier.of("backref", "some-value", String.class);
 
 	SqlGenerator sqlGenerator;
 	NamingStrategy namingStrategy = new PrefixingNamingStrategy();
@@ -149,7 +152,7 @@ public class SqlGeneratorUnitTests {
 	public void findAllByProperty() {
 
 		// this would get called when ListParent is the element type of a Set
-		String sql = sqlGenerator.getFindAllByProperty("backref", null, false);
+		String sql = sqlGenerator.getFindAllByProperty(BACKREF, null, false);
 
 		assertThat(sql).contains("SELECT", //
 				"dummy_entity.id1 AS id1", //
@@ -165,11 +168,33 @@ public class SqlGeneratorUnitTests {
 				"WHERE dummy_entity.backref = :backref");
 	}
 
+	@Test // DATAJDBC-223
+	public void findAllByPropertyWithMultipartIdentifier() {
+
+		// this would get called when ListParent is the element type of a Set
+		String sql = sqlGenerator.getFindAllByProperty(Identifier.of("backref", "some-value", String.class).withPart("backref_key", "key-value", Object.class), null, false);
+
+		assertThat(sql).contains("SELECT", //
+				"dummy_entity.id1 AS id1", //
+				"dummy_entity.x_name AS x_name", //
+				"dummy_entity.x_other AS x_other", //
+				"ref.x_l1id AS ref_x_l1id", //
+				"ref.x_content AS ref_x_content", //
+				"ref_further.x_l2id AS ref_further_x_l2id", //
+				"ref_further.x_something AS ref_further_x_something", //
+				"FROM dummy_entity ", //
+				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
+				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
+				"dummy_entity.backref = :backref",
+				"dummy_entity.backref_key = :backref_key"
+		);
+	}
+
 	@Test // DATAJDBC-131, DATAJDBC-111
 	public void findAllByPropertyWithKey() {
 
 		// this would get called when ListParent is th element type of a Map
-		String sql = sqlGenerator.getFindAllByProperty("backref", "key-column", false);
+		String sql = sqlGenerator.getFindAllByProperty(BACKREF, "key-column", false);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
@@ -184,14 +209,14 @@ public class SqlGeneratorUnitTests {
 
 	@Test(expected = IllegalArgumentException.class) // DATAJDBC-130
 	public void findAllByPropertyOrderedWithoutKey() {
-		sqlGenerator.getFindAllByProperty("back-ref", null, true);
+		sqlGenerator.getFindAllByProperty(BACKREF, null, true);
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
 	public void findAllByPropertyWithKeyOrdered() {
 
 		// this would get called when ListParent is th element type of a Map
-		String sql = sqlGenerator.getFindAllByProperty("backref", "key-column", true);
+		String sql = sqlGenerator.getFindAllByProperty(BACKREF, "key-column", true);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
@@ -297,7 +322,7 @@ public class SqlGeneratorUnitTests {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
 
-		assertThat(sqlGenerator.getFindAllByProperty("backref", "key-column", true)).isEqualToIgnoringCase( //
+		assertThat(sqlGenerator.getFindAllByProperty(BACKREF, "key-column", true)).isEqualToIgnoringCase( //
 				"SELECT " //
 						+ "entity_with_read_only_property.x_id AS x_id, " //
 						+ "entity_with_read_only_property.x_name AS x_name, " //

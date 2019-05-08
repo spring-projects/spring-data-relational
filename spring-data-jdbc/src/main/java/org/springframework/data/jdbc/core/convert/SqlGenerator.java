@@ -40,6 +40,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -163,32 +164,49 @@ class SqlGenerator {
 	 * {@literal columnName}. This is used to select values for a complex property ({@link Set}, {@link Map} ...) based on
 	 * a referencing entity.
 	 *
-	 * @param columnName name of the column of the FK back to the referencing entity.
+	 * @param parentIdentifier name of the column of the FK back to the referencing entity.
 	 * @param keyColumn if the property is of type {@link Map} this column contains the map key.
 	 * @param ordered whether the SQL statement should include an ORDER BY for the keyColumn. If this is {@code true}, the
 	 *          keyColumn must not be {@code null}.
 	 * @return a SQL String.
 	 */
-	String getFindAllByProperty(String columnName, @Nullable String keyColumn, boolean ordered) {
+	String getFindAllByProperty(Identifier parentIdentifier, @Nullable String keyColumn, boolean ordered) {
 
 		Assert.isTrue(keyColumn != null || !ordered,
 				"If the SQL statement should be ordered a keyColumn to order by must be provided.");
 
-		SelectBuilder.SelectWhere builder = selectBuilder(
-				keyColumn == null ? Collections.emptyList() : Collections.singleton(keyColumn));
+		SelectBuilder.SelectWhere builder = selectBuilder( //
+				keyColumn == null //
+						? Collections.emptyList() //
+						: Collections.singleton(keyColumn) //
+		);
 
 		Table table = getTable();
-		SelectBuilder.SelectWhereAndOr withWhereClause = builder
-				.where(table.column(columnName).isEqualTo(getBindMarker(columnName)));
 
-		Select select;
-		if (ordered) {
-			select = withWhereClause.orderBy(table.column(keyColumn).as(keyColumn)).build();
-		} else {
-			select = withWhereClause.build();
-		}
+		Condition condition = buildConditionForBackReference(parentIdentifier, table);
+
+		SelectBuilder.SelectWhereAndOr withWhereClause = builder.where(condition);
+
+		Select select = ordered //
+				? withWhereClause.orderBy(table.column(keyColumn).as(keyColumn)).build() //
+				: withWhereClause.build();
 
 		return render(select);
+	}
+
+	private Condition buildConditionForBackReference(Identifier parentIdentifier, Table table) {
+
+		Condition condition = null;
+		for (String backReferenceColumn : parentIdentifier.toMap().keySet()) {
+
+			Condition newCondition = table.column(backReferenceColumn).isEqualTo(getBindMarker(backReferenceColumn));
+
+			condition = condition == null ? newCondition : condition.and(newCondition);
+		}
+
+		Assert.state(condition != null, "We need at least one condition");
+
+		return condition;
 	}
 
 	/**

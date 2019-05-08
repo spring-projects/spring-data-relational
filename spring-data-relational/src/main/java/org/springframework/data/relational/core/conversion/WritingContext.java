@@ -25,6 +25,7 @@ import java.util.Map;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
@@ -121,16 +122,23 @@ class WritingContext {
 
 		from(path).forEach(node -> {
 
+			DbAction.WithEntity<?> parentAction = getAction(node.getParent());
 			DbAction.Insert<Object> insert;
 			if (node.getPath().getRequiredLeafProperty().isQualified()) {
 
 				@SuppressWarnings("unchecked")
 				Pair<Object, Object> value = (Pair) node.getValue();
-				insert = new DbAction.Insert<>(value.getSecond(), path, getAction(node.getParent()));
+				insert = new DbAction.Insert<>(value.getSecond(), path, parentAction);
 				insert.getQualifiers().put(node.getPath(), value.getFirst());
 
+				RelationalPersistentEntity<?> parentEntity = context.getRequiredPersistentEntity(parentAction.getEntityType());
+
+				if (!parentEntity.hasIdProperty() && parentAction instanceof DbAction.Insert) {
+					insert.getQualifiers().putAll(((DbAction.Insert<?>) parentAction).getQualifiers());
+				}
+
 			} else {
-				insert = new DbAction.Insert<>(node.getValue(), path, getAction(node.getParent()));
+				insert = new DbAction.Insert<>(node.getValue(), path, parentAction);
 			}
 			previousActions.put(node, insert);
 			actions.add(insert);
@@ -182,10 +190,6 @@ class WritingContext {
 
 		return null;
 	}
-	// commented as of #DATAJDBC-282
-	// private boolean isNew(Object o) {
-	// return context.getRequiredPersistentEntity(o.getClass()).isNew(o);
-	// }
 
 	private List<PathNode> from(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
@@ -201,7 +205,10 @@ class WritingContext {
 			List<PathNode> pathNodes = nodesCache.get(path.getParentPath());
 			pathNodes.forEach(parentNode -> {
 
-				Object value = path.getRequiredLeafProperty().getOwner().getPropertyAccessor(parentNode.getValue())
+				// todo: this should go into pathnode
+				Object parentValue = parentNode.getActualValue();
+
+				Object value = path.getRequiredLeafProperty().getOwner().getPropertyAccessor(parentValue)
 						.getProperty(path.getRequiredLeafProperty());
 
 				nodes.addAll(createNodes(path, parentNode, value));

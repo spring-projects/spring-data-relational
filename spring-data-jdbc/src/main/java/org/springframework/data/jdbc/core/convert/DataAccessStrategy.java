@@ -30,7 +30,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  */
-public interface DataAccessStrategy {
+public interface DataAccessStrategy extends RelationResolver {
 
 	/**
 	 * Inserts a the data of a single entity. Referenced entities don't get handled.
@@ -144,12 +144,26 @@ public interface DataAccessStrategy {
 	 */
 	<T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType);
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.relational.domain.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
+	 */
+	@Override
+	default <T> Iterable<T> findAllByPath(Identifier identifier,
+										  PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+		Object rootId = identifier.toMap().get(path.getRequiredLeafProperty().getReverseColumnName());
+		return findAllByProperty(rootId, path.getRequiredLeafProperty());
+	};
+
 	/**
 	 * Finds all entities reachable via {@literal property} from the instance identified by {@literal rootId}.
 	 *
 	 * @param rootId Id of the root object on which the {@literal propertyPath} is based.
 	 * @param property Leading from the root object to the entities to be found.
+	 * @deprecated Use #findAllByPath instead.
 	 */
+	@Deprecated
 	<T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property);
 
 	/**

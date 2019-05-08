@@ -18,8 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
@@ -45,16 +44,19 @@ import javax.naming.OperationNotSupportedException;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.repository.query.Param;
 import org.springframework.util.Assert;
 
@@ -580,30 +582,51 @@ public class EntityRowMapperUnitTests {
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determine what kind of ResultSet is needed for subsequent selects.
-		doReturn(new HashSet<>(asList(new Trivial(1L, "one"), new Trivial(2L, "two")))).when(accessStrategy)
-				.findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP), any(RelationalPersistentProperty.class));
+		HashSet<Trivial> trivials = new HashSet<>(asList( //
+				new Trivial(1L, "one"), //
+				new Trivial(2L, "two") //
+		));
 
-		doReturn(new HashSet<>(asList( //
+		HashSet<SimpleEntry<Integer, Trivial>> simpleEntriesWithInts = new HashSet<>(asList( //
+				new SimpleEntry<>(1, new Trivial(1L, "one")), //
+				new SimpleEntry<>(2, new Trivial(2L, "two")) //
+		));
+
+		HashSet<SimpleEntry<String, Trivial>> simpleEntriesWithStringKeys = new HashSet<>(asList( //
 				new SimpleEntry<>("one", new Trivial(1L, "one")), //
 				new SimpleEntry<>("two", new Trivial(2L, "two")) //
-		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP),
+		));
+
+		doReturn(trivials).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
 				any(RelationalPersistentProperty.class));
 
-		doReturn(new HashSet<>(asList( //
-				new SimpleEntry<>(1, new Trivial(1L, "one")), //
-				new SimpleEntry<>(2, new Trivial(2L, "tow")) //
-		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST),
+		doReturn(simpleEntriesWithStringKeys).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP),
 				any(RelationalPersistentProperty.class));
 
-		JdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions(),
+		doReturn(simpleEntriesWithInts).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST),
+				any(RelationalPersistentProperty.class));
+
+		doReturn(trivials).when(accessStrategy).findAllByPath(identifierOfValue(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
+				any(PersistentPropertyPath.class));
+
+		doReturn(simpleEntriesWithStringKeys).when(accessStrategy)
+				.findAllByPath(identifierOfValue(ID_FOR_ENTITY_REFERENCING_MAP), any(PersistentPropertyPath.class));
+
+		doReturn(simpleEntriesWithInts).when(accessStrategy)
+				.findAllByPath(identifierOfValue(ID_FOR_ENTITY_REFERENCING_LIST), any(PersistentPropertyPath.class));
+
+		BasicJdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions(),
 				JdbcTypeFactory.unsupported());
+		converter.setRelationResolver(accessStrategy);
 
 		return new EntityRowMapper<>( //
 				(RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type), //
-				//
-				converter, //
-				accessStrategy //
+				converter //
 		);
+	}
+
+	private Identifier identifierOfValue(long value) {
+		return ArgumentMatchers.argThat(argument -> argument.toMap().containsValue(value));
 	}
 
 	private static ResultSet mockResultSet(List<String> columns, Object... values) {

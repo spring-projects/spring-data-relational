@@ -28,6 +28,6 @@ public class EntityRowMapper<T> extends org.springframework.data.jdbc.core.conve
 
 	public EntityRowMapper(RelationalPersistentEntity<T> entity, JdbcConverter converter,
 			DataAccessStrategy accessStrategy) {
-		super(entity, converter, accessStrategy);
+		super(entity, converter);
 	}
 }
