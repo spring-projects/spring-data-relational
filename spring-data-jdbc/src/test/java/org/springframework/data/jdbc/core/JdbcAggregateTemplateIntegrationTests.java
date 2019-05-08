@@ -436,7 +436,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.binaryData).isEqualTo(new byte[] { 1, 23, 42 });
 	}
 
-	@Test
+	@Test // DATAJDBC-340
 	public void saveAndLoadLongChain() {
 
 		Chain4 chain4 = new Chain4();
