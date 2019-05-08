@@ -31,6 +31,7 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
@@ -39,6 +40,7 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -53,6 +55,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Christoph Strobl
+ * @since 1.1
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -61,70 +64,51 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 	private static final Logger LOG = LoggerFactory.getLogger(BasicJdbcConverter.class);
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
+
 	private final JdbcTypeFactory typeFactory;
+
+	private RelationResolver relationResolver;
 
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and a
 	 * {@link JdbcTypeFactory#unsupported() no-op type factory} throwing {@link UnsupportedOperationException} on type
-	 * creation. Use {@link #BasicJdbcConverter(MappingContext, JdbcTypeFactory)} to convert arrays and large objects into
-	 * JDBC-specific types.
+	 * creation. Use {@link #BasicJdbcConverter(MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and
+	 * large objects into JDBC-specific types.
 	 *
 	 * @param context must not be {@literal null}.
+	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
 	 */
 	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
-		this(context, JdbcTypeFactory.unsupported());
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			RelationResolver relationResolver) {
+
+		super(context);
+
+		Assert.notNull(relationResolver, "RelationResolver must not be null");
+
+		this.relationResolver = relationResolver;
+		this.typeFactory = JdbcTypeFactory.unsupported();
 	}
 
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
 	 *
 	 * @param context must not be {@literal null}.
+	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
 	 * @param typeFactory must not be {@literal null}
 	 * @since 1.1
 	 */
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			JdbcTypeFactory typeFactory) {
-
-		super(context);
-
-		Assert.notNull(typeFactory, "JdbcTypeFactory must not be null");
-
-		this.typeFactory = typeFactory;
-	}
-
-	/**
-	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}, {@link CustomConversions}, and
-	 * {@link JdbcTypeFactory}.
-	 *
-	 * @param context must not be {@literal null}.
-	 * @param conversions must not be {@literal null}.
-	 * @param typeFactory must not be {@literal null}
-	 * @since 1.1
-	 */
-	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			CustomConversions conversions, JdbcTypeFactory typeFactory) {
+			RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory) {
 
 		super(context, conversions);
 
 		Assert.notNull(typeFactory, "JdbcTypeFactory must not be null");
-		this.typeFactory = typeFactory;
-	}
+		Assert.notNull(relationResolver, "RelationResolver must not be null");
 
-	/**
-	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and {@link CustomConversions}.
-	 *
-	 * @param context must not be {@literal null}.
-	 * @param conversions must not be {@literal null}.
-	 * @deprecated use one of the constructors with {@link JdbcTypeFactory} parameter.
-	 */
-	@Deprecated
-	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			CustomConversions conversions) {
-		this(context, conversions, JdbcTypeFactory.unsupported());
+		this.relationResolver = relationResolver;
+		this.typeFactory = typeFactory;
 	}
 
 	/*
@@ -145,9 +129,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		if (AggregateReference.class.isAssignableFrom(type.getType())) {
 
-			TypeInformation<?> idType = type.getSuperTypeInformation(AggregateReference.class).getTypeArguments().get(1);
-
-			return AggregateReference.to(readValue(value, idType));
+			return readAggregateReference(value, type);
 		}
 
 		if (value instanceof Array) {
@@ -159,6 +141,14 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		return super.readValue(value, type);
+	}
+
+	@SuppressWarnings("ConstantConditions")
+	private Object readAggregateReference(@Nullable Object value, TypeInformation<?> type) {
+
+		TypeInformation<?> idType = type.getSuperTypeInformation(AggregateReference.class).getTypeArguments().get(1);
+
+		return AggregateReference.to(readValue(value, idType));
 	}
 
 	/*
@@ -246,47 +236,63 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.jdbc.core.RowMapper#mapRow(java.sql.ResultSet, int)
-	 */
+	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T mapRow(RelationalPersistentEntity<T> entity, DataAccessStrategy accessStrategy, ResultSet resultSet) {
-		return new ReadingContext<T>(entity, accessStrategy, resultSet).mapRow();
+	public <T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key) {
+		return new ReadingContext<T>(
+				new PersistentPropertyPathExtension(
+						(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty>) getMappingContext(), entity),
+				resultSet, Identifier.empty(), key).mapRow();
+	}
+
+	@Override
+	public <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
+		return new ReadingContext<T>(path, resultSet, identifier, key).mapRow();
 	}
 
 	private class ReadingContext<T> {
 
 		private final RelationalPersistentEntity<T> entity;
-		private final RelationalPersistentProperty idProperty;
 
 		private final ResultSet resultSet;
-		PersistentPropertyPathExtension path;
-		private final DataAccessStrategy accessStrategy;
+		private final PersistentPropertyPathExtension rootPath;
+		private final PersistentPropertyPathExtension path;
+		private final Identifier identifier;
+		private final Object key;
 
-		ReadingContext(RelationalPersistentEntity<T> entity, DataAccessStrategy accessStrategy, ResultSet resultSet) {
+		@SuppressWarnings("unchecked")
+		private ReadingContext(PersistentPropertyPathExtension rootPath, ResultSet resultSet, Identifier identifier,
+							   Object key) {
+
+
+			RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) rootPath.getLeafEntity();
+
+			Assert.notNull(entity, "The rootPath must point to an entity.");
 
 			this.entity = entity;
-			this.idProperty = entity.getIdProperty();
-			this.accessStrategy = accessStrategy;
 			this.resultSet = resultSet;
+			this.rootPath = rootPath;
 			this.path = new PersistentPropertyPathExtension(
-					(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty>) getMappingContext(), entity);
+					(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty>) getMappingContext(), this.entity);
+			this.identifier = identifier;
+			this.key = key;
 		}
 
-		public ReadingContext(RelationalPersistentEntity<T> entity, DataAccessStrategy accessStrategy, ResultSet resultSet,
-				PersistentPropertyPathExtension path) {
+		private ReadingContext(RelationalPersistentEntity<T> entity, ResultSet resultSet,
+				PersistentPropertyPathExtension rootPath, PersistentPropertyPathExtension path, Identifier identifier,
+				Object key) {
 
 			this.entity = entity;
-			this.idProperty = entity.getIdProperty();
-			this.accessStrategy = accessStrategy;
 			this.resultSet = resultSet;
+			this.rootPath = rootPath;
 			this.path = path;
+			this.identifier = identifier;
+			this.key = key;
 		}
 
-		private ReadingContext<?> extendBy(RelationalPersistentProperty property) {
-			return new ReadingContext(getMappingContext().getRequiredPersistentEntity(property.getActualType()),
-					accessStrategy, resultSet, path.extendBy(property));
+		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
+			return new ReadingContext<S>((RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()), resultSet,
+					rootPath.extendBy(property), path.extendBy(property), identifier, key);
 		}
 
 		T mapRow() {
@@ -319,15 +325,31 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		@Nullable
 		private Object readOrLoadProperty(@Nullable Object id, RelationalPersistentProperty property) {
 
-			if (property.isCollectionLike() && property.isEntity() && id != null) {
-				return accessStrategy.findAllByProperty(id, property);
-			} else if (property.isMap() && id != null) {
-				return ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(accessStrategy.findAllByProperty(id, property));
+			if ((property.isCollectionLike() && property.isEntity()) || property.isMap()) {
+
+				Iterable<Object> allByPath = resolveRelation(id, property);
+
+				return property.isMap() //
+						? ITERABLE_OF_ENTRY_TO_MAP_CONVERTER.convert(allByPath) //
+						: allByPath;
+
 			} else if (property.isEmbedded()) {
 				return readEmbeddedEntityFrom(id, property);
 			} else {
 				return readFrom(property);
 			}
+		}
+
+		private Iterable<Object> resolveRelation(@Nullable Object id, RelationalPersistentProperty property) {
+
+			Identifier identifier = id == null //
+					? this.identifier.withPart(rootPath.getQualifierColumn(), key, Object.class) //
+					: Identifier.of(rootPath.extendBy(property).getReverseColumnName(), id, Object.class);
+
+			PersistentPropertyPath<RelationalPersistentProperty> propertyPath = path.extendBy(property)
+					.getRequiredPersistentPropertyPath();
+
+			return relationResolver.findAllByPath(identifier, propertyPath);
 		}
 
 		/**
@@ -355,9 +377,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return newContext.hasInstanceValues(idValue) ? newContext.createInstanceInternal(idValue) : null;
 		}
 
-		private boolean hasInstanceValues(Object idValue) {
+		private boolean hasInstanceValues(@Nullable Object idValue) {
 
 			RelationalPersistentEntity<?> persistentEntity = path.getLeafEntity();
+
+			Assert.state(persistentEntity != null, "Entity must not be null");
 
 			for (RelationalPersistentProperty embeddedProperty : persistentEntity) {
 
@@ -375,11 +399,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		@Nullable
-		private <S> S readEntityFrom(RelationalPersistentProperty property, PersistentPropertyPathExtension path) {
+		private Object readEntityFrom(RelationalPersistentProperty property, PersistentPropertyPathExtension path) {
 
-			ReadingContext<S> newContext = (ReadingContext<S>) extendBy(property);
+			ReadingContext<?> newContext = extendBy(property);
 
-			RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) getMappingContext()
+			RelationalPersistentEntity<?> entity = getMappingContext()
 					.getRequiredPersistentEntity(property.getActualType());
 
 			RelationalPersistentProperty idProperty = entity.getIdProperty();

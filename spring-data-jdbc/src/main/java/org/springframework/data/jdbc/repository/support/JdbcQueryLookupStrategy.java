@@ -118,9 +118,8 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
 				context.getRequiredPersistentEntity(domainType), //
-				//
-				converter, //
-				accessStrategy);
+				converter //
+		);
 
 		return defaultEntityRowMapper;
 	}

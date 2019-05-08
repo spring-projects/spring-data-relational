@@ -16,12 +16,10 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -39,7 +37,7 @@ import org.springframework.data.util.ClassTypeInformation;
 public class BasicRelationalConverterAggregateReferenceUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
-	RelationalConverter converter = new BasicJdbcConverter(context);
+	RelationalConverter converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
 
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 

@@ -40,6 +40,7 @@ import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for the {@link RelationalEntityWriter}
@@ -54,9 +55,23 @@ public class RelationalEntityWriterUnitTests {
 	final RelationalMappingContext context = new RelationalMappingContext();
 	final RelationalEntityWriter converter = new RelationalEntityWriter(context);
 
-	final PersistentPropertyPath<RelationalPersistentProperty> listContainerElements = toPath("elements", ListContainer.class, context);
+	final PersistentPropertyPath<RelationalPersistentProperty> listContainerElements = toPath("elements",
+			ListContainer.class, context);
 
-	private final PersistentPropertyPath<RelationalPersistentProperty> mapContainerElements = toPath("elements", MapContainer.class, context);
+	private final PersistentPropertyPath<RelationalPersistentProperty> mapContainerElements = toPath("elements",
+			MapContainer.class, context);
+
+	private final PersistentPropertyPath<RelationalPersistentProperty> listMapContainerElements = toPath("maps.elements",
+			ListMapContainer.class, context);
+
+	private final PersistentPropertyPath<RelationalPersistentProperty> listMapContainerMaps = toPath("maps",
+			ListMapContainer.class, context);
+
+	private final PersistentPropertyPath<RelationalPersistentProperty> noIdListMapContainerElements = toPath("maps.elements",
+			NoIdListMapContainer.class, context);
+
+	private final PersistentPropertyPath<RelationalPersistentProperty> noIdListMapContainerMaps = toPath("maps",
+			NoIdListMapContainer.class, context);
 
 	@Test // DATAJDBC-112
 	public void newEntityGetsConvertedToOneInsert() {
@@ -419,6 +434,52 @@ public class RelationalEntityWriterUnitTests {
 				);
 	}
 
+	@Test // DATAJDBC-223
+	public void multiLevelQualifiedReferencesWithId() {
+
+		ListMapContainer listMapContainer = new ListMapContainer(SOME_ENTITY_ID);
+		listMapContainer.maps.add(new MapContainer(SOME_ENTITY_ID));
+		listMapContainer.maps.get(0).elements.put("one", new Element(null));
+
+		AggregateChange<ListMapContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, ListMapContainer.class,
+				listMapContainer);
+
+		converter.write(listMapContainer, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, a -> getQualifier(a, listMapContainerMaps),a -> getQualifier(a, listMapContainerElements), DbActionTestSupport::extractPath) //
+				.containsExactly( //
+						tuple(Delete.class, Element.class, null, null, "maps.elements"), //
+						tuple(Delete.class, MapContainer.class, null, null, "maps"), //
+						tuple(UpdateRoot.class, ListMapContainer.class, null, null, ""), //
+						tuple(Insert.class, MapContainer.class, 0, null, "maps"), //
+						tuple(Insert.class, Element.class, null, "one", "maps.elements") //
+				);
+	}
+
+	@Test // DATAJDBC-223
+	public void multiLevelQualifiedReferencesWithOutId() {
+
+		NoIdListMapContainer listMapContainer = new NoIdListMapContainer(SOME_ENTITY_ID);
+		listMapContainer.maps.add(new NoIdMapContainer());
+		listMapContainer.maps.get(0).elements.put("one", new NoIdElement());
+
+		AggregateChange<NoIdListMapContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, NoIdListMapContainer.class,
+				listMapContainer);
+
+		converter.write(listMapContainer, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, DbAction::getEntityType, a -> getQualifier(a, noIdListMapContainerMaps),a -> getQualifier(a, noIdListMapContainerElements), DbActionTestSupport::extractPath) //
+				.containsExactly( //
+						tuple(Delete.class, NoIdElement.class, null, null, "maps.elements"), //
+						tuple(Delete.class, NoIdMapContainer.class, null, null, "maps"), //
+						tuple(UpdateRoot.class, NoIdListMapContainer.class, null, null, ""), //
+						tuple(Insert.class, NoIdMapContainer.class, 0, null, "maps"), //
+						tuple(Insert.class, NoIdElement.class, 0, "one", "maps.elements") //
+				);
+	}
+
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {
 
 		CascadingReferenceMiddleElement middleElement1 = new CascadingReferenceMiddleElement(null);
@@ -429,21 +490,35 @@ public class RelationalEntityWriterUnitTests {
 
 	private Object getMapKey(DbAction a) {
 
-		return a instanceof DbAction.WithDependingOn //
-				? ((DbAction.WithDependingOn) a).getQualifiers().get(mapContainerElements) //
-				: null;
+		PersistentPropertyPath<RelationalPersistentProperty> path = this.mapContainerElements;
+
+		return getQualifier(a, path);
 	}
 
 	private Object getListKey(DbAction a) {
 
+		PersistentPropertyPath<RelationalPersistentProperty> path = this.listContainerElements;
+
+		return getQualifier(a, path);
+	}
+
+	@Nullable
+	private Object getQualifier(DbAction a, PersistentPropertyPath<RelationalPersistentProperty> path) {
+
 		return a instanceof DbAction.WithDependingOn //
-				? ((DbAction.WithDependingOn) a).getQualifiers()
-						.get(listContainerElements) //
+				? ((DbAction.WithDependingOn) a).getQualifiers().get(path) //
 				: null;
 	}
 
+	private int getQualifierCount(DbAction a, PersistentPropertyPath<RelationalPersistentProperty> path) {
+
+		return a instanceof DbAction.WithDependingOn //
+				? ((DbAction.WithDependingOn) a).getQualifiers().size() //
+				: 0;
+	}
+
 	static PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class source,
-																			  RelationalMappingContext context) {
+			RelationalMappingContext context) {
 
 		PersistentPropertyPaths<?, RelationalPersistentProperty> persistentPropertyPaths = context
 				.findPersistentPropertyPaths(source, p -> true);
@@ -456,7 +531,7 @@ public class RelationalEntityWriterUnitTests {
 
 		@Id final Long id;
 		Element other;
-		// should not trigger own Dbaction
+		// should not trigger own DbAction
 		String name;
 	}
 
@@ -472,7 +547,7 @@ public class RelationalEntityWriterUnitTests {
 
 		@Id final Long id;
 		NoIdElement other;
-		// should not trigger own Dbaction
+		// should not trigger own DbAction
 		String name;
 	}
 
@@ -498,6 +573,13 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@RequiredArgsConstructor
+	private static class ListMapContainer {
+
+		@Id final Long id;
+		List<MapContainer> maps = new ArrayList<>();
+	}
+
+	@RequiredArgsConstructor
 	private static class MapContainer {
 
 		@Id final Long id;
@@ -514,6 +596,20 @@ public class RelationalEntityWriterUnitTests {
 	@RequiredArgsConstructor
 	private static class Element {
 		@Id final Long id;
+	}
+
+
+	@RequiredArgsConstructor
+	private static class NoIdListMapContainer {
+
+		@Id final Long id;
+		List<NoIdMapContainer> maps = new ArrayList<>();
+	}
+
+	@RequiredArgsConstructor
+	private static class NoIdMapContainer {
+
+		Map<String, NoIdElement> elements = new HashMap<>();
 	}
 
 	@RequiredArgsConstructor

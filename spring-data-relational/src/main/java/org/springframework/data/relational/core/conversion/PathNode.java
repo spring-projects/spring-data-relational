@@ -16,13 +16,15 @@
 package org.springframework.data.relational.core.conversion;
 
 import lombok.Value;
+
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 
 /**
- * Represents a single entity in an aggregate along with its property path from the root entity and the chain of
- * objects to traverse a long this path.
+ * Represents a single entity in an aggregate along with its property path from the root entity and the chain of objects
+ * to traverse a long this path.
  *
  * @author Jens Schauder
  */
@@ -37,11 +39,23 @@ class PathNode {
 	/**
 	 * The parent {@link PathNode}. This is {@code null} if this is the root entity.
 	 */
-	@Nullable
-	PathNode parent;
+	@Nullable PathNode parent;
 
 	/**
 	 * The value of the entity.
 	 */
 	Object value;
+
+	/**
+	 * If the node represents a qualified property (i.e. a {@link java.util.List} or {@link java.util.Map}) the actual
+	 * value is an element of the {@literal List} or a value of the {@literal Map}, while the {@link #value} is actually a
+	 * {@link Pair} with the index or key as the first element and the actual value as second element.
+	 *
+	 */
+	Object getActualValue() {
+
+		return getPath().getRequiredLeafProperty().isQualified() //
+				? ((Pair) getValue()).getSecond() //
+				: getValue();
+	}
 }

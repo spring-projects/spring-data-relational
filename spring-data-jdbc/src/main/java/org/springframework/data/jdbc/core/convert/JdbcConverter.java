@@ -18,7 +18,9 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.ResultSet;
 
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 
@@ -42,9 +44,7 @@ public interface JdbcConverter extends RelationalConverter {
 	 */
 	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, int sqlType);
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.jdbc.core.RowMapper#mapRow(java.sql.ResultSet, int)
-	 */
-	<T> T mapRow(RelationalPersistentEntity<T> entity, DataAccessStrategy accessStrategy, ResultSet resultSet);
+	<T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key);
+
+	<T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key);
 }

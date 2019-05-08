@@ -15,9 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
-import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -54,18 +52,6 @@ public class JdbcIdentifierBuilder {
 		return new JdbcIdentifierBuilder(identifier);
 	}
 
-	private static RelationalPersistentProperty getLastIdProperty(
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
-
-		RelationalPersistentProperty idProperty = path.getRequiredLeafProperty().getOwner().getIdProperty();
-
-		if (idProperty != null) {
-			return idProperty;
-		}
-
-		return getLastIdProperty(path.getParentPath());
-	}
-
 	/**
 	 * Adds a qualifier to the identifier to build. A qualifier is a map key or a list index.
 	 *
@@ -78,7 +64,7 @@ public class JdbcIdentifierBuilder {
 		Assert.notNull(path, "Path must not be null");
 		Assert.notNull(value, "Value must not be null");
 
-		identifier = identifier.withPart(path.getKeyColumn(), value, path.getQualifierColumnType());
+		identifier = identifier.withPart(path.getQualifierColumn(), value, path.getQualifierColumnType());
 
 		return this;
 	}

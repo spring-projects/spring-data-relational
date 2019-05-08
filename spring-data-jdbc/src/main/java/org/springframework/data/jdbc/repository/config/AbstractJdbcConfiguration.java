@@ -20,7 +20,9 @@ import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -28,6 +30,7 @@ import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -73,8 +76,11 @@ public abstract class AbstractJdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	public JdbcConverter jdbcConverter(RelationalMappingContext mappingContext, JdbcOperations operations) {
-		return new BasicJdbcConverter(mappingContext, jdbcCustomConversions(), new DefaultJdbcTypeFactory(operations));
+	public JdbcConverter jdbcConverter(RelationalMappingContext mappingContext, NamedParameterJdbcOperations operations,
+			@Lazy RelationResolver relationResolver) {
+
+		return new BasicJdbcConverter(mappingContext, relationResolver, jdbcCustomConversions(),
+				new DefaultJdbcTypeFactory(operations.getJdbcOperations()));
 	}
 
 	/**
@@ -97,16 +103,30 @@ public abstract class AbstractJdbcConfiguration {
 	 * @param publisher for publishing events. Must not be {@literal null}.
 	 * @param context the mapping context to be used. Must not be {@literal null}.
 	 * @param converter the conversions used when reading and writing from/to the database. Must not be {@literal null}.
-	 * @param operations {@link NamedParameterJdbcOperations} used for accessing the database. Must not be
-	 *          {@literal null}.
 	 * @return a {@link JdbcAggregateTemplate}. Guaranteed to be not {@literal null}.
 	 */
 	@Bean
 	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationEventPublisher publisher,
-			RelationalMappingContext context, JdbcConverter converter, NamedParameterJdbcOperations operations) {
+			RelationalMappingContext context, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
-		DataAccessStrategy dataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context,
-				converter, operations);
 		return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 	}
+
+	/**
+	 * Register a {@link DataAccessStrategy} as a bean for reuse in the {@link JdbcAggregateOperations} and the
+	 * {@link RelationalConverter}.
+	 *
+	 * @param operations
+	 * @param namingStrategy
+	 * @param jdbcConverter
+	 * @return
+	 */
+	@Bean
+	public DataAccessStrategy dataAccessStrategy(NamedParameterJdbcOperations operations,
+			Optional<NamingStrategy> namingStrategy, JdbcConverter jdbcConverter) {
+
+		JdbcMappingContext context = jdbcMappingContext(namingStrategy);
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, jdbcConverter, operations);
+	}
+
 }

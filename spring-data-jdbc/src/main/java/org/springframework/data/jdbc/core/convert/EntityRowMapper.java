@@ -17,7 +17,9 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.ResultSet;
 
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
@@ -34,16 +36,24 @@ import org.springframework.jdbc.core.RowMapper;
 public class EntityRowMapper<T> implements RowMapper<T> {
 
 	private final RelationalPersistentEntity<T> entity;
-
+	private final PersistentPropertyPathExtension path;
 	private final JdbcConverter converter;
-	private final DataAccessStrategy accessStrategy;
+	private final Identifier identifier;
 
-	public EntityRowMapper(RelationalPersistentEntity<T> entity, JdbcConverter converter,
-			DataAccessStrategy accessStrategy) {
+	public EntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter, Identifier identifier) {
+
+		this.entity = (RelationalPersistentEntity<T>) path.getLeafEntity();
+		this.path = path;
+		this.converter = converter;
+		this.identifier = identifier;
+	}
+
+	public EntityRowMapper(RelationalPersistentEntity<T> entity, JdbcConverter converter) {
 
 		this.entity = entity;
+		this.path = null;
 		this.converter = converter;
-		this.accessStrategy = accessStrategy;
+		this.identifier = null;
 	}
 
 	/*
@@ -52,7 +62,9 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	 */
 	@Override
 	public T mapRow(ResultSet resultSet, int rowNumber) {
-		return converter.mapRow(entity, accessStrategy, resultSet);
+
+		return path == null ? converter.mapRow(entity, resultSet, rowNumber)
+				: converter.mapRow(path, resultSet, identifier, rowNumber);
 	}
 
 }

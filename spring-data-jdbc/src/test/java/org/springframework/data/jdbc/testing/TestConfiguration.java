@@ -20,13 +20,13 @@ import java.util.Optional;
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -34,6 +34,7 @@ import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -81,7 +82,11 @@ public class TestConfiguration {
 	DataAccessStrategy defaultDataAccessStrategy(
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
 			JdbcConverter converter) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter, template);
+
+		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context),
+				context, converter, template);
+
+		return defaultDataAccessStrategy;
 	}
 
 	@Bean
@@ -98,9 +103,14 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	JdbcConverter relationalConverter(RelationalMappingContext mappingContext, CustomConversions conversions,
-			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template) {
-		return new BasicJdbcConverter(mappingContext, conversions,
-				new DefaultJdbcTypeFactory(template.getJdbcOperations()));
+	JdbcConverter relationalConverter(RelationalMappingContext mappingContext, @Lazy RelationResolver relationResolver,
+			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template) {
+
+		return new BasicJdbcConverter( //
+				mappingContext, //
+				relationResolver, //
+				conversions, //
+				new DefaultJdbcTypeFactory(template.getJdbcOperations()) //
+		);
 	}
 }

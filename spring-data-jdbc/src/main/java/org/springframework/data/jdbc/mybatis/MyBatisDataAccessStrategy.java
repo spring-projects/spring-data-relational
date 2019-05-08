@@ -22,7 +22,6 @@ import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
-
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
@@ -88,8 +87,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				sqlGeneratorSource, //
 				context, //
 				converter, //
-				operations, //
-				cascadingDataAccessStrategy //
+				operations //
 		);
 
 		delegatingDataAccessStrategy.setDelegate(defaultDataAccessStrategy);
@@ -242,6 +240,13 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return sqlSession().selectList(namespace(domainType) + ".findAllById",
 				new MyBatisContext(ids, null, domainType, Collections.emptyMap()));
+	}
+
+	@Override
+	public <T> Iterable<T> findAllByPath(Identifier identifier,
+			PersistentPropertyPath<RelationalPersistentProperty> path) {
+		return sqlSession().selectList(namespace(path.getBaseProperty().getOwner().getType()) + ".findAllByPath",
+				new MyBatisContext(identifier, null, path.getLeafProperty().getType(), Collections.emptyMap()));
 	}
 
 	/*
