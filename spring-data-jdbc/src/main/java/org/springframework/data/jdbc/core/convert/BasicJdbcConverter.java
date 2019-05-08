@@ -30,7 +30,6 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
@@ -285,30 +284,22 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		private ReadingContext<?> extendBy(RelationalPersistentProperty property) {
-			return new ReadingContext<>(entity, accessStrategy, resultSet, path.extendBy(property));
+			return new ReadingContext(getMappingContext().getRequiredPersistentEntity(property.getActualType()),
+					accessStrategy, resultSet, path.extendBy(property));
 		}
 
 		T mapRow() {
 
 			RelationalPersistentProperty idProperty = entity.getIdProperty();
 
-			Object idValue = null;
-			if (idProperty != null) {
-				idValue = readFrom(idProperty);
-			}
+			Object idValue = idProperty == null ? null : readFrom(idProperty);
 
-			T result = createInstanceInternal(entity, idValue);
-
-			return entity.requiresPropertyPopulation() //
-					? populateProperties(result) //
-					: result;
+			return createInstanceInternal(idValue);
 		}
 
-		private T populateProperties(T result) {
+		private T populateProperties(T instance, @Nullable Object idValue) {
 
-			PersistentPropertyAccessor<T> propertyAccessor = getPropertyAccessor(entity, result);
-
-			Object id = idProperty == null ? null : readFrom(idProperty);
+			PersistentPropertyAccessor<T> propertyAccessor = getPropertyAccessor(entity, instance);
 
 			PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
 
@@ -318,7 +309,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 					continue;
 				}
 
-				propertyAccessor.setProperty(property, readOrLoadProperty(id, property));
+				propertyAccessor.setProperty(property, readOrLoadProperty(idValue, property));
 			}
 
 			return propertyAccessor.getBean();
@@ -358,27 +349,17 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		@SuppressWarnings("unchecked")
-		private Object readEmbeddedEntityFrom(@Nullable Object id, RelationalPersistentProperty property) {
+		private Object readEmbeddedEntityFrom(@Nullable Object idValue, RelationalPersistentProperty property) {
 
 			ReadingContext newContext = extendBy(property);
 
-			RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(property.getActualType());
-
-			Object instance = newContext.createInstanceInternal(entity, null);
-
-			PersistentPropertyAccessor<?> accessor = getPropertyAccessor((PersistentEntity<Object, ?>) entity, instance);
-
-			for (RelationalPersistentProperty p : entity) {
-				accessor.setProperty(p, newContext.readOrLoadProperty(id, p));
-			}
-
-			return instance;
+			return newContext.createInstanceInternal(idValue);
 		}
 
 		@Nullable
 		private <S> S readEntityFrom(RelationalPersistentProperty property, PersistentPropertyPathExtension path) {
 
-			ReadingContext<?> newContext = extendBy(property);
+			ReadingContext<S> newContext = (ReadingContext<S>) extendBy(property);
 
 			RelationalPersistentEntity<S> entity = (RelationalPersistentEntity<S>) getMappingContext()
 					.getRequiredPersistentEntity(property.getActualType());
@@ -398,15 +379,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				return null;
 			}
 
-			S instance = newContext.createInstanceInternal(entity, idValue);
-
-			PersistentPropertyAccessor<S> accessor = getPropertyAccessor(entity, instance);
-
-			for (RelationalPersistentProperty p : entity) {
-				accessor.setProperty(p, newContext.readOrLoadProperty(idValue, p));
-			}
-
-			return instance;
+			return newContext.createInstanceInternal(idValue);
 		}
 
 		@Nullable
@@ -419,9 +392,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			}
 		}
 
-		private <S> S createInstanceInternal(RelationalPersistentEntity<S> entity, @Nullable Object idValue) {
+		private T createInstanceInternal(@Nullable Object idValue) {
 
-			return createInstance(entity, parameter -> {
+			T instance = createInstance(entity, parameter -> {
 
 				String parameterName = parameter.getName();
 
@@ -431,6 +404,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 				return readOrLoadProperty(idValue, property);
 			});
+			return populateProperties(instance, idValue);
 		}
 
 	}

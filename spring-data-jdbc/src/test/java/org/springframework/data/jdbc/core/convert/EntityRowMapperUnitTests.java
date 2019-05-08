@@ -284,6 +284,131 @@ public class EntityRowMapperUnitTests {
 		fixture.assertOn(extracted);
 	}
 
+	// Model classes to be used in tests
+
+	@RequiredArgsConstructor
+	static class TrivialImmutable {
+
+		@Id private final Long id;
+		private final String name;
+	}
+
+	static class Trivial {
+
+		@Id Long id;
+		String name;
+	}
+
+	static class OneToOne {
+
+		@Id Long id;
+		String name;
+		Trivial child;
+	}
+
+	@RequiredArgsConstructor
+	static class OneToOneImmutable {
+
+		private final @Id Long id;
+		private final String name;
+		private final TrivialImmutable child;
+	}
+
+	static class OneToSet {
+
+		@Id Long id;
+		String name;
+		Set<Trivial> children;
+	}
+
+	static class OneToMap {
+
+		@Id Long id;
+		String name;
+		Map<String, Trivial> children;
+	}
+
+	static class OneToList {
+
+		@Id Long id;
+		String name;
+		List<Trivial> children;
+	}
+
+	static class EmbeddedEntity {
+
+		@Id Long id;
+		String name;
+		@Embedded("prefix_") Trivial children;
+	}
+
+	private static class DontUseSetter {
+		String value;
+
+		DontUseSetter(@Param("value") String value) {
+			this.value = "setThroughConstructor:" + value;
+		}
+	}
+
+	static class MixedProperties {
+
+		final String one;
+		String two;
+		final String three;
+
+		@PersistenceConstructor
+		MixedProperties(String one) {
+			this.one = one;
+			this.three = "unset";
+		}
+
+		private MixedProperties(String one, String two, String three) {
+
+			this.one = one;
+			this.two = two;
+			this.three = three;
+		}
+
+		MixedProperties withThree(String three) {
+			return new MixedProperties(one, two, three);
+		}
+	}
+
+	@AllArgsConstructor
+	static class EntityWithListInConstructor {
+
+		@Id final Long id;
+
+		final List<Trivial> content;
+	}
+
+	static class NoIdChain0 {
+		String zeroValue;
+	}
+
+	static class NoIdChain1 {
+		String oneValue;
+		NoIdChain0 chain0;
+	}
+
+	static class NoIdChain2 {
+		String twoValue;
+		NoIdChain1 chain1;
+	}
+
+	static class NoIdChain3 {
+		String threeValue;
+		NoIdChain2 chain2;
+	}
+
+	static class NoIdChain4 {
+		@Id Long four;
+		String fourValue;
+		NoIdChain3 chain3;
+	}
+
+	// Infrastructure for assertions and constructing mocks
+
 	private <T> FixtureBuilder<T> buildFixture() {
 		return new FixtureBuilder<>();
 	}
@@ -418,129 +543,6 @@ public class EntityRowMapperUnitTests {
 		}
 	}
 
-	@RequiredArgsConstructor
-	@Wither
-	static class TrivialImmutable {
-
-		@Id private final Long id;
-		private final String name;
-	}
-
-	static class Trivial {
-
-		@Id Long id;
-		String name;
-	}
-
-	static class OneToOne {
-
-		@Id Long id;
-		String name;
-		Trivial child;
-	}
-
-	@RequiredArgsConstructor
-	@Wither
-	static class OneToOneImmutable {
-
-		private final @Id Long id;
-		private final String name;
-		private final TrivialImmutable child;
-	}
-
-	static class OneToSet {
-
-		@Id Long id;
-		String name;
-		Set<Trivial> children;
-	}
-
-	static class OneToMap {
-
-		@Id Long id;
-		String name;
-		Map<String, Trivial> children;
-	}
-
-	static class OneToList {
-
-		@Id Long id;
-		String name;
-		List<Trivial> children;
-	}
-
-	static class EmbeddedEntity {
-
-		@Id Long id;
-		String name;
-		@Embedded("prefix_") Trivial children;
-	}
-
-	private static class DontUseSetter {
-		String value;
-
-		DontUseSetter(@Param("value") String value) {
-			this.value = "setThroughConstructor:" + value;
-		}
-	}
-
-	static class MixedProperties {
-
-		final String one;
-		String two;
-		final String three;
-
-		@PersistenceConstructor
-		MixedProperties(String one) {
-			this.one = one;
-			this.three = "unset";
-		}
-
-		private MixedProperties(String one, String two, String three) {
-
-			this.one = one;
-			this.two = two;
-			this.three = three;
-		}
-
-		MixedProperties withThree(String three) {
-			return new MixedProperties(one, two, three);
-		}
-	}
-
-	@AllArgsConstructor
-	static class EntityWithListInConstructor {
-
-		@Id final Long id;
-
-		final List<Trivial> content;
-	}
-
-	static class NoIdChain0 {
-		String zeroValue;
-	}
-
-	static class NoIdChain1 {
-		String oneValue;
-		NoIdChain0 chain0;
-	}
-
-	static class NoIdChain2 {
-		String twoValue;
-		NoIdChain1 chain1;
-	}
-
-	static class NoIdChain3 {
-		String threeValue;
-		NoIdChain2 chain2;
-	}
-
-	static class NoIdChain4 {
-		@Id Long four;
-		String fourValue;
-		NoIdChain3 chain3;
-	}
-
 	private interface SetValue<T> {
 		SetColumns<T> value(Object value);
 
@@ -609,6 +611,7 @@ public class EntityRowMapperUnitTests {
 
 	@AllArgsConstructor
 	private static class Fixture<T> {
+
 		final ResultSet resultSet;
 		final List<Expectation<T>> expectations;
 
