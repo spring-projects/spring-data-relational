@@ -18,11 +18,15 @@ package org.springframework.data.jdbc.core.convert;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.experimental.Wither;
 
@@ -301,6 +305,101 @@ public class EntityRowMapperUnitTests {
 				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, new ImmutableValue("ru'Ha'"));
 	}
 
+	@Test // DATAJDBC-370
+	@SneakyThrows
+	public void simplePrimitiveImmutableEmbeddedGetsProperlyExtracted() {
+
+		ResultSet rs = mockResultSet(asList("id", "value"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, 24);
+		rs.next();
+
+		WithPrimitiveImmutableValue extracted = createRowMapper(WithPrimitiveImmutableValue.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.embeddedImmutablePrimitiveValue) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, new ImmutablePrimitiveValue(24));
+	}
+
+	@Test // DATAJDBC-370
+	public void simpleImmutableEmbeddedShouldBeNullIfAllOfTheEmbeddableAreNull() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("id", "value"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
+		rs.next();
+
+		WithImmutableValue extracted = createRowMapper(WithImmutableValue.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.embeddedImmutableValue) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
+	}
+
+	@Test // DATAJDBC-370
+	@SneakyThrows
+	public void embeddedShouldBeNullWhenFieldsAreNull() {
+
+		ResultSet rs = mockResultSet(asList("id", "name", "prefix_id", "prefix_name"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", null, null);
+		rs.next();
+
+		EmbeddedEntity extracted = createRowMapper(EmbeddedEntity.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name, e -> e.children) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", null);
+	}
+
+	@Test // DATAJDBC-370
+	@SneakyThrows
+	public void embeddedShouldNotBeNullWhenAtLeastOneFieldIsNotNull() {
+
+		ResultSet rs = mockResultSet(asList("id", "name", "prefix_id", "prefix_name"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24, null);
+		rs.next();
+
+		EmbeddedEntity extracted = createRowMapper(EmbeddedEntity.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name, e -> e.children) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", new Trivial(24L, null));
+	}
+
+	@Test // DATAJDBC-370
+	@SneakyThrows
+	public void primitiveEmbeddedShouldBeNullWhenNoValuePresent() {
+
+		ResultSet rs = mockResultSet(asList("id", "value"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
+		rs.next();
+
+		WithPrimitiveImmutableValue extracted = createRowMapper(WithPrimitiveImmutableValue.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.embeddedImmutablePrimitiveValue) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
+	}
+
+	@Test // DATAJDBC-370
+	@SneakyThrows
+	public void deepNestedEmbeddable() {
+
+		ResultSet rs = mockResultSet(asList("id", "level0", "level1_value", "level1_level2_value"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "0", "1", "2");
+		rs.next();
+
+		WithDeepNestedEmbeddable extracted = createRowMapper(WithDeepNestedEmbeddable.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> extracted.level0, e -> e.level1.value, e -> e.level1.level2.value) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "0", "1", "2");
+	}
+
 	// Model classes to be used in tests
 
 	@Wither
@@ -311,6 +410,9 @@ public class EntityRowMapperUnitTests {
 		private final String name;
 	}
 
+	@EqualsAndHashCode
+	@NoArgsConstructor
+	@AllArgsConstructor
 	static class Trivial {
 
 		@Id Long id;
@@ -432,9 +534,33 @@ public class EntityRowMapperUnitTests {
 		@Embedded ImmutableValue embeddedImmutableValue;
 	}
 
+	static class WithPrimitiveImmutableValue {
+
+		@Id Long id;
+		@Embedded ImmutablePrimitiveValue embeddedImmutablePrimitiveValue;
+	}
+
 	@Value
 	static class ImmutableValue {
 		Object value;
+	}
+
+	@Value
+	static class ImmutablePrimitiveValue {
+		int value;
+	}
+
+	static class WithDeepNestedEmbeddable {
+
+		@Id Long id;
+		String level0;
+		@Embedded("level1_") EmbeddedWithEmbedded level1;
+	}
+
+	static class EmbeddedWithEmbedded {
+
+		Object value;
+		@Embedded("level2_") ImmutableValue level2;
 	}
 
 	// Infrastructure for assertions and constructing mocks
@@ -454,22 +580,23 @@ public class EntityRowMapperUnitTests {
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determine what kind of ResultSet is needed for subsequent selects.
-		doReturn(new HashSet<>(asList(new Trivial(), new Trivial()))).when(accessStrategy)
+		doReturn(new HashSet<>(asList(new Trivial(1L, "one"), new Trivial(2L, "two")))).when(accessStrategy)
 				.findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP), any(RelationalPersistentProperty.class));
 
 		doReturn(new HashSet<>(asList( //
-				new SimpleEntry<>("one", new Trivial()), //
-				new SimpleEntry<>("two", new Trivial()) //
+				new SimpleEntry<>("one", new Trivial(1L, "one")), //
+				new SimpleEntry<>("two", new Trivial(2L, "two")) //
 		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP),
 				any(RelationalPersistentProperty.class));
 
 		doReturn(new HashSet<>(asList( //
-				new SimpleEntry<>(1, new Trivial()), //
-				new SimpleEntry<>(2, new Trivial()) //
+				new SimpleEntry<>(1, new Trivial(1L, "one")), //
+				new SimpleEntry<>(2, new Trivial(2L, "tow")) //
 		))).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST),
 				any(RelationalPersistentProperty.class));
 
-		JdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions());
+		JdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions(),
+				JdbcTypeFactory.unsupported());
 
 		return new EntityRowMapper<>( //
 				(RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type), //
