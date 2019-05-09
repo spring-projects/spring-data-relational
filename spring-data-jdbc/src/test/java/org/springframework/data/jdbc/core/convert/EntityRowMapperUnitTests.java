@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.experimental.Wither;
 
 import java.sql.ResultSet;
@@ -60,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Maciej Walkowiak
  * @author Bastian Wilhelm
+ * @author Christoph Strobl
  */
 public class EntityRowMapperUnitTests {
 
@@ -284,8 +286,24 @@ public class EntityRowMapperUnitTests {
 		fixture.assertOn(extracted);
 	}
 
+	@Test // DATAJDBC-370
+	public void simpleImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("id", "value"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "ru'Ha'");
+		rs.next();
+
+		WithImmutableValue extracted = createRowMapper(WithImmutableValue.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.embeddedImmutableValue) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, new ImmutableValue("ru'Ha'"));
+	}
+
 	// Model classes to be used in tests
 
+	@Wither
 	@RequiredArgsConstructor
 	static class TrivialImmutable {
 
@@ -306,6 +324,7 @@ public class EntityRowMapperUnitTests {
 		Trivial child;
 	}
 
+	@Wither
 	@RequiredArgsConstructor
 	static class OneToOneImmutable {
 
@@ -405,6 +424,17 @@ public class EntityRowMapperUnitTests {
 		@Id Long four;
 		String fourValue;
 		NoIdChain3 chain3;
+	}
+
+	static class WithImmutableValue {
+
+		@Id Long id;
+		@Embedded ImmutableValue embeddedImmutableValue;
+	}
+
+	@Value
+	static class ImmutableValue {
+		Object value;
 	}
 
 	// Infrastructure for assertions and constructing mocks
