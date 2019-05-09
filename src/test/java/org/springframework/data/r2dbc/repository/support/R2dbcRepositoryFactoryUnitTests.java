@@ -25,9 +25,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;

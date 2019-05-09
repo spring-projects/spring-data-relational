@@ -18,8 +18,8 @@ package org.springframework.data.r2dbc.repository.support;
 import java.io.Serializable;
 
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;

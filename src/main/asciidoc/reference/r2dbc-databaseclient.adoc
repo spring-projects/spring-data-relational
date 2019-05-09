@@ -34,10 +34,10 @@ Once built, a `DatabaseClient` instance is immutable. However, you can clone it 
 [source,java]
 ----
 DatabaseClient client1 = DatabaseClient.builder()
-        .exceptionTranslator(exceptionTranslatorA).build();
+  .exceptionTranslator(exceptionTranslatorA).build();
 
 DatabaseClient client2 = client1.mutate()
-        .exceptionTranslator(exceptionTranslatorB).build();
+  .exceptionTranslator(exceptionTranslatorB).build();
 ----
 
 == Controlling Database Connections
@@ -98,12 +98,14 @@ You can extend `SqlErrorCodeR2dbcExceptionTranslator`, as the following example 
 ----
 public class CustomSqlErrorCodeR2dbcExceptionTranslator extends SqlErrorCodeR2dbcExceptionTranslator {
 
-    protected DataAccessException customTranslate(String task, String sql, R2dbcException r2dbcex) {
-        if (sqlex.getErrorCode() == -12345) {
-            return new DeadlockLoserDataAccessException(task, r2dbcex);
-        }
-        return null;
+  protected DataAccessException customTranslate(String task, String sql, R2dbcException r2dbcex) {
+
+    if (sqlex.getErrorCode() == -12345) {
+      return new DeadlockLoserDataAccessException(task, r2dbcex);
     }
+
+    return null;
+  }
 }
 ----
 
@@ -115,10 +117,11 @@ The following example shows how you can use this custom translator:
 ----
 ConnectionFactory connectionFactory = …;
 
-CustomSqlErrorCodeR2dbcExceptionTranslator exceptionTranslator = new CustomSqlErrorCodeR2dbcExceptionTranslator();
+CustomSqlErrorCodeR2dbcExceptionTranslator exceptionTranslator =
+  new CustomSqlErrorCodeR2dbcExceptionTranslator();
 
 DatabaseClient client = DatabaseClient.builder()
-                            .connectionFactory(connectionFactory)
-                            .exceptionTranslator(exceptionTranslator)
-                            .build();
+  .connectionFactory(connectionFactory)
+  .exceptionTranslator(exceptionTranslator)
+  .build();
 ----

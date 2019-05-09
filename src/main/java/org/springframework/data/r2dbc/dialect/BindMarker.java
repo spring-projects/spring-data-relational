@@ -2,8 +2,6 @@ package org.springframework.data.r2dbc.dialect;
 
 import io.r2dbc.spi.Statement;
 
-import org.springframework.data.r2dbc.domain.BindTarget;
-
 /**
  * A bind marker represents a single bindable parameter within a query. Bind markers are dialect-specific and provide a
  * {@link #getPlaceholder() placeholder} that is used in the actual query.

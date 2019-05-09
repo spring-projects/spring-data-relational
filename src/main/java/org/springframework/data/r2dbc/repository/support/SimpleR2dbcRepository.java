@@ -24,13 +24,12 @@ import java.util.Collections;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
-
-import org.springframework.data.r2dbc.domain.PreparedOperation;
-import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.function.StatementMapper;
-import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.function.query.Criteria;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.PreparedOperation;
+import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.core.StatementMapper;
+import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;

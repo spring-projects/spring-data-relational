@@ -29,9 +29,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
-import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
-import org.springframework.data.r2dbc.function.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;

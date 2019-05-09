@@ -15,9 +15,9 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
-import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.DatabaseClient.BindSpec;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;

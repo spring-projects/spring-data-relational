@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.r2dbc.dialect.ArrayColumns.Unsupported;
+import org.springframework.data.r2dbc.mapping.R2dbcSimpleTypeHolder;
 
 /**
  * Represents a dialect that is implemented by a particular database.

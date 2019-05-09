@@ -17,7 +17,7 @@ package org.springframework.data.r2dbc.repository.query;
 
 import java.util.function.Supplier;
 
-import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
+import org.springframework.data.r2dbc.core.DatabaseClient.BindSpec;
 
 /**
  * Interface declaring a query that supplies SQL and can bind parameters to a {@link BindSpec}.

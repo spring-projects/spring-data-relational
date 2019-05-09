@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.r2dbc.function.FetchSpec;
+import org.springframework.data.r2dbc.core.FetchSpec;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.repository.query.DtoInstantiatingConverter;

@@ -24,7 +24,7 @@ import org.springframework.lang.Nullable;
  * Exception thrown when a {@link io.r2dbc.spi.Result} has been accessed in an invalid fashion. Such exceptions always
  * have a {@link io.r2dbc.spi.R2dbcException} root cause.
  * <p>
- * This typically happens when an invalid {@link org.springframework.data.r2dbc.function.FetchSpec} column index or name
+ * This typically happens when an invalid {@link org.springframework.data.r2dbc.core.FetchSpec} column index or name
  * has been specified.
  *
  * @author Mark Paluch

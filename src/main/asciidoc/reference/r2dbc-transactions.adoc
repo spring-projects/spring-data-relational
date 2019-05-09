@@ -6,14 +6,14 @@ Relational databases typically associate a transaction with a single transport c
 Using different connections hence results in utilizing different transactions.
 Spring Data R2DBC includes transaction-awareness in `DatabaseClient` that allows you to group multiple statements within
 the same transaction using https://docs.spring.io/spring/docs/current/spring-framework-reference/data-access.html#transaction[Spring's Transaction Management].
-Spring Data R2DBC provides a implementation for `ReactiveTransactionManager` with `ConnectionFactoryTransactionManager`.
-See <<r2dbc.connections.ConnectionFactoryTransactionManager>> for further details.
+Spring Data R2DBC provides a implementation for `ReactiveTransactionManager` with `R2dbcTransactionManager`.
+See <<r2dbc.connections.R2dbcTransactionManager>> for further details.
 
 .Programmatic Transaction Management
 ====
 [source,java]
 ----
-ReactiveTransactionManager tm = new ConnectionFactoryTransactionManager(connectionFactory);
+ReactiveTransactionManager tm = new R2dbcTransactionManager(connectionFactory);
 TransactionalOperator operator = TransactionalOperator.create(tm); <1>
 
 DatabaseClient client = DatabaseClient.create(connectionFactory);
@@ -43,7 +43,7 @@ is a less invasive, annotation-based approach to transaction demarcation.
 [source,java]
 ----
 @Configuration
-@EnableTransactionManagement                                              <1>
+@EnableTransactionManagement                                                           <1>
 class Config extends AbstractR2dbcConfiguration {
 
   @Override
@@ -52,8 +52,8 @@ class Config extends AbstractR2dbcConfiguration {
   }
 
   @Bean
-  ReactiveTransactionManager txMgr(ConnectionFactory connectionFactory) { <2>
-    return new ConnectionFactoryTransactionManager(connectionFactory);
+  ReactiveTransactionManager transactionManager(ConnectionFactory connectionFactory) { <2>
+    return new R2dbcTransactionManager(connectionFactory);
   }
 }
 
@@ -83,5 +83,5 @@ class MyService {
 }
 ----
 <1> Enable declarative transaction management.
-<2> Provide a `ReactiveTransactionManager` implementation to back reactive tansaction features.
+<2> Provide a `ReactiveTransactionManager` implementation to back reactive transaction features.
 ====

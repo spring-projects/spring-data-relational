@@ -12,9 +12,9 @@ Let's take a look at a simple query:
 [source,java]
 ----
 Flux<Person> people = databaseClient.select()
-        .from(Person.class)                       <1>
-        .fetch()
-        .all();                                   <2>
+  .from(Person.class)                         <1>
+  .fetch()
+  .all();                                     <2>
 ----
 <1> Using `Person` with the `from(…)` method sets the `FROM` table based on mapping metadata. It also maps tabular results on `Person` result objects.
 <2> Fetching `all()` rows returns a `Flux<Person>` without limiting results.
@@ -26,13 +26,13 @@ The following example declares a more complex query that specifies the table nam
 [source,java]
 ----
 Mono<Person> first = databaseClient.select()
-        .from("legoset")                                  <1>
-        .matching(where("firstname").is("John")           <2>
-                .and("lastname").in("Doe", "White"))
-        .orderBy(desc("id"))                              <3>
-        .as(Person.class)
-        .fetch()
-        .one();                                           <4>
+  .from("legoset")                           <1>
+  .matching(where("firstname").is("John")    <2>
+    .and("lastname").in("Doe", "White"))
+  .orderBy(desc("id"))                       <3>
+  .as(Person.class)
+  .fetch()
+  .one();                                    <4>
 ----
 <1> Selecting from a table by name returns row results as `Map<String, Object>` with case-insensitive column name matching.
 <2> The issued query declares a `WHERE` condition on `firstname` and `lastname` columns to filter results.
@@ -166,9 +166,9 @@ Take a look at a simple typed update operation:
 Person modified = …
 
 Mono<Void> update = databaseClient.update()
-        .table(Person.class)                              <1>
-        .using(modified)                                  <2>
-        .then();                                          <3>
+  .table(Person.class)                      <1>
+  .using(modified)                          <2>
+  .then();                                  <3>
 ----
 <1> Using `Person` with the `table(…)` method sets the table to update based on mapping metadata.
 <2> Provide a scalar `Person` object value. `using(…)` accepts the modified object and derives primary keys and updates all column values.
@@ -181,10 +181,10 @@ Update also support untyped operations:
 [source,java]
 ----
 Mono<Void> update = databaseClient.update()
-        .table("person")                                  <1>
-        .using(Update.update("firstname", "Jane"))        <2>
-        .matching(where("firstname").is("John"))          <3>
-        .then();                                          <4>
+  .table("person")                           <1>
+  .using(Update.update("firstname", "Jane")) <2>
+  .matching(where("firstname").is("John"))   <3>
+  .then();                                   <4>
 ----
 <1> Update table `person`.
 <2> Provide a `Update` definition, which columns to update.
@@ -217,10 +217,10 @@ Take a look at a simple insert operation:
 [source,java]
 ----
 Mono<Void> delete = databaseClient.delete()
-        .from(Person.class)                               <1>
-        .matching(where("firstname").is("John")           <2>
-                .and("lastname").in("Doe", "White"))
-        .then();                                          <3>
+  .from(Person.class)                       <1>
+  .matching(where("firstname").is("John")   <2>
+    .and("lastname").in("Doe", "White"))
+  .then();                                  <3>
 ----
 <1> Using `Person` with the `from(…)` method sets the `FROM` table based on mapping metadata.
 <2> The issued query declares a `WHERE` condition on `firstname` and `lastname` columns to filter rows to delete.

@@ -4,7 +4,7 @@ import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
 
 import org.reactivestreams.Publisher;
-import org.springframework.data.r2dbc.function.DatabaseClient.BindSpec;
+import org.springframework.data.r2dbc.core.DatabaseClient.BindSpec;
 
 /**
  * Adapter for {@link BindSpec} to be used with {@link org.springframework.data.r2dbc.dialect.BindMarker} binding.

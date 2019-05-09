@@ -117,7 +117,7 @@ public @interface EnableR2dbcRepositories {
 	Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
 
 	/**
-	 * Configures the name of the {@link org.springframework.data.r2dbc.function.DatabaseClient} bean to be used with the
+	 * Configures the name of the {@link org.springframework.data.r2dbc.core.DatabaseClient} bean to be used with the
 	 * repositories detected.
 	 *
 	 * @return

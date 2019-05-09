@@ -140,31 +140,31 @@ public class R2dbcApp {
     DatabaseClient client = DatabaseClient.create(connectionFactory);
 
     client.execute()
-            .sql("CREATE TABLE person" +
-                    "(id VARCHAR(255) PRIMARY KEY," +
-                    "name VARCHAR(255)," +
-                    "age INT)")
-            .fetch()
-            .rowsUpdated()
-            .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
+      .sql("CREATE TABLE person" +
+        "(id VARCHAR(255) PRIMARY KEY," +
+        "name VARCHAR(255)," +
+        "age INT)")
+      .fetch()
+      .rowsUpdated()
+      .as(StepVerifier::create)
+      .expectNextCount(1)
+      .verifyComplete();
 
     client.insert()
-            .into(Person.class)
-            .using(new Person("joe", "Joe", 34))
-            .then()
-            .as(StepVerifier::create)
-            .verifyComplete();
+      .into(Person.class)
+      .using(new Person("joe", "Joe", 34))
+      .then()
+      .as(StepVerifier::create)
+      .verifyComplete();
 
     client.select()
-            .from(Person.class)
-            .fetch()
-            .first()
-            .doOnNext(it -> log.info(it))
-            .as(StepVerifier::create)
-            .expectNextCount(1)
-            .verifyComplete();
+      .from(Person.class)
+      .fetch()
+      .first()
+      .doOnNext(it -> log.info(it))
+      .as(StepVerifier::create)
+      .expectNextCount(1)
+      .verifyComplete();
   }
 }
 ----

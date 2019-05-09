@@ -3,7 +3,6 @@ package org.springframework.data.r2dbc.dialect;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.Function;
 
-import org.springframework.data.r2dbc.domain.BindTarget;
 import org.springframework.util.Assert;
 
 /**

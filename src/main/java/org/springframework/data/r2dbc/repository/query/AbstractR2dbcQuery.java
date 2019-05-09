@@ -22,10 +22,10 @@ import org.reactivestreams.Publisher;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.EntityInstantiators;
-import org.springframework.data.r2dbc.function.DatabaseClient;
-import org.springframework.data.r2dbc.function.DatabaseClient.GenericExecuteSpec;
-import org.springframework.data.r2dbc.function.FetchSpec;
-import org.springframework.data.r2dbc.function.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.FetchSpec;
+import org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingConverter;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingExecution;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;

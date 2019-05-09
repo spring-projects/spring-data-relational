@@ -15,8 +15,6 @@
  */
 package org.springframework.data.r2dbc.dialect;
 
-import org.springframework.data.r2dbc.domain.BindTarget;
-
 /**
  * A single indexed bind marker.
  */
