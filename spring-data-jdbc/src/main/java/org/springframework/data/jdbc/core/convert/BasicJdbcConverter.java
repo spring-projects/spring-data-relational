@@ -52,6 +52,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -345,15 +346,40 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 			Object value = getObjectFromResultSet(path.extendBy(property).getColumnAlias());
 			return readValue(value, property.getTypeInformation());
-
 		}
 
-		@SuppressWarnings("unchecked")
+		@Nullable
 		private Object readEmbeddedEntityFrom(@Nullable Object idValue, RelationalPersistentProperty property) {
 
-			ReadingContext newContext = extendBy(property);
+			ReadingContext<?> ctx = extendBy(property);
+			return hasInstanceValues(property, ctx) ? ctx.createInstanceInternal(idValue) : null;
+		}
 
-			return newContext.createInstanceInternal(idValue);
+		private boolean hasInstanceValues(RelationalPersistentProperty property, ReadingContext<?> ctx) {
+
+			RelationalPersistentEntity<?> persistentEntity = getMappingContext()
+					.getPersistentEntity(property.getTypeInformation());
+
+			PersistentPropertyPathExtension extension = ctx.path;
+
+			for (RelationalPersistentProperty embeddedProperty : persistentEntity) {
+
+				if (embeddedProperty.isQualified() || embeddedProperty.isReference()) {
+					return true;
+				}
+
+				try {
+					if (ctx.getObjectFromResultSet(extension.extendBy(embeddedProperty).getColumnName()) != null) {
+						return true;
+					}
+				} catch (MappingException e) {
+					if (ctx.getObjectFromResultSet(extension.extendBy(embeddedProperty).getReverseColumnNameAlias()) != null) {
+						return true;
+					}
+				}
+			}
+
+			return false;
 		}
 
 		@Nullable

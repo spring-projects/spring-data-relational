@@ -44,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
  *
  * @author Bastian Wilhelm
+ * @author Christoph Strobl
  */
 @ContextConfiguration
 @Transactional
@@ -209,6 +210,14 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		assertThat(repository.findAll()).isEmpty();
 	}
 
+	@Test // DATAJDBC-370
+	public void saveWithNullValueEmbeddable() {
+
+		DummyEntity entity = repository.save(new DummyEntity());
+
+		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
+				"id = " + entity.getId())).isEqualTo(1);
+	}
 
 	private static DummyEntity createDummyEntity() {
 		DummyEntity entity = new DummyEntity();
@@ -221,7 +230,6 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		prefixedCascadedEmbeddable.setEmbeddable(embeddable1);
 
 		entity.setPrefixedEmbeddable(prefixedCascadedEmbeddable);
-
 
 		final CascadedEmbeddable cascadedEmbeddable = new CascadedEmbeddable();
 		cascadedEmbeddable.setTest("c2");

@@ -54,6 +54,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Thomas Lang
  * @author Bastian Wilhelm
+ * @author Christoph Strobl
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -313,7 +314,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
-		PersistentPropertyAccessor<S> propertyAccessor = persistentEntity.getPropertyAccessor(instance);
+		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
+				: NoValuePropertyAccessor.instance();
 
 		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
@@ -478,6 +480,35 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		 */
 		static Predicate<RelationalPersistentProperty> includeAll() {
 			return it -> false;
+		}
+	}
+
+	/**
+	 * A {@link PersistentPropertyAccessor} implementation always returning null
+	 * 
+	 * @param <T>
+	 */
+	static class NoValuePropertyAccessor<T> implements PersistentPropertyAccessor<T> {
+
+		private static final NoValuePropertyAccessor INSTANCE = new NoValuePropertyAccessor();
+
+		static <T> NoValuePropertyAccessor<T> instance() {
+			return INSTANCE;
+		}
+
+		@Override
+		public void setProperty(PersistentProperty<?> property, Object value) {
+			throw new UnsupportedOperationException("Cannot set value on 'null' target object.");
+		}
+
+		@Override
+		public Object getProperty(PersistentProperty<?> property) {
+			return null;
+		}
+
+		@Override
+		public T getBean() {
+			return null;
 		}
 	}
 }
