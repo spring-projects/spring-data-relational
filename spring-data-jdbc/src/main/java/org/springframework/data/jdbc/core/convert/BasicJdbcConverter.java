@@ -351,31 +351,23 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		@Nullable
 		private Object readEmbeddedEntityFrom(@Nullable Object idValue, RelationalPersistentProperty property) {
 
-			ReadingContext<?> ctx = extendBy(property);
-			return hasInstanceValues(property, ctx) ? ctx.createInstanceInternal(idValue) : null;
+			ReadingContext<?> newContext = extendBy(property);
+			return newContext.hasInstanceValues(idValue) ? newContext.createInstanceInternal(idValue) : null;
 		}
 
-		private boolean hasInstanceValues(RelationalPersistentProperty property, ReadingContext<?> ctx) {
+		private boolean hasInstanceValues(Object idValue) {
 
-			RelationalPersistentEntity<?> persistentEntity = getMappingContext()
-					.getPersistentEntity(property.getTypeInformation());
-
-			PersistentPropertyPathExtension extension = ctx.path;
+			RelationalPersistentEntity<?> persistentEntity = path.getLeafEntity();
 
 			for (RelationalPersistentProperty embeddedProperty : persistentEntity) {
 
+				// if the embedded contains Lists, Sets or Maps we consider it non-empty
 				if (embeddedProperty.isQualified() || embeddedProperty.isReference()) {
 					return true;
 				}
 
-				try {
-					if (ctx.getObjectFromResultSet(extension.extendBy(embeddedProperty).getColumnName()) != null) {
-						return true;
-					}
-				} catch (MappingException e) {
-					if (ctx.getObjectFromResultSet(extension.extendBy(embeddedProperty).getReverseColumnNameAlias()) != null) {
-						return true;
-					}
+				if (readOrLoadProperty(idValue, embeddedProperty) != null) {
+					return true;
 				}
 			}
 
