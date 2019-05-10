@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.7.RELEASE (2019-05-10)
+---------------------------------------------
+* DATAJDBC-365 - Fix typos in readme.
+* DATAJDBC-351 - Release 1.0.7 (Lovelace SR7).
+
+
 Changes in version 1.1.0.M3 (2019-04-11)
 ----------------------------------------
 * DATAJDBC-357 - Introduce dialect support to render paginated queries.
