@@ -1,6 +1,15 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.0.M4 (2019-05-13)
+----------------------------------------
+* DATAJDBC-370 - Can't set attribute of embeddable with only a constructor for arguments.
+* DATAJDBC-365 - Fix typos in readme.
+* DATAJDBC-363 - Release 1.1 M4 (Moore).
+* DATAJDBC-361 - Fix minor typos in SqlGenerator.
+* DATAJDBC-359 - Chains of entities without id should work and reference the topmost entity.
+
+
 Changes in version 1.0.7.RELEASE (2019-05-10)
 ---------------------------------------------
 * DATAJDBC-365 - Fix typos in readme.
