@@ -1,6 +1,11 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.8.RELEASE (2019-05-13)
+---------------------------------------------
+* DATAJDBC-371 - Release 1.0.8 (Lovelace SR8).
+
+
 Changes in version 1.1.0.M4 (2019-05-13)
 ----------------------------------------
 * DATAJDBC-370 - Can't set attribute of embeddable with only a constructor for arguments.
