@@ -1,6 +1,40 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.0.0.M2 (2019-05-14)
+----------------------------------------
+* #117 - Upgrade to jasync-sql 0.9.51.
+* #116 - Upgrade to R2DBC 0.8 M8.
+* #115 - Upgrade to Spring Data Moore M4.
+* #111 - Revisit package structure and naming.
+* #109 - Support mapping of simple types (e.g. to Long/Integer) out of the box.
+* #108 - #107 - Add ConnectionFactoryTransactionManager and reactive transaction management utilities.
+* #100 - Refactor code to not require Spring JDBC as mandatory dependency.
+* #95 - Use @Configuration(proxyBeanMethods=false) for AbstractR2dbcConfiguration.
+* #90 - Inserting a row without key generation via R2dbcRepository.save(…) completes without emitting objects.
+* #86 - Add non-nullable variant to RowsFetchSpec extensions.
+* #85 - Could not read property java.math.BigDecimal.
+* #75 - Add support for MySQL.
+* #74 - URL Cleanup.
+* #73 - Introduce PreparedOperation.
+* #65 - Add converters for simple type projections.
+* #64 - Add criteria API to create filter predicates.
+* #63 - Add DatabaseClient Coroutines extensions.
+* #61 - Move Conversion-related functionality to MappingR2dbcConverter.
+* #60 - Use R2DBC's BOM for dependency management.
+* #59 - Consider custom conversion in EntityRowMapper and MappingR2dbcConverter.
+* #57 - Add R2DBC-specific exception translation.
+* #56 - Integrate Spring Data Relational's Statement Builder.
+* #54 - Upgrade to R2DBC 1.0 M7.
+* #52 - Don't depend on MSSQL JDBC driver.
+* #51 - #29 - Use TestContainers for integration tests.
+* #47 - Add support for named parameters.
+* #45 - Update copyright years to 2019.
+* #41 - Add support for simple type projections.
+* #39 - Add support for Custom Conversion.
+* #37 - Release 1.0 M2.
+
+
 Changes in version 1.0.0.M1 (2018-12-12)
 ----------------------------------------
 * #36 - Release 1.0 M1.
