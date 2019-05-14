@@ -76,7 +76,8 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		Assert.notNull(dialect, "Dialect must not be null");
 
 		R2dbcCustomConversions customConversions = new R2dbcCustomConversions(
-				StoreConversions.of(dialect.getSimpleTypeHolder()), Collections.emptyList());
+				StoreConversions.of(dialect.getSimpleTypeHolder(), R2dbcCustomConversions.STORE_CONVERTERS),
+				Collections.emptyList());
 
 		RelationalMappingContext context = new RelationalMappingContext();
 		context.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());

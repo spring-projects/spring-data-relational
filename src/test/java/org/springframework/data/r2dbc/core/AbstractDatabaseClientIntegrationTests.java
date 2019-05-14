@@ -33,7 +33,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
@@ -337,6 +336,30 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.all() //
 				.as(StepVerifier::create) //
 				.expectNext(42055) //
+				.verifyComplete();
+	}
+
+	@Test // gh-109
+	public void selectSimpleTypeProjection() {
+
+		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.execute().sql("SELECT COUNT(*) FROM legoset") //
+				.as(Long.class) //
+				.fetch() //
+				.all() //
+				.as(StepVerifier::create) //
+				.expectNext(1L) //
+				.verifyComplete();
+
+		databaseClient.execute().sql("SELECT name FROM legoset") //
+				.as(String.class) //
+				.fetch() //
+				.one() //
+				.as(StepVerifier::create) //
+				.expectNext("SCHAUFELRADBAGGER") //
 				.verifyComplete();
 	}
 
