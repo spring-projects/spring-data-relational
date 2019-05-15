@@ -1,3 +1,7 @@
+image:https://spring.io/badges/spring-data-r2dbc/snapshot.svg["Spring Data R2DBC", link="https://spring.io/projects/spring-data-r2dbc#learn"]
+
+image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-r2dbc%2Fmaster&subject=master["Spring Data R2DBC", link="https://jenkins.spring.io/view/SpringData/job/spring-data-r2dbc/"]
+
 = Spring Data R2DBC
 
 The primary goal of the https://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data R2DBC* offers the popular Repository abstraction based on https://r2dbc.io[R2DBC].
@@ -183,6 +187,32 @@ You don't need to build from source to use Spring Data R2DBC (binaries in https:
 If you want to build with the regular `mvn` command, you will need https://maven.apache.org/run-maven/index.html[Maven v3.5.0 or above].
 
 _Also see link:CONTRIBUTING.adoc[CONTRIBUTING.adoc] if you wish to submit pull requests, and in particular please fill out the https://cla.pivotal.io/[Contributor's Agreement] before your first change._
+
+== Running CI tasks locally
+
+Since this pipeline is purely Docker-based, it's easy to:
+
+* Debug what went wrong on your local machine.
+* Test out a a tweak to your `test.sh` script before sending it out.
+* Experiment against a new image before submitting your pull request.
+
+All of these use cases are great reasons to essentially run what the CI server does on your local machine.
+
+IMPORTANT: To do this you must have Docker installed on your machine.
+
+1. `docker run -it --mount type=bind,source="$(pwd)",target=/spring-data-r2dbc-github  -v /usr/bin/docker:/usr/bin/docker -v /var/run/docker.sock:/var/run/docker.sock adoptopenjdk/openjdk8:latest /bin/bash`
++
+This will launch the Docker image and mount your source code at `spring-data-r2dbc-github`.
++
+2. `cd spring-data-r2dbc-github`
++
+Next, test everything from inside the container:
++
+3. `./mvnw -Pci,all-dbs clean dependency:list test -Dsort -B` (or whatever test configuration you must use)
+
+Since the container is binding to your source, you can make edits from your IDE and continue to run build jobs.
+
+NOTE: Docker containers can eat up disk space fast! From time to time, run `docker system prune` to clean out old images.
 
 == Contributing to Spring Data R2DBC
 
