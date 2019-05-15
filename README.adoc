@@ -1,6 +1,9 @@
 image:https://spring.io/badges/spring-data-jdbc/ga.svg["Spring Data JDBC", link="https://spring.io/projects/spring-data-jdbc#learn"]
 image:https://spring.io/badges/spring-data-jdbc/snapshot.svg["Spring Data JDBC", link="https://spring.io/projects/spring-data-jdbc#learn"]
 
+image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-jdbc%2Fmaster&subject=Moore%20(master)["Spring Data JDBC", link="https://jenkins.spring.io/view/SpringData/job/spring-data-jdbc/"]
+image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-jdbc%2F1.0.x&subject=Lovelace%20(1.0.x)["Spring Data JDBC", link="https://jenkins.spring.io/view/SpringData/job/spring-data-jdbc/"]
+
 = Spring Data Relational
 
 The primary goal of the https://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data Relational* offers the popular Repository abstraction based on link:spring-data-jdbc[JDBC].
@@ -99,6 +102,32 @@ $ mvn test -Pall-dbs
 ----
 
 This will execute the unit tests, and all the integration tests with all the databases we currently support for testing. Running the integration-tests depends on Docker.
+
+== Running CI tasks locally
+
+Since this pipeline is purely Docker-based, it's easy to:
+
+* Debug what went wrong on your local machine.
+* Test out a a tweak to your `test.sh` script before sending it out.
+* Experiment against a new image before submitting your pull request.
+
+All of these use cases are great reasons to essentially run what the CI server does on your local machine.
+
+IMPORTANT: To do this you must have Docker installed on your machine.
+
+1. `docker run -it --mount type=bind,source="$(pwd)",target=/spring-data-jdbc-github  -v /usr/bin/docker:/usr/bin/docker -v /var/run/docker.sock:/var/run/docker.sock adoptopenjdk/openjdk8:latest /bin/bash`
++
+This will launch the Docker image and mount your source code at `spring-data-jdbc-github`.
++
+2. `cd spring-data-jdbc-github`
++
+Next, test everything from inside the container:
++
+3. `./mvnw -Pci,all-dbs clean dependency:list test -Dsort -B` (or whatever test configuration you must use)
+
+Since the container is binding to your source, you can make edits from your IDE and continue to run build jobs.
+
+NOTE: Docker containers can eat up disk space fast! From time to time, run `docker system prune` to clean out old images.
 
 == Contributing to Spring Data Relational
 
