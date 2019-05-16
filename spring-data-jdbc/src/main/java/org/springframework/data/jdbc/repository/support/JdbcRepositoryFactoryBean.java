@@ -15,8 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import java.io.Serializable;
-
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,6 +24,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.mybatis.support.MybatisContext;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -33,6 +33,8 @@ import org.springframework.data.repository.core.support.RepositoryFactorySupport
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
+
+import java.io.Serializable;
 
 /**
  * Special adapter for Springs {@link org.springframework.beans.factory.FactoryBean} interface to allow easy setup of
@@ -53,6 +55,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private JdbcConverter converter;
 	private DataAccessStrategy dataAccessStrategy;
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+	private MybatisContext mybatisContext = MybatisContext.EMPTY;
 	private NamedParameterJdbcOperations operations;
 
 	/**
@@ -85,7 +88,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
 				converter, publisher, operations);
 		jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
-
+		jdbcRepositoryFactory.setMyBatisContext(mybatisContext);
 		return jdbcRepositoryFactory;
 	}
 
@@ -132,6 +135,19 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.converter = converter;
 	}
 
+	/**
+	 * for mybatis support
+	 */
+	@Autowired(required = false)
+	public void setSqlSession(SqlSessionTemplate sqlSessionTemplate){
+		this.mybatisContext = new MybatisContext() {
+			@Override
+			public SqlSessionTemplate getSqlSessionTemplate() {
+				return sqlSessionTemplate;
+			}
+		};
+	}
+
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) {
 
@@ -166,6 +182,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		if (this.queryMappingConfiguration == null) {
 			this.queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+		}
+
+		if(this.mybatisContext == null){
+			this.mybatisContext = MybatisContext.EMPTY;
 		}
 
 		super.afterPropertiesSet();

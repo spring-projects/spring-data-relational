@@ -15,12 +15,15 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import java.lang.reflect.Method;
-
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.mybatis.support.MybatisContext;
+import org.springframework.data.jdbc.mybatis.support.MybatisQuery;
+import org.springframework.data.jdbc.mybatis.support.MybatisQueryMethod;
+import org.springframework.data.jdbc.mybatis.support.MybatisRepositoryQuery;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -34,6 +37,8 @@ import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
+import java.lang.reflect.Method;
+
 /**
  * {@link QueryLookupStrategy} for JDBC repositories. Currently only supports annotated queries.
  *
@@ -45,83 +50,105 @@ import org.springframework.util.Assert;
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
-	private final ApplicationEventPublisher publisher;
-	private final RelationalMappingContext context;
-	private final JdbcConverter converter;
-	private final DataAccessStrategy accessStrategy;
-	private final QueryMappingConfiguration queryMappingConfiguration;
-	private final NamedParameterJdbcOperations operations;
+    private final ApplicationEventPublisher publisher;
+    private final RelationalMappingContext context;
+    private final JdbcConverter converter;
+    private final DataAccessStrategy accessStrategy;
+    private final QueryMappingConfiguration queryMappingConfiguration;
+    private final NamedParameterJdbcOperations operations;
 
-	/**
-	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext},
-	 * {@link DataAccessStrategy} and {@link QueryMappingConfiguration}.
-	 *
-	 * @param publisher must not be {@literal null}.
-	 * @param context must not be {@literal null}.
-	 * @param converter must not be {@literal null}.
-	 * @param accessStrategy must not be {@literal null}.
-	 * @param queryMappingConfiguration must not be {@literal null}.
-	 */
-	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			JdbcConverter converter, DataAccessStrategy accessStrategy, QueryMappingConfiguration queryMappingConfiguration,
-			NamedParameterJdbcOperations operations) {
+    private MybatisContext mybatisContent;
 
-		Assert.notNull(publisher, "Publisher must not be null!");
-		Assert.notNull(context, "RelationalMappingContext must not be null!");
-		Assert.notNull(converter, "RelationalConverter must not be null!");
-		Assert.notNull(accessStrategy, "DataAccessStrategy must not be null!");
-		Assert.notNull(queryMappingConfiguration, "RowMapperMap must not be null!");
+    /**
+     * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext},
+     * {@link DataAccessStrategy} and {@link QueryMappingConfiguration}.
+     *
+     * @param publisher                 must not be {@literal null}.
+     * @param context                   must not be {@literal null}.
+     * @param converter                 must not be {@literal null}.
+     * @param accessStrategy            must not be {@literal null}.
+     * @param queryMappingConfiguration must not be {@literal null}.
+     */
+    JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, RelationalMappingContext context,
+                            JdbcConverter converter, DataAccessStrategy accessStrategy, QueryMappingConfiguration queryMappingConfiguration,
+                            NamedParameterJdbcOperations operations) {
 
-		this.publisher = publisher;
-		this.context = context;
-		this.converter = converter;
-		this.accessStrategy = accessStrategy;
-		this.queryMappingConfiguration = queryMappingConfiguration;
-		this.operations = operations;
-	}
+        Assert.notNull(publisher, "Publisher must not be null!");
+        Assert.notNull(context, "RelationalMappingContext must not be null!");
+        Assert.notNull(converter, "RelationalConverter must not be null!");
+        Assert.notNull(accessStrategy, "DataAccessStrategy must not be null!");
+        Assert.notNull(queryMappingConfiguration, "RowMapperMap must not be null!");
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.QueryLookupStrategy#resolveQuery(java.lang.reflect.Method, org.springframework.data.repository.core.RepositoryMetadata, org.springframework.data.projection.ProjectionFactory, org.springframework.data.repository.core.NamedQueries)
-	 */
-	@Override
-	public RepositoryQuery resolveQuery(Method method, RepositoryMetadata repositoryMetadata,
-			ProjectionFactory projectionFactory, NamedQueries namedQueries) {
+        this.publisher = publisher;
+        this.context = context;
+        this.converter = converter;
+        this.accessStrategy = accessStrategy;
+        this.queryMappingConfiguration = queryMappingConfiguration;
+        this.operations = operations;
+    }
 
-		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
+    /*
+     * (non-Javadoc)
+     * @see org.springframework.data.repository.query.QueryLookupStrategy#resolveQuery(java.lang.reflect.Method, org.springframework.data.repository.core.RepositoryMetadata, org.springframework.data.projection.ProjectionFactory, org.springframework.data.repository.core.NamedQueries)
+     */
+    @Override
+    public RepositoryQuery resolveQuery(Method method, RepositoryMetadata repositoryMetadata,
+                                        ProjectionFactory projectionFactory, NamedQueries namedQueries) {
 
-		RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
 
-		return new JdbcRepositoryQuery(publisher, context, queryMethod, operations, mapper);
-	}
+        if (method.isAnnotationPresent(MybatisQuery.class)) {
+            return createMybatisRepositoryQuery(method, repositoryMetadata, projectionFactory);
+        } else {
+            JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory);
 
-	private RowMapper<?> createMapper(JdbcQueryMethod queryMethod) {
+            RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
 
-		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
+            return new JdbcRepositoryQuery(publisher, context, queryMethod, operations, mapper);
+        }
 
-		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
+    }
 
-		if (persistentEntity == null) {
-			return SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService());
-		}
+    private RepositoryQuery createMybatisRepositoryQuery(Method method, RepositoryMetadata repositoryMetadata, ProjectionFactory projectionFactory) {
+        SqlSessionTemplate sqlSession = mybatisContent.getSqlSessionTemplate();
+        if (sqlSession == null) {
+            throw new IllegalStateException(String.format("You have annotated @MybatisQuery on method:%s ,but no org.mybatis.spring.SqlSessionTemplate provided.", method.getName()));
+        }
+        Object mapper = sqlSession.getMapper(method.getDeclaringClass());
+        MybatisQueryMethod mybatisQueryMethod = new MybatisQueryMethod(method, repositoryMetadata, projectionFactory, mapper);
+        return new MybatisRepositoryQuery(publisher, context, mybatisQueryMethod);
+    }
 
-		return determineDefaultMapper(queryMethod);
-	}
+    private RowMapper<?> createMapper(JdbcQueryMethod queryMethod) {
 
-	private RowMapper<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
+        Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
 
-		Class<?> domainType = queryMethod.getReturnedObjectType();
-		RowMapper<?> configuredQueryMapper = queryMappingConfiguration.getRowMapper(domainType);
+        RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
 
-		if (configuredQueryMapper != null)
-			return configuredQueryMapper;
+        if (persistentEntity == null) {
+            return SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService());
+        }
 
-		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
-				context.getRequiredPersistentEntity(domainType), //
-				//
-				converter, //
-				accessStrategy);
+        return determineDefaultMapper(queryMethod);
+    }
 
-		return defaultEntityRowMapper;
-	}
+    private RowMapper<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
+
+        Class<?> domainType = queryMethod.getReturnedObjectType();
+        RowMapper<?> configuredQueryMapper = queryMappingConfiguration.getRowMapper(domainType);
+
+        if (configuredQueryMapper != null)
+            return configuredQueryMapper;
+
+        EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
+                context.getRequiredPersistentEntity(domainType), //
+                //
+                converter, //
+                accessStrategy);
+
+        return defaultEntityRowMapper;
+    }
+
+    public void setMybatisContext(MybatisContext mybatisContent) {
+        this.mybatisContent = mybatisContent;
+    }
 }

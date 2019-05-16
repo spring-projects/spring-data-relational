@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springframework.data.jdbc.mybatis.support.DummyEntityRepository">
+	<update id="notSpringDataNamingConventionsUpdateById">
+		UPDATE Dummy_Entity
+		SET name = #{newName}
+		WHERE id = #{id}
+	</update>
+	<update id="notSpringDataNamingConventionsUpdateByIdReturnUpdatedRowCount">
+		UPDATE Dummy_Entity
+		SET name = #{newName}
+		WHERE id = #{id}
+	</update>
+
+	<select id="notSpringDataNamingConventionsFindByIdOptional" resultType="DummyEntity">
+		SELECT
+		id,
+		name
+		FROM Dummy_Entity
+		WHERE id = #{id}
+	</select>
+	<select id="notSpringDataNamingConventionsFindById" resultType="DummyEntity">
+		SELECT
+			id,
+			name
+		FROM Dummy_Entity
+		WHERE id = #{id}
+	</select>
+</mapper>

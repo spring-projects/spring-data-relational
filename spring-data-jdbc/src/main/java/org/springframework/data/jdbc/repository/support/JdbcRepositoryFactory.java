@@ -15,12 +15,11 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import java.util.Optional;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.mybatis.support.MybatisContext;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -35,6 +34,8 @@ import org.springframework.data.repository.query.QueryMethodEvaluationContextPro
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.Optional;
 
 /**
  * Creates repository implementation based on JDBC.
@@ -53,6 +54,8 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final NamedParameterJdbcOperations operations;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+
+	private MybatisContext mybatisContext = MybatisContext.EMPTY;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
@@ -96,6 +99,10 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Deprecated
 	public void setRowMapperMap(RowMapperMap rowMapperMap) {
 		setQueryMappingConfiguration(rowMapperMap);
+	}
+
+	public void setMyBatisContext(MybatisContext mybatisContext){
+		this.mybatisContext = mybatisContext;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -143,7 +150,11 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(publisher, context, converter, accessStrategy,
-				queryMappingConfiguration, operations));
+		JdbcQueryLookupStrategy jdbcQueryLookupStrategy = new JdbcQueryLookupStrategy(publisher, context, converter, accessStrategy,
+				queryMappingConfiguration, operations);
+		jdbcQueryLookupStrategy.setMybatisContext(mybatisContext);
+		return Optional.of(jdbcQueryLookupStrategy);
 	}
+
+
 }
