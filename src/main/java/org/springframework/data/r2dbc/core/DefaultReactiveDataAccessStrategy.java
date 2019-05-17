@@ -19,11 +19,13 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.mapping.context.MappingContext;
@@ -37,9 +39,11 @@ import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.UpdateMapper;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
@@ -48,6 +52,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Default {@link ReactiveDataAccessStrategy} implementation.
@@ -63,21 +68,35 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	private final StatementMapper statementMapper;
 
 	/**
-	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect}.
+	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect} and optional
+	 * {@link org.springframework.core.convert.converter.Converter}s.
 	 *
 	 * @param dialect the {@link Dialect} to use.
 	 */
 	public DefaultReactiveDataAccessStrategy(Dialect dialect) {
-		this(dialect, createConverter(dialect));
+		this(dialect, Collections.emptyList());
 	}
 
-	private static R2dbcConverter createConverter(Dialect dialect) {
+	/**
+	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect} and optional
+	 * {@link org.springframework.core.convert.converter.Converter}s.
+	 *
+	 * @param dialect the {@link Dialect} to use.
+	 * @param converters custom converters to register, must not be {@literal null}.
+	 * @see R2dbcCustomConversions
+	 * @see org.springframework.core.convert.converter.Converter
+	 */
+	public DefaultReactiveDataAccessStrategy(Dialect dialect, Collection<?> converters) {
+		this(dialect, createConverter(dialect, converters));
+	}
+
+	private static R2dbcConverter createConverter(Dialect dialect, Collection<?> converters) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
+		Assert.notNull(converters, "Converters must not be null");
 
 		R2dbcCustomConversions customConversions = new R2dbcCustomConversions(
-				StoreConversions.of(dialect.getSimpleTypeHolder(), R2dbcCustomConversions.STORE_CONVERTERS),
-				Collections.emptyList());
+				StoreConversions.of(dialect.getSimpleTypeHolder(), R2dbcCustomConversions.STORE_CONVERTERS), converters);
 
 		RelationalMappingContext context = new RelationalMappingContext();
 		context.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());

@@ -180,9 +180,9 @@ public class PersonWriteConverter implements Converter<Person, OutboundRow> {
 
   public OutboundRow convert(Person source) {
     OutboundRow row = new OutboundRow();
-    row.put("_d", source.getId());
-    row.put("name", source.getFirstName());
-    row.put("age", source.getAge());
+    row.put("_d", SettableValue.from(source.getId()));
+    row.put("name", SettableValue.from(source.getFirstName()));
+    row.put("age", SettableValue.from(source.getAge()));
     return row;
   }
 }
