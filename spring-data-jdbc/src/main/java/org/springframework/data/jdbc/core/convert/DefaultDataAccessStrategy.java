@@ -273,7 +273,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Class<?> actualType = path.getActualType();
 		String findAllByProperty = sql(actualType) //
-				.getFindAllByProperty(identifier, path.getKeyColumn(), path.isOrdered());
+				.getFindAllByProperty(identifier, path.getQualifierColumn(), path.isOrdered());
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
@@ -404,7 +404,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private RowMapper<?> getMapEntityRowMapper(PersistentPropertyPathExtension path, Identifier identifier) {
 
-		String keyColumn = path.getKeyColumn();
+		String keyColumn = path.getQualifierColumn();
 		Assert.notNull(keyColumn, () -> "KeyColumn must not be null for " + path);
 
 		return new MapEntityRowMapper<>(path, converter, identifier, keyColumn);
