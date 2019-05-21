@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ infix fun Criteria.CriteriaStep.isEquals(value: Any): Criteria =
  */
 fun Criteria.CriteriaStep.isIn(vararg value: Any): Criteria =
 		`in`(value)
-
 
 /**
  * Extension for [Criteria.CriteriaStep.in] providing a

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package org.springframework.data.r2dbc.core
 
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
 import io.mockk.verify
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.springframework.data.r2dbc.query.Criteria
-import reactor.core.publisher.Mono
 
 /**
  * Unit tests for [Criteria.CriteriaStep] extensions.
@@ -36,16 +33,44 @@ class CriteriaStepExtensionsTests {
 	fun eqIsCriteriaStep() {
 
 		val spec = mockk<Criteria.CriteriaStep>()
-		val eqSpec = mockk<Criteria>()
+		val criteria = mockk<Criteria>()
 
-		every { spec.`is`("test") } returns eqSpec
+		every { spec.`is`("test") } returns criteria
 
-		runBlocking {
-			assertThat(spec isEquals "test").isEqualTo(eqSpec)
-		}
+		assertThat(spec isEquals "test").isEqualTo(criteria)
 
 		verify {
 			spec.`is`("test")
+		}
+	}
+
+	@Test // gh-122
+	fun inVarargCriteriaStep() {
+
+		val spec = mockk<Criteria.CriteriaStep>()
+		val criteria = mockk<Criteria>()
+
+		every { spec.`in`(any() as Array<Any>) } returns criteria
+
+		assertThat(spec.isIn("test")).isEqualTo(criteria)
+
+		verify {
+			spec.`in`(arrayOf("test"))
+		}
+	}
+
+	@Test // gh-122
+	fun inListCriteriaStep() {
+
+		val spec = mockk<Criteria.CriteriaStep>()
+		val criteria = mockk<Criteria>()
+
+		every { spec.`in`(listOf("test")) } returns criteria
+
+		assertThat(spec.isIn(listOf("test"))).isEqualTo(criteria)
+
+		verify {
+			spec.`in`(listOf("test"))
 		}
 	}
 }

@@ -17,12 +17,10 @@ package org.springframework.data.r2dbc.core
 
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.springframework.data.r2dbc.query.Criteria
 import reactor.core.publisher.Mono
 
 /**
@@ -30,6 +28,7 @@ import reactor.core.publisher.Mono
  *
  * @author Sebastien Deleuze
  * @author Jonas Bark
+ * @author Mark Paluch
  */
 class DatabaseClientExtensionsTests {
 
@@ -142,15 +141,13 @@ class DatabaseClientExtensionsTests {
 	}
 
 	@Test // gh-122
-	fun selectFromSpecInto() {
+	fun selectFromSpecFrom() {
 
 		val spec = mockk<DatabaseClient.SelectFromSpec>()
 		val typedSpec: DatabaseClient.TypedSelectSpec<String> = mockk()
 		every { spec.from(String::class.java) } returns typedSpec
 
-		runBlocking {
-			assertThat(spec.from<String>()).isEqualTo(typedSpec)
-		}
+		assertThat(spec.from<String>()).isEqualTo(typedSpec)
 
 		verify {
 			spec.from(String::class.java)
@@ -158,15 +155,27 @@ class DatabaseClientExtensionsTests {
 	}
 
 	@Test // gh-122
-	fun deleteFromSpecInto() {
+	fun updateTableSpecTable() {
+
+		val spec = mockk<DatabaseClient.UpdateTableSpec>()
+		val typedSpec: DatabaseClient.TypedUpdateSpec<String> = mockk()
+		every { spec.table(String::class.java) } returns typedSpec
+
+		assertThat(spec.table<String>()).isEqualTo(typedSpec)
+
+		verify {
+			spec.table(String::class.java)
+		}
+	}
+
+	@Test // gh-122
+	fun deleteFromSpecFrom() {
 
 		val spec = mockk<DatabaseClient.DeleteFromSpec>()
 		val typedSpec: DatabaseClient.TypedDeleteSpec<String> = mockk()
 		every { spec.from(String::class.java) } returns typedSpec
 
-		runBlocking {
-			assertThat(spec.from<String>()).isEqualTo(typedSpec)
-		}
+		assertThat(spec.from<String>()).isEqualTo(typedSpec)
 
 		verify {
 			spec.from(String::class.java)
