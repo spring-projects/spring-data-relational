@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -499,6 +500,40 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@Test // DATAJDBC-223
 	public void saveAndLoadLongChainOfListsWithoutIds() {
 
+		NoIdListChain4 saved = template.save(createNoIdTree());
+
+		assertThat(saved.four).describedAs("Something went wrong during saving").isNotNull();
+
+		NoIdListChain4 reloaded = template.findById(saved.four, NoIdListChain4.class);
+
+		assertIsUnchanged(saved, reloaded);
+
+		template.deleteById(saved.four, NoIdListChain4.class);
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(count("NO_ID_LIST_CHAIN4")).describedAs("Chain4 elements got deleted").isEqualTo(0);
+			softly.assertThat(count("NO_ID_LIST_CHAIN3")).describedAs("Chain3 elements got deleted").isEqualTo(0);
+			softly.assertThat(count("NO_ID_LIST_CHAIN2")).describedAs("Chain2 elements got deleted").isEqualTo(0);
+			softly.assertThat(count("NO_ID_LIST_CHAIN1")).describedAs("Chain1 elements got deleted").isEqualTo(0);
+			softly.assertThat(count("NO_ID_LIST_CHAIN0")).describedAs("Chain0 elements got deleted").isEqualTo(0);
+		});
+
+	}
+
+	/**
+	 * creates an instance of {@link NoIdListChain4} with the following properties:
+	 * <ul>
+	 * <li>Each element has two children with indices 0 and 1.</li>
+	 * <li>the xxxValue of each element is a {@literal v} followed by the indices used to navigate to the given instance.
+	 * </li>
+	 * </ul>
+	 *
+	 * @return Guaranteed to be not {@literal null}.
+	 */
+	@NotNull
+	private JdbcAggregateTemplateIntegrationTests.NoIdListChain4 createNoIdTree() {
+
 		NoIdListChain4 chain4 = new NoIdListChain4();
 		chain4.fourValue = "v";
 		for (int _3 = 0; _3 <= 1; _3++) {
@@ -531,11 +566,10 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		}
 
-		NoIdListChain4 saved = template.save(chain4);
+		return chain4;
+	}
 
-		assertThat(saved.four).isNotNull();
-
-		NoIdListChain4 reloaded = template.findById(saved.four, NoIdListChain4.class);
+	private void assertIsUnchanged(NoIdListChain4 original, NoIdListChain4 reloaded) {
 
 		SoftAssertions.assertSoftly(softly -> {
 
@@ -544,7 +578,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 			for (int _3 = 0; _3 <= 1; _3++) {
 
 				NoIdListChain3 c3 = reloaded.chain3.get(_3);
-				softly.assertThat(c3.threeValue).isEqualTo(chain4.fourValue + _3);
+				softly.assertThat(c3.threeValue).isEqualTo(original.fourValue + _3);
 				softly.assertThat(c3.chain2).hasSize(2);
 
 				for (int _2 = 0; _2 <= 1; _2++) {
@@ -569,24 +603,35 @@ public class JdbcAggregateTemplateIntegrationTests {
 				}
 
 			}
-
 		});
-
-		template.deleteById(saved.four, NoIdListChain4.class);
-
-		SoftAssertions.assertSoftly(softly -> {
-
-			softly.assertThat(count("NO_ID_LIST_CHAIN4")).isEqualTo(0);
-			softly.assertThat(count("NO_ID_LIST_CHAIN3")).isEqualTo(0);
-			softly.assertThat(count("NO_ID_LIST_CHAIN2")).isEqualTo(0);
-			softly.assertThat(count("NO_ID_LIST_CHAIN1")).isEqualTo(0);
-			softly.assertThat(count("NO_ID_LIST_CHAIN0")).isEqualTo(0);
-		});
-
 	}
 
 	@Test // DATAJDBC-223
 	public void saveAndLoadLongChainOfMapsWithoutIds() {
+
+		NoIdMapChain4 saved = template.save(createNoIdMapTree());
+
+		assertThat(saved.four).isNotNull();
+
+		NoIdMapChain4 reloaded = template.findById(saved.four, NoIdMapChain4.class);
+
+		assertIsUnchanged(saved, reloaded);
+
+		template.deleteById(saved.four, NoIdMapChain4.class);
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(count("NO_ID_MAP_CHAIN4")).describedAs("Chain4 elements got deleted").isEqualTo(0);
+			softly.assertThat(count("NO_ID_MAP_CHAIN3")).describedAs("Chain3 elements got deleted").isEqualTo(0);
+			softly.assertThat(count("NO_ID_MAP_CHAIN2")).describedAs("Chain2 elements got deleted").isEqualTo(0);
+			softly.assertThat(count("NO_ID_MAP_CHAIN1")).describedAs("Chain1 elements got deleted").isEqualTo(0);
+			softly.assertThat(count("NO_ID_MAP_CHAIN0")).describedAs("Chain0 elements got deleted").isEqualTo(0);
+		});
+
+	}
+
+	@NotNull
+	private JdbcAggregateTemplateIntegrationTests.NoIdMapChain4 createNoIdMapTree() {
 
 		NoIdMapChain4 chain4 = new NoIdMapChain4();
 		chain4.fourValue = "v";
@@ -600,31 +645,29 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 				NoIdMapChain2 c2 = new NoIdMapChain2();
 				c2.twoValue = c3.threeValue + _2;
-				c3.chain2.put(asString(_2),c2);
+				c3.chain2.put(asString(_2), c2);
 
 				for (int _1 = 0; _1 <= 1; _1++) {
 
 					NoIdMapChain1 c1 = new NoIdMapChain1();
 					c1.oneValue = c2.twoValue + _1;
-					c2.chain1.put(asString(_1),c1);
+					c2.chain1.put(asString(_1), c1);
 
 					for (int _0 = 0; _0 <= 1; _0++) {
 
 						NoIdMapChain0 c0 = new NoIdMapChain0();
 						c0.zeroValue = c1.oneValue + _0;
-						c1.chain0.put(asString(_0),c0);
+						c1.chain0.put(asString(_0), c0);
 
 					}
 				}
 			}
 
 		}
+		return chain4;
+	}
 
-		NoIdMapChain4 saved = template.save(chain4);
-
-		assertThat(saved.four).isNotNull();
-
-		NoIdMapChain4 reloaded = template.findById(saved.four, NoIdMapChain4.class);
+	private void assertIsUnchanged(NoIdMapChain4 original, NoIdMapChain4 reloaded) {
 
 		SoftAssertions.assertSoftly(softly -> {
 
@@ -633,7 +676,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 			for (int _3 = 0; _3 <= 1; _3++) {
 
 				NoIdMapChain3 c3 = reloaded.chain3.get(asString(_3));
-				softly.assertThat(c3.threeValue).isEqualTo(chain4.fourValue + _3);
+				softly.assertThat(c3.threeValue).isEqualTo(original.fourValue + _3);
 				softly.assertThat(c3.chain2).hasSize(2);
 
 				for (int _2 = 0; _2 <= 1; _2++) {
@@ -660,22 +703,10 @@ public class JdbcAggregateTemplateIntegrationTests {
 			}
 
 		});
-
-		template.deleteById(saved.four, NoIdMapChain4.class);
-
-		SoftAssertions.assertSoftly(softly -> {
-
-			softly.assertThat(count("NO_ID_MAP_CHAIN4")).isEqualTo(0);
-			softly.assertThat(count("NO_ID_MAP_CHAIN3")).isEqualTo(0);
-			softly.assertThat(count("NO_ID_MAP_CHAIN2")).isEqualTo(0);
-			softly.assertThat(count("NO_ID_MAP_CHAIN1")).isEqualTo(0);
-			softly.assertThat(count("NO_ID_MAP_CHAIN0")).isEqualTo(0);
-		});
-
 	}
 
 	private static String asString(int i) {
-		
+
 		return "_" + i;
 	}
 
