@@ -23,6 +23,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -217,7 +218,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	static class DummyEntity {
 		@Id Long entityId;
 		Second second;
-		@Embedded("sec") Second second2;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "sec") Second second2;
 		List<Second> secondList;
 		WithId withId;
 	}
@@ -225,7 +226,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	@SuppressWarnings("unused")
 	static class Second {
 		Third third;
-		@Embedded("thrd") Third third2;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "thrd") Third third2;
 	}
 
 	@SuppressWarnings("unused")
@@ -237,7 +238,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	static class WithId {
 		@Id Long withIdId;
 		Second second;
-		@Embedded("sec") Second second2;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "sec") Second second2;
 	}
 
 }

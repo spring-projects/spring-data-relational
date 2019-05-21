@@ -288,14 +288,19 @@ Embedded entities are used to have value objects in your java data model, even i
 In the following example you see, that `MyEntity` is mapped with the `@Embedded` annotation.
 The consequence of this is, that in the database a table `my_entity` with the two columns `id` and `name` (from the `EmbeddedEntity` class) is expected.
 
+However, if the `name` column is actually `null` within the result set, the entire property `embeddedEntity` will be set to null according to the `onEmpty` of `@Embedded`, which ``null``s objects when all nested properties are `null`. +
+Opposite to this behavior `USE_EMPTY` tries to create a new instance using either a default constructor or one that accepts nullable parameter values from the result set.
+
+.Sample Code of embedding objects
 ====
 [source, java]
 ----
 public class MyEntity {
+
     @Id
     Integer id;
 
-    @Embedded
+    @Embedded(onEmpty = USE_NULL) <1>
     EmbeddedEntity embeddedEntity;
 }
 
@@ -303,9 +308,10 @@ public class EmbeddedEntity {
     String name;
 }
 ----
+<1> ``Null``s `embeddedEntity` if `name` in `null`. Use `USE_EMPTY` to instanciate `embeddedEntity` with a potential `null` value for the `name` property.
 ====
 
-If you need a value object multiple times in an entity, this can be achieved with the optional `value` element of the `@Embedded` annotation.
+If you need a value object multiple times in an entity, this can be achieved with the optional `prefix` element of the `@Embedded` annotation.
 This element represents a prefix and is prepend for each column name in the embedded object.
 
 [[jdbc.entity-persistence.state-detection-strategies]]

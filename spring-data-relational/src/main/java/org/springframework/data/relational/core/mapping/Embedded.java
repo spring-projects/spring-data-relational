@@ -23,15 +23,38 @@ import java.lang.annotation.Target;
 
 /**
  * The annotation to configure a value object as embedded in the current table.
+ * <p />
+ * Depending on the {@link OnEmpty value} of {@link #onEmpty()} the property is set to {@literal null} or an empty
+ * instance in the case all embedded values are {@literal null} when reading from the result set.
  *
  * @author Bastian Wilhelm
+ * @author Christoph Strobl
+ * @since 1.1
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Documented
 public @interface Embedded {
-  /**
-   * @return prefix for columns in the embedded value object. Default is an empty String
-   */
-  String value() default "";
+
+	/**
+	 * Set the load strategy for the embedded object if all contained fields yield {@literal null} values.
+	 * 
+	 * @return never {@link} null.
+	 */
+	OnEmpty onEmpty();
+
+	/**
+	 * @return prefix for columns in the embedded value object. An empty {@link String} by default.
+	 */
+	String prefix() default "";
+
+	/**
+	 * Load strategy to be used {@link Embedded#onEmpty()}.
+	 * 
+	 * @author Christoph Strobl
+	 * @since 1.1
+	 */
+	enum OnEmpty {
+		USE_NULL, USE_EMPTY
+	}
 }

@@ -33,6 +33,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -99,7 +100,7 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 
 		@Id Long id;
 
-		@Embedded("prefix_") Embeddable prefixedEmbeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") Embeddable prefixedEmbeddable;
 	}
 
 	@Value

@@ -51,6 +51,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -291,18 +292,33 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-370
-	public void simpleImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
+	public void simpleNullableImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("id", "value"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "ru'Ha'");
 		rs.next();
 
-		WithImmutableValue extracted = createRowMapper(WithImmutableValue.class).mapRow(rs, 1);
+		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
 				.extracting(e -> e.id, e -> e.embeddedImmutableValue) //
 				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, new ImmutableValue("ru'Ha'"));
+	}
+
+	@Test // DATAJDBC-374
+	public void simpleEmptyImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("id", "value"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
+		rs.next();
+
+		WithEmptyEmbeddedImmutableValue extracted = createRowMapper(WithEmptyEmbeddedImmutableValue.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.embeddedImmutableValue) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, new ImmutableValue(null));
 	}
 
 	@Test // DATAJDBC-370
@@ -313,7 +329,7 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, 24);
 		rs.next();
 
-		WithPrimitiveImmutableValue extracted = createRowMapper(WithPrimitiveImmutableValue.class).mapRow(rs, 1);
+		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class).mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -328,7 +344,7 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
 		rs.next();
 
-		WithImmutableValue extracted = createRowMapper(WithImmutableValue.class).mapRow(rs, 1);
+		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -376,7 +392,7 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
 		rs.next();
 
-		WithPrimitiveImmutableValue extracted = createRowMapper(WithPrimitiveImmutableValue.class).mapRow(rs, 1);
+		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class).mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -460,7 +476,7 @@ public class EntityRowMapperUnitTests {
 
 		@Id Long id;
 		String name;
-		@Embedded("prefix_") Trivial children;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") Trivial children;
 	}
 
 	private static class DontUseSetter {
@@ -528,16 +544,22 @@ public class EntityRowMapperUnitTests {
 		NoIdChain3 chain3;
 	}
 
-	static class WithImmutableValue {
+	static class WithNullableEmbeddedImmutableValue {
 
 		@Id Long id;
-		@Embedded ImmutableValue embeddedImmutableValue;
+		@Embedded(onEmpty = OnEmpty.USE_NULL) ImmutableValue embeddedImmutableValue;
 	}
 
-	static class WithPrimitiveImmutableValue {
+	static class WithEmptyEmbeddedImmutableValue {
 
 		@Id Long id;
-		@Embedded ImmutablePrimitiveValue embeddedImmutablePrimitiveValue;
+		@Embedded(onEmpty = OnEmpty.USE_EMPTY) ImmutableValue embeddedImmutableValue;
+	}
+
+	static class WithEmbeddedPrimitiveImmutableValue {
+
+		@Id Long id;
+		@Embedded(onEmpty = OnEmpty.USE_NULL) ImmutablePrimitiveValue embeddedImmutablePrimitiveValue;
 	}
 
 	@Value
@@ -554,13 +576,13 @@ public class EntityRowMapperUnitTests {
 
 		@Id Long id;
 		String level0;
-		@Embedded("level1_") EmbeddedWithEmbedded level1;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "level1_") EmbeddedWithEmbedded level1;
 	}
 
 	static class EmbeddedWithEmbedded {
 
 		Object value;
-		@Embedded("level2_") ImmutableValue level2;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "level2_") ImmutableValue level2;
 	}
 
 	// Infrastructure for assertions and constructing mocks

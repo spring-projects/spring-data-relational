@@ -84,7 +84,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		this.isEmbedded = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)).isPresent());
 
 		this.embeddedPrefix = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)) //
-				.map(Embedded::value) //
+				.map(Embedded::prefix) //
 				.orElse(""));
 
 		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)) //
