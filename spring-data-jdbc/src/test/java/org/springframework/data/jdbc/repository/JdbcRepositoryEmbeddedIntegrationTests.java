@@ -31,6 +31,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -250,16 +251,16 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		@Id Long id;
 
-		@Embedded("prefix_") CascadedEmbeddable prefixedEmbeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") CascadedEmbeddable prefixedEmbeddable;
 
-		@Embedded CascadedEmbeddable embeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL) CascadedEmbeddable embeddable;
 	}
 
 	@Data
 	static class CascadedEmbeddable {
 		String test;
 
-		@Embedded("prefix2_")
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix2_")
 		Embeddable embeddable;
 	}
 

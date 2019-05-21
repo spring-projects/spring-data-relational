@@ -32,6 +32,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -246,7 +247,7 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 		String test;
 
-		@Embedded("prefix_")
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
 		Embeddable embeddable;
 	}
 

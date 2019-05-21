@@ -30,6 +30,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 
 /**
  * Unit tests for the {@link BasicRelationalPersistentProperty}.
@@ -188,10 +189,10 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private @Column("dummy_name") String name;
 
 		// DATAJDBC-111
-		private @Embedded EmbeddableEntity embeddableEntity;
+		private @Embedded(onEmpty = OnEmpty.USE_NULL) EmbeddableEntity embeddableEntity;
 
 		// DATAJDBC-111
-		private @Embedded("prefix") EmbeddableEntity prefixedEmbeddableEntity;
+		private @Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix") EmbeddableEntity prefixedEmbeddableEntity;
 
 		@Column("dummy_last_updated_at")
 		public LocalDateTime getLocalDateTime() {

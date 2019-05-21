@@ -37,6 +37,8 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -375,6 +377,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private Object readEmbeddedEntityFrom(@Nullable Object idValue, RelationalPersistentProperty property) {
 
 			ReadingContext<?> newContext = extendBy(property);
+
+			if(OnEmpty.USE_EMPTY.equals(property.findAnnotation(Embedded.class).onEmpty())) {
+				return newContext.createInstanceInternal(idValue);
+			}
+
 			return newContext.hasInstanceValues(idValue) ? newContext.createInstanceInternal(idValue) : null;
 		}
 

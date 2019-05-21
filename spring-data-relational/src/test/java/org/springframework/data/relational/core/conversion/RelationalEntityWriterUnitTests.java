@@ -39,6 +39,7 @@ import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
@@ -588,7 +589,7 @@ public class RelationalEntityWriterUnitTests {
 	static class EmbeddedReferenceEntity {
 
 		@Id final Long id;
-		@Embedded("prefix_") Element other;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") Element other;
 	}
 
 	@RequiredArgsConstructor

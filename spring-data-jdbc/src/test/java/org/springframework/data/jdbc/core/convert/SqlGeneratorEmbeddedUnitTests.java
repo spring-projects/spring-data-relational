@@ -27,6 +27,7 @@ import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -245,16 +246,16 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 		@Column("id1") @Id Long id;
 
-		@Embedded("prefix_") CascadedEmbedded prefixedEmbeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") CascadedEmbedded prefixedEmbeddable;
 
-		@Embedded CascadedEmbedded embeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL) CascadedEmbedded embeddable;
 	}
 
 	@SuppressWarnings("unused")
 	static class CascadedEmbedded {
 		String test;
-		@Embedded("prefix2_") Embeddable prefixedEmbeddable;
-		@Embedded Embeddable embeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix2_") Embeddable prefixedEmbeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL) Embeddable embeddable;
 	}
 
 	@SuppressWarnings("unused")
@@ -268,7 +269,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 		@Id Long id;
 
-		@Embedded("prefix_") EmbeddedWithReference embedded;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") EmbeddedWithReference embedded;
 	}
 
 	static class EmbeddedWithReference {
