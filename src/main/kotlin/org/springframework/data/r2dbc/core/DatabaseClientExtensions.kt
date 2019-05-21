@@ -16,6 +16,7 @@
 package org.springframework.data.r2dbc.core
 
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import org.springframework.data.r2dbc.query.Criteria
 
 /**
  * Coroutines variant of [DatabaseClient.GenericExecuteSpec.then].
@@ -80,3 +81,20 @@ suspend fun <T> DatabaseClient.InsertSpec<T>.await() {
 inline fun <reified T : Any> DatabaseClient.InsertIntoSpec.into(): DatabaseClient.TypedInsertSpec<T> =
 		into(T::class.java)
 
+/**
+ * Extension for [DatabaseClient.SelectFromSpec.from] providing a
+ * `from<Foo>()` variant.
+ *
+ * @author Jonas Bark
+ */
+inline fun <reified T : Any> DatabaseClient.SelectFromSpec.from(): DatabaseClient.TypedSelectSpec<T> =
+		from(T::class.java)
+
+/**
+ * Extension for [DatabaseClient.SelectFromSpec.from] providing a
+ * `from<Foo>()` variant.
+ *
+ * @author Jonas Bark
+ */
+inline fun <reified T : Any> DatabaseClient.DeleteFromSpec.from(): DatabaseClient.TypedDeleteSpec<T> =
+		from(T::class.java)

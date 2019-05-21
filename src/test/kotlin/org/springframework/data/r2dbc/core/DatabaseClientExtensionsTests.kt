@@ -17,16 +17,19 @@ package org.springframework.data.r2dbc.core
 
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.springframework.data.r2dbc.query.Criteria
 import reactor.core.publisher.Mono
 
 /**
  * Unit tests for [DatabaseClient] extensions.
  *
  * @author Sebastien Deleuze
+ * @author Jonas Bark
  */
 class DatabaseClientExtensionsTests {
 
@@ -135,6 +138,38 @@ class DatabaseClientExtensionsTests {
 
 		verify {
 			spec.into(String::class.java)
+		}
+	}
+
+	@Test // gh-122
+	fun selectFromSpecInto() {
+
+		val spec = mockk<DatabaseClient.SelectFromSpec>()
+		val typedSpec: DatabaseClient.TypedSelectSpec<String> = mockk()
+		every { spec.from(String::class.java) } returns typedSpec
+
+		runBlocking {
+			assertThat(spec.from<String>()).isEqualTo(typedSpec)
+		}
+
+		verify {
+			spec.from(String::class.java)
+		}
+	}
+
+	@Test // gh-122
+	fun deleteFromSpecInto() {
+
+		val spec = mockk<DatabaseClient.DeleteFromSpec>()
+		val typedSpec: DatabaseClient.TypedDeleteSpec<String> = mockk()
+		every { spec.from(String::class.java) } returns typedSpec
+
+		runBlocking {
+			assertThat(spec.from<String>()).isEqualTo(typedSpec)
+		}
+
+		verify {
+			spec.from(String::class.java)
 		}
 	}
 }
