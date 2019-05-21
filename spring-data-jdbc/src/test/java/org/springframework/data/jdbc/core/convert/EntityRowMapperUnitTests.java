@@ -615,9 +615,8 @@ public class EntityRowMapperUnitTests {
 		doReturn(simpleEntriesWithInts).when(accessStrategy)
 				.findAllByPath(identifierOfValue(ID_FOR_ENTITY_REFERENCING_LIST), any(PersistentPropertyPath.class));
 
-		BasicJdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions(),
+		BasicJdbcConverter converter = new BasicJdbcConverter(context, accessStrategy, new JdbcCustomConversions(),
 				JdbcTypeFactory.unsupported());
-		converter.setRelationResolver(accessStrategy);
 
 		return new EntityRowMapper<>( //
 				(RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type), //

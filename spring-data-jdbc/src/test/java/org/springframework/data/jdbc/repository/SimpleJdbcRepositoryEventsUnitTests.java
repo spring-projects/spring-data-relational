@@ -38,6 +38,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
+import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
@@ -77,11 +78,13 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		RelationalMappingContext context = new JdbcMappingContext();
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
-		JdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions(),
+		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
+		JdbcConverter converter = new BasicJdbcConverter(context, delegatingDataAccessStrategy, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(operations.getJdbcOperations()));
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context);
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
+		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher,
 				operations);

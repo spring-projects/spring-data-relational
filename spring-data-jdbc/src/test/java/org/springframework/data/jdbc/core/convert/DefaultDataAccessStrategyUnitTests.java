@@ -25,9 +25,9 @@ import lombok.RequiredArgsConstructor;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
@@ -53,16 +53,27 @@ public class DefaultDataAccessStrategyUnitTests {
 	NamedParameterJdbcOperations namedJdbcOperations = mock(NamedParameterJdbcOperations.class);
 	JdbcOperations jdbcOperations = mock(JdbcOperations.class);
 	RelationalMappingContext context = new JdbcMappingContext();
-	JdbcConverter converter = new BasicJdbcConverter(context, new JdbcCustomConversions(),
-			new DefaultJdbcTypeFactory(jdbcOperations));
+
 	HashMap<String, Object> additionalParameters = new HashMap<>();
 	ArgumentCaptor<SqlParameterSource> paramSourceCaptor = ArgumentCaptor.forClass(SqlParameterSource.class);
 
-	DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
-			new SqlGeneratorSource(context), //
-			context, //
-			converter, //
-			namedJdbcOperations);
+	JdbcConverter converter;
+	DefaultDataAccessStrategy accessStrategy;
+
+	@Before
+	public void before() {
+		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
+
+		converter = new BasicJdbcConverter(context, relationResolver,
+				new JdbcCustomConversions(), new DefaultJdbcTypeFactory(jdbcOperations));
+		accessStrategy = new DefaultDataAccessStrategy( //
+				new SqlGeneratorSource(context), //
+				context, //
+				converter, //
+				namedJdbcOperations);
+
+		relationResolver.setDelegate(accessStrategy);
+	}
 
 	@Test // DATAJDBC-146
 	public void additionalParameterForIdDoesNotLeadToDuplicateParameters() {
@@ -95,7 +106,9 @@ public class DefaultDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-235
 	public void considersConfiguredWriteConverter() {
 
-		JdbcConverter converter = new BasicJdbcConverter(context,
+		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
+
+		JdbcConverter converter = new BasicJdbcConverter(context, relationResolver,
 				new JdbcCustomConversions(Arrays.asList(BooleanToStringConverter.INSTANCE, StringToBooleanConverter.INSTANCE)),
 				new DefaultJdbcTypeFactory(jdbcOperations));
 
@@ -104,6 +117,8 @@ public class DefaultDataAccessStrategyUnitTests {
 				context, //
 				converter, //
 				namedJdbcOperations);
+
+		relationResolver.setDelegate(accessStrategy);
 
 		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
 

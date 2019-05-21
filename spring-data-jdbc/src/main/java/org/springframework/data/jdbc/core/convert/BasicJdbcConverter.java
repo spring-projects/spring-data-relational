@@ -81,7 +81,13 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			RelationResolver relationResolver) {
-		this(context, relationResolver, JdbcTypeFactory.unsupported());
+
+		super(context);
+
+		Assert.notNull(relationResolver, "RelationResolver must not be null");
+
+		this.relationResolver = relationResolver;
+		this.typeFactory = JdbcTypeFactory.unsupported();
 	}
 
 	/**
@@ -94,49 +100,15 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 */
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			RelationResolver relationResolver, JdbcTypeFactory typeFactory) {
+			RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory) {
 
-		super(context);
+		super(context, conversions);
 
 		Assert.notNull(typeFactory, "JdbcTypeFactory must not be null");
 		Assert.notNull(relationResolver, "RelationResolver must not be null");
 
 		this.relationResolver = relationResolver;
 		this.typeFactory = typeFactory;
-	}
-
-	/**
-	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}, {@link CustomConversions}, and
-	 * {@link JdbcTypeFactory}.
-	 *
-	 * @param context must not be {@literal null}.
-	 * @param conversions must not be {@literal null}.
-	 * @param typeFactory must not be {@literal null}
-	 * @since 1.1
-	 */
-	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			CustomConversions conversions, JdbcTypeFactory typeFactory) {
-
-		super(context, conversions);
-
-		Assert.notNull(typeFactory, "JdbcTypeFactory must not be null");
-
-		this.typeFactory = typeFactory;
-	}
-
-	/**
-	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and {@link CustomConversions}.
-	 *
-	 * @param context must not be {@literal null}.
-	 * @param conversions must not be {@literal null}.
-	 * @deprecated use one of the constructors with {@link JdbcTypeFactory} parameter.
-	 */
-	@Deprecated
-	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			CustomConversions conversions) {
-		this(context, conversions, JdbcTypeFactory.unsupported());
 	}
 
 	/*
@@ -278,10 +250,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return new ReadingContext<T>(path, resultSet, identifier, key).mapRow();
 	}
 
-	public void setRelationResolver(RelationResolver relationResolver) {
-		this.relationResolver = relationResolver;
-	}
-
 	private class ReadingContext<T> {
 
 		private final RelationalPersistentEntity<T> entity;
@@ -322,8 +290,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			this.key = key;
 		}
 
-		private ReadingContext<?> extendBy(RelationalPersistentProperty property) {
-			return new ReadingContext<>(getMappingContext().getRequiredPersistentEntity(property.getActualType()), resultSet,
+		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
+			return new ReadingContext<S>((RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()), resultSet,
 					rootPath.extendBy(property), path.extendBy(property), identifier, key);
 		}
 
