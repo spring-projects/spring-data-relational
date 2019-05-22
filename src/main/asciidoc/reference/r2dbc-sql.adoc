@@ -119,7 +119,7 @@ In JDBC, the actual drivers translate question mark bind markers to database-nat
 
 Spring Data R2DBC allows you to use native bind markers or named bind markers with the `:name` syntax.
 
-Named parameter support leverages ``Dialect``s  to expand named parameters to native bind markers at the time of query execution which gives you a certain degree of query portability across various database vendors.
+Named parameter support leverages ``R2dbcDialect``s  to expand named parameters to native bind markers at the time of query execution which gives you a certain degree of query portability across various database vendors.
 ****
 
 The query-preprocessor unrolls named `Collection` parameters into a series of bind markers to remove the need of dynamic query creation based on the number of arguments.
