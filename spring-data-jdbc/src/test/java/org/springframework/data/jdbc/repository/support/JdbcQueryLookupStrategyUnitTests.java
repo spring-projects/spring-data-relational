@@ -38,6 +38,7 @@ import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Unit tests for {@link JdbcQueryLookupStrategy}.
@@ -65,7 +66,6 @@ public class JdbcQueryLookupStrategyUnitTests {
 		this.metadata = mock(RepositoryMetadata.class);
 
 		doReturn(NumberFormat.class).when(metadata).getReturnedDomainClass(any(Method.class));
-
 	}
 
 	@Test // DATAJDBC-166
@@ -73,7 +73,8 @@ public class JdbcQueryLookupStrategyUnitTests {
 	public void typeBasedRowMapperGetsUsedForQuery() {
 
 		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
-		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration().registerRowMapper(NumberFormat.class, numberFormatMapper);
+		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
+				.registerRowMapper(NumberFormat.class, numberFormatMapper);
 
 		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", mappingConfiguration);
 
@@ -84,25 +85,17 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 
-		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, mappingContext, converter, accessStrategy,
+		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, mappingContext, converter,
 				mappingConfiguration, operations);
 
-		return queryLookupStrategy.resolveQuery(getMethod(name), metadata, projectionFactory, namedQueries);
+		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
+		return queryLookupStrategy.resolveQuery(method, metadata, projectionFactory, namedQueries);
 	}
 
-	// NumberFormat is just used as an arbitrary non simple type.
-	@Query("some SQL")
-	private NumberFormat returningNumberFormat() {
-		return null;
+	interface MyRepository {
+
+		// NumberFormat is just used as an arbitrary non simple type.
+		@Query("some SQL")
+		NumberFormat returningNumberFormat();
 	}
-
-	private static Method getMethod(String name) {
-
-		try {
-			return JdbcQueryLookupStrategyUnitTests.class.getDeclaredMethod(name);
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 }

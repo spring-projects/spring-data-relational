@@ -23,7 +23,6 @@ import org.springframework.data.relational.domain.Identifier;
  * Resolves relations within an aggregate.
  *
  * @author Jens Schauder
- *
  * @since 1.1
  */
 public interface RelationResolver {
@@ -31,11 +30,10 @@ public interface RelationResolver {
 	/**
 	 * Finds all entities reachable via {@literal path}.
 	 *
-	 * @param identifier the combination of Id, map keys and list indexes that identify the parent of the entity to be loaded. Must not be {@literal null}.
+	 * @param identifier the combination of Id, map keys and list indexes that identify the parent of the entity to be
+	 *          loaded. Must not be {@literal null}.
 	 * @param path the path from the aggregate root to the entities to be resolved. Must not be {@literal null}.
-	 * @param <T> the type of entity created by this class
-	 * @return Guaranteed to be not {@literal null}.
+	 * @return guaranteed to be not {@literal null}.
 	 */
-	<T> Iterable<T> findAllByPath(Identifier identifier,
-								  PersistentPropertyPath<RelationalPersistentProperty> path);
+	Iterable<Object> findAllByPath(Identifier identifier, PersistentPropertyPath<RelationalPersistentProperty> path);
 }

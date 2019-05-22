@@ -15,10 +15,11 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import lombok.RequiredArgsConstructor;
+
 import java.lang.reflect.Method;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
@@ -32,7 +33,6 @@ import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.util.Assert;
 
 /**
  * {@link QueryLookupStrategy} for JDBC repositories. Currently only supports annotated queries.
@@ -43,42 +43,14 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Maciej Walkowiak
  */
+@RequiredArgsConstructor
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 	private final ApplicationEventPublisher publisher;
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
-	private final DataAccessStrategy accessStrategy;
 	private final QueryMappingConfiguration queryMappingConfiguration;
 	private final NamedParameterJdbcOperations operations;
-
-	/**
-	 * Creates a new {@link JdbcQueryLookupStrategy} for the given {@link RelationalMappingContext},
-	 * {@link DataAccessStrategy} and {@link QueryMappingConfiguration}.
-	 *
-	 * @param publisher must not be {@literal null}.
-	 * @param context must not be {@literal null}.
-	 * @param converter must not be {@literal null}.
-	 * @param accessStrategy must not be {@literal null}.
-	 * @param queryMappingConfiguration must not be {@literal null}.
-	 */
-	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			JdbcConverter converter, DataAccessStrategy accessStrategy, QueryMappingConfiguration queryMappingConfiguration,
-			NamedParameterJdbcOperations operations) {
-
-		Assert.notNull(publisher, "Publisher must not be null!");
-		Assert.notNull(context, "RelationalMappingContext must not be null!");
-		Assert.notNull(converter, "RelationalConverter must not be null!");
-		Assert.notNull(accessStrategy, "DataAccessStrategy must not be null!");
-		Assert.notNull(queryMappingConfiguration, "RowMapperMap must not be null!");
-
-		this.publisher = publisher;
-		this.context = context;
-		this.converter = converter;
-		this.accessStrategy = accessStrategy;
-		this.queryMappingConfiguration = queryMappingConfiguration;
-		this.operations = operations;
-	}
 
 	/*
 	 * (non-Javadoc)

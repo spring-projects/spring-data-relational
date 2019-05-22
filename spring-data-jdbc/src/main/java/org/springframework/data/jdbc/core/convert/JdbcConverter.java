@@ -34,8 +34,8 @@ import org.springframework.lang.Nullable;
 public interface JdbcConverter extends RelationalConverter {
 
 	/**
-	 * Convert a property value into a {@link JdbcValue} that contains the converted value and information how to bind
-	 * it to JDBC parameters.
+	 * Convert a property value into a {@link JdbcValue} that contains the converted value and information how to bind it
+	 * to JDBC parameters.
 	 *
 	 * @param value a value as it is used in the object model. May be {@code null}.
 	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
@@ -44,7 +44,26 @@ public interface JdbcConverter extends RelationalConverter {
 	 */
 	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, int sqlType);
 
+	/**
+	 * Read the current row from {@link ResultSet} to an {@link RelationalPersistentEntity#getType() entity}.
+	 *
+	 * @param entity the persistent entity type.
+	 * @param resultSet the {@link ResultSet} to read from.
+	 * @param key primary key.
+	 * @param <T>
+	 * @return
+	 */
 	<T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key);
 
+	/**
+	 * Read the current row from {@link ResultSet} to an {@link PersistentPropertyPathExtension#getActualType() entity}.
+	 *
+	 * @param path path to the owning property.
+	 * @param resultSet the {@link ResultSet} to read from.
+	 * @param identifier entity identifier.
+	 * @param key primary key.
+	 * @param <T>
+	 * @return
+	 */
 	<T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key);
 }

@@ -247,7 +247,7 @@ public interface DbAction<T> {
 		 * persist the entity, that are not part of the current entity, especially the id of the parent, which might only
 		 * become available once the parent entity got persisted.
 		 *
-		 * @return Guaranteed to be not {@code null}.
+		 * @return guaranteed to be not {@code null}.
 		 * @see #getQualifiers()
 		 */
 		WithEntity<?> getDependingOn();
@@ -257,7 +257,7 @@ public interface DbAction<T> {
 		 * <p>
 		 * Values come from parent entities but one might also add values manually.
 		 *
-		 * @return Guaranteed to be not {@code null}.
+		 * @return guaranteed to be not {@code null}.
 		 */
 		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers();
 

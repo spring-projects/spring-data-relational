@@ -64,8 +64,8 @@ public class DefaultDataAccessStrategyUnitTests {
 	public void before() {
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
 
-		converter = new BasicJdbcConverter(context, relationResolver,
-				new JdbcCustomConversions(), new DefaultJdbcTypeFactory(jdbcOperations));
+		converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
+				new DefaultJdbcTypeFactory(jdbcOperations));
 		accessStrategy = new DefaultDataAccessStrategy( //
 				new SqlGeneratorSource(context), //
 				context, //

@@ -40,6 +40,7 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	private final JdbcConverter converter;
 	private final Identifier identifier;
 
+	@SuppressWarnings("unchecked")
 	public EntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter, Identifier identifier) {
 
 		this.entity = (RelationalPersistentEntity<T>) path.getLeafEntity();

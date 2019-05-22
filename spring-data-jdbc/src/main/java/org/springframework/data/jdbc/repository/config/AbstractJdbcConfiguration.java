@@ -36,7 +36,6 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
@@ -86,8 +85,8 @@ public abstract class AbstractJdbcConfiguration {
 	/**
 	 * Register custom {@link Converter}s in a {@link JdbcCustomConversions} object if required. These
 	 * {@link JdbcCustomConversions} will be registered with the
-	 * {@link #jdbcConverter(RelationalMappingContext, JdbcOperations)}. Returns an empty {@link JdbcCustomConversions}
-	 * instance by default.
+	 * {@link #jdbcConverter(RelationalMappingContext, NamedParameterJdbcOperations, RelationResolver)}. Returns an empty
+	 * {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return must not be {@literal null}.
 	 */

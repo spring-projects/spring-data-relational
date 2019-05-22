@@ -20,8 +20,11 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.jdbc.core.PropertyPathTestingUtils.*;
 
+import java.util.List;
+
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -32,12 +35,11 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
 
-import java.util.List;
-
 /**
  * Unit tests for {@link DefaultJdbcInterpreter}
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class DefaultJdbcInterpreterUnitTests {
 
@@ -53,10 +55,8 @@ public class DefaultJdbcInterpreterUnitTests {
 	Element element = new Element();
 
 	InsertRoot<Container> containerInsert = new InsertRoot<>(container);
-	Insert<?> elementInsert = new Insert<>(element, toPath("element", Container.class, context),
-			containerInsert);
-	Insert<?> element1Insert = new Insert<>(element, toPath("element.element1", Container.class, context),
-			elementInsert);
+	Insert<?> elementInsert = new Insert<>(element, toPath("element", Container.class, context), containerInsert);
+	Insert<?> element1Insert = new Insert<>(element, toPath("element.element1", Container.class, context), elementInsert);
 
 	@Test // DATAJDBC-145
 	public void insertDoesHonourNamingStrategyForBackReference() {
@@ -122,21 +122,21 @@ public class DefaultJdbcInterpreterUnitTests {
 	@Test // DATAJDBC-223
 	public void generateCascadingIds() {
 
+		RootWithList rootWithList = new RootWithList();
+		WithList listContainer = new WithList();
 
-		ListListContainer listListContainer = new ListListContainer();
-		ListContainer listContainer = new ListContainer();
+		InsertRoot<RootWithList> listListContainerInsert = new InsertRoot<>(rootWithList);
 
-		InsertRoot<ListListContainer> listListContainerInsert = new InsertRoot<>(listListContainer);
-
-		PersistentPropertyPath<RelationalPersistentProperty> listContainersPath = toPath("listContainers", ListListContainer.class, context);
+		PersistentPropertyPath<RelationalPersistentProperty> listContainersPath = toPath("listContainers",
+				RootWithList.class, context);
 		Insert<?> listContainerInsert = new Insert<>(listContainer, listContainersPath, listListContainerInsert);
 		listContainerInsert.getQualifiers().put(listContainersPath, 3);
 
-		PersistentPropertyPath<RelationalPersistentProperty> listContainersElementsPath = toPath("listContainers.elements", ListListContainer.class, context);
+		PersistentPropertyPath<RelationalPersistentProperty> listContainersElementsPath = toPath("listContainers.elements",
+				RootWithList.class, context);
 		Insert<?> elementInsertInList = new Insert<>(element, listContainersElementsPath, listContainerInsert);
 		elementInsertInList.getQualifiers().put(listContainersElementsPath, 6);
 		elementInsertInList.getQualifiers().put(listContainersPath, 3);
-
 
 		listListContainerInsert.setGeneratedId(CONTAINER_ID);
 
@@ -147,10 +147,9 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		assertThat(argumentCaptor.getValue().getParts()) //
 				.extracting("name", "value", "targetType") //
-				.containsExactly(
-						tuple("list_list_container", CONTAINER_ID, Long.class), // the top level id
-						tuple("list_list_container_key", 3, Integer.class), // midlevel key
-						tuple("list_container_key", 6, Integer.class) // lowlevel key
+				.containsOnly(tuple("root_with_list", CONTAINER_ID, Long.class), // the top level id
+						tuple("root_with_list_key", 3, Integer.class), // midlevel key
+						tuple("with_list_key", 6, Integer.class) // lowlevel key
 				);
 	}
 
@@ -158,7 +157,6 @@ public class DefaultJdbcInterpreterUnitTests {
 	static class Container {
 
 		@Id Long id;
-
 		Element element;
 	}
 
@@ -167,18 +165,15 @@ public class DefaultJdbcInterpreterUnitTests {
 		Element1 element1;
 	}
 
-	static class Element1 {
+	static class Element1 {}
+
+	static class RootWithList {
+
+		@Id Long id;
+		List<WithList> listContainers;
 	}
 
-
-	static class ListListContainer {
-		@Id
-		Long id;
-
-		List<ListContainer> listContainers;
-	}
-
-	private static class ListContainer {
+	private static class WithList {
 		List<Element> elements;
 	}
 }

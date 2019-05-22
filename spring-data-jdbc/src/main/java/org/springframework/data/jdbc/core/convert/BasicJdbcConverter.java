@@ -262,8 +262,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		@SuppressWarnings("unchecked")
 		private ReadingContext(PersistentPropertyPathExtension rootPath, ResultSet resultSet, Identifier identifier,
-							   Object key) {
-
+				Object key) {
 
 			RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) rootPath.getLeafEntity();
 
@@ -273,7 +272,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			this.resultSet = resultSet;
 			this.rootPath = rootPath;
 			this.path = new PersistentPropertyPathExtension(
-					(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty>) getMappingContext(), this.entity);
+					(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty>) getMappingContext(),
+					this.entity);
 			this.identifier = identifier;
 			this.key = key;
 		}
@@ -291,8 +291,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
-			return new ReadingContext<S>((RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()), resultSet,
-					rootPath.extendBy(property), path.extendBy(property), identifier, key);
+			return new ReadingContext<S>(
+					(RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()),
+					resultSet, rootPath.extendBy(property), path.extendBy(property), identifier, key);
 		}
 
 		T mapRow() {
@@ -399,25 +400,22 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		@Nullable
+		@SuppressWarnings("unchecked")
 		private Object readEntityFrom(RelationalPersistentProperty property, PersistentPropertyPathExtension path) {
 
 			ReadingContext<?> newContext = extendBy(property);
-
-			RelationalPersistentEntity<?> entity = getMappingContext()
-					.getRequiredPersistentEntity(property.getActualType());
-
+			RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(property.getActualType());
 			RelationalPersistentProperty idProperty = entity.getIdProperty();
 
-			Object idValue = null;
+			Object idValue;
 
 			if (idProperty != null) {
 				idValue = newContext.readFrom(idProperty);
+			} else {
+				idValue = newContext.getObjectFromResultSet(path.extendBy(property).getReverseColumnNameAlias());
 			}
 
-			if ((idProperty != null //
-					? idValue //
-					: newContext.getObjectFromResultSet(path.extendBy(property).getReverseColumnNameAlias()) //
-			) == null) {
+			if (idValue == null) {
 				return null;
 			}
 

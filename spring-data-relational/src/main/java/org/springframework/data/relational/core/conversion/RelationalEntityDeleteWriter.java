@@ -49,8 +49,8 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 	 * identified by {@code id}. If {@code id} is {@code null} it is interpreted as "Delete all aggregates of the type
 	 * indicated by the aggregateChange".
 	 *
-	 * @param id May be {@code null}.
-	 * @param aggregateChange Must not be {@code null}.
+	 * @param id may be {@code null}.
+	 * @param aggregateChange must not be {@code null}.
 	 */
 	@Override
 	public void write(@Nullable Object id, AggregateChange<?> aggregateChange) {

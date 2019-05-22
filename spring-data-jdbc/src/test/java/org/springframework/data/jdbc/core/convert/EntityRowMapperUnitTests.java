@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -31,14 +32,14 @@ import lombok.experimental.Wither;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.naming.OperationNotSupportedException;
 
@@ -47,6 +48,7 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -415,6 +417,7 @@ public class EntityRowMapperUnitTests {
 	@EqualsAndHashCode
 	@NoArgsConstructor
 	@AllArgsConstructor
+	@Getter
 	static class Trivial {
 
 		@Id Long id;
@@ -575,6 +578,7 @@ public class EntityRowMapperUnitTests {
 		return createRowMapper(type, NamingStrategy.INSTANCE);
 	}
 
+	@SuppressWarnings("unchecked")
 	private <T> EntityRowMapper<T> createRowMapper(Class<T> type, NamingStrategy namingStrategy) {
 
 		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
@@ -582,20 +586,14 @@ public class EntityRowMapperUnitTests {
 		DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
 		// the ID of the entity is used to determine what kind of ResultSet is needed for subsequent selects.
-		HashSet<Trivial> trivials = new HashSet<>(asList( //
-				new Trivial(1L, "one"), //
-				new Trivial(2L, "two") //
-		));
+		Set<Trivial> trivials = Stream.of(new Trivial(1L, "one"), //
+				new Trivial(2L, "two")) //
+				.collect(Collectors.toSet());
 
-		HashSet<SimpleEntry<Integer, Trivial>> simpleEntriesWithInts = new HashSet<>(asList( //
-				new SimpleEntry<>(1, new Trivial(1L, "one")), //
-				new SimpleEntry<>(2, new Trivial(2L, "two")) //
-		));
-
-		HashSet<SimpleEntry<String, Trivial>> simpleEntriesWithStringKeys = new HashSet<>(asList( //
-				new SimpleEntry<>("one", new Trivial(1L, "one")), //
-				new SimpleEntry<>("two", new Trivial(2L, "two")) //
-		));
+		Set<Map.Entry<Integer, Trivial>> simpleEntriesWithInts = trivials.stream()
+				.collect(Collectors.toMap(it -> it.getId().intValue(), Function.identity())).entrySet();
+		Set<Map.Entry<String, Trivial>> simpleEntriesWithStringKeys = trivials.stream()
+				.collect(Collectors.toMap(Trivial::getName, Function.identity())).entrySet();
 
 		doReturn(trivials).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
 				any(RelationalPersistentProperty.class));
@@ -663,15 +661,11 @@ public class EntityRowMapperUnitTests {
 		return result;
 	}
 
+	@RequiredArgsConstructor
 	private static class ResultSetAnswer implements Answer {
 
 		private final List<Map<String, Object>> values;
 		private int index = -1;
-
-		public ResultSetAnswer(List<Map<String, Object>> values) {
-
-			this.values = values;
-		}
 
 		@Override
 		public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -691,9 +685,7 @@ public class EntityRowMapperUnitTests {
 					return this.toString();
 				default:
 					throw new OperationNotSupportedException(invocation.getMethod().getName());
-
 			}
-
 		}
 
 		private boolean isAfterLast() {

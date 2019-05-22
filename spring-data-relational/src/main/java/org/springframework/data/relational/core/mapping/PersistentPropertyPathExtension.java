@@ -39,7 +39,7 @@ public class PersistentPropertyPathExtension {
 
 	/**
 	 * Creates the empty path referencing the root itself.
-	 * 
+	 *
 	 * @param context Must not be {@literal null}.
 	 * @param entity Root entity of the path. Must not be {@literal null}.
 	 */
@@ -56,10 +56,10 @@ public class PersistentPropertyPathExtension {
 	}
 
 	/**
-	 * Creates a non empty path
-	 * 
-	 * @param context Must not be {@literal null}.
-	 * @param path Must not be {@literal null}.
+	 * Creates a non-empty path.
+	 *
+	 * @param context must not be {@literal null}.
+	 * @param path must not be {@literal null}.
 	 */
 	public PersistentPropertyPathExtension(
 			MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
@@ -202,19 +202,22 @@ public class PersistentPropertyPathExtension {
 	}
 
 	/**
-	 * Returns the longest ancestor path that has an Id property.
-	 * 
+	 * Returns the longest ancestor path that has an {@link org.springframework.data.annotation.Id} property.
+	 *
 	 * @return A path that starts just as this path but is shorter. Guaranteed to be not {@literal null}.
 	 */
 	public PersistentPropertyPathExtension getIdDefiningParentPath() {
 
 		PersistentPropertyPathExtension parent = getParentPath();
+
 		if (parent.path == null) {
 			return parent;
 		}
+
 		if (!parent.hasIdProperty()) {
 			return parent.getIdDefiningParentPath();
 		}
+
 		return parent;
 	}
 
@@ -267,7 +270,7 @@ public class PersistentPropertyPathExtension {
 
 	/**
 	 * Tests if {@code this} and the argument represent the same path.
-	 * 
+	 *
 	 * @param path to which this path gets compared. May be {@literal null}.
 	 * @return Whence the argument matches the path represented by this instance.
 	 */
@@ -277,7 +280,7 @@ public class PersistentPropertyPathExtension {
 
 	/**
 	 * The id property of the final element of the path.
-	 * 
+	 *
 	 * @return Guaranteed to be not {@literal null}.
 	 * @throws IllegalStateException if no such property exists.
 	 */
@@ -287,7 +290,7 @@ public class PersistentPropertyPathExtension {
 
 	/**
 	 * The column name used for the list index or map key of the leaf property of this path.
-	 * 
+	 *
 	 * @return May be {@literal null}.
 	 */
 	@Nullable
@@ -298,7 +301,7 @@ public class PersistentPropertyPathExtension {
 	/**
 	 * The type of the qualifier column of the leaf property of this path or {@literal null} if this is not applicable.
 	 *
-	 * @return May be {@literal null}.
+	 * @return may be {@literal null}.
 	 */
 	@Nullable
 	public Class<?> getQualifierColumnType() {
@@ -307,8 +310,8 @@ public class PersistentPropertyPathExtension {
 
 	/**
 	 * Creates a new path by extending the current path by the property passed as an argument.
-	 * 
-	 * @param property Must not be {@literal null}.
+	 *
+	 * @param property must not be {@literal null}.
 	 * @return Guaranteed to be not {@literal null}.
 	 */
 	public PersistentPropertyPathExtension extendBy(RelationalPersistentProperty property) {
@@ -331,7 +334,7 @@ public class PersistentPropertyPathExtension {
 
 	/**
 	 * For empty paths this is the type of the entity. For non empty paths this is the actual type of the leaf property.
-	 * 
+	 *
 	 * @return Guaranteed to be not {@literal null}.
 	 * @see PersistentProperty#getActualType()
 	 */
@@ -360,7 +363,7 @@ public class PersistentPropertyPathExtension {
 
 	/**
 	 * Converts this path to a non-null {@link PersistentPropertyPath}.
-	 * 
+	 *
 	 * @return Guaranteed to be not {@literal null}.
 	 * @throws IllegalStateException if this path is empty.
 	 */

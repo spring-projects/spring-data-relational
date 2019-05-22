@@ -217,7 +217,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * {@link Enum} handling or returns the value as is.
 	 *
 	 * @param value to be converted. May be {@code null}..
-	 * @param target May be {@code null}..
+	 * @param target may be {@code null}..
 	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
 	 */
 	@Nullable

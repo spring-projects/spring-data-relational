@@ -243,7 +243,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Override
-	public <T> Iterable<T> findAllByPath(Identifier identifier,
+	public Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<RelationalPersistentProperty> path) {
 		return sqlSession().selectList(namespace(path.getBaseProperty().getOwner().getType()) + ".findAllByPath",
 				new MyBatisContext(identifier, null, path.getLeafProperty().getType(), Collections.emptyMap()));

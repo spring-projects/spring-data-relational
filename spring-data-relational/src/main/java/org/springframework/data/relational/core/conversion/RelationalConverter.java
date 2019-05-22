@@ -69,7 +69,7 @@ public interface RelationalConverter {
 	 *
 	 * @param persistentEntity the kind of entity to operate on. Must not be {@code null}.
 	 * @param instance the instance to operate on. Must not be {@code null}.
-	 * @return Guaranteed to be not {@code null}.
+	 * @return guaranteed to be not {@code null}.
 	 */
 	<T> PersistentPropertyAccessor<T> getPropertyAccessor(PersistentEntity<T, ?> persistentEntity, T instance);
 

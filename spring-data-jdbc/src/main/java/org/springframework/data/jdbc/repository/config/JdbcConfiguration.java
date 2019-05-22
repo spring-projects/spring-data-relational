@@ -76,9 +76,10 @@ public class JdbcConfiguration {
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
-	public RelationalConverter relationalConverter(RelationalMappingContext mappingContext, @Lazy RelationResolver relationalResolver) {
-
-		return new BasicJdbcConverter(mappingContext, relationalResolver, jdbcCustomConversions(), JdbcTypeFactory.unsupported());
+	public RelationalConverter relationalConverter(RelationalMappingContext mappingContext,
+			@Lazy RelationResolver relationalResolver) {
+		return new BasicJdbcConverter(mappingContext, relationalResolver, jdbcCustomConversions(),
+				JdbcTypeFactory.unsupported());
 	}
 
 	/**
@@ -120,9 +121,7 @@ public class JdbcConfiguration {
 	 */
 	@Bean
 	public DataAccessStrategy dataAccessStrategy(RelationalMappingContext context, JdbcConverter converter,
-												 NamedParameterJdbcOperations operations) {
-
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context),
-				context, converter, operations);
+			NamedParameterJdbcOperations operations) {
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter, operations);
 	}
 }

@@ -19,6 +19,7 @@ import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,13 +28,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -505,9 +507,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(saved.four).describedAs("Something went wrong during saving").isNotNull();
 
 		NoIdListChain4 reloaded = template.findById(saved.four, NoIdListChain4.class);
+		assertThat(reloaded).isEqualTo(saved);
+	}
 
-		assertIsUnchanged(saved, reloaded);
+	@Test // DATAJDBC-223
+	public void shouldDeleteChainOfListsWithoutIds() {
 
+		NoIdListChain4 saved = template.save(createNoIdTree());
 		template.deleteById(saved.four, NoIdListChain4.class);
 
 		SoftAssertions.assertSoftly(softly -> {
@@ -518,7 +524,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 			softly.assertThat(count("NO_ID_LIST_CHAIN1")).describedAs("Chain1 elements got deleted").isEqualTo(0);
 			softly.assertThat(count("NO_ID_LIST_CHAIN0")).describedAs("Chain0 elements got deleted").isEqualTo(0);
 		});
-
 	}
 
 	/**
@@ -528,82 +533,41 @@ public class JdbcAggregateTemplateIntegrationTests {
 	 * <li>the xxxValue of each element is a {@literal v} followed by the indices used to navigate to the given instance.
 	 * </li>
 	 * </ul>
-	 *
-	 * @return Guaranteed to be not {@literal null}.
 	 */
-	@NotNull
-	private JdbcAggregateTemplateIntegrationTests.NoIdListChain4 createNoIdTree() {
+	private static NoIdListChain4 createNoIdTree() {
 
 		NoIdListChain4 chain4 = new NoIdListChain4();
 		chain4.fourValue = "v";
-		for (int _3 = 0; _3 <= 1; _3++) {
+
+		IntStream.of(0, 1).forEach(i -> {
 
 			NoIdListChain3 c3 = new NoIdListChain3();
-			c3.threeValue = chain4.fourValue + _3;
+			c3.threeValue = chain4.fourValue + i;
 			chain4.chain3.add(c3);
 
-			for (int _2 = 0; _2 <= 1; _2++) {
+			IntStream.of(0, 1).forEach(j -> {
 
 				NoIdListChain2 c2 = new NoIdListChain2();
-				c2.twoValue = c3.threeValue + _2;
+				c2.twoValue = c3.threeValue + j;
 				c3.chain2.add(c2);
 
-				for (int _1 = 0; _1 <= 1; _1++) {
+				IntStream.of(0, 1).forEach(k -> {
 
 					NoIdListChain1 c1 = new NoIdListChain1();
-					c1.oneValue = c2.twoValue + _1;
+					c1.oneValue = c2.twoValue + k;
 					c2.chain1.add(c1);
 
-					for (int _0 = 0; _0 <= 1; _0++) {
+					IntStream.of(0, 1).forEach(m -> {
 
 						NoIdListChain0 c0 = new NoIdListChain0();
-						c0.zeroValue = c1.oneValue + _0;
+						c0.zeroValue = c1.oneValue + m;
 						c1.chain0.add(c0);
-
-					}
-				}
-			}
-
-		}
+					});
+				});
+			});
+		});
 
 		return chain4;
-	}
-
-	private void assertIsUnchanged(NoIdListChain4 original, NoIdListChain4 reloaded) {
-
-		SoftAssertions.assertSoftly(softly -> {
-
-			softly.assertThat(reloaded.fourValue).isEqualTo("v");
-			softly.assertThat(reloaded.chain3).hasSize(2);
-			for (int _3 = 0; _3 <= 1; _3++) {
-
-				NoIdListChain3 c3 = reloaded.chain3.get(_3);
-				softly.assertThat(c3.threeValue).isEqualTo(original.fourValue + _3);
-				softly.assertThat(c3.chain2).hasSize(2);
-
-				for (int _2 = 0; _2 <= 1; _2++) {
-
-					NoIdListChain2 c2 = c3.chain2.get(_2);
-					softly.assertThat(c2.twoValue).isEqualTo(c3.threeValue + _2);
-					softly.assertThat(c2.chain1).hasSize(2);
-
-					for (int _1 = 0; _1 <= 1; _1++) {
-
-						NoIdListChain1 c1 = c2.chain1.get(_1);
-						softly.assertThat(c1.oneValue).isEqualTo(c2.twoValue + _1);
-						softly.assertThat(c1.chain0).hasSize(2);
-
-						for (int _0 = 0; _0 <= 1; _0++) {
-
-							NoIdListChain0 c0 = c1.chain0.get(_0);
-							softly.assertThat(c0.zeroValue).isEqualTo(c1.oneValue + _0);
-
-						}
-					}
-				}
-
-			}
-		});
 	}
 
 	@Test // DATAJDBC-223
@@ -614,9 +578,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(saved.four).isNotNull();
 
 		NoIdMapChain4 reloaded = template.findById(saved.four, NoIdMapChain4.class);
+		assertThat(reloaded).isEqualTo(saved);
+	}
 
-		assertIsUnchanged(saved, reloaded);
+	@Test // DATAJDBC-223
+	public void shouldDeleteChainOfMapsWithoutIds() {
 
+		NoIdMapChain4 saved = template.save(createNoIdMapTree());
 		template.deleteById(saved.four, NoIdMapChain4.class);
 
 		SoftAssertions.assertSoftly(softly -> {
@@ -627,86 +595,45 @@ public class JdbcAggregateTemplateIntegrationTests {
 			softly.assertThat(count("NO_ID_MAP_CHAIN1")).describedAs("Chain1 elements got deleted").isEqualTo(0);
 			softly.assertThat(count("NO_ID_MAP_CHAIN0")).describedAs("Chain0 elements got deleted").isEqualTo(0);
 		});
-
 	}
 
-	@NotNull
-	private JdbcAggregateTemplateIntegrationTests.NoIdMapChain4 createNoIdMapTree() {
+	private static NoIdMapChain4 createNoIdMapTree() {
 
 		NoIdMapChain4 chain4 = new NoIdMapChain4();
 		chain4.fourValue = "v";
-		for (int _3 = 0; _3 <= 1; _3++) {
+
+		IntStream.of(0, 1).forEach(i -> {
 
 			NoIdMapChain3 c3 = new NoIdMapChain3();
-			c3.threeValue = chain4.fourValue + _3;
-			chain4.chain3.put(asString(_3), c3);
+			c3.threeValue = chain4.fourValue + i;
+			chain4.chain3.put(asString(i), c3);
 
-			for (int _2 = 0; _2 <= 1; _2++) {
+			IntStream.of(0, 1).forEach(j -> {
 
 				NoIdMapChain2 c2 = new NoIdMapChain2();
-				c2.twoValue = c3.threeValue + _2;
-				c3.chain2.put(asString(_2), c2);
+				c2.twoValue = c3.threeValue + j;
+				c3.chain2.put(asString(j), c2);
 
-				for (int _1 = 0; _1 <= 1; _1++) {
+				IntStream.of(0, 1).forEach(k -> {
 
 					NoIdMapChain1 c1 = new NoIdMapChain1();
-					c1.oneValue = c2.twoValue + _1;
-					c2.chain1.put(asString(_1), c1);
+					c1.oneValue = c2.twoValue + k;
+					c2.chain1.put(asString(k), c1);
 
-					for (int _0 = 0; _0 <= 1; _0++) {
+					IntStream.of(0, 1).forEach(it -> {
 
 						NoIdMapChain0 c0 = new NoIdMapChain0();
-						c0.zeroValue = c1.oneValue + _0;
-						c1.chain0.put(asString(_0), c0);
+						c0.zeroValue = c1.oneValue + it;
+						c1.chain0.put(asString(it), c0);
+					});
+				});
+			});
+		});
 
-					}
-				}
-			}
-
-		}
 		return chain4;
 	}
 
-	private void assertIsUnchanged(NoIdMapChain4 original, NoIdMapChain4 reloaded) {
-
-		SoftAssertions.assertSoftly(softly -> {
-
-			softly.assertThat(reloaded.fourValue).isEqualTo("v");
-			softly.assertThat(reloaded.chain3).hasSize(2);
-			for (int _3 = 0; _3 <= 1; _3++) {
-
-				NoIdMapChain3 c3 = reloaded.chain3.get(asString(_3));
-				softly.assertThat(c3.threeValue).isEqualTo(original.fourValue + _3);
-				softly.assertThat(c3.chain2).hasSize(2);
-
-				for (int _2 = 0; _2 <= 1; _2++) {
-
-					NoIdMapChain2 c2 = c3.chain2.get(asString(_2));
-					softly.assertThat(c2.twoValue).isEqualTo(c3.threeValue + _2);
-					softly.assertThat(c2.chain1).hasSize(2);
-
-					for (int _1 = 0; _1 <= 1; _1++) {
-
-						NoIdMapChain1 c1 = c2.chain1.get(asString(_1));
-						softly.assertThat(c1.oneValue).isEqualTo(c2.twoValue + _1);
-						softly.assertThat(c1.chain0).hasSize(2);
-
-						for (int _0 = 0; _0 <= 1; _0++) {
-
-							NoIdMapChain0 c0 = c1.chain0.get(asString(_0));
-							softly.assertThat(c0.zeroValue).isEqualTo(c1.oneValue + _0);
-
-						}
-					}
-				}
-
-			}
-
-		});
-	}
-
 	private static String asString(int i) {
-
 		return "_" + i;
 	}
 
@@ -881,25 +808,30 @@ public class JdbcAggregateTemplateIntegrationTests {
 	/**
 	 * One may think of ChainN as a chain with N further elements
 	 */
+	@EqualsAndHashCode
 	static class NoIdListChain0 {
 		String zeroValue;
 	}
 
+	@EqualsAndHashCode
 	static class NoIdListChain1 {
 		String oneValue;
 		List<NoIdListChain0> chain0 = new ArrayList<>();
 	}
 
+	@EqualsAndHashCode
 	static class NoIdListChain2 {
 		String twoValue;
 		List<NoIdListChain1> chain1 = new ArrayList<>();
 	}
 
+	@EqualsAndHashCode
 	static class NoIdListChain3 {
 		String threeValue;
 		List<NoIdListChain2> chain2 = new ArrayList<>();
 	}
 
+	@EqualsAndHashCode
 	static class NoIdListChain4 {
 		@Id Long four;
 		String fourValue;
@@ -909,25 +841,30 @@ public class JdbcAggregateTemplateIntegrationTests {
 	/**
 	 * One may think of ChainN as a chain with N further elements
 	 */
+	@EqualsAndHashCode
 	static class NoIdMapChain0 {
 		String zeroValue;
 	}
 
+	@EqualsAndHashCode
 	static class NoIdMapChain1 {
 		String oneValue;
 		Map<String, NoIdMapChain0> chain0 = new HashMap<>();
 	}
 
+	@EqualsAndHashCode
 	static class NoIdMapChain2 {
 		String twoValue;
 		Map<String, NoIdMapChain1> chain1 = new HashMap<>();
 	}
 
+	@EqualsAndHashCode
 	static class NoIdMapChain3 {
 		String threeValue;
 		Map<String, NoIdMapChain2> chain2 = new HashMap<>();
 	}
 
+	@EqualsAndHashCode
 	static class NoIdMapChain4 {
 		@Id Long four;
 		String fourValue;

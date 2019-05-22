@@ -184,7 +184,6 @@ class SqlGenerator {
 		Table table = getTable();
 
 		Condition condition = buildConditionForBackReference(parentIdentifier, table);
-
 		SelectBuilder.SelectWhereAndOr withWhereClause = builder.where(condition);
 
 		Select select = ordered //
@@ -200,7 +199,6 @@ class SqlGenerator {
 		for (String backReferenceColumn : parentIdentifier.toMap().keySet()) {
 
 			Condition newCondition = table.column(backReferenceColumn).isEqualTo(getBindMarker(backReferenceColumn));
-
 			condition = condition == null ? newCondition : condition.and(newCondition);
 		}
 

@@ -57,14 +57,15 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
 	 * {@link RelationalMappingContext} and {@link ApplicationEventPublisher}.
-	 *  @param dataAccessStrategy must not be {@literal null}.
+	 *
+	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param publisher must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 */
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-								 JdbcConverter converter, ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
+			JdbcConverter converter, ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
@@ -136,14 +137,14 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable QueryLookupStrategy.Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
-		if (key != null //
-				&& key != QueryLookupStrategy.Key.USE_DECLARED_QUERY //
-				&& key != QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND //
-		) {
-			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
+		if (key == null || key == QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND
+				|| key == QueryLookupStrategy.Key.USE_DECLARED_QUERY) {
+
+			JdbcQueryLookupStrategy strategy = new JdbcQueryLookupStrategy(publisher, context, converter,
+					queryMappingConfiguration, operations);
+			return Optional.of(strategy);
 		}
 
-		return Optional.of(new JdbcQueryLookupStrategy(publisher, context, converter, accessStrategy,
-				queryMappingConfiguration, operations));
+		throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 	}
 }

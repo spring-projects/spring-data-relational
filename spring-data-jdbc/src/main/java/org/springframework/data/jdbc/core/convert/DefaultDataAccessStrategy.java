@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.NonNull;
-
 import java.sql.JDBCType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,10 +58,10 @@ import org.springframework.util.Assert;
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
-	private final @NonNull SqlGeneratorSource sqlGeneratorSource;
-	private final @NonNull RelationalMappingContext context;
-	private final @NonNull JdbcConverter converter;
-	private final @NonNull NamedParameterJdbcOperations operations;
+	private final SqlGeneratorSource sqlGeneratorSource;
+	private final RelationalMappingContext context;
+	private final JdbcConverter converter;
+	private final NamedParameterJdbcOperations operations;
 
 	/**
 	 * Creates a {@link DefaultDataAccessStrategy}
@@ -75,7 +73,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @since 1.1
 	 */
 	public DefaultDataAccessStrategy(SqlGeneratorSource sqlGeneratorSource, RelationalMappingContext context,
-									 JdbcConverter converter, NamedParameterJdbcOperations operations) {
+			JdbcConverter converter, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(sqlGeneratorSource, "SqlGeneratorSource must not be null");
 		Assert.notNull(context, "RelationalMappingContext must not be null");
@@ -211,16 +209,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, java.lang.Class)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> T findById(Object id, Class<T> domainType) {
 
 		String findOneSql = sql(domainType).getFindOne();
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
 
 		try {
-			return operations.queryForObject(findOneSql, parameter,
-					(RowMapper<T>) getEntityRowMapper(domainType));
+			return operations.queryForObject(findOneSql, parameter, (RowMapper<T>) getEntityRowMapper(domainType));
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -230,19 +227,18 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAll(java.lang.Class)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAll(Class<T> domainType) {
-		return operations.query(sql(domainType).getFindAll(),
-				(RowMapper<T>) getEntityRowMapper(domainType));
+		return operations.query(sql(domainType).getFindAll(), (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllById(java.lang.Iterable, java.lang.Class)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
 		RelationalPersistentProperty idProperty = getRequiredPersistentEntity(domainType).getRequiredIdProperty();
@@ -252,18 +248,16 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		String findAllInListSql = sql(domainType).getFindAllInList();
 
-		return operations.query(findAllInListSql, parameterSource,
-				(RowMapper<T>) getEntityRowMapper(domainType));
+		return operations.query(findAllInListSql, parameterSource, (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.relational.domain.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
 	 */
-
-	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Iterable<T> findAllByPath(Identifier identifier,
+	@SuppressWarnings("unchecked")
+	public Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
 		Assert.notNull(identifier, "identifier must not be null.");
@@ -275,16 +269,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String findAllByProperty = sql(actualType) //
 				.getFindAllByProperty(identifier, path.getQualifierColumn(), path.isOrdered());
 
-		MapSqlParameterSource parameters = new MapSqlParameterSource();
+		MapSqlParameterSource parameters = new MapSqlParameterSource(identifier.toMap());
 
-		identifier.forEach((name, value, targetType) -> {
-			parameters.addValue(name, value);
-		});
+		RowMapper<?> rowMapper = path.isMap() ? this.getMapEntityRowMapper(path, identifier)
+				: this.getEntityRowMapper(path, identifier);
 
-		return operations.query(findAllByProperty, parameters, //
-				(RowMapper<T>) (path.isMap() //
-						? this.getMapEntityRowMapper(path, identifier) //
-						: this.getEntityRowMapper(path, identifier)));
+		return operations.query(findAllByProperty, parameters, (RowMapper<Object>) rowMapper);
 	}
 
 	/*
@@ -293,7 +283,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
+	public Iterable<Object> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
 
 		Assert.notNull(rootId, "rootId must not be null.");
 
@@ -313,8 +303,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
 
 		Boolean result = operations.queryForObject(existsSql, parameter, Boolean.class);
-
-		Assert.notNull(result, "The result of an exists query must not be null");
+		Assert.state(result != null, "The result of an exists query must not be null");
 
 		return result;
 	}
@@ -355,8 +344,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return parameters;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Nullable
+	@SuppressWarnings("unchecked")
 	private <S, ID> ID getIdValueOrNull(S instance, RelationalPersistentEntity<S> persistentEntity) {
 
 		ID idValue = (ID) persistentEntity.getIdentifierAccessor(instance).getIdentifier();
@@ -398,7 +387,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return new EntityRowMapper<>(getRequiredPersistentEntity(domainType), converter);
 	}
 
-		private EntityRowMapper<?> getEntityRowMapper(PersistentPropertyPathExtension path, Identifier identifier) {
+	private EntityRowMapper<?> getEntityRowMapper(PersistentPropertyPathExtension path, Identifier identifier) {
 		return new EntityRowMapper<>(path, converter, identifier);
 	}
 
@@ -465,7 +454,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			convertedIds.add(jdbcValue.getValue());
 		}
 
-		Assert.notNull(jdbcValue, "JdbcValue must be not null at this point. Please report this as a bug.");
+		Assert.state(jdbcValue != null, "JdbcValue must be not null at this point. Please report this as a bug.");
 
 		JDBCType jdbcType = jdbcValue.getJdbcType();
 		int typeNumber = jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
@@ -499,7 +488,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	/**
 	 * A {@link PersistentPropertyAccessor} implementation always returning null
-	 * 
+	 *
 	 * @param <T>
 	 */
 	static class NoValuePropertyAccessor<T> implements PersistentPropertyAccessor<T> {
