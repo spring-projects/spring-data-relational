@@ -19,8 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -37,6 +38,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.TransactionalDatabaseClient;
@@ -210,14 +212,27 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Flux<Integer> findAllIds();
 	}
 
-	@Data
+	@Getter
+	@Setter
 	@Table("legoset")
-	@AllArgsConstructor
 	@NoArgsConstructor
-	static class LegoSet {
-		@Id Integer id;
+	static class LegoSet extends Lego {
 		String name;
 		Integer manual;
+
+		@PersistenceConstructor
+		public LegoSet(Integer id, String name, Integer manual) {
+			super(id);
+			this.name = name;
+			this.manual = manual;
+		}
+	}
+
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Getter
+	static class Lego {
+		@Id Integer id;
 	}
 
 	interface Named {

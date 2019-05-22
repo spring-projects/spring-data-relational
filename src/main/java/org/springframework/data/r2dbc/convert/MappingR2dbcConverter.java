@@ -22,6 +22,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.Array;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -117,7 +118,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 	private <R> R read(RelationalPersistentEntity<R> entity, Row row, @Nullable RowMetadata metadata) {
 
-		R result = createInstance(row, "", entity);
+		R result = createInstance(row, metadata, "", entity);
 
 		ConvertingPropertyAccessor<R> propertyAccessor = new ConvertingPropertyAccessor<>(
 				entity.getPropertyAccessor(result), getConversionService());
@@ -208,7 +209,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			return null;
 		}
 
-		Object instance = createInstance(row, prefix, entity);
+		Object instance = createInstance(row, metadata, prefix, entity);
 
 		PersistentPropertyAccessor<?> accessor = entity.getPropertyAccessor(instance);
 		ConvertingPropertyAccessor<?> propertyAccessor = new ConvertingPropertyAccessor<>(accessor, getConversionService());
@@ -222,9 +223,11 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return (S) instance;
 	}
 
-	private <S> S createInstance(Row row, String prefix, RelationalPersistentEntity<S> entity) {
+	private <S> S createInstance(Row row, @Nullable RowMetadata rowMetadata, String prefix,
+			RelationalPersistentEntity<S> entity) {
 
-		RowParameterValueProvider rowParameterValueProvider = new RowParameterValueProvider(row, entity, this, prefix);
+		RowParameterValueProvider rowParameterValueProvider = new RowParameterValueProvider(row, rowMetadata, entity, this,
+				prefix);
 
 		return createInstance(entity, rowParameterValueProvider::getParameterValue);
 	}
@@ -393,16 +396,16 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	private boolean potentiallySetId(Row row, RowMetadata metadata, PersistentPropertyAccessor<?> propertyAccessor,
 			RelationalPersistentProperty idProperty) {
 
-		Map<String, ColumnMetadata> columns = createMetadataMap(metadata);
+		Collection<String> columns = metadata.getColumnNames();
 		Object generatedIdValue = null;
 
-		if (columns.containsKey(idProperty.getColumnName())) {
+		if (columns.contains(idProperty.getColumnName())) {
 			generatedIdValue = row.get(idProperty.getColumnName());
 		}
 
 		if (columns.size() == 1) {
 
-			String key = columns.keySet().iterator().next();
+			String key = columns.iterator().next();
 			generatedIdValue = row.get(key);
 		}
 
@@ -416,7 +419,6 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return true;
 	}
 
-	@SuppressWarnings("unchecked")
 	private <R> RelationalPersistentEntity<R> getRequiredPersistentEntity(Class<R> type) {
 		return (RelationalPersistentEntity<R>) getMappingContext().getRequiredPersistentEntity(type);
 	}
@@ -436,6 +438,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	private static class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
 
 		private final @NonNull Row resultSet;
+		private final @Nullable RowMetadata metadata;
 		private final @NonNull RelationalPersistentEntity<?> entity;
 		private final @NonNull RelationalConverter converter;
 		private final @NonNull String prefix;
@@ -452,6 +455,10 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			String column = prefix + property.getColumnName();
 
 			try {
+
+				if (metadata != null && !metadata.getColumnNames().contains(column)) {
+					return null;
+				}
 
 				Object value = resultSet.get(column);
 
