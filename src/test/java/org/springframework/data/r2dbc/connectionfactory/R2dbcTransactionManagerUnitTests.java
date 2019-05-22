@@ -32,8 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
-import org.springframework.data.r2dbc.connectionfactory.ConnectionFactoryUtils;
+
 import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.reactive.TransactionSynchronization;
@@ -149,7 +148,7 @@ public class R2dbcTransactionManagerUnitTests {
 	public void testCommitFails() {
 
 		when(connectionMock.commitTransaction()).thenReturn(Mono.defer(() -> {
-			return Mono.error(new IllegalStateException());
+			return Mono.error(new IllegalStateException("Commit should fail"));
 		}));
 
 		TransactionalOperator operator = TransactionalOperator.create(tm);
