@@ -27,8 +27,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 
 /**
- * {@link RowMapper} implementation that creates a {@link Map} for each row, representing all columns as key-value
- * pairs: one entry for each column, with the column name as key.
+ * {@link BiFunction Mapping function} implementation that creates a {@link Map} for each row, representing all columns
+ * as key-value pairs: one entry for each column, with the column name as key.
  * <p>
  * The {@link Map} implementation to use and the key to use for each column in the column Map can be customized through
  * overriding {@link #createColumnMap} and {@link #getColumnKey}, respectively.

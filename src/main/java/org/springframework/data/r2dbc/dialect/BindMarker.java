@@ -24,7 +24,7 @@ public interface BindMarker {
 	 * Bind the given {@code value} to the {@link Statement} using the underlying binding strategy.
 	 *
 	 * @param bindTarget the target to bind the value to.
-	 * @param value the actual value. Must not be {@literal null}. Use {@link #bindNull(Statement, Class)} for
+	 * @param value the actual value. Must not be {@literal null}. Use {@link #bindNull(BindTarget, Class)} for
 	 *          {@literal null} values.
 	 * @see Statement#bind
 	 */

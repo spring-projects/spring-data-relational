@@ -219,7 +219,7 @@ public class ApplicationConfiguration extends AbstractR2dbcConfiguration {
 ----
 ====
 
-This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instance, with the container using Spring's `AbstractR2dbcConfiguration`. As compared to registering a `ConnectionFactory` instance directly, the configuration support has the added advantage of also providing the container with an `ExceptionTranslator` implementation that translates R2DBC exceptions to exceptions in Spring's portable `DataAccessException` hierarchy for data access classes annotated with the `@Repository` annotation. This hierarchy and the use of `@Repository` is described in https://docs.spring.io/spring/docs/{springVersion}/spring-framework-reference/data-access.html[Spring's DAO support features].
+This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instance, with the container using Spring's `AbstractR2dbcConfiguration`. As compared to registering a `ConnectionFactory` instance directly, the configuration support has the added advantage of also providing the container with an `ExceptionTranslator` implementation that translates R2DBC exceptions to exceptions in Spring's portable `DataAccessException` hierarchy for data access classes annotated with the `@Repository` annotation. This hierarchy and the use of `@Repository` is described in {spring-framework-ref}/data-access.html[Spring's DAO support features].
 
 `AbstractR2dbcConfiguration` registers also `DatabaseClient` that is required for database interaction and for Repository implementation.
 

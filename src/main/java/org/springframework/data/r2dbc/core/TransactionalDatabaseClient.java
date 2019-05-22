@@ -33,7 +33,8 @@ import org.springframework.util.Assert;
  * transaction. Alternatively, transactions can be started and cleaned up using {@link #beginTransaction()} and
  * {@link #commitTransaction()}.
  * <p>
- * Transactional resources are bound to {@link ReactiveTransactionSynchronization} through nested
+ * Transactional resources are bound to
+ * {@link org.springframework.data.r2dbc.connectionfactory.ReactiveTransactionSynchronization} through nested
  * {@link TransactionContext} enabling nested (parallel) transactions. The simplemost approach to use transactions is by
  * using {@link #inTransaction(Function)} which will start a transaction and commit it on successful termination. The
  * callback allows execution of multiple statements within the same transaction.
