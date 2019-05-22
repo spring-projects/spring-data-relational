@@ -451,22 +451,22 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		@Nullable
 		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 
-			RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameter.getName());
-			String column = prefix + property.getColumnName();
+			RelationalPersistentProperty property = this.entity.getRequiredPersistentProperty(parameter.getName());
+			String column = this.prefix + property.getColumnName();
 
 			try {
 
-				if (metadata != null && !metadata.getColumnNames().contains(column)) {
+				if (this.metadata != null && !this.metadata.getColumnNames().contains(column)) {
 					return null;
 				}
 
-				Object value = resultSet.get(column);
+				Object value = this.resultSet.get(column);
 
 				if (value == null) {
 					return null;
 				}
 
-				return converter.getConversionService().convert(value, parameter.getType().getType());
+				return this.converter.getConversionService().convert(value, parameter.getType().getType());
 			} catch (Exception o_O) {
 				throw new MappingException(String.format("Couldn't read column %s from Row.", column), o_O);
 			}
