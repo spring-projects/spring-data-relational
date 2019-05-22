@@ -1,7 +1,7 @@
 [[r2dbc.datbaseclient.fluent-api]]
 = Fluent Data Access API
 
-You have already seen ``DatabaseClient``s SQL API that offers you maximum flexibility to execute any type of SQL.
+You have already seen the SQL API of `DatabaseClient` that offers you maximum flexibility to execute any type of SQL.
 `DatabaseClient` provides a more narrow interface for typical ad-hoc use-cases such as querying, inserting, updating, and deleting data.
 
 The entry points (`insert()`, `select()`, `update()`, and others) follow a natural naming schema based on the operation to be run. Moving on from the entry point, the API is designed to offer only context-dependent methods that lead to a terminating method that creates and runs a SQL statement. Spring Data R2DBC uses a `R2dbcDialect` abstraction to determine bind markers, pagination support and  data types natively supported by the underlying driver.
