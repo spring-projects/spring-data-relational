@@ -42,7 +42,8 @@ import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.TransactionalDatabaseClient;
-import org.springframework.data.r2dbc.dialect.Database;
+import org.springframework.data.r2dbc.dialect.DialectResolver;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -172,9 +173,9 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@Test
 	public void shouldInsertItemsTransactional() {
 
-		Database database = Database.findDatabase(createConnectionFactory()).get();
-		DefaultReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(
-				database.defaultDialect(), new MappingR2dbcConverter(mappingContext));
+		R2dbcDialect dialect = DialectResolver.getDialect(createConnectionFactory());
+		DefaultReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(dialect,
+				new MappingR2dbcConverter(mappingContext));
 		TransactionalDatabaseClient client = TransactionalDatabaseClient.builder()
 				.connectionFactory(createConnectionFactory()).dataAccessStrategy(dataAccessStrategy).build();
 

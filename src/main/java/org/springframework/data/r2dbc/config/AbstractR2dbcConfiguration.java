@@ -33,7 +33,7 @@ import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.dialect.Database;
+import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
@@ -87,12 +87,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * @throws UnsupportedOperationException if the {@link R2dbcDialect} cannot be determined.
 	 */
 	public R2dbcDialect getDialect(ConnectionFactory connectionFactory) {
-
-		return Database.findDatabase(connectionFactory)
-				.orElseThrow(() -> new UnsupportedOperationException(
-						String.format("Cannot determine a dialect for %s using %s. Please provide a Dialect.",
-								connectionFactory.getMetadata().getName(), connectionFactory)))
-				.defaultDialect();
+		return DialectResolver.getDialect(connectionFactory);
 	}
 
 	/**

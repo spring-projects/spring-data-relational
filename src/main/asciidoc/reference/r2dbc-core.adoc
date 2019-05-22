@@ -193,7 +193,7 @@ Even in this simple example, there are few things to notice:
 
 There is a https://github.com/spring-projects/spring-data-examples[GitHub repository with several examples] that you can download and play around with to get a feel for how the library works.
 
-[[r2dbc.drivers]]
+[[r2dbc.connecting]]
 == Connecting to a Relational Database with Spring
 
 One of the first tasks when using relational databases and Spring is to create a `io.r2dbc.spi.ConnectionFactory` object using the IoC container. The following example explains Java-based configuration.
@@ -235,6 +235,11 @@ As of writing the following drivers are available:
 * https://github.com/r2dbc/r2dbc-mssql[Microsoft SQL Server] (`io.r2dbc:r2dbc-mssql`)
 * https://github.com/jasync-sql/jasync-sql[jasync-sql MySQL] (`com.github.jasync-sql:jasync-r2dbc-mysql`)
 
-Spring Data R2DBC reacts to database specifics by inspecting `ConnectionFactoryMetadata` exposed by the `ConnectionFactory` and selects the appropriate database dialect accordingly.
-You can configure an own https://docs.spring.io/spring-data/r2dbc/docs/{version}/api/org/springframework/data/r2dbc/dialect/R2dbcDialect.html[`R2dbcDialect`] if the used driver is not yet known to Spring Data R2DBC.
+Spring Data R2DBC reacts to database specifics by inspecting the `ConnectionFactory` and selects the appropriate database dialect accordingly.
+You can configure an own {spring-data-r2dbc-javadoc}/api/org/springframework/data/r2dbc/dialect/R2dbcDialect.html[`R2dbcDialect`] if the used driver is not yet known to Spring Data R2DBC.
+
+TIP: Dialects are resolved by {spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/dialect/DialectResolver.html[`DialectResolver`] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`. +
+ +
+You can let Spring auto-discover your `R2dbcDialect` by registering a class that implements `org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider` through `META-INF/spring.factories`. +
+`DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 
