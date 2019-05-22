@@ -314,6 +314,24 @@ public class EmbeddedEntity {
 If you need a value object multiple times in an entity, this can be achieved with the optional `prefix` element of the `@Embedded` annotation.
 This element represents a prefix and is prepend for each column name in the embedded object.
 
+[TIP]
+====
+Make use of the shortcuts `@Embedded.Nullable` & `@Embedded.Empty` for `@Embedded(onEmpty = USE_NULL)` and `@Embedded(onEmpty = USE_EMPTY)` to reduce verbositility and simultaneously set JSR-305 `@javax.annotation.Nonnull` accordingly.
+
+[source, java]
+----
+public class MyEntity {
+
+    @Id
+    Integer id;
+
+    @Embedded.Nullable <1>
+    EmbeddedEntity embeddedEntity;
+}
+----
+<1> Shortcut for `@Embedded(onEmpty = USE_NULL)`.
+====
+
 [[jdbc.entity-persistence.state-detection-strategies]]
 === Entity State Detection Strategies
 

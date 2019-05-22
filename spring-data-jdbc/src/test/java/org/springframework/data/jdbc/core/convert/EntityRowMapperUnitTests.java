@@ -558,13 +558,13 @@ public class EntityRowMapperUnitTests {
 	static class WithEmptyEmbeddedImmutableValue {
 
 		@Id Long id;
-		@Embedded(onEmpty = OnEmpty.USE_EMPTY) ImmutableValue embeddedImmutableValue;
+		@Embedded.Empty ImmutableValue embeddedImmutableValue;
 	}
 
 	static class WithEmbeddedPrimitiveImmutableValue {
 
 		@Id Long id;
-		@Embedded(onEmpty = OnEmpty.USE_NULL) ImmutablePrimitiveValue embeddedImmutablePrimitiveValue;
+		@Embedded.Nullable ImmutablePrimitiveValue embeddedImmutablePrimitiveValue;
 	}
 
 	@Value
