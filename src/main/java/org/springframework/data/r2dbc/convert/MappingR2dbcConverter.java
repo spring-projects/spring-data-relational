@@ -38,11 +38,11 @@ import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
-import org.springframework.data.r2dbc.dialect.ArrayColumns;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.ClassTypeInformation;
@@ -84,7 +84,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	// Entity reading
 	// ----------------------------------
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.convert.EntityReader#read(java.lang.Class, S)
 	 */
@@ -93,7 +93,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return read(type, row, null);
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#read(java.lang.Class, io.r2dbc.spi.Row, io.r2dbc.spi.RowMetadata)
 	 */
@@ -233,7 +233,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	// Entity writing
 	// ----------------------------------
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.convert.EntityWriter#write(java.lang.Object, java.lang.Object)
 	 */
@@ -337,7 +337,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return Enum.class.isAssignableFrom(value.getClass()) ? ((Enum<?>) value).name() : value;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#getArrayValue(org.springframework.data.r2dbc.dialect.ArrayColumns, org.springframework.data.relational.core.mapping.RelationalPersistentProperty, java.lang.Object)
 	 */

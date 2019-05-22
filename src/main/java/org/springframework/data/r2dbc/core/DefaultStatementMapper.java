@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.OptionalLong;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -28,28 +27,14 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.Bindings;
-import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.query.BoundAssignments;
 import org.springframework.data.r2dbc.query.BoundCondition;
 import org.springframework.data.r2dbc.query.UpdateMapper;
-import org.springframework.data.r2dbc.support.StatementRenderUtil;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.AssignValue;
-import org.springframework.data.relational.core.sql.Assignment;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Delete;
-import org.springframework.data.relational.core.sql.DeleteBuilder;
-import org.springframework.data.relational.core.sql.Insert;
-import org.springframework.data.relational.core.sql.InsertBuilder;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.InsertBuilder.InsertValuesWithBuild;
-import org.springframework.data.relational.core.sql.OrderByField;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SelectBuilder;
-import org.springframework.data.relational.core.sql.StatementBuilder;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.Update;
-import org.springframework.data.relational.core.sql.UpdateBuilder;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.lang.Nullable;
@@ -63,7 +48,7 @@ import org.springframework.util.Assert;
 @RequiredArgsConstructor
 class DefaultStatementMapper implements StatementMapper {
 
-	private final Dialect dialect;
+	private final R2dbcDialect dialect;
 	private final RenderContext renderContext;
 	private final UpdateMapper updateMapper;
 	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
@@ -116,26 +101,15 @@ class DefaultStatementMapper implements StatementMapper {
 			selectBuilder.orderBy(createOrderByFields(table, mappedSort));
 		}
 
-		OptionalLong limit;
-		OptionalLong offset;
-
 		if (selectSpec.getPage().isPaged()) {
 
 			Pageable page = selectSpec.getPage();
-			limit = OptionalLong.of(page.getPageSize());
-			offset = OptionalLong.of(page.getOffset());
-		} else {
-			limit = OptionalLong.empty();
-			offset = OptionalLong.empty();
+
+			selectBuilder.limitOffset(page.getPageSize(), page.getOffset());
 		}
 
 		Select select = selectBuilder.build();
-		return new DefaultPreparedOperation<Select>(select, this.renderContext, bindings) {
-			@Override
-			public String toQuery() {
-				return StatementRenderUtil.render(select, limit, offset, DefaultStatementMapper.this.dialect);
-			}
-		};
+		return new DefaultPreparedOperation<>(select, this.renderContext, bindings);
 	}
 
 	private Collection<? extends OrderByField> createOrderByFields(Table table, Sort sortToUse) {

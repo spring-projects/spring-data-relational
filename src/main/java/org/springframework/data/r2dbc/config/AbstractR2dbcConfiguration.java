@@ -34,7 +34,7 @@ import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.Database;
-import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.r2dbc.support.SqlStateR2dbcExceptionTranslator;
@@ -78,15 +78,15 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	public abstract ConnectionFactory connectionFactory();
 
 	/**
-	 * Return a {@link Dialect} for the given {@link ConnectionFactory}. This method attempts to resolve a {@link Dialect}
-	 * from {@link io.r2dbc.spi.ConnectionFactoryMetadata}. Override this method to specify a dialect instead of
-	 * attempting to resolve one.
+	 * Return a {@link R2dbcDialect} for the given {@link ConnectionFactory}. This method attempts to resolve a
+	 * {@link R2dbcDialect} from {@link io.r2dbc.spi.ConnectionFactoryMetadata}. Override this method to specify a dialect
+	 * instead of attempting to resolve one.
 	 *
 	 * @param connectionFactory the configured {@link ConnectionFactory}.
-	 * @return the resolved {@link Dialect}.
-	 * @throws UnsupportedOperationException if the {@link Dialect} cannot be determined.
+	 * @return the resolved {@link R2dbcDialect}.
+	 * @throws UnsupportedOperationException if the {@link R2dbcDialect} cannot be determined.
 	 */
-	public Dialect getDialect(ConnectionFactory connectionFactory) {
+	public R2dbcDialect getDialect(ConnectionFactory connectionFactory) {
 
 		return Database.findDatabase(connectionFactory)
 				.orElseThrow(() -> new UnsupportedOperationException(
@@ -172,13 +172,13 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	}
 
 	/**
-	 * Returns the {@link Dialect}-specific {@link StoreConversions}.
+	 * Returns the {@link R2dbcDialect}-specific {@link StoreConversions}.
 	 *
-	 * @return the {@link Dialect}-specific {@link StoreConversions}.
+	 * @return the {@link R2dbcDialect}-specific {@link StoreConversions}.
 	 */
 	protected StoreConversions getStoreConversions() {
 
-		Dialect dialect = getDialect(lookupConnectionFactory());
+		R2dbcDialect dialect = getDialect(lookupConnectionFactory());
 		return StoreConversions.of(dialect.getSimpleTypeHolder(), R2dbcCustomConversions.STORE_CONVERTERS);
 	}
 

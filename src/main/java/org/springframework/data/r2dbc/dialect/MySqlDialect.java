@@ -29,7 +29,8 @@ import java.util.UUID;
  *
  * @author Mark Paluch
  */
-public class MySqlDialect implements Dialect {
+public class MySqlDialect extends org.springframework.data.relational.core.dialect.MySqlDialect
+		implements R2dbcDialect {
 
 	private static final Set<Class<?>> SIMPLE_TYPES = new HashSet<>(
 			Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class));
@@ -40,36 +41,6 @@ public class MySqlDialect implements Dialect {
 	public static final MySqlDialect INSTANCE = new MySqlDialect();
 
 	private static final BindMarkersFactory ANONYMOUS = BindMarkersFactory.anonymous("?");
-
-	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long, long)
-		 */
-		@Override
-		public String getClause(long limit, long offset) {
-			return String.format("LIMIT %d,%d", limit, offset);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long)
-		 */
-		@Override
-		public String getClause(long limit) {
-			return "LIMIT " + limit;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClausePosition()
-		 */
-		@Override
-		public Position getClausePosition() {
-			return Position.END;
-		}
-	};
 
 	/*
 	 * (non-Javadoc)
@@ -87,23 +58,5 @@ public class MySqlDialect implements Dialect {
 	@Override
 	public Collection<? extends Class<?>> getSimpleTypes() {
 		return SIMPLE_TYPES;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#limit()
-	 */
-	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#getArraySupport()
-	 */
-	@Override
-	public ArrayColumns getArraySupport() {
-		return ArrayColumns.Unsupported.INSTANCE;
 	}
 }

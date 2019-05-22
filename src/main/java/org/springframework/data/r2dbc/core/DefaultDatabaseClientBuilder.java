@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 import org.springframework.data.r2dbc.core.DatabaseClient.Builder;
 import org.springframework.data.r2dbc.dialect.Database;
-import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.lang.Nullable;
@@ -121,7 +121,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 		if (accessStrategy == null) {
 
-			Dialect dialect = Database.findDatabase(this.connectionFactory)
+			R2dbcDialect dialect = Database.findDatabase(this.connectionFactory)
 					.orElseThrow(() -> new UnsupportedOperationException(
 							"Cannot determine a Dialect. Configure the dialect by providing DefaultReactiveDataAccessStrategy(Dialect)"))
 					.defaultDialect();

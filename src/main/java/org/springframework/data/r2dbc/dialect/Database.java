@@ -10,9 +10,9 @@ import java.util.Optional;
 import org.springframework.util.Assert;
 
 /**
- * Enumeration of known Databases for offline {@link Dialect} resolution. R2DBC {@link io.r2dbc.spi.ConnectionFactory}
- * provides {@link io.r2dbc.spi.ConnectionFactoryMetadata metadata} that allows resolving an appropriate {@link Dialect}
- * if none was configured explicitly.
+ * Enumeration of known Databases for offline {@link R2dbcDialect} resolution. R2DBC
+ * {@link io.r2dbc.spi.ConnectionFactory} provides {@link io.r2dbc.spi.ConnectionFactoryMetadata metadata} that allows
+ * resolving an appropriate {@link R2dbcDialect} if none was configured explicitly.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -26,7 +26,7 @@ public enum Database {
 		}
 
 		@Override
-		public Dialect defaultDialect() {
+		public R2dbcDialect defaultDialect() {
 			return PostgresDialect.INSTANCE;
 		}
 	},
@@ -38,7 +38,7 @@ public enum Database {
 		}
 
 		@Override
-		public Dialect defaultDialect() {
+		public R2dbcDialect defaultDialect() {
 			return SqlServerDialect.INSTANCE;
 		}
 	},
@@ -50,7 +50,7 @@ public enum Database {
 		}
 
 		@Override
-		public Dialect defaultDialect() {
+		public R2dbcDialect defaultDialect() {
 			return H2Dialect.INSTANCE;
 		}
 	},
@@ -62,7 +62,7 @@ public enum Database {
 		}
 
 		@Override
-		public Dialect defaultDialect() {
+		public R2dbcDialect defaultDialect() {
 			return MySqlDialect.INSTANCE;
 		}
 	};
@@ -96,10 +96,10 @@ public enum Database {
 	public abstract String driverName();
 
 	/**
-	 * Returns the latest {@link Dialect} for the underlying database.
+	 * Returns the latest {@link R2dbcDialect} for the underlying database.
 	 *
-	 * @return the latest {@link Dialect} for the underlying database.
+	 * @return the latest {@link R2dbcDialect} for the underlying database.
 	 */
-	public abstract Dialect defaultDialect();
+	public abstract R2dbcDialect defaultDialect();
 
 }

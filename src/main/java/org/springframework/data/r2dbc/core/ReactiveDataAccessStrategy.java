@@ -23,7 +23,6 @@ import java.util.function.BiFunction;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
-import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 
@@ -67,9 +66,9 @@ public interface ReactiveDataAccessStrategy {
 	String getTableName(Class<?> type);
 
 	/**
-	 * Returns the {@link Dialect}-specific {@link StatementMapper}.
+	 * Returns the {@link org.springframework.data.r2dbc.dialect.R2dbcDialect}-specific {@link StatementMapper}.
 	 *
-	 * @return the {@link Dialect}-specific {@link StatementMapper}.
+	 * @return the {@link org.springframework.data.r2dbc.dialect.R2dbcDialect}-specific {@link StatementMapper}.
 	 */
 	StatementMapper getStatementMapper();
 

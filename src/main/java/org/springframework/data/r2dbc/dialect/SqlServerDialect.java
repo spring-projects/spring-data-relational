@@ -11,7 +11,8 @@ import java.util.UUID;
  *
  * @author Mark Paluch
  */
-public class SqlServerDialect implements Dialect {
+public class SqlServerDialect extends org.springframework.data.relational.core.dialect.SqlServerDialect
+		implements R2dbcDialect {
 
 	private static final Set<Class<?>> SIMPLE_TYPES = new HashSet<>(Collections.singletonList(UUID.class));
 
@@ -22,36 +23,6 @@ public class SqlServerDialect implements Dialect {
 
 	private static final BindMarkersFactory NAMED = BindMarkersFactory.named("@", "P", 32,
 			SqlServerDialect::filterBindMarker);
-
-	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long)
-		 */
-		@Override
-		public String getClause(long limit) {
-			return "OFFSET 0 ROWS FETCH NEXT " + limit + " ROWS ONLY";
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long, long)
-		 */
-		@Override
-		public String getClause(long limit, long offset) {
-			return String.format("OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", offset, limit);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClausePosition()
-		 */
-		@Override
-		public Position getClausePosition() {
-			return Position.END;
-		}
-	};
 
 	/*
 	 * (non-Javadoc)
@@ -69,15 +40,6 @@ public class SqlServerDialect implements Dialect {
 	@Override
 	public Collection<? extends Class<?>> getSimpleTypes() {
 		return SIMPLE_TYPES;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#limit()
-	 */
-	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
 	}
 
 	private static String filterBindMarker(CharSequence input) {

@@ -36,11 +36,11 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
-import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 
 /**
- * Abstract base class for {@link Dialect}-aware {@link DefaultReactiveDataAccessStrategy} tests.
+ * Abstract base class for {@link R2dbcDialect}-aware {@link DefaultReactiveDataAccessStrategy} tests.
  *
  * @author Mark Paluch
  */

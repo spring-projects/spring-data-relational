@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.dialect.ArrayColumns;
 
 /**
  * Unit tests for {@link PostgresDialect}.

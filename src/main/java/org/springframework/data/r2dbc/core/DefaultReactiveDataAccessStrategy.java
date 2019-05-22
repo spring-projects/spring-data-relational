@@ -23,9 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.mapping.context.MappingContext;
@@ -33,26 +31,19 @@ import org.springframework.data.r2dbc.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
-import org.springframework.data.r2dbc.dialect.ArrayColumns;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
-import org.springframework.data.r2dbc.dialect.Dialect;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.UpdateMapper;
-import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.dialect.ArrayColumns;
+import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.mapping.Table;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.render.NamingStrategies;
-import org.springframework.data.relational.core.sql.render.RenderContext;
-import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
-import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * Default {@link ReactiveDataAccessStrategy} implementation.
@@ -61,36 +52,36 @@ import org.springframework.util.StringUtils;
  */
 public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStrategy {
 
-	private final Dialect dialect;
+	private final R2dbcDialect dialect;
 	private final R2dbcConverter converter;
 	private final UpdateMapper updateMapper;
 	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final StatementMapper statementMapper;
 
 	/**
-	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect} and optional
+	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link R2dbcDialect} and optional
 	 * {@link org.springframework.core.convert.converter.Converter}s.
 	 *
-	 * @param dialect the {@link Dialect} to use.
+	 * @param dialect the {@link R2dbcDialect} to use.
 	 */
-	public DefaultReactiveDataAccessStrategy(Dialect dialect) {
+	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect) {
 		this(dialect, Collections.emptyList());
 	}
 
 	/**
-	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect} and optional
+	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link R2dbcDialect} and optional
 	 * {@link org.springframework.core.convert.converter.Converter}s.
 	 *
-	 * @param dialect the {@link Dialect} to use.
+	 * @param dialect the {@link R2dbcDialect} to use.
 	 * @param converters custom converters to register, must not be {@literal null}.
 	 * @see R2dbcCustomConversions
 	 * @see org.springframework.core.convert.converter.Converter
 	 */
-	public DefaultReactiveDataAccessStrategy(Dialect dialect, Collection<?> converters) {
+	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect, Collection<?> converters) {
 		this(dialect, createConverter(dialect, converters));
 	}
 
-	private static R2dbcConverter createConverter(Dialect dialect, Collection<?> converters) {
+	private static R2dbcConverter createConverter(R2dbcDialect dialect, Collection<?> converters) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converters, "Converters must not be null");
@@ -105,13 +96,13 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	}
 
 	/**
-	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link Dialect} and {@link R2dbcConverter}.
+	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link R2dbcDialect} and {@link R2dbcConverter}.
 	 *
-	 * @param dialect the {@link Dialect} to use.
+	 * @param dialect the {@link R2dbcDialect} to use.
 	 * @param converter must not be {@literal null}.
 	 */
 	@SuppressWarnings("unchecked")
-	public DefaultReactiveDataAccessStrategy(Dialect dialect, R2dbcConverter converter) {
+	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect, R2dbcConverter converter) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converter, "RelationalConverter must not be null");
@@ -122,29 +113,9 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 				.getMappingContext();
 		this.dialect = dialect;
 
-		RenderContext renderContext = new RenderContext() {
-			@Override
-			public RenderNamingStrategy getNamingStrategy() {
-				return NamingStrategies.asIs();
-			}
-
-			@Override
-			public SelectRenderContext getSelect() {
-				return new SelectRenderContext() {
-					@Override
-					public Function<Select, ? extends CharSequence> afterSelectList() {
-						return it -> "";
-					}
-
-					@Override
-					public Function<Select, ? extends CharSequence> afterOrderBy(boolean hasOrderBy) {
-						return it -> "";
-					}
-				};
-			}
-		};
-
-		this.statementMapper = new DefaultStatementMapper(dialect, renderContext, this.updateMapper, this.mappingContext);
+		RenderContextFactory factory = new RenderContextFactory(dialect);
+		this.statementMapper = new DefaultStatementMapper(dialect, factory.createRenderContext(), this.updateMapper,
+				this.mappingContext);
 	}
 
 	/*

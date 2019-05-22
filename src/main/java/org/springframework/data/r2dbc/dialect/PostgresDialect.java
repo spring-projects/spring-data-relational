@@ -12,7 +12,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.util.Assert;
+import org.springframework.data.relational.core.dialect.ArrayColumns;
+import org.springframework.data.util.Lazy;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -20,7 +21,8 @@ import org.springframework.util.ClassUtils;
  *
  * @author Mark Paluch
  */
-public class PostgresDialect implements Dialect {
+public class PostgresDialect extends org.springframework.data.relational.core.dialect.PostgresDialect
+		implements R2dbcDialect {
 
 	private static final Set<Class<?>> SIMPLE_TYPES = new HashSet<>(
 			Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class));
@@ -32,37 +34,9 @@ public class PostgresDialect implements Dialect {
 
 	private static final BindMarkersFactory INDEXED = BindMarkersFactory.indexed("$", 1);
 
-	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long, long)
-		 */
-		@Override
-		public String getClause(long limit, long offset) {
-			return String.format("LIMIT %d OFFSET %d", limit, offset);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClause(long)
-		 */
-		@Override
-		public String getClause(long limit) {
-			return "LIMIT " + limit;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.LimitClause#getClausePosition()
-		 */
-		@Override
-		public Position getClausePosition() {
-			return Position.END;
-		}
-	};
-
-	private final PostgresArrayColumns ARRAY_COLUMNS = new PostgresArrayColumns(getSimpleTypeHolder());
+	private final Lazy<ArrayColumns> arrayColumns = Lazy.of(() -> new R2dbcArrayColumns(
+			org.springframework.data.relational.core.dialect.PostgresDialect.INSTANCE.getArraySupport(),
+			getSimpleTypeHolder()));
 
 	/*
 	 * (non-Javadoc)
@@ -84,50 +58,33 @@ public class PostgresDialect implements Dialect {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.dialect.Dialect#limit()
-	 */
-	@Override
-	public LimitClause limit() {
-		return LIMIT_CLAUSE;
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.dialect.Dialect#getArraySupport()
 	 */
 	@Override
 	public ArrayColumns getArraySupport() {
-		return ARRAY_COLUMNS;
+		return this.arrayColumns.get();
 	}
 
 	@RequiredArgsConstructor
-	static class PostgresArrayColumns implements ArrayColumns {
+	private static class R2dbcArrayColumns implements ArrayColumns {
 
-		private final SimpleTypeHolder simpleTypes;
+		private final ArrayColumns delegate;
+		private final SimpleTypeHolder simpleTypeHolder;
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.ArrayColumns#isSupported()
-		 */
 		@Override
 		public boolean isSupported() {
-			return true;
+			return this.delegate.isSupported();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.dialect.ArrayColumns#getArrayType(java.lang.Class)
-		 */
 		@Override
 		public Class<?> getArrayType(Class<?> userType) {
 
-			Assert.notNull(userType, "Array component type must not be null");
-
-			if (!simpleTypes.isSimpleType(userType)) {
+			if (!simpleTypeHolder.isSimpleType(userType)) {
 				throw new IllegalArgumentException("Unsupported array type: " + ClassUtils.getQualifiedName(userType));
 			}
 
-			return ClassUtils.resolvePrimitiveIfNecessary(userType);
+			return this.delegate.getArrayType(userType);
 		}
 	}
+
 }

@@ -6,16 +6,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.r2dbc.dialect.ArrayColumns.Unsupported;
 import org.springframework.data.r2dbc.mapping.R2dbcSimpleTypeHolder;
+import org.springframework.data.relational.core.dialect.Dialect;
 
 /**
- * Represents a dialect that is implemented by a particular database.
+ * R2DBC-specific extension to {@link Dialect}. Represents a dialect that is implemented by a particular database.
  *
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public interface Dialect {
+public interface R2dbcDialect extends Dialect {
 
 	/**
 	 * Returns the {@link BindMarkersFactory} used by this dialect.
@@ -47,21 +47,5 @@ public interface Dialect {
 		simpleTypes.addAll(R2dbcSimpleTypeHolder.R2DBC_SIMPLE_TYPES);
 
 		return new SimpleTypeHolder(simpleTypes, true);
-	}
-
-	/**
-	 * Return the {@link LimitClause} used by this dialect.
-	 *
-	 * @return the {@link LimitClause} used by this dialect.
-	 */
-	LimitClause limit();
-
-	/**
-	 * Returns the array support object that describes how array-typed columns are supported by this dialect.
-	 *
-	 * @return the array support object that describes how array-typed columns are supported by this dialect.
-	 */
-	default ArrayColumns getArraySupport() {
-		return Unsupported.INSTANCE;
 	}
 }

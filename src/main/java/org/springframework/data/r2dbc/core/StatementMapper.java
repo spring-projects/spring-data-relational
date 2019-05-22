@@ -25,7 +25,6 @@ import java.util.Map;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
-import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
@@ -33,7 +32,8 @@ import org.springframework.lang.Nullable;
 
 /**
  * Mapper for statement specifications to {@link PreparedOperation}. Statement mapping applies a
- * {@link Dialect}-specific transformation considering {@link BindMarkers} and vendor-specific SQL differences.
+ * {@link org.springframework.data.r2dbc.dialect.R2dbcDialect}-specific transformation considering {@link BindMarkers}
+ * and vendor-specific SQL differences.
  *
  * @author Mark Paluch
  */
