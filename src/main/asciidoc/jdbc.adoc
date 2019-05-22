@@ -332,6 +332,9 @@ public class MyEntity {
 <1> Shortcut for `@Embedded(onEmpty = USE_NULL)`.
 ====
 
+Embedded entities containing a `Collection` or a `Map` will always be considered non empty since they will at least contain the empty collection or map.
+Such an entity will therefore never be `null` even when using @Embedded(onEmpty = USE_NULL).
+
 [[jdbc.entity-persistence.state-detection-strategies]]
 === Entity State Detection Strategies
 

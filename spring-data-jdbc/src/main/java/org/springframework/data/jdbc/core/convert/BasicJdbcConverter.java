@@ -378,11 +378,15 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 			ReadingContext<?> newContext = extendBy(property);
 
-			if(OnEmpty.USE_EMPTY.equals(property.findAnnotation(Embedded.class).onEmpty())) {
+			if(shouldCreateEmptyEmbeddedInstance(property) || newContext.hasInstanceValues(idValue)) {
 				return newContext.createInstanceInternal(idValue);
 			}
 
-			return newContext.hasInstanceValues(idValue) ? newContext.createInstanceInternal(idValue) : null;
+			return null;
+		}
+
+		private boolean shouldCreateEmptyEmbeddedInstance(RelationalPersistentProperty property) {
+			return OnEmpty.USE_EMPTY.equals(property.findAnnotation(Embedded.class).onEmpty());
 		}
 
 		private boolean hasInstanceValues(@Nullable Object idValue) {
