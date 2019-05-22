@@ -33,7 +33,6 @@
 		<mysql-connector-java.version>5.1.41</mysql-connector-java.version>
 		<postgresql.version>42.0.0</postgresql.version>
 		<mariadb-java-client.version>2.2.3</mariadb-java-client.version>
-		<testcontainers.version>1.9.1</testcontainers.version>
 		<jsr305.version>3.0.2</jsr305.version>
 	</properties>
 
