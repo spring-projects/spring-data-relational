@@ -43,6 +43,6 @@ public class EntityRowMapper<T> implements BiFunction<Row, RowMetadata, T> {
 	 */
 	@Override
 	public T apply(Row row, RowMetadata metadata) {
-		return converter.read(typeRoRead, row);
+		return converter.read(typeRoRead, row, metadata);
 	}
 }

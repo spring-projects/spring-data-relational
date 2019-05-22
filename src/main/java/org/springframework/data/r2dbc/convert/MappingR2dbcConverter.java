@@ -84,8 +84,21 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	// Entity reading
 	// ----------------------------------
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.convert.EntityReader#read(java.lang.Class, S)
+	 */
 	@Override
 	public <R> R read(Class<R> type, Row row) {
+		return read(type, row, null);
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#read(java.lang.Class, io.r2dbc.spi.Row, io.r2dbc.spi.RowMetadata)
+	 */
+	@Override
+	public <R> R read(Class<R> type, Row row, @Nullable RowMetadata metadata) {
 
 		TypeInformation<? extends R> typeInfo = ClassTypeInformation.from(type);
 		Class<? extends R> rawType = typeInfo.getType();
@@ -99,10 +112,10 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			return getConversionService().convert(row, rawType);
 		}
 
-		return read(getRequiredPersistentEntity(type), row);
+		return read(getRequiredPersistentEntity(type), row, metadata);
 	}
 
-	private <R> R read(RelationalPersistentEntity<R> entity, Row row) {
+	private <R> R read(RelationalPersistentEntity<R> entity, Row row, @Nullable RowMetadata metadata) {
 
 		R result = createInstance(row, "", entity);
 
@@ -115,7 +128,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 				continue;
 			}
 
-			Object value = readFrom(row, property, "");
+			Object value = readFrom(row, metadata, property, "");
 
 			if (value != null) {
 				propertyAccessor.setProperty(property, value);
@@ -129,20 +142,27 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	 * Read a single value or a complete Entity from the {@link Row} passed as an argument.
 	 *
 	 * @param row the {@link Row} to extract the value from. Must not be {@literal null}.
+	 * @param metadata the {@link RowMetadata}. Can be {@literal null}.
 	 * @param property the {@link RelationalPersistentProperty} for which the value is intended. Must not be
 	 *          {@literal null}.
 	 * @param prefix to be used for all column names accessed by this method. Must not be {@literal null}.
 	 * @return the value read from the {@link Row}. May be {@literal null}.
 	 */
-	private Object readFrom(Row row, RelationalPersistentProperty property, String prefix) {
+	private Object readFrom(Row row, @Nullable RowMetadata metadata, RelationalPersistentProperty property,
+			String prefix) {
 
 		try {
 
 			if (property.isEntity()) {
-				return readEntityFrom(row, property);
+				return readEntityFrom(row, metadata, property);
 			}
 
-			Object value = row.get(prefix + property.getColumnName());
+			String identifier = prefix + property.getColumnName();
+			if (metadata != null && !metadata.getColumnNames().contains(identifier)) {
+				return null;
+			}
+
+			Object value = row.get(identifier);
 			return getPotentiallyConvertedSimpleRead(value, property.getTypeInformation().getType());
 
 		} catch (Exception o_O) {
@@ -178,13 +198,13 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	}
 
 	@SuppressWarnings("unchecked")
-	private <S> S readEntityFrom(Row row, PersistentProperty<?> property) {
+	private <S> S readEntityFrom(Row row, RowMetadata metadata, PersistentProperty<?> property) {
 
 		String prefix = property.getName() + "_";
 
 		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(property.getActualType());
 
-		if (readFrom(row, entity.getRequiredIdProperty(), prefix) == null) {
+		if (readFrom(row, metadata, entity.getRequiredIdProperty(), prefix) == null) {
 			return null;
 		}
 
@@ -195,7 +215,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		for (RelationalPersistentProperty p : entity) {
 			if (!entity.isConstructorArgument(property)) {
-				propertyAccessor.setProperty(p, readFrom(row, p, prefix));
+				propertyAccessor.setProperty(p, readFrom(row, metadata, p, prefix));
 			}
 		}
 
@@ -213,6 +233,10 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	// Entity writing
 	// ----------------------------------
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.convert.EntityWriter#write(java.lang.Object, java.lang.Object)
+	 */
 	@Override
 	public void write(Object source, OutboundRow sink) {
 
@@ -313,6 +337,11 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return Enum.class.isAssignableFrom(value.getClass()) ? ((Enum<?>) value).name() : value;
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#getArrayValue(org.springframework.data.r2dbc.dialect.ArrayColumns, org.springframework.data.relational.core.mapping.RelationalPersistentProperty, java.lang.Object)
+	 */
+	@Override
 	public Object getArrayValue(ArrayColumns arrayColumns, RelationalPersistentProperty property, Object value) {
 
 		Class<?> targetType = arrayColumns.getArrayType(property.getActualType());
@@ -337,6 +366,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	 * @param object must not be {@literal null}.
 	 * @return
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public <T> BiFunction<Row, RowMetadata, T> populateIdIfNecessary(T object) {
 

@@ -7,13 +7,15 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.data.r2dbc.convert.EntityRowMapper;
+
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 
@@ -30,6 +32,14 @@ public class EntityRowMapperUnitTests {
 
 	Row rowMock = mock(Row.class);
 	RowMetadata metadata = mock(RowMetadata.class);
+	Collection<String> columns = mock(Collection.class);
+
+	@Before
+	public void before() {
+
+		when(columns.contains(anyString())).thenReturn(true);
+		when(metadata.getColumnNames()).thenReturn(columns);
+	}
 
 	@Test // gh-22
 	public void shouldMapSimpleEntity() {

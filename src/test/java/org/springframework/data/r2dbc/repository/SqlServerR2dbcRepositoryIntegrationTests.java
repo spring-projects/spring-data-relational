@@ -90,7 +90,7 @@ public class SqlServerR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepos
 		Flux<LegoSet> findByNameContains(String name);
 
 		@Override
-		@Query("SELECT * FROM legoset")
+		@Query("SELECT name FROM legoset")
 		Flux<Named> findAsProjection();
 
 		@Override

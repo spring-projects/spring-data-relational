@@ -29,13 +29,13 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.junit.Test;
-import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+
 import org.springframework.data.r2dbc.dialect.Dialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 
@@ -177,6 +177,9 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		ReactiveDataAccessStrategy strategy = getStrategy();
 		Row rowMock = mock(Row.class);
 		RowMetadata metadataMock = mock(RowMetadata.class);
+		Collection<String> columnNames = mock(Collection.class);
+		when(metadataMock.getColumnNames()).thenReturn(columnNames);
+		when(columnNames.contains(fieldname)).thenReturn(true);
 
 		PrimitiveTypes toSave = new PrimitiveTypes();
 		setter.accept(toSave, testValue);

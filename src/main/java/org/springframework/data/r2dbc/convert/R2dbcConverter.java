@@ -71,4 +71,14 @@ public interface R2dbcConverter
 	 * @return
 	 */
 	<T> BiFunction<Row, RowMetadata, T> populateIdIfNecessary(T object);
+
+	/**
+	 * Reads the given source into the given type.
+	 *
+	 * @param type they type to convert the given source to.
+	 * @param source the source to create an object of the given type from.
+	 * @param metadata the {@link RowMetadata}.
+	 * @return
+	 */
+	<R> R read(Class<R> type, Row source, RowMetadata metadata);
 }
