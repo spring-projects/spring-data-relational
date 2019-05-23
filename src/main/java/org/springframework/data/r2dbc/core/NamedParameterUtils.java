@@ -452,6 +452,12 @@ abstract class NamedParameterUtils {
 
 			List<BindMarker> bindMarkers = getBindMarkers(identifier);
 
+			if (bindMarkers == null) {
+
+				target.bindNull(identifier, valueType);
+				return;
+			}
+
 			if (bindMarkers.size() == 1) {
 				bindMarkers.get(0).bindNull(target, valueType);
 				return;
