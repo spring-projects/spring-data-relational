@@ -35,7 +35,7 @@ The following example shows how to configure a `ConnectionFactory` in Java:
 [source,java,indent=0]
 [subs="verbatim,quotes"]
 ----
-	ConnectionFactory factory = ConnectionFactories.get("rdbc:h2:mem:///test?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+	ConnectionFactory factory = ConnectionFactories.get("r2dbc:h2:mem:///test?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
 ----
 
 [[r2dbc.connections.ConnectionFactoryUtils]]

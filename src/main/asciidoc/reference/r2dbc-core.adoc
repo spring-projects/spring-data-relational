@@ -135,7 +135,7 @@ public class R2dbcApp {
 
   public static void main(String[] args) throws Exception {
 
-    ConnectionFactory connectionFactory = ConnectionFactories.get("rdbc:h2:mem:///test?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+    ConnectionFactory connectionFactory = ConnectionFactories.get("r2dbc:h2:mem:///test?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
 
     DatabaseClient client = DatabaseClient.create(connectionFactory);
 
