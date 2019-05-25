@@ -35,7 +35,6 @@ import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -595,6 +594,24 @@ public class JdbcAggregateTemplateIntegrationTests {
 			softly.assertThat(count("NO_ID_MAP_CHAIN1")).describedAs("Chain1 elements got deleted").isEqualTo(0);
 			softly.assertThat(count("NO_ID_MAP_CHAIN0")).describedAs("Chain0 elements got deleted").isEqualTo(0);
 		});
+	}
+
+	@Test // DATAJDBC-378
+	public void findAllByIdMustNotAcceptNullArgumentForType() {
+
+		assertThatThrownBy(() -> template.findAllById(singleton(23L), null)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test // DATAJDBC-378
+	public void findAllByIdMustNotAcceptNullArgumentForIds() {
+
+		assertThatThrownBy(() -> template.findAllById(null, LegoSet.class)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test // DATAJDBC-378
+	public void findAllByIdWithEmpthListMustReturnEmptyResult() {
+
+		assertThat(template.findAllById(emptyList(), LegoSet.class)).isEmpty();
 	}
 
 	private static NoIdMapChain4 createNoIdMapTree() {

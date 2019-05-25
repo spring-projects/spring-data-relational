@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.JDBCType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -240,6 +241,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
+
+		if (!ids.iterator().hasNext()) {
+			return Collections.emptyList();
+		}
 
 		RelationalPersistentProperty idProperty = getRequiredPersistentEntity(domainType).getRequiredIdProperty();
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
