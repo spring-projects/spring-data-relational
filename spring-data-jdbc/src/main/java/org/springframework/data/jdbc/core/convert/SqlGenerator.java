@@ -136,7 +136,7 @@ class SqlGenerator {
 	}
 
 	private static BindMarker getBindMarker(String columnName) {
-		return SQL.bindMarker(":" + parameterPattern.matcher(columnName).replaceAll(""));
+		return SQL.bindMarker(":" + SqlUtils.sanitizeName(columnName));
 	}
 
 	/**

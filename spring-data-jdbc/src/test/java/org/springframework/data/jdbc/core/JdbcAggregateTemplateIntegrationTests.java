@@ -35,7 +35,6 @@ import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -597,6 +596,26 @@ public class JdbcAggregateTemplateIntegrationTests {
 		});
 	}
 
+	@Test // DATAJDBC-381
+	@IfProfileValue(name = "current.database", value = "mysql")
+	public void saveAndLoadEntityWithKeywordAsColumnName() {
+
+		WithKeywordColumn entity = new WithKeywordColumn();
+		entity.virtual = "some value";
+
+		WithKeywordColumn saved = template.save(entity);
+
+		WithKeywordColumn reloaded = template.findById(saved.id, WithKeywordColumn.class);
+
+		assertThat(reloaded.virtual).isEqualTo("some value");
+
+		reloaded.virtual = "other value";
+
+		template.save(reloaded);
+
+		template.deleteById(reloaded.id, WithKeywordColumn.class);
+	}
+
 	private static NoIdMapChain4 createNoIdMapTree() {
 
 		NoIdMapChain4 chain4 = new NoIdMapChain4();
@@ -869,5 +888,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long four;
 		String fourValue;
 		Map<String, NoIdMapChain3> chain3 = new HashMap<>();
+	}
+
+	@Data
+	static class WithKeywordColumn {
+
+		@Id private Long id;
+
+		@Column("`virtual`") private String virtual;
 	}
 }

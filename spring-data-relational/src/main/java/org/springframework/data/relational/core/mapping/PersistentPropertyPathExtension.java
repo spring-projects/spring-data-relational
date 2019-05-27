@@ -20,6 +20,7 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.sql.SqlUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -189,7 +190,7 @@ public class PersistentPropertyPathExtension {
 	 */
 	public String getColumnAlias() {
 
-		return prefixWithTableAlias(getColumnName());
+		return SqlUtils.sanitizeName(prefixWithTableAlias(getColumnName()));
 	}
 
 	/**

@@ -247,7 +247,7 @@ public class SqlGeneratorUnitTests {
 		String insert = sqlGenerator.getInsert(emptySet());
 
 		assertThat(insert)
-				.isEqualTo("INSERT INTO entity_with_quoted_column_name " + "(\"test_@123\") " + "VALUES (:test_123)");
+				.isEqualTo("INSERT INTO entity_with_quoted_column_name " + "(\"test_@123\") " + "VALUES (:test_123_)");
 	}
 
 	@Test // DATAJDBC-266
@@ -291,8 +291,8 @@ public class SqlGeneratorUnitTests {
 
 		String update = sqlGenerator.getUpdate();
 
-		assertThat(update).isEqualTo("UPDATE entity_with_quoted_column_name " + "SET \"test_@123\" = :test_123 "
-				+ "WHERE entity_with_quoted_column_name.\"test_@id\" = :test_id");
+		assertThat(update).isEqualTo("UPDATE entity_with_quoted_column_name " + "SET \"test_@123\" = :test_123_ "
+				+ "WHERE entity_with_quoted_column_name.\"test_@id\" = :test_id_");
 	}
 
 	@Test // DATAJDBC-324
