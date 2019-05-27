@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.data.util.Optionals;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 
 /**
@@ -55,9 +56,8 @@ public class DialectResolver {
 
 		return DETECTORS.stream() //
 				.map(it -> it.getDialect(connectionFactory)) //
-				.filter(Optional::isPresent) //
+				.flatMap(Optionals::toStream) //
 				.findFirst() //
-				.flatMap(it -> it) //
 				.orElseThrow(() -> {
 					return new NoDialectException(
 							String.format("Cannot determine a dialect for %s using %s. Please provide a Dialect.",
@@ -127,13 +127,10 @@ public class DialectResolver {
 				return Optional.of(r2dbcDialect);
 			}
 
-			for (String key : BUILTIN.keySet()) {
-				if (metadata.getName().contains(key)) {
-					return Optional.of(BUILTIN.get(key));
-				}
-			}
-
-			return Optional.empty();
+			return BUILTIN.keySet().stream() //
+					.filter(it -> metadata.getName().contains(it)) //
+					.map(BUILTIN::get) //
+					.findFirst();
 		}
 	}
 }
