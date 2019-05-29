@@ -19,10 +19,10 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 
@@ -32,7 +32,7 @@ import org.springframework.data.r2dbc.mapping.SettableValue;
  * primary keys.
  *
  * @author Mark Paluch
- * @see BindableOperation
+ * @see PreparedOperation
  */
 public interface ReactiveDataAccessStrategy {
 
@@ -66,18 +66,20 @@ public interface ReactiveDataAccessStrategy {
 	String getTableName(Class<?> type);
 
 	/**
+	 * Expand named parameters and return a {@link PreparedOperations} wrapping named bindings.
+	 * 
+	 * @param query the query to expand.
+	 * @param bindings named parameter bindings.
+	 * @return the {@link PreparedOperation} encapsulating expanded SQL and bindings.
+	 */
+	PreparedOperation<?> processNamedParameters(String query, Map<String, SettableValue> bindings);
+
+	/**
 	 * Returns the {@link org.springframework.data.r2dbc.dialect.R2dbcDialect}-specific {@link StatementMapper}.
 	 *
 	 * @return the {@link org.springframework.data.r2dbc.dialect.R2dbcDialect}-specific {@link StatementMapper}.
 	 */
 	StatementMapper getStatementMapper();
-
-	/**
-	 * Returns the configured {@link BindMarkersFactory} to create native parameter placeholder markers.
-	 *
-	 * @return the configured {@link BindMarkersFactory}.
-	 */
-	BindMarkersFactory getBindMarkersFactory();
 
 	/**
 	 * Returns the {@link R2dbcConverter}.

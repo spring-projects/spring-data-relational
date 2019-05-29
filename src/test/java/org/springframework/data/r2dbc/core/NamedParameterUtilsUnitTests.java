@@ -22,10 +22,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import org.junit.Test;
-import org.springframework.data.r2dbc.core.BindableOperation;
-import org.springframework.data.r2dbc.core.MapBindParameterSource;
-import org.springframework.data.r2dbc.core.NamedParameterUtils;
-import org.springframework.data.r2dbc.core.ParsedSql;
+
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -67,12 +64,12 @@ public class NamedParameterUtilsUnitTests {
 		MapBindParameterSource namedParams = new MapBindParameterSource(new HashMap<>());
 		namedParams.addValue("a", "a").addValue("b", "b").addValue("c", "c");
 
-		BindableOperation operation = NamedParameterUtils.substituteNamedParameters("xxx :a :b :c",
+		PreparedOperation<?> operation = NamedParameterUtils.substituteNamedParameters("xxx :a :b :c",
 				PostgresDialect.INSTANCE.getBindMarkersFactory(), namedParams);
 
 		assertThat(operation.toQuery()).isEqualTo("xxx $1 $2 $3");
 
-		BindableOperation operation2 = NamedParameterUtils.substituteNamedParameters("xxx :a :b :c",
+		PreparedOperation<?> operation2 = NamedParameterUtils.substituteNamedParameters("xxx :a :b :c",
 				SqlServerDialect.INSTANCE.getBindMarkersFactory(), namedParams);
 
 		assertThat(operation2.toQuery()).isEqualTo("xxx @P0_a @P1_b @P2_c");
@@ -85,12 +82,12 @@ public class NamedParameterUtilsUnitTests {
 		namedParams.addValue("a",
 				Arrays.asList(new Object[] { "Walter", "Heisenberg" }, new Object[] { "Walt Jr.", "Flynn" }));
 
-		BindableOperation operation = NamedParameterUtils.substituteNamedParameters("xxx :a", BIND_MARKERS, namedParams);
+		PreparedOperation<?> operation = NamedParameterUtils.substituteNamedParameters("xxx :a", BIND_MARKERS, namedParams);
 
 		assertThat(operation.toQuery()).isEqualTo("xxx ($1, $2), ($3, $4)");
 	}
 
-	@Test // gh-23
+	@Test // gh-23, gh-105
 	public void shouldBindObjectArray() {
 
 		MapBindParameterSource namedParams = new MapBindParameterSource(new HashMap<>());
@@ -99,8 +96,8 @@ public class NamedParameterUtilsUnitTests {
 
 		BindTarget bindTarget = mock(BindTarget.class);
 
-		BindableOperation operation = NamedParameterUtils.substituteNamedParameters("xxx :a", BIND_MARKERS, namedParams);
-		operation.bind(bindTarget, "a", namedParams.getValue("a"));
+		PreparedOperation<?> operation = NamedParameterUtils.substituteNamedParameters("xxx :a", BIND_MARKERS, namedParams);
+		operation.bindTo(bindTarget);
 
 		verify(bindTarget).bind(0, "Walter");
 		verify(bindTarget).bind(1, "Heisenberg");
@@ -133,7 +130,7 @@ public class NamedParameterUtilsUnitTests {
 		String sql = "select 'first name' from artists where id = :id and birth_date=:birthDate::timestamp";
 
 		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-		BindableOperation operation = NamedParameterUtils.substituteNamedParameters(parsedSql, BIND_MARKERS,
+		PreparedOperation<?> operation = NamedParameterUtils.substituteNamedParameters(parsedSql, BIND_MARKERS,
 				new MapBindParameterSource());
 
 		assertThat(operation.toQuery()).isEqualTo(expectedSql);

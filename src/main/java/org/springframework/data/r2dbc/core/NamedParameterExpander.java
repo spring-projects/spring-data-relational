@@ -22,7 +22,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
-import org.springframework.data.r2dbc.dialect.BindTarget;
 
 /**
  * SQL translation support allowing the use of named parameters rather than native placeholders.
@@ -56,25 +55,12 @@ public class NamedParameterExpander {
 		}
 	};
 
-	private NamedParameterExpander() {}
-
 	/**
-	 * Creates a disabled instance of {@link NamedParameterExpander}.
-	 *
-	 * @return a disabled instance of {@link NamedParameterExpander}.
-	 */
-	public static NamedParameterExpander disabled() {
-		return Disabled.INSTANCE;
-	}
-
-	/**
-	 * Creates a new enabled instance of {@link NamedParameterExpander}.
+	 * Create a new enabled instance of {@link NamedParameterExpander}.
 	 *
 	 * @return a new enabled instance of {@link NamedParameterExpander}.
 	 */
-	public static NamedParameterExpander enabled() {
-		return new NamedParameterExpander();
-	}
+	public NamedParameterExpander() {}
 
 	/**
 	 * Specify the maximum number of entries for the SQL cache. Default is 256.
@@ -98,7 +84,7 @@ public class NamedParameterExpander {
 	 * @param sql the original SQL statement
 	 * @return a representation of the parsed SQL statement
 	 */
-	protected ParsedSql getParsedSql(String sql) {
+	private ParsedSql getParsedSql(String sql) {
 
 		if (getCacheLimit() <= 0) {
 			return NamedParameterUtils.parseSqlStatement(sql);
@@ -116,51 +102,36 @@ public class NamedParameterExpander {
 		}
 	}
 
-	BindableOperation expand(String sql, BindMarkersFactory bindMarkersFactory, BindParameterSource paramSource) {
+	/**
+	 * Parse the SQL statement and locate any placeholders or named parameters. Named parameters are substituted for a
+	 * native placeholder, and any select list is expanded to the required number of placeholders. Select lists may
+	 * contain an array of objects, and in that case the placeholders will be grouped and enclosed with parentheses. This
+	 * allows for the use of "expression lists" in the SQL statement like: <br />
+	 * <br />
+	 * {@code select id, name, state from table where (name, age) in (('John', 35), ('Ann', 50))}
+	 * <p>
+	 * The parameter values passed in are used to determine the number of placeholders to be used for a select list.
+	 * Select lists should be limited to 100 or fewer elements. A larger number of elements is not guaranteed to be
+	 * supported by the database and is strictly vendor-dependent.
+	 *
+	 * @param sql sql the original SQL statement
+	 * @param bindMarkersFactory the bind marker factory.
+	 * @param paramSource the source for named parameters.
+	 * @return the expanded sql that accepts bind parameters and allows for execution without further translation wrapped
+	 *         as {@link PreparedOperation}.
+	 */
+	public PreparedOperation<String> expand(String sql, BindMarkersFactory bindMarkersFactory,
+			BindParameterSource paramSource) {
 
 		ParsedSql parsedSql = getParsedSql(sql);
 
-		BindableOperation expanded = NamedParameterUtils.substituteNamedParameters(parsedSql, bindMarkersFactory,
+		PreparedOperation<String> expanded = NamedParameterUtils.substituteNamedParameters(parsedSql, bindMarkersFactory,
 				paramSource);
 
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("Expanding SQL statement [%s] to [%s]", sql, expanded.toQuery()));
+		if (this.logger.isDebugEnabled()) {
+			this.logger.debug(String.format("Expanding SQL statement [%s] to [%s]", sql, expanded.toQuery()));
 		}
 
 		return expanded;
-	}
-
-	/**
-	 * Disabled named parameter support.
-	 */
-	static class Disabled extends NamedParameterExpander {
-
-		private static final Disabled INSTANCE = new Disabled();
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.NamedParameterSupport#expand(java.lang.String, org.springframework.data.r2dbc.dialect.BindMarkersFactory, org.springframework.data.r2dbc.function.SqlParameterSource)
-		 */
-		@Override
-		BindableOperation expand(String sql, BindMarkersFactory bindMarkersFactory, BindParameterSource paramSource) {
-
-			return new BindableOperation() {
-
-				@Override
-				public void bind(BindTarget target, String identifier, Object value) {
-					target.bind(identifier, value);
-				}
-
-				@Override
-				public void bindNull(BindTarget target, String identifier, Class<?> valueType) {
-					target.bindNull(identifier, valueType);
-				}
-
-				@Override
-				public String toQuery() {
-					return sql;
-				}
-			};
-		}
 	}
 }

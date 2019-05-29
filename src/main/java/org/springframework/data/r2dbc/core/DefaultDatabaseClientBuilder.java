@@ -36,9 +36,12 @@ import org.springframework.util.Assert;
 class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 	private @Nullable ConnectionFactory connectionFactory;
+
 	private @Nullable R2dbcExceptionTranslator exceptionTranslator;
+
 	private ReactiveDataAccessStrategy accessStrategy;
-	private NamedParameterExpander namedParameters;
+
+	private boolean namedParameters = true;
 
 	DefaultDatabaseClientBuilder() {}
 
@@ -93,14 +96,12 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#namedParameters(org.springframework.data.r2dbc.function.NamedParameterExpander)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#namedParameters(boolean)
 	 */
 	@Override
-	public Builder namedParameters(NamedParameterExpander expander) {
+	public Builder namedParameters(boolean enabled) {
 
-		Assert.notNull(expander, "NamedParameterExpander must not be null!");
-
-		this.namedParameters = expander;
+		this.namedParameters = enabled;
 		return this;
 	}
 
@@ -125,19 +126,12 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 			accessStrategy = new DefaultReactiveDataAccessStrategy(dialect);
 		}
 
-		NamedParameterExpander namedParameters = this.namedParameters;
-
-		if (namedParameters == null) {
-			namedParameters = NamedParameterExpander.enabled();
-		}
-
 		return doBuild(this.connectionFactory, exceptionTranslator, accessStrategy, namedParameters,
 				new DefaultDatabaseClientBuilder(this));
 	}
 
 	protected DatabaseClient doBuild(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy accessStrategy, NamedParameterExpander namedParameters,
-			DefaultDatabaseClientBuilder builder) {
+			ReactiveDataAccessStrategy accessStrategy, boolean namedParameters, DefaultDatabaseClientBuilder builder) {
 		return new DefaultDatabaseClient(connector, exceptionTranslator, accessStrategy, namedParameters, builder);
 	}
 

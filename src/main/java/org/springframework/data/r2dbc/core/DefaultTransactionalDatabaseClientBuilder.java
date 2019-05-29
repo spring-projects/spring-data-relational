@@ -70,11 +70,11 @@ class DefaultTransactionalDatabaseClientBuilder extends DefaultDatabaseClientBui
 	}
 
 	/* (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.DefaultDatabaseClientBuilder#dataAccessStrategy(org.springframework.data.r2dbc.function.NamedParameterSupport)
+	 * @see org.springframework.data.r2dbc.function.DefaultDatabaseClientBuilder#dataAccessStrategy(boolean)
 	 */
 	@Override
-	public TransactionalDatabaseClient.Builder namedParameters(NamedParameterExpander expander) {
-		super.namedParameters(expander);
+	public TransactionalDatabaseClient.Builder namedParameters(boolean enabled) {
+		super.namedParameters(enabled);
 		return this;
 	}
 
@@ -97,7 +97,7 @@ class DefaultTransactionalDatabaseClientBuilder extends DefaultDatabaseClientBui
 
 	@Override
 	protected DatabaseClient doBuild(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy accessStrategy, NamedParameterExpander namedParameters,
+			ReactiveDataAccessStrategy accessStrategy, boolean namedParameters,
 			DefaultDatabaseClientBuilder builder) {
 		return new DefaultTransactionalDatabaseClient(connector, exceptionTranslator, accessStrategy, namedParameters,
 				builder);

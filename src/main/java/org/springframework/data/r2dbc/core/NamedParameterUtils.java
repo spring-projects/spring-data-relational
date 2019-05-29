@@ -258,15 +258,15 @@ abstract class NamedParameterUtils {
 	 * @return the expanded query that accepts bind parameters and allows for execution without further translation.
 	 * @see #parseSqlStatement
 	 */
-	public static BindableOperation substituteNamedParameters(ParsedSql parsedSql, BindMarkersFactory bindMarkersFactory,
-			BindParameterSource paramSource) {
+	public static PreparedOperation<String> substituteNamedParameters(ParsedSql parsedSql,
+			BindMarkersFactory bindMarkersFactory, BindParameterSource paramSource) {
 
 		BindMarkerHolder markerHolder = new BindMarkerHolder(bindMarkersFactory.create());
 
 		String originalSql = parsedSql.getOriginalSql();
 		List<String> paramNames = parsedSql.getParameterNames();
 		if (paramNames.isEmpty()) {
-			return new ExpandedQuery(originalSql, markerHolder);
+			return new ExpandedQuery(originalSql, markerHolder, paramSource);
 		}
 
 		StringBuilder actualSql = new StringBuilder(originalSql.length());
@@ -313,7 +313,7 @@ abstract class NamedParameterUtils {
 		}
 		actualSql.append(originalSql, lastIndex, originalSql.length());
 
-		return new ExpandedQuery(actualSql.toString(), markerHolder);
+		return new ExpandedQuery(actualSql.toString(), markerHolder, paramSource);
 	}
 
 	/**
@@ -338,7 +338,7 @@ abstract class NamedParameterUtils {
 	 * @param paramSource the source for named parameters.
 	 * @return the expanded query that accepts bind parameters and allows for execution without further translation.
 	 */
-	public static BindableOperation substituteNamedParameters(String sql, BindMarkersFactory bindMarkersFactory,
+	public static PreparedOperation<String> substituteNamedParameters(String sql, BindMarkersFactory bindMarkersFactory,
 			BindParameterSource paramSource) {
 		ParsedSql parsedSql = parseSqlStatement(sql);
 		return substituteNamedParameters(parsedSql, bindMarkersFactory, paramSource);
@@ -368,8 +368,8 @@ abstract class NamedParameterUtils {
 
 		String addMarker(String name) {
 
-			BindMarker bindMarker = bindMarkers.next(name);
-			markers.computeIfAbsent(name, ignore -> new ArrayList<>()).add(bindMarker);
+			BindMarker bindMarker = this.bindMarkers.next(name);
+			this.markers.computeIfAbsent(name, ignore -> new ArrayList<>()).add(bindMarker);
 			return bindMarker.getPlaceholder();
 		}
 	}
@@ -378,22 +378,20 @@ abstract class NamedParameterUtils {
 	 * Expanded query that allows binding of parameters using parameter names that were used to expand the query. Binding
 	 * unrolls {@link Collection}s and nested arrays.
 	 */
-	private static class ExpandedQuery implements BindableOperation {
+	private static class ExpandedQuery implements PreparedOperation<String> {
 
 		private final String expandedSql;
 
 		private final Map<String, List<BindMarker>> markers;
 
-		ExpandedQuery(String expandedSql, BindMarkerHolder bindMarkerHolder) {
+		private final BindParameterSource parameterSource;
+
+		ExpandedQuery(String expandedSql, BindMarkerHolder bindMarkerHolder, BindParameterSource parameterSource) {
 			this.expandedSql = expandedSql;
 			this.markers = bindMarkerHolder.markers;
+			this.parameterSource = parameterSource;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bind(BindTarget, java.lang.String, java.lang.Object)
-		 */
-		@Override
 		@SuppressWarnings("unchecked")
 		public void bind(BindTarget target, String identifier, Object value) {
 
@@ -443,11 +441,6 @@ abstract class NamedParameterUtils {
 			markers.next().bind(target, valueToBind);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.BindableOperation#bindNull(BindTarget, java.lang.String, java.lang.Class)
-		 */
-		@Override
 		public void bindNull(BindTarget target, String identifier, Class<?> valueType) {
 
 			List<BindMarker> bindMarkers = getBindMarkers(identifier);
@@ -467,7 +460,27 @@ abstract class NamedParameterUtils {
 		}
 
 		private List<BindMarker> getBindMarkers(String identifier) {
-			return markers.get(identifier);
+			return this.markers.get(identifier);
+		}
+
+		@Override
+		public String getSource() {
+			return this.expandedSql;
+		}
+
+		@Override
+		public void bindTo(BindTarget target) {
+
+			for (String namedParameter : this.parameterSource.getParameterNames()) {
+
+				Object value = this.parameterSource.getValue(namedParameter);
+
+				if (value == null) {
+					bindNull(target, namedParameter, this.parameterSource.getType(namedParameter));
+				} else {
+					bind(target, namedParameter, value);
+				}
+			}
 		}
 
 		/*
@@ -476,7 +489,7 @@ abstract class NamedParameterUtils {
 		 */
 		@Override
 		public String toQuery() {
-			return expandedSql;
+			return this.expandedSql;
 		}
 	}
 }

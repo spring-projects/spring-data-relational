@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.data.util.Streamable;
 import org.springframework.util.Assert;
 
 /**
@@ -110,5 +111,14 @@ class MapBindParameterSource implements BindParameterSource {
 		}
 
 		return this.values.get(paramName).getValue();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.SqlParameterSource#getParameterNames()
+	 */
+	@Override
+	public Streamable<String> getParameterNames() {
+		return Streamable.of(this.values.keySet());
 	}
 }

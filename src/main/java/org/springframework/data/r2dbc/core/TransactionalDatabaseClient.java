@@ -194,14 +194,14 @@ public interface TransactionalDatabaseClient extends DatabaseClient {
 		Builder dataAccessStrategy(ReactiveDataAccessStrategy accessStrategy);
 
 		/**
-		 * Configures {@link NamedParameterExpander}.
+		 * Configures whether to use named parameter expansion. Defaults to {@literal true}.
 		 *
-		 * @param expander must not be {@literal null}.
-		 * @return {@code this} {@link Builder}.
-		 * @see NamedParameterExpander#enabled()
-		 * @see NamedParameterExpander#disabled()
+		 * @param enabled {@literal true} to use named parameter expansion. {@literal false} to disable named parameter
+		 *          expansion.
+		 * @return {@code this} {@link DatabaseClient.Builder}.
+		 * @see NamedParameterExpander
 		 */
-		Builder namedParameters(NamedParameterExpander expander);
+		Builder namedParameters(boolean enabled);
 
 		/**
 		 * Configures a {@link Consumer} to configure this builder.

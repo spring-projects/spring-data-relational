@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
@@ -31,7 +32,6 @@ import org.springframework.data.r2dbc.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
-import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
@@ -57,6 +57,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	private final UpdateMapper updateMapper;
 	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final StatementMapper statementMapper;
+	private final NamedParameterExpander expander;
 
 	/**
 	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link R2dbcDialect} and optional
@@ -81,7 +82,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		this(dialect, createConverter(dialect, converters));
 	}
 
-	private static R2dbcConverter createConverter(R2dbcDialect dialect, Collection<?> converters) {
+	public static R2dbcConverter createConverter(R2dbcDialect dialect, Collection<?> converters) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converters, "Converters must not be null");
@@ -101,11 +102,24 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @param dialect the {@link R2dbcDialect} to use.
 	 * @param converter must not be {@literal null}.
 	 */
-	@SuppressWarnings("unchecked")
 	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect, R2dbcConverter converter) {
+		this(dialect, converter, new NamedParameterExpander());
+	}
+
+	/**
+	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link R2dbcDialect} and {@link R2dbcConverter}.
+	 *
+	 * @param dialect the {@link R2dbcDialect} to use.
+	 * @param converter must not be {@literal null}.
+	 * @param expander must not be {@literal null}.
+	 */
+	@SuppressWarnings("unchecked")
+	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect, R2dbcConverter converter,
+			NamedParameterExpander expander) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converter, "RelationalConverter must not be null");
+		Assert.notNull(expander, "NamedParameterExpander must not be null");
 
 		this.converter = converter;
 		this.updateMapper = new UpdateMapper(converter);
@@ -116,6 +130,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		RenderContextFactory factory = new RenderContextFactory(dialect);
 		this.statementMapper = new DefaultStatementMapper(dialect, factory.createRenderContext(), this.updateMapper,
 				this.mappingContext);
+		this.expander = expander;
 	}
 
 	/*
@@ -215,6 +230,15 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy#processNamedParameters(java.lang.String, java.util.Map)
+	 */
+	@Override
+	public PreparedOperation<?> processNamedParameters(String query, Map<String, SettableValue> bindings) {
+		return this.expander.expand(query, this.dialect.getBindMarkersFactory(), new MapBindParameterSource(bindings));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getTableName(java.lang.Class)
 	 */
 	@Override
@@ -229,15 +253,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	@Override
 	public StatementMapper getStatementMapper() {
 		return this.statementMapper;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getBindMarkersFactory()
-	 */
-	@Override
-	public BindMarkersFactory getBindMarkersFactory() {
-		return this.dialect.getBindMarkersFactory();
 	}
 
 	/*

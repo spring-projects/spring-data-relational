@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import org.springframework.data.util.Streamable;
 import org.springframework.lang.Nullable;
 
 /**
@@ -58,4 +59,11 @@ public interface BindParameterSource {
 	default Class<?> getType(String paramName) {
 		return Object.class;
 	}
+
+	/**
+	 * Returns parameter names of the underlying parameter source.
+	 *
+	 * @return parameter names of the underlying parameter source.
+	 */
+	Streamable<String> getParameterNames();
 }

@@ -79,13 +79,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 
-	private final NamedParameterExpander namedParameters;
+	private final boolean namedParameters;
 
 	private final DefaultDatabaseClientBuilder builder;
 
 	DefaultDatabaseClient(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy dataAccessStrategy, NamedParameterExpander namedParameters,
-			DefaultDatabaseClientBuilder builder) {
+			ReactiveDataAccessStrategy dataAccessStrategy, boolean namedParameters, DefaultDatabaseClientBuilder builder) {
 
 		this.connector = connector;
 		this.exceptionTranslator = exceptionTranslator;
@@ -284,6 +283,18 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		return new DefaultGenericExecuteSpec(sqlSupplier);
 	}
 
+	private static void bindByName(Statement statement, Map<String, SettableValue> byName) {
+
+		byName.forEach((name, o) -> {
+
+			if (o.getValue() != null) {
+				statement.bind(name, o.getValue());
+			} else {
+				statement.bindNull(name, o.getType());
+			}
+		});
+	}
+
 	private static void bindByIndex(Statement statement, Map<Integer, SettableValue> byIndex) {
 
 		byIndex.forEach((i, o) -> {
@@ -353,27 +364,28 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					return statement;
 				}
 
-				BindableOperation operation = namedParameters.expand(sql, dataAccessStrategy.getBindMarkersFactory(),
-						new MapBindParameterSource(this.byName));
+				if (namedParameters) {
 
-				String expanded = getRequiredSql(operation);
-				if (logger.isTraceEnabled()) {
-					logger.trace("Expanded SQL [" + expanded + "]");
+					PreparedOperation<?> operation = dataAccessStrategy.processNamedParameters(sql, this.byName);
+
+					String expanded = getRequiredSql(operation);
+					if (logger.isTraceEnabled()) {
+						logger.trace("Expanded SQL [" + expanded + "]");
+					}
+
+					Statement statement = it.createStatement(expanded);
+					BindTarget bindTarget = new StatementWrapper(statement);
+
+					operation.bindTo(bindTarget);
+					bindByIndex(statement, this.byIndex);
+
+					return statement;
 				}
 
-				Statement statement = it.createStatement(expanded);
-				BindTarget bindTarget = new StatementWrapper(statement);
-
-				this.byName.forEach((name, o) -> {
-
-					if (o.getValue() != null) {
-						operation.bind(bindTarget, name, o.getValue());
-					} else {
-						operation.bindNull(bindTarget, name, o.getType());
-					}
-				});
+				Statement statement = it.createStatement(sql);
 
 				bindByIndex(statement, this.byIndex);
+				bindByName(statement, this.byName);
 
 				return statement;
 			};
