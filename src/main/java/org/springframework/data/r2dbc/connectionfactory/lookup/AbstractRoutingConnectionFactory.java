@@ -38,6 +38,7 @@ import org.springframework.util.Assert;
  * ConnectionFactory} if configured.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see #setTargetConnectionFactories
  * @see #setDefaultTargetConnectionFactory
  * @see #determineCurrentLookupKey()
@@ -46,7 +47,7 @@ public abstract class AbstractRoutingConnectionFactory implements ConnectionFact
 
 	private static final Object FALLBACK_MARKER = new Object();
 
-	private @Nullable Map<Object, Object> targetConnectionFactories;
+	private @Nullable Map<?, ?> targetConnectionFactories;
 
 	private @Nullable Object defaultTargetConnectionFactory;
 
@@ -67,9 +68,8 @@ public abstract class AbstractRoutingConnectionFactory implements ConnectionFact
 	 * representation will be handled by {@link #resolveSpecifiedLookupKey(Object)} and
 	 * {@link #determineCurrentLookupKey()}.
 	 */
-	@SuppressWarnings("unchecked")
 	public void setTargetConnectionFactories(Map<?, ?> targetConnectionFactories) {
-		this.targetConnectionFactories = (Map) targetConnectionFactories;
+		this.targetConnectionFactories = targetConnectionFactories;
 	}
 
 	/**
@@ -79,7 +79,7 @@ public abstract class AbstractRoutingConnectionFactory implements ConnectionFact
 	 * {@link String} (to be resolved via a {@link #setConnectionFactoryLookup ConnectionFactoryLookup}).
 	 * <p>
 	 * This {@link ConnectionFactory} will be used as target if none of the keyed {@link #setTargetConnectionFactories
-	 * targetConnectionFactories} match the {@link #determineCurrentLookupKey()} current lookup key.
+	 * targetConnectionFactories} match the {@link #determineCurrentLookupKey() current lookup key}.
 	 */
 	public void setDefaultTargetConnectionFactory(Object defaultTargetConnectionFactory) {
 		this.defaultTargetConnectionFactory = defaultTargetConnectionFactory;
@@ -92,7 +92,7 @@ public abstract class AbstractRoutingConnectionFactory implements ConnectionFact
 	 * Default is {@literal true}, accepting lookup keys without a corresponding entry in the target
 	 * {@link ConnectionFactory} map - simply falling back to the default {@link ConnectionFactory} in that case.
 	 * <p>
-	 * Switch this flag to {@literal false} if you would prefer the fallback to only apply no lookup key was emitted.
+	 * Switch this flag to {@literal false} if you would prefer the fallback to only apply when no lookup key was emitted.
 	 * Lookup keys without a {@link ConnectionFactory} entry will then lead to an {@link IllegalStateException}.
 	 *
 	 * @see #setTargetConnectionFactories
@@ -168,6 +168,7 @@ public abstract class AbstractRoutingConnectionFactory implements ConnectionFact
 		} else if (connectionFactory instanceof String) {
 			return this.connectionFactoryLookup.getConnectionFactory((String) connectionFactory);
 		} else {
+
 			throw new IllegalArgumentException(
 					"Illegal connection factory value - only 'io.r2dbc.spi.ConnectionFactory' and 'String' supported: "
 							+ connectionFactory);

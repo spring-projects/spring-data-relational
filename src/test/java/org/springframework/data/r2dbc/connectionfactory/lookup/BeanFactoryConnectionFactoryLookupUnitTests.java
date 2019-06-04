@@ -49,6 +49,7 @@ public class BeanFactoryConnectionFactoryLookupUnitTests {
 
 		BeanFactoryConnectionFactoryLookup lookup = new BeanFactoryConnectionFactoryLookup();
 		lookup.setBeanFactory(beanFactory);
+
 		ConnectionFactory connectionFactory = lookup.getConnectionFactory(CONNECTION_FACTORY_BEAN_NAME);
 
 		assertThat(connectionFactory).isNotNull();

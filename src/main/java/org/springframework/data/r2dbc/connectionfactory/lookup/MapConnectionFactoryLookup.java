@@ -30,6 +30,7 @@ import org.springframework.util.Assert;
  * {@link ConnectionFactory} objects.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class MapConnectionFactoryLookup implements ConnectionFactoryLookup {
 
@@ -111,13 +112,10 @@ public class MapConnectionFactoryLookup implements ConnectionFactoryLookup {
 
 		Assert.notNull(connectionFactoryName, "ConnectionFactory name must not be null!");
 
-		ConnectionFactory connectionFactory = this.connectionFactories.get(connectionFactoryName);
+		return this.connectionFactories.computeIfAbsent(connectionFactoryName, key -> {
 
-		if (connectionFactory == null) {
 			throw new ConnectionFactoryLookupFailureException(
 					"No ConnectionFactory with name '" + connectionFactoryName + "' registered");
-		}
-
-		return connectionFactory;
+		});
 	}
 }
