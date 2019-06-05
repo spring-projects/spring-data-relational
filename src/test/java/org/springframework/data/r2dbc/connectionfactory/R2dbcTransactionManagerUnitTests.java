@@ -73,7 +73,7 @@ public class R2dbcTransactionManagerUnitTests {
 
 		ConnectionFactoryUtils.getConnection(connectionFactoryMock).map(Tuple2::getT1).flatMap(it -> {
 
-			return TransactionSynchronizationManager.currentTransaction()
+			return TransactionSynchronizationManager.forCurrentTransaction()
 					.doOnNext(synchronizationManager -> synchronizationManager.registerSynchronization(sync));
 
 		}) //
@@ -209,7 +209,7 @@ public class R2dbcTransactionManagerUnitTests {
 			tx.setRollbackOnly();
 			assertThat(tx.isNewTransaction()).isTrue();
 
-			return TransactionSynchronizationManager.currentTransaction().doOnNext(it -> {
+			return TransactionSynchronizationManager.forCurrentTransaction().doOnNext(it -> {
 
 				assertThat(it.hasResource(connectionFactoryMock)).isTrue();
 				it.registerSynchronization(sync);
