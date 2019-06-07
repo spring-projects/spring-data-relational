@@ -15,8 +15,10 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
+import java.util.Collections;
 import java.util.Map;
 
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -30,6 +32,7 @@ public class MyBatisContext {
 
 	private final Object id;
 	private final Object instance;
+	private final Identifier identifier;
 	private final Class domainType;
 	private final Map<String, Object> additonalValues;
 
@@ -37,9 +40,19 @@ public class MyBatisContext {
 			Map<String, Object> additonalValues) {
 
 		this.id = id;
+		this.identifier = null;
 		this.instance = instance;
 		this.domainType = domainType;
 		this.additonalValues = additonalValues;
+	}
+
+	public MyBatisContext(Identifier identifier, Object instance, Class<?> domainType) {
+
+		this.id = null;
+		this.identifier = identifier;
+		this.instance = instance;
+		this.domainType = domainType;
+		this.additonalValues = Collections.emptyMap();
 	}
 
 	/**
@@ -50,6 +63,15 @@ public class MyBatisContext {
 	@Nullable
 	public Object getId() {
 		return id;
+	}
+
+	/**
+	 * The {@link Identifier} for a path to query.
+	 *
+	 * @return Might return {@literal null}.
+	 */
+	public Identifier getIdentifier() {
+		return identifier;
 	}
 
 	/**
@@ -82,4 +104,5 @@ public class MyBatisContext {
 	public Object get(String key) {
 		return additonalValues.get(key);
 	}
+
 }
