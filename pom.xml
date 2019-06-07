@@ -5,7 +5,7 @@
 
 	<groupId>org.springframework.data</groupId>
 	<artifactId>spring-data-relational-parent</artifactId>
-	<version>1.1.0.BUILD-SNAPSHOT</version>
+	<version>1.1.0.DATAJDBC-384-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Spring Data Relational Parent</name>
