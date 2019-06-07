@@ -20,8 +20,11 @@ import static java.util.Arrays.*;
 import java.util.Collections;
 import java.util.Map;
 
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
@@ -51,6 +54,8 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
+
+	private static final Logger LOG = LoggerFactory.getLogger(MyBatisDataAccessStrategy.class);
 
 	private final SqlSession sqlSession;
 	private NamespaceStrategy namespaceStrategy = NamespaceStrategy.DEFAULT_INSTANCE;
@@ -245,8 +250,19 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<RelationalPersistentProperty> path) {
-		return sqlSession().selectList(namespace(path.getBaseProperty().getOwner().getType()) + ".findAllByPath",
-				new MyBatisContext(identifier, null, path.getLeafProperty().getType(), Collections.emptyMap()));
+
+		String statementName = namespace(path.getBaseProperty().getOwner().getType()) + ".findAllByPath-"
+				+ path.toDotPath();
+
+		try {
+			return sqlSession().selectList(statementName,
+					new MyBatisContext(identifier, null, path.getRequiredLeafProperty().getType()));
+		} catch (PersistenceException pex) {
+
+			LOG.debug("Didn't find %s in the MyBatis session. Falling back to findAllByPath", pex);
+
+			return DataAccessStrategy.super.findAllByPath(identifier, path);
+		}
 	}
 
 	/*
@@ -255,6 +271,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
+
 		return sqlSession().selectList(
 				namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
 				new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap()));
@@ -266,6 +283,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
+
 		return sqlSession().selectOne(namespace(domainType) + ".existsById",
 				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
 	}

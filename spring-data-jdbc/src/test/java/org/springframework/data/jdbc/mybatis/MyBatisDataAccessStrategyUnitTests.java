@@ -16,22 +16,24 @@
 package org.springframework.data.jdbc.mybatis;
 
 import static java.util.Arrays.*;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 
+import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.Identifier;
 
 /**
  * Unit tests for the {@link MyBatisDataAccessStrategy}, mainly ensuring that the correct statements get's looked up.
@@ -48,7 +50,8 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session);
 
-	PersistentPropertyPath<RelationalPersistentProperty> path = PropertyPathTestingUtils.toPath("one.two", DummyEntity.class, context);
+	PersistentPropertyPath<RelationalPersistentProperty> path = PropertyPathTestingUtils.toPath("one.two",
+			DummyEntity.class, context);
 
 	@Before
 	public void before() {
@@ -127,8 +130,8 @@ public class MyBatisDataAccessStrategyUnitTests {
 
 		accessStrategy.deleteAll(path);
 
-		verify(session).delete(
-				eq("org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.deleteAll-one-two"),
+		verify(session).delete(eq(
+				"org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategyUnitTests$DummyEntityMapper.deleteAll-one-two"),
 				captor.capture());
 
 		assertThat(captor.getValue()) //
@@ -283,6 +286,65 @@ public class MyBatisDataAccessStrategyUnitTests {
 						Number.class, //
 						null //
 				);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test // DATAJDBC-384
+	public void findAllByPath() {
+
+		RelationalPersistentProperty property = mock(RelationalPersistentProperty.class, RETURNS_DEEP_STUBS);
+		PersistentPropertyPath path = mock(PersistentPropertyPath.class, RETURNS_DEEP_STUBS);
+
+		when(path.getBaseProperty()).thenReturn(property);
+		when(property.getOwner().getType()).thenReturn((Class) String.class);
+
+		when(path.getRequiredLeafProperty()).thenReturn(property);
+		when(property.getType()).thenReturn((Class) Number.class);
+
+		when(path.toDotPath()).thenReturn("dot.path");
+
+		accessStrategy.findAllByPath(Identifier.empty(), path);
+
+		verify(session).selectList(eq("java.lang.StringMapper.findAllByPath-dot.path"), captor.capture());
+
+		assertThat(captor.getValue()) //
+				.isNotNull() //
+				.extracting( //
+						MyBatisContext::getInstance, //
+						MyBatisContext::getId, //
+						MyBatisContext::getIdentifier, //
+						MyBatisContext::getDomainType, //
+						c -> c.get("key") //
+				).containsExactly( //
+						null, //
+						null, //
+						Identifier.empty(), //
+						Number.class, //
+						null //
+				);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test // DATAJDBC-384
+	public void findAllByPathFallsBackToFindAllByProperty() {
+
+		RelationalPersistentProperty property = mock(RelationalPersistentProperty.class, RETURNS_DEEP_STUBS);
+		PersistentPropertyPath path = mock(PersistentPropertyPath.class, RETURNS_DEEP_STUBS);
+
+		when(path.getBaseProperty()).thenReturn(property);
+		when(property.getOwner().getType()).thenReturn((Class) String.class);
+
+		when(path.getRequiredLeafProperty()).thenReturn(property);
+		when(property.getType()).thenReturn((Class) Number.class);
+
+		when(path.toDotPath()).thenReturn("dot.path");
+
+		when(session.selectList(any(), any())).thenThrow(PersistenceException.class).thenReturn(emptyList());
+
+		accessStrategy.findAllByPath(Identifier.empty(), path);
+
+		verify(session, times(2)).selectList(any(), any());
+
 	}
 
 	@Test // DATAJDBC-123
