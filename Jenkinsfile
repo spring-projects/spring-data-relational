@@ -16,7 +16,6 @@ pipeline {
                 stage("test: baseline") {
                     agent {
                         docker {
-                            label 'data'
                             image 'adoptopenjdk/openjdk8:latest'
                             args '-u root -v /var/run/docker.sock:/var/run/docker.sock' // root but with no maven caching
                         }
