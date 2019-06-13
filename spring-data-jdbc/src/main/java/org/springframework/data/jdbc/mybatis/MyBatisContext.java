@@ -27,16 +27,17 @@ import org.springframework.lang.Nullable;
  * the kind of values available on invocation.
  *
  * @author Jens Schauder
+ * @author Christoph Strobl
  */
 public class MyBatisContext {
 
-	private final Object id;
-	private final Object instance;
-	private final Identifier identifier;
-	private final Class domainType;
+	private final @Nullable Object id;
+	private final @Nullable Object instance;
+	private final @Nullable Identifier identifier;
+	private final @Nullable Class domainType;
 	private final Map<String, Object> additonalValues;
 
-	public MyBatisContext(@Nullable Object id, @Nullable Object instance, Class domainType,
+	public MyBatisContext(@Nullable Object id, @Nullable Object instance, @Nullable Class domainType,
 			Map<String, Object> additonalValues) {
 
 		this.id = id;
@@ -46,7 +47,7 @@ public class MyBatisContext {
 		this.additonalValues = additonalValues;
 	}
 
-	public MyBatisContext(Identifier identifier, Object instance, Class<?> domainType) {
+	public MyBatisContext(Identifier identifier, @Nullable Object instance, @Nullable Class<?> domainType) {
 
 		this.id = null;
 		this.identifier = identifier;
@@ -70,6 +71,7 @@ public class MyBatisContext {
 	 *
 	 * @return Might return {@literal null}.
 	 */
+	@Nullable
 	public Identifier getIdentifier() {
 		return identifier;
 	}

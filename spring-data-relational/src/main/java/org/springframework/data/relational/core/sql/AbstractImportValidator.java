@@ -30,7 +30,7 @@ abstract class AbstractImportValidator implements Visitor {
 
 	Set<Table> requiredByWhere = new HashSet<>();
 	Set<Table> from = new HashSet<>();
-	Visitable parent;
+	@Nullable Visitable parent;
 
 	/*
 	 * (non-Javadoc)

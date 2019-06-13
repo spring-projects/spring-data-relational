@@ -259,7 +259,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 					new MyBatisContext(identifier, null, path.getRequiredLeafProperty().getType()));
 		} catch (PersistenceException pex) {
 
-			LOG.debug("Didn't find %s in the MyBatis session. Falling back to findAllByPath", pex);
+			LOG.debug(String.format("Didn't find %s in the MyBatis session. Falling back to findAllByPath.", statementName),
+					pex);
 
 			return DataAccessStrategy.super.findAllByPath(identifier, path);
 		}
