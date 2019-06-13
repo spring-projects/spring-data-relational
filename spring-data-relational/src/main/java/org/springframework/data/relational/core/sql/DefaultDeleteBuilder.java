@@ -26,7 +26,7 @@ import org.springframework.util.Assert;
  */
 class DefaultDeleteBuilder implements DeleteBuilder, DeleteBuilder.DeleteWhereAndOr, DeleteBuilder.DeleteWhere {
 
-	private Table from;
+	private @Nullable Table from;
 	private @Nullable Condition where;
 
 	/*

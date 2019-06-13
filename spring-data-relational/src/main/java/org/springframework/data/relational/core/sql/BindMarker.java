@@ -46,7 +46,6 @@ public class BindMarker extends AbstractSegment implements Expression {
 		 * (non-Javadoc)
 		 * @see org.springframework.data.relational.core.sql.Named#getName()
 		 */
-		@Nullable
 		@Override
 		public String getName() {
 			return name;

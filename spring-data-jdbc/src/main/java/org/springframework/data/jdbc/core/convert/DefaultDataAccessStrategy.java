@@ -505,7 +505,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 
 		@Override
-		public void setProperty(PersistentProperty<?> property, Object value) {
+		public void setProperty(PersistentProperty<?> property, @Nullable Object value) {
 			throw new UnsupportedOperationException("Cannot set value on 'null' target object.");
 		}
 

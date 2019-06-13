@@ -20,6 +20,7 @@ import java.util.function.Predicate;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -32,7 +33,7 @@ import org.springframework.util.Assert;
 abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisitor {
 
 	private final RenderContext context;
-	private PartRenderer current;
+	private @Nullable PartRenderer current;
 
 	/**
 	 * Creates a new {@link FilteredSingleConditionRenderSupport} given the filter {@link Predicate}.

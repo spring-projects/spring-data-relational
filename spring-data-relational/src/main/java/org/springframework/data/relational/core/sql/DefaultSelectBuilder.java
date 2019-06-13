@@ -284,15 +284,15 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		private final Table table;
 		private final DefaultSelectBuilder selectBuilder;
 		private final JoinType joinType;
-		private Expression from;
-		private Expression to;
+		private @Nullable Expression from;
+		private @Nullable Expression to;
 		private @Nullable Condition condition;
 
 
 		JoinBuilder(Table table, DefaultSelectBuilder selectBuilder, JoinType joinType) {
+
 			this.table = table;
 			this.selectBuilder = selectBuilder;
-
 			this.joinType = joinType;
 		}
 
