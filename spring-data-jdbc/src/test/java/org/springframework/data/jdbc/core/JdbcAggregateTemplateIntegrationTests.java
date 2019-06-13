@@ -596,24 +596,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 		});
 	}
 
-	@Test // DATAJDBC-378
-	public void findAllByIdMustNotAcceptNullArgumentForType() {
-
-		assertThatThrownBy(() -> template.findAllById(singleton(23L), null)).isInstanceOf(IllegalArgumentException.class);
-	}
-
-	@Test // DATAJDBC-378
-	public void findAllByIdMustNotAcceptNullArgumentForIds() {
-
-		assertThatThrownBy(() -> template.findAllById(null, LegoSet.class)).isInstanceOf(IllegalArgumentException.class);
-	}
-
-	@Test // DATAJDBC-378
-	public void findAllByIdWithEmpthListMustReturnEmptyResult() {
-
-		assertThat(template.findAllById(emptyList(), LegoSet.class)).isEmpty();
-	}
-
 	private static NoIdMapChain4 createNoIdMapTree() {
 
 		NoIdMapChain4 chain4 = new NoIdMapChain4();
