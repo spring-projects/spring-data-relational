@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.9.RELEASE (2019-06-14)
+---------------------------------------------
+* DATAJDBC-378 - IllegalArgumentException: JdbcValue must be not null at this point.
+* DATAJDBC-372 - Release 1.0.9 (Lovelace SR9).
+
+
 Changes in version 1.0.8.RELEASE (2019-05-13)
 ---------------------------------------------
 * DATAJDBC-371 - Release 1.0.8 (Lovelace SR8).
