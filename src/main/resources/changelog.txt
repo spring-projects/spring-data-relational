@@ -1,6 +1,17 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.0.RC1 (2019-06-14)
+-----------------------------------------
+* DATAJDBC-384 - Improve backward compatibility for MybatisDataAccessStrategy.
+* DATAJDBC-382 - Create security policy readme.
+* DATAJDBC-378 - IllegalArgumentException: JdbcValue must be not null at this point.
+* DATAJDBC-377 - Use testcontainers version property.
+* DATAJDBC-374 - Make behavior for empty embeddables configurable.
+* DATAJDBC-360 - Release 1.1 RC1 (Moore).
+* DATAJDBC-223 - Collection like properties of entities without id property need special handling.
+
+
 Changes in version 1.0.9.RELEASE (2019-06-14)
 ---------------------------------------------
 * DATAJDBC-378 - IllegalArgumentException: JdbcValue must be not null at this point.
