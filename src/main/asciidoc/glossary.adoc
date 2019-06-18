@@ -9,10 +9,10 @@ CRUD::
    Create, Read, Update, Delete - Basic persistence operations
 
 Dependency Injection::
-   Pattern to hand a component's dependency to the component from outside, freeing the component to lookup the dependent itself. For more information, see link:$$http://en.wikipedia.org/wiki/Dependency_Injection$$[http://en.wikipedia.org/wiki/Dependency_Injection].
+   Pattern to hand a component's dependency to the component from outside, freeing the component to lookup the dependent itself. For more information, see link:$$https://en.wikipedia.org/wiki/Dependency_Injection$$[https://en.wikipedia.org/wiki/Dependency_Injection].
 
 JPA::
    Java Persistence API
 
 Spring::
-   Java application framework -- link:$$http://projects.spring.io/spring-framework$$[http://projects.spring.io/spring-framework]
+   Java application framework -- link:$$https://projects.spring.io/spring-framework$$[https://projects.spring.io/spring-framework]
