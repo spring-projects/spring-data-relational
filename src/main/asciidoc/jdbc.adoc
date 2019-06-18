@@ -588,7 +588,7 @@ The instance can be modified by adding or removing {javadoc-base}/org/springfram
 
 Spring Data JDBC does little to no logging on its own.
 Instead, the mechanics of `JdbcTemplate` to issue SQL statements provide logging.
-Thus, if you want to inspect what SQL statements are executed, activate logging for Spring's {spring-framework-docs}/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or http://www.mybatis.org/mybatis-3/logging.html[MyBatis].
+Thus, if you want to inspect what SQL statements are executed, activate logging for Spring's {spring-framework-docs}/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or https://www.mybatis.org/mybatis-3/logging.html[MyBatis].
 
 [[jdbc.transactions]]
 == Transactionality
