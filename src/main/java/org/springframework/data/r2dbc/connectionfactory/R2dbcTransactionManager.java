@@ -421,7 +421,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager
 	 * Prepare the transactional {@link Connection} right after transaction begin.
 	 * <p>
 	 * The default implementation executes a "SET TRANSACTION READ ONLY" statement if the {@link #setEnforceReadOnly
-	 * "enforceReadOnly"} flag is set to {@code true} and the transaction definition indicates a read-only transaction.
+	 * "enforceReadOnly"} flag is set to {@literal true} and the transaction definition indicates a read-only transaction.
 	 * <p>
 	 * The "SET TRANSACTION READ ONLY" is understood by Oracle, MySQL and Postgres and may work with other databases as
 	 * well. If you'd like to adapt this treatment, override this method accordingly.
