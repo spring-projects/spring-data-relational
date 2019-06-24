@@ -20,8 +20,10 @@ pipeline {
                             args '-u root -v /var/run/docker.sock:/var/run/docker.sock' // root but with no maven caching
                         }
                     }
+                    options { timeout(time: 30, unit: 'MINUTES') }
                     steps {
-                        sh "./mvnw -Pci,all-dbs clean dependency:list test -Dsort -B"
+                        sh 'rm -rf ?'
+                        sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/spring-data-maven-repository" ./mvnw -Pci,all-dbs clean dependency:list test -Dsort -B'
                         sh "chown -R 1001:1001 target"
                     }
                 }
@@ -34,16 +36,18 @@ pipeline {
             agent {
                 docker {
                     image 'adoptopenjdk/openjdk8:latest'
-                    args '-v $HOME/.m2:/root/.m2'
+                    args '-v $HOME/.m2:/tmp/spring-data-maven-repository'
                 }
             }
+            options { timeout(time: 20, unit: 'MINUTES') }
 
             environment {
                 ARTIFACTORY = credentials('02bd1690-b54f-4c9f-819d-a77cb7a9822c')
             }
 
             steps {
-                sh "./mvnw -Pci,snapshot clean deploy -Dmaven.test.skip=true -B"
+                sh 'rm -rf ?'
+                sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/spring-data-maven-repository" ./mvnw -Pci,snapshot clean deploy -Dmaven.test.skip=true -B'
             }
         }
         stage('Release to artifactory with docs') {
@@ -53,16 +57,18 @@ pipeline {
             agent {
                 docker {
                     image 'adoptopenjdk/openjdk8:latest'
-                    args '-v $HOME/.m2:/root/.m2'
+                    args '-v $HOME/.m2:/tmp/spring-data-maven-repository'
                 }
             }
+            options { timeout(time: 20, unit: 'MINUTES') }
 
             environment {
                 ARTIFACTORY = credentials('02bd1690-b54f-4c9f-819d-a77cb7a9822c')
             }
 
             steps {
-                sh "./mvnw -Pci,snapshot clean deploy -Dmaven.test.skip=true -B"
+                sh 'rm -rf ?'
+                sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/spring-data-maven-repository" ./mvnw -Pci,snapshot clean deploy -Dmaven.test.skip=true -B'
             }
         }
     }
