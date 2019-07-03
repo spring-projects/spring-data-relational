@@ -8,6 +8,7 @@ pipeline {
 
     options {
         disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '14'))
     }
 
     stages {
@@ -23,13 +24,14 @@ pipeline {
                     agent {
                         docker {
                             image 'adoptopenjdk/openjdk8:latest'
+                            label 'data'
                             args '-u root -v /var/run/docker.sock:/var/run/docker.sock' // root but with no maven caching
                         }
                     }
                     options { timeout(time: 30, unit: 'MINUTES') }
                     steps {
                         sh 'rm -rf ?'
-                        sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/spring-data-maven-repository" ./mvnw -Pci,all-dbs clean dependency:list test -Dsort -B'
+                        sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,all-dbs clean dependency:list test -Dsort -B'
                         sh "chown -R 1001:1001 target"
                     }
                 }
@@ -43,7 +45,8 @@ pipeline {
             agent {
                 docker {
                     image 'adoptopenjdk/openjdk8:latest'
-                    args '-v $HOME/.m2:/tmp/spring-data-maven-repository'
+                    label 'data'
+                    args '-v $HOME:/tmp/jenkins-home'
                 }
             }
             options { timeout(time: 20, unit: 'MINUTES') }
@@ -54,7 +57,14 @@ pipeline {
 
             steps {
                 sh 'rm -rf ?'
-                sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/spring-data-maven-repository" ./mvnw -Pci,snapshot clean deploy -Dmaven.test.skip=true -B'
+                sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,artifactory ' +
+                        '-Dartifactory.server=https://repo.spring.io ' +
+                        "-Dartifactory.username=${ARTIFACTORY_USR} " +
+                        "-Dartifactory.password=${ARTIFACTORY_PSW} " +
+                        "-Dartifactory.staging-repository=libs-snapshot-local " +
+                        "-Dartifactory.build-name=spring-data-jdbc " +
+                        "-Dartifactory.build-number=${BUILD_NUMBER} " +
+                        '-Dmaven.test.skip=true clean deploy -B'
             }
         }
         stage('Release to artifactory with docs') {
@@ -64,7 +74,8 @@ pipeline {
             agent {
                 docker {
                     image 'adoptopenjdk/openjdk8:latest'
-                    args '-v $HOME/.m2:/tmp/spring-data-maven-repository'
+                    label 'data'
+                    args '-v $HOME:/tmp/jenkins-home'
                 }
             }
             options { timeout(time: 20, unit: 'MINUTES') }
@@ -75,7 +86,14 @@ pipeline {
 
             steps {
                 sh 'rm -rf ?'
-                sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/spring-data-maven-repository" ./mvnw -Pci,snapshot clean deploy -Dmaven.test.skip=true -B'
+                sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,artifactory ' +
+                        '-Dartifactory.server=https://repo.spring.io ' +
+                        "-Dartifactory.username=${ARTIFACTORY_USR} " +
+                        "-Dartifactory.password=${ARTIFACTORY_PSW} " +
+                        "-Dartifactory.staging-repository=libs-snapshot-local " +
+                        "-Dartifactory.build-name=spring-data-jdbc " +
+                        "-Dartifactory.build-number=${BUILD_NUMBER} " +
+                        '-Dmaven.test.skip=true clean deploy -B'
             }
         }
     }
