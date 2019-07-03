@@ -62,7 +62,7 @@ pipeline {
                         "-Dartifactory.username=${ARTIFACTORY_USR} " +
                         "-Dartifactory.password=${ARTIFACTORY_PSW} " +
                         "-Dartifactory.staging-repository=libs-snapshot-local " +
-                        "-Dartifactory.build-name=spring-data-jdbc " +
+                        "-Dartifactory.build-name=spring-data-jdbc-1.0 " +
                         "-Dartifactory.build-number=${BUILD_NUMBER} " +
                         '-Dmaven.test.skip=true clean deploy -B'
             }
@@ -91,7 +91,7 @@ pipeline {
                         "-Dartifactory.username=${ARTIFACTORY_USR} " +
                         "-Dartifactory.password=${ARTIFACTORY_PSW} " +
                         "-Dartifactory.staging-repository=libs-snapshot-local " +
-                        "-Dartifactory.build-name=spring-data-jdbc " +
+                        "-Dartifactory.build-name=spring-data-jdbc-1.0 " +
                         "-Dartifactory.build-number=${BUILD_NUMBER} " +
                         '-Dmaven.test.skip=true clean deploy -B'
             }
