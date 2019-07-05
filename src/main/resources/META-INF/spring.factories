@@ -1,1 +1,2 @@
 org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider=org.springframework.data.r2dbc.dialect.DialectResolver.BuiltInDialectProvider
+org.springframework.data.repository.core.support.RepositoryFactorySupport=org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory
