@@ -65,18 +65,6 @@
 	</developers>
 
 	<profiles>
-		<profile>
-			<id>release</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.jfrog.buildinfo</groupId>
-						<artifactId>artifactory-maven-plugin</artifactId>
-						<inherited>false</inherited>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
 
 		<profile>
 			<id>all-dbs</id>
@@ -333,10 +321,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>wagon-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
 				<groupId>org.asciidoctor</groupId>
