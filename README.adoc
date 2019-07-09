@@ -1,226 +1,158 @@
 image:https://spring.io/badges/spring-data-r2dbc/snapshot.svg["Spring Data R2DBC", link="https://spring.io/projects/spring-data-r2dbc#learn"]
 
-image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-r2dbc%2Fmaster&subject=master["Spring Data R2DBC", link="https://jenkins.spring.io/view/SpringData/job/spring-data-r2dbc/"]
-
-= Spring Data R2DBC
+= Spring Data R2DBC image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-r2dbc%2Fmaster&subject=Build[link=https://jenkins.spring.io/view/SpringData/job/spring-data-r2dbc/] https://gitter.im/spring-projects/spring-data[image:https://badges.gitter.im/spring-projects/spring-data.svg[Gitter]]
 
 The primary goal of the https://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data R2DBC* offers the popular Repository abstraction based on https://r2dbc.io[R2DBC].
 
 R2DBC is the abbreviation for https://github.com/r2dbc/[Reactive Relational Database Connectivity], an incubator to integrate relational databases using a reactive driver.
 
-The state of R2DBC is incubating to evaluate how an reactive integration could look like. To get started, you need a R2DBC driver first.
-
 == This is NOT an ORM
 
-Spring Data R2DBC does not try to be an ORM.
-Instead it is more of a construction kit for your personal reactive relational data access component that you can define the way you like or need it.
+Spring Data R2DBC aims at being conceptually easy. In order to achieve this it does NOT offer caching, lazy loading, write behind or many other features of ORM frameworks. This makes Spring Data R2DBC a simple, limited, opinionated object mapper.
 
-== Maven Coordinates
+== Features
+
+* Spring configuration support using Java based `@Configuration` classes.
+* Annotation based mapping metadata.
+* Automatic implementation of Repository interfaces including support.
+* Support for Reactive Transactions
+* Schema and data initialization utilities.
+
+== Code of Conduct
+
+This project is governed by the link:CODE_OF_CONDUCT.adoc[Spring Code of Conduct]. By participating, you are expected to uphold this code of conduct. Please report unacceptable behavior to spring-code-of-conduct@pivotal.io.
+
+== Getting Started
+
+Here is a quick teaser of an application using Spring Data Repositories in Java:
+
+[source,java]
+----
+public interface PersonRepository extends CrudRepository<Person, Long> {
+
+	@Query("SELECT * FROM person WHERE lastname = :lastname")
+  Flux<Person> findByLastname(String lastname);
+
+	@Query("SELECT * FROM person WHERE firstname LIKE :lastname")
+  Flux<Person> findByFirstnameLike(String firstname);
+}
+
+@Service
+public class MyService {
+
+  private final PersonRepository repository;
+
+  public MyService(PersonRepository repository) {
+    this.repository = repository;
+  }
+
+  public void doWork() {
+
+    repository.deleteAll().block();
+
+    Person person = new Person();
+    person.setFirstname("Mark");
+    person.setLastname("Paluch");
+    repository.save(person).block();
+
+    Flux<Person> lastNameResults = repository.findByLastname("Paluch");
+    Flux<Person> firstNameResults = repository.findByFirstnameLike("M%");
+ }
+}
+
+@Configuration
+@EnableR2dbcRepositories
+class ApplicationConfig extends AbstractR2dbcConfiguration {
+
+  @Bean
+  public ConnectionFactory connectionFactory() {
+    return ConnectionFactories.get("r2dbc:h2:mem:///test?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+  }
+}
+----
+
+=== Maven configuration
+
+Add the Maven dependency:
 
 [source,xml]
 ----
 <dependency>
-    <groupId>org.springframework.data</groupId>
-    <artifactId>spring-data-r2dbc</artifactId>
-    <version>1.0.0.BUILD-SNAPSHOT</version>
+  <groupId>org.springframework.data</groupId>
+  <artifactId>spring-data-r2dbc</artifactId>
+  <version>${version}.RELEASE</version>
 </dependency>
 ----
 
+If you'd rather like the latest snapshots of the upcoming major version, use our Maven snapshot repository and declare the appropriate dependency version.
 
-== DatabaseClient
-
-All functionality is encapsulated in `DatabaseClient` which is the entry point for applications that wish to integrate with relational databases using reactive drivers:
-
-[source,java]
+[source,xml]
 ----
-PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
-		.host(…)
-		.database(…)
-		.username(…)
-		.password(…).build());
+<dependency>
+  <groupId>org.springframework.data</groupId>
+  <artifactId>spring-data-r2dbc</artifactId>
+  <version>${version}.BUILD-SNAPSHOT</version>
+</dependency>
 
-DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
-----
-
-The client API provides covers the following features:
-
-* Execution of generic SQL and consumption of update count/row results.
-* Generic `SELECT` with paging and ordering.
-* `SELECT` of mapped objects with paging and ordering.
-* Generic `INSERT` with parameter binding.
-* `INSERT` of mapped objects.
-* Parameter binding using the native syntax.
-* Result consumption: Update count, unmapped (`Map<String, Object>`), mapped to entities, extraction function.
-* Reactive repositories using `@Query` annotated methods.
-* Transaction Management.
-
-=== Examples executing generic SQL statements
-
-[source,java]
-----
-Mono<Integer> count = databaseClient.execute()
-				.sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)")
-				.bind("$1", 42055)
-				.bind("$2", "Description")
-				.bindNull("$3", Integer.class)
-				.fetch()
-				.rowsUpdated();
-
-Flux<Map<String, Object>> rows = databaseClient.execute()
-				.sql("SELECT id, name, manual FROM legoset")
-				.fetch()
-				.all();
-
-Flux<Long> result = db.execute()
-				.sql("SELECT txid_current();")
-				.map((r, md) -> r.get(0, Long.class))
-				.all();
+<repository>
+  <id>spring-libs-snapshot</id>
+  <name>Spring Snapshot Repository</name>
+  <url>https://repo.spring.io/libs-snapshot</url>
+</repository>
 ----
 
-=== Examples selecting data
+== Getting Help
 
-[source,java]
-----
+Having trouble with Spring Data? We’d love to help!
 
-Flux<Map<String, Object>> rows = databaseClient.select()
-				.from("legoset")
-				.orderBy(Sort.by(desc("id")))
-				.fetch()
-				.all();
+* Check the
+https://docs.spring.io/spring-data/r2dbc/docs/current/reference/html/[reference documentation], and https://docs.spring.io/spring-data/r2dbc/docs/current/api/[Javadocs].
+* Learn the Spring basics – Spring Data builds on Spring Framework, check the https://spring.io[spring.io] web-site for a wealth of reference documentation.
+If you are just starting out with Spring, try one of the https://spring.io/guides[guides].
+* If you are upgrading, check out the https://docs.spring.io/spring-data/r2dbc/docs/current/changelog.txt[changelog] for "`new and noteworthy`" features.
+* Ask a question - we monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-data[`spring-data-r2dbc`].
+* Report bugs with Spring Data envers at https://github.com/spring-projects/spring-data-r2dbc/issues[github.com/spring-projects/spring-data-r2dbc/issues].
 
-Flux<LegoSet> rows = databaseClient.select()
-				.from("legoset")
-				.orderBy(Sort.by(desc("id")))
-				.as(LegoSet.class)
-				.fetch()
-				.all();
-----
+== Reporting Issues
 
-=== Examples inserting data
+Spring Data uses GitHub as issue tracking system to record bugs and feature requests. If you want to raise an issue, please follow the recommendations below:
 
-[source,java]
-----
-Flux<Integer> ids = databaseClient.insert()
-				.into("legoset")
-				.value("id", 42055)
-				.value("name", "Description")
-				.nullValue("manual", Integer.class)
-				.map((r, m) -> r.get("id", Integer.class)
-				.all();
-
-Mono<Void> completion = databaseClient.insert()
-				.into(LegoSet.class)
-				.using(legoSet)
-				.then();
-----
-
-=== Examples using reactive repositories
-
-[source,java]
-----
-interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
-
-		@Query("SELECT * FROM legoset WHERE name like $1")
-		Flux<LegoSet> findByNameContains(String name);
-
-		@Query("SELECT * FROM legoset WHERE manual = $1")
-		Mono<LegoSet> findByManual(int manual);
-}
-----
-
-=== Examples using transaction control
-
-All examples above run with auto-committed transactions. To get group multiple statements within the same transaction or
-control the transaction yourself, you need to use `TransactionalDatabaseClient`:
-
-[source,java]
-----
-TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
-----
-
-`TransactionalDatabaseClient` allows multiple flavors of transaction management:
-
-* Participate in ongoing transactions and fall-back to auto-commit mode if there's no active transaction (default).
-* Group multiple statements in a managed transaction using `TransactionalDatabaseClient.inTransaction(…)`.
-* Application-controlled transaction management using `TransactionalDatabaseClient.beginTransaction()`/`commitTransaction()`/`rollbackTransaction()`.
-
-Participating in ongoing transactions does not require changes to your application code. Instead, a managed transaction must be hosted by your application container. Transaction control needs to happen there, as well.
-
-**Statement grouping**
-
-[source,java]
-----
-Flux<Integer> rowsUpdated = databaseClient.inTransaction(db -> {
-
-	return db.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
-			.bind(0, 42055) //
-			.bind(1, "Description") //
-			.bindNull("$3", Integer.class) //
-			.fetch()
-			.rowsUpdated();
-});
-----
-
-**Application-controlled transaction management**
-
-[source,java]
-----
-Flux<Long> txId = databaseClient.execute().sql("SELECT txid_current();").exchange()
-				.flatMapMany(it -> it.map((r, md) -> r.get(0, Long.class)).all());
-
-Mono<Void> then = databaseClient.enableTransactionSynchronization(databaseClient.beginTransaction() //
-				.thenMany(txId)) //
-				.then(databaseClient.rollbackTransaction()));
-----
-
-NOTE: Application-controlled transactions must be enabled with `enableTransactionSynchronization(…)`.
+* Before you log a bug, please search the
+https://github.com/spring-projects/spring-data-r2dbc/issues[issue tracker] to see if someone has already reported the problem.
+* If the issue doesn’t already exist, https://github.com/spring-projects/spring-data-r2dbc/issues/new[create a new issue].
+* Please provide as much information as possible with the issue report, we like to know the version of Spring Data that you are using and JVM version.
+* If you need to paste code, or include a stack trace use Markdown +++```+++ escapes before and after your text.
+* If possible try to create a test-case or project that replicates the issue. Attach a link to your code or a compressed file containing your code.
 
 == Building from Source
 
-You don't need to build from source to use Spring Data R2DBC (binaries in https://repo.spring.io[repo.spring.io]), but if you want to try out the latest and greatest, Spring Data R2DBC can be easily built with the https://github.com/takari/maven-wrapper[maven wrapper]. You also need JDK 1.8.
+You don’t need to build from source to use Spring Data (binaries in https://repo.spring.io[repo.spring.io]), but if you want to try out the latest and greatest, Spring Data can be easily built with the https://github.com/takari/maven-wrapper[maven wrapper].
+You also need JDK 1.8.
 
-[indent=0]
+[source,bash]
 ----
-	$ ./mvnw clean install
+ $ ./mvnw clean install
 ----
 
 If you want to build with the regular `mvn` command, you will need https://maven.apache.org/run-maven/index.html[Maven v3.5.0 or above].
 
-_Also see link:CONTRIBUTING.adoc[CONTRIBUTING.adoc] if you wish to submit pull requests, and in particular please fill out the https://cla.pivotal.io/[Contributor's Agreement] before your first change._
+_Also see link:CONTRIBUTING.adoc[CONTRIBUTING.adoc] if you wish to submit pull requests, and in particular please sign the https://cla.pivotal.io/sign/spring[Contributor’s Agreement] before your first change, is trivial._
 
-== Running CI tasks locally
+=== Building reference documentation
 
-Since this pipeline is purely Docker-based, it's easy to:
+Building the documentation builds also the project without running tests.
 
-* Debug what went wrong on your local machine.
-* Test out a a tweak to your `test.sh` script before sending it out.
-* Experiment against a new image before submitting your pull request.
+[source,bash]
+----
+ $ ./mvnw clean install -Pdistribute
+----
 
-All of these use cases are great reasons to essentially run what the CI server does on your local machine.
+The generated documentation is available from `target/site/reference/html/index.html`.
 
-IMPORTANT: To do this you must have Docker installed on your machine.
+== Examples
 
-1. `docker run -it --mount type=bind,source="$(pwd)",target=/spring-data-r2dbc-github  -v /usr/bin/docker:/usr/bin/docker -v /var/run/docker.sock:/var/run/docker.sock adoptopenjdk/openjdk8:latest /bin/bash`
-+
-This will launch the Docker image and mount your source code at `spring-data-r2dbc-github`.
-+
-2. `cd spring-data-r2dbc-github`
-+
-Next, test everything from inside the container:
-+
-3. `./mvnw -Pci,all-dbs clean dependency:list test -Dsort -B` (or whatever test configuration you must use)
+* https://github.com/spring-projects/spring-data-examples/[Spring Data Examples] contains example projects that explain specific features in more detail.
 
-Since the container is binding to your source, you can make edits from your IDE and continue to run build jobs.
+== License
 
-NOTE: Docker containers can eat up disk space fast! From time to time, run `docker system prune` to clean out old images.
-
-== Contributing to Spring Data R2DBC
-
-Here are some ways for you to get involved in the community:
-
-* Get involved with the Spring community by helping out on https://stackoverflow.com/questions/tagged/spring-data-r2dbc[Stackoverflow] by responding to questions and joining the debate.
-* Create https://github.com/spring-projects/spring-data-r2dbc[GitHub] tickets for bugs and new features and comment and vote on the ones that you are interested in.
-* Github is for social coding: if you want to write code, we encourage contributions through pull requests from https://help.github.com/forking/[forks of this repository]. If you want to contribute code this way, please reference a JIRA ticket as well, covering the specific issue you are addressing.
-* Watch for upcoming articles on Spring by https://spring.io/blog[subscribing] to spring.io.
-
-Before we accept a non-trivial patch or pull request we will need you to https://cla.pivotal.io/sign/spring[sign the Contributor License Agreement]. Signing the contributor’s agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. If you forget to do so, you'll be reminded when you submit a pull request. Active contributors might be asked to join the core team, and given the ability to merge pull requests.
+Spring Data R2DBC is Open Source software released under the https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].
