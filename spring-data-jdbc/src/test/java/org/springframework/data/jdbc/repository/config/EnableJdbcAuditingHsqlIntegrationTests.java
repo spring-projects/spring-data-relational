@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -41,7 +42,9 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Component;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
@@ -176,6 +179,23 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 						});
 	}
 
+	@Test // DATAJDBC-390
+	public void auditingListenerTriggersBeforeDefaultListener() {
+
+		configureRepositoryWith( //
+				AuditingAnnotatedDummyEntityRepository.class, //
+				TestConfiguration.class, //
+				AuditingConfiguration.class, //
+				OrderAssertingEventListener.class) //
+						.accept(repository -> {
+
+							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
+
+							assertThat(entity.id).isNotNull();
+
+						});
+	}
+
 	/**
 	 * Usage looks like this:
 	 * <p>
@@ -294,6 +314,22 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 		@Bean
 		AuditorAware<String> auditorAware() {
 			return () -> Optional.of("user");
+		}
+	}
+
+	/**
+	 * An event listener asserting that it is running after {@link AuditingConfiguration#auditorAware()} was invoked and
+	 * set the auditing data.
+	 */
+	@Component
+	static class OrderAssertingEventListener implements ApplicationListener<BeforeSaveEvent> {
+
+		@Override
+		public void onApplicationEvent(BeforeSaveEvent event) {
+
+			Object entity = event.getEntity();
+			assertThat(entity).isInstanceOf(AuditingAnnotatedDummyEntity.class);
+			assertThat(((AuditingAnnotatedDummyEntity) entity).createdDate).isNotNull();
 		}
 	}
 }
