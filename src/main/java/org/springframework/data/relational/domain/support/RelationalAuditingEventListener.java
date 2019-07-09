@@ -18,6 +18,7 @@ package org.springframework.data.relational.domain.support;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.ApplicationListener;
+import org.springframework.core.Ordered;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
@@ -25,15 +26,23 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 /**
  * Spring JDBC event listener to capture auditing information on persisting and updating entities.
  * <p>
- * An instance of this class gets registered when you apply {@link EnableJdbcAuditing} to your Spring config.
+ * An instance of this class gets registered when you enable auditing for Spring Data JDBC.
  *
  * @author Kazuki Shimizu
  * @author Jens Schauder
  * @author Oliver Gierke
- * @see EnableJdbcAuditing
  */
 @RequiredArgsConstructor
-public class RelationalAuditingEventListener implements ApplicationListener<BeforeSaveEvent> {
+public class RelationalAuditingEventListener implements ApplicationListener<BeforeSaveEvent>, Ordered {
+
+	/**
+	 * The order used for this {@link org.springframework.context.event.EventListener}. This ensures that it will run
+	 * before other listeners without a specified priority.
+	 *
+	 * @see org.springframework.core.annotation.Order
+	 * @see Ordered
+	 */
+	public static final int AUDITING_ORDER = 100;
 
 	private final IsNewAwareAuditingHandler handler;
 
@@ -45,5 +54,10 @@ public class RelationalAuditingEventListener implements ApplicationListener<Befo
 	@Override
 	public void onApplicationEvent(BeforeSaveEvent event) {
 		handler.markAudited(event.getEntity());
+	}
+
+	@Override
+	public int getOrder() {
+		return AUDITING_ORDER;
 	}
 }
