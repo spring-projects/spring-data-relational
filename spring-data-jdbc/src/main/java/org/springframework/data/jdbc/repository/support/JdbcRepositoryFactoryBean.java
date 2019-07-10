@@ -27,6 +27,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
@@ -54,6 +55,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private DataAccessStrategy dataAccessStrategy;
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private NamedParameterJdbcOperations operations;
+	private EntityCallbacks entityCallbacks;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
@@ -85,6 +87,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
 				converter, publisher, operations);
 		jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
+		jdbcRepositoryFactory.setEntityCallbacks(entityCallbacks);
 
 		return jdbcRepositoryFactory;
 	}
@@ -151,10 +154,16 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		Assert.state(this.converter != null, "RelationalConverter is required and must not be null!");
 
 		if (this.operations == null) {
+
+			Assert.state(beanFactory != null, "If no JdbcOperations are set a BeanFactory must be available.");
+
 			this.operations = beanFactory.getBean(NamedParameterJdbcOperations.class);
 		}
 
 		if (this.dataAccessStrategy == null) {
+
+			Assert.state(beanFactory != null, "If no DataAccessStrategy is set a BeanFactory must be available.");
+
 			this.dataAccessStrategy = this.beanFactory.getBeanProvider(DataAccessStrategy.class) //
 					.getIfAvailable(() -> {
 
@@ -166,6 +175,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		if (this.queryMappingConfiguration == null) {
 			this.queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+		}
+
+		if (beanFactory != null) {
+			entityCallbacks = EntityCallbacks.create(beanFactory);
 		}
 
 		super.afterPropertiesSet();

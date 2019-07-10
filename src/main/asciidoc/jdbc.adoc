@@ -563,9 +563,9 @@ Note that the type used for prefixing the statement name is the name of the aggr
 |===
 
 [[jdbc.events]]
-== Events
+== Events and Callback
 
-Spring Data JDBC triggers events that get published to any matching `ApplicationListener` in the application context.
+Spring Data JDBC triggers events that get published to any matching `ApplicationListener` and `EntityCallback` beans in the application context.
 For example, the following listener gets invoked before an aggregate gets saved:
 
 ====
@@ -586,27 +586,34 @@ public ApplicationListener<BeforeSave> timeStampingSaveTime() {
 ----
 ====
 
-The following table describes the available events:
+The following table describes the available events and callbacks:
 
 .Available events
 |===
-| Event | When It Is Published
+| Event | `EntityCallback` | When It Is Published
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/BeforeDeleteEvent.html[`BeforeDeleteEvent`]
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/BeforeDeleteCallback.html[`BeforeDeleteCallback`]
 | Before an aggregate root gets deleted.
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterDeleteEvent.html[`AfterDeleteEvent`]
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterDeleteCallback.html[`AfterDeleteCallback`]
 | After an aggregate root gets deleted.
 
-| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveEvent.html[`BeforeSaveEvent`]
+| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeConvertEvent.html[`BeforeConvertEvent`]
+| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeConvertCallback.html[`BeforeConvertCallback`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
-The event has a reference to an {javadoc-base}/org/springframework/data/relational/core/conversion/AggregateChange.html[`AggregateChange`] instance.
-The instance can be modified by adding or removing {javadoc-base}/org/springframework/data/relational/core/conversion/DbAction.html[`DbAction`] instances.
+
+| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveEvent.html[`BeforeSaveEvent`]
+| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveCallback.html[`BeforeSaveCallback`]
+| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveEvent.html[`AfterSaveEvent`]
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveCallback.html[`AfterSaveCallback`]
 | After an aggregate root gets saved (that is, inserted or updated).
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadEvent.html[`AfterLoadEvent`]
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadCallback.html[`AfterLoadCallback`]
 | After an aggregate root gets created from a database `ResultSet` and all its property get set.
 |===
 

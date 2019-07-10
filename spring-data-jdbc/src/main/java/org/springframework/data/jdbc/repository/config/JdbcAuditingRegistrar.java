@@ -24,6 +24,7 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport;
 import org.springframework.data.auditing.config.AuditingConfiguration;
+import org.springframework.data.relational.domain.support.RelationalAuditingCallback;
 import org.springframework.data.relational.domain.support.RelationalAuditingEventListener;
 import org.springframework.util.Assert;
 
@@ -86,7 +87,7 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	protected void registerAuditListenerBeanDefinition(BeanDefinition auditingHandlerDefinition,
 			BeanDefinitionRegistry registry) {
 
-		Class<?> listenerClass = RelationalAuditingEventListener.class;
+		Class<?> listenerClass = RelationalAuditingCallback.class;
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(listenerClass) //
 				.addConstructorArgReference(AUDITING_HANDLER_BEAN_NAME);
 

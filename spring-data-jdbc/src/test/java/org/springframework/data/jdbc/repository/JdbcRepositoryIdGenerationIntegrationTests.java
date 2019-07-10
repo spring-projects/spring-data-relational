@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 import lombok.Value;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.Wither;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -34,6 +37,7 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -67,6 +71,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired ReadOnlyIdEntityRepository readOnlyIdrepository;
 	@Autowired PrimitiveIdEntityRepository primitiveIdRepository;
+	@Autowired ImmutableWithManualIdEntityRepository immutableWithManualIdEntityRepository;
 
 	@Test // DATAJDBC-98
 	public void idWithoutSetterGetsSet() {
@@ -99,9 +104,22 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		});
 	}
 
+	@Test // DATAJDBC-393
+	public void manuallyGeneratedId() {
+
+		ImmutableWithManualIdEntity entity = new ImmutableWithManualIdEntity(null, "immutable");
+		ImmutableWithManualIdEntity saved = immutableWithManualIdEntityRepository.save(entity);
+
+		assertThat(saved.getId()).isNotNull();
+
+		assertThat(immutableWithManualIdEntityRepository.findAll()).hasSize(1);
+	}
+
 	private interface PrimitiveIdEntityRepository extends CrudRepository<PrimitiveIdEntity, Long> {}
 
 	public interface ReadOnlyIdEntityRepository extends CrudRepository<ReadOnlyIdEntity, Long> {}
+
+	private interface ImmutableWithManualIdEntityRepository extends CrudRepository<ImmutableWithManualIdEntity, Long> {}
 
 	@Value
 	@FieldDefaults(makeFinal = false)
@@ -118,10 +136,19 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		String name;
 	}
 
+	@Value
+	@Wither
+	static class ImmutableWithManualIdEntity {
+		@Id Long id;
+		String name;
+	}
+
 	@Configuration
 	@ComponentScan("org.springframework.data.jdbc.testing")
 	@EnableJdbcRepositories(considerNestedRepositories = true)
 	static class TestConfiguration {
+
+		AtomicLong lastId = new AtomicLong(0);
 
 		@Bean
 		Class<?> testClass() {
@@ -134,12 +161,19 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 		 */
 		@Bean
 		NamingStrategy namingStrategy() {
+
 			return new NamingStrategy() {
+
 				@Override
 				public String getTableName(Class<?> type) {
 					return type.getSimpleName().toUpperCase();
 				}
 			};
+		}
+
+		@Bean
+		BeforeConvertCallback<ImmutableWithManualIdEntity> idGenerator() {
+			return (e, __) -> e.withId(lastId.incrementAndGet());
 		}
 	}
 }

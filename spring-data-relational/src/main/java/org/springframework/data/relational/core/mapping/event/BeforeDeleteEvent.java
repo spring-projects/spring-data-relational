@@ -35,7 +35,7 @@ public class BeforeDeleteEvent extends RelationalEventWithId {
 	 * @param entity the entity about to get deleted. Might be empty.
 	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
 	 */
-	public <T> BeforeDeleteEvent(Specified id, Optional<Object> entity, AggregateChange change) {
+	public <T> BeforeDeleteEvent(Specified id, Optional<?> entity, AggregateChange change) {
 		super(id, entity, change);
 	}
 }

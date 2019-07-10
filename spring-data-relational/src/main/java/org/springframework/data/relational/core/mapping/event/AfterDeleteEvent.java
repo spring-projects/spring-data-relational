@@ -36,7 +36,7 @@ public class AfterDeleteEvent extends RelationalEventWithId {
 	 * @param change the {@link AggregateChange} encoding the actions that were performed on the database as part of the
 	 *          delete operation.
 	 */
-	public AfterDeleteEvent(Specified id, Optional<Object> instance, AggregateChange change) {
+	public AfterDeleteEvent(Specified id, Optional<?> instance, AggregateChange change) {
 		super(id, instance, change);
 	}
 }

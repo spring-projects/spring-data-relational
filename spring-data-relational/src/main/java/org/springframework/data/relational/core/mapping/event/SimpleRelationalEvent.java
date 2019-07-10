@@ -35,7 +35,7 @@ class SimpleRelationalEvent extends ApplicationEvent implements RelationalEvent 
 	private final Object entity;
 	private final AggregateChange change;
 
-	SimpleRelationalEvent(Identifier id, Optional<Object> entity, @Nullable AggregateChange change) {
+	SimpleRelationalEvent(Identifier id, Optional<?> entity, @Nullable AggregateChange change) {
 
 		super(id);
 
@@ -61,6 +61,15 @@ class SimpleRelationalEvent extends ApplicationEvent implements RelationalEvent 
 		return Optional.ofNullable(entity);
 	}
 
+	/**
+	 * Returns the an {@link AggregateChange} instance representing the SQL statements performed by the action that
+	 * triggered this event.
+	 * 
+	 * @return Guaranteed to be not {@literal null}.
+	 * @deprecated There is currently no replacement for this. If something like this is required please create an issue
+	 *             outlining your use case.
+	 */
+	@Deprecated
 	public AggregateChange getChange() {
 		return change;
 	}

@@ -44,6 +44,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -71,6 +72,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
+
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
 	LegoSet legoSet = createLegoSet();
@@ -728,22 +730,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 		private String content;
 	}
 
-	@Configuration
-	@Import(TestConfiguration.class)
-	static class Config {
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcAggregateTemplateIntegrationTests.class;
-		}
-
-		@Bean
-		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context,
-				DataAccessStrategy dataAccessStrategy, RelationalConverter converter) {
-			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
-		}
-	}
-
 	/**
 	 * One may think of ChainN as a chain with N further elements
 	 */
@@ -868,5 +854,22 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long four;
 		String fourValue;
 		Map<String, NoIdMapChain3> chain3 = new HashMap<>();
+	}
+
+
+	@Configuration
+	@Import(TestConfiguration.class)
+	static class Config {
+
+		@Bean
+		Class<?> testClass() {
+			return JdbcAggregateTemplateIntegrationTests.class;
+		}
+
+		@Bean
+		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context,
+										   DataAccessStrategy dataAccessStrategy, RelationalConverter converter) {
+			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
+		}
 	}
 }

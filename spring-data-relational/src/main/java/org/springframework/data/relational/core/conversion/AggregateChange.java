@@ -99,6 +99,11 @@ public class AggregateChange<T> {
 		}
 	}
 
+
+	public void setEntity(@Nullable T aggregateRoot) {
+		entity = aggregateRoot;
+	}
+
 	@SuppressWarnings("unchecked")
 	private static <T> void setIdInElementOfSet(RelationalConverter converter, DbAction.WithDependingOn<?> action,
 			Object generatedId, Set<T> set) {

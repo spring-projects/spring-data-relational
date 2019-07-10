@@ -15,36 +15,25 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import java.util.Optional;
-
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
-import org.springframework.lang.Nullable;
 
 /**
- * A {@link SimpleRelationalEvent} guaranteed to have an identifier.
+ * Gets published before an aggregate gets converted into a database change.
  *
+ * @since 1.1
  * @author Jens Schauder
  */
-public class RelationalEventWithId extends SimpleRelationalEvent implements WithId {
+public class BeforeConvertEvent extends RelationalEventWithIdAndEntity {
 
-	private static final long serialVersionUID = -8071323168471611098L;
+	private static final long serialVersionUID = 3980149746683849019L;
 
-	private final Specified id;
-
-	public RelationalEventWithId(Specified id, Optional<?> entity, @Nullable AggregateChange change) {
-
-		super(id, entity, change);
-
-		this.id = id;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.mapping.event.JdbcEvent#getId()
+	/**
+	 * @param id identifier of the saved entity.
+	 * @param instance the saved entity.
+	 * @param change the {@link AggregateChange} encoding the actions performed on the database as part of the delete.
 	 */
-	@Override
-	public Specified getId() {
-		return id;
+	public BeforeConvertEvent(Specified id, Object instance, AggregateChange change) {
+		super(id, instance, change);
 	}
 }

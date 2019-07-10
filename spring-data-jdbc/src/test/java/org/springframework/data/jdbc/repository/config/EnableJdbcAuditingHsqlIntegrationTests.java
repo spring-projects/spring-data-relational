@@ -42,7 +42,9 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
+import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.test.context.ActiveProfiles;
@@ -186,7 +188,9 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 				AuditingAnnotatedDummyEntityRepository.class, //
 				TestConfiguration.class, //
 				AuditingConfiguration.class, //
-				OrderAssertingEventListener.class) //
+				OrderAssertingEventListener.class, //
+				OrderAssertingCallback.class //
+		) //
 						.accept(repository -> {
 
 							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
@@ -329,6 +333,23 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 			Object entity = event.getEntity();
 			assertThat(entity).isInstanceOf(AuditingAnnotatedDummyEntity.class);
 			assertThat(((AuditingAnnotatedDummyEntity) entity).createdDate).isNotNull();
+		}
+	}
+
+	/**
+	 * An event listener asserting that it is running after {@link AuditingConfiguration#auditorAware()} was invoked and
+	 * set the auditing data.
+	 */
+	@Component
+	static class OrderAssertingCallback implements BeforeConvertCallback {
+
+		@Override
+		public Object onBeforeConvert(Object entity, Identifier id) {
+
+			assertThat(entity).isInstanceOf(AuditingAnnotatedDummyEntity.class);
+			assertThat(((AuditingAnnotatedDummyEntity) entity).createdDate).isNotNull();
+
+			return entity;
 		}
 	}
 }
