@@ -23,6 +23,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.RowMapperMap;
+import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.repository.core.EntityInformation;
@@ -53,6 +54,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final NamedParameterJdbcOperations operations;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
+	private EntityCallbacks entityCallbacks;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link DataAccessStrategy},
@@ -117,7 +119,13 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, converter, accessStrategy);
 
-		return new SimpleJdbcRepository<>(template, context.getPersistentEntity(repositoryInformation.getDomainType()));
+		SimpleJdbcRepository<?, Object> repository = new SimpleJdbcRepository<>(template, context.getPersistentEntity(repositoryInformation.getDomainType()));
+
+		if (entityCallbacks != null) {
+			template.setEntityCallbacks(entityCallbacks);
+		}
+
+		return repository;
 	}
 
 	/*
@@ -146,5 +154,10 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		}
 
 		throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
+	}
+
+	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
+
+		this.entityCallbacks = entityCallbacks;
 	}
 }

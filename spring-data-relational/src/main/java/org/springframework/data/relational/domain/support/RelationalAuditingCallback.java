@@ -20,19 +20,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
+import org.springframework.data.relational.core.mapping.event.Identifier;
 
 /**
- * Spring JDBC event listener to capture auditing information on persisting and updating entities.
+ * {@link BeforeConvertCallback} to capture auditing information on persisting and updating entities.
+ * <p>
+ * An instance of this class gets registered when you enable auditing for Spring Data JDBC.
  *
- * @author Kazuki Shimizu
  * @author Jens Schauder
- * @author Oliver Gierke
- * @deprecated Use {@link RelationalAuditingCallback} instead.
  */
-@Deprecated
 @RequiredArgsConstructor
-public class RelationalAuditingEventListener implements ApplicationListener<BeforeSaveEvent>, Ordered {
+public class RelationalAuditingCallback implements BeforeConvertCallback, Ordered {
 
 	/**
 	 * The order used for this {@link org.springframework.context.event.EventListener}. Ordering ensures that this
@@ -45,16 +45,6 @@ public class RelationalAuditingEventListener implements ApplicationListener<Befo
 
 	private final IsNewAwareAuditingHandler handler;
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @param event a notification event for indicating before save
-	 */
-	@Override
-	public void onApplicationEvent(BeforeSaveEvent event) {
-		handler.markAudited(event.getEntity());
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.core.Ordered#getOrder()
@@ -62,5 +52,10 @@ public class RelationalAuditingEventListener implements ApplicationListener<Befo
 	@Override
 	public int getOrder() {
 		return AUDITING_ORDER;
+	}
+
+	@Override
+	public Object onBeforeConvert(Object entity, Identifier id) {
+		return handler.markAudited(entity);
 	}
 }
