@@ -153,16 +153,16 @@ References between those should be encoded as simple `id` values, which should m
 [[jdbc.entity-persistence.custom-converters]]
 === Custom converters
 
-Custom converters can be registered, for types that are not supported by default, by inheriting your configuration from `JdbcConfiguration` and overwriting the method `jdbcCustomConversions()`.
+Custom converters can be registered, for types that are not supported by default, by inheriting your configuration from `AbstractJdbcConfiguration` and overwriting the method `jdbcCustomConversions()`.
 
 ====
 [source, java]
 ----
 @Configuration
-public class DataJdbcConfiguration extends JdbcConfiguration {
+public class DataJdbcConfiguration extends AbstractJdbcConfiguration {
 
     @Override
-    protected JdbcCustomConversions jdbcCustomConversions() {
+    public JdbcCustomConversions jdbcCustomConversions() {
 
       return new JdbcCustomConversions(Collections.singletonList(TimestampTzToDateConverter.INSTANCE));
 

@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.config;
 
 import java.util.Optional;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,6 +52,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 @Configuration
 public abstract class AbstractJdbcConfiguration {
 
+	private DefaultDataAccessStrategy defaultDataAccessStrategy = null;
+
 	/**
 	 * Register a {@link RelationalMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
@@ -76,17 +79,28 @@ public abstract class AbstractJdbcConfiguration {
 	 */
 	@Bean
 	public JdbcConverter jdbcConverter(RelationalMappingContext mappingContext, NamedParameterJdbcOperations operations,
-			@Lazy RelationResolver relationResolver) {
+			ObjectProvider<RelationResolver> relationResolverProvider, Optional<NamingStrategy> namingStrategy,
+			JdbcConverter jdbcConverter) {
 
-		return new BasicJdbcConverter(mappingContext, relationResolver, jdbcCustomConversions(),
-				new DefaultJdbcTypeFactory(operations.getJdbcOperations()));
+		RelationResolver relationResolver = relationResolverProvider.getIfAvailable(() -> dataAccessStrategy( //
+				operations, //
+				jdbcConverter, //
+				jdbcMappingContext(namingStrategy)) //
+		);
+
+		return new BasicJdbcConverter( //
+				mappingContext, //
+				relationResolver, //
+				jdbcCustomConversions(), //
+				new DefaultJdbcTypeFactory(operations.getJdbcOperations()) //
+		);
 	}
 
 	/**
 	 * Register custom {@link Converter}s in a {@link JdbcCustomConversions} object if required. These
 	 * {@link JdbcCustomConversions} will be registered with the
-	 * {@link #jdbcConverter(RelationalMappingContext, NamedParameterJdbcOperations, RelationResolver)}. Returns an empty
-	 * {@link JdbcCustomConversions} instance by default.
+	 * {@link #jdbcConverter(RelationalMappingContext, NamedParameterJdbcOperations, ObjectProvider, Optional, JdbcConverter)}.
+	 * Returns an empty {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return must not be {@literal null}.
 	 */
@@ -106,26 +120,45 @@ public abstract class AbstractJdbcConfiguration {
 	 */
 	@Bean
 	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationEventPublisher publisher,
-			RelationalMappingContext context, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
+			RelationalMappingContext context, JdbcConverter converter,
+			ObjectProvider<DataAccessStrategy> dataAccessStrategyProvider, NamedParameterJdbcOperations operations,
+			Optional<NamingStrategy> namingStrategy, @Lazy JdbcConverter jdbcConverter) {
 
-		return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
+		DataAccessStrategy dataAccessStrategy = dataAccessStrategyProvider.getIfAvailable(() -> dataAccessStrategy( //
+				operations, //
+				jdbcConverter, //
+				jdbcMappingContext(namingStrategy)) //
+		);
+
+		return new JdbcAggregateTemplate( //
+				publisher, //
+				context, //
+				converter, //
+				dataAccessStrategy //
+		);
 	}
 
 	/**
-	 * Register a {@link DataAccessStrategy} as a bean for reuse in the {@link JdbcAggregateOperations} and the
-	 * {@link RelationalConverter}.
+	 * Create a {@link DataAccessStrategy} for reuse in the {@link JdbcAggregateOperations} and the
+	 * {@link RelationalConverter}. It will return the same instance if called multiple times, regardless of the arguments
+	 * provided. Register a bean of type {@link DataAccessStrategy} if your use case requires a more specialized
+	 * DataAccessStrategy.
 	 *
-	 * @param operations
-	 * @param namingStrategy
-	 * @param jdbcConverter
-	 * @return
+	 * @return Guaranteed to be not {@literal null}.
 	 */
-	@Bean
-	public DataAccessStrategy dataAccessStrategy(NamedParameterJdbcOperations operations,
-			Optional<NamingStrategy> namingStrategy, JdbcConverter jdbcConverter) {
+	private DataAccessStrategy dataAccessStrategy(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
+			JdbcMappingContext context) {
 
-		JdbcMappingContext context = jdbcMappingContext(namingStrategy);
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, jdbcConverter, operations);
+		if (defaultDataAccessStrategy == null) {
+
+			defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
+					new SqlGeneratorSource(context), //
+					context, //
+					jdbcConverter, //
+					operations //
+			);
+		}
+		return defaultDataAccessStrategy;
 	}
 
 }
