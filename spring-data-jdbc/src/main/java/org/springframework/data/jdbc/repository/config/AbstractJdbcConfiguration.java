@@ -82,18 +82,12 @@ public abstract class AbstractJdbcConfiguration {
 			ObjectProvider<RelationResolver> relationResolverProvider, Optional<NamingStrategy> namingStrategy,
 			JdbcConverter jdbcConverter) {
 
-		RelationResolver relationResolver = relationResolverProvider.getIfAvailable(() -> dataAccessStrategy( //
-				operations, //
-				jdbcConverter, //
-				jdbcMappingContext(namingStrategy)) //
-		);
+		RelationResolver relationResolver = relationResolverProvider
+				.getIfAvailable(() -> dataAccessStrategy(operations, jdbcConverter, jdbcMappingContext(namingStrategy)));
 
-		return new BasicJdbcConverter( //
-				mappingContext, //
-				relationResolver, //
-				jdbcCustomConversions(), //
-				new DefaultJdbcTypeFactory(operations.getJdbcOperations()) //
-		);
+		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations());
+
+		return new BasicJdbcConverter(mappingContext, relationResolver, jdbcCustomConversions(), jdbcTypeFactory);
 	}
 
 	/**
@@ -124,18 +118,10 @@ public abstract class AbstractJdbcConfiguration {
 			ObjectProvider<DataAccessStrategy> dataAccessStrategyProvider, NamedParameterJdbcOperations operations,
 			Optional<NamingStrategy> namingStrategy, @Lazy JdbcConverter jdbcConverter) {
 
-		DataAccessStrategy dataAccessStrategy = dataAccessStrategyProvider.getIfAvailable(() -> dataAccessStrategy( //
-				operations, //
-				jdbcConverter, //
-				jdbcMappingContext(namingStrategy)) //
-		);
+		DataAccessStrategy dataAccessStrategy = dataAccessStrategyProvider //
+				.getIfAvailable(() -> dataAccessStrategy(operations, jdbcConverter, jdbcMappingContext(namingStrategy)));
 
-		return new JdbcAggregateTemplate( //
-				publisher, //
-				context, //
-				converter, //
-				dataAccessStrategy //
-		);
+		return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 	}
 
 	/**
@@ -151,12 +137,8 @@ public abstract class AbstractJdbcConfiguration {
 
 		if (defaultDataAccessStrategy == null) {
 
-			defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
-					new SqlGeneratorSource(context), //
-					context, //
-					jdbcConverter, //
-					operations //
-			);
+			defaultDataAccessStrategy = //
+					new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, jdbcConverter, operations);
 		}
 		return defaultDataAccessStrategy;
 	}
