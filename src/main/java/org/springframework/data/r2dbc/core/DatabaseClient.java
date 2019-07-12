@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
@@ -230,6 +231,15 @@ public interface DatabaseClient {
 		<R> TypedExecuteSpec<R> as(Class<R> resultType);
 
 		/**
+		 * Configure a result mapping {@link java.util.function.Function function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
+		 */
+		<R> RowsFetchSpec<R> map(Function<Row, R> mappingFunction);
+
+		/**
 		 * Configure a result mapping {@link java.util.function.BiFunction function}.
 		 *
 		 * @param mappingFunction must not be {@literal null}.
@@ -264,6 +274,15 @@ public interface DatabaseClient {
 		 * @param <R> result type.
 		 */
 		<R> TypedExecuteSpec<R> as(Class<R> resultType);
+
+		/**
+		 * Configure a result mapping {@link java.util.function.Function function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
+		 */
+		<R> RowsFetchSpec<R> map(Function<Row, R> mappingFunction);
 
 		/**
 		 * Configure a result mapping {@link java.util.function.BiFunction function}.
@@ -394,6 +413,15 @@ public interface DatabaseClient {
 		<R> TypedSelectSpec<R> as(Class<R> resultType);
 
 		/**
+		 * Configure a result mapping {@link java.util.function.Function function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
+		 */
+		<R> RowsFetchSpec<R> map(Function<Row, R> mappingFunction);
+
+		/**
 		 * Configure a result mapping {@link java.util.function.BiFunction function}.
 		 *
 		 * @param mappingFunction must not be {@literal null}.
@@ -421,6 +449,15 @@ public interface DatabaseClient {
 		 * @param <R> result type.
 		 */
 		<R> RowsFetchSpec<R> as(Class<R> resultType);
+
+		/**
+		 * Configure a result mapping {@link java.util.function.Function function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
+		 */
+		<R> RowsFetchSpec<R> map(Function<Row, R> mappingFunction);
 
 		/**
 		 * Configure a result mapping {@link java.util.function.BiFunction function}.
@@ -555,6 +592,15 @@ public interface DatabaseClient {
 	 * @param <T> Result type of tabular insert results.
 	 */
 	interface InsertSpec<T> {
+
+		/**
+		 * Configure a result mapping {@link java.util.function.Function function}.
+		 *
+		 * @param mappingFunction must not be {@literal null}.
+		 * @param <R> result type.
+		 * @return a {@link FetchSpec} for configuration what to fetch. Guaranteed to be not {@literal null}.
+		 */
+		<R> RowsFetchSpec<R> map(Function<Row, R> mappingFunction);
 
 		/**
 		 * Configure a result mapping {@link java.util.function.BiFunction function}.

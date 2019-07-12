@@ -332,7 +332,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		databaseClient.select().from("legoset") //
 				.project("id", "name", "manual") //
 				.orderBy(Sort.by("id")) //
-				.map((r, md) -> r.get("id", Integer.class)) //
+				.map((r) -> r.get("id", Integer.class)) //
 				.all() //
 				.as(StepVerifier::create) //
 				.expectNext(42055) //
@@ -374,7 +374,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.project("id", "name", "manual") //
 				.orderBy(Sort.by("id")) //
 				.matching(where("id").greaterThanOrEquals(42055).and("id").lessThanOrEquals(42055))
-				.map((r, md) -> r.get("id", Integer.class)) //
+				.map((r) -> r.get("id", Integer.class)) //
 				.all() //
 				.as(StepVerifier::create) //
 				.expectNext(42055) //

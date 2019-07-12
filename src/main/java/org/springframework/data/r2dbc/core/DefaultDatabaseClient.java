@@ -487,6 +487,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		public <R> FetchSpec<R> map(Function<Row, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange(this.sqlSupplier, (row, rowMetadata) -> mappingFunction.apply(row));
+		}
+
+		@Override
 		public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			Assert.notNull(mappingFunction, "Mapping function must not be null!");
@@ -569,6 +577,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Assert.notNull(resultType, "Result type must not be null!");
 
 			return createTypedExecuteSpec(this.byIndex, this.byName, this.sqlSupplier, resultType);
+		}
+
+		@Override
+		public <R> FetchSpec<R> map(Function<Row, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange(this.sqlSupplier, (row, rowMetadata) -> mappingFunction.apply(row));
 		}
 
 		@Override
@@ -728,6 +744,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		public <R> FetchSpec<R> map(Function<Row, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange((row, rowMetadata) -> mappingFunction.apply(row));
+		}
+
+		@Override
 		public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			Assert.notNull(mappingFunction, "Mapping function must not be null!");
@@ -814,6 +838,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Assert.notNull(resultType, "Result type must not be null!");
 
 			return exchange(dataAccessStrategy.getRowMapper(resultType));
+		}
+
+		@Override
+		public <R> FetchSpec<R> map(Function<Row, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange((row, rowMetadata) -> mappingFunction.apply(row));
 		}
 
 		@Override
@@ -936,6 +968,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		public <R> FetchSpec<R> map(Function<Row, R> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange((row, rowMetadata) -> mappingFunction.apply(row));
+		}
+
+		@Override
 		public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
 			Assert.notNull(mappingFunction, "Mapping function must not be null!");
@@ -1015,6 +1055,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Assert.notNull(objectToInsert, "Publisher to insert must not be null!");
 
 			return new DefaultTypedInsertSpec<>(this.typeToInsert, this.table, objectToInsert, this.mappingFunction);
+		}
+
+		@Override
+		public <MR> FetchSpec<MR> map(Function<Row, MR> mappingFunction) {
+
+			Assert.notNull(mappingFunction, "Mapping function must not be null!");
+
+			return exchange((row, rowMetadata) -> mappingFunction.apply(row));
 		}
 
 		@Override
