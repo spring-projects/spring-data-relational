@@ -8,3 +8,4 @@ target/
 .sonar4clipse
 *.sonar4clipseExternals
 *.graphml
+*.json

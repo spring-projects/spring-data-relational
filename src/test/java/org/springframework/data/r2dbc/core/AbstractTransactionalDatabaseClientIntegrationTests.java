@@ -24,6 +24,7 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import io.r2dbc.spi.ConnectionFactory;
+import org.assertj.core.api.Condition;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -156,7 +157,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 				.expectNext(1) //
 				.verifyComplete();
 
-		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).hasEntrySatisfying("id", numberOf(42055));
 	}
 
 	@Test // gh-2
@@ -174,7 +175,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 				.expectNext(1) //
 				.verifyComplete();
 
-		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).hasEntrySatisfying("id", numberOf(42055));
 	}
 
 	@Test // gh-2
@@ -311,6 +312,12 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
 		assertThat(count).isEqualTo(0);
+	}
+
+	private Condition<? super Object> numberOf(int expected) {
+		return new Condition<>(it -> {
+			return it instanceof Number && ((Number) it).intValue() == expected;
+		}, "Number  %d", expected);
 	}
 
 	@Configuration

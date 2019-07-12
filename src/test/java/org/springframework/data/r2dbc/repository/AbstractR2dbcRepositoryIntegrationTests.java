@@ -32,6 +32,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -198,7 +199,13 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		nonTransactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 2L)).verifyComplete();
 
 		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) AS count FROM legoset");
-		assertThat(count).containsEntry("count", 2L);
+		assertThat(count).hasEntrySatisfying("count", numberOf(2));
+	}
+
+	private Condition<? super Object> numberOf(int expected) {
+		return new Condition<>(it -> {
+			return it instanceof Number && ((Number) it).intValue() == expected;
+		}, "Number  %d", expected);
 	}
 
 	@NoRepositoryBean

@@ -25,6 +25,7 @@ import reactor.test.StepVerifier;
 
 import javax.sql.DataSource;
 
+import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -110,7 +111,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.expectNext(1) //
 				.verifyComplete();
 
-		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).hasEntrySatisfying("id", numberOf(42055));
 	}
 
 	@Test // gh-2
@@ -121,9 +122,9 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		executeInsert();
 
 		databaseClient.execute(getInsertIntoLegosetStatement()) //
-				.bind(0, 42055) //
-				.bind(1, "SCHAUFELRADBAGGER") //
-				.bindNull(2, Integer.class) //
+				.bind("id", 42055) //
+				.bind("name", "SCHAUFELRADBAGGER") //
+				.bindNull("manual", Integer.class) //
 				.fetch().rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectErrorSatisfies(exception -> assertThat(exception) //
@@ -166,7 +167,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.expectNext(1) //
 				.verifyComplete();
 
-		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).hasEntrySatisfying("id", numberOf(42055));
 	}
 
 	@Test // gh-2
@@ -182,7 +183,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
-		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).hasEntrySatisfying("id", numberOf(42055));
 	}
 
 	@Test // gh-2
@@ -203,7 +204,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.expectNext(1) //
 				.verifyComplete();
 
-		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).containsEntry("id", 42055);
+		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).hasEntrySatisfying("id", numberOf(42055));
 	}
 
 	@Test // gh-64
@@ -454,6 +455,12 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.as(StepVerifier::create) //
 				.expectNext(42068, 42064, 42055) //
 				.verifyComplete();
+	}
+
+	private Condition<? super Object> numberOf(int expected) {
+		return new Condition<>(it -> {
+			return it instanceof Number && ((Number) it).intValue() == expected;
+		}, "Number  %d", expected);
 	}
 
 	@Data
