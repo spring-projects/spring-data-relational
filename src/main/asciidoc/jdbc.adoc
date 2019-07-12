@@ -453,6 +453,33 @@ You can specify the following return types:
 [[jdbc.mybatis]]
 == MyBatis Integration
 
+The execution of CRUD operations and query methods can be delegated to MyBatis.
+This section describes how to configure Spring Data JDBC to integrate with MyBatis and which conventions to follow to hand over the execution of the queries as well as the mapping to the library.
+
+[[jdbc.mybatis.configuration]]
+== Configuration
+
+The easiest way to properly plug MyBatis into Spring Data JDBC is by importing `MyBatisJdbcConfiguration` into you application configuration:
+
+[source, java]
+----
+@Configuration
+@EnableJdbcRepositories
+@Import(MyBatisJdbcConfiguration.class)
+class Application {
+
+  @Bean
+  SqlSessionFactoryBean sqlSessionFactoryBean() {
+    // Configure MyBatis here
+  }
+}
+----
+
+As you can see, all you need to declare is a `SqlSessionFactoryBean` as `MyBatisJdbcConfiguration` relies on a `SqlSession` bean to be available in the `ApplicationContext` eventually.
+
+[[jdbc.mybatis.conventions]]
+== Usage conventions
+
 For each operation in `CrudRepository`, Spring Data JDBC runs multiple statements.
 If there is a https://github.com/mybatis/mybatis-3/blob/master/src/main/java/org/apache/ibatis/session/SqlSessionFactory.java[`SqlSessionFactory`] in the application context, Spring Data checks, for each step, whether the `SessionFactory` offers a statement.
 If one is found, that statement (including its configured mapping to an entity) is used.
