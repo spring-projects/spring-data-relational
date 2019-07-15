@@ -36,8 +36,8 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 public class RelationalAuditingEventListener implements ApplicationListener<BeforeSaveEvent>, Ordered {
 
 	/**
-	 * The order used for this {@link org.springframework.context.event.EventListener}. This ensures that it will run
-	 * before other listeners without a specified priority.
+	 * The order used for this {@link org.springframework.context.event.EventListener}. Ordering ensures that this
+	 * {@link ApplicationListener} will run before other listeners without a specified priority.
 	 *
 	 * @see org.springframework.core.annotation.Order
 	 * @see Ordered
@@ -48,7 +48,7 @@ public class RelationalAuditingEventListener implements ApplicationListener<Befo
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @param event a notification event for indicating before save
 	 */
 	@Override
@@ -56,6 +56,10 @@ public class RelationalAuditingEventListener implements ApplicationListener<Befo
 		handler.markAudited(event.getEntity());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.core.Ordered#getOrder()
+	 */
 	@Override
 	public int getOrder() {
 		return AUDITING_ORDER;
