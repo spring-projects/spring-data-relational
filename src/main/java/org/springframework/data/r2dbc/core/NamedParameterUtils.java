@@ -31,12 +31,16 @@ import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Helper methods for named parameter parsing.
  * <p>
  * Only intended for internal use within Spring's Data's R2DBC framework. Partially extracted from Spring's JDBC named
  * parameter support.
+ * <p>
+ * References to the same parameter name are substituted with the same bind marker placeholder if a
+ * {@link BindMarkersFactory} uses {@link BindMarkersFactory#identifiablePlaceholders() identifiable} placeholders.
  * <p>
  * This is a subset of Spring Frameworks's {@code org.springframework.r2dbc.namedparam.NamedParameterUtils}.
  *
@@ -260,7 +264,7 @@ abstract class NamedParameterUtils {
 	public static PreparedOperation<String> substituteNamedParameters(ParsedSql parsedSql,
 			BindMarkersFactory bindMarkersFactory, BindParameterSource paramSource) {
 
-		BindMarkerHolder markerHolder = new BindMarkerHolder(bindMarkersFactory.create());
+		NamedParameters markerHolder = new NamedParameters(bindMarkersFactory);
 
 		String originalSql = parsedSql.getOriginalSql();
 		List<String> paramNames = parsedSql.getParameterNames();
@@ -276,9 +280,11 @@ abstract class NamedParameterUtils {
 			int startIndex = indexes[0];
 			int endIndex = indexes[1];
 			actualSql.append(originalSql, lastIndex, startIndex);
+			NamedParameters.NamedParameter marker = markerHolder.getOrCreate(paramName);
 			if (paramSource.hasValue(paramName)) {
 				Object value = paramSource.getValue(paramName);
 				if (value instanceof Collection) {
+
 					Iterator<?> entryIter = ((Collection<?>) value).iterator();
 					int k = 0;
 					while (entryIter.hasNext()) {
@@ -294,19 +300,19 @@ abstract class NamedParameterUtils {
 								if (m > 0) {
 									actualSql.append(", ");
 								}
-								actualSql.append(markerHolder.addMarker(paramName));
+								actualSql.append(marker.addPlaceholder());
 							}
 							actualSql.append(')');
 						} else {
-							actualSql.append(markerHolder.addMarker(paramName));
+							actualSql.append(marker.addPlaceholder());
 						}
 
 					}
 				} else {
-					actualSql.append(markerHolder.addMarker(paramName));
+					actualSql.append(marker.getPlaceholder());
 				}
 			} else {
-				actualSql.append(markerHolder.addMarker(paramName));
+				actualSql.append(marker.getPlaceholder());
 			}
 			lastIndex = endIndex;
 		}
@@ -387,22 +393,79 @@ abstract class NamedParameterUtils {
 	}
 
 	/**
-	 * Holder for bind marker progress.
+	 * Holder for bind markers progress.
 	 */
-	private static class BindMarkerHolder {
+	static class NamedParameters {
 
 		private final BindMarkers bindMarkers;
-		private final Map<String, List<BindMarker>> markers = new TreeMap<>();
+		private final boolean identifiable;
+		private final Map<String, List<NamedParameter>> references = new TreeMap<>();
 
-		BindMarkerHolder(BindMarkers bindMarkers) {
-			this.bindMarkers = bindMarkers;
+		NamedParameters(BindMarkersFactory factory) {
+			this.bindMarkers = factory.create();
+			this.identifiable = factory.identifiablePlaceholders();
 		}
 
-		String addMarker(String name) {
+		/**
+		 * Get the {@link NamedParameter} identified by {@code namedParameter}.
+		 *
+		 * @param namedParameter
+		 * @return
+		 */
+		NamedParameter getOrCreate(String namedParameter) {
 
-			BindMarker bindMarker = this.bindMarkers.next(name);
-			this.markers.computeIfAbsent(name, ignore -> new ArrayList<>()).add(bindMarker);
-			return bindMarker.getPlaceholder();
+			List<NamedParameter> reference = this.references.computeIfAbsent(namedParameter, ignore -> new ArrayList<>());
+
+			if (reference.isEmpty()) {
+				NamedParameter param = new NamedParameter(namedParameter);
+				reference.add(param);
+				return param;
+			}
+
+			if (this.identifiable) {
+				return reference.get(0);
+			}
+
+			NamedParameter param = new NamedParameter(namedParameter);
+			reference.add(param);
+			return param;
+		}
+
+		List<NamedParameter> getMarker(String name) {
+			return this.references.get(name);
+		}
+
+		class NamedParameter {
+
+			private final String namedParameter;
+			private final List<BindMarker> placeholders = new ArrayList<>();
+
+			NamedParameter(String namedParameter) {
+				this.namedParameter = namedParameter;
+			}
+
+			/**
+			 * Create a placeholder to translate a single value into a bindable parameter.
+			 * <p>
+			 * Can be called multiple times to create placeholders for array/collections.
+			 *
+			 * @return
+			 */
+			String addPlaceholder() {
+
+				BindMarker bindMarker = NamedParameters.this.bindMarkers.next(this.namedParameter);
+				this.placeholders.add(bindMarker);
+				return bindMarker.getPlaceholder();
+			}
+
+			String getPlaceholder() {
+
+				if (this.placeholders.isEmpty()) {
+					return addPlaceholder();
+				}
+
+				return this.placeholders.get(0).getPlaceholder();
+			}
 		}
 	}
 
@@ -414,13 +477,13 @@ abstract class NamedParameterUtils {
 
 		private final String expandedSql;
 
-		private final Map<String, List<BindMarker>> markers;
+		private final NamedParameters parameters;
 
 		private final BindParameterSource parameterSource;
 
-		ExpandedQuery(String expandedSql, BindMarkerHolder bindMarkerHolder, BindParameterSource parameterSource) {
+		ExpandedQuery(String expandedSql, NamedParameters parameters, BindParameterSource parameterSource) {
 			this.expandedSql = expandedSql;
-			this.markers = bindMarkerHolder.markers;
+			this.parameters = parameters;
 			this.parameterSource = parameterSource;
 		}
 
@@ -435,13 +498,7 @@ abstract class NamedParameterUtils {
 				return;
 			}
 
-			if (bindMarkers.size() == 1) {
-				bindMarkers.get(0).bind(target, value);
-			} else {
-
-				Assert.isInstanceOf(Collection.class, value,
-						() -> String.format("Value [%s] must be an Collection with a size of [%d]", value, bindMarkers.size()));
-
+			if (value instanceof Collection) {
 				Collection<Object> collection = (Collection<Object>) value;
 
 				Iterator<Object> iterator = collection.iterator();
@@ -459,6 +516,10 @@ abstract class NamedParameterUtils {
 					} else {
 						bind(target, markers, valueToBind);
 					}
+				}
+			} else {
+				for (BindMarker bindMarker : bindMarkers) {
+					bindMarker.bind(target, value);
 				}
 			}
 		}
@@ -483,16 +544,26 @@ abstract class NamedParameterUtils {
 				return;
 			}
 
-			if (bindMarkers.size() == 1) {
-				bindMarkers.get(0).bindNull(target, valueType);
-				return;
+			for (BindMarker bindMarker : bindMarkers) {
+				bindMarker.bindNull(target, valueType);
 			}
-
-			throw new UnsupportedOperationException("bindNull(…) can bind only singular values");
 		}
 
-		private List<BindMarker> getBindMarkers(String identifier) {
-			return this.markers.get(identifier);
+		List<BindMarker> getBindMarkers(String identifier) {
+
+			List<NamedParameters.NamedParameter> parameters = this.parameters.getMarker(identifier);
+
+			if (parameters == null) {
+				return null;
+			}
+
+			List<BindMarker> markers = new ArrayList<>();
+
+			for (NamedParameters.NamedParameter parameter : parameters) {
+				markers.addAll(parameter.placeholders);
+			}
+
+			return markers;
 		}
 
 		@Override

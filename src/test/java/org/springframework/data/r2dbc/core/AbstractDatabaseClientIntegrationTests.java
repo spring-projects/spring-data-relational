@@ -153,6 +153,18 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 	}
 
 	@Test // gh-2
+	public void executeSelectNamedParameters() {
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.execute("SELECT id, name, manual FROM legoset WHERE name = :name or manual = :name") //
+				.bind("name", "unknown").as(LegoSet.class) //
+				.fetch().all() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+	}
+
+	@Test // gh-2
 	public void insert() {
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);

@@ -29,6 +29,9 @@ import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
  * This class expands SQL from named parameters to native style placeholders at execution time. It also allows for
  * expanding a {@link java.util.List} of values to the appropriate number of placeholders.
  * <p>
+ * References to the same parameter name are substituted with the same bind marker placeholder if a
+ * {@link BindMarkersFactory} uses {@link BindMarkersFactory#identifiablePlaceholders() identifiable} placeholders.
+ * <p>
  * <b>NOTE: An instance of this class is thread-safe once configured.</b>
  *
  * @author Mark Paluch

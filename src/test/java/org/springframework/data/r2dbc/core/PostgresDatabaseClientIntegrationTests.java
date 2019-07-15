@@ -55,6 +55,11 @@ public class PostgresDatabaseClientIntegrationTests extends AbstractDatabaseClie
 	@Override
 	public void insert() {}
 
+	@Ignore("Postgres considers multiple references to the same parameter as multiple bindings (where name = $1 OR lastname = $1)")
+	@Test
+	@Override
+	public void executeSelectNamedParameters() {}
+
 	@Ignore("Adding RETURNING * lets Postgres report 0 affected rows.")
 	@Test
 	@Override

@@ -27,6 +27,17 @@ public interface BindMarkersFactory {
 	BindMarkers create();
 
 	/**
+	 * Return whether the {@link BindMarkersFactory} uses identifiable placeholders.
+	 *
+	 * @return whether the {@link BindMarkersFactory} uses identifiable placeholders. {@literal false} if multiple
+	 *         placeholders cannot be distinguished by just the {@link BindMarker#getPlaceholder() placeholder}
+	 *         identifier.
+	 */
+	default boolean identifiablePlaceholders() {
+		return true;
+	}
+
+	/**
 	 * Create index-based {@link BindMarkers} using indexes to bind parameters. Allow customization of the bind marker
 	 * placeholder {@code prefix} to represent the bind marker as placeholder within the query.
 	 *
@@ -40,6 +51,7 @@ public interface BindMarkersFactory {
 	static BindMarkersFactory indexed(String prefix, int beginWith) {
 
 		Assert.notNull(prefix, "Prefix must not be null!");
+
 		return () -> new IndexedBindMarkers(prefix, beginWith);
 	}
 
@@ -56,7 +68,19 @@ public interface BindMarkersFactory {
 	static BindMarkersFactory anonymous(String placeholder) {
 
 		Assert.hasText(placeholder, "Placeholder must not be empty!");
-		return () -> new AnonymousBindMarkers(placeholder);
+
+		return new BindMarkersFactory() {
+
+			@Override
+			public BindMarkers create() {
+				return new AnonymousBindMarkers(placeholder);
+			}
+
+			@Override
+			public boolean identifiablePlaceholders() {
+				return false;
+			}
+		};
 	}
 
 	/**

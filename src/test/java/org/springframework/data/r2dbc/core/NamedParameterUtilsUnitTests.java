@@ -19,7 +19,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -27,6 +30,7 @@ import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.dialect.SqlServerDialect;
+import org.springframework.data.r2dbc.mapping.SettableValue;
 
 /**
  * Unit tests for {@link NamedParameterUtils}.
@@ -111,7 +115,7 @@ public class NamedParameterUtilsUnitTests {
 		String sql1 = "/*+ HINT */ xxx /* comment ? */ :a yyyy :b :c :a zzzzz -- :xx XX\n";
 
 		ParsedSql psql1 = NamedParameterUtils.parseSqlStatement(sql1);
-		assertThat(expand(psql1)).isEqualTo("/*+ HINT */ xxx /* comment ? */ $1 yyyy $2 $3 $4 zzzzz -- :xx XX\n");
+		assertThat(expand(psql1)).isEqualTo("/*+ HINT */ xxx /* comment ? */ $1 yyyy $2 $3 $1 zzzzz -- :xx XX\n");
 
 		MapBindParameterSource paramMap = new MapBindParameterSource(new HashMap<>());
 		paramMap.addValue("a", "a");
@@ -120,7 +124,7 @@ public class NamedParameterUtilsUnitTests {
 
 		String sql2 = "/*+ HINT */ xxx /* comment ? */ :a yyyy :b :c :a zzzzz -- :xx XX";
 		ParsedSql psql2 = NamedParameterUtils.parseSqlStatement(sql2);
-		assertThat(expand(psql2)).isEqualTo("/*+ HINT */ xxx /* comment ? */ $1 yyyy $2 $3 $4 zzzzz -- :xx XX");
+		assertThat(expand(psql2)).isEqualTo("/*+ HINT */ xxx /* comment ? */ $1 yyyy $2 $3 $1 zzzzz -- :xx XX");
 	}
 
 	@Test // gh-23
@@ -281,6 +285,129 @@ public class NamedParameterUtilsUnitTests {
 
 		assertThat(psql2.getTotalParameterCount()).isEqualTo(1);
 		assertThat(psql2.getParameterNames()).containsExactly("xxx");
+	}
+
+	@Test // gh-138
+	public void shouldAllowParsingMultipleUseOfParameter() {
+
+		String sql = "SELECT * FROM person where name = :id or lastname = :id";
+
+		ParsedSql parsed = NamedParameterUtils.parseSqlStatement(sql);
+
+		assertThat(parsed.getTotalParameterCount()).isEqualTo(2);
+		assertThat(parsed.getNamedParameterCount()).isEqualTo(1);
+		assertThat(parsed.getParameterNames()).containsExactly("id", "id");
+	}
+
+	@Test // gh-138
+	public void multipleEqualParameterReferencesBindsValueOnce() {
+
+		String sql = "SELECT * FROM person where name = :id or lastname = :id";
+
+		BindMarkersFactory factory = BindMarkersFactory.indexed("$", 0);
+
+		PreparedOperation<String> operation = NamedParameterUtils.substituteNamedParameters(sql, factory,
+				new MapBindParameterSource(Collections.singletonMap("id", SettableValue.from("foo"))));
+
+		assertThat(operation.toQuery()).isEqualTo("SELECT * FROM person where name = $0 or lastname = $0");
+
+		operation.bindTo(new BindTarget() {
+			@Override
+			public void bind(Object identifier, Object value) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bind(int index, Object value) {
+				assertThat(index).isEqualTo(0);
+				assertThat(value).isEqualTo("foo");
+			}
+
+			@Override
+			public void bindNull(Object identifier, Class<?> type) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bindNull(int index, Class<?> type) {
+				throw new UnsupportedOperationException();
+			}
+		});
+	}
+
+	@Test // gh-138
+	public void multipleEqualParameterReferencesForAnonymousMarkersBindsValueMultipleTimes() {
+
+		String sql = "SELECT * FROM person where name = :id or lastname = :id";
+
+		BindMarkersFactory factory = BindMarkersFactory.anonymous("?");
+
+		PreparedOperation<String> operation = NamedParameterUtils.substituteNamedParameters(sql, factory,
+				new MapBindParameterSource(Collections.singletonMap("id", SettableValue.from("foo"))));
+
+		assertThat(operation.toQuery()).isEqualTo("SELECT * FROM person where name = ? or lastname = ?");
+
+		Map<Integer, Object> bindValues = new LinkedHashMap<>();
+
+		operation.bindTo(new BindTarget() {
+			@Override
+			public void bind(Object identifier, Object value) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bind(int index, Object value) {
+				bindValues.put(index, value);
+			}
+
+			@Override
+			public void bindNull(Object identifier, Class<?> type) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bindNull(int index, Class<?> type) {
+				throw new UnsupportedOperationException();
+			}
+		});
+
+		assertThat(bindValues).hasSize(2).containsEntry(0, "foo").containsEntry(1, "foo");
+	}
+
+	@Test // gh-138
+	public void multipleEqualParameterReferencesBindsNullOnce() {
+
+		String sql = "SELECT * FROM person where name = :id or lastname = :id";
+
+		BindMarkersFactory factory = BindMarkersFactory.indexed("$", 0);
+
+		PreparedOperation<String> operation = NamedParameterUtils.substituteNamedParameters(sql, factory,
+				new MapBindParameterSource(Collections.singletonMap("id", SettableValue.empty(String.class))));
+
+		assertThat(operation.toQuery()).isEqualTo("SELECT * FROM person where name = $0 or lastname = $0");
+
+		operation.bindTo(new BindTarget() {
+			@Override
+			public void bind(Object identifier, Object value) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bind(int index, Object value) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bindNull(Object identifier, Class<?> type) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bindNull(int index, Class<?> type) {
+				assertThat(index).isEqualTo(0);
+				assertThat(type).isEqualTo(String.class);
+			}
+		});
 	}
 
 	private String expand(ParsedSql sql) {
