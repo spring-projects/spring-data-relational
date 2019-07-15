@@ -25,7 +25,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Christoph Strobl
  */
-class SimpleConnectionHandle implements ConnectionHandle {
+public class SimpleConnectionHandle implements ConnectionHandle {
 
 	private final Connection connection;
 

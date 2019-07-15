@@ -1,7 +1,5 @@
 package org.springframework.data.r2dbc.dialect;
 
-import lombok.RequiredArgsConstructor;
-
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
@@ -65,11 +63,15 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 		return this.arrayColumns.get();
 	}
 
-	@RequiredArgsConstructor
 	private static class R2dbcArrayColumns implements ArrayColumns {
 
 		private final ArrayColumns delegate;
 		private final SimpleTypeHolder simpleTypeHolder;
+
+		R2dbcArrayColumns(ArrayColumns delegate, SimpleTypeHolder simpleTypeHolder) {
+			this.delegate = delegate;
+			this.simpleTypeHolder = simpleTypeHolder;
+		}
 
 		@Override
 		public boolean isSupported() {

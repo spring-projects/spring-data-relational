@@ -15,8 +15,6 @@
  */
 package org.springframework.data.r2dbc.query;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -268,10 +266,13 @@ public class Criteria {
 	/**
 	 * Default {@link CriteriaStep} implementation.
 	 */
-	@RequiredArgsConstructor
 	static class DefaultCriteriaStep implements CriteriaStep {
 
 		private final String property;
+
+		DefaultCriteriaStep(String property) {
+			this.property = property;
+		}
 
 		/*
 		 * (non-Javadoc)
@@ -438,7 +439,7 @@ public class Criteria {
 		}
 
 		protected Criteria createCriteria(Comparator comparator, Object value) {
-			return new Criteria(property, comparator, value);
+			return new Criteria(this.property, comparator, value);
 		}
 	}
 }

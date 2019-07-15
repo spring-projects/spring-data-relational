@@ -16,7 +16,6 @@
 package org.springframework.data.r2dbc.core;
 
 import io.r2dbc.spi.Connection;
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -29,13 +28,20 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
  *
  * @author Mark Paluch
  */
-@RequiredArgsConstructor
 class DefaultFetchSpec<T> implements FetchSpec<T> {
 
 	private final ConnectionAccessor connectionAccessor;
 	private final String sql;
 	private final Function<Connection, Flux<T>> resultFunction;
 	private final Function<Connection, Mono<Integer>> updatedRowsFunction;
+
+	DefaultFetchSpec(ConnectionAccessor connectionAccessor, String sql, Function<Connection, Flux<T>> resultFunction,
+			Function<Connection, Mono<Integer>> updatedRowsFunction) {
+		this.connectionAccessor = connectionAccessor;
+		this.sql = sql;
+		this.resultFunction = resultFunction;
+		this.updatedRowsFunction = updatedRowsFunction;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.FetchSpec#one()

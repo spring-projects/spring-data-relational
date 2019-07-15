@@ -15,8 +15,6 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
+
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.PreparedOperation;
@@ -44,13 +43,20 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  */
-@RequiredArgsConstructor
 public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, ID> {
 
-	private final @NonNull RelationalEntityInformation<T, ID> entity;
-	private final @NonNull DatabaseClient databaseClient;
-	private final @NonNull R2dbcConverter converter;
-	private final @NonNull ReactiveDataAccessStrategy accessStrategy;
+	private final RelationalEntityInformation<T, ID> entity;
+	private final DatabaseClient databaseClient;
+	private final R2dbcConverter converter;
+	private final ReactiveDataAccessStrategy accessStrategy;
+
+	public SimpleR2dbcRepository(RelationalEntityInformation<T, ID> entity, DatabaseClient databaseClient,
+			R2dbcConverter converter, ReactiveDataAccessStrategy accessStrategy) {
+		this.entity = entity;
+		this.databaseClient = databaseClient;
+		this.converter = converter;
+		this.accessStrategy = accessStrategy;
+	}
 
 	/* (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#save(S)

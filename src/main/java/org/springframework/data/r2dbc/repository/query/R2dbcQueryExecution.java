@@ -15,9 +15,6 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.mapping.context.MappingContext;
@@ -42,30 +39,41 @@ interface R2dbcQueryExecution {
 	/**
 	 * An {@link R2dbcQueryExecution} that wraps the results of the given delegate with the given result processing.
 	 */
-	@RequiredArgsConstructor
 	final class ResultProcessingExecution implements R2dbcQueryExecution {
 
-		private final @NonNull R2dbcQueryExecution delegate;
-		private final @NonNull Converter<Object, Object> converter;
+		private final R2dbcQueryExecution delegate;
+		private final Converter<Object, Object> converter;
+
+		ResultProcessingExecution(R2dbcQueryExecution delegate, Converter<Object, Object> converter) {
+			this.delegate = delegate;
+			this.converter = converter;
+		}
 
 		/* (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution#execute(org.springframework.data.r2dbc.function.FetchSpec, java.lang.Class, java.lang.String)
 		 */
 		@Override
 		public Object execute(FetchSpec<?> query, Class<?> type, String tableName) {
-			return converter.convert(delegate.execute(query, type, tableName));
+			return this.converter.convert(this.delegate.execute(query, type, tableName));
 		}
 	}
 
 	/**
 	 * A {@link Converter} to post-process all source objects using the given {@link ResultProcessor}.
 	 */
-	@RequiredArgsConstructor
 	final class ResultProcessingConverter implements Converter<Object, Object> {
 
-		private final @NonNull ResultProcessor processor;
-		private final @NonNull MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
-		private final @NonNull EntityInstantiators instantiators;
+		private final ResultProcessor processor;
+		private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+		private final EntityInstantiators instantiators;
+
+		ResultProcessingConverter(ResultProcessor processor,
+				MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext,
+				EntityInstantiators instantiators) {
+			this.processor = processor;
+			this.mappingContext = mappingContext;
+			this.instantiators = instantiators;
+		}
 
 		/* (non-Javadoc)
 		 * @see org.springframework.core.convert.converter.Converter#convert(java.lang.Object)
@@ -73,16 +81,16 @@ interface R2dbcQueryExecution {
 		@Override
 		public Object convert(Object source) {
 
-			ReturnedType returnedType = processor.getReturnedType();
+			ReturnedType returnedType = this.processor.getReturnedType();
 
 			if (ClassUtils.isPrimitiveOrWrapper(returnedType.getReturnedType())) {
 				return source;
 			}
 
 			Converter<Object, Object> converter = new DtoInstantiatingConverter(returnedType.getReturnedType(),
-					mappingContext, instantiators);
+					this.mappingContext, this.instantiators);
 
-			return processor.processResult(source, converter);
+			return this.processor.processResult(source, converter);
 		}
 	}
 }

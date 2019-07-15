@@ -15,17 +15,6 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.R2dbcException;
-import io.r2dbc.spi.Result;
-import io.r2dbc.spi.Row;
-import io.r2dbc.spi.RowMetadata;
-import io.r2dbc.spi.Statement;
-import lombok.RequiredArgsConstructor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -42,9 +31,18 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.R2dbcException;
+import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Statement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -305,7 +303,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Base class for {@link DatabaseClient.GenericExecuteSpec} implementations.
 	 */
-	@RequiredArgsConstructor
 	class ExecuteSpecSupport {
 
 		final Map<Integer, SettableValue> byIndex;
@@ -316,6 +313,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			this.byIndex = Collections.emptyMap();
 			this.byName = Collections.emptyMap();
+			this.sqlSupplier = sqlSupplier;
+		}
+
+		ExecuteSpecSupport(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
+				Supplier<String> sqlSupplier) {
+			this.byIndex = byIndex;
+			this.byName = byName;
 			this.sqlSupplier = sqlSupplier;
 		}
 
@@ -630,7 +634,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Base class for {@link DatabaseClient.GenericExecuteSpec} implementations.
 	 */
-	@RequiredArgsConstructor
 	private abstract class DefaultSelectSpecSupport {
 
 		final String table;
@@ -648,6 +651,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.criteria = null;
 			this.sort = Sort.unsorted();
 			this.page = Pageable.unpaged();
+		}
+
+		DefaultSelectSpecSupport(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page) {
+			this.table = table;
+			this.projectedFields = projectedFields;
+			this.criteria = criteria;
+			this.sort = sort;
+			this.page = page;
 		}
 
 		public DefaultSelectSpecSupport project(String... selectedFields) {
@@ -789,7 +800,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		private final @Nullable Class<T> typeToRead;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
-		DefaultTypedSelectSpec(Class<T> typeToRead) {
+		DefaultTypedSelectSpec(@Nullable Class<T> typeToRead) {
 
 			super(dataAccessStrategy.getTableName(typeToRead));
 
@@ -798,7 +809,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		DefaultTypedSelectSpec(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page,
-				Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
+				@Nullable Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			super(table, projectedFields, criteria, sort, page);
 
@@ -905,12 +916,18 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Default implementation of {@link DatabaseClient.GenericInsertSpec}.
 	 */
-	@RequiredArgsConstructor
 	class DefaultGenericInsertSpec<T> implements GenericInsertSpec<T> {
 
 		private final String table;
 		private final Map<String, SettableValue> byName;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
+
+		DefaultGenericInsertSpec(String table, Map<String, SettableValue> byName,
+				BiFunction<Row, RowMetadata, T> mappingFunction) {
+			this.table = table;
+			this.byName = byName;
+			this.mappingFunction = mappingFunction;
+		}
 
 		@Override
 		public GenericInsertSpec<T> value(String field, Object value) {
@@ -988,7 +1005,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Default implementation of {@link DatabaseClient.TypedInsertSpec}.
 	 */
-	@RequiredArgsConstructor
 	class DefaultTypedInsertSpec<T, R> implements TypedInsertSpec<T>, InsertSpec<R> {
 
 		private final Class<?> typeToInsert;
@@ -1001,6 +1017,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.typeToInsert = typeToInsert;
 			this.table = dataAccessStrategy.getTableName(typeToInsert);
 			this.objectToInsert = Mono.empty();
+			this.mappingFunction = mappingFunction;
+		}
+
+		DefaultTypedInsertSpec(Class<?> typeToInsert, String table, Publisher<T> objectToInsert,
+				BiFunction<Row, RowMetadata, R> mappingFunction) {
+			this.typeToInsert = typeToInsert;
+			this.table = table;
+			this.objectToInsert = objectToInsert;
 			this.mappingFunction = mappingFunction;
 		}
 
@@ -1118,13 +1142,20 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 	}
 
-	@RequiredArgsConstructor
 	class DefaultGenericUpdateSpec implements GenericUpdateSpec, UpdateMatchingSpec {
 
 		private final @Nullable Class<?> typeToUpdate;
 		private final @Nullable String table;
 		private final Update assignments;
 		private final Criteria where;
+
+		DefaultGenericUpdateSpec(@Nullable Class<?> typeToUpdate, @Nullable String table, Update assignments,
+				Criteria where) {
+			this.typeToUpdate = typeToUpdate;
+			this.table = table;
+			this.assignments = assignments;
+			this.where = where;
+		}
 
 		@Override
 		public UpdateMatchingSpec using(Update update) {
@@ -1181,12 +1212,17 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 	}
 
-	@RequiredArgsConstructor
 	class DefaultTypedUpdateSpec<T> implements TypedUpdateSpec<T>, UpdateSpec {
 
 		private final @Nullable Class<T> typeToUpdate;
 		private final @Nullable String table;
 		private final T objectToUpdate;
+
+		DefaultTypedUpdateSpec(@Nullable Class<T> typeToUpdate, @Nullable String table, T objectToUpdate) {
+			this.typeToUpdate = typeToUpdate;
+			this.table = table;
+			this.objectToUpdate = objectToUpdate;
+		}
 
 		@Override
 		public UpdateSpec using(T objectToUpdate) {
@@ -1270,12 +1306,17 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Default implementation of {@link DatabaseClient.TypedInsertSpec}.
 	 */
-	@RequiredArgsConstructor
 	class DefaultDeleteSpec<T> implements DeleteMatchingSpec, TypedDeleteSpec<T> {
 
 		private final @Nullable Class<T> typeToDelete;
 		private final @Nullable String table;
 		private final Criteria where;
+
+		DefaultDeleteSpec(@Nullable Class<T> typeToDelete, @Nullable String table, Criteria where) {
+			this.typeToDelete = typeToDelete;
+			this.table = table;
+			this.where = where;
+		}
 
 		@Override
 		public DeleteSpec matching(Criteria criteria) {
@@ -1483,13 +1524,17 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Holder for a connection that makes sure the close action is invoked atomically only once.
 	 */
-	@RequiredArgsConstructor
 	static class ConnectionCloseHolder extends AtomicBoolean {
 
 		private static final long serialVersionUID = -8994138383301201380L;
 
 		final Connection connection;
 		final Function<Connection, Publisher<Void>> closeFunction;
+
+		ConnectionCloseHolder(Connection connection, Function<Connection, Publisher<Void>> closeFunction) {
+			this.connection = connection;
+			this.closeFunction = closeFunction;
+		}
 
 		Mono<Void> close() {
 
@@ -1504,10 +1549,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 	}
 
-	@RequiredArgsConstructor
 	static class StatementWrapper implements BindTarget {
 
 		final Statement statement;
+
+		StatementWrapper(Statement statement) {
+			this.statement = statement;
+		}
 
 		@Override
 		public void bind(Object identifier, Object value) {

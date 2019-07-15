@@ -18,8 +18,6 @@ package org.springframework.data.r2dbc.convert;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -434,14 +432,22 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return columns;
 	}
 
-	@RequiredArgsConstructor
 	private static class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
 
-		private final @NonNull Row resultSet;
+		private final Row resultSet;
 		private final @Nullable RowMetadata metadata;
-		private final @NonNull RelationalPersistentEntity<?> entity;
-		private final @NonNull RelationalConverter converter;
-		private final @NonNull String prefix;
+		private final RelationalPersistentEntity<?> entity;
+		private final RelationalConverter converter;
+		private final String prefix;
+
+		public RowParameterValueProvider(Row resultSet, RowMetadata metadata, RelationalPersistentEntity<?> entity,
+				RelationalConverter converter, String prefix) {
+			this.resultSet = resultSet;
+			this.metadata = metadata;
+			this.entity = entity;
+			this.converter = converter;
+			this.prefix = prefix;
+		}
 
 		/*
 		 * (non-Javadoc)

@@ -15,9 +15,6 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-
 import java.lang.reflect.Method;
 import java.util.Optional;
 
@@ -95,8 +92,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		RelationalEntityInformation<?, ?> entityInformation = getEntityInformation(information.getDomainType(),
 				information);
 
-		return getTargetRepositoryViaReflection(information, entityInformation, databaseClient, converter,
-				dataAccessStrategy);
+		return getTargetRepositoryViaReflection(information, entityInformation, this.databaseClient, this.converter,
+				this.dataAccessStrategy);
 	}
 
 	/*
@@ -106,7 +103,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.of(new R2dbcQueryLookupStrategy(databaseClient, evaluationContextProvider, converter));
+		return Optional.of(new R2dbcQueryLookupStrategy(this.databaseClient, evaluationContextProvider, this.converter));
 	}
 
 	/*
@@ -121,7 +118,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private <T, ID> RelationalEntityInformation<T, ID> getEntityInformation(Class<T> domainClass,
 			@Nullable RepositoryInformation information) {
 
-		RelationalPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(domainClass);
+		RelationalPersistentEntity<?> entity = this.mappingContext.getRequiredPersistentEntity(domainClass);
 
 		return new MappingRelationalEntityInformation<>((RelationalPersistentEntity<T>) entity);
 	}
@@ -131,12 +128,18 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	 *
 	 * @author Mark Paluch
 	 */
-	@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 	private static class R2dbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		private final DatabaseClient databaseClient;
 		private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 		private final R2dbcConverter converter;
+
+		R2dbcQueryLookupStrategy(DatabaseClient databaseClient,
+				QueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter) {
+			this.databaseClient = databaseClient;
+			this.evaluationContextProvider = evaluationContextProvider;
+			this.converter = converter;
+		}
 
 		/*
 		 * (non-Javadoc)
@@ -146,16 +149,17 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
 				NamedQueries namedQueries) {
 
-			R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory, converter.getMappingContext());
+			R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory,
+					this.converter.getMappingContext());
 			String namedQueryName = queryMethod.getNamedQueryName();
 
 			if (namedQueries.hasQuery(namedQueryName)) {
 				String namedQuery = namedQueries.getQuery(namedQueryName);
-				return new StringBasedR2dbcQuery(namedQuery, queryMethod, databaseClient, converter, EXPRESSION_PARSER,
-						evaluationContextProvider);
+				return new StringBasedR2dbcQuery(namedQuery, queryMethod, this.databaseClient, this.converter,
+						EXPRESSION_PARSER, this.evaluationContextProvider);
 			} else if (queryMethod.hasAnnotatedQuery()) {
-				return new StringBasedR2dbcQuery(queryMethod, databaseClient, converter, EXPRESSION_PARSER,
-						evaluationContextProvider);
+				return new StringBasedR2dbcQuery(queryMethod, this.databaseClient, this.converter, EXPRESSION_PARSER,
+						this.evaluationContextProvider);
 			}
 
 			throw new UnsupportedOperationException("Query derivation not yet supported!");

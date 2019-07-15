@@ -15,14 +15,13 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import lombok.Value;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -344,14 +343,47 @@ abstract class NamedParameterUtils {
 		return substituteNamedParameters(parsedSql, bindMarkersFactory, paramSource);
 	}
 
-	@Value
-	private static class ParameterHolder {
+	private static final class ParameterHolder {
 
-		String parameterName;
+		private final String parameterName;
 
-		int startIndex;
+		private final int startIndex;
 
-		int endIndex;
+		private final int endIndex;
+
+		ParameterHolder(String parameterName, int startIndex, int endIndex) {
+			this.parameterName = parameterName;
+			this.startIndex = startIndex;
+			this.endIndex = endIndex;
+		}
+
+		String getParameterName() {
+			return this.parameterName;
+		}
+
+		int getStartIndex() {
+			return this.startIndex;
+		}
+
+		int getEndIndex() {
+			return this.endIndex;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o)
+				return true;
+			if (!(o instanceof ParameterHolder))
+				return false;
+			ParameterHolder that = (ParameterHolder) o;
+			return this.startIndex == that.startIndex && this.endIndex == that.endIndex
+					&& Objects.equals(this.parameterName, that.parameterName);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.parameterName, this.startIndex, this.endIndex);
+		}
 	}
 
 	/**

@@ -15,8 +15,6 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -45,13 +43,20 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  */
-@RequiredArgsConstructor
 class DefaultStatementMapper implements StatementMapper {
 
 	private final R2dbcDialect dialect;
 	private final RenderContext renderContext;
 	private final UpdateMapper updateMapper;
 	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+
+	DefaultStatementMapper(R2dbcDialect dialect, RenderContext renderContext, UpdateMapper updateMapper,
+			MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {
+		this.dialect = dialect;
+		this.renderContext = renderContext;
+		this.updateMapper = updateMapper;
+		this.mappingContext = mappingContext;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -255,12 +260,17 @@ class DefaultStatementMapper implements StatementMapper {
 	 *
 	 * @param <T>
 	 */
-	@RequiredArgsConstructor
 	static class DefaultPreparedOperation<T> implements PreparedOperation<T> {
 
 		private final T source;
 		private final RenderContext renderContext;
 		private final Bindings bindings;
+
+		public DefaultPreparedOperation(T source, RenderContext renderContext, Bindings bindings) {
+			this.source = source;
+			this.renderContext = renderContext;
+			this.bindings = bindings;
+		}
 
 		/*
 		 * (non-Javadoc)
@@ -305,10 +315,13 @@ class DefaultStatementMapper implements StatementMapper {
 		}
 	}
 
-	@RequiredArgsConstructor
 	class DefaultTypedStatementMapper<T> implements TypedStatementMapper<T> {
 
 		final RelationalPersistentEntity<T> entity;
+
+		DefaultTypedStatementMapper(RelationalPersistentEntity<T> entity) {
+			this.entity = entity;
+		}
 
 		/*
 		 * (non-Javadoc)
