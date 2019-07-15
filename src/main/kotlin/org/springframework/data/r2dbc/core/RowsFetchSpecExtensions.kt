@@ -18,16 +18,17 @@ package org.springframework.data.r2dbc.core
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactive.flow.asFlow
+import org.springframework.dao.EmptyResultDataAccessException
 
 /**
  * Non-nullable Coroutines variant of [RowsFetchSpec.one].
  *
  * @author Sebastien Deleuze
  */
-suspend fun <T> RowsFetchSpec<T>.awaitOne(): T =
-		one().awaitSingle()
+suspend fun <T> RowsFetchSpec<T>.awaitOne(): T {
+	return one().awaitFirstOrNull() ?: throw EmptyResultDataAccessException(1)
+}
 
 /**
  * Nullable Coroutines variant of [RowsFetchSpec.one].
@@ -42,8 +43,9 @@ suspend fun <T> RowsFetchSpec<T>.awaitOneOrNull(): T? =
  *
  * @author Sebastien Deleuze
  */
-suspend fun <T> RowsFetchSpec<T>.awaitFirst(): T =
-		first().awaitSingle()
+suspend fun <T> RowsFetchSpec<T>.awaitFirst(): T {
+	return first().awaitFirstOrNull() ?: throw EmptyResultDataAccessException(1)
+}
 
 /**
  * Nullable Coroutines variant of [RowsFetchSpec.first].
@@ -62,4 +64,4 @@ suspend fun <T> RowsFetchSpec<T>.awaitFirstOrNull(): T? =
  * @author Sebastien Deleuze
  */
 @FlowPreview
-fun <T: Any> RowsFetchSpec<T>.flow(batchSize: Int = 1): Flow<T> = all().asFlow(batchSize)
+fun <T : Any> RowsFetchSpec<T>.flow(batchSize: Int = 1): Flow<T> = all().asFlow(batchSize)

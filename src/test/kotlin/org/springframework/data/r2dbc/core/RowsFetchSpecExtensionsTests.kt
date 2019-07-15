@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.Test
+import org.springframework.dao.EmptyResultDataAccessException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -31,6 +32,7 @@ import reactor.core.publisher.Mono
  * Unit tests for [RowsFetchSpec] extensions.
  *
  * @author Sebastien Deleuze
+ * @author Mark Paluch
  */
 class RowsFetchSpecExtensionsTests {
 
@@ -49,13 +51,13 @@ class RowsFetchSpecExtensionsTests {
 		}
 	}
 
-	@Test // gh-63
+	@Test // gh-63, gh-103
 	fun awaitOneWithNull() {
 
 		val spec = mockk<RowsFetchSpec<String>>()
 		every { spec.one() } returns Mono.empty()
 
-		assertThatExceptionOfType(NoSuchElementException::class.java).isThrownBy {
+		assertThatExceptionOfType(EmptyResultDataAccessException::class.java).isThrownBy {
 			runBlocking { spec.awaitOne() }
 		}
 
@@ -109,13 +111,13 @@ class RowsFetchSpecExtensionsTests {
 		}
 	}
 
-	@Test // gh-63
+	@Test // gh-63, gh-103
 	fun awaitFirstWithNull() {
 
 		val spec = mockk<RowsFetchSpec<String>>()
 		every { spec.first() } returns Mono.empty()
 
-		assertThatExceptionOfType(NoSuchElementException::class.java).isThrownBy {
+		assertThatExceptionOfType(EmptyResultDataAccessException::class.java).isThrownBy {
 			runBlocking { spec.awaitFirst() }
 		}
 
