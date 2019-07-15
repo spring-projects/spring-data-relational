@@ -6,7 +6,7 @@ The following example shows what you need to include for minimal but fully funct
 
 [source,java]
 ----
-Mono<Void> completion = client.sql("CREATE TABLE person (id VARCHAR(255) PRIMARY KEY, name VARCHAR(255), age INTEGER);")
+Mono<Void> completion = client.execute("CREATE TABLE person (id VARCHAR(255) PRIMARY KEY, name VARCHAR(255), age INTEGER);")
         .then();
 ----
 
@@ -14,7 +14,7 @@ Mono<Void> completion = client.sql("CREATE TABLE person (id VARCHAR(255) PRIMARY
 It exposes intermediate, continuation, and terminal methods at each stage of the execution specification.
 The example above uses `then()` to return a completion `Publisher` that completes as soon as the query (or queries, if the SQL query contains multiple statements) completes.
 
-NOTE: `sql(…)` accepts either the SQL query string or a query `Supplier<String>` to defer the actual query creation until execution.
+NOTE: `execute(…)` accepts either the SQL query string or a query `Supplier<String>` to defer the actual query creation until execution.
 
 [[r2dbc.datbaseclient.queries]]
 == Running Queries
@@ -26,7 +26,7 @@ The following example shows an `UPDATE` statement that returns the number of upd
 
 [source,java]
 ----
-Mono<Integer> affectedRows = client.sql("UPDATE person SET name = 'Joe'")
+Mono<Integer> affectedRows = client.execute("UPDATE person SET name = 'Joe'")
         .fetch().rowsUpdated();
 ----
 
@@ -36,7 +36,7 @@ You might have noticed the use of `fetch()` in the previous example.
 
 [source,java]
 ----
-Mono<Map<String, Object>> first = client.sql("SELECT id, name FROM person")
+Mono<Map<String, Object>> first = client.execute("SELECT id, name FROM person")
         .fetch().first();
 ----
 
@@ -52,7 +52,7 @@ You can consume data with the following operators:
 
 [source,java]
 ----
-Flux<Person> all = client.sql("SELECT id, name FROM mytable")
+Flux<Person> all = client.execute("SELECT id, name FROM mytable")
         .as(Person.class)
         .fetch().all();
 ----
@@ -69,7 +69,7 @@ The following example extracts the `id` column and emits its value:
 
 [source,java]
 ----
-Flux<String> names = client.sql("SELECT name FROM person")
+Flux<String> names = client.execute("SELECT name FROM person")
         .map((row, rowMetadata) -> row.get("id", String.class))
         .all();
 ----
@@ -90,7 +90,7 @@ A typical application requires parameterized SQL statements to select or update 
 These are typically `SELECT` statements  constrained by a `WHERE` clause or `INSERT`/`UPDATE` statements accepting input parameters.
 Parameterized statements bear the risk of SQL injection if parameters are not escaped properly.
 `DatabaseClient` leverages R2DBC's Bind API to eliminate the risk of SQL injection for query parameters.
-You can provide a parameterized SQL statement with the `sql(…)` operator and bind parameters to the actual `Statement`.
+You can provide a parameterized SQL statement with the `execute(…)` operator and bind parameters to the actual `Statement`.
 Your R2DBC driver then executes the statement using prepared statements and parameter substitution.
 
 Parameter binding supports various binding strategies:
@@ -102,7 +102,7 @@ The following example shows parameter binding for a query:
 
 [source,java]
 ----
-db.sql("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
+db.execute("INSERT INTO person (id, name, age) VALUES(:id, :name, :age)")
     .bind("id", "joe")
     .bind("name", "Joe")
     .bind("age", 34);
@@ -140,7 +140,7 @@ List<Object[]> tuples = new ArrayList<>();
 tuples.add(new Object[] {"John", 35});
 tuples.add(new Object[] {"Ann",  50});
 
-db.sql("SELECT id, name, state FROM table WHERE (name, age) IN (:tuples)")
+db.execute("SELECT id, name, state FROM table WHERE (name, age) IN (:tuples)")
     .bind("tuples", tuples);
 ----
 
@@ -150,6 +150,6 @@ A simpler variant using `IN` predicates:
 
 [source,java]
 ----
-db.sql("SELECT id, name, state FROM table WHERE age IN (:ages)")
+db.execute("SELECT id, name, state FROM table WHERE age IN (:ages)")
     .bind("ages", Arrays.asList(35, 50));
 ----

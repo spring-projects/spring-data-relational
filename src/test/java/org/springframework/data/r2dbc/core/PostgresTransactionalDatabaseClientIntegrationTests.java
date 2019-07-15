@@ -5,12 +5,12 @@ import io.r2dbc.spi.ConnectionFactory;
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
-import org.springframework.data.r2dbc.core.TransactionalDatabaseClient;
+
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
 
 /**
- * Integration tests for {@link TransactionalDatabaseClient} against PostgreSQL.
+ * Transactional integration tests for {@link DatabaseClient} against PostgreSQL.
  *
  * @author Mark Paluch
  */

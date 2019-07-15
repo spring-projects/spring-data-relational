@@ -25,6 +25,7 @@ import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -53,6 +54,7 @@ public class SqlServerR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepos
 			includeFilters = @Filter(classes = SqlServerLegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
+		@Bean
 		@Override
 		public ConnectionFactory connectionFactory() {
 			return SqlServerTestSupport.createConnectionFactory(database);

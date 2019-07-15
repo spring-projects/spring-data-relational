@@ -139,7 +139,7 @@ public class R2dbcApp {
 
     DatabaseClient client = DatabaseClient.create(connectionFactory);
 
-    client.sql("CREATE TABLE person" +
+    client.execute("CREATE TABLE person" +
         "(id VARCHAR(255) PRIMARY KEY," +
         "name VARCHAR(255)," +
         "age INT)")

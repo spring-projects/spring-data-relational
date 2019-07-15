@@ -18,20 +18,17 @@ package org.springframework.data.r2dbc.connectionfactory;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
-import org.springframework.data.r2dbc.connectionfactory.ConnectionFactoryUtils;
-import org.springframework.data.r2dbc.connectionfactory.ConnectionProxy;
-import org.springframework.data.r2dbc.connectionfactory.TransactionAwareConnectionFactoryProxy;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuple2;
+
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import org.springframework.transaction.reactive.TransactionalOperator;
 
 /**
  * Unit tests for {@link TransactionAwareConnectionFactoryProxy}.
@@ -63,20 +60,17 @@ public class TransactionAwareConnectionFactoryProxyUnitTests {
 				.as(StepVerifier::create) //
 				.consumeNextWith(connection -> {
 					assertThat(connection).isInstanceOf(ConnectionProxy.class);
-				})
-				.verifyComplete();
+				}).verifyComplete();
 	}
 
 	@Test // gh-107
 	public void unwrapShouldReturnTargetConnection() {
 
 		new TransactionAwareConnectionFactoryProxy(connectionFactoryMock).create() //
-				.map(ConnectionProxy.class::cast)
-				.as(StepVerifier::create) //
+				.map(ConnectionProxy.class::cast).as(StepVerifier::create) //
 				.consumeNextWith(proxy -> {
 					assertThat(proxy.unwrap()).isEqualTo(connectionMock1);
-				})
-				.verifyComplete();
+				}).verifyComplete();
 	}
 
 	@Test // gh-107
@@ -85,25 +79,21 @@ public class TransactionAwareConnectionFactoryProxyUnitTests {
 		when(connectionMock1.close()).thenReturn(Mono.empty());
 
 		new TransactionAwareConnectionFactoryProxy(connectionFactoryMock).create() //
-				.map(ConnectionProxy.class::cast)
-				.flatMap(it -> Mono.from(it.close()).then(Mono.just(it)))
+				.map(ConnectionProxy.class::cast).flatMap(it -> Mono.from(it.close()).then(Mono.just(it)))
 				.as(StepVerifier::create) //
 				.consumeNextWith(proxy -> {
 					assertThat(proxy.unwrap()).isEqualTo(connectionMock1);
-				})
-				.verifyComplete();
+				}).verifyComplete();
 	}
 
 	@Test // gh-107
 	public void getTargetConnectionShouldReturnTargetConnection() {
 
 		new TransactionAwareConnectionFactoryProxy(connectionFactoryMock).create() //
-				.map(ConnectionProxy.class::cast)
-				.as(StepVerifier::create) //
+				.map(ConnectionProxy.class::cast).as(StepVerifier::create) //
 				.consumeNextWith(proxy -> {
 					assertThat(proxy.getTargetConnection()).isEqualTo(connectionMock1);
-				})
-				.verifyComplete();
+				}).verifyComplete();
 	}
 
 	@Test // gh-107
@@ -112,38 +102,32 @@ public class TransactionAwareConnectionFactoryProxyUnitTests {
 		when(connectionMock1.close()).thenReturn(Mono.empty());
 
 		new TransactionAwareConnectionFactoryProxy(connectionFactoryMock).create() //
-				.map(ConnectionProxy.class::cast)
-				.flatMap(it -> Mono.from(it.close()).then(Mono.just(it)))
+				.map(ConnectionProxy.class::cast).flatMap(it -> Mono.from(it.close()).then(Mono.just(it)))
 				.as(StepVerifier::create) //
 				.consumeNextWith(proxy -> {
 					assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> proxy.getTargetConnection());
-				})
-				.verifyComplete();
+				}).verifyComplete();
 	}
 
 	@Test // gh-107
 	public void hashCodeShouldReturnProxyHash() {
 
 		new TransactionAwareConnectionFactoryProxy(connectionFactoryMock).create() //
-				.map(ConnectionProxy.class::cast)
-				.as(StepVerifier::create) //
+				.map(ConnectionProxy.class::cast).as(StepVerifier::create) //
 				.consumeNextWith(proxy -> {
 					assertThat(proxy.hashCode()).isEqualTo(System.identityHashCode(proxy));
-				})
-				.verifyComplete();
+				}).verifyComplete();
 	}
 
 	@Test // gh-107
 	public void equalsShouldCompareCorrectly() {
 
 		new TransactionAwareConnectionFactoryProxy(connectionFactoryMock).create() //
-				.map(ConnectionProxy.class::cast)
-				.as(StepVerifier::create) //
+				.map(ConnectionProxy.class::cast).as(StepVerifier::create) //
 				.consumeNextWith(proxy -> {
 					assertThat(proxy.equals(proxy)).isTrue();
 					assertThat(proxy.equals(connectionMock1)).isFalse();
-				})
-				.verifyComplete();
+				}).verifyComplete();
 	}
 
 	@Test // gh-107
@@ -158,16 +142,16 @@ public class TransactionAwareConnectionFactoryProxyUnitTests {
 
 		TransactionAwareConnectionFactoryProxy proxyCf = new TransactionAwareConnectionFactoryProxy(connectionFactoryMock);
 
-		ConnectionFactoryUtils.getConnection(connectionFactoryMock).map(Tuple2::getT1) //
+		ConnectionFactoryUtils.getConnection(connectionFactoryMock) //
 				.doOnNext(transactionalConnection::set).flatMap(it -> {
 
-			return proxyCf.create().doOnNext(connectionFromProxy -> {
+					return proxyCf.create().doOnNext(connectionFromProxy -> {
 
-				ConnectionProxy connectionProxy = (ConnectionProxy) connectionFromProxy;
-				assertThat(connectionProxy.getTargetConnection()).isSameAs(it);
-				assertThat(connectionProxy.unwrap()).isSameAs(it);
-			});
-		}).as(rxtx::transactional) //
+						ConnectionProxy connectionProxy = (ConnectionProxy) connectionFromProxy;
+						assertThat(connectionProxy.getTargetConnection()).isSameAs(it);
+						assertThat(connectionProxy.unwrap()).isSameAs(it);
+					});
+				}).as(rxtx::transactional) //
 				.flatMapMany(Connection::close) //
 				.as(StepVerifier::create) //
 				.verifyComplete();

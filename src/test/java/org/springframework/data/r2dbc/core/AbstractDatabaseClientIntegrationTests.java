@@ -347,7 +347,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 
-		databaseClient.execute().sql("SELECT COUNT(*) FROM legoset") //
+		databaseClient.execute("SELECT COUNT(*) FROM legoset") //
 				.as(Long.class) //
 				.fetch() //
 				.all() //
@@ -355,7 +355,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.expectNext(1L) //
 				.verifyComplete();
 
-		databaseClient.execute().sql("SELECT name FROM legoset") //
+		databaseClient.execute("SELECT name FROM legoset") //
 				.as(String.class) //
 				.fetch() //
 				.one() //

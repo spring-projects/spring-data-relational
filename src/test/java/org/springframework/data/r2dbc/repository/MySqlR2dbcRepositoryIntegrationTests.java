@@ -24,6 +24,7 @@ import javax.sql.DataSource;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -52,6 +53,7 @@ public class MySqlR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositor
 			includeFilters = @Filter(classes = MySqlLegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
+		@Bean
 		@Override
 		public ConnectionFactory connectionFactory() {
 			return MySqlTestSupport.createConnectionFactory(database);

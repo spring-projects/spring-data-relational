@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 
 import org.junit.runner.RunWith;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -48,6 +49,7 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 			includeFilters = @Filter(classes = H2LegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
+		@Bean
 		@Override
 		public ConnectionFactory connectionFactory() {
 			return H2TestSupport.createConnectionFactory();

@@ -15,30 +15,27 @@
  */
 package org.springframework.data.r2dbc.connectionfactory;
 
-import static org.springframework.util.ReflectionUtils.*;
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Wrapped;
+import reactor.core.publisher.Mono;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.Wrapped;
-
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ReflectionUtils;
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 /**
  * Proxy for a target R2DBC {@link ConnectionFactory}, adding awareness of Spring-managed transactions.
  * <p>
  * Data access code that should remain unaware of Spring's data access support can work with this proxy to seamlessly
  * participate in Spring-managed transactions. Note that the transaction manager, for example
- * {@link R2dbcTransactionManager}, still needs to work with the underlying {@link ConnectionFactory},
- * <i>not</i> with this proxy.
+ * {@link R2dbcTransactionManager}, still needs to work with the underlying {@link ConnectionFactory}, <i>not</i> with
+ * this proxy.
  * <p>
  * <b>Make sure that {@link TransactionAwareConnectionFactoryProxy} is the outermost {@link ConnectionFactory} of a
  * chain of {@link ConnectionFactory} proxies/adapters.</b> {@link TransactionAwareConnectionFactoryProxy} can delegate
@@ -101,14 +98,15 @@ public class TransactionAwareConnectionFactoryProxy extends DelegatingConnection
 	 * @see ConnectionFactoryUtils#doReleaseConnection
 	 */
 	protected Mono<Connection> getTransactionAwareConnectionProxy(ConnectionFactory targetConnectionFactory) {
-		return ConnectionFactoryUtils.getConnection(targetConnectionFactory).map(TransactionAwareConnectionFactoryProxy::proxyConnection);
+		return ConnectionFactoryUtils.getConnection(targetConnectionFactory)
+				.map(it -> proxyConnection(it, targetConnectionFactory));
 	}
 
-	private static Connection proxyConnection(Tuple2<Connection, ConnectionFactory> connectionConnectionFactoryTuple) {
+	private static Connection proxyConnection(Connection connection, ConnectionFactory targetConnectionFactory) {
 
 		return (Connection) Proxy.newProxyInstance(ConnectionProxy.class.getClassLoader(),
-				new Class<?>[]{ConnectionProxy.class},
-				new TransactionAwareInvocationHandler(connectionConnectionFactoryTuple.getT1(), connectionConnectionFactoryTuple.getT2()));
+				new Class<?>[] { ConnectionProxy.class },
+				new TransactionAwareInvocationHandler(connection, targetConnectionFactory));
 	}
 
 	/**

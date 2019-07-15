@@ -70,8 +70,7 @@ import org.springframework.util.Assert;
  * @see TransactionAwareConnectionFactoryProxy
  * @see DatabaseClient
  */
-public class R2dbcTransactionManager extends AbstractReactiveTransactionManager
-		implements InitializingBean {
+public class R2dbcTransactionManager extends AbstractReactiveTransactionManager implements InitializingBean {
 
 	private ConnectionFactory connectionFactory;
 
@@ -473,12 +472,12 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager
 	 * ConnectionFactory transaction object, representing a ConnectionHolder. Used as transaction object by
 	 * ConnectionFactoryTransactionManager.
 	 */
-	private static class ConnectionFactoryTransactionObject extends R2dbcTransactionObjectSupport {
+	private static class ConnectionFactoryTransactionObject {
 
 		private boolean newConnectionHolder;
 
 		void setConnectionHolder(@Nullable ConnectionHolder connectionHolder, boolean newConnectionHolder) {
-			super.setConnectionHolder(connectionHolder);
+			setConnectionHolder(connectionHolder);
 			this.newConnectionHolder = newConnectionHolder;
 		}
 
@@ -488,6 +487,42 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager
 
 		void setRollbackOnly() {
 			getConnectionHolder().setRollbackOnly();
+		}
+
+		@Nullable private ConnectionHolder connectionHolder;
+
+		@Nullable private IsolationLevel previousIsolationLevel;
+
+		private boolean savepointAllowed = false;
+
+		public void setConnectionHolder(@Nullable ConnectionHolder connectionHolder) {
+			this.connectionHolder = connectionHolder;
+		}
+
+		public ConnectionHolder getConnectionHolder() {
+			Assert.state(this.connectionHolder != null, "No ConnectionHolder available");
+			return this.connectionHolder;
+		}
+
+		public boolean hasConnectionHolder() {
+			return (this.connectionHolder != null);
+		}
+
+		public void setPreviousIsolationLevel(@Nullable IsolationLevel previousIsolationLevel) {
+			this.previousIsolationLevel = previousIsolationLevel;
+		}
+
+		@Nullable
+		public IsolationLevel getPreviousIsolationLevel() {
+			return this.previousIsolationLevel;
+		}
+
+		public void setSavepointAllowed(boolean savepointAllowed) {
+			this.savepointAllowed = savepointAllowed;
+		}
+
+		public boolean isSavepointAllowed() {
+			return this.savepointAllowed;
 		}
 	}
 }

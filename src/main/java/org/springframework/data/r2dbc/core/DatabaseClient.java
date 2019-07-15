@@ -51,12 +51,9 @@ public interface DatabaseClient {
 	 * the exchange. The SQL string can contain either native parameter bind markers or named parameters (e.g.
 	 * {@literal :foo, :bar}) when {@link NamedParameterExpander} is enabled.
 	 *
-	 * @see NamedParameterExpander
-	 * @see DatabaseClient.Builder#namedParameters(NamedParameterExpander)
 	 * @param sql must not be {@literal null} or empty.
 	 * @return a new {@link GenericExecuteSpec}.
-	 * @see NamedParameterExpander
-	 * @see DatabaseClient.Builder#namedParameters(NamedParameterExpander)
+	 * @see NamedParameterExpander * @see DatabaseClient.Builder#namedParameters(boolean)
 	 */
 	GenericExecuteSpec execute(String sql);
 
@@ -71,18 +68,10 @@ public interface DatabaseClient {
 	 * @param sqlSupplier must not be {@literal null}.
 	 * @return a new {@link GenericExecuteSpec}.
 	 * @see NamedParameterExpander
-	 * @see DatabaseClient.Builder#namedParameters(NamedParameterExpander)
+	 * @see DatabaseClient.Builder#namedParameters(boolean)
 	 * @see PreparedOperation
 	 */
 	GenericExecuteSpec execute(Supplier<String> sqlSupplier);
-
-	/**
-	 * Prepare an SQL call returning a result.
-	 *
-	 * @deprecated will be removed with 1.0 M3. Use {@link #execute(String)} directly.
-	 */
-	@Deprecated
-	SqlSpec execute();
 
 	/**
 	 * Prepare an SQL SELECT call.
@@ -179,41 +168,6 @@ public interface DatabaseClient {
 		 * Builder the {@link DatabaseClient} instance.
 		 */
 		DatabaseClient build();
-	}
-
-	/**
-	 * Contract for specifying a SQL call along with options leading to the exchange. The SQL string can contain either
-	 * native parameter bind markers (e.g. {@literal $1, $2} for Postgres, {@literal @P0, @P1} for SQL Server) or named
-	 * parameters (e.g. {@literal :foo, :bar}) when {@link NamedParameterExpander} is enabled.
-	 * <p>
-	 * Accepts {@link PreparedOperation} as SQL and binding {@link Supplier}.
-	 * </p>
-	 *
-	 * @see NamedParameterExpander
-	 * @see DatabaseClient.Builder#namedParameters(NamedParameterExpander)
-	 * @deprecated use {@code DatabaseClient.execute(…)} directly.
-	 */
-	@Deprecated
-	interface SqlSpec {
-
-		/**
-		 * Specify a static {@code sql} string to execute.
-		 *
-		 * @param sql must not be {@literal null} or empty.
-		 * @return a new {@link GenericExecuteSpec}.
-		 */
-		@Deprecated
-		GenericExecuteSpec sql(String sql);
-
-		/**
-		 * Specify a static {@link Supplier SQL supplier} that provides SQL to execute.
-		 *
-		 * @param sqlSupplier must not be {@literal null}.
-		 * @return a new {@link GenericExecuteSpec}.
-		 * @see PreparedOperation
-		 */
-		@Deprecated
-		GenericExecuteSpec sql(Supplier<String> sqlSupplier);
 	}
 
 	/**

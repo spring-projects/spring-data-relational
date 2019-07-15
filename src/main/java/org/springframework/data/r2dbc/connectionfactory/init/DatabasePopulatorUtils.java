@@ -18,7 +18,6 @@ package org.springframework.data.r2dbc.connectionfactory.init;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.connectionfactory.ConnectionFactoryUtils;
@@ -47,7 +46,7 @@ public abstract class DatabasePopulatorUtils {
 		Assert.notNull(populator, "DatabasePopulator must not be null");
 		Assert.notNull(connectionFactory, "ConnectionFactory must not be null");
 
-		return Mono.usingWhen(ConnectionFactoryUtils.getConnection(connectionFactory).map(Tuple2::getT1), //
+		return Mono.usingWhen(ConnectionFactoryUtils.getConnection(connectionFactory), //
 				populator::populate, //
 				it -> ConnectionFactoryUtils.releaseConnection(it, connectionFactory), //
 				it -> ConnectionFactoryUtils.releaseConnection(it, connectionFactory))

@@ -25,7 +25,6 @@ import io.r2dbc.spi.Statement;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -46,6 +45,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Pageable;
@@ -96,11 +96,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	@Override
 	public Builder mutate() {
 		return this.builder;
-	}
-
-	@Override
-	public SqlSpec execute() {
-		return new DefaultSqlSpec();
 	}
 
 	@Override
@@ -201,7 +196,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * @return a {@link Mono} able to emit a {@link Connection}.
 	 */
 	protected Mono<Connection> getConnection() {
-		return ConnectionFactoryUtils.getConnection(obtainConnectionFactory()).map(Tuple2::getT1);
+		return ConnectionFactoryUtils.getConnection(obtainConnectionFactory());
 	}
 
 	/**
@@ -305,27 +300,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				statement.bindNull(i.intValue(), o.getType());
 			}
 		});
-	}
-
-	/**
-	 * Default {@link DatabaseClient.SqlSpec} implementation.
-	 */
-	private class DefaultSqlSpec implements SqlSpec {
-
-		@Override
-		public GenericExecuteSpec sql(String sql) {
-
-			Assert.hasText(sql, "SQL must not be null or empty!");
-			return sql(() -> sql);
-		}
-
-		@Override
-		public GenericExecuteSpec sql(Supplier<String> sqlSupplier) {
-
-			Assert.notNull(sqlSupplier, "SQL Supplier must not be null!");
-
-			return createGenericExecuteSpec(sqlSupplier);
-		}
 	}
 
 	/**

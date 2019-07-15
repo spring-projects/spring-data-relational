@@ -22,14 +22,13 @@ import io.r2dbc.spi.ConnectionFactory;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.TransactionalDatabaseClient;
+
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
 import reactor.core.publisher.Mono;
 
 /**
- * Integration tests for {@link TransactionalDatabaseClient} against MySQL.
+ * Transactional integration tests for {@link DatabaseClient} against MySQL.
  *
  * @author Mark Paluch
  */
@@ -63,7 +62,7 @@ public class MySqlTransactionalDatabaseClientIntegrationTests
 		 * batches every now and then.
 		 * @see: https://dev.mysql.com/doc/refman/5.7/en/innodb-information-schema-internal-data.html
 		 */
-		return client.execute().sql(getInsertIntoLegosetStatement()) //
+		return client.execute(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
@@ -75,11 +74,5 @@ public class MySqlTransactionalDatabaseClientIntegrationTests
 	@Override
 	protected String getCurrentTransactionIdStatement() {
 		return "SELECT tx.trx_id FROM information_schema.innodb_trx tx WHERE tx.trx_mysql_thread_id = connection_id()";
-	}
-
-	@Override
-	@Test
-	@Ignore("MySQL creates transactions only on interaction with transactional tables. BEGIN does not create a txid")
-	public void shouldManageUserTransaction() {
 	}
 }

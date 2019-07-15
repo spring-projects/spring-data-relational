@@ -71,7 +71,7 @@ public class R2dbcTransactionManagerUnitTests {
 
 		TransactionalOperator operator = TransactionalOperator.create(tm);
 
-		ConnectionFactoryUtils.getConnection(connectionFactoryMock).map(Tuple2::getT1).flatMap(it -> {
+		ConnectionFactoryUtils.getConnection(connectionFactoryMock).flatMap(it -> {
 
 			return TransactionSynchronizationManager.forCurrentTransaction()
 					.doOnNext(synchronizationManager -> synchronizationManager.registerSynchronization(sync));
@@ -153,7 +153,7 @@ public class R2dbcTransactionManagerUnitTests {
 
 		TransactionalOperator operator = TransactionalOperator.create(tm);
 
-		ConnectionFactoryUtils.getConnection(connectionFactoryMock).map(Tuple2::getT1) //
+		ConnectionFactoryUtils.getConnection(connectionFactoryMock) //
 				.doOnNext(it -> {
 					it.createStatement("foo");
 				}).then() //
@@ -179,7 +179,7 @@ public class R2dbcTransactionManagerUnitTests {
 
 		TransactionalOperator operator = TransactionalOperator.create(tm);
 
-		ConnectionFactoryUtils.getConnection(connectionFactoryMock).map(Tuple2::getT1).doOnNext(it -> {
+		ConnectionFactoryUtils.getConnection(connectionFactoryMock).doOnNext(it -> {
 
 			throw new IllegalStateException();
 

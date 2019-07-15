@@ -23,7 +23,6 @@ import reactor.util.function.Tuples;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.reactivestreams.Publisher;
 
 import org.springframework.core.Ordered;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -67,7 +66,7 @@ public abstract class ConnectionFactoryUtils {
 	 * @throws DataAccessResourceFailureException if the attempt to get a {@link io.r2dbc.spi.Connection} failed
 	 * @see #releaseConnection
 	 */
-	public static Mono<Tuple2<Connection, ConnectionFactory>> getConnection(ConnectionFactory connectionFactory) {
+	public static Mono<Connection> getConnection(ConnectionFactory connectionFactory) {
 		return doGetConnection(connectionFactory)
 				.onErrorMap(e -> new DataAccessResourceFailureException("Failed to obtain R2DBC Connection", e));
 	}
@@ -82,7 +81,7 @@ public abstract class ConnectionFactoryUtils {
 	 * @param connectionFactory the {@link ConnectionFactory} to obtain Connections from.
 	 * @return a R2DBC {@link io.r2dbc.spi.Connection} from the given {@link ConnectionFactory}.
 	 */
-	public static Mono<Tuple2<Connection, ConnectionFactory>> doGetConnection(ConnectionFactory connectionFactory) {
+	public static Mono<Connection> doGetConnection(ConnectionFactory connectionFactory) {
 
 		Assert.notNull(connectionFactory, "ConnectionFactory must not be null!");
 
@@ -138,54 +137,9 @@ public abstract class ConnectionFactoryUtils {
 
 			return con;
 		}) //
-				.map(conn -> Tuples.of(conn, connectionFactory)) //
 				.onErrorResume(NoTransactionException.class, e -> {
-
-					return Mono.subscriberContext().flatMap(it -> {
-
-						if (it.hasKey(ReactiveTransactionSynchronization.class)) {
-
-							ReactiveTransactionSynchronization synchronization = it.get(ReactiveTransactionSynchronization.class);
-
-							return obtainConnection(synchronization, connectionFactory);
-						}
-						return Mono.empty();
-					}).switchIfEmpty(Mono.defer(() -> {
-						return Mono.from(connectionFactory.create()).map(it -> Tuples.of(it, connectionFactory));
-					}));
+					return Mono.from(connectionFactory.create());
 				});
-	}
-
-	private static Mono<Tuple2<Connection, ConnectionFactory>> obtainConnection(
-			ReactiveTransactionSynchronization synchronization, ConnectionFactory connectionFactory) {
-
-		if (synchronization.isSynchronizationActive()) {
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("Registering transaction synchronization for R2DBC Connection");
-			}
-
-			TransactionResources txContext = synchronization.getCurrentTransaction();
-			ConnectionFactory resource = txContext.getResource(ConnectionFactory.class);
-
-			Mono<Tuple2<Connection, ConnectionFactory>> attachNewConnection = Mono
-					.defer(() -> Mono.from(connectionFactory.create()).map(it -> {
-
-						if (logger.isDebugEnabled()) {
-							logger.debug("Fetching new R2DBC Connection from ConnectionFactory");
-						}
-
-						SingletonConnectionFactory s = new SingletonConnectionFactory(connectionFactory.getMetadata(), it);
-						txContext.registerResource(ConnectionFactory.class, s);
-
-						return Tuples.of(it, connectionFactory);
-					}));
-
-			return Mono.justOrEmpty(resource).flatMap(ConnectionFactoryUtils::createConnection)
-					.switchIfEmpty(attachNewConnection);
-		}
-
-		return Mono.empty();
 	}
 
 	/**
@@ -198,12 +152,7 @@ public abstract class ConnectionFactoryUtils {
 	 * @see ConnectionFactory#create()
 	 */
 	private static Mono<Connection> fetchConnection(ConnectionFactory connectionFactory) {
-
-		Publisher<? extends Connection> con = connectionFactory.create();
-		if (con == null) { // TODO: seriously why would it do that?
-			throw new IllegalStateException("ConnectionFactory returned null from getConnection(): " + connectionFactory);
-		}
-		return Mono.from(con);
+		return Mono.from(connectionFactory.create());
 	}
 
 	/**
@@ -226,40 +175,24 @@ public abstract class ConnectionFactoryUtils {
 	 * Actually close the given {@link io.r2dbc.spi.Connection}, obtained from the given {@link ConnectionFactory}. Same
 	 * as {@link #releaseConnection}, but preserving the original exception.
 	 *
-	 * @param con the {@link io.r2dbc.spi.Connection} to close if necessary.
+	 * @param connection the {@link io.r2dbc.spi.Connection} to close if necessary.
 	 * @param connectionFactory the {@link ConnectionFactory} that the Connection was obtained from (may be
 	 *          {@literal null}).
 	 * @see #doGetConnection
 	 */
-	public static Mono<Void> doReleaseConnection(@Nullable io.r2dbc.spi.Connection con,
+	public static Mono<Void> doReleaseConnection(@Nullable io.r2dbc.spi.Connection connection,
 			@Nullable ConnectionFactory connectionFactory) {
 
 		return TransactionSynchronizationManager.forCurrentTransaction().flatMap(it -> {
 
 			ConnectionHolder conHolder = (ConnectionHolder) it.getResource(connectionFactory);
-			if (conHolder != null && connectionEquals(conHolder, con)) {
+			if (conHolder != null && connectionEquals(conHolder, connection)) {
 				// It's the transactional Connection: Don't close it.
 				conHolder.released();
 			}
-			return Mono.from(con.close());
+			return Mono.from(connection.close());
 		}).onErrorResume(NoTransactionException.class, e -> {
-
-			if (connectionFactory instanceof SingletonConnectionFactory) {
-
-				SingletonConnectionFactory factory = (SingletonConnectionFactory) connectionFactory;
-
-				if (logger.isDebugEnabled()) {
-					logger.debug("Releasing R2DBC Connection");
-				}
-
-				return factory.close(con);
-			}
-
-			if (logger.isDebugEnabled()) {
-				logger.debug("Closing R2DBC Connection");
-			}
-
-			return Mono.from(con.close());
+			return doCloseConnection(connection, connectionFactory);
 		});
 	}
 
@@ -287,55 +220,23 @@ public abstract class ConnectionFactoryUtils {
 	 */
 	public static Mono<Void> doCloseConnection(Connection connection, @Nullable ConnectionFactory connectionFactory) {
 
-		if (!(connectionFactory instanceof SingletonConnectionFactory)
-				|| ((SingletonConnectionFactory) connectionFactory).shouldClose(connection)) {
+		if (!(connectionFactory instanceof SmartConnectionFactory)
+				|| ((SmartConnectionFactory) connectionFactory).shouldClose(connection)) {
 
-			SingletonConnectionFactory factory = (SingletonConnectionFactory) connectionFactory;
-			return factory.close(connection).then(Mono.from(connection.close()));
+			if (logger.isDebugEnabled()) {
+				logger.debug("Closing R2DBC Connection");
+			}
+
+			return Mono.from(connection.close());
 		}
 
 		return Mono.empty();
 	}
 
 	/**
-	 * Obtain the currently {@link ReactiveTransactionSynchronization} from the current subscriber
-	 * {@link reactor.util.context.Context}.
-	 *
-	 * @throws NoTransactionException if no active {@link ReactiveTransactionSynchronization} is associated with the
-	 *           current subscription.
-	 * @see Mono#subscriberContext()
-	 * @see ReactiveTransactionSynchronization
-	 */
-	public static Mono<ReactiveTransactionSynchronization> currentReactiveTransactionSynchronization() {
-
-		return Mono.subscriberContext().filter(it -> it.hasKey(ReactiveTransactionSynchronization.class)) //
-				.switchIfEmpty(Mono.error(new NoTransactionException(
-						"Transaction management is not enabled. Make sure to register ReactiveTransactionSynchronization in the subscriber Context!"))) //
-				.map(it -> it.get(ReactiveTransactionSynchronization.class));
-	}
-
-	/**
-	 * Obtain the currently active {@link ReactiveTransactionSynchronization} from the current subscriber
-	 * {@link reactor.util.context.Context}.
-	 *
-	 * @throws NoTransactionException if no active {@link ReactiveTransactionSynchronization} is associated with the
-	 *           current subscription.
-	 * @see Mono#subscriberContext()
-	 * @see ReactiveTransactionSynchronization
-	 */
-	public static Mono<ReactiveTransactionSynchronization> currentActiveReactiveTransactionSynchronization() {
-
-		return currentReactiveTransactionSynchronization()
-				.filter(ReactiveTransactionSynchronization::isSynchronizationActive) //
-				.switchIfEmpty(Mono.error(new NoTransactionException("ReactiveTransactionSynchronization not active!")));
-	}
-
-	/**
 	 * Obtain the {@link io.r2dbc.spi.ConnectionFactory} from the current subscriber {@link reactor.util.context.Context}.
 	 *
-	 * @see Mono#subscriberContext()
-	 * @see ReactiveTransactionSynchronization
-	 * @see TransactionResources
+	 * @see TransactionSynchronizationManager
 	 */
 	public static Mono<ConnectionFactory> currentConnectionFactory(ConnectionFactory connectionFactory) {
 
@@ -347,8 +248,7 @@ public abstract class ConnectionFactoryUtils {
 						return true;
 					}
 					return false;
-				}).map(it -> connectionFactory) //
-				.onErrorResume(NoTransactionException.class, ConnectionFactoryUtils::obtainDefaultConnectionFactory);
+				}).map(it -> connectionFactory);
 	}
 
 	/**
@@ -408,20 +308,6 @@ public abstract class ConnectionFactoryUtils {
 			current = ((DelegatingConnectionFactory) current).getTargetConnectionFactory();
 		}
 		return order;
-	}
-
-	/**
-	 * @param e
-	 * @return an {@link Mono#error(Throwable) error} if not transaction present.
-	 */
-	private static Mono<? extends ConnectionFactory> obtainDefaultConnectionFactory(NoTransactionException e) {
-
-		return currentActiveReactiveTransactionSynchronization().map(synchronization -> {
-
-			TransactionResources currentSynchronization = synchronization.getCurrentTransaction();
-			return currentSynchronization.getResource(ConnectionFactory.class);
-		}).switchIfEmpty(Mono.error(
-				new DataAccessResourceFailureException("Cannot extract ConnectionFactory from current TransactionContext!")));
 	}
 
 	/**

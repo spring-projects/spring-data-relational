@@ -40,9 +40,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.core.TransactionalDatabaseClient;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
@@ -52,6 +52,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.reactive.TransactionalOperator;
 
 /**
  * Abstract base class for integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
@@ -60,9 +61,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
-	private static RelationalMappingContext mappingContext = new RelationalMappingContext();
-
 	@Autowired private LegoSetRepository repository;
+	@Autowired private ConnectionFactory connectionFactory;
 	private JdbcTemplate jdbc;
 
 	@Before
@@ -174,25 +174,18 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@Test
 	public void shouldInsertItemsTransactional() {
 
-		R2dbcDialect dialect = DialectResolver.getDialect(createConnectionFactory());
-		DefaultReactiveDataAccessStrategy dataAccessStrategy = new DefaultReactiveDataAccessStrategy(dialect,
-				new MappingR2dbcConverter(mappingContext));
-		TransactionalDatabaseClient client = TransactionalDatabaseClient.builder()
-				.connectionFactory(createConnectionFactory()).dataAccessStrategy(dataAccessStrategy).build();
 
-		LegoSetRepository transactionalRepository = new R2dbcRepositoryFactory(client, dataAccessStrategy)
-				.getRepository(getRepositoryInterfaceType());
+		R2dbcTransactionManager r2dbcTransactionManager = new R2dbcTransactionManager(connectionFactory);
+		TransactionalOperator rxtx = TransactionalOperator.create(r2dbcTransactionManager);
 
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
 		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
 
-		Flux<Map<String, Object>> transactional = client.inTransaction(db -> {
+		Mono<Map<String, Object>> transactional = repository.save(legoSet1) //
+				.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset")).as(rxtx::transactional);
 
-			return transactionalRepository.save(legoSet1) //
-					.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset"));
-		});
 
-		Mono<Map<String, Object>> nonTransactional = transactionalRepository.save(legoSet2) //
+		Mono<Map<String, Object>> nonTransactional = repository.save(legoSet2) //
 				.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset"));
 
 		transactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 0L)).verifyComplete();

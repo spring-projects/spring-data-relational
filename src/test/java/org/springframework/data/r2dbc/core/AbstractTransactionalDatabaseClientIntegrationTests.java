@@ -17,17 +17,18 @@ package org.springframework.data.r2dbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 
-import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import javax.sql.DataSource;
+
 import org.assertj.core.api.Condition;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -36,22 +37,16 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.TransactionalDatabaseClient;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.NoTransactionException;
 import org.springframework.transaction.ReactiveTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 /**
- * Abstract base class for integration tests for {@link TransactionalDatabaseClient}.
+ * Abstract base class for transactional integration tests for {@link DatabaseClient}.
  *
  * @author Mark Paluch
  * @author Christoph Strobl
@@ -64,6 +59,10 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 	AnnotationConfigApplicationContext context;
 	TransactionalService service;
+
+	DatabaseClient databaseClient;
+	R2dbcTransactionManager transactionManager;
+	TransactionalOperator rxtx;
 
 	@Before
 	public void before() {
@@ -80,10 +79,13 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		jdbc = createJdbcTemplate(createDataSource());
 		try {
 			jdbc.execute("DROP TABLE legoset");
-		} catch (DataAccessException e) {
-		}
+		} catch (DataAccessException e) {}
 		jdbc.execute(getCreateTableStatement());
 		jdbc.execute("DELETE FROM legoset");
+
+		databaseClient = DatabaseClient.create(connectionFactory);
+		transactionManager = new R2dbcTransactionManager(connectionFactory);
+		rxtx = TransactionalOperator.create(transactionManager);
 	}
 
 	@After
@@ -143,15 +145,12 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2
 	public void executeInsertInManagedTransaction() {
 
-		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
-
-		Flux<Integer> integerFlux = databaseClient.inTransaction(db -> db //
+		Mono<Integer> integerFlux = databaseClient //
 				.execute(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
-				.fetch().rowsUpdated() //
-		);
+				.fetch().rowsUpdated().as(rxtx::transactional);
 
 		integerFlux.as(StepVerifier::create) //
 				.expectNext(1) //
@@ -163,13 +162,11 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2
 	public void executeInsertInAutoCommitTransaction() {
 
-		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
-
 		Mono<Integer> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
-				.fetch().rowsUpdated();
+				.fetch().rowsUpdated().as(rxtx::transactional);
 
 		integerFlux.as(StepVerifier::create) //
 				.expectNext(1) //
@@ -179,57 +176,14 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	}
 
 	@Test // gh-2
-	public void shouldManageUserTransaction() {
-
-		Queue<Long> transactionIds = new ArrayBlockingQueue<>(5);
-		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
-
-		Flux<Long> txId = databaseClient //
-				.execute(getCurrentTransactionIdStatement()) //
-				.map((r, md) -> r.get(0, Long.class)) //
-				.all();
-
-		Mono<Void> then = databaseClient.enableTransactionSynchronization(databaseClient.beginTransaction() //
-				.thenMany(txId.concatWith(txId).doOnNext(transactionIds::add)) //
-				.then(databaseClient.rollbackTransaction()));
-
-		then.as(StepVerifier::create) //
-				.verifyComplete();
-
-		List<Long> listOfTxIds = new ArrayList<>(transactionIds);
-		assertThat(listOfTxIds).hasSize(2);
-		assertThat(listOfTxIds).containsExactly(listOfTxIds.get(1), listOfTxIds.get(0));
-	}
-
-	@Test // gh-2
-	public void userTransactionManagementShouldFailWithoutSynchronizer() {
-
-		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
-
-		Mono<Void> then = databaseClient.beginTransaction().then(databaseClient.rollbackTransaction());
-
-		then.as(StepVerifier::create) //
-				.consumeErrorWith(exception -> {
-
-					assertThat(exception).isInstanceOf(NoTransactionException.class)
-							.hasMessageContaining("Transaction management is not enabled");
-				}).verify();
-	}
-
-	@Test // gh-2
 	public void shouldRollbackTransaction() {
 
-		TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
-
-		Flux<Integer> integerFlux = databaseClient.inTransaction(db -> {
-
-			return db.execute(getInsertIntoLegosetStatement()) //
-					.bind(0, 42055) //
-					.bind(1, "SCHAUFELRADBAGGER") //
-					.bindNull(2, Integer.class) //
-					.fetch().rowsUpdated() //
-					.then(Mono.error(new IllegalStateException("failed")));
-		});
+		Mono<Object> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
+				.bind(0, 42055) //
+				.bind(1, "SCHAUFELRADBAGGER") //
+				.bindNull(2, Integer.class) //
+				.fetch().rowsUpdated() //
+				.then(Mono.error(new IllegalStateException("failed"))).as(rxtx::transactional);
 
 		integerFlux.as(StepVerifier::create) //
 				.expectError(IllegalStateException.class) //
@@ -242,17 +196,12 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2, gh-75, gh-107
 	public void emitTransactionIds() {
 
-		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
-
-		TransactionalOperator transactionalOperator = TransactionalOperator
-				.create(new R2dbcTransactionManager(connectionFactory), new DefaultTransactionDefinition());
-
 		Flux<Object> txId = databaseClient.execute(getCurrentTransactionIdStatement()) //
 				.map((row, md) -> row.get(0)) //
 				.all();
 
 		Flux<Object> transactionIds = prepareForTransaction(databaseClient).thenMany(txId.concatWith(txId)) //
-				.as(transactionalOperator::transactional);
+				.as(rxtx::transactional);
 
 		transactionIds.collectList().as(StepVerifier::create) //
 				.consumeNextWith(actual -> {
@@ -271,8 +220,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		TransactionalOperator transactionalOperator = TransactionalOperator
 				.create(new R2dbcTransactionManager(connectionFactory), new DefaultTransactionDefinition());
 
-		Flux<Integer> integerFlux = databaseClient.execute() //
-				.sql(getInsertIntoLegosetStatement()) //
+		Flux<Integer> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
@@ -290,10 +238,11 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		assertThat(count).isEqualTo(0);
 	}
 
-	@Test //gh-107
+	@Test // gh-107
 	public void emitTransactionIdsUsingManagedTransactions() {
 
-		service.emitTransactionIds(prepareForTransaction(service.getDatabaseClient()), getCurrentTransactionIdStatement()).collectList().as(StepVerifier::create) //
+		service.emitTransactionIds(prepareForTransaction(service.getDatabaseClient()), getCurrentTransactionIdStatement())
+				.collectList().as(StepVerifier::create) //
 				.consumeNextWith(actual -> {
 
 					assertThat(actual).hasSize(2);
@@ -352,19 +301,17 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		@Transactional
 		public Flux<Object> emitTransactionIds(Mono<Void> prepareTransaction, String idStatement) {
 
-			Flux<Object> txId = databaseClient.execute() //
-					.sql(idStatement) //
+			Flux<Object> txId = databaseClient.execute(idStatement) //
 					.map((row, md) -> row.get(0)) //
 					.all();
 
 			return prepareTransaction.thenMany(txId.concatWith(txId));
 		}
 
-
 		@Transactional
 		public Flux<Integer> shouldRollbackTransactionUsingTransactionalOperator(String insertStatement) {
 
-			return databaseClient.execute().sql(insertStatement) //
+			return databaseClient.execute(insertStatement) //
 					.bind(0, 42055) //
 					.bind(1, "SCHAUFELRADBAGGER") //
 					.bindNull(2, Integer.class) //

@@ -70,7 +70,7 @@ public class H2IntegrationTests {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
 
-		databaseClient.execute().sql("SELECT COUNT(*) FROM legoset") //
+		databaseClient.execute("SELECT COUNT(*) FROM legoset") //
 				.as(Long.class) //
 				.fetch() //
 				.all() //
