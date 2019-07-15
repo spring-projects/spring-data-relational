@@ -134,7 +134,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 							entity = repository.save(entity);
 
-							assertThat(repository.findById(entity.id).get()).isEqualTo(entity);
+							assertThat(repository.findById(entity.id)).contains(entity);
 						});
 	}
 
@@ -192,7 +192,6 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
 							assertThat(entity.id).isNotNull();
-
 						});
 	}
 
