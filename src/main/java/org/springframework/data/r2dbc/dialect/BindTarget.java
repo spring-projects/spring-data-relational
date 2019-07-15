@@ -44,7 +44,7 @@ public interface BindTarget {
 	void bind(int index, Object value);
 
 	/**
-	 * Bind a {@code null} value.
+	 * Bind a {@literal null} value.
 	 *
 	 * @param identifier the identifier to bind to.
 	 * @param type the type of {@literal null} value.
@@ -52,7 +52,7 @@ public interface BindTarget {
 	void bindNull(Object identifier, Class<?> type);
 
 	/**
-	 * Bind a {@code null} value.
+	 * Bind a {@literal null} value.
 	 *
 	 * @param index the index to bind to.
 	 * @param type the type of {@literal null} value.

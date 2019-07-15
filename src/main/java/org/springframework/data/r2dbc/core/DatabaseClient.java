@@ -53,7 +53,8 @@ public interface DatabaseClient {
 	 *
 	 * @param sql must not be {@literal null} or empty.
 	 * @return a new {@link GenericExecuteSpec}.
-	 * @see NamedParameterExpander * @see DatabaseClient.Builder#namedParameters(boolean)
+	 * @see NamedParameterExpander
+	 * @see DatabaseClient.Builder#namedParameters(boolean)
 	 */
 	GenericExecuteSpec execute(String sql);
 

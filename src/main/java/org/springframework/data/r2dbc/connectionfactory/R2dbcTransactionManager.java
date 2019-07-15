@@ -127,7 +127,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	/**
 	 * Obtain the {@link ConnectionFactory} for actual use.
 	 *
-	 * @return the {@link ConnectionFactory} (never {@code null})
+	 * @return the {@link ConnectionFactory} (never {@literal null})
 	 * @throws IllegalStateException in case of no ConnectionFactory set
 	 */
 	protected ConnectionFactory obtainConnectionFactory() {

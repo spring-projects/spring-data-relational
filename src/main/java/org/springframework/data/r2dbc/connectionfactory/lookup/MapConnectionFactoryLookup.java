@@ -65,7 +65,7 @@ public class MapConnectionFactoryLookup implements ConnectionFactoryLookup {
 	 * Set the {@link Map} of {@link ConnectionFactory ConnectionFactories}. The keys are {@link String Strings}, the
 	 * values are actual {@link ConnectionFactory} instances.
 	 * <p>
-	 * If the supplied {@link Map} is {@code null}, then this method call effectively has no effect.
+	 * If the supplied {@link Map} is {@literal null}, then this method call effectively has no effect.
 	 *
 	 * @param connectionFactories said {@link Map} of {@link ConnectionFactory connectionFactories}
 	 */

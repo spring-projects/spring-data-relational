@@ -18,8 +18,6 @@ package org.springframework.data.r2dbc.connectionfactory;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,9 +59,10 @@ public abstract class ConnectionFactoryUtils {
 	 * Is aware of a corresponding Connection bound to the current {@link reactor.util.context.Context}. Will bind a
 	 * Connection to the {@link reactor.util.context.Context} if transaction synchronization is active.
 	 *
-	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} to obtain Connections from
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} to obtain {@link io.r2dbc.spi.Connection
+	 *          Connections} from.
 	 * @return a R2DBC Connection from the given {@link io.r2dbc.spi.ConnectionFactory}.
-	 * @throws DataAccessResourceFailureException if the attempt to get a {@link io.r2dbc.spi.Connection} failed
+	 * @throws DataAccessResourceFailureException if the attempt to get a {@link io.r2dbc.spi.Connection} failed.
 	 * @see #releaseConnection
 	 */
 	public static Mono<Connection> getConnection(ConnectionFactory connectionFactory) {
@@ -72,14 +71,14 @@ public abstract class ConnectionFactoryUtils {
 	}
 
 	/**
-	 * Actually obtain a R2DBC Connection from the given {@link ConnectionFactory}. Same as {@link #getConnection}, but
-	 * preserving the original exceptions.
+	 * Actually obtain a R2DBC Connection from the given {@link io.r2dbc.spi.ConnectionFactory}. Same as
+	 * {@link #getConnection}, but preserving the original exceptions.
 	 * <p>
 	 * Is aware of a corresponding Connection bound to the current {@link reactor.util.context.Context}. Will bind a
 	 * Connection to the {@link reactor.util.context.Context} if transaction synchronization is active.
 	 *
-	 * @param connectionFactory the {@link ConnectionFactory} to obtain Connections from.
-	 * @return a R2DBC {@link io.r2dbc.spi.Connection} from the given {@link ConnectionFactory}.
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} to obtain Connections from.
+	 * @return a R2DBC {@link io.r2dbc.spi.Connection} from the given {@link io.r2dbc.spi.ConnectionFactory}.
 	 */
 	public static Mono<Connection> doGetConnection(ConnectionFactory connectionFactory) {
 
@@ -143,12 +142,14 @@ public abstract class ConnectionFactoryUtils {
 	}
 
 	/**
-	 * Actually fetch a {@link Connection} from the given {@link ConnectionFactory}, defensively turning an unexpected
-	 * {@code null} return value from {@link ConnectionFactory#create()} into an {@link IllegalStateException}.
+	 * Actually fetch a {@link io.r2dbc.spi.Connection} from the given {@link io.r2dbc.spi.ConnectionFactory}, defensively
+	 * turning an unexpected {@literal null} return value from {@link io.r2dbc.spi.ConnectionFactory#create()} into an
+	 * {@link IllegalStateException}.
 	 *
-	 * @param connectionFactory the {@link ConnectionFactory} to obtain {@link Connection}s from
-	 * @return a R2DBC {@link Connection} from the given {@link ConnectionFactory} (never {@code null})
-	 * @throws IllegalStateException if the {@link ConnectionFactory} returned a {@literal null} value.
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} to obtain {@link io.r2dbc.spi.Connection}s from
+	 * @return a R2DBC {@link io.r2dbc.spi.Connection} from the given {@link io.r2dbc.spi.ConnectionFactory} (never
+	 *         {@literal null}).
+	 * @throws IllegalStateException if the {@link io.r2dbc.spi.ConnectionFactory} returned a {@literal null} value.
 	 * @see ConnectionFactory#create()
 	 */
 	private static Mono<Connection> fetchConnection(ConnectionFactory connectionFactory) {
@@ -156,32 +157,29 @@ public abstract class ConnectionFactoryUtils {
 	}
 
 	/**
-	 * Close the given {@link io.r2dbc.spi.Connection}, obtained from the given {@link ConnectionFactory}, if it is not
-	 * managed externally (that is, not bound to the thread).
+	 * Close the given {@link io.r2dbc.spi.Connection}, obtained from the given {@link io.r2dbc.spi.ConnectionFactory}, if
+	 * it is not managed externally (that is, not bound to the thread).
 	 *
 	 * @param con the {@link io.r2dbc.spi.Connection} to close if necessary.
-	 * @param connectionFactory the {@link ConnectionFactory} that the Connection was obtained from (may be
-	 *          {@literal null}).
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} that the Connection was obtained from.
 	 * @see #getConnection
 	 */
-	public static Mono<Void> releaseConnection(@Nullable io.r2dbc.spi.Connection con,
-			@Nullable ConnectionFactory connectionFactory) {
+	public static Mono<Void> releaseConnection(io.r2dbc.spi.Connection con, ConnectionFactory connectionFactory) {
 
 		return doReleaseConnection(con, connectionFactory)
 				.onErrorMap(e -> new DataAccessResourceFailureException("Failed to close R2DBC Connection", e));
 	}
 
 	/**
-	 * Actually close the given {@link io.r2dbc.spi.Connection}, obtained from the given {@link ConnectionFactory}. Same
-	 * as {@link #releaseConnection}, but preserving the original exception.
+	 * Actually close the given {@link io.r2dbc.spi.Connection}, obtained from the given
+	 * {@link io.r2dbc.spi.ConnectionFactory}. Same as {@link #releaseConnection}, but preserving the original exception.
 	 *
 	 * @param connection the {@link io.r2dbc.spi.Connection} to close if necessary.
-	 * @param connectionFactory the {@link ConnectionFactory} that the Connection was obtained from (may be
-	 *          {@literal null}).
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} that the Connection was obtained from.
 	 * @see #doGetConnection
 	 */
-	public static Mono<Void> doReleaseConnection(@Nullable io.r2dbc.spi.Connection connection,
-			@Nullable ConnectionFactory connectionFactory) {
+	public static Mono<Void> doReleaseConnection(io.r2dbc.spi.Connection connection,
+			ConnectionFactory connectionFactory) {
 
 		return TransactionSynchronizationManager.forCurrentTransaction().flatMap(it -> {
 
@@ -200,11 +198,16 @@ public abstract class ConnectionFactoryUtils {
 	 * Close the {@link io.r2dbc.spi.Connection}. Translates exceptions into the Spring hierarchy of unchecked generic
 	 * data access exceptions, simplifying calling code and making any exception that is thrown more meaningful.
 	 *
-	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} to obtain Connections from
+	 * @param connection the {@link io.r2dbc.spi.Connection} to close.
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} that the {@link io.r2dbc.spi.Connection} was
+	 *          obtained from.
 	 * @return a R2DBC Connection from the given {@link io.r2dbc.spi.ConnectionFactory}.
 	 * @throws DataAccessResourceFailureException if the attempt to get a {@link io.r2dbc.spi.Connection} failed
 	 */
 	public static Mono<Void> closeConnection(Connection connection, ConnectionFactory connectionFactory) {
+
+		Assert.notNull(connection, "Connection must not be null!");
+		Assert.notNull(connectionFactory, "ConnectionFactory must not be null!");
 
 		return doCloseConnection(connection, connectionFactory)
 				.onErrorMap(e -> new DataAccessResourceFailureException("Failed to obtain R2DBC Connection", e));
@@ -214,7 +217,7 @@ public abstract class ConnectionFactoryUtils {
 	 * Close the {@link io.r2dbc.spi.Connection}, unless a {@link SmartConnectionFactory} doesn't want us to.
 	 *
 	 * @param connection the {@link io.r2dbc.spi.Connection} to close if necessary.
-	 * @param connectionFactory the {@link ConnectionFactory} that the Connection was obtained from.
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} that the Connection was obtained from.
 	 * @see Connection#close()
 	 * @see SmartConnectionFactory#shouldClose(Connection)
 	 */
@@ -236,6 +239,7 @@ public abstract class ConnectionFactoryUtils {
 	/**
 	 * Obtain the {@link io.r2dbc.spi.ConnectionFactory} from the current subscriber {@link reactor.util.context.Context}.
 	 *
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} that the Connection was obtained from.
 	 * @see TransactionSynchronizationManager
 	 */
 	public static Mono<ConnectionFactory> currentConnectionFactory(ConnectionFactory connectionFactory) {
@@ -252,12 +256,13 @@ public abstract class ConnectionFactoryUtils {
 	}
 
 	/**
-	 * Determine whether the given two {@link Connection}s are equal, asking the target {@link Connection} in case of a
-	 * proxy. Used to detect equality even if the user passed in a raw target Connection while the held one is a proxy.
+	 * Determine whether the given two {@link io.r2dbc.spi.Connection}s are equal, asking the target
+	 * {@link io.r2dbc.spi.Connection} in case of a proxy. Used to detect equality even if the user passed in a raw target
+	 * Connection while the held one is a proxy.
 	 *
-	 * @param conHolder the {@link ConnectionHolder} for the held Connection (potentially a proxy)
-	 * @param passedInCon the {@link Connection} passed-in by the user (potentially a target {@link Connection} without
-	 *          proxy)
+	 * @param conHolder the {@link .ConnectionHolder} for the held {@link io.r2dbc.spi.Connection} (potentially a proxy).
+	 * @param passedInCon the {@link io.r2dbc.spi.Connection} passed-in by the user (potentially a target
+	 *          {@link io.r2dbc.spi.Connection} without proxy).
 	 * @return whether the given Connections are equal
 	 * @see #getTargetConnection
 	 */
@@ -273,11 +278,11 @@ public abstract class ConnectionFactoryUtils {
 	}
 
 	/**
-	 * Return the innermost target {@link Connection} of the given {@link Connection}. If the given {@link Connection} is
-	 * a proxy, it will be unwrapped until a non-proxy {@link Connection} is found. Otherwise, the passed-in Connection
-	 * will be returned as-is.
+	 * Return the innermost target {@link io.r2dbc.spi.Connection} of the given {@link io.r2dbc.spi.Connection}. If the
+	 * given {@link io.r2dbc.spi.Connection} is a proxy, it will be unwrapped until a non-proxy
+	 * {@link io.r2dbc.spi.Connection} is found. Otherwise, the passed-in Connection will be returned as-is.
 	 *
-	 * @param con the {@link Connection} proxy to unwrap
+	 * @param con the {@link io.r2dbc.spi.Connection} proxy to unwrap
 	 * @return the innermost target Connection, or the passed-in one if no proxy
 	 * @see ConnectionProxy#getTargetConnection()
 	 */
@@ -291,11 +296,11 @@ public abstract class ConnectionFactoryUtils {
 	}
 
 	/**
-	 * Determine the connection synchronization order to use for the given {@link ConnectionFactory}. Decreased for every
-	 * level of nesting that a {@link ConnectionFactory} has, checked through the level of
-	 * {@link DelegatingConnectionFactory} nesting.
+	 * Determine the connection synchronization order to use for the given {@link io.r2dbc.spi.ConnectionFactory}.
+	 * Decreased for every level of nesting that a {@link io.r2dbc.spi.ConnectionFactory} has, checked through the level
+	 * of {@link DelegatingConnectionFactory} nesting.
 	 *
-	 * @param connectionFactory the {@link ConnectionFactory} to check.
+	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} to check.
 	 * @return the connection synchronization order to use.
 	 * @see #CONNECTION_SYNCHRONIZATION_ORDER
 	 */
@@ -308,22 +313,6 @@ public abstract class ConnectionFactoryUtils {
 			current = ((DelegatingConnectionFactory) current).getTargetConnectionFactory();
 		}
 		return order;
-	}
-
-	/**
-	 * Create a {@link Connection} via the given {@link ConnectionFactory#create() factory} and return a {@link Tuple2}
-	 * associating the {@link Connection} with its creating {@link ConnectionFactory}.
-	 *
-	 * @param factory must not be {@literal null}.
-	 * @return never {@literal null}
-	 */
-	private static Mono<Tuple2<Connection, ConnectionFactory>> createConnection(ConnectionFactory factory) {
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("Fetching resumed R2DBC Connection from ConnectionFactory");
-		}
-
-		return Mono.from(factory.create()).map(connection -> Tuples.of(connection, factory));
 	}
 
 	/**

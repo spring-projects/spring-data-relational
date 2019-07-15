@@ -100,9 +100,10 @@ public class ConnectionHolder extends ResourceHolderSupport {
 	}
 
 	/**
-	 * Override the existing Connection handle with the given {@link Connection}. Reset the handle if given {@code null}.
+	 * Override the existing Connection handle with the given {@link Connection}. Reset the handle if given
+	 * {@literal null}.
 	 * <p>
-	 * Used for releasing the {@link Connection} on suspend (with a {@code null} argument) and setting a fresh
+	 * Used for releasing the {@link Connection} on suspend (with a {@literal null} argument) and setting a fresh
 	 * {@link Connection} on resume.
 	 */
 	protected void setConnection(@Nullable Connection connection) {

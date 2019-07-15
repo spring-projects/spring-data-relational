@@ -32,8 +32,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Value object representing value and {@code null} bindings for a {@link Statement} using {@link BindMarkers}. Bindings
- * are typically immutable.
+ * Value object representing value and {@literal null} bindings for a {@link Statement} using {@link BindMarkers}.
+ * Bindings are typically immutable.
  *
  * @author Mark Paluch
  */

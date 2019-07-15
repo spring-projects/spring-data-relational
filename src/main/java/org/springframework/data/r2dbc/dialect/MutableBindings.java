@@ -22,7 +22,7 @@ import java.util.LinkedHashMap;
 import org.springframework.util.Assert;
 
 /**
- * Mutable extension to {@link Bindings} for Value and {@code null} bindings for a {@link Statement} using
+ * Mutable extension to {@link Bindings} for Value and {@literal null} bindings for a {@link Statement} using
  * {@link BindMarkers}.
  *
  * @author Mark Paluch
@@ -51,7 +51,7 @@ public class MutableBindings extends Bindings {
 	 * @return the next {@link BindMarker}.
 	 */
 	public BindMarker nextMarker() {
-		return markers.next();
+		return this.markers.next();
 	}
 
 	/**
@@ -61,7 +61,7 @@ public class MutableBindings extends Bindings {
 	 * @return the next {@link BindMarker}.
 	 */
 	public BindMarker nextMarker(String hint) {
-		return markers.next(hint);
+		return this.markers.next(hint);
 	}
 
 	/**

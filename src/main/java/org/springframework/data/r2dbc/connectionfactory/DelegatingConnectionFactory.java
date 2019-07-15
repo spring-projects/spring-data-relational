@@ -78,7 +78,7 @@ public class DelegatingConnectionFactory implements ConnectionFactory, Wrapped<C
 	}
 
 	/**
-	 * Obtain the target {@link ConnectionFactory} for actual use (never {@code null}).
+	 * Obtain the target {@link ConnectionFactory} for actual use (never {@literal null}).
 	 */
 	protected ConnectionFactory obtainTargetConnectionFactory() {
 		return getTargetConnectionFactory();
