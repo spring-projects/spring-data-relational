@@ -16,18 +16,26 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.mapping.callback.EntityCallback;
-import org.springframework.lang.Nullable;
 
 /**
- * An {@link EntityCallback} that gets called after an aggregate got deleted. This callback gets only invoked if
- * the method deleting the aggregate received an instance of that aggregate as an argument. Methods deleting entities by id or
- * without any parameter don't invoke this callback.
- * 
- * @since 1.1
+ * An {@link EntityCallback} that gets called after an aggregate got deleted. This callback gets only invoked if the
+ * method deleting the aggregate received an instance of that aggregate as an argument. Methods deleting entities by id
+ * or without any parameter don't invoke this callback.
+ *
  * @author Jens Schauder
+ * @author Mark Paluch
+ * @since 1.1
  */
 @FunctionalInterface
 public interface AfterDeleteCallback<T> extends EntityCallback<T> {
 
-	T onAfterDelete(@Nullable T aggregate, Identifier id);
+	/**
+	 * Entity callback method invoked after an aggregate root was deleted. Can return either the same or a modified
+	 * instance of the aggregate object.
+	 *
+	 * @param aggregate the aggregate that was deleted.
+	 * @param id identifier.
+	 * @return the aggregate that was deleted.
+	 */
+	T onAfterDelete(T aggregate, Identifier id);
 }

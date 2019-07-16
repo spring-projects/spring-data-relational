@@ -18,13 +18,23 @@ package org.springframework.data.relational.core.mapping.event;
 import org.springframework.data.mapping.callback.EntityCallback;
 
 /**
- * An {@link EntityCallback} that gets invoked before the aggregate gets converted into a database change. The decision
- * if the change will be an insert or update will be made before this callback gets called.
- * 
- * @since 1.1
+ * An {@link EntityCallback} that gets invoked before the aggregate is converted into a database change. The decision if
+ * the change will be an insert or update is made before this callback gets called.
+ *
  * @author Jens Schauder
+ * @author Mark Paluch
+ * @since 1.1
  */
 @FunctionalInterface
 public interface BeforeConvertCallback<T> extends EntityCallback<T> {
+
+	/**
+	 * Entity callback method invoked before an aggregate root is converted to be persisted. Can return either the same or
+	 * a modified instance of the aggregate.
+	 *
+	 * @param aggregate the saved aggregate.
+	 * @param id identifier.
+	 * @return the aggregate to be persisted.
+	 */
 	T onBeforeConvert(T aggregate, Identifier id);
 }

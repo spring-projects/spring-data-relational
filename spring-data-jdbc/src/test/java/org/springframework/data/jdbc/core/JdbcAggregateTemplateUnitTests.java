@@ -35,6 +35,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.mapping.callback.EntityCallbacks;
+import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -47,7 +48,10 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback
 import org.springframework.data.relational.core.mapping.event.Identifier;
 
 /**
+ * Unit tests for {@link JdbcAggregateTemplate}.
+ *
  * @author Christoph Strobl
+ * @author Mark Paluch
  */
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcAggregateTemplateUnitTests {
@@ -98,7 +102,8 @@ public class JdbcAggregateTemplateUnitTests {
 		SampleEntity last = template.save(first);
 
 		verify(callbacks).callback(BeforeConvertCallback.class, first, Identifier.ofNullable(null));
-		verify(callbacks).callback(BeforeSaveCallback.class, second, Identifier.ofNullable(23L));
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), eq(second), eq(Identifier.ofNullable(23L)),
+				any(AggregateChange.class));
 		verify(callbacks).callback(AfterSaveCallback.class, third, Identifier.of(23L));
 		assertThat(last).isEqualTo(third);
 	}
@@ -109,11 +114,12 @@ public class JdbcAggregateTemplateUnitTests {
 		SampleEntity first = new SampleEntity(23L, "Alfred");
 		SampleEntity second = new SampleEntity(23L, "Alfred E.");
 
-		when(callbacks.callback(any(Class.class), any(), any())).thenReturn(second);
+		when(callbacks.callback(any(Class.class), any(), any(), any())).thenReturn(second);
 
 		template.delete(first, SampleEntity.class);
 
-		verify(callbacks).callback(BeforeDeleteCallback.class, first, Identifier.of(23L));
+		verify(callbacks).callback(eq(BeforeDeleteCallback.class), eq(first), eq(Identifier.of(23L)),
+				any(AggregateChange.class));
 		verify(callbacks).callback(AfterDeleteCallback.class, second, Identifier.of(23L));
 	}
 

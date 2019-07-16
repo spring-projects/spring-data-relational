@@ -28,7 +28,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
  * @author Kazuki Shimizu
  * @author Jens Schauder
  * @author Oliver Gierke
- * @deprecated Use {@link RelationalAuditingCallback} instead.
+ * @deprecated since 1.1, use {@link RelationalAuditingCallback} instead.
  */
 @Deprecated
 @RequiredArgsConstructor

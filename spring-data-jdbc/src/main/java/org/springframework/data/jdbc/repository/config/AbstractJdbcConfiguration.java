@@ -17,8 +17,7 @@ package org.springframework.data.jdbc.repository.config;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -75,7 +74,7 @@ public class AbstractJdbcConfiguration {
 	 * Creates a {@link RelationalConverter} using the configured {@link #jdbcMappingContext(Optional)}. Will get
 	 * {@link #jdbcCustomConversions()} applied.
 	 *
-	 * @see #jdbcMappingContext(Optional)
+	 * @see #jdbcMappingContext(Optional, JdbcCustomConversions)
 	 * @see #jdbcCustomConversions()
 	 * @return must not be {@literal null}.
 	 */
@@ -91,7 +90,7 @@ public class AbstractJdbcConfiguration {
 	/**
 	 * Register custom {@link Converter}s in a {@link JdbcCustomConversions} object if required. These
 	 * {@link JdbcCustomConversions} will be registered with the
-	 * {@link #jdbcConverter(RelationalMappingContext, NamedParameterJdbcOperations, ObjectProvider, Optional, JdbcConverter)}.
+	 * {@link #jdbcConverter(RelationalMappingContext, NamedParameterJdbcOperations, RelationResolver, JdbcCustomConversions)}.
 	 * Returns an empty {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return will never be {@literal null}.
@@ -105,16 +104,16 @@ public class AbstractJdbcConfiguration {
 	 * Register a {@link JdbcAggregateTemplate} as a bean for easy use in applications that need a lower level of
 	 * abstraction than the normal repository abstraction.
 	 *
-	 * @param publisher for publishing events. Must not be {@literal null}.
-	 * @param context the mapping context to be used. Must not be {@literal null}.
+	 * @param applicationContext for publishing events. Must not be {@literal null}.
+	 * @param mappingContext the mapping context to be used. Must not be {@literal null}.
 	 * @param converter the conversions used when reading and writing from/to the database. Must not be {@literal null}.
 	 * @return a {@link JdbcAggregateTemplate}. Will never be {@literal null}.
 	 */
 	@Bean
-	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationEventPublisher publisher,
-			RelationalMappingContext context, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
+	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationContext applicationContext,
+			RelationalMappingContext mappingContext, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
-		return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
+		return new JdbcAggregateTemplate(applicationContext, mappingContext, converter, dataAccessStrategy);
 	}
 
 	/**

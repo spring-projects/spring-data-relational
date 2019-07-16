@@ -16,17 +16,29 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.mapping.callback.EntityCallback;
+import org.springframework.data.relational.core.conversion.AggregateChange;
 
 /**
- * An {@link EntityCallback} that gets invoked before an entity gets deleted.This callback gets only invoked if * the
+ * An {@link EntityCallback} that gets invoked before an entity is deleted. This callback gets only invoked if the
  * method deleting the aggregate received an instance of that aggregate as an argument. Methods deleting entities by id
- * or * without any parameter don't invoke this callback.
+ * or without any parameter don't invoke this callback.
  *
- * @since 1.1
  * @author Jens Schauder
+ * @since 1.1
  */
 @FunctionalInterface
 public interface BeforeDeleteCallback<T> extends EntityCallback<T> {
 
-	T onBeforeDelete(T aggregate, Identifier id);
+	/**
+	 * Entity callback method invoked before an aggregate root is deleted. Can return either the same or a modified
+	 * instance of the aggregate and can modify {@link AggregateChange} contents. This method is called after converting
+	 * the {@code aggregate} to {@link AggregateChange}. Changes to the aggregate are not taken into account for deleting.
+	 * Only transient fields of the entity should be changed in this callback.
+	 *
+	 * @param aggregate the aggregate.
+	 * @param id identifier.
+	 * @param aggregateChange the associated {@link AggregateChange}.
+	 * @return the aggregate to be deleted.
+	 */
+	T onBeforeDelete(T aggregate, Identifier id, AggregateChange<T> aggregateChange);
 }
