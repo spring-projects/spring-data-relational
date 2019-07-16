@@ -443,10 +443,19 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 		databaseClient.select().from(LegoSet.class) //
 				.orderBy(Sort.by(desc("id"))) //
-				.page(PageRequest.of(1, 1)).fetch().all() //
+				.page(PageRequest.of(2, 1)) //
+				.fetch().all() //
 				.map(LegoSet::getId) //
 				.as(StepVerifier::create) //
-				.expectNext(42064) //
+				.expectNext(42055) //
+				.verifyComplete();
+
+		databaseClient.select().from(LegoSet.class) //
+				.page(PageRequest.of(2, 1, Sort.by(Sort.Direction.ASC, "id"))) //
+				.fetch().all() //
+				.map(LegoSet::getId) //
+				.as(StepVerifier::create) //
+				.expectNext(42068) //
 				.verifyComplete();
 	}
 

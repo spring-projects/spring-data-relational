@@ -18,12 +18,12 @@ package org.springframework.data.r2dbc.core;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Collections;
+
 import org.junit.Test;
-import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.core.DefaultStatementMapper;
-import org.springframework.data.r2dbc.core.PreparedOperation;
-import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.core.StatementMapper;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.StatementMapper.UpdateSpec;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -68,5 +68,17 @@ public class StatementMapperUnitTests {
 		preparedOperation.bindTo(bindTarget);
 		verify(bindTarget).bind(0, "value");
 		verify(bindTarget).bind(1, "bar");
+	}
+
+	@Test // gh-148
+	public void shouldMapSelectWithPage() {
+
+		StatementMapper.SelectSpec selectSpec = StatementMapper.SelectSpec.create("table")
+				.withProjection(Collections.singletonList("*"))
+				.withPage(PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "id")));
+
+		PreparedOperation<?> preparedOperation = mapper.getMappedObject(selectSpec);
+
+		assertThat(preparedOperation.toQuery()).isEqualTo("SELECT table.* FROM table ORDER BY id DESC LIMIT 2 OFFSET 2");
 	}
 }

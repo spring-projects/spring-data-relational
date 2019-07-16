@@ -188,7 +188,12 @@ public interface StatementMapper {
 		 * @return the {@link SelectSpec}.
 		 */
 		public SelectSpec withSort(Sort sort) {
-			return new SelectSpec(this.table, this.projectedFields, this.criteria, sort, this.page);
+
+			if (sort.isSorted()) {
+				return new SelectSpec(this.table, this.projectedFields, this.criteria, sort, this.page);
+			}
+
+			return new SelectSpec(this.table, this.projectedFields, this.criteria, this.sort, this.page);
 		}
 
 		/**
