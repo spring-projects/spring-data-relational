@@ -60,6 +60,6 @@ public class DeleteRendererUnitTests {
 				.where(table.column("foo").isEqualTo(table.column("baz"))) //
 				.build();
 
-		assertThat(SqlRenderer.toString(delete)).isEqualTo("DELETE FROM bar AS my_bar WHERE my_bar.foo = my_bar.baz");
+		assertThat(SqlRenderer.toString(delete)).isEqualTo("DELETE FROM bar my_bar WHERE my_bar.foo = my_bar.baz");
 	}
 }

@@ -55,7 +55,7 @@ public class SelectRendererUnitTests {
 
 		Select select = Select.builder().select(table.column("foo").as("my_foo")).from(table).build();
 
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT my_bar.foo AS my_foo FROM bar AS my_bar");
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT my_bar.foo AS my_foo FROM bar my_bar");
 	}
 
 	@Test // DATAJDBC-309
@@ -163,8 +163,9 @@ public class SelectRendererUnitTests {
 				.join(tenant).on(tenant.column("tenant_id")).equals(department.column("tenant")) //
 				.build();
 
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
-				+ "JOIN department ON employee.department_id = department.id " + "AND employee.tenant = department.tenant "
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
+				+ "JOIN department ON employee.department_id = department.id " //
+				+ "AND employee.tenant = department.tenant " //
 				+ "JOIN tenant AS tenant_base ON tenant_base.tenant_id = department.tenant");
 	}
 
@@ -177,7 +178,7 @@ public class SelectRendererUnitTests {
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
 
 		assertThat(SqlRenderer.toString(select))
-				.isEqualTo("SELECT emp.name AS emp_name FROM employee AS emp ORDER BY emp_name ASC");
+				.isEqualTo("SELECT emp.name AS emp_name FROM employee emp ORDER BY emp_name ASC");
 	}
 
 	@Test // DATAJDBC-309
