@@ -5,7 +5,7 @@ This chapter points out the specialties for repository support for JDBC. This bu
 You should have a sound understanding of the basic concepts explained there.
 
 [[jdbc.why]]
-=== Why Spring Data JDBC?
+== Why Spring Data JDBC?
 
 The main persistence API for relational databases in the Java world is certainly JPA, which has its own Spring Data module.
 Why is there another one?
@@ -36,7 +36,7 @@ If you do not like that, you should code your own strategy.
 Spring Data JDBC offers only very limited support for customizing the strategy with annotations.
 
 [[jdbc.domain-driven-design]]
-=== Domain Driven Design and Relational Databases.
+== Domain Driven Design and Relational Databases.
 
 All Spring Data modules are inspired by the concepts of "`repository`", "`aggregate`", and "`aggregate root`" from Domain Driven Design.
 These are possibly even more important for Spring Data JDBC, because they are, to some extent, contrary to normal practice when working with relational databases.
@@ -62,7 +62,7 @@ WARNING: In the current implementation, entities referenced from an aggregate ro
 You can overwrite the repository methods with implementations that match your style of working and designing your database.
 
 [[jdbc.java-config]]
-=== Annotation-based Configuration
+== Annotation-based Configuration
 The Spring Data JDBC repositories support can be activated by an annotation through Java configuration, as the following example shows:
 
 .Spring Data JDBC repositories using Java configuration
@@ -563,9 +563,9 @@ Note that the type used for prefixing the statement name is the name of the aggr
 |===
 
 [[jdbc.events]]
-== Events and Callback
+== Lifecycle Events
 
-Spring Data JDBC triggers events that get published to any matching `ApplicationListener` and `EntityCallback` beans in the application context.
+Spring Data JDBC triggers events that get published to any matching `ApplicationListener` beans in the application context.
 For example, the following listener gets invoked before an aggregate gets saved:
 
 ====
@@ -586,33 +586,59 @@ public ApplicationListener<BeforeSave> timeStampingSaveTime() {
 ----
 ====
 
-The following table describes the available events and callbacks:
+The following table describes the available events:
 
 .Available events
 |===
-| Event | `EntityCallback` | When It Is Published
+| Event | When It Is Published
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/BeforeDeleteEvent.html[`BeforeDeleteEvent`]
-| {javadoc-base}org/springframework/data/relational/core/mapping/event/BeforeDeleteCallback.html[`BeforeDeleteCallback`]
 | Before an aggregate root gets deleted.
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterDeleteEvent.html[`AfterDeleteEvent`]
-| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterDeleteCallback.html[`AfterDeleteCallback`]
 | After an aggregate root gets deleted.
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeConvertEvent.html[`BeforeConvertEvent`]
-| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeConvertCallback.html[`BeforeConvertCallback`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveEvent.html[`BeforeSaveEvent`]
-| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveCallback.html[`BeforeSaveCallback`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveEvent.html[`AfterSaveEvent`]
-| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveCallback.html[`AfterSaveCallback`]
 | After an aggregate root gets saved (that is, inserted or updated).
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadEvent.html[`AfterLoadEvent`]
+| After an aggregate root gets created from a database `ResultSet` and all its property get set.
+|===
+
+WARNING: Lifecycle events depend on an `ApplicationEventMulticaster`, which in case of the `SimpleApplicationEventMulticaster` can be configured with a `TaskExecutor`, and therefore gives no guarantees when an Event is processed.
+
+include::../{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
+
+[[jdbc.entity-callbacks]]
+=== Store-specific EntityCallbacks
+
+Spring Data JDBC uses the `EntityCallback` API for its auditing support and reacts on the following callbacks:
+
+.Available Callbacks
+|===
+| `EntityCallback` | When It Is Published
+
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/BeforeDeleteCallback.html[`BeforeDeleteCallback`]
+| Before an aggregate root gets deleted.
+
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterDeleteCallback.html[`AfterDeleteCallback`]
+| After an aggregate root gets deleted.
+
+| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeConvertCallback.html[`BeforeConvertCallback`]
+| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
+
+| {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveCallback.html[`BeforeSaveCallback`]
+| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
+
+| {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterSaveCallback.html[`AfterSaveCallback`]
+| After an aggregate root gets saved (that is, inserted or updated).
+
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadCallback.html[`AfterLoadCallback`]
 | After an aggregate root gets created from a database `ResultSet` and all its property get set.
 |===

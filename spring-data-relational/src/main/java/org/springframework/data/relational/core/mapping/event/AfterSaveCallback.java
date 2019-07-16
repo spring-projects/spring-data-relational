@@ -19,11 +19,21 @@ import org.springframework.data.mapping.callback.EntityCallback;
 
 /**
  * An {@link EntityCallback} that gets invoked after an aggregate was saved.
- * 
- * @since 1.1
+ *
  * @author Jens Schauder
+ * @author Mark Paluch
+ * @since 1.1
  */
 @FunctionalInterface
 public interface AfterSaveCallback<T> extends EntityCallback<T> {
+
+	/**
+	 * Entity callback method invoked after an aggregate root was persisted. Can return either the same or a modified
+	 * instance of the aggregate.
+	 *
+	 * @param aggregate the saved aggregate.
+	 * @param id identifier.
+	 * @return the saved aggregate.
+	 */
 	T onAfterSave(T aggregate, Identifier.Specified id);
 }

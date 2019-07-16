@@ -21,7 +21,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
-import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
 
 /**
@@ -30,9 +29,11 @@ import org.springframework.data.relational.core.mapping.event.Identifier;
  * An instance of this class gets registered when you enable auditing for Spring Data JDBC.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
+ * @since 1.1
  */
 @RequiredArgsConstructor
-public class RelationalAuditingCallback implements BeforeConvertCallback, Ordered {
+public class RelationalAuditingCallback implements BeforeConvertCallback<Object>, Ordered {
 
 	/**
 	 * The order used for this {@link org.springframework.context.event.EventListener}. Ordering ensures that this
@@ -54,6 +55,10 @@ public class RelationalAuditingCallback implements BeforeConvertCallback, Ordere
 		return AUDITING_ORDER;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.event.BeforeConvertCallback#onBeforeConvert(java.lang.Object, org.springframework.data.relational.core.mapping.event.Identifier)
+	 */
 	@Override
 	public Object onBeforeConvert(Object entity, Identifier id) {
 		return handler.markAudited(entity);

@@ -44,7 +44,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -856,7 +855,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 		Map<String, NoIdMapChain3> chain3 = new HashMap<>();
 	}
 
-
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -868,7 +866,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		@Bean
 		JdbcAggregateOperations operations(ApplicationEventPublisher publisher, RelationalMappingContext context,
-										   DataAccessStrategy dataAccessStrategy, RelationalConverter converter) {
+				DataAccessStrategy dataAccessStrategy, RelationalConverter converter) {
 			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 		}
 	}

@@ -119,7 +119,8 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, converter, accessStrategy);
 
-		SimpleJdbcRepository<?, Object> repository = new SimpleJdbcRepository<>(template, context.getPersistentEntity(repositoryInformation.getDomainType()));
+		SimpleJdbcRepository<?, Object> repository = new SimpleJdbcRepository<>(template,
+				context.getPersistentEntity(repositoryInformation.getDomainType()));
 
 		if (entityCallbacks != null) {
 			template.setEntityCallbacks(entityCallbacks);
@@ -156,8 +157,11 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 	}
 
+	/**
+	 * @param entityCallbacks
+	 * @since 1.1
+	 */
 	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
-
 		this.entityCallbacks = entityCallbacks;
 	}
 }

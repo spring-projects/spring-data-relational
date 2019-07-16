@@ -101,15 +101,15 @@ public @interface EnableJdbcRepositories {
 	String repositoryImplementationPostfix() default "Impl";
 
 	/**
-	 * Configures the name of the {@link NamedParameterJdbcOperations} bean definition to be used to create repositories 
-	 * discovered through this annotation. Defaults to {@code namedParameterJdbcTemplate}.
+	 * Configures the name of the {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} bean
+	 * definition to be used to create repositories discovered through this annotation. Defaults to
+	 * {@code namedParameterJdbcTemplate}.
 	 */
 	String jdbcOperationsRef() default "";
 
-
 	/**
-	 * Configures the name of the {@link DataAccessStrategy} bean definition to be used to create repositories 
-	 * discovered through this annotation. Defaults to {@code defaultDataAccessStrategy} if existed.
+	 * Configures the name of the {@link org.springframework.data.jdbc.core.convert.DataAccessStrategy} bean definition to
+	 * be used to create repositories discovered through this annotation. Defaults to {@code defaultDataAccessStrategy}.
 	 */
 	String dataAccessStrategyRef() default "";
 }

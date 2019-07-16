@@ -20,10 +20,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.mapping.IdentifierAccessor;
-import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
@@ -62,7 +62,38 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final DataAccessStrategy accessStrategy;
 
-	private EntityCallbacks entityCallbacks = NoopEntityCallback.INSTANCE;
+	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
+
+	/**
+	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationContext}, {@link RelationalMappingContext} and
+	 * {@link DataAccessStrategy}.
+	 *
+	 * @param publisher must not be {@literal null}.
+	 * @param context must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @since 1.1
+	 */
+	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context,
+			RelationalConverter converter, DataAccessStrategy dataAccessStrategy) {
+
+		Assert.notNull(publisher, "ApplicationContext must not be null!");
+		Assert.notNull(context, "RelationalMappingContext must not be null!");
+		Assert.notNull(converter, "RelationalConverter must not be null!");
+		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
+
+		this.publisher = publisher;
+		this.context = context;
+		this.converter = converter;
+		this.accessStrategy = dataAccessStrategy;
+
+		this.jdbcEntityWriter = new RelationalEntityWriter(context);
+		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
+		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
+		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
+		this.interpreter = new DefaultJdbcInterpreter(context, accessStrategy);
+
+		setEntityCallbacks(EntityCallbacks.create(publisher));
+	}
 
 	/**
 	 * Creates a new {@link JdbcAggregateTemplate} given {@link ApplicationEventPublisher},
@@ -92,6 +123,10 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.interpreter = new DefaultJdbcInterpreter(context, accessStrategy);
 	}
 
+	/**
+	 * @param entityCallbacks
+	 * @since 1.1
+	 */
 	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
 
 		Assert.notNull(entityCallbacks, "Callbacks must not be null.");
@@ -298,16 +333,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private <T> AggregateChange<T> createChange(T instance) {
-
-		// context.getRequiredPersistentEntity(o.getClass()).isNew(o)
-
-		AggregateChange<T> aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
-		jdbcEntityWriter.write(instance, aggregateChange);
-		return aggregateChange;
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private <T> AggregateChange<T> createInsertChange(T instance) {
 
 		AggregateChange<T> aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
@@ -351,9 +376,11 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> T triggerAfterLoad(Object id, T entity) {
 
-		publisher.publishEvent(new AfterLoadEvent(Identifier.of(id), entity));
+		Specified identifier = Identifier.of(id);
 
-		return entityCallbacks.callback(AfterLoadCallback.class, entity, Identifier.of(id));
+		publisher.publishEvent(new AfterLoadEvent(identifier, entity));
+
+		return entityCallbacks.callback(AfterLoadCallback.class, entity, identifier);
 	}
 
 	private <T> T triggerBeforeConvert(T aggregateRoot, @Nullable Object id) {
@@ -373,7 +400,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 				change //
 		));
 
-		return entityCallbacks.callback(BeforeSaveCallback.class, aggregateRoot, identifier);
+		return entityCallbacks.callback(BeforeSaveCallback.class, aggregateRoot, identifier, change);
 	}
 
 	private <T> T triggerAfterSave(T aggregateRoot, Object id, AggregateChange<T> change) {
@@ -389,7 +416,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return entityCallbacks.callback(AfterSaveCallback.class, aggregateRoot, identifier);
 	}
 
-	@Nullable
 	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, AggregateChange<?> change) {
 
 		Specified identifier = Identifier.of(id);
@@ -409,25 +435,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		publisher.publishEvent(new BeforeDeleteEvent(identifier, Optional.ofNullable(aggregateRoot), change));
 
 		if (aggregateRoot != null) {
-			return entityCallbacks.callback(BeforeDeleteCallback.class, aggregateRoot, identifier);
+			return entityCallbacks.callback(BeforeDeleteCallback.class, aggregateRoot, identifier, change);
 		}
-		return aggregateRoot;
-	}
 
-	/**
-	 * An {@link EntityCallbacks} implementation doing nothing.
-	 */
-	private enum NoopEntityCallback implements EntityCallbacks {
-
-		INSTANCE {
-
-			@Override
-			public void addEntityCallback(EntityCallback<?> callback) {}
-
-			@Override
-			public <T> T callback(Class<? extends EntityCallback> callbackType, T entity, Object... args) {
-				return entity;
-			}
-		}
+		return null;
 	}
 }
