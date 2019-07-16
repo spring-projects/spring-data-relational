@@ -49,7 +49,7 @@ class FromTableVisitor extends TypedSubtreeVisitor<Table> {
 
 		builder.append(context.getNamingStrategy().getName(segment));
 		if (segment instanceof Aliased) {
-			builder.append(" AS ").append(((Aliased) segment).getAlias());
+			builder.append(" ").append(((Aliased) segment).getAlias());
 		}
 
 		parent.onRendered(builder);
