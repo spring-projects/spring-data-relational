@@ -25,12 +25,14 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.util.Streamable;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Jens Schauder
  * @author Oliver Gierke
  */
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 
     private final @NonNull
@@ -43,6 +45,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
      * @see org.springframework.data.repository.CrudRepository#save(S)
      */
     @Override
+	@Transactional
     public <S extends T> S save(S instance) {
         return entityOperations.save(instance);
     }
@@ -52,6 +55,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
      * @see org.springframework.data.repository.CrudRepository#save(java.lang.Iterable)
      */
     @Override
+	@Transactional
     public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
 
         return Streamable.of(entities).stream() //
@@ -109,6 +113,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
      * @see org.springframework.data.repository.CrudRepository#delete(java.io.Serializable)
      */
     @Override
+	@Transactional
     public void deleteById(ID id) {
         entityOperations.deleteById(id, entity.getType());
     }
@@ -118,6 +123,7 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
      * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Object)
      */
     @Override
+	@Transactional
     public void delete(T instance) {
         entityOperations.delete(instance, entity.getType());
     }
@@ -127,12 +133,14 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
      * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Iterable)
      */
     @Override
+	@Transactional
     @SuppressWarnings("unchecked")
     public void deleteAll(Iterable<? extends T> entities) {
         entities.forEach(it -> entityOperations.delete(it, (Class<T>) it.getClass()));
     }
 
     @Override
+	@Transactional
     public void deleteAll() {
         entityOperations.deleteAll(entity.getType());
     }
