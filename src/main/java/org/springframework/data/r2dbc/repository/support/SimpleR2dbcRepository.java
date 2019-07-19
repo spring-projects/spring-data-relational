@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -42,7 +43,9 @@ import org.springframework.util.Assert;
  * Simple {@link ReactiveCrudRepository} implementation using R2DBC through {@link DatabaseClient}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
+@Transactional(readOnly = true)
 public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, ID> {
 
 	private final RelationalEntityInformation<T, ID> entity;
@@ -62,6 +65,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#save(S)
 	 */
 	@Override
+	@Transactional
 	public <S extends T> Mono<S> save(S objectToSave) {
 
 		Assert.notNull(objectToSave, "Object to save must not be null!");
@@ -87,6 +91,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#saveAll(java.lang.Iterable)
 	 */
 	@Override
+	@Transactional
 	public <S extends T> Flux<S> saveAll(Iterable<S> objectsToSave) {
 
 		Assert.notNull(objectsToSave, "Objects to save must not be null!");
@@ -98,6 +103,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#saveAll(org.reactivestreams.Publisher)
 	 */
 	@Override
+	@Transactional
 	public <S extends T> Flux<S> saveAll(Publisher<S> objectsToSave) {
 
 		Assert.notNull(objectsToSave, "Object publisher must not be null!");
@@ -237,6 +243,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteById(java.lang.Object)
 	 */
 	@Override
+	@Transactional
 	public Mono<Void> deleteById(ID id) {
 
 		Assert.notNull(id, "Id must not be null!");
@@ -254,6 +261,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteById(org.reactivestreams.Publisher)
 	 */
 	@Override
+	@Transactional
 	public Mono<Void> deleteById(Publisher<ID> idPublisher) {
 
 		Assert.notNull(idPublisher, "The Id Publisher must not be null!");
@@ -278,6 +286,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#delete(java.lang.Object)
 	 */
 	@Override
+	@Transactional
 	public Mono<Void> delete(T objectToDelete) {
 
 		Assert.notNull(objectToDelete, "Object to delete must not be null!");
@@ -289,6 +298,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll(java.lang.Iterable)
 	 */
 	@Override
+	@Transactional
 	public Mono<Void> deleteAll(Iterable<? extends T> iterable) {
 
 		Assert.notNull(iterable, "The iterable of Id's must not be null!");
@@ -300,6 +310,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll(org.reactivestreams.Publisher)
 	 */
 	@Override
+	@Transactional
 	public Mono<Void> deleteAll(Publisher<? extends T> objectPublisher) {
 
 		Assert.notNull(objectPublisher, "The Object Publisher must not be null!");
@@ -314,6 +325,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll()
 	 */
 	@Override
+	@Transactional
 	public Mono<Void> deleteAll() {
 		return this.databaseClient.delete().from(this.entity.getTableName()).then();
 	}
