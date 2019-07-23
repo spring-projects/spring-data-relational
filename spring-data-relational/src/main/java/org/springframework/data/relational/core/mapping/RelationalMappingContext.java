@@ -54,7 +54,7 @@ public class RelationalMappingContext
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
 
-		this.namingStrategy = namingStrategy;
+		this.namingStrategy = new CachingNamingStrategy(namingStrategy);
 
 		setSimpleTypeHolder(SimpleTypeHolder.DEFAULT);
 	}

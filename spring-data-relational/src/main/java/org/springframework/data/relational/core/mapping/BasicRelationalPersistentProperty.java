@@ -29,6 +29,7 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Optionals;
 import org.springframework.lang.Nullable;
@@ -57,9 +58,9 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	private final RelationalMappingContext context;
-	private final Lazy<Optional<String>> columnName;
+	private final Lazy<String> columnName;
 	private final Lazy<Optional<String>> collectionIdColumnName;
-	private final Lazy<Optional<String>> collectionKeyColumnName;
+	private final Lazy<String> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
 	private final Lazy<String> embeddedPrefix;
 	private final Lazy<Class<?>> columnType = Lazy.of(this::doGetColumnType);
@@ -89,7 +90,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)) //
 				.map(Column::value) //
-				.filter(StringUtils::hasText));
+				.filter(StringUtils::hasText) //
+				.orElseGet(() -> context.getNamingStrategy().getColumnName(this)));
 
 		this.collectionIdColumnName = Lazy.of(() -> Optionals
 				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::idColumn),
@@ -99,7 +101,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		this.collectionKeyColumnName = Lazy.of(() -> Optionals
 				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn),
 						Optional.ofNullable(findAnnotation(Column.class)).map(Column::keyColumn)) //
-				.filter(StringUtils::hasText).findFirst());
+				.filter(StringUtils::hasText).findFirst().orElseGet(() -> context.getNamingStrategy().getKeyColumn(this)));
 	}
 
 	/*
@@ -127,7 +129,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 */
 	@Override
 	public String getColumnName() {
-		return columnName.get().orElseGet(() -> context.getNamingStrategy().getColumnName(this));
+		return columnName.get();
 	}
 
 	/**
@@ -188,12 +190,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public String getKeyColumn() {
-
-		if (isQualified()) {
-			return collectionKeyColumnName.get().orElseGet(() -> context.getNamingStrategy().getKeyColumn(this));
-		} else {
-			return null;
-		}
+		return isQualified() ? collectionKeyColumnName.get() : null;
 	}
 
 	@Override
@@ -227,6 +224,18 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	public String getEmbeddedPrefix() {
 		return isEmbedded() ? embeddedPrefix.get() : null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#shouldCreateEmptyEmbedded()
+	 */
+	@Override
+	public boolean shouldCreateEmptyEmbedded() {
+
+		Embedded findAnnotation = findAnnotation(Embedded.class);
+
+		return findAnnotation != null && OnEmpty.USE_EMPTY.equals(findAnnotation.onEmpty());
 	}
 
 	private boolean isListLike() {

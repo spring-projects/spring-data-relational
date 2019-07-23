@@ -97,4 +97,11 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	default String getEmbeddedPrefix() {
 		return null;
 	};
+
+	/**
+	 * Returns whether an empty embedded object is supposed to be created for this property.
+	 *
+	 * @return
+	 */
+	boolean shouldCreateEmptyEmbedded();
 }

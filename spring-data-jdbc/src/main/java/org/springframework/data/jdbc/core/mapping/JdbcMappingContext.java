@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
+import org.springframework.data.mapping.PreferredConstructor;
+import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
@@ -23,6 +25,8 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * {@link MappingContext} implementation for JDBC.
@@ -34,6 +38,8 @@ import org.springframework.data.util.TypeInformation;
  * @author Mark Paluch
  */
 public class JdbcMappingContext extends RelationalMappingContext {
+
+	private static final String MISSING_PARAMETER_NAME = "A constructor parameter name must not be null to be used with Spring Data JDBC! Offending parameter: %s";
 
 	/**
 	 * Creates a new {@link JdbcMappingContext}.
@@ -49,6 +55,27 @@ public class JdbcMappingContext extends RelationalMappingContext {
 	 */
 	public JdbcMappingContext(NamingStrategy namingStrategy) {
 		super(namingStrategy);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalMappingContext#createPersistentEntity(org.springframework.data.util.TypeInformation)
+	 */
+	@Override
+	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
+
+		RelationalPersistentEntity<T> entity = super.createPersistentEntity(typeInformation);
+		PreferredConstructor<T, RelationalPersistentProperty> constructor = entity.getPersistenceConstructor();
+
+		if (constructor == null) {
+			return entity;
+		}
+
+		for (Parameter<Object, RelationalPersistentProperty> parameter : constructor.getParameters()) {
+			Assert.state(StringUtils.hasText(parameter.getName()), () -> String.format(MISSING_PARAMETER_NAME, parameter));
+		}
+
+		return entity;
 	}
 
 	/*

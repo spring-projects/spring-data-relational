@@ -20,6 +20,7 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -30,12 +31,14 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @since 1.1
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = { "columnAlias", "context" })
 public class PersistentPropertyPathExtension {
 
 	private final RelationalPersistentEntity<?> entity;
 	private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context;
+
+	private final Lazy<String> columnAlias = Lazy.of(() -> prefixWithTableAlias(getColumnName()));
 
 	/**
 	 * Creates the empty path referencing the root itself.
@@ -188,8 +191,7 @@ public class PersistentPropertyPathExtension {
 	 * @throws IllegalStateException when called on an empty path.
 	 */
 	public String getColumnAlias() {
-
-		return prefixWithTableAlias(getColumnName());
+		return columnAlias.get();
 	}
 
 	/**
@@ -316,12 +318,9 @@ public class PersistentPropertyPathExtension {
 	 */
 	public PersistentPropertyPathExtension extendBy(RelationalPersistentProperty property) {
 
-		PersistentPropertyPath<RelationalPersistentProperty> newPath;
-		if (path == null) {
-			newPath = context.getPersistentPropertyPath(property.getName(), entity.getType());
-		} else {
-			newPath = context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(), entity.getType());
-		}
+		PersistentPropertyPath<RelationalPersistentProperty> newPath = path == null //
+				? context.getPersistentPropertyPath(property.getName(), entity.getType()) //
+				: context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(), entity.getType());
 
 		return new PersistentPropertyPathExtension(context, newPath);
 	}
@@ -409,12 +408,16 @@ public class PersistentPropertyPathExtension {
 		if (path.getLength() <= 1) {
 			return suffix;
 		}
+
 		PersistentPropertyPath<RelationalPersistentProperty> parentPath = path.getParentPath();
 		RelationalPersistentProperty parentLeaf = parentPath.getRequiredLeafProperty();
+
 		if (!parentLeaf.isEmbedded()) {
 			return suffix;
 		}
+
 		String embeddedPrefix = parentLeaf.getEmbeddedPrefix();
+
 		return getParentPath().assembleColumnName(embeddedPrefix + suffix);
 	}
 

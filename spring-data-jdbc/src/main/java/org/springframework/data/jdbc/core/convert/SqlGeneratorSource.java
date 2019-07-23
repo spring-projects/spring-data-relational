@@ -18,9 +18,9 @@ package org.springframework.data.jdbc.core.convert;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
  * Provides {@link SqlGenerator}s per domain type. Instances get cached, so when asked multiple times for the same
@@ -31,12 +31,10 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 @RequiredArgsConstructor
 public class SqlGeneratorSource {
 
-	private final Map<Class, SqlGenerator> sqlGeneratorCache = new ConcurrentHashMap<>();
+	private final Map<Class<?>, SqlGenerator> CACHE = new ConcurrentReferenceHashMap<>();
 	private final RelationalMappingContext context;
 
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
-
-		return sqlGeneratorCache.computeIfAbsent(domainType,
-				t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t)));
+		return CACHE.computeIfAbsent(domainType, t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t)));
 	}
 }

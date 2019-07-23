@@ -15,10 +15,10 @@
  */
 package org.springframework.data.jdbc.core;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -364,13 +364,17 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> Iterable<T> triggerAfterLoad(Iterable<T> all) {
 
-		return StreamSupport.stream(all.spliterator(), false).map(e -> {
+		List<T> result = new ArrayList<>();
+
+		for (T e : all) {
 
 			RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(e.getClass());
 			IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(e);
 
-			return triggerAfterLoad(identifierAccessor.getRequiredIdentifier(), e);
-		}).collect(Collectors.toList());
+			result.add(triggerAfterLoad(identifierAccessor.getRequiredIdentifier(), e));
+		}
+
+		return result;
 	}
 
 	private <T> T triggerAfterLoad(Object id, T entity) {

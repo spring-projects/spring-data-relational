@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.convert.SqlGenerator;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
