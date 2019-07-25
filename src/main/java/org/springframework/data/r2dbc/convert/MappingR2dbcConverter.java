@@ -107,7 +107,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		}
 
 		if (getConversions().hasCustomReadTarget(Row.class, rawType)
-				|| getConversionService().canConvert(Row.class, rawType)) {
+				&& getConversionService().canConvert(Row.class, rawType)) {
 			return getConversionService().convert(row, rawType);
 		}
 
@@ -118,19 +118,21 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		R result = createInstance(row, metadata, "", entity);
 
-		ConvertingPropertyAccessor<R> propertyAccessor = new ConvertingPropertyAccessor<>(
-				entity.getPropertyAccessor(result), getConversionService());
+		if (entity.requiresPropertyPopulation()) {
+			ConvertingPropertyAccessor<R> propertyAccessor = new ConvertingPropertyAccessor<>(
+					entity.getPropertyAccessor(result), getConversionService());
 
-		for (RelationalPersistentProperty property : entity) {
+			for (RelationalPersistentProperty property : entity) {
 
-			if (entity.isConstructorArgument(property)) {
-				continue;
-			}
+				if (entity.isConstructorArgument(property)) {
+					continue;
+				}
 
-			Object value = readFrom(row, metadata, property, "");
+				Object value = readFrom(row, metadata, property, "");
 
-			if (value != null) {
-				propertyAccessor.setProperty(property, value);
+				if (value != null) {
+					propertyAccessor.setProperty(property, value);
+				}
 			}
 		}
 
@@ -209,12 +211,15 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		Object instance = createInstance(row, metadata, prefix, entity);
 
-		PersistentPropertyAccessor<?> accessor = entity.getPropertyAccessor(instance);
-		ConvertingPropertyAccessor<?> propertyAccessor = new ConvertingPropertyAccessor<>(accessor, getConversionService());
+		if (entity.requiresPropertyPopulation()) {
+			PersistentPropertyAccessor<?> accessor = entity.getPropertyAccessor(instance);
+			ConvertingPropertyAccessor<?> propertyAccessor = new ConvertingPropertyAccessor<>(accessor,
+					getConversionService());
 
-		for (RelationalPersistentProperty p : entity) {
-			if (!entity.isConstructorArgument(property)) {
-				propertyAccessor.setProperty(p, readFrom(row, metadata, p, prefix));
+			for (RelationalPersistentProperty p : entity) {
+				if (!entity.isConstructorArgument(property)) {
+					propertyAccessor.setProperty(p, readFrom(row, metadata, p, prefix));
+				}
 			}
 		}
 
@@ -435,7 +440,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	private static class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
 
 		private final Row resultSet;
-		private final @Nullable RowMetadata metadata;
+		private final RowMetadata metadata;
 		private final RelationalPersistentEntity<?> entity;
 		private final RelationalConverter converter;
 		private final String prefix;
@@ -458,7 +463,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 
 			RelationalPersistentProperty property = this.entity.getRequiredPersistentProperty(parameter.getName());
-			String column = this.prefix + property.getColumnName();
+			String column = this.prefix.isEmpty() ? property.getColumnName() : this.prefix + property.getColumnName();
 
 			try {
 
@@ -472,7 +477,12 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 					return null;
 				}
 
-				return this.converter.getConversionService().convert(value, parameter.getType().getType());
+				Class<T> type = parameter.getType().getType();
+
+				if (type.isInstance(value)) {
+					return type.cast(value);
+				}
+				return this.converter.getConversionService().convert(value, type);
 			} catch (Exception o_O) {
 				throw new MappingException(String.format("Couldn't read column %s from Row.", column), o_O);
 			}
