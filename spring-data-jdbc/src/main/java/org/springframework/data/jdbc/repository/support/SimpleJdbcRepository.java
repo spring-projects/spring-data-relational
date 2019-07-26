@@ -28,6 +28,8 @@ import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
+ * Default implementation of the {@link org.springframework.data.repository.CrudRepository} interface.
+ *
  * @author Jens Schauder
  * @author Oliver Gierke
  */
@@ -35,113 +37,111 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 
-    private final @NonNull
-    JdbcAggregateOperations entityOperations;
-    private final @NonNull
-    PersistentEntity<T, ?> entity;
+	private final @NonNull JdbcAggregateOperations entityOperations;
+	private final @NonNull PersistentEntity<T, ?> entity;
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#save(S)
-     */
-    @Override
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#save(S)
+	 */
 	@Transactional
-    public <S extends T> S save(S instance) {
-        return entityOperations.save(instance);
-    }
+	@Override
+	public <S extends T> S save(S instance) {
+		return entityOperations.save(instance);
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#save(java.lang.Iterable)
-     */
-    @Override
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#save(java.lang.Iterable)
+	 */
 	@Transactional
-    public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
+	@Override
+	public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
 
-        return Streamable.of(entities).stream() //
-                .map(this::save) //
-                .collect(Collectors.toList());
-    }
+		return Streamable.of(entities).stream() //
+				.map(this::save) //
+				.collect(Collectors.toList());
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#findOne(java.io.Serializable)
-     */
-    @Override
-    public Optional<T> findById(ID id) {
-        return Optional.ofNullable(entityOperations.findById(id, entity.getType()));
-    }
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#findOne(java.io.Serializable)
+	 */
+	@Override
+	public Optional<T> findById(ID id) {
+		return Optional.ofNullable(entityOperations.findById(id, entity.getType()));
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#exists(java.io.Serializable)
-     */
-    @Override
-    public boolean existsById(ID id) {
-        return entityOperations.existsById(id, entity.getType());
-    }
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#exists(java.io.Serializable)
+	 */
+	@Override
+	public boolean existsById(ID id) {
+		return entityOperations.existsById(id, entity.getType());
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#findAll()
-     */
-    @Override
-    public Iterable<T> findAll() {
-        return entityOperations.findAll(entity.getType());
-    }
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#findAll()
+	 */
+	@Override
+	public Iterable<T> findAll() {
+		return entityOperations.findAll(entity.getType());
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#findAll(java.lang.Iterable)
-     */
-    @Override
-    public Iterable<T> findAllById(Iterable<ID> ids) {
-        return entityOperations.findAllById(ids, entity.getType());
-    }
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#findAll(java.lang.Iterable)
+	 */
+	@Override
+	public Iterable<T> findAllById(Iterable<ID> ids) {
+		return entityOperations.findAllById(ids, entity.getType());
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#count()
-     */
-    @Override
-    public long count() {
-        return entityOperations.count(entity.getType());
-    }
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#count()
+	 */
+	@Override
+	public long count() {
+		return entityOperations.count(entity.getType());
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#delete(java.io.Serializable)
-     */
-    @Override
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#delete(java.io.Serializable)
+	 */
 	@Transactional
-    public void deleteById(ID id) {
-        entityOperations.deleteById(id, entity.getType());
-    }
+	@Override
+	public void deleteById(ID id) {
+		entityOperations.deleteById(id, entity.getType());
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Object)
-     */
-    @Override
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Object)
+	 */
 	@Transactional
-    public void delete(T instance) {
-        entityOperations.delete(instance, entity.getType());
-    }
+	@Override
+	public void delete(T instance) {
+		entityOperations.delete(instance, entity.getType());
+	}
 
-    /*
-     * (non-Javadoc)
-     * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Iterable)
-     */
-    @Override
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Iterable)
+	 */
 	@Transactional
-    @SuppressWarnings("unchecked")
-    public void deleteAll(Iterable<? extends T> entities) {
-        entities.forEach(it -> entityOperations.delete(it, (Class<T>) it.getClass()));
-    }
+	@Override
+	@SuppressWarnings("unchecked")
+	public void deleteAll(Iterable<? extends T> entities) {
+		entities.forEach(it -> entityOperations.delete(it, (Class<T>) it.getClass()));
+	}
 
-    @Override
 	@Transactional
-    public void deleteAll() {
-        entityOperations.deleteAll(entity.getType());
-    }
+	@Override
+	public void deleteAll() {
+		entityOperations.deleteAll(entity.getType());
+	}
 }
