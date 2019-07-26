@@ -43,11 +43,11 @@ class SimpleRelationalEvent extends ApplicationEvent implements RelationalEvent 
 		this.change = change;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.mapping.event.JdbcEvent#getId()
+	/**
+	 * @deprecated obtain the id from the entity instead.
 	 */
 	@Override
+	@Deprecated
 	public Identifier getId() {
 		return (Identifier) getSource();
 	}

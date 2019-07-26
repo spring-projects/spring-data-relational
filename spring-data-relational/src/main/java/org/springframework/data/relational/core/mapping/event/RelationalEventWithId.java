@@ -39,11 +39,13 @@ public class RelationalEventWithId extends SimpleRelationalEvent implements With
 		this.id = id;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.mapping.event.JdbcEvent#getId()
+	/**
+	 * Events with an identifier will always return a {@link Specified} one.
+	 *
+	 * @deprecated obtain the id from the entity instead.
 	 */
 	@Override
+	@Deprecated
 	public Specified getId() {
 		return id;
 	}
