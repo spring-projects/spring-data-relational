@@ -27,7 +27,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
@@ -45,7 +47,6 @@ import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
-import org.springframework.data.relational.core.mapping.event.Identifier;
 
 /**
  * Unit tests for {@link JdbcAggregateTemplate}.
@@ -71,6 +72,7 @@ public class JdbcAggregateTemplateUnitTests {
 
 		template = new JdbcAggregateTemplate(eventPublisher, mappingContext, converter, dataAccessStrategy);
 		((JdbcAggregateTemplate) template).setEntityCallbacks(callbacks);
+
 	}
 
 	@Test // DATAJDBC-378
@@ -101,10 +103,9 @@ public class JdbcAggregateTemplateUnitTests {
 
 		SampleEntity last = template.save(first);
 
-		verify(callbacks).callback(BeforeConvertCallback.class, first, Identifier.ofNullable(null));
-		verify(callbacks).callback(eq(BeforeSaveCallback.class), eq(second), eq(Identifier.ofNullable(23L)),
-				any(AggregateChange.class));
-		verify(callbacks).callback(AfterSaveCallback.class, third, Identifier.of(23L));
+		verify(callbacks).callback(BeforeConvertCallback.class, first);
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), eq(second), any(AggregateChange.class));
+		verify(callbacks).callback(AfterSaveCallback.class, third);
 		assertThat(last).isEqualTo(third);
 	}
 
@@ -114,13 +115,12 @@ public class JdbcAggregateTemplateUnitTests {
 		SampleEntity first = new SampleEntity(23L, "Alfred");
 		SampleEntity second = new SampleEntity(23L, "Alfred E.");
 
-		when(callbacks.callback(any(Class.class), any(), any(), any())).thenReturn(second);
+		when(callbacks.callback(any(Class.class), any(), any())).thenReturn(second);
 
 		template.delete(first, SampleEntity.class);
 
-		verify(callbacks).callback(eq(BeforeDeleteCallback.class), eq(first), eq(Identifier.of(23L)),
-				any(AggregateChange.class));
-		verify(callbacks).callback(AfterDeleteCallback.class, second, Identifier.of(23L));
+		verify(callbacks).callback(eq(BeforeDeleteCallback.class), eq(first), any(AggregateChange.class));
+		verify(callbacks).callback(AfterDeleteCallback.class, second);
 	}
 
 	@Test // DATAJDBC-393
@@ -139,8 +139,8 @@ public class JdbcAggregateTemplateUnitTests {
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class);
 
-		verify(callbacks).callback(AfterLoadCallback.class, alfred1, Identifier.of(23L));
-		verify(callbacks).callback(AfterLoadCallback.class, neumann1, Identifier.of(42L));
+		verify(callbacks).callback(AfterLoadCallback.class, alfred1);
+		verify(callbacks).callback(AfterLoadCallback.class, neumann1);
 
 		assertThat(all).containsExactly(alfred2, neumann2);
 	}

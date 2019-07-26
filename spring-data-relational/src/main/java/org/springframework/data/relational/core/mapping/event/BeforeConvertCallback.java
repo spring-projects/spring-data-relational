@@ -33,8 +33,7 @@ public interface BeforeConvertCallback<T> extends EntityCallback<T> {
 	 * a modified instance of the aggregate.
 	 *
 	 * @param aggregate the saved aggregate.
-	 * @param id identifier.
 	 * @return the aggregate to be persisted.
 	 */
-	T onBeforeConvert(T aggregate, Identifier id);
+	T onBeforeConvert(T aggregate);
 }

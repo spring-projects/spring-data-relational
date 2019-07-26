@@ -34,8 +34,7 @@ public interface AfterDeleteCallback<T> extends EntityCallback<T> {
 	 * instance of the aggregate object.
 	 *
 	 * @param aggregate the aggregate that was deleted.
-	 * @param id identifier.
 	 * @return the aggregate that was deleted.
 	 */
-	T onAfterDelete(T aggregate, Identifier id);
+	T onAfterDelete(T aggregate);
 }

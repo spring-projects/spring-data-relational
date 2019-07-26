@@ -30,6 +30,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
@@ -52,6 +53,7 @@ import org.springframework.util.ReflectionUtils;
 public class JdbcQueryLookupStrategyUnitTests {
 
 	ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
+	EntityCallbacks callbacks = mock(EntityCallbacks.class);
 	RelationalMappingContext mappingContext = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 	JdbcConverter converter = mock(JdbcConverter.class);
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
@@ -85,7 +87,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 
-		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, mappingContext, converter,
+		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, callbacks, mappingContext, converter,
 				mappingConfiguration, operations);
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);

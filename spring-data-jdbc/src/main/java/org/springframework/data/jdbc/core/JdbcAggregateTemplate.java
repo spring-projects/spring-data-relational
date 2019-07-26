@@ -380,14 +380,14 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		publisher.publishEvent(new AfterLoadEvent(identifier, entity));
 
-		return entityCallbacks.callback(AfterLoadCallback.class, entity, identifier);
+		return entityCallbacks.callback(AfterLoadCallback.class, entity);
 	}
 
 	private <T> T triggerBeforeConvert(T aggregateRoot, @Nullable Object id) {
 
 		Identifier identifier = Identifier.ofNullable(id);
 
-		return entityCallbacks.callback(BeforeConvertCallback.class, aggregateRoot, identifier);
+		return entityCallbacks.callback(BeforeConvertCallback.class, aggregateRoot);
 	}
 
 	private <T> T triggerBeforeSave(T aggregateRoot, @Nullable Object id, AggregateChange<T> change) {
@@ -400,7 +400,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 				change //
 		));
 
-		return entityCallbacks.callback(BeforeSaveCallback.class, aggregateRoot, identifier, change);
+		return entityCallbacks.callback(BeforeSaveCallback.class, aggregateRoot, change);
 	}
 
 	private <T> T triggerAfterSave(T aggregateRoot, Object id, AggregateChange<T> change) {
@@ -413,7 +413,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 				change //
 		));
 
-		return entityCallbacks.callback(AfterSaveCallback.class, aggregateRoot, identifier);
+		return entityCallbacks.callback(AfterSaveCallback.class, aggregateRoot);
 	}
 
 	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, AggregateChange<?> change) {
@@ -423,7 +423,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		publisher.publishEvent(new AfterDeleteEvent(identifier, Optional.ofNullable(aggregateRoot), change));
 
 		if (aggregateRoot != null) {
-			entityCallbacks.callback(AfterDeleteCallback.class, aggregateRoot, identifier);
+			entityCallbacks.callback(AfterDeleteCallback.class, aggregateRoot);
 		}
 	}
 
@@ -435,7 +435,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		publisher.publishEvent(new BeforeDeleteEvent(identifier, Optional.ofNullable(aggregateRoot), change));
 
 		if (aggregateRoot != null) {
-			return entityCallbacks.callback(BeforeDeleteCallback.class, aggregateRoot, identifier, change);
+			return entityCallbacks.callback(BeforeDeleteCallback.class, aggregateRoot, change);
 		}
 
 		return null;

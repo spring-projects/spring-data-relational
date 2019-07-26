@@ -32,8 +32,7 @@ public interface AfterSaveCallback<T> extends EntityCallback<T> {
 	 * instance of the aggregate.
 	 *
 	 * @param aggregate the saved aggregate.
-	 * @param id identifier.
 	 * @return the saved aggregate.
 	 */
-	T onAfterSave(T aggregate, Identifier.Specified id);
+	T onAfterSave(T aggregate);
 }

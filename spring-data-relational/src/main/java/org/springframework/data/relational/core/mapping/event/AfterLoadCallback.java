@@ -32,8 +32,7 @@ public interface AfterLoadCallback<T> extends EntityCallback<T> {
 	 * instance of the domain object.
 	 *
 	 * @param aggregate the loaded aggregate.
-	 * @param id identifier.
 	 * @return the loaded aggregate.
 	 */
-	T onAfterLoad(T aggregate, Identifier.Specified id);
+	T onAfterLoad(T aggregate);
 }

@@ -57,10 +57,10 @@ public class RelationalAuditingCallback implements BeforeConvertCallback<Object>
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.event.BeforeConvertCallback#onBeforeConvert(java.lang.Object, org.springframework.data.relational.core.mapping.event.Identifier)
+	 * @see org.springframework.data.relational.core.mapping.event.BeforeConvertCallback#onBeforeConvert(java.lang.Object)
 	 */
 	@Override
-	public Object onBeforeConvert(Object entity, Identifier id) {
+	public Object onBeforeConvert(Object entity) {
 		return handler.markAudited(entity);
 	}
 }

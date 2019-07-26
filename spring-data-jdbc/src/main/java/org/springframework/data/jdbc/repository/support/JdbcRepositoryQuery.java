@@ -21,8 +21,10 @@ import java.util.List;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.repository.query.RepositoryQuery;
@@ -49,6 +51,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters. Use @Param for query method parameters, or when on Java 8+ use the javac flag -parameters.";
 
 	private final ApplicationEventPublisher publisher;
+	private final EntityCallbacks callbacks;
 	private final RelationalMappingContext context;
 	private final JdbcQueryMethod queryMethod;
 	private final NamedParameterJdbcOperations operations;
@@ -64,8 +67,9 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	 * @param operations must not be {@literal null}.
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
-	JdbcRepositoryQuery(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations, RowMapper<?> defaultRowMapper) {
+	JdbcRepositoryQuery(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
+			RelationalMappingContext context, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+			RowMapper<?> defaultRowMapper) {
 
 		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "Context must not be null!");
@@ -77,6 +81,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		}
 
 		this.publisher = publisher;
+		this.callbacks = callbacks == null ? EntityCallbacks.create() : callbacks;
 		this.context = context;
 		this.queryMethod = queryMethod;
 		this.operations = operations;
@@ -214,7 +219,8 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	@Nullable
 	private ResultSetExtractor determineResultSetExtractor(@Nullable RowMapper<?> rowMapper) {
 
-		Class<? extends ResultSetExtractor> resultSetExtractorClass = (Class<? extends ResultSetExtractor>) queryMethod.getResultSetExtractorClass();
+		Class<? extends ResultSetExtractor> resultSetExtractorClass = (Class<? extends ResultSetExtractor>) queryMethod
+				.getResultSetExtractorClass();
 
 		if (isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
 			return null;
@@ -262,6 +268,8 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 			if (identifier != null) {
 				publisher.publishEvent(new AfterLoadEvent(Identifier.of(identifier), entity));
 			}
+
+			callbacks.callback(AfterLoadCallback.class, entity);
 		}
 
 	}
