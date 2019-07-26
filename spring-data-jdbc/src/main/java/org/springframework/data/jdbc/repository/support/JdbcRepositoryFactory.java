@@ -149,7 +149,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		if (key == null || key == QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND
 				|| key == QueryLookupStrategy.Key.USE_DECLARED_QUERY) {
 
-			JdbcQueryLookupStrategy strategy = new JdbcQueryLookupStrategy(publisher, context, converter,
+			JdbcQueryLookupStrategy strategy = new JdbcQueryLookupStrategy(publisher, entityCallbacks, context, converter,
 					queryMappingConfiguration, operations);
 			return Optional.of(strategy);
 		}

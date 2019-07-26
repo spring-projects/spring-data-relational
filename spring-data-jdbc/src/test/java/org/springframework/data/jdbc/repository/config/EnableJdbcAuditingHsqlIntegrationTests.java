@@ -44,7 +44,6 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
-import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.test.context.ActiveProfiles;
@@ -191,12 +190,12 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 				OrderAssertingEventListener.class, //
 				OrderAssertingCallback.class //
 		) //
-						.accept(repository -> {
+				.accept(repository -> {
 
-							AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
+					AuditingAnnotatedDummyEntity entity = repository.save(new AuditingAnnotatedDummyEntity());
 
-							assertThat(entity.id).isNotNull();
-						});
+					assertThat(entity.id).isNotNull();
+				});
 	}
 
 	/**
@@ -344,7 +343,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 	static class OrderAssertingCallback implements BeforeConvertCallback {
 
 		@Override
-		public Object onBeforeConvert(Object entity, Identifier id) {
+		public Object onBeforeConvert(Object entity) {
 
 			assertThat(entity).isInstanceOf(AuditingAnnotatedDummyEntity.class);
 			assertThat(((AuditingAnnotatedDummyEntity) entity).createdDate).isNotNull();

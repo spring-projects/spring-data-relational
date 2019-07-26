@@ -173,7 +173,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 		@Bean
 		BeforeConvertCallback<ImmutableWithManualIdEntity> idGenerator() {
-			return (e, __) -> e.withId(lastId.incrementAndGet());
+			return e -> e.withId(lastId.incrementAndGet());
 		}
 	}
 }
