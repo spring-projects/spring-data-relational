@@ -301,8 +301,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(aggregateRoot, "Aggregate instance must not be null!");
 
-		aggregateRoot = triggerBeforeConvert(aggregateRoot,
-				persistentEntity.getIdentifierAccessor(aggregateRoot).getIdentifier());
+		aggregateRoot = triggerBeforeConvert(aggregateRoot);
 
 		AggregateChange<T> change = changeCreator.apply(aggregateRoot);
 
@@ -376,26 +375,19 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> T triggerAfterLoad(Object id, T entity) {
 
-		Specified identifier = Identifier.of(id);
-
-		publisher.publishEvent(new AfterLoadEvent(identifier, entity));
+		publisher.publishEvent(new AfterLoadEvent(Identifier.of(id), entity));
 
 		return entityCallbacks.callback(AfterLoadCallback.class, entity);
 	}
 
-	private <T> T triggerBeforeConvert(T aggregateRoot, @Nullable Object id) {
-
-		Identifier identifier = Identifier.ofNullable(id);
-
+	private <T> T triggerBeforeConvert(T aggregateRoot) {
 		return entityCallbacks.callback(BeforeConvertCallback.class, aggregateRoot);
 	}
 
 	private <T> T triggerBeforeSave(T aggregateRoot, @Nullable Object id, AggregateChange<T> change) {
 
-		Identifier identifier = Identifier.ofNullable(id);
-
 		publisher.publishEvent(new BeforeSaveEvent( //
-				identifier, //
+				Identifier.ofNullable(id), //
 				aggregateRoot, //
 				change //
 		));
@@ -418,9 +410,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, AggregateChange<?> change) {
 
-		Specified identifier = Identifier.of(id);
-
-		publisher.publishEvent(new AfterDeleteEvent(identifier, Optional.ofNullable(aggregateRoot), change));
+		publisher.publishEvent(new AfterDeleteEvent(Identifier.of(id), Optional.ofNullable(aggregateRoot), change));
 
 		if (aggregateRoot != null) {
 			entityCallbacks.callback(AfterDeleteCallback.class, aggregateRoot);
@@ -430,9 +420,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	@Nullable
 	private <T> T triggerBeforeDelete(@Nullable T aggregateRoot, Object id, AggregateChange<?> change) {
 
-		Specified identifier = Identifier.of(id);
-
-		publisher.publishEvent(new BeforeDeleteEvent(identifier, Optional.ofNullable(aggregateRoot), change));
+		publisher.publishEvent(new BeforeDeleteEvent(Identifier.of(id), Optional.ofNullable(aggregateRoot), change));
 
 		if (aggregateRoot != null) {
 			return entityCallbacks.callback(BeforeDeleteCallback.class, aggregateRoot, change);

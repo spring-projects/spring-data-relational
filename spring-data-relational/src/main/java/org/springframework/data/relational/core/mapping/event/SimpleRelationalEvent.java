@@ -44,7 +44,7 @@ class SimpleRelationalEvent extends ApplicationEvent implements RelationalEvent 
 	}
 
 	/**
-	 * @deprecated obtain the id from the entity instead.
+	 * @deprecated since 1.1, obtain the id from the entity instead.
 	 */
 	@Override
 	@Deprecated
@@ -64,7 +64,7 @@ class SimpleRelationalEvent extends ApplicationEvent implements RelationalEvent 
 	/**
 	 * Returns the an {@link AggregateChange} instance representing the SQL statements performed by the action that
 	 * triggered this event.
-	 * 
+	 *
 	 * @return Guaranteed to be not {@literal null}.
 	 * @deprecated There is currently no replacement for this. If something like this is required please create an issue
 	 *             outlining your use case.
