@@ -1,6 +1,14 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.10.RELEASE (2019-08-05)
+----------------------------------------------
+* DATAJDBC-390 - Auditing never considers an instance as new if the id is set in a listener.
+* DATAJDBC-387 - Release 1.0.10 (Lovelace SR10).
+* DATAJDBC-383 - Remove http reference to mybatis dtd.
+* DATAJDBC-376 - Introduce Jenkins CI.
+
+
 Changes in version 1.1.0.RC1 (2019-06-14)
 -----------------------------------------
 * DATAJDBC-384 - Improve backward compatibility for MybatisDataAccessStrategy.
