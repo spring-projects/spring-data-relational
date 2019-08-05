@@ -31,7 +31,7 @@ pipeline {
                     options { timeout(time: 30, unit: 'MINUTES') }
                     steps {
                         sh 'rm -rf ?'
-                        sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,all-dbs clean dependency:list test -Dsort -B'
+                        sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,all-dbs clean dependency:list test -Dsort -U -B'
                         sh "chown -R 1001:1001 target"
                     }
                 }
@@ -64,7 +64,7 @@ pipeline {
                         "-Dartifactory.staging-repository=libs-snapshot-local " +
                         "-Dartifactory.build-name=spring-data-jdbc-1.0 " +
                         "-Dartifactory.build-number=${BUILD_NUMBER} " +
-                        '-Dmaven.test.skip=true clean deploy -B'
+                        '-Dmaven.test.skip=true clean deploy -U -B'
             }
         }
         stage('Release to artifactory with docs') {
@@ -93,7 +93,7 @@ pipeline {
                         "-Dartifactory.staging-repository=libs-snapshot-local " +
                         "-Dartifactory.build-name=spring-data-jdbc-1.0 " +
                         "-Dartifactory.build-number=${BUILD_NUMBER} " +
-                        '-Dmaven.test.skip=true clean deploy -B'
+                        '-Dmaven.test.skip=true clean deploy -U -B'
             }
         }
     }
