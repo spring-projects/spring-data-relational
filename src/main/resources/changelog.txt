@@ -1,6 +1,20 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.0.RC2 (2019-08-05)
+-----------------------------------------
+* DATAJDBC-400 - Remove Identifier from EntityCallback notification.
+* DATAJDBC-398 - Make SimpleJdbcRepository transactional.
+* DATAJDBC-395 - General overhaul of (Abstract)JdbcConfiguration and MyBatis integration.
+* DATAJDBC-394 - the genereated AS in table alias not supported  in Oracle.
+* DATAJDBC-393 - Use the new EntityCallback infrastructure.
+* DATAJDBC-391 - Revise readme for a consistent structure.
+* DATAJDBC-390 - Auditing never considers an instance as new if the id is set in a listener.
+* DATAJDBC-388 - Release 1.1 RC2 (Moore).
+* DATAJDBC-383 - Remove http reference to mybatis dtd.
+* DATAJDBC-376 - Introduce Jenkins CI.
+
+
 Changes in version 1.0.10.RELEASE (2019-08-05)
 ----------------------------------------------
 * DATAJDBC-390 - Auditing never considers an instance as new if the id is set in a listener.
