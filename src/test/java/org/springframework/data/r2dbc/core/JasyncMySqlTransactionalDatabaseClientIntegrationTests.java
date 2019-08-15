@@ -16,6 +16,9 @@
 package org.springframework.data.r2dbc.core;
 
 import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 import javax.sql.DataSource;
 
@@ -25,11 +28,12 @@ import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
 
 /**
- * Integration tests for {@link DatabaseClient} against MySQL.
+ * Transactional integration tests for {@link DatabaseClient} against MySQL using Jasync MySQL.
  *
  * @author Mark Paluch
  */
-public class MySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientIntegrationTests {
+public class JasyncMySqlTransactionalDatabaseClientIntegrationTests
+		extends AbstractTransactionalDatabaseClientIntegrationTests {
 
 	@ClassRule public static final ExternalDatabase database = MySqlTestSupport.database();
 
@@ -40,11 +44,35 @@ public class MySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientI
 
 	@Override
 	protected ConnectionFactory createConnectionFactory() {
-		return MySqlTestSupport.createConnectionFactory(database);
+		return MySqlTestSupport.createJasyncConnectionFactory(database);
 	}
 
 	@Override
 	protected String getCreateTableStatement() {
 		return MySqlTestSupport.CREATE_TABLE_LEGOSET;
+	}
+
+	@Override
+	protected Mono<Void> prepareForTransaction(DatabaseClient client) {
+
+		/*
+		 * We have to execute a sql statement first.
+		 * Otherwise MySql don't have a transaction id.
+		 * And we need to delay emitting the result so that MySql has time to write the transaction id, which is done in
+		 * batches every now and then.
+		 * @see: https://dev.mysql.com/doc/refman/5.7/en/innodb-information-schema-internal-data.html
+		 */
+		return client.execute(getInsertIntoLegosetStatement()) //
+				.bind(0, 42055) //
+				.bind(1, "SCHAUFELRADBAGGER") //
+				.bindNull(2, Integer.class) //
+				.fetch().rowsUpdated() //
+				.delayElement(Duration.ofMillis(50)) //
+				.then();
+	}
+
+	@Override
+	protected String getCurrentTransactionIdStatement() {
+		return "SELECT tx.trx_id FROM information_schema.innodb_trx tx WHERE tx.trx_mysql_thread_id = connection_id()";
 	}
 }

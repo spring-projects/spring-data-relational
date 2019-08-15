@@ -20,16 +20,18 @@ import io.r2dbc.spi.ConnectionFactory;
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
 
 /**
- * Integration tests for {@link DatabaseClient} against MySQL.
+ * Integration tests for {@link DatabaseClient} against MySQL using Jasync MySQL.
  *
  * @author Mark Paluch
  */
-public class MySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientIntegrationTests {
+public class JasyncMySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientIntegrationTests {
 
 	@ClassRule public static final ExternalDatabase database = MySqlTestSupport.database();
 
@@ -40,11 +42,17 @@ public class MySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientI
 
 	@Override
 	protected ConnectionFactory createConnectionFactory() {
-		return MySqlTestSupport.createConnectionFactory(database);
+		return MySqlTestSupport.createJasyncConnectionFactory(database);
 	}
 
 	@Override
 	protected String getCreateTableStatement() {
 		return MySqlTestSupport.CREATE_TABLE_LEGOSET;
 	}
+
+	@Override
+	@Ignore("Jasync currently uses its own exceptions, see jasync-sql/jasync-sql#106")
+	@Test
+	public void shouldTranslateDuplicateKeyException() {}
+
 }

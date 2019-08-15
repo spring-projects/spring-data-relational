@@ -15,17 +15,19 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import javax.sql.DataSource;
+import io.r2dbc.spi.ConnectionFactory;
+import reactor.core.publisher.Mono;
+
 import java.time.Duration;
 
-import io.r2dbc.spi.ConnectionFactory;
+import javax.sql.DataSource;
+
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
-import reactor.core.publisher.Mono;
 
 /**
  * Transactional integration tests for {@link DatabaseClient} against MySQL.
@@ -69,6 +71,17 @@ public class MySqlTransactionalDatabaseClientIntegrationTests
 				.fetch().rowsUpdated() //
 				.delayElement(Duration.ofMillis(50)) //
 				.then();
+	}
+
+	@Test
+	@Ignore("https://github.com/mirromutth/r2dbc-mysql/issues/45")
+	@Override
+	public void emitTransactionIds() {}
+
+	@Test
+	@Ignore("https://github.com/mirromutth/r2dbc-mysql/issues/45")
+	public void emitTransactionIdsUsingManagedTransactions() {
+		super.emitTransactionIdsUsingManagedTransactions();
 	}
 
 	@Override

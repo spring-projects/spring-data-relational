@@ -48,7 +48,7 @@ abstract class ConnectionUtils {
 	 * @param configuration
 	 * @return
 	 */
-	private static ConnectionFactoryOptions createOptions(String driver, ExternalDatabase configuration) {
+	static ConnectionFactoryOptions createOptions(String driver, ExternalDatabase configuration) {
 
 		return ConnectionFactoryOptions.builder().option(DRIVER, driver) //
 				.option(USER, configuration.getUsername()) //

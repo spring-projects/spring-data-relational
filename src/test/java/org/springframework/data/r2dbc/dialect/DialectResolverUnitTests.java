@@ -3,6 +3,8 @@ package org.springframework.data.r2dbc.dialect;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.github.mirromutth.r2dbc.mysql.MySqlConnectionConfiguration;
+import io.github.mirromutth.r2dbc.mysql.MySqlConnectionFactory;
 import io.r2dbc.h2.H2ConnectionConfiguration;
 import io.r2dbc.h2.H2ConnectionFactory;
 import io.r2dbc.mssql.MssqlConnectionConfiguration;
@@ -24,6 +26,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
 import com.github.jasync.r2dbc.mysql.JasyncConnectionFactory;
 import com.github.jasync.sql.db.mysql.pool.MySQLConnectionFactory;
+import reactor.core.publisher.Mono;
 
 /**
  * Unit tests for {@link DialectResolver}.
@@ -40,11 +43,14 @@ public class DialectResolverUnitTests {
 		MssqlConnectionFactory mssql = new MssqlConnectionFactory(MssqlConnectionConfiguration.builder().host("localhost")
 				.database("foo").username("bar").password("password").build());
 		H2ConnectionFactory h2 = new H2ConnectionFactory(H2ConnectionConfiguration.builder().inMemory("mem").build());
-		JasyncConnectionFactory mysql = new JasyncConnectionFactory(mock(MySQLConnectionFactory.class));
+		JasyncConnectionFactory jasyncMysql = new JasyncConnectionFactory(mock(MySQLConnectionFactory.class));
+		MySqlConnectionFactory mysql = MySqlConnectionFactory
+				.from(MySqlConnectionConfiguration.builder().host("localhost").username("mysql").build());
 
 		assertThat(DialectResolver.getDialect(postgres)).isEqualTo(PostgresDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(mssql)).isEqualTo(SqlServerDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(h2)).isEqualTo(H2Dialect.INSTANCE);
+		assertThat(DialectResolver.getDialect(jasyncMysql)).isEqualTo(MySqlDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(mysql)).isEqualTo(MySqlDialect.INSTANCE);
 	}
 

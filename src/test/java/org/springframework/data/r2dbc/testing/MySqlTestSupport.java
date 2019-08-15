@@ -15,7 +15,9 @@
  */
 package org.springframework.data.r2dbc.testing;
 
+import io.github.mirromutth.r2dbc.mysql.MySqlConnectionFactoryProvider;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ConnectionFactoryOptions;
 
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -26,6 +28,7 @@ import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
 
 import org.testcontainers.containers.MySQLContainer;
 
+import com.github.jasync.r2dbc.mysql.MysqlConnectionFactoryProvider;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
 /**
@@ -90,7 +93,7 @@ public class MySqlTestSupport {
 				.port(3306) //
 				.database("mysql") //
 				.username("root") //
-				.password("my-secret-pw").build();
+				.password("my-secret-pw").jdbcUrl("jdbc:mysql://localhost:3306/mysql").build();
 	}
 
 	/**
@@ -101,7 +104,7 @@ public class MySqlTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				MySQLContainer container = new MySQLContainer("mysql:5.6.43");
+				MySQLContainer container = new MySQLContainer();
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //
@@ -117,10 +120,21 @@ public class MySqlTestSupport {
 	}
 
 	/**
-	 * Creates a new {@link ConnectionFactory} configured from the {@link ExternalDatabase}..
+	 * Creates a new Jasync MySQL {@link ConnectionFactory} configured from the {@link ExternalDatabase}.
+	 */
+	public static ConnectionFactory createJasyncConnectionFactory(ExternalDatabase database) {
+
+		ConnectionFactoryOptions options = ConnectionUtils.createOptions("mysql", database);
+		return new MysqlConnectionFactoryProvider().create(options);
+	}
+
+	/**
+	 * Creates a new R2DBC MySQL {@link ConnectionFactory} configured from the {@link ExternalDatabase}.
 	 */
 	public static ConnectionFactory createConnectionFactory(ExternalDatabase database) {
-		return ConnectionUtils.getConnectionFactory("mysql", database);
+
+		ConnectionFactoryOptions options = ConnectionUtils.createOptions("mysql", database);
+		return new MySqlConnectionFactoryProvider().create(options);
 	}
 
 	/**
