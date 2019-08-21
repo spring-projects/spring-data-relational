@@ -613,7 +613,7 @@ The following table describes the available events:
 
 WARNING: Lifecycle events depend on an `ApplicationEventMulticaster`, which in case of the `SimpleApplicationEventMulticaster` can be configured with a `TaskExecutor`, and therefore gives no guarantees when an Event is processed.
 
-include::../{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
+include::{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
 
 [[jdbc.entity-callbacks]]
 === Store-specific EntityCallbacks
