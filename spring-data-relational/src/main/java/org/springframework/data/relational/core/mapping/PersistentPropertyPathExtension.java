@@ -21,6 +21,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.util.Lazy;
+import org.springframework.data.relational.core.sql.SqlUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -191,7 +192,8 @@ public class PersistentPropertyPathExtension {
 	 * @throws IllegalStateException when called on an empty path.
 	 */
 	public String getColumnAlias() {
-		return columnAlias.get();
+
+		return SqlUtils.sanitizeName(prefixWithTableAlias(getColumnName()));
 	}
 
 	/**

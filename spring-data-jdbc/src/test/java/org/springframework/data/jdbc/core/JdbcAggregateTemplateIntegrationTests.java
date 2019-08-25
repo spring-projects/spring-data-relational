@@ -597,6 +597,28 @@ public class JdbcAggregateTemplateIntegrationTests {
 		});
 	}
 
+	@Test // DATAJDBC-407
+	@IfProfileValue(name = "current.database", value = "postgres")
+	public void saveAndLoadEntityWithQuotedColumnName() {
+
+		EntityWithQuotedColumnName entity = new EntityWithQuotedColumnName();
+		entity.id = 42L;
+		entity.name = "some value";
+		entity.name2 = "name2";
+
+		EntityWithQuotedColumnName saved = template.save(entity);
+
+		EntityWithQuotedColumnName reloaded = template.findById(saved.id, EntityWithQuotedColumnName.class);
+
+		assertThat(reloaded.name).isEqualTo("some value");
+
+		reloaded.name = "new value";
+
+		template.save(reloaded);
+
+		template.deleteById(reloaded.id, EntityWithQuotedColumnName.class);
+	}
+
 	private static NoIdMapChain4 createNoIdMapTree() {
 
 		NoIdMapChain4 chain4 = new NoIdMapChain4();
@@ -869,5 +891,12 @@ public class JdbcAggregateTemplateIntegrationTests {
 				DataAccessStrategy dataAccessStrategy, RelationalConverter converter) {
 			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 		}
+	}
+
+	@Data
+	static class EntityWithQuotedColumnName {
+		@Id @Column("\"test_@id\"") private Long id;
+		@Column("\"test_@123\"") private String name;
+		@Column("\"ValueCol\"") private String name2;
 	}
 }

@@ -37,6 +37,7 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlUtils;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -120,7 +121,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		operations.update( //
 				sql(domainType).getInsert(new HashSet<>(Arrays.asList(parameterSource.getParameterNames()))), //
-				parameterSource, //
+				sanitize(parameterSource), //
 				holder //
 		);
 
@@ -137,7 +138,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
 		return operations.update(sql(domainType).getUpdate(),
-				getParameterSource(instance, persistentEntity, "", Predicates.includeAll())) != 0;
+				sanitize(getParameterSource(instance, persistentEntity, "", Predicates.includeAll()))) != 0;
 	}
 
 	/*
@@ -148,7 +149,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public void delete(Object id, Class<?> domainType) {
 
 		String deleteByIdSql = sql(domainType).getDeleteById();
-		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
+		MapSqlParameterSource parameter = sanitize(createIdParameterSource(id, domainType));
 
 		operations.update(deleteByIdSql, parameter);
 	}
@@ -218,7 +219,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
 
 		try {
-			return operations.queryForObject(findOneSql, parameter, (RowMapper<T>) getEntityRowMapper(domainType));
+			return operations.queryForObject(findOneSql, sanitize(parameter), (RowMapper<T>) getEntityRowMapper(domainType));
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -253,7 +254,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		String findAllInListSql = sql(domainType).getFindAllInList();
 
-		return operations.query(findAllInListSql, parameterSource, (RowMapper<T>) getEntityRowMapper(domainType));
+		return operations.query(findAllInListSql, sanitize(parameterSource), (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
 	/*
@@ -279,7 +280,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		RowMapper<?> rowMapper = path.isMap() ? this.getMapEntityRowMapper(path, identifier)
 				: this.getEntityRowMapper(path, identifier);
 
-		return operations.query(findAllByProperty, parameters, (RowMapper<Object>) rowMapper);
+		return operations.query(findAllByProperty, sanitize( parameters), (RowMapper<Object>) rowMapper);
 	}
 
 	/*
@@ -307,7 +308,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String existsSql = sql(domainType).getExists();
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
 
-		Boolean result = operations.queryForObject(existsSql, parameter, Boolean.class);
+		Boolean result = operations.queryForObject(existsSql,sanitize( parameter), Boolean.class);
 		Assert.state(result != null, "The result of an exists query must not be null");
 
 		return result;
@@ -347,6 +348,24 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		});
 
 		return parameters;
+	}
+
+	private MapSqlParameterSource sanitize(MapSqlParameterSource parameterSource) {
+
+		MapSqlParameterSource sanitized = new MapSqlParameterSource();
+
+		for (String parameterName : parameterSource.getParameterNames()) {
+
+			String sanitizedName = SqlUtils.sanitizeName(parameterName);
+
+			sanitized.addValue( //
+					sanitizedName, //
+					parameterSource.getValue(parameterName), //
+					parameterSource.getSqlType(parameterName), //
+					parameterSource.getTypeName(parameterName)); //
+		}
+
+		return sanitized;
 	}
 
 	@Nullable

@@ -18,10 +18,11 @@ package org.springframework.data.jdbc.testing;
 import org.springframework.test.annotation.ProfileValueSource;
 
 /**
- * This {@link ProfileValueSource} offers a single set of keys {@code current.database.is.not.<database>} where
+ * This {@link ProfileValueSource} offers a set of keys {@code current.database.is.not.<database>} where
  * {@code <database> } is a database as used in active profiles to enable integration tests to run with a certain
  * database. The value returned for these keys is {@code "true"} or {@code "false"} depending on if the database is
- * actually the one currently used by integration tests.
+ * actually the one currently used by integration tests. Additionally it offers the key {@code current.database} which
+ * holds the database value.
  *
  * @author Jens Schauder
  */
@@ -37,10 +38,14 @@ public class DatabaseProfileValueSource implements ProfileValueSource {
 	@Override
 	public String get(String key) {
 
-		if (!key.startsWith("current.database.is.not.")) {
-			return null;
+		if (key.startsWith("current.database.is.not.")) {
+			return Boolean.toString(!key.endsWith(currentDatabase)).toLowerCase();
 		}
 
-		return Boolean.toString(!key.endsWith(currentDatabase)).toLowerCase();
+		if (key.startsWith("current.database")) {
+			return currentDatabase;
+		}
+
+		return null;
 	}
 }

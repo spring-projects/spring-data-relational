@@ -33,6 +33,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -132,6 +133,24 @@ public class DefaultDataAccessStrategyUnitTests {
 		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");
 	}
 
+	@Test // DATAJDBC-407
+	public void additionalParametersForCaseSensitiveColumnNames() {
+
+		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+
+		accessStrategy.insert(new EntityWithCaseSensitiveColumnName(ORIGINAL_ID, "val", "val2"), EntityWithCaseSensitiveColumnName.class, additionalParameters);
+
+		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
+
+		assertThat(sqlCaptor.getValue()) //
+				.containsSequence("INSERT INTO entity_with_case_sensitive_column_name (", "\"primaryKey\"", ") VALUES (", ":primaryKey", ")") //
+				.containsSequence("INSERT INTO entity_with_case_sensitive_column_name (", "\"ValueCol\"", ") VALUES (", ":ValueCol", ")") //
+				.containsSequence("INSERT INTO entity_with_case_sensitive_column_name (", "\"test_@123\"", ") VALUES (", ":test_123", ")");
+		assertThat(paramSourceCaptor.getValue().getValue("primaryKey")).isEqualTo(ORIGINAL_ID);
+		assertThat(paramSourceCaptor.getValue().getValue("ValueCol")).isEqualTo("val");
+		assertThat(paramSourceCaptor.getValue().getValue("test_123")).isEqualTo("val2");
+	}
+
 	@RequiredArgsConstructor
 	private static class DummyEntity {
 
@@ -143,6 +162,13 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		@Id Long id;
 		boolean flag;
+	}
+
+	@AllArgsConstructor
+	static class EntityWithCaseSensitiveColumnName {
+		@Id @Column("\"primaryKey\"") Long id;
+		@Column("\"ValueCol\"") String name;
+		@Column("\"test_@123\"") String name2;
 	}
 
 	@WritingConverter

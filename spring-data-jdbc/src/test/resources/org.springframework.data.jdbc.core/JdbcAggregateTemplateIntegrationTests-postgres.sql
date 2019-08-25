@@ -304,3 +304,10 @@ CREATE TABLE NO_ID_MAP_CHAIN0
                                    NO_ID_MAP_CHAIN2_KEY
     )
 );
+
+CREATE TABLE ENTITY_WITH_QUOTED_COLUMN_NAME
+(
+    "primaryKey" SERIAL PRIMARY KEY,
+    "ValueCol"   VARCHAR(20),
+    "test_@123"  VARCHAR(20)
+);
