@@ -18,11 +18,15 @@ package org.springframework.data.r2dbc.dialect;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.core.convert.converter.Converter;
 
 /**
  * An SQL dialect for MySQL.
@@ -41,6 +45,19 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	public static final MySqlDialect INSTANCE = new MySqlDialect();
 
 	private static final BindMarkersFactory ANONYMOUS = BindMarkersFactory.anonymous("?");
+	
+	/**
+	 * MySql specific converters.
+	 */
+	public static final List<Object> CONVERTERS;
+	
+	static {
+		List<Object> converters = new ArrayList<>();
+
+		converters.add(ByteToBooleanConverter.INSTANCE);
+
+		CONVERTERS = Collections.unmodifiableList(converters);
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -58,5 +75,34 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	@Override
 	public Collection<? extends Class<?>> getSimpleTypes() {
 		return SIMPLE_TYPES;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.dialect.R2dbcDialect#getConverters()
+	 */
+	@Override
+	public Collection<Object> getConverters() {
+		return CONVERTERS;
+	}
+        
+	/**
+	 * Simple singleton to convert {@link Byte}s to their {@link Boolean}
+	 * representation. MySQL does not have a built in boolean type by default,
+	 * so relies on using a byte instead. Non-zero values represent true.
+	 *
+	 * @author Michael Berry
+	 */
+	public enum ByteToBooleanConverter implements Converter<Byte, Boolean> {
+
+		INSTANCE;
+
+		@Override
+		public Boolean convert(Byte s) {
+			if (s == null) {
+				return null;
+			}
+			return s != 0;
+		}
 	}
 }

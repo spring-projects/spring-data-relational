@@ -174,7 +174,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	protected StoreConversions getStoreConversions() {
 
 		R2dbcDialect dialect = getDialect(lookupConnectionFactory());
-		return StoreConversions.of(dialect.getSimpleTypeHolder(), R2dbcCustomConversions.STORE_CONVERTERS);
+		return StoreConversions.of(dialect.getSimpleTypeHolder(), dialect.getConverters(), R2dbcCustomConversions.STORE_CONVERTERS);
 	}
 
 	/**

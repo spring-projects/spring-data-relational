@@ -48,4 +48,13 @@ public interface R2dbcDialect extends Dialect {
 
 		return new SimpleTypeHolder(simpleTypes, true);
 	}
+
+	/**
+	 * Return a collection of converters for this dialect.
+	 * 
+	 * @return a collection of converters for this dialect.
+	 */
+	default Collection<Object> getConverters() {
+		return Collections.emptySet();
+	}
 }
