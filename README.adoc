@@ -106,7 +106,7 @@ If you'd rather like the latest snapshots of the upcoming major version, use our
 Having trouble with Spring Data? We’d love to help!
 
 * Check the
-https://docs.spring.io/spring-data/r2dbc/docs/current/reference/html/[reference documentation], and https://docs.spring.io/spring-data/r2dbc/docs/current/api/[Javadocs].
+https://docs.spring.io/spring-data/r2dbc/docs/1.0.x/reference/html/#reference[reference documentation], and https://docs.spring.io/spring-data/r2dbc/docs/1.0.x/api/[Javadocs].
 * Learn the Spring basics – Spring Data builds on Spring Framework, check the https://spring.io[spring.io] web-site for a wealth of reference documentation.
 If you are just starting out with Spring, try one of the https://spring.io/guides[guides].
 * If you are upgrading, check out the https://docs.spring.io/spring-data/r2dbc/docs/current/changelog.txt[changelog] for "`new and noteworthy`" features.
