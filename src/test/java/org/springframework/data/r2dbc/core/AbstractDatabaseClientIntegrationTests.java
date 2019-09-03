@@ -157,7 +157,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 
-		databaseClient.execute("SELECT id, name, manual FROM legoset WHERE name = :name or manual = :name") //
+		databaseClient.execute("SELECT id, name, manual FROM legoset WHERE name = :name or name = :name") //
 				.bind("name", "unknown").as(LegoSet.class) //
 				.fetch().all() //
 				.as(StepVerifier::create) //

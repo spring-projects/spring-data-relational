@@ -145,12 +145,12 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2
 	public void executeInsertInManagedTransaction() {
 
-		Mono<Integer> integerFlux = databaseClient //
+		Flux<Integer> integerFlux = databaseClient //
 				.execute(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
-				.fetch().rowsUpdated().as(rxtx::transactional);
+				.fetch().rowsUpdated().flux().as(rxtx::transactional);
 
 		integerFlux.as(StepVerifier::create) //
 				.expectNext(1) //
@@ -162,11 +162,11 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2
 	public void executeInsertInAutoCommitTransaction() {
 
-		Mono<Integer> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
+		Flux<Integer> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
-				.fetch().rowsUpdated().as(rxtx::transactional);
+				.fetch().rowsUpdated().flux().as(rxtx::transactional);
 
 		integerFlux.as(StepVerifier::create) //
 				.expectNext(1) //
