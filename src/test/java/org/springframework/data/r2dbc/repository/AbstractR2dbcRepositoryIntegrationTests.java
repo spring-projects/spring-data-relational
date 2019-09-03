@@ -41,13 +41,9 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
-import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
-import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.dialect.DialectResolver;
-import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.r2dbc.repository.query.Query;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -172,8 +168,20 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test
-	public void shouldInsertItemsTransactional() {
+	public void shouldDeleteUsingQueryMethod() {
 
+		shouldInsertNewItems();
+
+		repository.deleteAllByManual(12) //
+				.then().as(StepVerifier::create) //
+				.verifyComplete();
+
+		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) AS count FROM legoset");
+		assertThat(count).hasEntrySatisfying("count", numberOf(1));
+	}
+
+	@Test
+	public void shouldInsertItemsTransactional() {
 
 		R2dbcTransactionManager r2dbcTransactionManager = new R2dbcTransactionManager(connectionFactory);
 		TransactionalOperator rxtx = TransactionalOperator.create(r2dbcTransactionManager);
@@ -183,7 +191,6 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		Mono<Map<String, Object>> transactional = repository.save(legoSet1) //
 				.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset")).as(rxtx::transactional);
-
 
 		Mono<Map<String, Object>> nonTransactional = repository.save(legoSet2) //
 				.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset"));
@@ -211,6 +218,9 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Mono<LegoSet> findByManual(int manual);
 
 		Flux<Integer> findAllIds();
+
+		@Query("DELETE from legoset where manual = :manual")
+		Mono<Void> deleteAllByManual(int manual);
 	}
 
 	@Getter

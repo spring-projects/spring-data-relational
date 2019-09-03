@@ -83,7 +83,8 @@ interface R2dbcQueryExecution {
 
 			ReturnedType returnedType = this.processor.getReturnedType();
 
-			if (ClassUtils.isPrimitiveOrWrapper(returnedType.getReturnedType())) {
+			if (Void.class == returnedType.getReturnedType()
+					|| ClassUtils.isPrimitiveOrWrapper(returnedType.getReturnedType())) {
 				return source;
 			}
 
