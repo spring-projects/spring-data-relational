@@ -49,6 +49,7 @@ public abstract class DatabasePopulatorUtils {
 		return Mono.usingWhen(ConnectionFactoryUtils.getConnection(connectionFactory), //
 				populator::populate, //
 				it -> ConnectionFactoryUtils.releaseConnection(it, connectionFactory), //
+				(it, err) -> ConnectionFactoryUtils.releaseConnection(it, connectionFactory),
 				it -> ConnectionFactoryUtils.releaseConnection(it, connectionFactory))
 				.onErrorMap(ex -> !(ex instanceof ScriptException), ex -> {
 					return new UncategorizedScriptException("Failed to execute database script", ex);

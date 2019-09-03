@@ -157,7 +157,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Connection connectionToUse = createConnectionProxy(it.connection);
 
 			return doInConnection(connectionToUse, action);
-		}, ConnectionCloseHolder::close, ConnectionCloseHolder::close, ConnectionCloseHolder::close) //
+		}, ConnectionCloseHolder::close, (it, err) -> it.close(), ConnectionCloseHolder::close) //
 				.onErrorMap(R2dbcException.class, ex -> translateException("execute", getSql(action), ex));
 	}
 
@@ -185,7 +185,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Connection connectionToUse = createConnectionProxy(it.connection);
 
 			return doInConnectionMany(connectionToUse, action);
-		}, ConnectionCloseHolder::close, ConnectionCloseHolder::close, ConnectionCloseHolder::close) //
+		}, ConnectionCloseHolder::close, (it, err) -> it.close(), ConnectionCloseHolder::close) //
 				.onErrorMap(R2dbcException.class, ex -> translateException("executeMany", getSql(action), ex));
 	}
 
