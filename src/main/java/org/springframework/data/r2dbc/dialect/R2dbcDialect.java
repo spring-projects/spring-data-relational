@@ -14,6 +14,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Michael Berry
  */
 public interface R2dbcDialect extends Dialect {
 
@@ -51,7 +52,7 @@ public interface R2dbcDialect extends Dialect {
 
 	/**
 	 * Return a collection of converters for this dialect.
-	 * 
+	 *
 	 * @return a collection of converters for this dialect.
 	 */
 	default Collection<Object> getConverters() {

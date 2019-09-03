@@ -15,14 +15,22 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
+import lombok.Data;
+import reactor.test.StepVerifier;
 
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
+import org.junit.Test;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Integration tests for {@link DatabaseClient} against MySQL.
@@ -47,4 +55,42 @@ public class MySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientI
 	protected String getCreateTableStatement() {
 		return MySqlTestSupport.CREATE_TABLE_LEGOSET;
 	}
+
+	@Test // gh-166
+	public void considersBuiltInConverters() {
+
+		ConnectionFactory connectionFactory = createConnectionFactory();
+		JdbcTemplate jdbc = createJdbcTemplate(createDataSource());
+
+		try {
+			jdbc.execute("DROP TABLE boolean_mapping");
+		} catch (DataAccessException e) {}
+		jdbc.execute("CREATE TABLE boolean_mapping (id int, flag1 TINYINT, flag2 TINYINT)");
+
+		BooleanMapping mapping = new BooleanMapping();
+		mapping.setId(42);
+		mapping.setFlag1(true);
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.insert().into(BooleanMapping.class).using(mapping).then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		databaseClient.select().from(BooleanMapping.class).fetch().first() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> assertThat(actual.isFlag1()).isTrue()) //
+				.verifyComplete();
+	}
+
+	@Table("boolean_mapping")
+	@Data
+	static class BooleanMapping {
+
+		int id;
+		boolean flag1;
+		boolean flag2;
+
+	}
+
 }

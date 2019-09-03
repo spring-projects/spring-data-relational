@@ -82,13 +82,23 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		this(dialect, createConverter(dialect, converters));
 	}
 
+	/**
+	 * Creates a new {@link R2dbcConverter} given {@link R2dbcDialect} and custom {@code converters}.
+	 *
+	 * @param dialect must not be {@literal null}.
+	 * @param converters must not be {@literal null}.
+	 * @return the {@link R2dbcConverter}.
+	 */
 	public static R2dbcConverter createConverter(R2dbcDialect dialect, Collection<?> converters) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converters, "Converters must not be null");
 
+		List<Object> storeConverters = new ArrayList<>(dialect.getConverters());
+		storeConverters.addAll(R2dbcCustomConversions.STORE_CONVERTERS);
+
 		R2dbcCustomConversions customConversions = new R2dbcCustomConversions(
-				StoreConversions.of(dialect.getSimpleTypeHolder(), R2dbcCustomConversions.STORE_CONVERTERS), converters);
+				StoreConversions.of(dialect.getSimpleTypeHolder(), storeConverters), storeConverters);
 
 		RelationalMappingContext context = new RelationalMappingContext();
 		context.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());

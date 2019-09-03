@@ -17,7 +17,9 @@ package org.springframework.data.r2dbc.config;
 
 import io.r2dbc.spi.ConnectionFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.BeansException;
@@ -174,7 +176,11 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	protected StoreConversions getStoreConversions() {
 
 		R2dbcDialect dialect = getDialect(lookupConnectionFactory());
-		return StoreConversions.of(dialect.getSimpleTypeHolder(), dialect.getConverters(), R2dbcCustomConversions.STORE_CONVERTERS);
+
+		List<Object> converters = new ArrayList<>(dialect.getConverters());
+		converters.addAll(R2dbcCustomConversions.STORE_CONVERTERS);
+
+		return StoreConversions.of(dialect.getSimpleTypeHolder(), converters);
 	}
 
 	/**
