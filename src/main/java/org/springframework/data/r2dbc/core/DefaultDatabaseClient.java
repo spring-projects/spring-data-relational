@@ -15,6 +15,16 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.R2dbcException;
+import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Statement;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,18 +41,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import io.r2dbc.spi.Connection;
-import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.R2dbcException;
-import io.r2dbc.spi.Result;
-import io.r2dbc.spi.Row;
-import io.r2dbc.spi.RowMetadata;
-import io.r2dbc.spi.Statement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -383,7 +384,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Assert.notNull(value, () -> String.format("Value at index %d must not be null. Use bindNull(…) instead.", index));
 
 			Map<Integer, SettableValue> byIndex = new LinkedHashMap<>(this.byIndex);
-			byIndex.put(index, SettableValue.fromOrEmpty(value, value.getClass()));
+
+			if (value instanceof SettableValue) {
+				byIndex.put(index, (SettableValue) value);
+			} else {
+				byIndex.put(index, SettableValue.fromOrEmpty(value, value.getClass()));
+			}
 
 			return createInstance(byIndex, this.byName, this.sqlSupplier);
 		}
@@ -407,7 +413,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					() -> String.format("Value for parameter %s must not be null. Use bindNull(…) instead.", name));
 
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
-			byName.put(name, SettableValue.fromOrEmpty(value, value.getClass()));
+
+			if (value instanceof SettableValue) {
+				byName.put(name, (SettableValue) value);
+			} else {
+				byName.put(name, SettableValue.fromOrEmpty(value, value.getClass()));
+			}
 
 			return createInstance(this.byIndex, byName, this.sqlSupplier);
 		}
@@ -432,13 +443,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		protected ExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
 				Supplier<String> sqlSupplier) {
 			return new ExecuteSpecSupport(byIndex, byName, sqlSupplier);
-		}
-
-		public ExecuteSpecSupport bind(Object bean) {
-
-			Assert.notNull(bean, "Bean must not be null!");
-
-			throw new UnsupportedOperationException("Implement me!");
 		}
 	}
 
@@ -508,11 +512,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		public DefaultGenericExecuteSpec bindNull(String name, Class<?> type) {
 			return (DefaultGenericExecuteSpec) super.bindNull(name, type);
-		}
-
-		@Override
-		public DefaultGenericExecuteSpec bind(Object bean) {
-			return (DefaultGenericExecuteSpec) super.bind(bean);
 		}
 
 		@Override
@@ -601,11 +600,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		public DefaultTypedExecuteSpec<T> bindNull(String name, Class<?> type) {
 			return (DefaultTypedExecuteSpec<T>) super.bindNull(name, type);
-		}
-
-		@Override
-		public DefaultTypedExecuteSpec<T> bind(Object bean) {
-			return (DefaultTypedExecuteSpec<T>) super.bind(bean);
 		}
 
 		@Override
@@ -933,8 +927,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		public GenericInsertSpec<T> value(String field, Object value) {
 
 			Assert.notNull(field, "Field must not be null!");
-			Assert.notNull(value,
-					() -> String.format("Value for field %s must not be null. Use nullValue(…) instead.", field));
 
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
 
@@ -943,17 +935,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			} else {
 				byName.put(field, SettableValue.fromOrEmpty(value, value.getClass()));
 			}
-
-			return new DefaultGenericInsertSpec<>(this.table, byName, this.mappingFunction);
-		}
-
-		@Override
-		public GenericInsertSpec<T> nullValue(String field) {
-
-			Assert.notNull(field, "Field must not be null!");
-
-			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
-			byName.put(field, null);
 
 			return new DefaultGenericInsertSpec<>(this.table, byName, this.mappingFunction);
 		}

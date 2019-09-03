@@ -480,10 +480,12 @@ public interface DatabaseClient {
 	interface GenericInsertSpec<T> extends InsertSpec<T> {
 
 		/**
-		 * Specify a field and non-{@literal null} value to insert.
+		 * Specify a field and non-{@literal null} value to insert. {@code value} can be either a scalar value or
+		 * {@link SettableValue}.
 		 *
 		 * @param field must not be {@literal null} or empty.
-		 * @param value must not be {@literal null}
+		 * @param value the field value to set, must not be {@literal null}. Can be either a scalar value or
+		 *          {@link SettableValue}.
 		 */
 		GenericInsertSpec<T> value(String field, Object value);
 
@@ -492,19 +494,10 @@ public interface DatabaseClient {
 		 *
 		 * @param field must not be {@literal null} or empty.
 		 * @param type must not be {@literal null}.
-		 * @deprecated will be removed soon. Use {@link #nullValue(String)}.
 		 */
-		@Deprecated
 		default GenericInsertSpec<T> nullValue(String field, Class<?> type) {
 			return value(field, SettableValue.empty(type));
 		}
-
-		/**
-		 * Specify a {@literal null} value to insert.
-		 *
-		 * @param field must not be {@literal null} or empty.
-		 */
-		GenericInsertSpec<T> nullValue(String field);
 	}
 
 	/**
@@ -704,10 +697,11 @@ public interface DatabaseClient {
 	interface BindSpec<S extends BindSpec<S>> {
 
 		/**
-		 * Bind a non-{@literal null} value to a parameter identified by its {@code index}.
+		 * Bind a non-{@literal null} value to a parameter identified by its {@code index}. {@code value} can be either a
+		 * scalar value or {@link SettableValue}.
 		 *
 		 * @param index zero based index to bind the parameter to.
-		 * @param value to bind. Must not be {@literal null}.
+		 * @param value must not be {@literal null}. Can be either a scalar value or {@link SettableValue}.
 		 */
 		S bind(int index, Object value);
 
@@ -720,10 +714,11 @@ public interface DatabaseClient {
 		S bindNull(int index, Class<?> type);
 
 		/**
-		 * Bind a non-{@literal null} value to a parameter identified by its {@code name}.
+		 * Bind a non-{@literal null} value to a parameter identified by its {@code name}. {@code value} can be either a
+		 * scalar value or {@link SettableValue}.
 		 *
 		 * @param name must not be {@literal null} or empty.
-		 * @param value must not be {@literal null}.
+		 * @param value must not be {@literal null}. Can be either a scalar value or {@link SettableValue}.
 		 */
 		S bind(String name, Object value);
 
@@ -734,12 +729,5 @@ public interface DatabaseClient {
 		 * @param type must not be {@literal null}.
 		 */
 		S bindNull(String name, Class<?> type);
-
-		/**
-		 * Bind a bean according to Java {@link java.beans.BeanInfo Beans} using property names.
-		 *
-		 * @param bean must not be {@literal null}.
-		 */
-		S bind(Object bean);
 	}
 }

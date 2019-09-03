@@ -34,6 +34,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 
 /**
@@ -118,6 +119,34 @@ public class DefaultDatabaseClientUnitTests {
 		verify(statement).bindNull("$1", String.class);
 	}
 
+	@Test // gh-162
+	public void executeShouldBindSettableValues() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement("SELECT * FROM table WHERE key = $1")).thenReturn(statement);
+		when(statement.execute()).thenReturn(Mono.empty());
+
+		DefaultDatabaseClient databaseClient = (DefaultDatabaseClient) DatabaseClient.builder()
+				.connectionFactory(connectionFactory)
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
+
+		databaseClient.execute("SELECT * FROM table WHERE key = $1") //
+				.bind(0, SettableValue.empty(String.class)) //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		verify(statement).bindNull(0, String.class);
+
+		databaseClient.execute("SELECT * FROM table WHERE key = $1") //
+				.bind("$1", SettableValue.empty(String.class)) //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		verify(statement).bindNull("$1", String.class);
+	}
+
 	@Test // gh-128
 	public void executeShouldBindNamedNullValues() {
 
@@ -138,7 +167,7 @@ public class DefaultDatabaseClientUnitTests {
 		verify(statement).bindNull(0, String.class);
 	}
 
-	@Test // gh-128
+	@Test // gh-128, gh-162
 	public void executeShouldBindValues() {
 
 		Statement statement = mock(Statement.class);
@@ -150,7 +179,7 @@ public class DefaultDatabaseClientUnitTests {
 				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
 
 		databaseClient.execute("SELECT * FROM table WHERE key = $1") //
-				.bind(0, "foo") //
+				.bind(0, SettableValue.from("foo")) //
 				.then() //
 				.as(StepVerifier::create) //
 				.verifyComplete();
@@ -164,6 +193,52 @@ public class DefaultDatabaseClientUnitTests {
 				.verifyComplete();
 
 		verify(statement).bind("$1", "foo");
+	}
+
+	@Test // gh-162
+	public void insertShouldAcceptNullValues() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement("INSERT INTO foo (first, second) VALUES ($1, $2)")).thenReturn(statement);
+		when(statement.returnGeneratedValues()).thenReturn(statement);
+		when(statement.execute()).thenReturn(Mono.empty());
+
+		DefaultDatabaseClient databaseClient = (DefaultDatabaseClient) DatabaseClient.builder()
+				.connectionFactory(connectionFactory)
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
+
+		databaseClient.insert().into("foo") //
+				.value("first", "foo") //
+				.nullValue("second", Integer.class) //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		verify(statement).bind(0, "foo");
+		verify(statement).bindNull(1, Integer.class);
+	}
+
+	@Test // gh-162
+	public void insertShouldAcceptSettableValue() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement("INSERT INTO foo (first, second) VALUES ($1, $2)")).thenReturn(statement);
+		when(statement.returnGeneratedValues()).thenReturn(statement);
+		when(statement.execute()).thenReturn(Mono.empty());
+
+		DefaultDatabaseClient databaseClient = (DefaultDatabaseClient) DatabaseClient.builder()
+				.connectionFactory(connectionFactory)
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
+
+		databaseClient.insert().into("foo") //
+				.value("first", SettableValue.from("foo")) //
+				.value("second", SettableValue.empty(Integer.class)) //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		verify(statement).bind(0, "foo");
+		verify(statement).bindNull(1, Integer.class);
 	}
 
 	@Test // gh-128

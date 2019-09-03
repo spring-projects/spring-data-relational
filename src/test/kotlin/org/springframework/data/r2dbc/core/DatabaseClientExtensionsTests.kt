@@ -21,6 +21,7 @@ import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.springframework.data.r2dbc.mapping.SettableValue
 import reactor.core.publisher.Mono
 
 /**
@@ -31,6 +32,66 @@ import reactor.core.publisher.Mono
  * @author Mark Paluch
  */
 class DatabaseClientExtensionsTests {
+
+	@Test // gh-162
+	fun bindByIndexShouldBindValue() {
+
+		val spec = mockk<DatabaseClient.GenericExecuteSpec>()
+		every { spec.bind(eq(0), any()) } returns spec
+
+		runBlocking {
+			spec.bind<String>(0, "foo")
+		}
+
+		verify {
+			spec.bind(0, SettableValue.fromOrEmpty("foo", String::class.java))
+		}
+	}
+
+	@Test // gh-162
+	fun bindByIndexShouldBindNull() {
+
+		val spec = mockk<DatabaseClient.GenericExecuteSpec>()
+		every { spec.bind(eq(0), any()) } returns spec
+
+		runBlocking {
+			spec.bind<String>(0, null)
+		}
+
+		verify {
+			spec.bind(0, SettableValue.empty(String::class.java))
+		}
+	}
+
+	@Test // gh-162
+	fun bindByNameShouldBindValue() {
+
+		val spec = mockk<DatabaseClient.GenericExecuteSpec>()
+		every { spec.bind(eq("field"), any()) } returns spec
+
+		runBlocking {
+			spec.bind<String>("field", "foo")
+		}
+
+		verify {
+			spec.bind("field", SettableValue.fromOrEmpty("foo", String::class.java))
+		}
+	}
+
+	@Test // gh-162
+	fun bindByNameShouldBindNull() {
+
+		val spec = mockk<DatabaseClient.GenericExecuteSpec>()
+		every { spec.bind(eq("field"), any()) } returns spec
+
+		runBlocking {
+			spec.bind<String>("field", null)
+		}
+
+		verify {
+			spec.bind("field", SettableValue.empty(String::class.java))
+		}
+	}
 
 	@Test // gh-63
 	fun genericExecuteSpecAwait() {
@@ -137,6 +198,36 @@ class DatabaseClientExtensionsTests {
 
 		verify {
 			spec.into(String::class.java)
+		}
+	}
+
+	@Test // gh-162
+	fun insertValueShouldBindValue() {
+
+		val spec = mockk<DatabaseClient.GenericInsertSpec<Any>>()
+		every { spec.value(eq("field"), any()) } returns spec
+
+		runBlocking {
+			spec.value<String>("field", "foo")
+		}
+
+		verify {
+			spec.value("field", SettableValue.fromOrEmpty("foo", String::class.java))
+		}
+	}
+
+	@Test // gh-162
+	fun insertValueShouldBindNull() {
+
+		val spec = mockk<DatabaseClient.GenericInsertSpec<Any>>()
+		every { spec.value(eq("field"), any()) } returns spec
+
+		runBlocking {
+			spec.value<String>("field", null)
+		}
+
+		verify {
+			spec.value("field", SettableValue.empty(String::class.java))
 		}
 	}
 

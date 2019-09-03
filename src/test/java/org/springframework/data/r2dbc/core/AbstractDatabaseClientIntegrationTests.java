@@ -172,7 +172,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		databaseClient.insert().into("legoset")//
 				.value("id", 42055) //
 				.value("name", "SCHAUFELRADBAGGER") //
-				.nullValue("manual") //
+				.nullValue("manual", Integer.class) //
 				.fetch() //
 				.rowsUpdated() //
 				.as(StepVerifier::create) //
@@ -190,7 +190,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		databaseClient.insert().into("legoset")//
 				.value("id", 42055) //
 				.value("name", "SCHAUFELRADBAGGER") //
-				.nullValue("manual") //
+				.nullValue("manual", Integer.class) //
 				.then() //
 				.as(StepVerifier::create) //
 				.verifyComplete();
