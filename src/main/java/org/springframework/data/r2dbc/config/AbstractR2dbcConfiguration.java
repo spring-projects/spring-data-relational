@@ -37,6 +37,7 @@ import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.r2dbc.support.SqlStateR2dbcExceptionTranslator;
@@ -126,7 +127,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
 
-		RelationalMappingContext relationalMappingContext = new RelationalMappingContext(
+		R2dbcMappingContext relationalMappingContext = new R2dbcMappingContext(
 				namingStrategy.orElse(NamingStrategy.INSTANCE));
 		relationalMappingContext.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
 
@@ -159,13 +160,23 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * Register custom {@link Converter}s in a {@link CustomConversions} object if required. These
 	 * {@link CustomConversions} will be registered with the {@link BasicRelationalConverter} and
 	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)}. Returns an empty {@link R2dbcCustomConversions}
-	 * instance by default.
+	 * instance by default. Override {@link #getCustomConverters()} to supply custom converters.
 	 *
 	 * @return must not be {@literal null}.
+	 * @see #getCustomConverters()
 	 */
 	@Bean
 	public R2dbcCustomConversions r2dbcCustomConversions() {
-		return new R2dbcCustomConversions(getStoreConversions(), Collections.emptyList());
+		return new R2dbcCustomConversions(getStoreConversions(), getCustomConverters());
+	}
+
+	/**
+	 * Customization hook to return custom converters.
+	 *
+	 * @return return custom converters.
+	 */
+	protected List<Object> getCustomConverters() {
+		return Collections.emptyList();
 	}
 
 	/**

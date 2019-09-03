@@ -34,6 +34,7 @@ import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.UpdateMapper;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
@@ -100,7 +101,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		R2dbcCustomConversions customConversions = new R2dbcCustomConversions(
 				StoreConversions.of(dialect.getSimpleTypeHolder(), storeConverters), storeConverters);
 
-		RelationalMappingContext context = new RelationalMappingContext();
+		R2dbcMappingContext context = new R2dbcMappingContext();
 		context.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
 
 		return new MappingR2dbcConverter(context, customConversions);
