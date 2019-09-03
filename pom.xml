@@ -31,7 +31,7 @@
 		<degraph-check.version>0.1.4</degraph-check.version>
 		<postgresql.version>42.2.5</postgresql.version>
 		<mysql.version>5.1.47</mysql.version>
-		<jasync.version>0.9.52</jasync.version>
+		<jasync.version>1.0.6</jasync.version>
 		<r2dbc-mysql.version>0.2.0.M2</r2dbc-mysql.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
 		<r2dbc-releasetrain.version>Arabba-M8</r2dbc-releasetrain.version>
