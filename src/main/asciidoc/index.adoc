@@ -14,17 +14,26 @@ NOTE: Copies of this document may be made for your own use and for distribution 
 
 toc::[]
 
+// The blank line before each include prevents content from running together in a bad way
+// (because an included bit does not have its own blank lines).
+
 include::preface.adoc[]
 
 include::new-features.adoc[leveloffset=+1]
+
 include::{spring-data-commons-docs}/dependencies.adoc[leveloffset=+1]
+
 include::{spring-data-commons-docs}/repositories.adoc[leveloffset=+1]
 
 [[reference]]
 = Reference Documentation
 
 include::reference/introduction.adoc[leveloffset=+1]
+
 include::reference/r2dbc.adoc[leveloffset=+1]
+
 include::reference/r2dbc-repositories.adoc[leveloffset=+1]
+
 include::reference/r2dbc-connections.adoc[leveloffset=+1]
+
 include::reference/mapping.adoc[leveloffset=+1]

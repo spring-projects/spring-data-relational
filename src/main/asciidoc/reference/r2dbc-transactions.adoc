@@ -3,11 +3,12 @@
 
 A common pattern when using relational databases is grouping multiple queries within a unit of work that is guarded by a transaction.
 Relational databases typically associate a transaction with a single transport connection.
-Using different connections hence results in utilizing different transactions.
-Spring Data R2DBC includes transaction-awareness in `DatabaseClient` that allows you to group multiple statements within
-the same transaction using {spring-framework-ref}/data-access.html#transaction[Spring's Transaction Management].
-Spring Data R2DBC provides a implementation for `ReactiveTransactionManager` with `R2dbcTransactionManager`.
+Consequently, using different connections results in using different transactions.
+Spring Data R2DBC includes transaction-awareness in `DatabaseClient` that lets you group multiple statements within the same transaction by using {spring-framework-ref}/data-access.html#transaction[Spring's Transaction Management].
+Spring Data R2DBC provides an implementation for `ReactiveTransactionManager` with `R2dbcTransactionManager`.
 See <<r2dbc.connections.R2dbcTransactionManager>> for further details.
+
+The following example shows how to programmatically manage a transaction
 
 .Programmatic Transaction Management
 ====
@@ -35,8 +36,7 @@ Mono<Void> atomicOperation = client.execute("INSERT INTO person (id, name, age) 
 <2> Bind the operation to the `TransactionalOperator`.
 ====
 
-{spring-framework-ref}/data-access.html#transaction-declarative[Spring's declarative Transaction Management]
-is a less invasive, annotation-based approach to transaction demarcation.
+{spring-framework-ref}/data-access.html#transaction-declarative[Spring's declarative Transaction Management] is a less invasive, annotation-based approach to transaction demarcation, as the following example shows:
 
 .Declarative Transaction Management
 ====

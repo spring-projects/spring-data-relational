@@ -1,7 +1,7 @@
 [[mapping-chapter]]
 = Mapping
 
-Rich mapping support is provided by the `MappingR2dbcConverter`. `MappingR2dbcConverter` has a rich metadata model that allows to map domain objects to a data row.
+Rich mapping support is provided by the `MappingR2dbcConverter`. `MappingR2dbcConverter` has a rich metadata model that allows mapping domain objects to a data row.
 The mapping metadata model is populated by using annotations on your domain objects.
 However, the infrastructure is not limited to using annotations as the only source of metadata information.
 The `MappingR2dbcConverter` also lets you map objects to rows without providing any additional metadata, by following a set of conventions.
@@ -26,12 +26,12 @@ Public `JavaBean` properties are not used.
 
 * If you have a single non-zero-argument constructor whose constructor argument names match top-level column names of the row, that constructor is used.
 Otherwise, the zero-argument constructor is used.
-If there is more than one non-zero-argument constructor, an exception will be thrown.
+If there is more than one non-zero-argument constructor, an exception is thrown.
 
 [[mapping-configuration]]
 == Mapping Configuration
 
-Unless explicitly configured, an instance of `MappingR2dbcConverter` is created by default when you create a `DatabaseClient`.
+By default (unless explicitly configured) an instance of `MappingR2dbcConverter` is created when you create a `DatabaseClient`.
 You can create your own instance of the `MappingR2dbcConverter`.
 By creating your own instance, you can register Spring converters to map specific classes to and from the database.
 
@@ -67,7 +67,7 @@ public class MyAppConfig extends AbstractR2dbcConfiguration {
 
 You can add additional converters to the converter by overriding the `r2dbcCustomConversions` method.
 
-NOTE: `AbstractR2dbcConfiguration` creates a `DatabaseClient` instance and registers it with the container under the name `databaseClient`.
+NOTE: `AbstractR2dbcConfiguration` creates a `DatabaseClient` instance and registers it with the container under the name of `databaseClient`.
 
 [[mapping-usage]]
 == Metadata-based Mapping
@@ -98,7 +98,7 @@ public class Person {
 ----
 ====
 
-IMPORTANT: The `@Id` annotation tells the mapper which property you want to use for the primary key property.
+IMPORTANT: The `@Id` annotation tells the mapper which property you want to use as the primary key.
 
 
 [[mapping-usage-annotations]]
@@ -106,24 +106,28 @@ IMPORTANT: The `@Id` annotation tells the mapper which property you want to use 
 
 The `MappingR2dbcConverter` can use metadata to drive the mapping of objects to rows. The following annotations are available:
 
-* `@Id`: Applied at the field level to mark the primary used for identity purpose.
-* `@Table`: Applied at the class level to indicate this class is a candidate for mapping to the database. You can specify the name of the table where the database will be stored.
-* `@Transient`: By default all private fields are mapped to the row, this annotation excludes the field where it is applied from being stored in the database
-* `@PersistenceConstructor`: Marks a given constructor - even a package protected one - to use when instantiating the object from the database. Constructor arguments are mapped by name to the key values in the retrieved row.
-* `@Column`: Applied at the field level and described the name of the column as it will be represented in the row thus allowing the name to be different than the fieldname of the class.
+* `@Id`: Applied at the field level to mark the primary key.
+* `@Table`: Applied at the class level to indicate this class is a candidate for mapping to the database.
+You can specify the name of the table where the database is stored.
+* `@Transient`: By default, all private fields are mapped to the row. This annotation excludes the field where it is applied from being stored in the database
+* `@PersistenceConstructor`: Marks a given constructor -- even a package protected one -- to use when instantiating the object from the database. Constructor arguments are mapped by name to the key values in the retrieved row.
+* `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, allowing the name to be different than the field name of the class.
 
-The mapping metadata infrastructure is defined in the separate spring-data-commons project that is technology agnostic. Specific subclasses are using in the R2DBC support to support annotation based metadata. Other strategies are also possible to put in place if there is demand.
-
+The mapping metadata infrastructure is defined in the separate `spring-data-commons` project that is technology-agnostic.
+Specific subclasses are used in the R2DBC support to support annotation based metadata.
+Other strategies can also be put in place (if there is demand).
 
 [[mapping-custom-object-construction]]
 === Customized Object Construction
 
 The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation. The values to be used for the constructor parameters are resolved in the following way:
 
-* If a parameter is annotated with the `@Value` annotation, the given expression is evaluated and the result is used as the parameter value.
-* If the Java type has a property whose name matches the given field of the input row, then it's property information is used to select the appropriate constructor parameter to pass the input field value to. This works only if the parameter name information is present in the java `.class` files which can be achieved by compiling the source with debug information or using the `-parameters` command-line switch for javac in Java 8.
-* Otherwise a `MappingException` will be thrown indicating that the given constructor parameter could not be bound.
+* If a parameter is annotated with the `@Value` annotation, the given expression is evaluated, and the result is used as the parameter value.
+* If the Java type has a property whose name matches the given field of the input row, then its property information is used to select the appropriate constructor parameter to which to pass the input field value.
+This works only if the parameter name information is present in the Java `.class` files, which you can achieve by compiling the source with debug information or using the `-parameters` command-line switch for `javac` in Java 8.
+* Otherwise, a `MappingException` is thrown to indicate that the given constructor parameter could not be bound.
 
+====
 [source,java]
 ----
 class OrderItem {
@@ -140,24 +144,26 @@ class OrderItem {
 
   // getters/setters ommitted
 }
-
 ----
+====
 
 [[mapping-explicit-converters]]
 === Overriding Mapping with Explicit Converters
 
-When storing and querying your objects, it is convenient to have a `R2dbcConverter` instance handle the mapping of all Java types to `OutboundRow` instances.
-However, sometimes you may want the `R2dbcConverter` instances do most of the work but let you selectively handle the conversion for a particular type -- perhaps to optimize performance.
+When storing and querying your objects, it is often convenient to have a `R2dbcConverter` instance to handle the mapping of all Java types to `OutboundRow` instances.
+However, you may sometimes want the `R2dbcConverter` instances to do most of the work but let you selectively handle the conversion for a particular type -- perhaps to optimize performance.
 
 To selectively handle the conversion yourself, register one or more one or more `org.springframework.core.convert.converter.Converter` instances with the `R2dbcConverter`.
 
-You can use the `r2dbcCustomConversions` method in `AbstractR2dbcConfiguration` to configure converters. The examples <<mapping-configuration, at the beginning of this chapter>> show how to perform the configuration using Java.
+You can use the `r2dbcCustomConversions` method in `AbstractR2dbcConfiguration` to configure converters.
+The examples <<mapping-configuration, at the beginning of this chapter>> show how to perform the configuration with Java.
 
 NOTE: Custom top-level entity conversion requires asymmetric types for conversion. Inbound data is extracted from R2DBC's `Row`.
 Outbound data (to be used with `INSERT`/`UPDATE` statements) is represented as `OutboundRow` and later assembled to a statement.
 
 The following example of a Spring Converter implementation converts from a `Row` to a `Person` POJO:
 
+====
 [source,java]
 ----
 @ReadingConverter
@@ -170,9 +176,11 @@ The following example of a Spring Converter implementation converts from a `Row`
   }
 }
 ----
+====
 
 The following example converts from a `Person` to a `OutboundRow`:
 
+====
 [source,java]
 ----
 @WritingConverter
@@ -187,3 +195,4 @@ public class PersonWriteConverter implements Converter<Person, OutboundRow> {
   }
 }
 ----
+====
