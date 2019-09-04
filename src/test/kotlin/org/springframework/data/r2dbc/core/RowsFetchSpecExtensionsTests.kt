@@ -18,7 +18,7 @@ package org.springframework.data.r2dbc.core
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -157,7 +157,7 @@ class RowsFetchSpecExtensionsTests {
 	}
 
 	@Test // gh-91
-	@FlowPreview
+	@ExperimentalCoroutinesApi
 	fun allAsFlow() {
 
 		val spec = mockk<RowsFetchSpec<String>>()

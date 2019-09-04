@@ -15,10 +15,10 @@
  */
 package org.springframework.data.r2dbc.core
 
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactive.flow.asFlow
 import org.springframework.dao.EmptyResultDataAccessException
 
 /**
@@ -58,10 +58,7 @@ suspend fun <T> RowsFetchSpec<T>.awaitFirstOrNull(): T? =
 /**
  * Coroutines [Flow] variant of [RowsFetchSpec.all].
  *
- * Backpressure is controlled by [batchSize] parameter that controls the size of in-flight elements
- * and [org.reactivestreams.Subscription.request] size.
- *
  * @author Sebastien Deleuze
  */
-@FlowPreview
-fun <T : Any> RowsFetchSpec<T>.flow(batchSize: Int = 1): Flow<T> = all().asFlow(batchSize)
+@ExperimentalCoroutinesApi
+fun <T : Any> RowsFetchSpec<T>.flow(): Flow<T> = all().asFlow()
