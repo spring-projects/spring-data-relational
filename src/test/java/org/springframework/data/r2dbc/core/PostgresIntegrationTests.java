@@ -115,6 +115,9 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 			assertThat(actual.multidimensionalArray[0]).containsExactly(1, 2, 3);
 			assertThat(actual.multidimensionalArray[1]).containsExactly(4, 5, 6);
 		});
+
+		client.update().table(EntityWithArrays.class).using(withArrays).then() //
+				.as(StepVerifier::create).verifyComplete();
 	}
 
 	private void insert(EntityWithArrays object) {

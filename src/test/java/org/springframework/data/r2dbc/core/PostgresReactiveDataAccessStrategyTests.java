@@ -41,7 +41,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		return strategy;
 	}
 
-	@Test
+	@Test // gh-161
 	public void shouldConvertPrimitiveMultidimensionArrayToWrapper() {
 
 		OutboundRow row = strategy.getOutboundRow(new WithMultidimensionalArray(new int[][] { { 1, 2, 3 }, { 4, 5 } }));
@@ -50,7 +50,16 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		assertThat(row.get("myarray").getValue()).isInstanceOf(Integer[][].class);
 	}
 
-	@Test
+	@Test // gh-161
+	public void shouldConvertNullArrayToDriverArrayType() {
+
+		OutboundRow row = strategy.getOutboundRow(new WithMultidimensionalArray(null));
+
+		assertThat(row.get("myarray").hasValue()).isFalse();
+		assertThat(row.get("myarray").getType()).isEqualTo(Integer[].class);
+	}
+
+	@Test // gh-161
 	public void shouldConvertCollectionToArray() {
 
 		OutboundRow row = strategy.getOutboundRow(new WithIntegerCollection(Arrays.asList(1, 2, 3)));

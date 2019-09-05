@@ -37,9 +37,9 @@ import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.UpdateMapper;
+import org.springframework.data.r2dbc.support.ArrayUtils;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
@@ -213,7 +213,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	}
 
 	private boolean shouldConvertArrayValue(RelationalPersistentProperty property, SettableValue value) {
-		return value != null && value.hasValue() && property.isCollectionLike();
+		return property.isCollectionLike();
 	}
 
 	private SettableValue getArrayValue(SettableValue value, RelationalPersistentProperty property) {
@@ -225,9 +225,18 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			throw new InvalidDataAccessResourceUsageException(
 					"Dialect " + this.dialect.getClass().getName() + " does not support array columns");
 		}
+		Class<?> actualType = property.getActualType();
+
+		if (value.isEmpty()) {
+
+			Class<?> targetType = arrayColumns.getArrayType(actualType);
+			int depth = actualType.isArray() ? ArrayUtils.getDimensionDepth(actualType) : 1;
+			Class<?> targetArrayType = ArrayUtils.getArrayClass(targetType, depth);
+			return SettableValue.empty(targetArrayType);
+		}
 
 		return SettableValue.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value.getValue()),
-				property.getActualType());
+				actualType);
 	}
 
 	/*
