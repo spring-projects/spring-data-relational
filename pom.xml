@@ -36,6 +36,7 @@
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
 		<r2dbc-releasetrain.version>Arabba-M8</r2dbc-releasetrain.version>
 		<reactive-streams.version>1.0.1</reactive-streams.version>
+		<netty>4.1.39.Final</netty>
 	</properties>
 
 	<inceptionYear>2018</inceptionYear>
@@ -78,6 +79,13 @@
 				<groupId>org.testcontainers</groupId>
 				<artifactId>testcontainers-bom</artifactId>
 				<version>${testcontainers}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-bom</artifactId>
+				<version>${netty}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -321,7 +329,7 @@
 						<aspectjVersion>${aspectj}</aspectjVersion>
 						<querydslVersion>${querydsl}</querydslVersion>
 						<springVersion>${spring}</springVersion>
-						<r2dbcVersion>${r2dbc-spi.version}</r2dbcVersion>
+						<r2dbcVersion>${r2dbc-releasetrain.version}</r2dbcVersion>
 						<reactiveStreamsVersion>${reactive-streams.version}
 						</reactiveStreamsVersion>
 						<releasetrainVersion>${releasetrain}</releasetrainVersion>
