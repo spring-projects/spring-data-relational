@@ -19,7 +19,6 @@ import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -39,6 +38,7 @@ import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.data.r2dbc.support.ArrayUtils;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
@@ -352,10 +352,11 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		Class<?> targetType = arrayColumns.getArrayType(property.getActualType());
 
-		if (!property.isArray() || !property.getActualType().equals(targetType)) {
+		if (!property.isArray() || !targetType.isAssignableFrom(value.getClass())) {
 
-			Object zeroLengthArray = Array.newInstance(targetType, 0);
-			return getConversionService().convert(value, zeroLengthArray.getClass());
+			int depth = value.getClass().isArray() ? ArrayUtils.getDimensionDepth(value.getClass()) : 1;
+			Class<?> targetArrayType = ArrayUtils.getArrayClass(targetType, depth);
+			return getConversionService().convert(value, targetArrayType);
 		}
 
 		return value;

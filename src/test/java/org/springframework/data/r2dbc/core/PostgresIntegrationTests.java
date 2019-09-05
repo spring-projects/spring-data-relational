@@ -29,9 +29,9 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.data.r2dbc.core.DatabaseClient;
+
+import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
@@ -57,6 +57,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 		template.execute("DROP TABLE IF EXISTS with_arrays");
 		template.execute("CREATE TABLE with_arrays (" //
+				+ "id serial PRIMARY KEY," //
 				+ "boxed_array INT[]," //
 				+ "primitive_array INT[]," //
 				+ "multidimensional_array INT[]," //
@@ -64,10 +65,9 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
-	@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/40, r2dbc-postgresql returns Object[] instead of Integer[]")
 	public void shouldReadAndWritePrimitiveSingleDimensionArrays() {
 
-		EntityWithArrays withArrays = new EntityWithArrays(null, new int[] { 1, 2, 3 }, null, null);
+		EntityWithArrays withArrays = new EntityWithArrays(null, null, new int[] { 1, 2, 3 }, null, null);
 
 		insert(withArrays);
 		selectAndAssert(actual -> {
@@ -76,10 +76,9 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
-	@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/67")
 	public void shouldReadAndWriteBoxedSingleDimensionArrays() {
 
-		EntityWithArrays withArrays = new EntityWithArrays(new Integer[] { 1, 2, 3 }, null, null, null);
+		EntityWithArrays withArrays = new EntityWithArrays(null, new Integer[] { 1, 2, 3 }, null, null, null);
 
 		insert(withArrays);
 
@@ -91,10 +90,9 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
-	@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/67")
 	public void shouldReadAndWriteConvertedDimensionArrays() {
 
-		EntityWithArrays withArrays = new EntityWithArrays(null, null, null, Arrays.asList(5, 6, 7));
+		EntityWithArrays withArrays = new EntityWithArrays(null, null, null, null, Arrays.asList(5, 6, 7));
 
 		insert(withArrays);
 
@@ -104,10 +102,10 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
-	@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/42, Multi-dimensional arrays not supported yet")
 	public void shouldReadAndWriteMultiDimensionArrays() {
 
-		EntityWithArrays withArrays = new EntityWithArrays(null, null, new int[][] { { 1, 2, 3 }, { 4, 5 } }, null);
+		EntityWithArrays withArrays = new EntityWithArrays(null, null, null, new int[][] { { 1, 2, 3 }, { 4, 5, 6 } },
+				null);
 
 		insert(withArrays);
 
@@ -142,6 +140,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	@AllArgsConstructor
 	static class EntityWithArrays {
 
+		@Id Integer id;
 		Integer[] boxedArray;
 		int[] primitiveArray;
 		int[][] multidimensionalArray;

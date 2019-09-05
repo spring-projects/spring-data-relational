@@ -15,9 +15,17 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import static org.assertj.core.api.Assertions.*;
+
+import lombok.RequiredArgsConstructor;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.Test;
+
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.OutboundRow;
 
 /**
  * {@link PostgresDialect} specific tests for {@link ReactiveDataAccessStrategy}.
@@ -31,5 +39,36 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	@Override
 	protected ReactiveDataAccessStrategy getStrategy() {
 		return strategy;
+	}
+
+	@Test
+	public void shouldConvertPrimitiveMultidimensionArrayToWrapper() {
+
+		OutboundRow row = strategy.getOutboundRow(new WithMultidimensionalArray(new int[][] { { 1, 2, 3 }, { 4, 5 } }));
+
+		assertThat(row.get("myarray").hasValue()).isTrue();
+		assertThat(row.get("myarray").getValue()).isInstanceOf(Integer[][].class);
+	}
+
+	@Test
+	public void shouldConvertCollectionToArray() {
+
+		OutboundRow row = strategy.getOutboundRow(new WithIntegerCollection(Arrays.asList(1, 2, 3)));
+
+		assertThat(row.get("myarray").hasValue()).isTrue();
+		assertThat(row.get("myarray").getValue()).isInstanceOf(Integer[].class);
+		assertThat((Integer[]) row.get("myarray").getValue()).contains(1, 2, 3);
+	}
+
+	@RequiredArgsConstructor
+	static class WithMultidimensionalArray {
+
+		final int[][] myarray;
+	}
+
+	@RequiredArgsConstructor
+	static class WithIntegerCollection {
+
+		final List<Integer> myarray;
 	}
 }

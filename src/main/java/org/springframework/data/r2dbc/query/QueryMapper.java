@@ -181,17 +181,19 @@ public class QueryMapper {
 			return null;
 		}
 
-		if (typeInformation.isCollectionLike()) {
-			this.converter.writeValue(value, typeInformation);
-		} else if (value instanceof Iterable) {
+		if (value instanceof Iterable) {
 
 			List<Object> mapped = new ArrayList<>();
 
 			for (Object o : (Iterable<?>) value) {
-
-				mapped.add(this.converter.writeValue(o, typeInformation));
+				mapped.add(this.converter.writeValue(o, typeInformation.getActualType()));
 			}
 			return mapped;
+		}
+
+		if (typeInformation.getType().isAssignableFrom(value.getClass())
+				|| (typeInformation.getType().isArray() && value.getClass().isArray())) {
+			return value;
 		}
 
 		return this.converter.writeValue(value, typeInformation);
@@ -419,12 +421,16 @@ public class QueryMapper {
 				return super.getTypeHint();
 			}
 
-			if (this.property.getActualType().isPrimitive()) {
-				return ClassTypeInformation.from(ClassUtils.resolvePrimitiveIfNecessary(this.property.getActualType()));
+			if (this.property.getType().isPrimitive()) {
+				return ClassTypeInformation.from(ClassUtils.resolvePrimitiveIfNecessary(this.property.getType()));
 			}
 
-			if (this.property.getActualType().isInterface()
-					|| java.lang.reflect.Modifier.isAbstract(this.property.getActualType().getModifiers())) {
+			if (this.property.getType().isArray()) {
+				return this.property.getTypeInformation();
+			}
+
+			if (this.property.getType().isInterface()
+					|| (java.lang.reflect.Modifier.isAbstract(this.property.getType().getModifiers()))) {
 				return ClassTypeInformation.OBJECT;
 			}
 
