@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.0.RC3 (2019-09-06)
+-----------------------------------------
+* DATAJDBC-405 - Unresolved directives in Docs.
+* DATAJDBC-404 - Release 1.1 RC3 (Moore).
+
+
 Changes in version 1.1.0.RC2 (2019-08-05)
 -----------------------------------------
 * DATAJDBC-400 - Remove Identifier from EntityCallback notification.
