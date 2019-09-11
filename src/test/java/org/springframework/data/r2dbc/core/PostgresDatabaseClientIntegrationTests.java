@@ -22,7 +22,7 @@ import javax.sql.DataSource;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.data.r2dbc.core.DatabaseClient;
+
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
 
@@ -31,6 +31,7 @@ import org.springframework.data.r2dbc.testing.PostgresTestSupport;
  *
  * @author Mark Paluch
  */
+@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/151")
 public class PostgresDatabaseClientIntegrationTests extends AbstractDatabaseClientIntegrationTests {
 
 	@ClassRule public static final ExternalDatabase database = PostgresTestSupport.database();

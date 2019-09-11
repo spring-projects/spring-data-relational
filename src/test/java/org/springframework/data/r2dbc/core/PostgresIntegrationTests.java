@@ -29,6 +29,7 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.data.annotation.Id;
@@ -43,6 +44,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author Mark Paluch
  */
+@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/151")
 public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	@ClassRule public static final ExternalDatabase database = PostgresTestSupport.database();
