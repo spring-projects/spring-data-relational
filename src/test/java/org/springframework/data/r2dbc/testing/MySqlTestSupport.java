@@ -93,7 +93,9 @@ public class MySqlTestSupport {
 				.port(3306) //
 				.database("mysql") //
 				.username("root") //
-				.password("my-secret-pw").jdbcUrl("jdbc:mysql://localhost:3306/mysql").build();
+				.password("my-secret-pw") //
+				.jdbcUrl("jdbc:mysql://localhost:3306/mysql") //
+				.build();
 	}
 
 	/**
@@ -146,7 +148,7 @@ public class MySqlTestSupport {
 
 		dataSource.setUser(database.getUsername());
 		dataSource.setPassword(database.getPassword());
-		dataSource.setURL(database.getJdbcUrl());
+		dataSource.setURL(database.getJdbcUrl() + "?useSSL=false");
 
 		return dataSource;
 	}
