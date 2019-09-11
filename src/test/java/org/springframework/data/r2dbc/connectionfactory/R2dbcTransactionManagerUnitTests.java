@@ -26,7 +26,6 @@ import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuple2;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -83,6 +82,7 @@ public class R2dbcTransactionManagerUnitTests {
 				.verifyComplete();
 
 		assertThat(commits).hasValue(1);
+		verify(connectionMock).isAutoCommit();
 		verify(connectionMock).beginTransaction();
 		verify(connectionMock).commitTransaction();
 		verify(connectionMock).close();
@@ -98,6 +98,7 @@ public class R2dbcTransactionManagerUnitTests {
 	public void appliesIsolationLevel() {
 
 		when(connectionMock.commitTransaction()).thenReturn(Mono.empty());
+		when(connectionMock.getTransactionIsolationLevel()).thenReturn(IsolationLevel.READ_COMMITTED);
 		when(connectionMock.setTransactionIsolationLevel(any())).thenReturn(Mono.empty());
 
 		DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
@@ -111,10 +112,74 @@ public class R2dbcTransactionManagerUnitTests {
 				.verifyComplete();
 
 		verify(connectionMock).beginTransaction();
+		verify(connectionMock).setTransactionIsolationLevel(IsolationLevel.READ_COMMITTED);
 		verify(connectionMock).setTransactionIsolationLevel(IsolationLevel.SERIALIZABLE);
 		verify(connectionMock).commitTransaction();
 		verify(connectionMock).close();
-		verifyNoMoreInteractions(connectionMock);
+	}
+
+	@Test // gh-184
+	public void doesNotSetIsolationLevelIfMatch() {
+
+		when(connectionMock.getTransactionIsolationLevel()).thenReturn(IsolationLevel.READ_COMMITTED);
+		when(connectionMock.commitTransaction()).thenReturn(Mono.empty());
+
+		DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+		definition.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
+
+		TransactionalOperator operator = TransactionalOperator.create(tm, definition);
+
+		ConnectionFactoryUtils.getConnection(connectionFactoryMock).as(operator::transactional) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		verify(connectionMock).beginTransaction();
+		verify(connectionMock, never()).setTransactionIsolationLevel(any());
+		verify(connectionMock).commitTransaction();
+	}
+
+	@Test // gh-184
+	public void doesNotSetAutoCommitDisabled() {
+
+		when(connectionMock.isAutoCommit()).thenReturn(false);
+		when(connectionMock.commitTransaction()).thenReturn(Mono.empty());
+
+		DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+
+		TransactionalOperator operator = TransactionalOperator.create(tm, definition);
+
+		ConnectionFactoryUtils.getConnection(connectionFactoryMock).as(operator::transactional) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		verify(connectionMock).beginTransaction();
+		verify(connectionMock, never()).setAutoCommit(anyBoolean());
+		verify(connectionMock).commitTransaction();
+	}
+
+	@Test // gh-184
+	public void restoresAutoCommit() {
+
+		when(connectionMock.isAutoCommit()).thenReturn(true);
+		when(connectionMock.setAutoCommit(anyBoolean())).thenReturn(Mono.empty());
+		when(connectionMock.commitTransaction()).thenReturn(Mono.empty());
+
+		DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+
+		TransactionalOperator operator = TransactionalOperator.create(tm, definition);
+
+		ConnectionFactoryUtils.getConnection(connectionFactoryMock).as(operator::transactional) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		verify(connectionMock).beginTransaction();
+		verify(connectionMock).setAutoCommit(false);
+		verify(connectionMock).setAutoCommit(true);
+		verify(connectionMock).commitTransaction();
+		verify(connectionMock).close();
 	}
 
 	@Test // gh-107
@@ -137,6 +202,7 @@ public class R2dbcTransactionManagerUnitTests {
 				.expectNextCount(1) //
 				.verifyComplete();
 
+		verify(connectionMock).isAutoCommit();
 		verify(connectionMock).beginTransaction();
 		verify(connectionMock).createStatement("SET TRANSACTION READ ONLY");
 		verify(connectionMock).commitTransaction();
@@ -161,6 +227,7 @@ public class R2dbcTransactionManagerUnitTests {
 				.as(StepVerifier::create) //
 				.verifyError();
 
+		verify(connectionMock).isAutoCommit();
 		verify(connectionMock).beginTransaction();
 		verify(connectionMock).createStatement("foo");
 		verify(connectionMock).commitTransaction();
@@ -189,6 +256,7 @@ public class R2dbcTransactionManagerUnitTests {
 
 		assertThat(commits).hasValue(0);
 		assertThat(rollbacks).hasValue(1);
+		verify(connectionMock).isAutoCommit();
 		verify(connectionMock).beginTransaction();
 		verify(connectionMock).rollbackTransaction();
 		verify(connectionMock).close();
@@ -218,6 +286,7 @@ public class R2dbcTransactionManagerUnitTests {
 		}).as(StepVerifier::create) //
 				.verifyComplete();
 
+		verify(connectionMock).isAutoCommit();
 		verify(connectionMock).beginTransaction();
 		verify(connectionMock).rollbackTransaction();
 		verify(connectionMock).close();

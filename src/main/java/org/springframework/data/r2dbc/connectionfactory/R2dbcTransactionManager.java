@@ -227,53 +227,34 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 
 			return connection.flatMap(con -> {
 
-				return prepareTransactionalConnection(con, definition).then(doBegin(con, definition)).then().doOnSuccess(v -> {
-					txObject.getConnectionHolder().setTransactionActive(true);
+				return prepareTransactionalConnection(con, definition, transaction).then(Mono.from(con.beginTransaction()))
+						.doOnSuccess(v -> {
+							txObject.getConnectionHolder().setTransactionActive(true);
 
-					Duration timeout = determineTimeout(definition);
-					if (!timeout.isNegative() && !timeout.isZero()) {
-						txObject.getConnectionHolder().setTimeoutInMillis(timeout.toMillis());
-					}
+							Duration timeout = determineTimeout(definition);
+							if (!timeout.isNegative() && !timeout.isZero()) {
+								txObject.getConnectionHolder().setTimeoutInMillis(timeout.toMillis());
+							}
 
-					// Bind the connection holder to the thread.
-					if (txObject.isNewConnectionHolder()) {
-						synchronizationManager.bindResource(obtainConnectionFactory(), txObject.getConnectionHolder());
-					}
-				}).thenReturn(con).onErrorResume(e -> {
+							// Bind the connection holder to the thread.
+							if (txObject.isNewConnectionHolder()) {
+								synchronizationManager.bindResource(obtainConnectionFactory(), txObject.getConnectionHolder());
+							}
+						}).thenReturn(con).onErrorResume(e -> {
 
-					CannotCreateTransactionException ex = new CannotCreateTransactionException(
-							"Could not open R2DBC Connection for transaction", e);
+							CannotCreateTransactionException ex = new CannotCreateTransactionException(
+									"Could not open R2DBC Connection for transaction", e);
 
-					if (txObject.isNewConnectionHolder()) {
-						return ConnectionFactoryUtils.releaseConnection(con, obtainConnectionFactory()).doOnTerminate(() -> {
+							if (txObject.isNewConnectionHolder()) {
+								return ConnectionFactoryUtils.releaseConnection(con, obtainConnectionFactory()).doOnTerminate(() -> {
 
-							txObject.setConnectionHolder(null, false);
-						}).then(Mono.error(ex));
-					}
-					return Mono.error(ex);
-				});
+									txObject.setConnectionHolder(null, false);
+								}).then(Mono.error(ex));
+							}
+							return Mono.error(ex);
+						});
 			});
 		}).then();
-	}
-
-	private Mono<Void> doBegin(Connection con, TransactionDefinition definition) {
-
-		Mono<Void> doBegin = Mono.from(con.beginTransaction());
-
-		if (definition != null && definition.getIsolationLevel() != -1) {
-
-			IsolationLevel isolationLevel = resolveIsolationLevel(definition.getIsolationLevel());
-
-			if (isolationLevel != null) {
-				if (this.logger.isDebugEnabled()) {
-					this.logger
-							.debug("Changing isolation level of R2DBC Connection [" + con + "] to " + definition.getIsolationLevel());
-				}
-				doBegin = doBegin.then(Mono.from(con.setTransactionIsolationLevel(isolationLevel)));
-			}
-		}
-
-		return doBegin;
 	}
 
 	/**
@@ -401,18 +382,32 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 			// Reset connection.
 			Connection con = txObject.getConnectionHolder().getConnection();
 
-			try {
-				if (txObject.isNewConnectionHolder()) {
-					if (this.logger.isDebugEnabled()) {
-						this.logger.debug("Releasing R2DBC Connection [" + con + "] after transaction");
-					}
-					return ConnectionFactoryUtils.releaseConnection(con, obtainConnectionFactory());
-				}
-			} finally {
-				txObject.getConnectionHolder().clear();
+			Mono<Void> afterCleanup = Mono.empty();
+
+			if (txObject.isMustRestoreAutoCommit()) {
+				afterCleanup = afterCleanup.then(Mono.from(con.setAutoCommit(true)));
 			}
 
-			return Mono.empty();
+			if (txObject.getPreviousIsolationLevel() != null) {
+				afterCleanup = afterCleanup
+						.then(Mono.from(con.setTransactionIsolationLevel(txObject.getPreviousIsolationLevel())));
+			}
+
+			return afterCleanup.then(Mono.defer(() -> {
+
+				try {
+					if (txObject.isNewConnectionHolder()) {
+						if (this.logger.isDebugEnabled()) {
+							this.logger.debug("Releasing R2DBC Connection [" + con + "] after transaction");
+						}
+						return ConnectionFactoryUtils.releaseConnection(con, obtainConnectionFactory());
+					}
+				} finally {
+					txObject.getConnectionHolder().clear();
+				}
+
+				return Mono.empty();
+			}));
 		});
 	}
 
@@ -427,18 +422,51 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	 *
 	 * @param con the transactional R2DBC Connection
 	 * @param definition the current transaction definition
+	 * @param definition the transaction object
 	 * @see #setEnforceReadOnly
 	 */
-	protected Mono<Void> prepareTransactionalConnection(Connection con, TransactionDefinition definition) {
+	protected Mono<Void> prepareTransactionalConnection(Connection con, TransactionDefinition definition,
+			Object transaction) {
+
+		ConnectionFactoryTransactionObject txObject = (ConnectionFactoryTransactionObject) transaction;
+
+		Mono<Void> prepare = Mono.empty();
 
 		if (isEnforceReadOnly() && definition.isReadOnly()) {
 
-			return Mono.from(con.createStatement("SET TRANSACTION READ ONLY").execute()) //
+			prepare = Mono.from(con.createStatement("SET TRANSACTION READ ONLY").execute()) //
 					.flatMapMany(Result::getRowsUpdated) //
 					.then();
 		}
 
-		return Mono.empty();
+		// Apply specific isolation level, if any.
+		IsolationLevel isolationLevelToUse = resolveIsolationLevel(definition.getIsolationLevel());
+		if (isolationLevelToUse != null && definition.getIsolationLevel() != TransactionDefinition.ISOLATION_DEFAULT) {
+
+			if (this.logger.isDebugEnabled()) {
+				this.logger
+						.debug("Changing isolation level of R2DBC Connection [" + con + "] to " + isolationLevelToUse.asSql());
+			}
+			IsolationLevel currentIsolation = con.getTransactionIsolationLevel();
+			if (!currentIsolation.asSql().equalsIgnoreCase(isolationLevelToUse.asSql())) {
+
+				txObject.setPreviousIsolationLevel(currentIsolation);
+				prepare = prepare.then(Mono.from(con.setTransactionIsolationLevel(isolationLevelToUse)));
+			}
+		}
+
+		// Switch to manual commit if necessary. This is very expensive in some JDBC drivers,
+		// so we don't want to do it unnecessarily (for example if we've explicitly
+		// configured the connection pool to set it already).
+		if (con.isAutoCommit()) {
+			txObject.setMustRestoreAutoCommit(true);
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug("Switching R2DBC Connection [" + con + "] to manual commit");
+			}
+			prepare = prepare.then(Mono.from(con.setAutoCommit(false)));
+		}
+
+		return prepare;
 	}
 
 	/**
@@ -474,7 +502,13 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	 */
 	private static class ConnectionFactoryTransactionObject {
 
+		private @Nullable ConnectionHolder connectionHolder;
+
+		private @Nullable IsolationLevel previousIsolationLevel;
+
 		private boolean newConnectionHolder;
+
+		private boolean mustRestoreAutoCommit;
 
 		void setConnectionHolder(@Nullable ConnectionHolder connectionHolder, boolean newConnectionHolder) {
 			setConnectionHolder(connectionHolder);
@@ -488,12 +522,6 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 		void setRollbackOnly() {
 			getConnectionHolder().setRollbackOnly();
 		}
-
-		@Nullable private ConnectionHolder connectionHolder;
-
-		@Nullable private IsolationLevel previousIsolationLevel;
-
-		private boolean savepointAllowed = false;
 
 		public void setConnectionHolder(@Nullable ConnectionHolder connectionHolder) {
 			this.connectionHolder = connectionHolder;
@@ -517,12 +545,12 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 			return this.previousIsolationLevel;
 		}
 
-		public void setSavepointAllowed(boolean savepointAllowed) {
-			this.savepointAllowed = savepointAllowed;
+		public void setMustRestoreAutoCommit(boolean mustRestoreAutoCommit) {
+			this.mustRestoreAutoCommit = mustRestoreAutoCommit;
 		}
 
-		public boolean isSavepointAllowed() {
-			return this.savepointAllowed;
+		public boolean isMustRestoreAutoCommit() {
+			return this.mustRestoreAutoCommit;
 		}
 	}
 }

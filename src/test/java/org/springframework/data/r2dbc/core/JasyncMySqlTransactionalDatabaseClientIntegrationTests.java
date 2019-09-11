@@ -23,6 +23,7 @@ import java.time.Duration;
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
@@ -32,6 +33,7 @@ import org.springframework.data.r2dbc.testing.MySqlTestSupport;
  *
  * @author Mark Paluch
  */
+@Ignore("https://github.com/jasync-sql/jasync-sql/issues/150")
 public class JasyncMySqlTransactionalDatabaseClientIntegrationTests
 		extends AbstractTransactionalDatabaseClientIntegrationTests {
 

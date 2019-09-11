@@ -31,6 +31,7 @@ import org.springframework.data.r2dbc.testing.MySqlTestSupport;
  *
  * @author Mark Paluch
  */
+@Ignore("https://github.com/jasync-sql/jasync-sql/issues/150")
 public class JasyncMySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientIntegrationTests {
 
 	@ClassRule public static final ExternalDatabase database = MySqlTestSupport.database();
