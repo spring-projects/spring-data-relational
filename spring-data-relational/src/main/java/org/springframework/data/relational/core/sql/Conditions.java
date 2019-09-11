@@ -192,6 +192,66 @@ public abstract class Conditions {
 		return in(column, new SubselectExpression(subselect));
 	}
 
+	/**
+	 * Creates a {@code NOT IN} {@link Condition clause}.
+	 *
+	 * @param columnOrExpression left side of the comparison.
+	 * @param arg IN argument.
+	 * @return the {@link In} condition.
+	 */
+	public static In notIn(Expression columnOrExpression, Expression arg) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(arg, "Expression argument must not be null");
+
+		return In.create(columnOrExpression, arg);
+	}
+
+	/**
+	 * Creates a new {@code NOT IN} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static Condition notIn(Expression columnOrExpression, Collection<? extends Expression> expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return In.createNotIn(columnOrExpression, new ArrayList<>(expressions));
+	}
+
+	/**
+	 * Creates a new {@code NOT IN} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static In notIn(Expression columnOrExpression, Expression... expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return In.createNotIn(columnOrExpression, Arrays.asList(expressions));
+	}
+
+	/**
+	 * Creates a {@code NOT IN} {@link Condition clause} for a {@link Select subselect}.
+	 *
+	 * @param column the column to compare.
+	 * @param subselect the subselect.
+	 * @return the {@link In} condition.
+	 */
+	public static In notIn(Column column, Select subselect) {
+
+		Assert.notNull(column, "Column must not be null");
+		Assert.notNull(subselect, "Subselect must not be null");
+
+		return notIn(column, new SubselectExpression(subselect));
+	}
+
 	static class ConstantCondition extends AbstractSegment implements Condition {
 
 		private final String condition;

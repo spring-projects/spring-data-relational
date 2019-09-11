@@ -30,6 +30,7 @@ class InVisitor extends TypedSingleConditionRenderSupport<In> {
 	private final RenderTarget target;
 	private final StringBuilder part = new StringBuilder();
 	private boolean needsComma = false;
+	private boolean notIn = false;
 
 	InVisitor(RenderContext context, RenderTarget target) {
 		super(context);
@@ -52,6 +53,9 @@ class InVisitor extends TypedSingleConditionRenderSupport<In> {
 
 			if (part.length() == 0) {
 				part.append(renderedPart);
+				if (notIn) {
+					part.append(" NOT");
+				}
 				part.append(" IN (");
 			} else {
 				part.append(renderedPart);
@@ -60,6 +64,14 @@ class InVisitor extends TypedSingleConditionRenderSupport<In> {
 		}
 
 		return super.leaveNested(segment);
+	}
+
+	@Override
+	Delegation enterMatched(In segment) {
+
+		notIn = segment.isNotIn();
+
+		return super.enterMatched(segment);
 	}
 
 	/*

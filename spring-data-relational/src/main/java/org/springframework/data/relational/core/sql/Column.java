@@ -194,6 +194,26 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	/**
+	 * Creates a new {@code not} {@link In} {@link Condition} given right {@link Expression}s.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link In} condition.
+	 */
+	public In notIn(Expression... expression) {
+		return Conditions.notIn(this, expression);
+	}
+
+	/**
+	 * Creates a new {@code not} {@link In} {@link Condition} given a subselects.
+	 *
+	 * @param subselect right side of the comparison.
+	 * @return the {@link In} condition.
+	 */
+	public In notIn(Select subselect) {
+		return Conditions.notIn(this, subselect);
+	}
+
+	/**
 	 * Creates a {@code IS NULL} condition.
 	 *
 	 * @return the {@link IsNull} condition.
