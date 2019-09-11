@@ -86,7 +86,7 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 				typeToUse = typeToUse.getComponentType();
 			}
 
-			if (!simpleTypeHolder.isSimpleType(typeToUse)) {
+			if (!this.simpleTypeHolder.isSimpleType(typeToUse)) {
 				throw new IllegalArgumentException("Unsupported array type: " + ClassUtils.getQualifiedName(typeToUse));
 			}
 
