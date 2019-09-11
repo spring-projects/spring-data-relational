@@ -126,4 +126,16 @@ public class ConditionRendererUnitTests {
 
 		assertThat(sql).endsWith("WHERE my_table.left IS NOT NULL");
 	}
+
+	@Test // DATAJDBC-410
+	public void shouldRenderNotIn() {
+
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.in(right).not()).build());
+
+		assertThat(sql).endsWith("WHERE my_table.left NOT IN (my_table.right)");
+
+		sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.notIn(right)).build());
+
+		assertThat(sql).endsWith("WHERE my_table.left NOT IN (my_table.right)");
+	}
 }

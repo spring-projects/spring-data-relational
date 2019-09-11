@@ -34,13 +34,15 @@ public class In extends AbstractSegment implements Condition {
 
 	private final Expression left;
 	private final Collection<Expression> expressions;
+	private final boolean notIn;
 
-	private In(Expression left, Collection<Expression> expressions) {
+	private In(Expression left, Collection<Expression> expressions, boolean notIn) {
 
 		super(toArray(left, expressions));
 
 		this.left = left;
 		this.expressions = expressions;
+		this.notIn = notIn;
 	}
 
 	private static Segment[] toArray(Expression expression, Collection<Expression> expressions) {
@@ -69,7 +71,7 @@ public class In extends AbstractSegment implements Condition {
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(arg, "Expression argument must not be null");
 
-		return new In(columnOrExpression, Collections.singletonList(arg));
+		return new In(columnOrExpression, Collections.singletonList(arg), false);
 	}
 
 	/**
@@ -84,7 +86,7 @@ public class In extends AbstractSegment implements Condition {
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(expressions, "Expression argument must not be null");
 
-		return new In(columnOrExpression, new ArrayList<>(expressions));
+		return new In(columnOrExpression, new ArrayList<>(expressions), false);
 	}
 
 	/**
@@ -99,7 +101,58 @@ public class In extends AbstractSegment implements Condition {
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(expressions, "Expression argument must not be null");
 
-		return new In(columnOrExpression, Arrays.asList(expressions));
+		return new In(columnOrExpression, Arrays.asList(expressions), false);
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param arg right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static In createNotIn(Expression columnOrExpression, Expression arg) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(arg, "Expression argument must not be null");
+
+		return new In(columnOrExpression, Collections.singletonList(arg), true);
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static In createNotIn(Expression columnOrExpression, Collection<? extends Expression> expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return new In(columnOrExpression, new ArrayList<>(expressions), true);
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static In createNotIn(Expression columnOrExpression, Expression... expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return new In(columnOrExpression, Arrays.asList(expressions), true);
+	}
+
+	@Override
+	public Condition not() {
+
+		return new In(left, expressions, !notIn);
 	}
 
 	/*
@@ -108,6 +161,10 @@ public class In extends AbstractSegment implements Condition {
 	 */
 	@Override
 	public String toString() {
-		return left + " IN (" + StringUtils.collectionToDelimitedString(expressions, ", ") + ")";
+		return left + (notIn ? " NOT" : "") + " IN (" + StringUtils.collectionToDelimitedString(expressions, ", ") + ")";
+	}
+
+	public boolean isNotIn() {
+		return notIn;
 	}
 }
