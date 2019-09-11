@@ -149,9 +149,12 @@ public class In extends AbstractSegment implements Condition {
 		return new In(columnOrExpression, Arrays.asList(expressions), true);
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.Condition#not()
+	 */
 	@Override
 	public Condition not() {
-
 		return new In(left, expressions, !notIn);
 	}
 

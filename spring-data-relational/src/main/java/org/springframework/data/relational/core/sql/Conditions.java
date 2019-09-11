@@ -227,7 +227,7 @@ public abstract class Conditions {
 	 *
 	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
 	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
-	 * @return the {@link In} {@link Condition}.
+	 * @return the {@link In NOT IN} {@link Condition}.
 	 */
 	public static In notIn(Expression columnOrExpression, Expression... expressions) {
 
@@ -242,7 +242,7 @@ public abstract class Conditions {
 	 *
 	 * @param column the column to compare.
 	 * @param subselect the subselect.
-	 * @return the {@link In} condition.
+	 * @return the {@link In NOT IN} condition.
 	 */
 	public static In notIn(Column column, Select subselect) {
 
