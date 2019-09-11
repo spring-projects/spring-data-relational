@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 
 /**
@@ -260,6 +261,24 @@ public interface DbAction<T> {
 		 * @return guaranteed to be not {@code null}.
 		 */
 		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers();
+
+		@Nullable
+		default Pair<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifier() {
+			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = getQualifiers();
+			if (qualifiers.size() == 0)
+				return null;
+
+			if (qualifiers.size() > 1) {
+				throw new IllegalStateException("Can't handle more then on qualifier");
+			}
+
+			Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> entry = qualifiers.entrySet().iterator().next();
+			if (entry.getValue() == null) {
+				return null;
+			}
+			return Pair.of(entry.getKey(), entry.getValue());
+		};
+
 
 		@Override
 		default Class<T> getEntityType() {

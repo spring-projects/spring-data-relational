@@ -18,16 +18,20 @@ package org.springframework.data.relational.core.conversion;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -55,162 +59,106 @@ public class AggregateChange<T> {
 		this.entity = entity;
 	}
 
-	@SuppressWarnings("unchecked")
-	static void setIdOfNonRootEntity(RelationalMappingContext context, RelationalConverter converter,
-			PersistentPropertyAccessor<?> propertyAccessor, DbAction.WithDependingOn<?> action, Object generatedId) {
-
-		PersistentPropertyPath<RelationalPersistentProperty> propertyPathToEntity = action.getPropertyPath();
-		PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(context, propertyPathToEntity);
-
-		RelationalPersistentProperty leafProperty = propertyPathToEntity.getRequiredLeafProperty();
-
-		Object currentPropertyValue = propertyAccessor.getProperty(propertyPathToEntity);
-		Assert.notNull(currentPropertyValue, "Trying to set an ID for an element that does not exist");
-
-		if (leafProperty.isQualified()) {
-
-			Object keyObject = action.getQualifiers().get(propertyPathToEntity);
-
-			if (List.class.isAssignableFrom(leafProperty.getType())) {
-				setIdInElementOfList(converter, action, generatedId, (List) currentPropertyValue, (int) keyObject);
-			} else if (Map.class.isAssignableFrom(leafProperty.getType())) {
-				setIdInElementOfMap(converter, action, generatedId, (Map) currentPropertyValue, keyObject);
-			} else {
-				throw new IllegalStateException("Can't handle " + currentPropertyValue);
-			}
-		} else if (leafProperty.isCollectionLike()) {
-
-			if (Set.class.isAssignableFrom(leafProperty.getType())) {
-				setIdInElementOfSet(converter, action, generatedId, (Set) currentPropertyValue);
-			} else {
-				throw new IllegalStateException("Can't handle " + currentPropertyValue);
-			}
-		} else if (extPath.hasIdProperty()) {
-
-			RelationalPersistentProperty requiredIdProperty = context
-					.getRequiredPersistentEntity(propertyPathToEntity.getRequiredLeafProperty().getActualType())
-					.getRequiredIdProperty();
-
-			PersistentPropertyPath<RelationalPersistentProperty> pathToId = context.getPersistentPropertyPath(
-					propertyPathToEntity.toDotPath() + '.' + requiredIdProperty.getName(),
-					propertyPathToEntity.getBaseProperty().getOwner().getType());
-
-			propertyAccessor.setProperty(pathToId, generatedId);
-		}
-	}
-
-
 	public void setEntity(@Nullable T aggregateRoot) {
 		entity = aggregateRoot;
 	}
 
-	@SuppressWarnings("unchecked")
-	private static <T> void setIdInElementOfSet(RelationalConverter converter, DbAction.WithDependingOn<?> action,
-			Object generatedId, Set<T> set) {
-
-		PersistentPropertyAccessor<?> intermediateAccessor = setId(converter, action, generatedId);
-
-		// this currently only works on the standard collections
-		// no support for immutable collections, nor specialized ones.
-		set.remove((T) action.getEntity());
-		set.add((T) intermediateAccessor.getBean());
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <K, V> void setIdInElementOfMap(RelationalConverter converter, DbAction.WithDependingOn<?> action,
-			Object generatedId, Map<K, V> map, K keyObject) {
-
-		PersistentPropertyAccessor<?> intermediateAccessor = setId(converter, action, generatedId);
-
-		// this currently only works on the standard collections
-		// no support for immutable collections, nor specialized ones.
-		map.put(keyObject, (V) intermediateAccessor.getBean());
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <T> void setIdInElementOfList(RelationalConverter converter, DbAction.WithDependingOn<?> action,
-			Object generatedId, List<T> list, int index) {
-
-		PersistentPropertyAccessor<?> intermediateAccessor = setId(converter, action, generatedId);
-
-		// this currently only works on the standard collections
-		// no support for immutable collections, nor specialized ones.
-		list.set(index, (T) intermediateAccessor.getBean());
-	}
-
-	/**
-	 * Sets the id of the entity referenced in the action and uses the {@link PersistentPropertyAccessor} used for that.
-	 */
-	private static <T> PersistentPropertyAccessor<T> setId(RelationalConverter converter,
-			DbAction.WithDependingOn<T> action, Object generatedId) {
-
-		T originalElement = action.getEntity();
-
-		RelationalPersistentEntity<T> persistentEntity = (RelationalPersistentEntity<T>) converter.getMappingContext()
-				.getRequiredPersistentEntity(action.getEntityType());
-		PersistentPropertyAccessor<T> intermediateAccessor = converter.getPropertyAccessor(persistentEntity,
-				originalElement);
-
-		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
-		if (idProperty != null) {
-			intermediateAccessor.setProperty(idProperty, generatedId);
-		}
-
-		return intermediateAccessor;
-	}
-
-	@SuppressWarnings("unchecked")
 	public void executeWith(Interpreter interpreter, RelationalMappingContext context, RelationalConverter converter) {
 
-		RelationalPersistentEntity<T> persistentEntity = entity != null
-				? (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(entity.getClass())
-				: null;
+		actions.forEach(action -> action.executeWith(interpreter));
 
-		PersistentPropertyAccessor<T> propertyAccessor = //
-				persistentEntity != null //
-						? converter.getPropertyAccessor(persistentEntity, entity) //
-						: null;
+		T newRoot = setGeneratedIds(context, converter);
 
-		actions.forEach(action -> {
-
-			action.executeWith(interpreter);
-
-			processGeneratedId(context, converter, persistentEntity, propertyAccessor, action);
-		});
-
-		if (propertyAccessor != null) {
-			entity = propertyAccessor.getBean();
+		if (newRoot != null) {
+			entity = newRoot;
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Nullable
+	private T setGeneratedIds(RelationalMappingContext context, RelationalConverter converter) {
+
+		T newRoot = null;
+
+		// have the actions so that the inserts on the leaves come first.
+		ArrayList<DbAction<?>> reverseActions = new ArrayList<>(actions);
+		Collections.reverse(reverseActions);
+
+		CascadingValuesLookup cascadingValues = new CascadingValuesLookup();
+
+		for (DbAction<?> action : reverseActions) {
+
+			if (action instanceof DbAction.WithGeneratedId) {
+
+				DbAction.WithGeneratedId<?> withGeneratedId = (DbAction.WithGeneratedId<?>) action;
+				Object generatedId = withGeneratedId.getGeneratedId();
+
+				Object newEntity = setIdAndCascadingProperties(context, converter, withGeneratedId, generatedId,
+						cascadingValues);
+
+				// the id property was immutable so we have to propagate changes up the tree
+				if (newEntity != ((DbAction.WithGeneratedId<?>) action).getEntity()) {
+
+					if (action instanceof DbAction.Insert) {
+						DbAction.Insert insert = (DbAction.Insert) action;
+
+						Pair qualifier = insert.getQualifier();
+
+						cascadingValues.add(insert.dependingOn, insert.propertyPath, newEntity,
+								qualifier == null ? null : qualifier.getSecond());
+
+					} else if (action instanceof DbAction.InsertRoot) {
+						newRoot = (T) newEntity;
+					}
+				}
+			}
+		}
+
+		return newRoot;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <S> Object setIdAndCascadingProperties(RelationalMappingContext context, RelationalConverter converter,
+			DbAction.WithGeneratedId<S> action, @Nullable Object generatedId, CascadingValuesLookup cascadingValues) {
+
+		S originalEntity = action.getEntity();
+
+		RelationalPersistentEntity<S> persistentEntity = (RelationalPersistentEntity<S>) context
+				.getRequiredPersistentEntity(action.getEntityType());
+		PersistentPropertyAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity, originalEntity);
+
+		if (generatedId != null) {
+			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
+		}
+
+		// set values of changed immutables referenced by this entity
+		Map<PersistentPropertyPath, Object> cascadingValue = cascadingValues.get(action);
+		for (Map.Entry<PersistentPropertyPath, Object> pathValuePair : cascadingValue.entrySet()) {
+			propertyAccessor.setProperty(getRelativePath(action, pathValuePair), pathValuePair.getValue());
+		}
+
+		return propertyAccessor.getBean();
+	}
+
+	@SuppressWarnings("unchecked")
+	private PersistentPropertyPath getRelativePath(DbAction action,
+			Map.Entry<PersistentPropertyPath, Object> pathValuePair) {
+
+		PersistentPropertyPath pathToValue = pathValuePair.getKey();
+
+		if (action instanceof DbAction.Insert) {
+			return pathToValue.getExtensionForBaseOf(((DbAction.Insert) action).propertyPath);
+		}
+
+		if (action instanceof DbAction.InsertRoot) {
+			return pathToValue;
+		}
+
+		throw new IllegalArgumentException(String.format("DbAction of type %s is not supported.", action.getClass()));
 	}
 
 	public void addAction(DbAction<?> action) {
 		actions.add(action);
-	}
-
-	private void processGeneratedId(RelationalMappingContext context, RelationalConverter converter,
-			@Nullable RelationalPersistentEntity<T> persistentEntity,
-			@Nullable PersistentPropertyAccessor<T> propertyAccessor, DbAction<?> action) {
-
-		if (!(action instanceof DbAction.WithGeneratedId)) {
-			return;
-		}
-
-		Assert.notNull(persistentEntity,
-				"For statements triggering database side id generation a RelationalPersistentEntity must be provided.");
-		Assert.notNull(propertyAccessor, "propertyAccessor must not be null");
-
-		Object generatedId = ((DbAction.WithGeneratedId<?>) action).getGeneratedId();
-
-		if (generatedId == null) {
-			return;
-		}
-
-		if (action instanceof DbAction.InsertRoot && action.getEntityType().equals(entityType)) {
-			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
-		} else if (action instanceof DbAction.WithDependingOn) {
-
-			setIdOfNonRootEntity(context, converter, propertyAccessor, (DbAction.WithDependingOn<?>) action, generatedId);
-		}
 	}
 
 	/**
@@ -228,4 +176,170 @@ public class AggregateChange<T> {
 		 */
 		DELETE
 	}
+
+	/**
+	 * Gathers and holds information about immutable properties in an aggregate that need updating.
+	 */
+	private static class CascadingValuesLookup {
+
+		static final List<MultiValueAggregator> aggregators = Arrays.asList(new SetAggregator(), new MapAggregator(),
+				new ListAggregator(), new SingleElementAggregator());
+
+		Map<DbAction, Map<PersistentPropertyPath, Object>> values = new HashMap<>();
+
+		/**
+		 * Adds a value that needs to be set in an entity higher up in the tree of entities in the aggregate. If the
+		 * attribute to be set is multivalued this method expects only a single element.
+		 *
+		 * @param action The action responsible for persisting the entity that needs the added value set. Must not be
+		 *          {@literal null}.
+		 * @param path The path to the property in which to set the value. Must not be {@literal null}.
+		 * @param value The value to be set. Must not be {@literal null}.
+		 * @param qualifier If {@code path} is a qualified multivalued properties this parameter contains the qualifier. May
+		 *          be {@literal null}.
+		 */
+		@SuppressWarnings("unchecked")
+		public <T> void add(DbAction<?> action, PersistentPropertyPath path, Object value, @Nullable Object qualifier) {
+
+			MultiValueAggregator<T> aggregator = getAggregatorFor(path);
+
+			Map<PersistentPropertyPath, Object> valuesForPath = this.values.get(action);
+			if (valuesForPath == null) {
+				valuesForPath = new HashMap<>();
+				values.put(action, valuesForPath);
+			}
+
+			T currentValue = (T) valuesForPath.get(path);
+			if (currentValue == null) {
+				currentValue = aggregator.createEmptyInstance();
+			}
+
+			Object newValue = aggregator.add(currentValue, value, qualifier);
+
+			valuesForPath.put(path, newValue);
+		}
+
+		private MultiValueAggregator getAggregatorFor(PersistentPropertyPath path) {
+
+			PersistentProperty property = path.getRequiredLeafProperty();
+			for (MultiValueAggregator aggregator : aggregators) {
+				if (aggregator.handles(property)) {
+					return aggregator;
+				}
+			}
+
+			throw new IllegalStateException(String.format("Can't handle path %s", path));
+		}
+
+		public Map<PersistentPropertyPath, Object> get(DbAction<?> action) {
+			return values.getOrDefault(action, Collections.emptyMap());
+		}
+	}
+
+	interface MultiValueAggregator<T> {
+
+		default Class<? super T> handledType() {
+			return Object.class;
+		}
+
+		default boolean handles(PersistentProperty property) {
+			return handledType().isAssignableFrom(property.getType());
+		}
+
+		@Nullable
+		T createEmptyInstance();
+
+		T add(@Nullable T aggregate, Object value, @Nullable Object qualifier);
+
+	}
+
+	static private class SetAggregator implements MultiValueAggregator<Set> {
+
+		@Override
+		public Class<Set> handledType() {
+			return Set.class;
+		}
+
+		@Override
+		public Set createEmptyInstance() {
+			return new HashSet();
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public Set add(@Nullable Set set, Object value, @Nullable Object qualifier) {
+
+			Assert.notNull(set, "Set must not be null");
+
+			set.add(value);
+			return set;
+		}
+	}
+
+	static private class ListAggregator implements MultiValueAggregator<List> {
+
+		@Override
+		public boolean handles(PersistentProperty property) {
+			return property.isCollectionLike();
+		}
+
+		@Override
+		public List createEmptyInstance() {
+			return new ArrayList();
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public List add(@Nullable List list, Object value, @Nullable Object qualifier) {
+
+			Assert.notNull(list, "List must not be null.");
+
+			int index = (int) qualifier;
+			if (index >= list.size()) {
+				list.add(value);
+			} else {
+				list.add(index, value);
+			}
+
+			return list;
+		}
+	}
+
+	static private class MapAggregator implements MultiValueAggregator<Map> {
+
+		@Override
+		public Class<Map> handledType() {
+			return Map.class;
+		}
+
+		@Override
+		public Map createEmptyInstance() {
+			return new HashMap();
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public Map add(@Nullable Map map, Object value, @Nullable Object qualifier) {
+
+			Assert.notNull(map, "Map must not be null.");
+
+			map.put(qualifier, value);
+			return map;
+		}
+	}
+
+	static private class SingleElementAggregator implements MultiValueAggregator<Object> {
+
+		@Override
+		@Nullable
+		public Object createEmptyInstance() {
+			return null;
+		}
+
+		@Override
+		public Object add(@Nullable Object __null, Object value, @Nullable Object qualifier) {
+			return value;
+		}
+	}
+
 }
