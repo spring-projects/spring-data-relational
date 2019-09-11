@@ -33,7 +33,7 @@ public interface BindTarget {
 	 * @param identifier the identifier to bind to.
 	 * @param value the value to bind.
 	 */
-	void bind(Object identifier, Object value);
+	void bind(String identifier, Object value);
 
 	/**
 	 * Bind a value to an index. Indexes are zero-based.
@@ -49,7 +49,7 @@ public interface BindTarget {
 	 * @param identifier the identifier to bind to.
 	 * @param type the type of {@literal null} value.
 	 */
-	void bindNull(Object identifier, Class<?> type);
+	void bindNull(String identifier, Class<?> type);
 
 	/**
 	 * Bind a {@literal null} value.

@@ -1539,7 +1539,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public void bind(Object identifier, Object value) {
+		public void bind(String identifier, Object value) {
 			this.statement.bind(identifier, value);
 		}
 
@@ -1549,7 +1549,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public void bindNull(Object identifier, Class<?> type) {
+		public void bindNull(String identifier, Class<?> type) {
 			this.statement.bindNull(identifier, type);
 		}
 

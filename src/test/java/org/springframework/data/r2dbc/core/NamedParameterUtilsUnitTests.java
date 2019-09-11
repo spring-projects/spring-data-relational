@@ -313,7 +313,7 @@ public class NamedParameterUtilsUnitTests {
 
 		operation.bindTo(new BindTarget() {
 			@Override
-			public void bind(Object identifier, Object value) {
+			public void bind(String identifier, Object value) {
 				throw new UnsupportedOperationException();
 			}
 
@@ -324,7 +324,7 @@ public class NamedParameterUtilsUnitTests {
 			}
 
 			@Override
-			public void bindNull(Object identifier, Class<?> type) {
+			public void bindNull(String identifier, Class<?> type) {
 				throw new UnsupportedOperationException();
 			}
 
@@ -351,7 +351,7 @@ public class NamedParameterUtilsUnitTests {
 
 		operation.bindTo(new BindTarget() {
 			@Override
-			public void bind(Object identifier, Object value) {
+			public void bind(String identifier, Object value) {
 				throw new UnsupportedOperationException();
 			}
 
@@ -361,7 +361,7 @@ public class NamedParameterUtilsUnitTests {
 			}
 
 			@Override
-			public void bindNull(Object identifier, Class<?> type) {
+			public void bindNull(String identifier, Class<?> type) {
 				throw new UnsupportedOperationException();
 			}
 
@@ -388,7 +388,7 @@ public class NamedParameterUtilsUnitTests {
 
 		operation.bindTo(new BindTarget() {
 			@Override
-			public void bind(Object identifier, Object value) {
+			public void bind(String identifier, Object value) {
 				throw new UnsupportedOperationException();
 			}
 
@@ -398,7 +398,7 @@ public class NamedParameterUtilsUnitTests {
 			}
 
 			@Override
-			public void bindNull(Object identifier, Class<?> type) {
+			public void bindNull(String identifier, Class<?> type) {
 				throw new UnsupportedOperationException();
 			}
 
