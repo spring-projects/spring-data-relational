@@ -20,15 +20,13 @@ import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
 import org.junit.Test;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.mapping.SettableValue;
-import org.springframework.data.r2dbc.query.BoundCondition;
-import org.springframework.data.r2dbc.query.Criteria;
-import org.springframework.data.r2dbc.query.QueryMapper;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.Table;
@@ -158,14 +156,14 @@ public class QueryMapperUnitTests {
 		assertThat(bindings.getCondition().toString()).isEqualTo("person.name IN (?[$1], ?[$2], ?[$3])");
 	}
 
-	@Test // gh-64
+	@Test // gh-64, gh-177
 	public void shouldMapIsNotIn() {
 
 		Criteria criteria = Criteria.where("name").notIn("a", "b", "c");
 
 		BoundCondition bindings = map(criteria);
 
-		assertThat(bindings.getCondition().toString()).isEqualTo("NOT person.name IN (?[$1], ?[$2], ?[$3])");
+		assertThat(bindings.getCondition().toString()).isEqualTo("person.name NOT IN (?[$1], ?[$2], ?[$3])");
 	}
 
 	@Test // gh-64

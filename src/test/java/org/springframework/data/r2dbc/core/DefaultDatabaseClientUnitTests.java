@@ -16,6 +16,7 @@
 package org.springframework.data.r2dbc.core;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.data.r2dbc.query.Criteria.*;
 
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
@@ -259,5 +260,27 @@ public class DefaultDatabaseClientUnitTests {
 				.verifyComplete();
 
 		verify(statement).bind(0, "foo");
+	}
+
+	@Test // gh-177
+	public void deleteNotInShouldRenderCorrectQuery() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement("DELETE FROM tab WHERE tab.pole = $1 AND tab.id NOT IN ($2, $3)"))
+				.thenReturn(statement);
+		when(statement.execute()).thenReturn(Mono.empty());
+
+		DefaultDatabaseClient databaseClient = (DefaultDatabaseClient) DatabaseClient.builder()
+				.connectionFactory(connectionFactory)
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
+
+		databaseClient.delete().from("tab").matching(where("pole").is("foo").and("id").notIn(1, 2)) //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		verify(statement).bind(0, "foo");
+		verify(statement).bind(1, (Object) 1);
+		verify(statement).bind(2, (Object) 2);
 	}
 }
