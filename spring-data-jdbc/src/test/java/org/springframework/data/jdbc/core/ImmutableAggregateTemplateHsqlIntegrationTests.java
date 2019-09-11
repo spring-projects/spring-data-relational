@@ -97,6 +97,29 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		softly.assertAll();
 	}
 
+	@Test // DATAJDBC-291
+	public void saveAndLoadAnEntityWithTwoReferencedEntitiesById() {
+
+		LegoSet saved = template.save(createLegoSet(createManual(), new Author(null, "Alfred E. Neumann")));
+
+		assertThat(saved.manual.id).describedAs("id of stored manual").isNotNull();
+		assertThat(saved.author.id).describedAs("id of stored author").isNotNull();
+
+		LegoSet reloadedLegoSet = template.findById(saved.getId(), LegoSet.class);
+
+		assertThat(reloadedLegoSet.manual).isNotNull();
+
+		SoftAssertions softly = new SoftAssertions();
+
+		softly.assertThat(reloadedLegoSet.manual.getId()) //
+				.isEqualTo(saved.getManual().getId()) //
+				.isNotNull();
+		softly.assertThat(reloadedLegoSet.manual.getContent()).isEqualTo(saved.getManual().getContent());
+		softly.assertThat(reloadedLegoSet.author.getName()).isEqualTo(saved.getAuthor().getName());
+
+		softly.assertAll();
+	}
+
 	@Test // DATAJDBC-241
 	public void saveAndLoadManyEntitiesWithReferencedEntity() {
 
@@ -168,7 +191,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 		LegoSet saved = template.save(createLegoSet(null));
 
-		LegoSet changedLegoSet = new LegoSet(saved.id, saved.name, new Manual(23L, "Some content"));
+		LegoSet changedLegoSet = new LegoSet(saved.id, saved.name, new Manual(23L, "Some content"), null);
 
 		template.save(changedLegoSet);
 
@@ -182,7 +205,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 		LegoSet saved = template.save(createLegoSet(null));
 
-		LegoSet changedLegoSet = new LegoSet(saved.id, saved.name, null);
+		LegoSet changedLegoSet = new LegoSet(saved.id, saved.name, null, null);
 
 		template.save(changedLegoSet);
 
@@ -201,7 +224,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 		LegoSet saved = template.save(createLegoSet(null));
 
-		LegoSet changedLegoSet = new LegoSet(saved.id, saved.name, new Manual(null, "other content"));
+		LegoSet changedLegoSet = new LegoSet(saved.id, saved.name, new Manual(null, "other content"), null);
 
 		template.save(changedLegoSet);
 
@@ -233,7 +256,12 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 	private static LegoSet createLegoSet(Manual manual) {
 
-		return new LegoSet(null, "Star Destroyer", manual);
+		return new LegoSet(null, "Star Destroyer", manual, null);
+	}
+
+	private static LegoSet createLegoSet(Manual manual, Author author) {
+
+		return new LegoSet(null, "Star Destroyer", manual, author);
 	}
 
 	private static Manual createManual() {
@@ -248,6 +276,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		@Id Long id;
 		String name;
 		Manual manual;
+		Author author;
 	}
 
 	@Value
@@ -256,6 +285,14 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 		@Id Long id;
 		String content;
+	}
+
+	@Value
+	@Wither
+	static class Author {
+
+		@Id Long id;
+		String name;
 	}
 
 	@Configuration
