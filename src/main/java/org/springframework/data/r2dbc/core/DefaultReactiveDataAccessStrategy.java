@@ -218,6 +218,10 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	private SettableValue getArrayValue(SettableValue value, RelationalPersistentProperty property) {
 
+		if (value.getType().equals(byte[].class)) {
+			return value;
+		}
+
 		ArrayColumns arrayColumns = this.dialect.getArraySupport();
 
 		if (!arrayColumns.isSupported()) {

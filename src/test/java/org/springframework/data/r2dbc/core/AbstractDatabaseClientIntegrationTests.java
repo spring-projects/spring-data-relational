@@ -219,6 +219,36 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		assertThat(jdbc.queryForMap("SELECT id, name, manual FROM legoset")).hasEntrySatisfying("id", numberOf(42055));
 	}
 
+	@Test // gh-2
+	public void insertTypedObjectWithBinary() {
+
+		LegoSet legoSet = new LegoSet();
+		legoSet.setId(42055);
+		legoSet.setName("SCHAUFELRADBAGGER");
+		legoSet.setManual(12);
+		legoSet.setCert(new byte[] { 1, 2, 3, 4, 5 });
+
+		DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+
+		databaseClient.insert().into(LegoSet.class)//
+				.using(legoSet) //
+				.fetch() //
+				.rowsUpdated() //
+				.as(StepVerifier::create) //
+				.expectNext(1) //
+				.verifyComplete();
+
+		databaseClient.select().from(LegoSet.class) //
+				.matching(where("name").is("SCHAUFELRADBAGGER")) //
+				.fetch() //
+				.first() //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+
+					assertThat(actual.getCert()).isEqualTo(new byte[] { 1, 2, 3, 4, 5 });
+				}).verifyComplete();
+	}
+
 	@Test // gh-64
 	public void update() {
 
@@ -491,5 +521,6 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 		@Id int id;
 		String name;
 		Integer manual;
+		byte[] cert;
 	}
 }

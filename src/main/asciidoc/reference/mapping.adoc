@@ -1,4 +1,4 @@
-[[mapping-chapter]]
+[[mapping]]
 = Mapping
 
 Rich mapping support is provided by the `MappingR2dbcConverter`. `MappingR2dbcConverter` has a rich metadata model that allows mapping domain objects to a data row.
@@ -8,7 +8,7 @@ The `MappingR2dbcConverter` also lets you map objects to rows without providing 
 
 This section describes the features of the `MappingR2dbcConverter`, including how to use conventions for mapping objects to rows and how to override those conventions with annotation-based mapping metadata.
 
-[[mapping-conventions]]
+[[mapping.conventions]]
 == Convention-based Mapping
 
 `MappingR2dbcConverter` has a few conventions for mapping objects to rows when no additional mapping metadata is provided.
@@ -28,7 +28,7 @@ Public `JavaBean` properties are not used.
 Otherwise, the zero-argument constructor is used.
 If there is more than one non-zero-argument constructor, an exception is thrown.
 
-[[mapping-configuration]]
+[[mapping.configuration]]
 == Mapping Configuration
 
 By default (unless explicitly configured) an instance of `MappingR2dbcConverter` is created when you create a `DatabaseClient`.
@@ -69,7 +69,7 @@ You can add additional converters to the converter by overriding the `r2dbcCusto
 
 NOTE: `AbstractR2dbcConfiguration` creates a `DatabaseClient` instance and registers it with the container under the name of `databaseClient`.
 
-[[mapping-usage]]
+[[mapping.usage]]
 == Metadata-based Mapping
 
 To take full advantage of the object mapping functionality inside the Spring Data R2DBC support, you should annotate your mapped objects with the `@Table` annotation.
@@ -100,8 +100,53 @@ public class Person {
 
 IMPORTANT: The `@Id` annotation tells the mapper which property you want to use as the primary key.
 
+[[mapping.types]]
+=== Default Type Mapping
 
-[[mapping-usage-annotations]]
+The following table explains how property types of an entity affect mapping:
+
+|===
+|Source Type | Target Type | Remarks
+
+|Primitive types and wrapper types
+|Passthru
+|Can be customized using <<mapping.explicit.converters, Explicit Converters>>.
+
+|JSR-310 Date/Time types
+|Passthru
+|Can be customized using <<mapping.explicit.converters, Explicit Converters>>.
+
+
+|`String`, `BigInteger`, `BigDecimal`, and `UUID`
+|Passthru
+|Can be customized using <<mapping.explicit.converters, Explicit Converters>>.
+
+|`Blob` and `Clob`
+|Passthru
+|Can be customized using <<mapping.explicit.converters, Explicit Converters>>.
+
+|`byte[]`, `ByteBuffer`
+|Passthru
+|Considered a binary payload.
+
+|`Collection<T>`
+|Array of `T`
+|Conversion to Array type if supported by the configured <<r2dbc.drivers, driver>>, not supported otherwise.
+
+|Arrays of primitive types, wrapper types and `String`
+|Array of wrapper type (e.g. `int[]` -> `Integer[]`)
+|Conversion to Array type if supported by the configured <<r2dbc.drivers, driver>>, not supported otherwise.
+
+|Complex objects
+|Target type depends on registered `Converter`.
+|Requires a <<mapping.explicit.converters, Explicit Converters>>, not supported otherwise.
+
+|===
+
+NOTE: The native data type for a column depends on the R2DBC driver type mapping.
+Drivers can contribute additional simple types such as Geometry types.
+
+[[mapping.usage.annotations]]
 === Mapping Annotation Overview
 
 The `MappingR2dbcConverter` can use metadata to drive the mapping of objects to rows. The following annotations are available:
@@ -117,7 +162,7 @@ The mapping metadata infrastructure is defined in the separate `spring-data-comm
 Specific subclasses are used in the R2DBC support to support annotation based metadata.
 Other strategies can also be put in place (if there is demand).
 
-[[mapping-custom-object-construction]]
+[[mapping.custom.object.construction]]
 === Customized Object Construction
 
 The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation. The values to be used for the constructor parameters are resolved in the following way:
@@ -147,7 +192,7 @@ class OrderItem {
 ----
 ====
 
-[[mapping-explicit-converters]]
+[[mapping.explicit.converters]]
 === Overriding Mapping with Explicit Converters
 
 When storing and querying your objects, it is often convenient to have a `R2dbcConverter` instance to handle the mapping of all Java types to `OutboundRow` instances.
@@ -156,7 +201,7 @@ However, you may sometimes want the `R2dbcConverter` instances to do most of the
 To selectively handle the conversion yourself, register one or more one or more `org.springframework.core.convert.converter.Converter` instances with the `R2dbcConverter`.
 
 You can use the `r2dbcCustomConversions` method in `AbstractR2dbcConfiguration` to configure converters.
-The examples <<mapping-configuration, at the beginning of this chapter>> show how to perform the configuration with Java.
+The examples <<mapping.configuration, at the beginning of this chapter>> show how to perform the configuration with Java.
 
 NOTE: Custom top-level entity conversion requires asymmetric types for conversion. Inbound data is extracted from R2DBC's `Row`.
 Outbound data (to be used with `INSERT`/`UPDATE` statements) is represented as `OutboundRow` and later assembled to a statement.

@@ -67,7 +67,7 @@ Flux<Person> all = client.execute("SELECT id, name FROM mytable")
 ----
 ====
 
-`as(…)` applies <<mapping-conventions,Convention-based Object Mapping>> and maps the resulting columns to your POJO.
+`as(…)` applies <<mapping.conventions,Convention-based Object Mapping>> and maps the resulting columns to your POJO.
 
 [[r2dbc.datbaseclient.mapping]]
 == Mapping Results

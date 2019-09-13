@@ -20,6 +20,7 @@ import java.util.Objects;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
 
 /**
  * A database value that can be set in a statement.
@@ -121,7 +122,7 @@ public class SettableValue {
 		if (!(o instanceof SettableValue))
 			return false;
 		SettableValue value1 = (SettableValue) o;
-		return Objects.equals(this.value, value1.value) && Objects.equals(this.type, value1.type);
+		return ObjectUtils.nullSafeEquals(this.value, value1.value) && ObjectUtils.nullSafeEquals(this.type, value1.type);
 	}
 
 	@Override

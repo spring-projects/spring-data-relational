@@ -26,7 +26,8 @@ public class PostgresTestSupport {
 	public static String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
 			+ "    id          integer CONSTRAINT id PRIMARY KEY,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
-			+ "    manual      integer NULL\n" //
+			+ "    manual      integer NULL\n," //
+			+ "    cert        bytea NULL\n" //
 			+ ");";
 
 	public static String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //

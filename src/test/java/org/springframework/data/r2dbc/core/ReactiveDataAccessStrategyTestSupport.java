@@ -171,6 +171,11 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		testType(PrimitiveTypes::setUuid, PrimitiveTypes::getUuid, UUID.randomUUID(), "uuid");
 	}
 
+	@Test // gh-186
+	public void shouldReadAndWriteBinary() {
+		testType(PrimitiveTypes::setBinary, PrimitiveTypes::getBinary, "hello".getBytes(), "binary");
+	}
+
 	private <T> void testType(BiConsumer<PrimitiveTypes, T> setter, Function<PrimitiveTypes, T> getter, T testValue,
 			String fieldname) {
 
@@ -223,6 +228,8 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		LocalDateTime localDateTime;
 		OffsetDateTime offsetDateTime;
 		ZonedDateTime zonedDateTime;
+
+		byte[] binary;
 
 		UUID uuid;
 	}

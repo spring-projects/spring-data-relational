@@ -24,6 +24,7 @@ import reactor.test.StepVerifier;
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.dao.DataAccessException;
@@ -82,6 +83,11 @@ public class MySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientI
 				.consumeNextWith(actual -> assertThat(actual.isFlag1()).isTrue()) //
 				.verifyComplete();
 	}
+
+	@Ignore("https://github.com/mirromutth/r2dbc-mysql/issues/62")
+	@Test
+	@Override
+	public void insertTypedObjectWithBinary() {}
 
 	@Table("boolean_mapping")
 	@Data
