@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-		"https://raw.githubusercontent.com/mybatis/mybatis-3/mybatis-3.5.1/src/main/java/org/apache/ibatis/builder/xml/mybatis-3-mapper.dtd">
+		"https://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.springframework.data.jdbc.mybatis.DummyEntityMapper">
 	<resultMap id="dummyEntityMap" type="DummyEntity">
 		<constructor>
