@@ -2,6 +2,7 @@ target/
 .idea/
 .settings/
 *.iml
+.flattened-pom.xml
 .project
 .classpath
 .springBeans

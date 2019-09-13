@@ -2,8 +2,6 @@ language: java
 
 matrix:
   include:
-    - jdk: oraclejdk8
-      env: JDK='Oracle JDK 8'
     - jdk: oraclejdk9
       env: JDK='Oracle JDK 9'
     - env:
@@ -14,6 +12,10 @@ matrix:
       - JDK='Oracle JDK 11'
       - NO_JACOCO='true'
       before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -F 11
+    - env:
+      - JDK='Oracle JDK 12'
+      - NO_JACOCO='true'
+      before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -F 12
 
 cache:
   directories:
@@ -28,5 +30,5 @@ services:
 install: true
 
 script:
-  - "mvn -version"
-  - "mvn clean dependency:list test -Pall-dbs${NO_JACOCO:+',no-jacoco'} -Dsort -U"
+  - "./mvnw -version"
+  - "./mvnw clean dependency:list test -Pall-dbs${NO_JACOCO:+',no-jacoco'} -Dsort -U"
