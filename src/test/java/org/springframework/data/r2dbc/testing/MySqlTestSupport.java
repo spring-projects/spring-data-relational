@@ -15,7 +15,7 @@
  */
 package org.springframework.data.r2dbc.testing;
 
-import io.github.mirromutth.r2dbc.mysql.MySqlConnectionFactoryProvider;
+import dev.miku.r2dbc.mysql.MySqlConnectionFactoryProvider;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 

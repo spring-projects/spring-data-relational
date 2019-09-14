@@ -3,8 +3,8 @@ package org.springframework.data.r2dbc.dialect;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import io.github.mirromutth.r2dbc.mysql.MySqlConnectionConfiguration;
-import io.github.mirromutth.r2dbc.mysql.MySqlConnectionFactory;
+import dev.miku.r2dbc.mysql.MySqlConnectionConfiguration;
+import dev.miku.r2dbc.mysql.MySqlConnectionFactory;
 import io.r2dbc.h2.H2ConnectionConfiguration;
 import io.r2dbc.h2.H2ConnectionFactory;
 import io.r2dbc.mssql.MssqlConnectionConfiguration;
@@ -26,7 +26,6 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
 import com.github.jasync.r2dbc.mysql.JasyncConnectionFactory;
 import com.github.jasync.sql.db.mysql.pool.MySQLConnectionFactory;
-import reactor.core.publisher.Mono;
 
 /**
  * Unit tests for {@link DialectResolver}.
