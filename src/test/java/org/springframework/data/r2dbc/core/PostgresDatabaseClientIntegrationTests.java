@@ -20,8 +20,6 @@ import io.r2dbc.spi.ConnectionFactory;
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
@@ -31,7 +29,6 @@ import org.springframework.data.r2dbc.testing.PostgresTestSupport;
  *
  * @author Mark Paluch
  */
-@Ignore("https://github.com/r2dbc/r2dbc-postgresql/issues/151")
 public class PostgresDatabaseClientIntegrationTests extends AbstractDatabaseClientIntegrationTests {
 
 	@ClassRule public static final ExternalDatabase database = PostgresTestSupport.database();
@@ -51,18 +48,4 @@ public class PostgresDatabaseClientIntegrationTests extends AbstractDatabaseClie
 		return PostgresTestSupport.CREATE_TABLE_LEGOSET;
 	}
 
-	@Ignore("Adding RETURNING * lets Postgres report 0 affected rows.")
-	@Test
-	@Override
-	public void insert() {}
-
-	@Ignore("Postgres considers multiple references to the same parameter as multiple bindings (where name = $1 OR lastname = $1)")
-	@Test
-	@Override
-	public void executeSelectNamedParameters() {}
-
-	@Ignore("Adding RETURNING * lets Postgres report 0 affected rows.")
-	@Test
-	@Override
-	public void insertTypedObject() {}
 }
