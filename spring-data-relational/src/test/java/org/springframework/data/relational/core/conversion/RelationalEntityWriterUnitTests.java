@@ -29,7 +29,6 @@ import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
@@ -117,6 +116,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(InsertRoot.class, EmbeddedReferenceEntity.class, "", EmbeddedReferenceEntity.class, false) //
 				);
 	}
+
 
 	@Test // DATAJDBC-112
 	public void newEntityWithReferenceGetsConvertedToTwoInserts() {
@@ -530,6 +530,51 @@ public class RelationalEntityWriterUnitTests {
 				);
 	}
 
+	@Test // DATAJDBC-417
+	public void savingANullEmbeddedWithEntity() {
+
+		EmbeddedReferenceChainEntity entity = new EmbeddedReferenceChainEntity(null);
+		// the embedded is null !!!
+
+		AggregateChange<EmbeddedReferenceChainEntity> aggregateChange = //
+				new AggregateChange<>(Kind.SAVE, EmbeddedReferenceChainEntity.class, entity);
+
+		converter.write(entity, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, //
+						DbAction::getEntityType, //
+						DbActionTestSupport::extractPath, //
+						DbActionTestSupport::actualEntityType, //
+						DbActionTestSupport::isWithDependsOn) //
+				.containsExactly( //
+						tuple(InsertRoot.class, EmbeddedReferenceChainEntity.class, "", EmbeddedReferenceChainEntity.class, false) //
+				);
+	}
+	@Test // DATAJDBC-417
+	public void savingInnerNullEmbeddedWithEntity() {
+
+		RootWithEmbeddedReferenceChainEntity root = new RootWithEmbeddedReferenceChainEntity(null);
+		root.other = new EmbeddedReferenceChainEntity(null);
+		// the embedded is null !!!
+
+		AggregateChange<RootWithEmbeddedReferenceChainEntity> aggregateChange = //
+				new AggregateChange<>(Kind.SAVE, RootWithEmbeddedReferenceChainEntity.class, root);
+
+		converter.write(root, aggregateChange);
+
+		assertThat(aggregateChange.getActions()) //
+				.extracting(DbAction::getClass, //
+						DbAction::getEntityType, //
+						DbActionTestSupport::extractPath, //
+						DbActionTestSupport::actualEntityType, //
+						DbActionTestSupport::isWithDependsOn) //
+				.containsExactly( //
+						tuple(InsertRoot.class, RootWithEmbeddedReferenceChainEntity.class, "", RootWithEmbeddedReferenceChainEntity.class, false), //
+						tuple(Insert.class, EmbeddedReferenceChainEntity.class, "other", EmbeddedReferenceChainEntity.class, true) //
+				);
+	}
+
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {
 
 		CascadingReferenceMiddleElement middleElement1 = new CascadingReferenceMiddleElement(null);
@@ -586,6 +631,19 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@RequiredArgsConstructor
+	static class EmbeddedReferenceChainEntity {
+
+		@Id final Long id;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") ElementReference other;
+	}
+	@RequiredArgsConstructor
+	static class RootWithEmbeddedReferenceChainEntity {
+
+		@Id final Long id;
+		EmbeddedReferenceChainEntity other;
+	}
+
+	@RequiredArgsConstructor
 	static class ReferenceWoIdEntity {
 
 		@Id final Long id;
@@ -639,6 +697,11 @@ public class RelationalEntityWriterUnitTests {
 	@RequiredArgsConstructor
 	private static class Element {
 		@Id final Long id;
+	}
+
+	@RequiredArgsConstructor
+	private static class ElementReference {
+		final Element element;
 	}
 
 	@RequiredArgsConstructor

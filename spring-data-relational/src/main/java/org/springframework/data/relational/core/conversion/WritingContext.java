@@ -202,7 +202,8 @@ class WritingContext {
 
 		} else {
 
-			List<PathNode> pathNodes = nodesCache.get(path.getParentPath());
+			List<PathNode> pathNodes = nodesCache.getOrDefault(path.getParentPath(), Collections.emptyList());
+
 			pathNodes.forEach(parentNode -> {
 
 				// todo: this should go into pathnode
@@ -238,7 +239,17 @@ class WritingContext {
 
 	@Nullable
 	private Object getFromRootValue(PersistentPropertyPath<RelationalPersistentProperty> path) {
-		return path.getBaseProperty().getOwner().getPropertyAccessor(entity).getProperty(path);
+
+		if (path.getLength() == 0)
+			return entity;
+
+		Object parent = getFromRootValue(path.getParentPath());
+		if (parent == null) {
+			return null;
+		}
+
+		return context.getRequiredPersistentEntity(parent.getClass()).getPropertyAccessor(parent)
+				.getProperty(path.getRequiredLeafProperty());
 	}
 
 	private List<PathNode> createNodes(PersistentPropertyPath<RelationalPersistentProperty> path,
