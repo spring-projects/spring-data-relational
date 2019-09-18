@@ -560,13 +560,6 @@ public class RelationalEntityWriterUnitTests {
 				: null;
 	}
 
-	private int getQualifierCount(DbAction a, PersistentPropertyPath<RelationalPersistentProperty> path) {
-
-		return a instanceof DbAction.WithDependingOn //
-				? ((DbAction.WithDependingOn) a).getQualifiers().size() //
-				: 0;
-	}
-
 	static PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class source,
 			RelationalMappingContext context) {
 
