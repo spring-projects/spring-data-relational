@@ -32,11 +32,7 @@ import lombok.With;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -84,6 +80,35 @@ public class EntityRowMapperUnitTests {
 			return NamingStrategy.super.getColumnName(property) + "x";
 		}
 	};
+
+	@Test // DATAJDBC-341
+	public void mapNotNeededValueTypePropertiesToNull() throws SQLException {
+		ResultSet rs = mockResultSet(singletonList("id"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
+		rs.next();
+		Trivial extracted = createRowMapper(Trivial.class).mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
+
+	}
+
+	@Test // DATAJDBC-341
+	public void mapNotNeededPrimitiveTypePropertiesToNull() throws SQLException {
+		ResultSet rs = mockResultSet(singletonList("id"), //
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
+		rs.next();
+		TrivialMapPropertiesToNullIfNotNeeded extracted = createRowMapper(TrivialMapPropertiesToNullIfNotNeeded.class)
+				.mapRow(rs, 1);
+
+		assertThat(extracted) //
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.age) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, 0);
+
+	}
 
 	@Test // DATAJDBC-113
 	public void simpleEntitiesGetProperlyExtracted() throws SQLException {
@@ -479,6 +504,19 @@ public class EntityRowMapperUnitTests {
 	@NoArgsConstructor
 	@AllArgsConstructor
 	@Getter
+	static class TrivialMapPropertiesToNullIfNotNeeded {
+
+		@Id Long id;
+		int age;
+		String phone;
+		Boolean isSupreme;
+		long referenceToCustomer;
+	}
+
+	@EqualsAndHashCode
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Getter
 	static class WithReference {
 
 		@Id Long id;
@@ -760,9 +798,16 @@ public class EntityRowMapperUnitTests {
 					return isAfterLast() || isBeforeFirst() ? 0 : index + 1;
 				case "toString":
 					return this.toString();
+				case "findColumn":
+					return isThereAColumnNamed(invocation.getArgument(0));
 				default:
 					throw new OperationNotSupportedException(invocation.getMethod().getName());
 			}
+		}
+
+		private int isThereAColumnNamed(String name) {
+			Optional<Map<String, Object>> first = values.stream().filter(s -> s.equals(name)).findFirst();
+			return (first.isPresent()) ? 1 : 0;
 		}
 
 		private boolean isAfterLast() {
