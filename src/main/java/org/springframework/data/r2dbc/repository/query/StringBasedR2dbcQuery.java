@@ -15,6 +15,11 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.DatabaseClient.BindSpec;
@@ -35,6 +40,7 @@ import org.springframework.util.Assert;
 public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	private final String sql;
+	private final Map<String, Boolean> namedParameters = new ConcurrentHashMap<>();
 
 	/**
 	 * Creates a new {@link StringBasedR2dbcQuery} for the given {@link StringBasedR2dbcQuery}, {@link DatabaseClient},
@@ -90,20 +96,46 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 				Parameters<?, ?> bindableParameters = accessor.getBindableParameters();
 
 				int index = 0;
+				int bindingIndex = 0;
 				for (Object value : accessor.getValues()) {
 
-					Parameter bindableParameter = bindableParameters.getBindableParameter(index);
+					Parameter bindableParameter = bindableParameters.getBindableParameter(index++);
 
-					if (value == null) {
-						if (accessor.hasBindableNullValue()) {
-							bindSpecToUse = bindSpecToUse.bindNull(index++, bindableParameter.getType());
+					Optional<String> name = bindableParameter.getName();
+					if (isNamedParameter(name)) {
+						if (value == null) {
+							if (accessor.hasBindableNullValue()) {
+								bindSpecToUse = bindSpecToUse.bindNull(name.get(), bindableParameter.getType());
+							}
+						} else {
+							bindSpecToUse = bindSpecToUse.bind(name.get(), value);
 						}
 					} else {
-						bindSpecToUse = bindSpecToUse.bind(index++, value);
+						if (value == null) {
+							if (accessor.hasBindableNullValue()) {
+								bindSpecToUse = bindSpecToUse.bindNull(bindingIndex++, bindableParameter.getType());
+							}
+						} else {
+							bindSpecToUse = bindSpecToUse.bind(bindingIndex++, value);
+						}
 					}
 				}
 
 				return bindSpecToUse;
+			}
+
+			private boolean isNamedParameter(Optional<String> name) {
+
+				if (!name.isPresent()) {
+					return false;
+				}
+
+				return namedParameters.computeIfAbsent(name.get(), it -> {
+
+					Pattern namedParameterPattern = Pattern.compile("(\\W)" + Pattern.quote(it) + "(\\W|$)");
+					return namedParameterPattern.matcher(this.get()).find();
+				});
+
 			}
 
 			@Override

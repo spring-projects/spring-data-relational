@@ -26,6 +26,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.Arrays;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -166,6 +168,31 @@ public class DefaultDatabaseClientUnitTests {
 				.verifyComplete();
 
 		verify(statement).bindNull(0, String.class);
+	}
+
+	@Test // gh-178
+	public void executeShouldBindNamedValuesFromIndexes() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement("SELECT id, name, manual FROM legoset WHERE name IN ($1, $2, $3)"))
+				.thenReturn(statement);
+		when(statement.execute()).thenReturn(Mono.empty());
+
+		DefaultDatabaseClient databaseClient = (DefaultDatabaseClient) DatabaseClient.builder()
+				.connectionFactory(connectionFactory)
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
+
+		databaseClient.execute("SELECT id, name, manual FROM legoset WHERE name IN (:name)") //
+				.bind(0, Arrays.asList("unknown", "dunno", "other")) //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		verify(statement).bind(0, "unknown");
+		verify(statement).bind(1, "dunno");
+		verify(statement).bind(2, "other");
+		verify(statement).execute();
+		verifyNoMoreInteractions(statement);
 	}
 
 	@Test // gh-128, gh-162

@@ -21,10 +21,12 @@ import io.r2dbc.spi.RowMetadata;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.mapping.context.MappingContext;
@@ -254,11 +256,27 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy#processNamedParameters(java.lang.String, java.util.Map)
+	 * @see org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy#processNamedParameters(java.lang.String, org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy.NamedParameterProvider)
 	 */
 	@Override
-	public PreparedOperation<?> processNamedParameters(String query, Map<String, SettableValue> bindings) {
-		return this.expander.expand(query, this.dialect.getBindMarkersFactory(), new MapBindParameterSource(bindings));
+	public PreparedOperation<?> processNamedParameters(String query, NamedParameterProvider parameterProvider) {
+
+		List<String> parameterNames = this.expander.getParameterNames(query);
+
+		Map<String, SettableValue> namedBindings = new LinkedHashMap<>(parameterNames.size());
+		for (String parameterName : parameterNames) {
+
+			SettableValue value = parameterProvider.getParameter(parameterNames.indexOf(parameterName), parameterName);
+
+			if (value == null) {
+				throw new InvalidDataAccessApiUsageException(
+						String.format("No parameter specified for [%s] in query [%s]", parameterName, query));
+			}
+
+			namedBindings.put(parameterName, value);
+		}
+
+		return this.expander.expand(query, this.dialect.getBindMarkersFactory(), new MapBindParameterSource(namedBindings));
 	}
 
 	/*

@@ -37,6 +37,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
 import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.Param;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.ReflectionUtils;
 
@@ -67,6 +68,7 @@ public class StringBasedR2dbcQueryUnitTests {
 		this.factory = new SpelAwareProxyProjectionFactory();
 
 		when(bindSpec.bind(anyInt(), any())).thenReturn(bindSpec);
+		when(bindSpec.bind(anyString(), any())).thenReturn(bindSpec);
 	}
 
 	@Test
@@ -78,6 +80,48 @@ public class StringBasedR2dbcQueryUnitTests {
 		BindableQuery stringQuery = query.createQuery(accessor);
 
 		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind(0, "White");
+	}
+
+	@Test
+	public void bindsByNamedParameter() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("findByNamedParameter", String.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :lastname");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind("lastname", "White");
+	}
+
+	@Test
+	public void bindsByBindmarker() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("findByNamedBindMarker", String.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = @lastname");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind("lastname", "White");
+	}
+
+	@Test
+	public void bindsByIndexWithNamedParameter() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("findNotByNamedBindMarker", String.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :unknown");
 		assertThat(stringQuery.bind(bindSpec)).isNotNull();
 
 		verify(bindSpec).bind(0, "White");
@@ -98,6 +142,15 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		@Query("SELECT * FROM person WHERE lastname = $1")
 		Person findByLastname(String lastname);
+
+		@Query("SELECT * FROM person WHERE lastname = :lastname")
+		Person findByNamedParameter(@Param("lastname") String lastname);
+
+		@Query("SELECT * FROM person WHERE lastname = :unknown")
+		Person findNotByNamedBindMarker(String lastname);
+
+		@Query("SELECT * FROM person WHERE lastname = @lastname")
+		Person findByNamedBindMarker(@Param("lastname") String lastname);
 	}
 
 	static class Person {

@@ -16,6 +16,7 @@
 package org.springframework.data.r2dbc.core;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -136,5 +137,15 @@ public class NamedParameterExpander {
 		}
 
 		return expanded;
+	}
+
+	/**
+	 * Parse the SQL statement and locate any placeholders or named parameters. Named parameters are returned as result of
+	 * this method invocation.
+	 *
+	 * @return the parameter names.
+	 */
+	public List<String> getParameterNames(String sql) {
+		return getParsedSql(sql).getParameterNames();
 	}
 }

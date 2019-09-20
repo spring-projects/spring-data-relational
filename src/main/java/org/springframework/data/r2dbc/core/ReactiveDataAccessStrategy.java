@@ -19,12 +19,12 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiFunction;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.lang.Nullable;
 
 /**
  * Data access strategy that generalizes convenience operations using mapped entities. Typically used internally by
@@ -66,13 +66,14 @@ public interface ReactiveDataAccessStrategy {
 	String getTableName(Class<?> type);
 
 	/**
-	 * Expand named parameters and return a {@link PreparedOperations} wrapping named bindings.
-	 * 
+	 * Expand named parameters and return a {@link PreparedOperation} wrapping the given bindings.
+	 *
 	 * @param query the query to expand.
-	 * @param bindings named parameter bindings.
-	 * @return the {@link PreparedOperation} encapsulating expanded SQL and bindings.
+	 * @param parameterProvider indexed parameter bindings.
+	 * @return the {@link PreparedOperation} encapsulating expanded SQL and namedBindings.
+	 * @throws org.springframework.dao.InvalidDataAccessApiUsageException if a named parameter value cannot be resolved.
 	 */
-	PreparedOperation<?> processNamedParameters(String query, Map<String, SettableValue> bindings);
+	PreparedOperation<?> processNamedParameters(String query, NamedParameterProvider parameterProvider);
 
 	/**
 	 * Returns the {@link org.springframework.data.r2dbc.dialect.R2dbcDialect}-specific {@link StatementMapper}.
@@ -87,5 +88,23 @@ public interface ReactiveDataAccessStrategy {
 	 * @return the {@link R2dbcConverter}.
 	 */
 	R2dbcConverter getConverter();
+
+	/**
+	 * Interface to retrieve parameters for named parameter processing.
+	 */
+	@FunctionalInterface
+	interface NamedParameterProvider {
+
+		/**
+		 * Returns the {@link SettableValue value} for a parameter identified either by name or by index.
+		 *
+		 * @param index parameter index according the parameter discovery order.
+		 * @param name name of the parameter.
+		 * @return the bindable value. Returning a {@literal null} value raises
+		 *         {@link org.springframework.dao.InvalidDataAccessApiUsageException} in named parameter processing.
+		 */
+		@Nullable
+		SettableValue getParameter(int index, String name);
+	}
 
 }

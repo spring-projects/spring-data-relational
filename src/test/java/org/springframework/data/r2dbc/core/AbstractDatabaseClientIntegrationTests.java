@@ -234,7 +234,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 				.using(legoSet) //
 				.fetch() //
 				.rowsUpdated() //
-				.then()
+				.then() //
 				.as(StepVerifier::create) //
 				.verifyComplete();
 

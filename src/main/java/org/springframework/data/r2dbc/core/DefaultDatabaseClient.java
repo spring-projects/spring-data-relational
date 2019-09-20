@@ -345,7 +345,22 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 				if (namedParameters) {
 
-					PreparedOperation<?> operation = dataAccessStrategy.processNamedParameters(sql, this.byName);
+					Map<String, SettableValue> remainderByName = new LinkedHashMap<>(this.byName);
+					Map<Integer, SettableValue> remainderByIndex = new LinkedHashMap<>(this.byIndex);
+					PreparedOperation<?> operation = dataAccessStrategy.processNamedParameters(sql, (index, name) -> {
+
+						if (byName.containsKey(name)) {
+							remainderByName.remove(name);
+							return byName.get(name);
+						}
+
+						if (byIndex.containsKey(index)) {
+							remainderByIndex.remove(index);
+							return byIndex.get(index);
+						}
+
+						return null;
+					});
 
 					String expanded = getRequiredSql(operation);
 					if (logger.isTraceEnabled()) {
@@ -356,7 +371,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					BindTarget bindTarget = new StatementWrapper(statement);
 
 					operation.bindTo(bindTarget);
-					bindByIndex(statement, this.byIndex);
+
+					bindByName(statement, remainderByName);
+					bindByIndex(statement, remainderByIndex);
 
 					return statement;
 				}
