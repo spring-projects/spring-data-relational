@@ -122,23 +122,22 @@ class WritingContext {
 
 		from(path).forEach(node -> {
 
-			DbAction.WithEntity<?> parentAction = getAction(node.getParent());
+			DbAction.WithIdentifier<?> parentAction = getAction(node.getParent());
 			DbAction.Insert<Object> insert;
+
+
 			if (node.getPath().getRequiredLeafProperty().isQualified()) {
 
 				@SuppressWarnings("unchecked")
 				Pair<Object, Object> value = (Pair) node.getValue();
-				insert = new DbAction.Insert<>(value.getSecond(), path, parentAction);
-				insert.getQualifiers().put(node.getPath(), value.getFirst());
 
-				RelationalPersistentEntity<?> parentEntity = context.getRequiredPersistentEntity(parentAction.getEntityType());
+				Object entity = (value).getSecond();
 
-				if (!parentEntity.hasIdProperty() && parentAction instanceof DbAction.Insert) {
-					insert.getQualifiers().putAll(((DbAction.Insert<?>) parentAction).getQualifiers());
-				}
-
+				insert = new DbAction.Insert<>(entity, path, parentAction, value.getFirst());
 			} else {
-				insert = new DbAction.Insert<>(node.getValue(), path, parentAction);
+				Object value = node.getValue();
+
+				insert = new DbAction.Insert<>(value, path, parentAction);
 			}
 			previousActions.put(node, insert);
 			actions.add(insert);
@@ -173,19 +172,19 @@ class WritingContext {
 	}
 
 	@Nullable
-	private DbAction.WithEntity<?> getAction(@Nullable PathNode parent) {
+	private DbAction.WithIdentifier<?> getAction(@Nullable PathNode parent) {
 
 		DbAction action = previousActions.get(parent);
 
 		if (action != null) {
 
 			Assert.isInstanceOf( //
-					DbAction.WithEntity.class, //
+					DbAction.WithIdentifier.class, //
 					action, //
-					"dependsOn action is not a WithEntity, but " + action.getClass().getSimpleName() //
+					"dependsOn action is not a WithIdentifier, but " + action.getClass().getSimpleName() //
 			);
 
-			return (DbAction.WithEntity<?>) action;
+			return (DbAction.WithIdentifier<?>) action;
 		}
 
 		return null;

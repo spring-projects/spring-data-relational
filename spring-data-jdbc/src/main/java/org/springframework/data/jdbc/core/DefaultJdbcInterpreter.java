@@ -18,10 +18,8 @@ package org.springframework.data.jdbc.core;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
-import java.util.Map;
 
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
@@ -33,12 +31,8 @@ import org.springframework.data.relational.core.conversion.DbAction.Merge;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.conversion.Interpreter;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.util.Assert;
 
 /**
  * {@link Interpreter} for {@link DbAction}s using a {@link DataAccessStrategy} for performing actual database
@@ -144,68 +138,6 @@ class DefaultJdbcInterpreter implements Interpreter {
 	}
 
 	private Identifier getParentKeys(DbAction.WithDependingOn<?> action) {
-
-		Object id = getParentId(action);
-
-		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
-				.forBackReferences(new PersistentPropertyPathExtension(context, action.getPropertyPath()), id);
-
-		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
-				.entrySet()) {
-			identifier = identifier.withQualifier(new PersistentPropertyPathExtension(context, qualifier.getKey()),
-					qualifier.getValue());
-		}
-
-		return identifier.build();
-	}
-
-	private Object getParentId(DbAction.WithDependingOn<?> action) {
-
-		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, action.getPropertyPath());
-		PersistentPropertyPathExtension idPath = path.getIdDefiningParentPath();
-
-		DbAction.WithEntity idOwningAction = getIdOwningAction(action, idPath);
-
-		return getIdFrom(idOwningAction);
-	}
-
-	@SuppressWarnings("unchecked")
-	private DbAction.WithEntity getIdOwningAction(DbAction.WithEntity action, PersistentPropertyPathExtension idPath) {
-
-		if (!(action instanceof DbAction.WithDependingOn)) {
-
-			Assert.state(idPath.getLength() == 0,
-					"When the id path is not empty the id providing action should be of type WithDependingOn");
-
-			return action;
-		}
-
-		DbAction.WithDependingOn withDependingOn = (DbAction.WithDependingOn) action;
-
-		if (idPath.matches(withDependingOn.getPropertyPath())) {
-			return action;
-		}
-
-		return getIdOwningAction(withDependingOn.getDependingOn(), idPath);
-	}
-
-	private Object getIdFrom(DbAction.WithEntity idOwningAction) {
-
-		if (idOwningAction instanceof DbAction.WithGeneratedId) {
-
-			Object generatedId = ((DbAction.WithGeneratedId<?>) idOwningAction).getGeneratedId();
-
-			if (generatedId != null) {
-				return generatedId;
-			}
-		}
-
-		RelationalPersistentEntity<?> persistentEntity = context
-				.getRequiredPersistentEntity(idOwningAction.getEntityType());
-		Object identifier = persistentEntity.getIdentifierAccessor(idOwningAction.getEntity()).getIdentifier();
-
-		Assert.state(identifier != null, "Couldn't get obtain a required id value");
-
-		return identifier;
+		return action.getIdentifier(context, action.getPropertyPath());
 	}
 }

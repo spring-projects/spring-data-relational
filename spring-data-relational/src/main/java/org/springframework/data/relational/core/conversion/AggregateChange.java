@@ -31,7 +31,6 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -99,13 +98,10 @@ public class AggregateChange<T> {
 				// the id property was immutable so we have to propagate changes up the tree
 				if (newEntity != ((DbAction.WithGeneratedId<?>) action).getEntity()) {
 
-					if (action instanceof DbAction.Insert) {
-						DbAction.Insert insert = (DbAction.Insert) action;
+					if (action instanceof DbAction.WithDependingOn) {
+						DbAction.WithDependingOn withDependingOn = (DbAction.WithDependingOn) action;
 
-						Pair qualifier = insert.getQualifier();
-
-						cascadingValues.add(insert.dependingOn, insert.propertyPath, newEntity,
-								qualifier == null ? null : qualifier.getSecond());
+						cascadingValues.add(withDependingOn.getDependingOn(), withDependingOn.getPropertyPath(), newEntity, withDependingOn.getQualifier());
 
 					} else if (action instanceof DbAction.InsertRoot) {
 						newRoot = (T) newEntity;

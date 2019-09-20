@@ -41,7 +41,8 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.lang.Nullable;
 
 /**
- * Unit tests for the {@link AggregateChange} testing the setting of generated ids in aggregates consisting of immutable entities.
+ * Unit tests for the {@link AggregateChange} testing the setting of generated ids in aggregates consisting of immutable
+ * entities.
  *
  * @author Jens Schauder
  * @author Myeonghyeon-Lee
@@ -60,7 +61,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalConverter converter = new BasicRelationalConverter(context);
 
-	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity);
+	DbAction.InsertRoot<?> rootInsert = new DbAction.InsertRoot<>(entity);
 
 	@Test // DATAJDBC-291
 	public void singleRoot() {
@@ -415,19 +416,14 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 	DbAction.Insert<?> createInsert(String propertyName, Object value, @Nullable Object key) {
 
-		DbAction.Insert<Object> insert = new DbAction.Insert<>(value,
-				context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert);
-		insert.getQualifiers().put(toPath(propertyName), key);
-
-		return insert;
+		return new DbAction.Insert<>(value, toPath(propertyName), rootInsert, key);
 	}
 
 	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, Object key,
 			@Nullable DbAction.Insert<?> parentInsert) {
 
-		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, toPath(entity, value), parentInsert);
-		insert.getQualifiers().put(toPath(parentInsert.getPropertyPath().toDotPath() + "." + propertyName), key);
-		return insert;
+		return new DbAction.Insert<>(value,
+				toPath(parentInsert.getPropertyPath().toDotPath() + "." + propertyName), parentInsert, key);
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {

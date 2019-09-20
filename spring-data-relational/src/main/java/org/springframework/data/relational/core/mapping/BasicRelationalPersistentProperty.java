@@ -32,6 +32,7 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Optionals;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -236,6 +237,22 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		Embedded findAnnotation = findAnnotation(Embedded.class);
 
 		return findAnnotation != null && OnEmpty.USE_EMPTY.equals(findAnnotation.onEmpty());
+	}
+
+	@Override
+	@Nullable
+	public RelationalPersistentEntity<?> getEntity() {
+		return context.getPersistentEntity(getActualType());
+	}
+
+	@Override
+	public RelationalPersistentEntity<?> getRequiredPersistentEntity() {
+
+		RelationalPersistentEntity<?> entity = getEntity();
+
+		Assert.state(entity != null, "Persistent entity is required to be not null.");
+
+		return entity;
 	}
 
 	private boolean isListLike() {

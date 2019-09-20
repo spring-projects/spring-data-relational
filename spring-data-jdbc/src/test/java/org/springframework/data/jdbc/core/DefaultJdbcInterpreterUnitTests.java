@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -129,14 +128,11 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		PersistentPropertyPath<RelationalPersistentProperty> listContainersPath = toPath("listContainers",
 				RootWithList.class, context);
-		Insert<?> listContainerInsert = new Insert<>(listContainer, listContainersPath, listListContainerInsert);
-		listContainerInsert.getQualifiers().put(listContainersPath, 3);
+		Insert<?> listContainerInsert = new Insert<>(listContainer, listContainersPath, listListContainerInsert, 3);
 
 		PersistentPropertyPath<RelationalPersistentProperty> listContainersElementsPath = toPath("listContainers.elements",
 				RootWithList.class, context);
-		Insert<?> elementInsertInList = new Insert<>(element, listContainersElementsPath, listContainerInsert);
-		elementInsertInList.getQualifiers().put(listContainersElementsPath, 6);
-		elementInsertInList.getQualifiers().put(listContainersPath, 3);
+		Insert<?> elementInsertInList = new Insert<>(element, listContainersElementsPath, listContainerInsert, 6);
 
 		listListContainerInsert.setGeneratedId(CONTAINER_ID);
 

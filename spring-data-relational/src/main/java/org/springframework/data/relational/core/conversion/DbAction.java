@@ -15,18 +15,22 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Function;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.util.Pair;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * An instance of this interface represents a (conceptual) single interaction with a database, e.g. a single update,
@@ -70,25 +74,86 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Data
-	class Insert<T> implements WithGeneratedId<T>, WithDependingOn<T> {
+	abstract class InsertLike<T> extends WithIdentifier<T> implements WithDependingOn<T> {
 
 		@NonNull final T entity;
 		@NonNull final PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-		@NonNull final WithEntity<?> dependingOn;
+		@NonNull final WithIdentifier<?> dependingOn;
 
-		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = new HashMap<>();
+		@Getter(value = AccessLevel.NONE) private final IdentifierContext identifierContext;
+
+		private final Object qualifier;
 
 		private Object generatedId;
 
-		@Override
-		public void doExecuteWith(Interpreter interpreter) {
-			interpreter.interpret(this);
+		public InsertLike(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
+				WithIdentifier<?> dependingOn) {
+			this(entity, propertyPath, dependingOn, null);
+		}
+
+		public InsertLike(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
+				WithIdentifier<?> dependingOn, @Nullable Object qualifier) {
+
+			this.entity = entity;
+			this.propertyPath = propertyPath;
+			this.dependingOn = dependingOn;
+			this.qualifier = qualifier;
+
+			IdentifierContext parentIdContext;
+			if (dependingOn instanceof WithIdentifier) {
+				parentIdContext = ((WithIdentifier<?>) dependingOn).getIdentifierContext();
+			} else {
+				throw new IllegalArgumentException("dependingOn must be either an InsertRoot or an Insert");
+			}
+
+			Function<MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty>, Object> id = //
+					propertyPath.getRequiredLeafProperty().getRequiredPersistentEntity().hasIdProperty() //
+							? this::getActualId //
+							: null;
+			identifierContext = parentIdContext.withQualifier(propertyPath, qualifier, id);
 		}
 
 		@Override
 		public Class<T> getEntityType() {
 			return WithDependingOn.super.getEntityType();
 		}
+
+		@Override
+		protected IdentifierContext getIdentifierContext() {
+			return identifierContext;
+		}
+
+		@Override
+		public Identifier getIdentifier(RelationalMappingContext context,
+				PersistentPropertyPath<RelationalPersistentProperty> path) {
+			return identifierContext.toIdentifier(context, path);
+		}
+
+
+		protected Object getActualId(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context) {
+
+			if (getGeneratedId() != null) {
+				return getGeneratedId();
+			}
+			RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(getEntityType());
+			return persistentEntity.getIdentifierAccessor(getEntity()).getIdentifier();
+		}
+	}
+
+	class Insert<T> extends InsertLike<T> {
+		public Insert(T entity, PersistentPropertyPath propertyPath, WithIdentifier dependingOn) {
+			super(entity, propertyPath, dependingOn);
+		}
+
+		public Insert(T entity, PersistentPropertyPath propertyPath, WithIdentifier dependingOn, Object qualifier) {
+			super(entity, propertyPath, dependingOn, qualifier);
+		}
+
+		@Override
+		public void doExecuteWith(Interpreter interpreter) {
+			interpreter.interpret(this);
+		}
+
 	}
 
 	/**
@@ -97,16 +162,27 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Data
-	@RequiredArgsConstructor
-	class InsertRoot<T> implements WithEntity<T>, WithGeneratedId<T> {
+	class InsertRoot<T> extends WithIdentifier<T> implements WithGeneratedId<T> {
 
 		@NonNull private final T entity;
-
 		private Object generatedId;
+
+		public InsertRoot(T entity) {
+			this.entity = entity;
+		}
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
+		}
+
+		protected Object getActualId(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context) {
+
+			if (getGeneratedId() != null) {
+				return getGeneratedId();
+			}
+			RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(getEntityType());
+			return persistentEntity.getIdentifierAccessor(getEntity()).getIdentifier();
 		}
 	}
 
@@ -116,7 +192,7 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Value
-	class Update<T> implements WithEntity<T> {
+	class Update<T> implements WithEntity<T>, WithPropertyPath<T> {
 
 		@NonNull T entity;
 		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
@@ -124,6 +200,11 @@ public interface DbAction<T> {
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
+		}
+
+		@Override
+		public Class<T> getEntityType() {
+			return WithEntity.super.getEntityType();
 		}
 	}
 
@@ -133,14 +214,19 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Value
-	class UpdateRoot<T> implements WithEntity<T> {
+	class UpdateRoot<T> extends WithIdentifier<T> implements WithEntity<T> {
 
 		@NonNull private final T entity;
+
+		public UpdateRoot(T entity) {
+			this.entity = entity;
+		}
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
 			interpreter.interpret(this);
 		}
+
 	}
 
 	/**
@@ -148,14 +234,17 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Value
-	class Merge<T> implements WithDependingOn<T>, WithPropertyPath<T> {
+	class Merge<T> extends InsertLike<T> {
 
-		@NonNull T entity;
-		@NonNull PersistentPropertyPath<RelationalPersistentProperty> propertyPath;
-		@NonNull WithEntity<?> dependingOn;
+		public Merge(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
+				WithIdentifier<?> dependingOn) {
+			super(entity, propertyPath, dependingOn);
+		}
 
-		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = new HashMap<>();
+		public Merge(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath, WithIdentifier<?> dependingOn,
+				Object qualifier) {
+			super(entity, propertyPath, dependingOn, qualifier);
+		}
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -241,7 +330,7 @@ public interface DbAction<T> {
 	 *
 	 * @author Jens Schauder
 	 */
-	interface WithDependingOn<T> extends WithPropertyPath<T>, WithEntity<T> {
+	interface WithDependingOn<T> extends WithPropertyPath<T>, WithGeneratedId<T> {
 
 		/**
 		 * The {@link DbAction} of a parent entity, possibly the aggregate root. This is used to obtain values needed to
@@ -249,41 +338,18 @@ public interface DbAction<T> {
 		 * become available once the parent entity got persisted.
 		 *
 		 * @return guaranteed to be not {@code null}.
-		 * @see #getQualifiers()
 		 */
-		WithEntity<?> getDependingOn();
-
-		/**
-		 * Additional values to be set during insert or update statements.
-		 * <p>
-		 * Values come from parent entities but one might also add values manually.
-		 *
-		 * @return guaranteed to be not {@code null}.
-		 */
-		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers();
-
-		@Nullable
-		default Pair<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifier() {
-			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = getQualifiers();
-			if (qualifiers.size() == 0)
-				return null;
-
-			if (qualifiers.size() > 1) {
-				throw new IllegalStateException("Can't handle more then on qualifier");
-			}
-
-			Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> entry = qualifiers.entrySet().iterator().next();
-			if (entry.getValue() == null) {
-				return null;
-			}
-			return Pair.of(entry.getKey(), entry.getValue());
-		};
-
+		WithIdentifier<?> getDependingOn();
 
 		@Override
 		default Class<T> getEntityType() {
-			return WithEntity.super.getEntityType();
+			return WithGeneratedId.super.getEntityType();
 		}
+
+		Object getQualifier();
+
+		Identifier getIdentifier(RelationalMappingContext context,
+				PersistentPropertyPath<RelationalPersistentProperty> path);
 	}
 
 	/**
@@ -302,6 +368,26 @@ public interface DbAction<T> {
 		@Override
 		default Class<T> getEntityType() {
 			return (Class<T>) getEntity().getClass();
+		}
+
+	}
+
+	abstract class WithIdentifier<T> implements WithEntity<T> {
+		private final IdentifierContext identifierContext = IdentifierContext.of(context -> getActualId(context));
+
+		protected IdentifierContext getIdentifierContext() {
+			return identifierContext;
+		}
+
+
+		protected Object getActualId(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context) {
+
+			RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(getEntityType());
+			Object id = persistentEntity.getIdentifierAccessor(getEntity()).getIdentifier();
+
+			Assert.state(id != null, "Id must not be null");
+
+			return id;
 		}
 	}
 

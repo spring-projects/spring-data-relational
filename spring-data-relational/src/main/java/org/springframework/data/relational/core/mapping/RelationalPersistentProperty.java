@@ -104,4 +104,9 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * @return
 	 */
 	boolean shouldCreateEmptyEmbedded();
+
+	@Nullable
+	RelationalPersistentEntity<?> getEntity();
+
+	RelationalPersistentEntity<?> getRequiredPersistentEntity();
 }
