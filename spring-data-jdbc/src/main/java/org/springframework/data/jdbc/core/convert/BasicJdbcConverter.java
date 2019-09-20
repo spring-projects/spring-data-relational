@@ -59,10 +59,10 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
- * @since 1.1
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
+ * @since 1.1
  */
 public class BasicJdbcConverter extends BasicRelationalConverter implements JdbcConverter {
 
@@ -401,7 +401,35 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 					continue;
 				}
 
-				propertyAccessor.setProperty(property, readOrLoadProperty(idValue, property));
+				// check if property is in the result set
+				// if not - leave it out
+				// DATAJDBC-341
+				if (property.isEntity() || property.isEmbedded()) {
+					propertyAccessor.setProperty(property, readOrLoadProperty(idValue, property));
+				} else {
+					try {
+						if (resultSet.findColumn(property.getColumnName().getReference(identifierProcessing)) > 0) {
+							propertyAccessor.setProperty(property, readOrLoadProperty(idValue, property));
+						} else {
+							try {
+								propertyAccessor.setProperty(property, readOrLoadProperty(idValue, property));
+							} catch (Exception exception) {
+								LOG.info(
+										"The result set is not corresponding to the target entity. Left out properties will be set to standard values (NULL for reference types, 0 for primitives.");
+							}
+						}
+					} catch (SQLException e) {
+						String columnAlias = path.extendBy(property).getColumnAlias().getReference(identifierProcessing);
+						try {
+							if (resultSet.findColumn(columnAlias) > 0) {
+								propertyAccessor.setProperty(property, readOrLoadProperty(idValue, property));
+							}
+						} catch (SQLException ex) {
+							LOG.info(String.format("Cannot find column named %s within the result set!", property.getColumnName()));
+						}
+					}
+				}
+
 			}
 
 			return propertyAccessor.getBean();
@@ -523,7 +551,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			try {
 				return resultSet.getObject(backreferenceName);
 			} catch (SQLException o_O) {
-				throw new MappingException(String.format("Could not read value %s from result set!", backreferenceName), o_O);
+				LOG.info(String.format("Could not read value %s from result set! Use null as value.", backreferenceName), o_O);
+				return null;
 			}
 		}
 
