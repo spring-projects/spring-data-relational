@@ -55,9 +55,9 @@ class BindSpecAdapter<S extends BindSpec<S>> implements Statement {
 	 * @see io.r2dbc.spi.Statement#bind(java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public BindSpecAdapter<S> bind(Object identifier, Object value) {
+	public BindSpecAdapter<S> bind(String identifier, Object value) {
 
-		this.bindSpec = bindSpec.bind((String) identifier, value);
+		this.bindSpec = bindSpec.bind(identifier, value);
 		return this;
 	}
 
@@ -77,9 +77,9 @@ class BindSpecAdapter<S extends BindSpec<S>> implements Statement {
 	 * @see io.r2dbc.spi.Statement#bindNull(java.lang.Object, java.lang.Class)
 	 */
 	@Override
-	public BindSpecAdapter<S> bindNull(Object identifier, Class<?> type) {
+	public BindSpecAdapter<S> bindNull(String identifier, Class<?> type) {
 
-		this.bindSpec = bindSpec.bindNull((String) identifier, type);
+		this.bindSpec = bindSpec.bindNull(identifier, type);
 		return this;
 	}
 
