@@ -32,7 +32,7 @@
 		<postgresql.version>42.2.5</postgresql.version>
 		<mysql.version>5.1.47</mysql.version>
 		<jasync.version>1.0.6</jasync.version>
-		<r2dbc-mysql.version>master-SNAPSHOT</r2dbc-mysql.version>
+		<r2dbc-mysql.version>0.3.0.BUILD-SNAPSHOT</r2dbc-mysql.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
 		<r2dbc-releasetrain.version>Arabba-BUILD-SNAPSHOT</r2dbc-releasetrain.version>
 		<reactive-streams.version>1.0.1</reactive-streams.version>
@@ -231,7 +231,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.github.mirromutth</groupId>
+			<groupId>dev.miku</groupId>
 			<artifactId>r2dbc-mysql</artifactId>
 			<version>${r2dbc-mysql.version}</version>
 			<scope>test</scope>
@@ -402,8 +402,11 @@
 			<url>https://repo.spring.io/libs-snapshot</url>
 		</repository>
 		<repository>
-			<id>jitpack.io</id>
-			<url>https://jitpack.io</url>
+			<id>oss-sonatype-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
 
