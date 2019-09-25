@@ -193,28 +193,6 @@
 			</plugins>
 		</pluginManagement>
 		<plugins>
-
-			<!--
-				 Jacoco plugin redeclared to make sure it's downloaded and
-				 the agents can be explicitly added to the test executions.
-			-->
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>${jacoco}</version>
-				<configuration>
-					<destFile>${jacoco.destfile}</destFile>
-				</configuration>
-				<executions>
-					<execution>
-						<id>jacoco-initialize</id>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
