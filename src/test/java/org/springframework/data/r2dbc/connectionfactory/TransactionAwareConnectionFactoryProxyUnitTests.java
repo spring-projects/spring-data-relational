@@ -134,7 +134,7 @@ public class TransactionAwareConnectionFactoryProxyUnitTests {
 	public void shouldEmitBoundConnection() {
 
 		when(connectionMock1.beginTransaction()).thenReturn(Mono.empty());
-		when(connectionMock1.commitTransaction()).thenReturn(Mono.error(new IllegalStateException()));
+		when(connectionMock1.commitTransaction()).thenReturn(Mono.empty());
 		when(connectionMock1.close()).thenReturn(Mono.empty());
 
 		TransactionalOperator rxtx = TransactionalOperator.create(tm);
