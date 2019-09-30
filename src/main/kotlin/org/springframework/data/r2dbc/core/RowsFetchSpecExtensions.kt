@@ -15,7 +15,6 @@
  */
 package org.springframework.data.r2dbc.core
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -60,5 +59,4 @@ suspend fun <T> RowsFetchSpec<T>.awaitFirstOrNull(): T? =
  *
  * @author Sebastien Deleuze
  */
-@ExperimentalCoroutinesApi
 fun <T : Any> RowsFetchSpec<T>.flow(): Flow<T> = all().asFlow()
