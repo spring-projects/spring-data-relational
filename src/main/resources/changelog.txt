@@ -1,6 +1,15 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.0.RELEASE (2019-09-30)
+---------------------------------------------
+* DATAJDBC-419 - Inherit Jacoco configuration from parent pom.
+* DATAJDBC-413 - Use proper https links for mybatis DTDs.
+* DATAJDBC-411 - Beginning with the RC for Moore Javadoc doesn't get published anymore.
+* DATAJDBC-410 - NOT IN doesn't get redered correctly.
+* DATAJDBC-403 - Release 1.1 GA (Moore).
+
+
 Changes in version 1.0.11.RELEASE (2019-09-30)
 ----------------------------------------------
 * DATAJDBC-413 - Use proper https links for mybatis DTDs.
