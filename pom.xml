@@ -403,11 +403,4 @@
 		</repository>
 	</repositories>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>spring-plugins-snapshot</id>
-			<url>https://repo.spring.io/plugins-snapshot</url>
-		</pluginRepository>
-	</pluginRepositories>
-
 </project>
