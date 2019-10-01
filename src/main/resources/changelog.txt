@@ -1,6 +1,70 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.0.0.RC1 (2019-10-01)
+-----------------------------------------
+* #202 - Upgrade to r2dbc-mysql 0.8.0 RC1.
+* #200 - Remove @ExperimentalCoroutinesApi annotations.
+* #199 - Add documentation for Kotlin support.
+* #197 - Upgrade to R2DBC Arabba RC1.
+* #191 - Adapt to changed groupId of r2dbc-mysql.
+* #190 - Adapt to R2DBC SPI changes.
+* #188 - Adapt to package changes in r2dbc-mysql.
+* #186 - byte[]: Distinguish between binary or a smallint[] column.
+* #185 - Disable Postgres integration tests.
+* #184 - Restore AutoCommit and IsolationLevel after transaction.
+* #183 - Use Statement.bind(String) and Row.get(String) methods instead of bind(Object).
+* #182 - Upgrade to R2DBC 0.8.0.RC1.
+* #181 - Remove repositories declaration from published pom.
+* #180 - Remove jcenter repository from pom.
+* #178 - IN CLAUSE and binding throws java.lang.IllegalArgumentException.
+* #177 - NOT IN comparator is not working with Criteria API.
+* #176 - Consistently use a single netty version.
+* #175 - Editing pass for the reference docs.
+* #174 - Update README.adoc.
+* #173 - Upgrade to Coroutines 1.3.0.
+* #172 - Upgrade to Kotlin Coroutines 1.3.
+* #171 - Upgrade to jasync-r2dbc-mysql 1.0.6.
+* #170 - Switch to newly introduced usingWhen methods.
+* #169 - Allow usage of Entity-level converters.
+* #168 - Introduce Dialect-specific converters.
+* #166 - Add converter for byte to boolean for MySQL.
+* #163 - Add tests for R2DBC MySQL.
+* #162 - Support nullable values in GenericInsertSpec.value().
+* #161 - Inserting an array into PostgreSQL array type inserts null value.
+* #159 - Delete by query doesn't seems to work as expected.
+* #155 - Consider early returns to omit unnecessary conversion.
+* #154 - Release 1.0 RC1.
+* #152 - #151 - SimpleR2dbcRepository is now transactional.
+* #151 - The repository implementation should be transactional.
+* #148 - Sorting by column names not working with Database Client.
+* #146 - Revise readme for a consistent structure.
+* #145 - Spring Data does not enter strict configuration mode with multiple modules on the class path.
+* #141 - Add support for schema initialization.
+* #140 - Accept simple mapping function for Row in DatabaseClient.
+* #138 - Allow multiple usages of the same named parameter.
+* #135 - Adapt to renamed TransactionSynchronizationManager.forCurrentTransaction().
+* #132 - Add support for AbstractRoutingConnectionFactory.
+* #130 - Fix scheme name in sample code.
+* #128 - DatabaseClient bindNull throws NullPointerException.
+* #126 - Use testcontainers version property.
+* #125 - Reuse Dialect support provided by Spring Data Relational.
+* #124 - Remove deprecated DatabaseClient.execute() and TransactionalDatabaseClient.
+* #123 - Kotlin extensions.
+* #122 - Improved Kotlin extensions for CriteriaStep and DatabaseClient should be provided.
+* #120 - Fix link text for jasync-sql.
+* #118 - Upgrade to jasync-r2dbc-mysql 0.9.52.
+* #112 - Accept SQL directly in DatabaseClient.execute(…) stage.
+* #105 - Move named parameter resolution to ReactiveDataAccessStrategy.
+* #104 - Add pluggable mechanism to register dialects.
+* #103 - RowsFetchSpec<T>.awaitOne() and RowsFetchSpec<T>.awaitFirst() should throw EmptyResultDataAccessException.
+* #98 - Add support for AbstractRoutingConnectionFactory.
+* #89 - Consider compressing DatabaseClient.execute().sql(…) to DatabaseClient.execute(…).
+* #87 - Accessing inherited @Id property fails.
+* #69 - Allow object creation with a subset of columns.
+* #55 - Reuse Dialect support provided by Spring Data Relational.
+
+
 Changes in version 1.0.0.M2 (2019-05-14)
 ----------------------------------------
 * #117 - Upgrade to jasync-sql 0.9.51.
