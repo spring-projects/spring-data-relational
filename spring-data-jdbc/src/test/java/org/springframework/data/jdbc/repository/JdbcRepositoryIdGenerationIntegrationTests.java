@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 import lombok.Value;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -137,7 +137,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	static class ImmutableWithManualIdEntity {
 		@Id Long id;
 		String name;

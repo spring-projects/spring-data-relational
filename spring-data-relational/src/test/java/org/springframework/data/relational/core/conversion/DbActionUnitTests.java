@@ -16,7 +16,7 @@
 package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.Test;
@@ -35,7 +35,7 @@ public class DbActionUnitTests {
 	public void exceptionFromActionContainsUsefulInformationWhenInterpreterFails() {
 
 		DummyEntity entity = new DummyEntity();
-		DbAction.InsertRoot<DummyEntity> insert = new DbAction.InsertRoot<>(entity);
+		DbAction.InsertRoot<DummyEntity> insert = new DbAction.InsertRoot<>(() -> entity);
 
 		Interpreter failingInterpreter = mock(Interpreter.class);
 		doThrow(new RuntimeException()).when(failingInterpreter).interpret(any(DbAction.InsertRoot.class));

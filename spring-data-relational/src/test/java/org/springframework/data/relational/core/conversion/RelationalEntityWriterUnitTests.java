@@ -21,7 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -534,14 +534,14 @@ public class RelationalEntityWriterUnitTests {
 	@AllArgsConstructor
 	static class SingleReferenceEntity {
 
-		@Wither @Id final Long id;
+		@With @Id final Long id;
 		Element other;
 		// should not trigger own DbAction
 		String name;
 	}
 
 	@AllArgsConstructor
-	@Wither
+	@With
 	static class EmbeddedReferenceEntity {
 
 		@Id final Long id;
@@ -562,7 +562,7 @@ public class RelationalEntityWriterUnitTests {
 		String name;
 	}
 
-	@Wither
+	@With
 	@AllArgsConstructor
 	static class CascadingReferenceMiddleElement {
 
@@ -577,7 +577,7 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@AllArgsConstructor
-	@Wither
+	@With
 	private static class CascadingReferenceEntity {
 
 		@Id final Long id;
@@ -590,7 +590,7 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@AllArgsConstructor
-	@Wither
+	@With
 	private static class SetContainer {
 
 		@Id final Long id;
@@ -610,7 +610,7 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@AllArgsConstructor
-	@Wither
+	@With
 	private static class MapContainer {
 
 		@Id final Long id;
@@ -622,7 +622,7 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@AllArgsConstructor
-	@Wither
+	@With
 	private static class ListContainer {
 
 		ListContainer() {
@@ -636,7 +636,7 @@ public class RelationalEntityWriterUnitTests {
 
 	@RequiredArgsConstructor
 	private static class Element {
-		@Wither @Id final Long id;
+		@With @Id final Long id;
 	}
 
 	@RequiredArgsConstructor
@@ -653,7 +653,7 @@ public class RelationalEntityWriterUnitTests {
 	}
 
 	@RequiredArgsConstructor
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class NoIdElement {
 		// empty classes feel weird.

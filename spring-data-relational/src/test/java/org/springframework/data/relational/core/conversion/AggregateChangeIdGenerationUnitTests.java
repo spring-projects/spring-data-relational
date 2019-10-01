@@ -15,9 +15,12 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,7 +53,7 @@ public class AggregateChangeIdGenerationUnitTests {
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalConverter converter = new BasicRelationalConverter(context);
 
-	DbAction.InsertRoot<?> rootInsert = new DbAction.InsertRoot<>(entity);
+	DbAction.InsertRoot<?> rootInsert = new DbAction.InsertRoot<>(() -> entity);
 
 	@Test // DATAJDBC-291
 	public void singleRoot() {
@@ -175,8 +178,7 @@ public class AggregateChangeIdGenerationUnitTests {
 	@Test // DATAJDBC-291
 	public void setIdForDeepElementSetElementSet() {
 
-		content.tagSet.add(tag1);
-		content.tagSet.add(tag2);
+		content.tagSet = unmodifiableSet(new HashSet<>(asList(tag1, tag2)));
 		entity.contentSet.add(content);
 
 		DbAction.Insert<?> parentInsert = createInsert("contentSet", content, null);
@@ -369,9 +371,9 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		Tag single;
 
-		Set<Tag> tagSet = new HashSet<>();
+		Set<Tag> tagSet = unmodifiableSet(new HashSet<>());
 
-		List<Tag> tagList = new ArrayList<>();
+		final List<Tag> tagList = new ArrayList<>();
 
 		Map<String, Tag> tagMap = new HashMap<>();
 	}

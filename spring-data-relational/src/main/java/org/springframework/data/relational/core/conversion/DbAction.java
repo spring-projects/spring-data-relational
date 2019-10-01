@@ -20,9 +20,6 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
-
-import java.util.function.Function;
-
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -31,6 +28,9 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * An instance of this interface represents a (conceptual) single interaction with a database, e.g. a single update,
@@ -129,7 +129,6 @@ public interface DbAction<T> {
 			return identifierContext.toIdentifier(context, path);
 		}
 
-
 		protected Object getActualId(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context) {
 
 			if (getGeneratedId() != null) {
@@ -161,14 +160,14 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Data
 	class InsertRoot<T> extends WithIdentifier<T> implements WithGeneratedId<T> {
 
-		@NonNull private final T entity;
+		private final Supplier<T> entitySupplier;
+
 		private Object generatedId;
 
-		public InsertRoot(T entity) {
-			this.entity = entity;
+		public InsertRoot(Supplier<T> entitySupplier) {
+			this.entitySupplier = entitySupplier;
 		}
 
 		@Override
@@ -183,6 +182,24 @@ public interface DbAction<T> {
 			}
 			RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(getEntityType());
 			return persistentEntity.getIdentifierAccessor(getEntity()).getIdentifier();
+		}
+
+		@Override
+		public T getEntity() {
+			return (entitySupplier.get());
+		}
+
+		public void setGeneratedId(Object id) {
+			generatedId = id;
+		}
+
+		@Override
+		public Object getGeneratedId() {
+			return generatedId;
+		}
+
+		public String toString() {
+			return "DbAction.InsertRoot(entity=" + entitySupplier.get() + ", generatedId=" + this.getGeneratedId() + ")";
 		}
 	}
 
@@ -213,13 +230,12 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Value
 	class UpdateRoot<T> extends WithIdentifier<T> implements WithEntity<T> {
 
-		@NonNull private final T entity;
+		private final Supplier<T> entitySupplier;
 
-		public UpdateRoot(T entity) {
-			this.entity = entity;
+		public UpdateRoot(Supplier<T> entitySupplier) {
+			this.entitySupplier = entitySupplier;
 		}
 
 		@Override
@@ -227,6 +243,14 @@ public interface DbAction<T> {
 			interpreter.interpret(this);
 		}
 
+		@Override
+		public T getEntity() {
+			return entitySupplier.get();
+		}
+
+		public String toString() {
+			return "DbAction.UpdateRoot(entity=" + this.entitySupplier.get() + ")";
+		}
 	}
 
 	/**
@@ -241,8 +265,8 @@ public interface DbAction<T> {
 			super(entity, propertyPath, dependingOn);
 		}
 
-		public Merge(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath, WithIdentifier<?> dependingOn,
-				Object qualifier) {
+		public Merge(T entity, PersistentPropertyPath<RelationalPersistentProperty> propertyPath,
+				WithIdentifier<?> dependingOn, Object qualifier) {
 			super(entity, propertyPath, dependingOn, qualifier);
 		}
 
@@ -378,7 +402,6 @@ public interface DbAction<T> {
 		protected IdentifierContext getIdentifierContext() {
 			return identifierContext;
 		}
-
 
 		protected Object getActualId(MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context) {
 

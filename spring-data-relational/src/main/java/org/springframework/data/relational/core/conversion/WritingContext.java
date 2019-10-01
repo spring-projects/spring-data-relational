@@ -25,7 +25,6 @@ import java.util.Map;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
@@ -45,6 +44,7 @@ class WritingContext {
 	private final Class<?> entityType;
 	private final PersistentPropertyPaths<?, RelationalPersistentProperty> paths;
 	private final Map<PathNode, DbAction> previousActions = new HashMap<>();
+	private final AggregateChange<?> aggregateChange;
 	private Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
 
 	WritingContext(RelationalMappingContext context, Object root, AggregateChange<?> aggregateChange) {
@@ -54,6 +54,7 @@ class WritingContext {
 		this.entity = aggregateChange.getEntity();
 		this.entityType = aggregateChange.getEntityType();
 		this.paths = context.findPersistentPropertyPaths(entityType, (p) -> p.isEntity() && !p.isEmbedded());
+		this.aggregateChange = aggregateChange;
 	}
 
 	/**
@@ -65,7 +66,7 @@ class WritingContext {
 	List<DbAction<?>> insert() {
 
 		List<DbAction<?>> actions = new ArrayList<>();
-		actions.add(setRootAction(new DbAction.InsertRoot<>(entity)));
+		actions.add(setRootAction(new DbAction.InsertRoot<>(() -> aggregateChange.getEntity())));
 		actions.addAll(insertReferenced());
 		return actions;
 	}
@@ -79,7 +80,7 @@ class WritingContext {
 	List<DbAction<?>> update() {
 
 		List<DbAction<?>> actions = new ArrayList<>(deleteReferenced());
-		actions.add(setRootAction(new DbAction.UpdateRoot<>(entity)));
+		actions.add(setRootAction(new DbAction.UpdateRoot<>(() -> aggregateChange.getEntity())));
 		actions.addAll(insertReferenced());
 		return actions;
 	}
@@ -89,12 +90,12 @@ class WritingContext {
 		List<DbAction<?>> actions = new ArrayList<>();
 		if (isNew(root)) {
 
-			actions.add(setRootAction(new DbAction.InsertRoot<>(entity)));
+			actions.add(setRootAction(new DbAction.InsertRoot<>(() -> aggregateChange.getEntity())));
 			actions.addAll(insertReferenced());
 		} else {
 
 			actions.addAll(deleteReferenced());
-			actions.add(setRootAction(new DbAction.UpdateRoot<>(entity)));
+			actions.add(setRootAction(new DbAction.UpdateRoot<>(() -> aggregateChange.getEntity())));
 			actions.addAll(insertReferenced());
 		}
 
@@ -124,7 +125,6 @@ class WritingContext {
 
 			DbAction.WithIdentifier<?> parentAction = getAction(node.getParent());
 			DbAction.Insert<Object> insert;
-
 
 			if (node.getPath().getRequiredLeafProperty().isQualified()) {
 

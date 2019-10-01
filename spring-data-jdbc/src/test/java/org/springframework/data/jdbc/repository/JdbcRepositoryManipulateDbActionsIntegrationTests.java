@@ -205,7 +205,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 
 				List<DbAction<?>> actions = event.getChange().getActions();
 				actions.clear();
-				actions.add(new DbAction.UpdateRoot<>(entity));
+				actions.add(new DbAction.UpdateRoot<>(() -> entity));
 			};
 		}
 
@@ -224,7 +224,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 				log.text = entity.name + " saved";
 
 				List<DbAction<?>> actions = event.getChange().getActions();
-				actions.add(new DbAction.InsertRoot<>(log));
+				actions.add(new DbAction.InsertRoot<>(() -> log));
 			};
 		}
 	}

@@ -24,8 +24,8 @@ import java.util.UUID;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.conversion.JdbcIdentifierBuilder;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.conversion.JdbcIdentifierBuilder;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.domain.Identifier;
 

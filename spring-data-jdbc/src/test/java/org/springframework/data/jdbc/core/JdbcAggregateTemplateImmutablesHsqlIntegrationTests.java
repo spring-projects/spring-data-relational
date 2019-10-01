@@ -15,11 +15,12 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
@@ -41,6 +42,8 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * Integration tests for {@link JdbcAggregateTemplate} and it's handling of immutable entities.
  *
@@ -50,7 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration
 @Transactional
 @ActiveProfiles("hsql")
-public class ImmutableAggregateTemplateHsqlIntegrationTests {
+public class JdbcAggregateTemplateImmutablesHsqlIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
@@ -254,6 +257,33 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		assertThat(manual.content).isEqualTo("new content");
 	}
 
+
+	@Test // DATAJDBC-291
+	public void updatingCollectionInEntityWithoutId() {
+
+		CollectionOwner owner = new CollectionOwner(null, "owner", singletonList(new IdLessIntermediate("intermediate", singletonList(new Element(null, "Lovecraft")))));
+		CollectionOwner saved = template.save(owner);
+
+		Long id = saved.id;
+		assertThat(id).isNotNull();
+
+		Element savedLovecraft = saved.list.get(0).list.get(0);
+		assertThat(savedLovecraft.id).isNotNull();
+
+		CollectionOwner changedOwner = new CollectionOwner(id, "owner", singletonList(new IdLessIntermediate("intermediate", asList(savedLovecraft, new Element(null, "Sakurai")))));
+
+		CollectionOwner savedAgain = template.save(changedOwner);
+
+		SoftAssertions softly = new SoftAssertions();
+
+		softly.assertThat(savedAgain.id).isEqualTo(id);
+		softly.assertThat(savedAgain.list.get(0).list.get(0)).isEqualTo(savedLovecraft);
+		softly.assertThat(savedAgain.list.get(0).list.get(1).id).describedAs("Element has id set and that element is part of the aggregate").isNotNull();
+
+		softly.assertAll();
+	}
+
+
 	private static LegoSet createLegoSet(Manual manual) {
 
 		return new LegoSet(null, "Star Destroyer", manual, null);
@@ -270,7 +300,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	static class LegoSet {
 
 		@Id Long id;
@@ -280,7 +310,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	static class Manual {
 
 		@Id Long id;
@@ -288,7 +318,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	static class Author {
 
 		@Id Long id;
@@ -301,7 +331,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return ImmutableAggregateTemplateHsqlIntegrationTests.class;
+			return JdbcAggregateTemplateImmutablesHsqlIntegrationTests.class;
 		}
 
 		@Bean
@@ -309,5 +339,29 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 				DataAccessStrategy dataAccessStrategy, RelationalConverter converter) {
 			return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy);
 		}
+	}
+
+	@Value
+	@With
+	static class CollectionOwner {
+		@Id Long id;
+		String name;
+		List<IdLessIntermediate> list;
+	}
+
+	@Value
+	@With
+	static class IdLessIntermediate {
+		String name;
+		List<Element> list;
+	}
+
+
+	@Value
+	@With
+	static class Element {
+
+		@Id Long id;
+		String name;
 	}
 }

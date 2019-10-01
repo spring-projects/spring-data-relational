@@ -19,6 +19,7 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,7 +80,7 @@ public class AggregateChange<T> {
 
 		T newRoot = null;
 
-		// have the actions so that the inserts on the leaves come first.
+		// have the actions so that the inserts on the leafs come first.
 		ArrayList<DbAction<?>> reverseActions = new ArrayList<>(actions);
 		Collections.reverse(reverseActions);
 
@@ -87,25 +88,28 @@ public class AggregateChange<T> {
 
 		for (DbAction<?> action : reverseActions) {
 
-			if (action instanceof DbAction.WithGeneratedId) {
+			if (action instanceof DbAction.WithEntity) {
 
-				DbAction.WithGeneratedId<?> withGeneratedId = (DbAction.WithGeneratedId<?>) action;
-				Object generatedId = withGeneratedId.getGeneratedId();
+				DbAction.WithEntity<?> actionWithEntity = (DbAction.WithEntity<?>) action;
 
-				Object newEntity = setIdAndCascadingProperties(context, converter, withGeneratedId, generatedId,
+				Object generatedId = null;
+				if (action instanceof DbAction.WithGeneratedId) {
+
+					DbAction.WithGeneratedId<?> withGeneratedId = (DbAction.WithGeneratedId<?>) action;
+					generatedId = withGeneratedId.getGeneratedId();
+				}
+
+				Object newEntity = setIdAndCascadingProperties(context, converter, actionWithEntity, generatedId,
 						cascadingValues);
 
-				// the id property was immutable so we have to propagate changes up the tree
-				if (newEntity != ((DbAction.WithGeneratedId<?>) action).getEntity()) {
+				if (action instanceof DbAction.WithDependingOn) {
+					DbAction.WithDependingOn withDependingOn = (DbAction.WithDependingOn) action;
 
-					if (action instanceof DbAction.WithDependingOn) {
-						DbAction.WithDependingOn withDependingOn = (DbAction.WithDependingOn) action;
+					cascadingValues.add(withDependingOn.getDependingOn(), withDependingOn.getPropertyPath(), newEntity,
+							withDependingOn.getQualifier());
 
-						cascadingValues.add(withDependingOn.getDependingOn(), withDependingOn.getPropertyPath(), newEntity, withDependingOn.getQualifier());
-
-					} else if (action instanceof DbAction.InsertRoot) {
-						newRoot = (T) newEntity;
-					}
+				} else {
+					newRoot = (T) newEntity;
 				}
 			}
 		}
@@ -115,7 +119,7 @@ public class AggregateChange<T> {
 
 	@SuppressWarnings("unchecked")
 	private <S> Object setIdAndCascadingProperties(RelationalMappingContext context, RelationalConverter converter,
-			DbAction.WithGeneratedId<S> action, @Nullable Object generatedId, CascadingValuesLookup cascadingValues) {
+			DbAction.WithEntity<S> action, @Nullable Object generatedId, CascadingValuesLookup cascadingValues) {
 
 		S originalEntity = action.getEntity();
 
@@ -130,10 +134,49 @@ public class AggregateChange<T> {
 		// set values of changed immutables referenced by this entity
 		Map<PersistentPropertyPath, Object> cascadingValue = cascadingValues.get(action);
 		for (Map.Entry<PersistentPropertyPath, Object> pathValuePair : cascadingValue.entrySet()) {
-			propertyAccessor.setProperty(getRelativePath(action, pathValuePair), pathValuePair.getValue());
+
+			PersistentPropertyPath path = getRelativePath(action, pathValuePair);
+
+			try {
+				propertyAccessor.setProperty(path, pathValuePair.getValue());
+				// if the property is final we get an exception and try to change the values of collections instead
+			} catch (UnsupportedOperationException o_O) {
+				updateCollectionIfPossible(propertyAccessor, path, pathValuePair.getValue());
+			}
 		}
 
 		return propertyAccessor.getBean();
+	}
+
+	private <S> void updateCollectionIfPossible(PersistentPropertyAccessor<S> propertyAccessor,
+			PersistentPropertyPath path, Object value) {
+
+		Object property = propertyAccessor.getProperty(path);
+		Class propertyType = path.getRequiredLeafProperty().getType();
+
+		if (Collection.class.isAssignableFrom(propertyType)) {
+
+			Collection collection = (Collection) property;
+			collection.clear();
+			collection.addAll((Collection) value);
+
+		} else if (Map.class.isAssignableFrom(propertyType)) {
+
+			Map map = (Map) property;
+			map.clear();
+			map.putAll((Map) value);
+
+		} else if (path.getRequiredLeafProperty().getType().isArray()) {
+
+			Object[] array = (Object[]) property;
+			Object[] valueArray = (Object[]) value;
+
+			for (int i = 0; i < valueArray.length; i++) {
+				array[i] = valueArray[i];
+			}
+		} else {
+			throw new UnsupportedOperationException(String.format("Can't update the value %s to %s.", property, value));
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -142,15 +185,11 @@ public class AggregateChange<T> {
 
 		PersistentPropertyPath pathToValue = pathValuePair.getKey();
 
-		if (action instanceof DbAction.Insert) {
-			return pathToValue.getExtensionForBaseOf(((DbAction.Insert) action).propertyPath);
-		}
-
-		if (action instanceof DbAction.InsertRoot) {
+		if (action instanceof DbAction.WithPropertyPath) {
+			return pathToValue.getExtensionForBaseOf(((DbAction.WithPropertyPath) action).getPropertyPath());
+		} else {
 			return pathToValue;
 		}
-
-		throw new IllegalArgumentException(String.format("DbAction of type %s is not supported.", action.getClass()));
 	}
 
 	public void addAction(DbAction<?> action) {

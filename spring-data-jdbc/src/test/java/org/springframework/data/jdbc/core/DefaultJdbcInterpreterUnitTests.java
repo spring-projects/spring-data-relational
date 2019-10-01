@@ -53,7 +53,7 @@ public class DefaultJdbcInterpreterUnitTests {
 	Container container = new Container();
 	Element element = new Element();
 
-	InsertRoot<Container> containerInsert = new InsertRoot<>(container);
+	InsertRoot<Container> containerInsert = new InsertRoot<>(() -> container);
 	Insert<?> elementInsert = new Insert<>(element, toPath("element", Container.class, context), containerInsert);
 	Insert<?> element1Insert = new Insert<>(element, toPath("element.element1", Container.class, context), elementInsert);
 
@@ -124,7 +124,7 @@ public class DefaultJdbcInterpreterUnitTests {
 		RootWithList rootWithList = new RootWithList();
 		WithList listContainer = new WithList();
 
-		InsertRoot<RootWithList> listListContainerInsert = new InsertRoot<>(rootWithList);
+		InsertRoot<RootWithList> listListContainerInsert = new InsertRoot<>(() -> rootWithList);
 
 		PersistentPropertyPath<RelationalPersistentProperty> listContainersPath = toPath("listContainers",
 				RootWithList.class, context);
@@ -163,12 +163,14 @@ public class DefaultJdbcInterpreterUnitTests {
 
 	static class Element1 {}
 
+	@SuppressWarnings("unused")
 	static class RootWithList {
 
 		@Id Long id;
 		List<WithList> listContainers;
 	}
 
+	@SuppressWarnings("unused")
 	private static class WithList {
 		List<Element> elements;
 	}

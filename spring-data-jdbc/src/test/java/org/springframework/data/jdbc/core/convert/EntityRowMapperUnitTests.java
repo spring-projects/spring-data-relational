@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -422,7 +422,7 @@ public class EntityRowMapperUnitTests {
 
 	// Model classes to be used in tests
 
-	@Wither
+	@With
 	@RequiredArgsConstructor
 	static class TrivialImmutable {
 
@@ -447,7 +447,7 @@ public class EntityRowMapperUnitTests {
 		Trivial child;
 	}
 
-	@Wither
+	@With
 	@RequiredArgsConstructor
 	static class OneToOneImmutable {
 

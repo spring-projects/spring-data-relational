@@ -15,13 +15,11 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Data;
-
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,12 +33,10 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -95,7 +91,7 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
 	@Value
-	@Wither
+	@With
 	static class DummyEntity {
 
 		@Id Long id;
@@ -104,7 +100,7 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	private static class Embeddable {
 
 		Long attr1;

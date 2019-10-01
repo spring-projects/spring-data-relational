@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +61,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalConverter converter = new BasicRelationalConverter(context);
 
-	DbAction.InsertRoot<?> rootInsert = new DbAction.InsertRoot<>(entity);
+	DbAction.InsertRoot<?> rootInsert = new DbAction.InsertRoot<>(() -> entity);
 
 	@Test // DATAJDBC-291
 	public void singleRoot() {
@@ -422,8 +422,8 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, Object key,
 			@Nullable DbAction.Insert<?> parentInsert) {
 
-		return new DbAction.Insert<>(value,
-				toPath(parentInsert.getPropertyPath().toDotPath() + "." + propertyName), parentInsert, key);
+		return new DbAction.Insert<>(value, toPath(parentInsert.getPropertyPath().toDotPath() + "." + propertyName),
+				parentInsert, key);
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {
@@ -445,7 +445,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class DummyEntity {
 
@@ -470,7 +470,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class Content {
 
@@ -491,7 +491,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class ContentNoId {
 
@@ -510,7 +510,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class Tag {
 
