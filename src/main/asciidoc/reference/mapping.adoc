@@ -8,6 +8,8 @@ The `MappingR2dbcConverter` also lets you map objects to rows without providing 
 
 This section describes the features of the `MappingR2dbcConverter`, including how to use conventions for mapping objects to rows and how to override those conventions with annotation-based mapping metadata.
 
+include::../{spring-data-commons-docs}/object-mapping.adoc[leveloffset=+1]
+
 [[mapping.conventions]]
 == Convention-based Mapping
 

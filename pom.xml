@@ -8,7 +8,7 @@
 	<version>1.0.0.BUILD-SNAPSHOT</version>
 
 	<name>Spring Data R2DBC</name>
-	<description>Spring Data module for R2DBC.</description>
+	<description>Spring Data module for R2DBC</description>
 	<url>https://projects.spring.io/spring-data-r2dbc</url>
 
 	<parent>

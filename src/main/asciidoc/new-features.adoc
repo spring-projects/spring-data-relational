@@ -1,6 +1,16 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.1-0-0-RC1]]
+== What's New in Spring Data R2DBC 1.0.0 RC1
+
+* `ConnectionFactory` routing through `AbstractRoutingConnectionFactory`.
+* Utilities for schema initialization through `ResourceDatabasePopulator` and `ScriptUtils`.
+* Propagation and reset of Auto-Commit and Isolation Level control through `TransactionDefinition`.
+* Support for Entity-level converters.
+* Kotlin extensions for reified generics and <<kotlin.coroutines,Coroutines>>.
+* Add pluggable mechanism to register dialects.
+
 [[new-features.1-0-0-M2]]
 == What's New in Spring Data R2DBC 1.0.0 M2
 
