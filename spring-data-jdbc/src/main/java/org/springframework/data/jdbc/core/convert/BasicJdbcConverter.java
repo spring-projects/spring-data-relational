@@ -57,6 +57,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Christoph Strobl
+ * @author Myeonghyeon Lee
  * @since 1.1
  * @see MappingContext
  * @see SimpleTypeHolder
@@ -130,6 +131,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		if (AggregateReference.class.isAssignableFrom(type.getType())) {
+			if (type.getType().isAssignableFrom(value.getClass())) {
+				return value;
+			}
 
 			return readAggregateReference(value, type);
 		}
