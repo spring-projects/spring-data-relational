@@ -522,12 +522,16 @@ public class RelationalEntityWriterUnitTests {
 		return newValue;
 	}
 
-	static PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class source) {
+	static <T> PersistentPropertyPath<RelationalPersistentProperty> toPath(String path, Class<T> source) {
 
-		PersistentPropertyPaths<?, RelationalPersistentProperty> persistentPropertyPaths = context
+		PersistentPropertyPaths<T, RelationalPersistentProperty> persistentPropertyPaths = context
 				.findPersistentPropertyPaths(source, p -> true);
 
-		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst().orElse(null);
+		return persistentPropertyPaths //
+				.filter(p -> p.toDotPath().equals(path)) //
+				.stream().findFirst() //
+				.orElseThrow(
+						() -> new IllegalStateException(String.format("No matching path found for %s in %s", path, source)));
 	}
 
 	@RequiredArgsConstructor
@@ -553,6 +557,7 @@ public class RelationalEntityWriterUnitTests {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@RequiredArgsConstructor
 	static class ReferenceWoIdEntity {
 
@@ -646,6 +651,7 @@ public class RelationalEntityWriterUnitTests {
 		List<NoIdMapContainer> maps = new ArrayList<>();
 	}
 
+	@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 	@RequiredArgsConstructor
 	private static class NoIdMapContainer {
 

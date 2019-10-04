@@ -31,13 +31,13 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.domain.Identifier;
 
 /**
+ * Unit tests for {@link IdentifierContext}.
+ *
  * @author Jens Schauder
  */
 public class IdentifierContextUnitTests {
 
 	private MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context = new RelationalMappingContext();
-
-	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 	@Test
 	public void withId() {
@@ -46,15 +46,6 @@ public class IdentifierContextUnitTests {
 
 		Identifier identifier = withId.toIdentifier(context, path("simple"));
 		assertThat(identifier.toMap()).containsExactly(new AbstractMap.SimpleEntry<>("dummy_entity", 23));
-	}
-
-	@Test
-	public void dontIncludeIdInIdentifier() {
-
-		IdentifierContext withId = IdentifierContext.of(__ -> 23);
-
-		Identifier identifier = withId.toIdentifier(context, null);
-		assertThat(identifier.toMap()).isEmpty();
 	}
 
 	@Test
@@ -95,6 +86,7 @@ public class IdentifierContextUnitTests {
 		return context.getPersistentPropertyPath(s, DummyEntity.class);
 	}
 
+	@SuppressWarnings("unused")
 	private static class DummyEntity {
 		@Id Long id;
 
@@ -103,6 +95,7 @@ public class IdentifierContextUnitTests {
 		ElementWithId withId;
 	}
 
+	@SuppressWarnings("unused")
 	private static class ElementWithId {
 		@Id Long id;
 		Map<String, Element> map;
@@ -111,6 +104,7 @@ public class IdentifierContextUnitTests {
 
 	}
 
+	@SuppressWarnings("unused")
 	private static class Element {
 		Map<String, Element> map;
 		@MappedCollection(keyColumn = "other_key") Map<String, ElementWithId> other;

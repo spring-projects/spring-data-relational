@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.core.convert;
+package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.core.PropertyPathTestingUtils.*;
@@ -25,7 +25,6 @@ import java.util.UUID;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.conversion.JdbcIdentifierBuilder;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.domain.Identifier;
 

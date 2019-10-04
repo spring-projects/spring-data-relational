@@ -74,6 +74,15 @@ public class AggregateChange<T> {
 		}
 	}
 
+	/**
+	 * Sets the generated Ids for alle the entities in the actions of the {@code AggregateChange}. In case of immutable
+	 * properties it also propagates the changes up towards and including the root.
+	 * 
+	 * @param context Must not be {@literal null}.
+	 * @param converter Must not be {@literal null}.
+	 * @return The aggregate root of this change with all necessary attributes changed. This might be the same as before
+	 *         the setting of the ids or in the presence of immutable properties a new instance.
+	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
 	private T setGeneratedIds(RelationalMappingContext context, RelationalConverter converter) {
@@ -103,8 +112,8 @@ public class AggregateChange<T> {
 						cascadingValues);
 
 				if (action instanceof DbAction.WithDependingOn) {
-					DbAction.WithDependingOn withDependingOn = (DbAction.WithDependingOn) action;
 
+					DbAction.WithDependingOn withDependingOn = (DbAction.WithDependingOn) action;
 					cascadingValues.add(withDependingOn.getDependingOn(), withDependingOn.getPropertyPath(), newEntity,
 							withDependingOn.getQualifier());
 
@@ -148,34 +157,36 @@ public class AggregateChange<T> {
 		return propertyAccessor.getBean();
 	}
 
+	@SuppressWarnings("unchecked")
 	private <S> void updateCollectionIfPossible(PersistentPropertyAccessor<S> propertyAccessor,
-			PersistentPropertyPath path, Object value) {
+												PersistentPropertyPath<?> path, Object value) {
 
-		Object property = propertyAccessor.getProperty(path);
+		Object propertyValue = propertyAccessor.getProperty(path);
 		Class propertyType = path.getRequiredLeafProperty().getType();
+
+		Assert.state(propertyValue != null, "Can't modify a `null` value");
 
 		if (Collection.class.isAssignableFrom(propertyType)) {
 
-			Collection collection = (Collection) property;
+			Collection collection = (Collection) propertyValue;
+
 			collection.clear();
 			collection.addAll((Collection) value);
 
 		} else if (Map.class.isAssignableFrom(propertyType)) {
 
-			Map map = (Map) property;
+			Map map = (Map) propertyValue;
 			map.clear();
 			map.putAll((Map) value);
 
 		} else if (path.getRequiredLeafProperty().getType().isArray()) {
 
-			Object[] array = (Object[]) property;
-			Object[] valueArray = (Object[]) value;
+			Object[] existing = (Object[]) propertyValue;
+			Object[] newValues = (Object[]) value;
 
-			for (int i = 0; i < valueArray.length; i++) {
-				array[i] = valueArray[i];
-			}
+			System.arraycopy(newValues, 0, existing, 0, newValues.length);
 		} else {
-			throw new UnsupportedOperationException(String.format("Can't update the value %s to %s.", property, value));
+			throw new UnsupportedOperationException(String.format("Can't update the value %s to %s.", propertyValue, value));
 		}
 	}
 

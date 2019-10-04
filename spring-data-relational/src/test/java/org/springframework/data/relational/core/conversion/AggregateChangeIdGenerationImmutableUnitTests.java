@@ -435,15 +435,6 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
 
-	PersistentPropertyPath<RelationalPersistentProperty> toPath(DummyEntity root, Object pathValue) {
-		// DefaultPersistentPropertyPath is package-public
-		return new WritingContext(context, entity,
-				new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class, root)).insert().stream()
-						.filter(a -> a instanceof DbAction.Insert).map(DbAction.Insert.class::cast)
-						.filter(a -> a.getEntity() == pathValue).map(DbAction.Insert::getPropertyPath).findFirst()
-						.orElseThrow(() -> new IllegalArgumentException("No matching path found for " + pathValue));
-	}
-
 	@Value
 	@With
 	@AllArgsConstructor

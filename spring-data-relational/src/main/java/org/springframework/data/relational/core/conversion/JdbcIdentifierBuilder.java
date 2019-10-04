@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.conversion;
 
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -26,7 +25,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @since 1.1
  */
-public class JdbcIdentifierBuilder {
+class JdbcIdentifierBuilder {
 
 	private Identifier identifier;
 
@@ -34,14 +33,10 @@ public class JdbcIdentifierBuilder {
 		this.identifier = identifier;
 	}
 
-	public static JdbcIdentifierBuilder empty() {
-		return new JdbcIdentifierBuilder(Identifier.empty());
-	}
-
 	/**
 	 * Creates ParentKeys with backreference for the given path and value of the parents id.
 	 */
-	public static JdbcIdentifierBuilder forBackReferences(PersistentPropertyPathExtension path, @Nullable Object value) {
+	static JdbcIdentifierBuilder forBackReferences(PersistentPropertyPathExtension path, Object value) {
 
 		Identifier identifier = Identifier.of( //
 				path.getReverseColumnName(), //
@@ -59,17 +54,23 @@ public class JdbcIdentifierBuilder {
 	 * @param value map key or list index qualifying the map identified by {@code path}. Must not be {@literal null}.
 	 * @return this builder. Guaranteed to be not {@literal null}.
 	 */
-	public JdbcIdentifierBuilder withQualifier(PersistentPropertyPathExtension path, Object value) {
+	JdbcIdentifierBuilder withQualifier(PersistentPropertyPathExtension path, Object value) {
 
 		Assert.notNull(path, "Path must not be null");
 		Assert.notNull(value, "Value must not be null");
 
-		identifier = identifier.withPart(path.getQualifierColumn(), value, path.getQualifierColumnType());
+		String qualifierColumn = path.getQualifierColumn();
+		Assert.state(qualifierColumn != null, "The qualifier column of an Identifier must not be null");
+
+		Class<?> qualifierColumnType = path.getQualifierColumnType();
+		Assert.state(qualifierColumnType != null, "The qualifier column type of an Identifier must not be null");
+
+		identifier = identifier.withPart(qualifierColumn, value, qualifierColumnType);
 
 		return this;
 	}
 
-	public Identifier build() {
+	Identifier build() {
 		return identifier;
 	}
 }

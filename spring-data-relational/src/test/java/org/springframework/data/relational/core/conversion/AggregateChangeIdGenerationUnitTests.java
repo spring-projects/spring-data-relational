@@ -20,7 +20,6 @@ import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -322,16 +321,16 @@ public class AggregateChangeIdGenerationUnitTests {
 	}
 
 	DbAction.Insert<?> createInsert(String propertyName, Object value, @Nullable Object key) {
-		return new DbAction.Insert<>(value,
-				context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert, key);
+		return new DbAction.Insert<>(value, context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert,
+				key);
 	}
 
 	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, Object key,
 			@Nullable DbAction.Insert<?> parentInsert) {
 
-		PersistentPropertyPath<RelationalPersistentProperty> path = toPath(parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
-		return new DbAction.Insert<>(value,
-				path, parentInsert, key);
+		PersistentPropertyPath<RelationalPersistentProperty> path = toPath(
+				parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
+		return new DbAction.Insert<>(value, path, parentInsert, key);
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {
@@ -341,15 +340,6 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
-	}
-
-	PersistentPropertyPath<RelationalPersistentProperty> toPath(DummyEntity root, Object pathValue) {
-		// DefaultPersistentPropertyPath is package-public
-		return new WritingContext(context, entity,
-				new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class, root)).insert().stream()
-						.filter(a -> a instanceof DbAction.Insert).map(DbAction.Insert.class::cast)
-						.filter(a -> a.getEntity() == pathValue).map(DbAction.Insert::getPropertyPath).findFirst()
-						.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
 
 	private static class DummyEntity {

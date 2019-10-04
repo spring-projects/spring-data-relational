@@ -47,6 +47,7 @@ public class DbActionUnitTests {
 
 	}
 
+	@SuppressWarnings("unused")
 	static class DummyEntity {
 		String someName;
 	}

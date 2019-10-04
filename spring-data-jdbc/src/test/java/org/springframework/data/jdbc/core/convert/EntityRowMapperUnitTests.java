@@ -48,7 +48,6 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -302,7 +301,8 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "ru'Ha'");
 		rs.next();
 
-		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs, 1);
+		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs,
+				1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -333,7 +333,8 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, 24);
 		rs.next();
 
-		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class).mapRow(rs, 1);
+		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class)
+				.mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -348,7 +349,8 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
 		rs.next();
 
-		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs, 1);
+		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs,
+				1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -396,7 +398,8 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
 		rs.next();
 
-		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class).mapRow(rs, 1);
+		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class)
+				.mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -470,13 +473,6 @@ public class EntityRowMapperUnitTests {
 		Map<String, Trivial> children;
 	}
 
-	static class OneToList {
-
-		@Id Long id;
-		String name;
-		List<Trivial> children;
-	}
-
 	static class EmbeddedEntity {
 
 		@Id Long id;
@@ -492,6 +488,7 @@ public class EntityRowMapperUnitTests {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	static class MixedProperties {
 
 		final String one;
@@ -797,7 +794,7 @@ public class EntityRowMapperUnitTests {
 		@Override
 		public SetValue<T> endUpIn(Function<T, Object> extractor) {
 
-			expectations.add(new Expectation<T>(extractor, values.get(values.size() - 1), explainingColumn));
+			expectations.add(new Expectation<>(extractor, values.get(values.size() - 1), explainingColumn));
 			return this;
 		}
 	}
@@ -810,14 +807,11 @@ public class EntityRowMapperUnitTests {
 
 		public void assertOn(T result) {
 
-			SoftAssertions.assertSoftly(softly -> {
-				expectations.forEach(expectation -> {
-
-					softly.assertThat(expectation.extractor.apply(result)).describedAs("From column: " + expectation.sourceColumn)
-							.isEqualTo(expectation.expectedValue);
-				});
-
-			});
+			SoftAssertions.assertSoftly( //
+					softly -> expectations.forEach( //
+							expectation -> softly.assertThat(expectation.extractor.apply(result)) //
+									.describedAs("From column: " + expectation.sourceColumn) //
+									.isEqualTo(expectation.expectedValue)));
 		}
 	}
 
