@@ -15,7 +15,9 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import org.springframework.lang.Nullable;
 
@@ -25,6 +27,7 @@ import org.springframework.lang.Nullable;
  * @param <T> the type of the referenced aggregate root.
  * @param <ID> the type of the id of the referenced aggregate root.
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 1.0
  */
 public interface AggregateReference<T, ID> {
@@ -47,6 +50,8 @@ public interface AggregateReference<T, ID> {
 	 * @param <ID>
 	 */
 	@RequiredArgsConstructor
+	@EqualsAndHashCode
+	@ToString
 	class IdOnlyAggregateReference<T, ID> implements AggregateReference<T, ID> {
 
 		private final ID id;
