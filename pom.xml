@@ -32,7 +32,7 @@
 		<jasync.version>1.0.6</jasync.version>
 		<r2dbc-mysql.version>0.8.0.RC1</r2dbc-mysql.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
-		<r2dbc-releasetrain.version>Arabba-RC1</r2dbc-releasetrain.version>
+		<r2dbc-releasetrain.version>Arabba-RC2</r2dbc-releasetrain.version>
 		<reactive-streams.version>1.0.3</reactive-streams.version>
 		<netty>4.1.42.Final</netty>
 	</properties>
