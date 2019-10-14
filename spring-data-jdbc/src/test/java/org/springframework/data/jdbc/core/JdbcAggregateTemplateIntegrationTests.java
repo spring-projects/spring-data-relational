@@ -21,8 +21,10 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -41,8 +43,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
+import org.springframework.data.jdbc.testing.HsqlDbOnly;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
@@ -597,6 +601,20 @@ public class JdbcAggregateTemplateIntegrationTests {
 		});
 	}
 
+	@Test // DATAJDBC-431
+	@HsqlDbOnly
+	public void readOnlyGetsLoadedButNotWritten() {
+
+		WithReadOnly entity = new WithReadOnly();
+		entity.name = "Alfred";
+		entity.readOnly = "not used";
+
+		template.save(entity);
+
+		assertThat(
+				jdbcTemplate.queryForObject("SELECT read_only FROM with_read_only", Collections.emptyMap(), String.class)).isEqualTo("from-db");
+	}
+
 	private static NoIdMapChain4 createNoIdMapTree() {
 
 		NoIdMapChain4 chain4 = new NoIdMapChain4();
@@ -853,6 +871,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long four;
 		String fourValue;
 		Map<String, NoIdMapChain3> chain3 = new HashMap<>();
+	}
+
+	static class WithReadOnly {
+		@Id Long id;
+		String name;
+		@ReadOnlyProperty
+		String readOnly;
 	}
 
 	@Configuration
