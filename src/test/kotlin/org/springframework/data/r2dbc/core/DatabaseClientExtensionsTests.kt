@@ -48,6 +48,21 @@ class DatabaseClientExtensionsTests {
 		}
 	}
 
+	@Test // gh-209
+	fun typedExecuteSpecBindByIndexShouldBindValue() {
+
+		val spec = mockk<DatabaseClient.TypedExecuteSpec<String>>()
+		every { spec.bind(eq(0), any()) } returns spec
+
+		runBlocking {
+			spec.bind<String>(0, "foo")
+		}
+
+		verify {
+			spec.bind(0, SettableValue.fromOrEmpty("foo", String::class.java))
+		}
+	}
+
 	@Test // gh-162
 	fun bindByIndexShouldBindNull() {
 
@@ -63,10 +78,40 @@ class DatabaseClientExtensionsTests {
 		}
 	}
 
+	@Test // gh-209
+	fun typedExecuteSpecBindByIndexShouldBindNull() {
+
+		val spec = mockk<DatabaseClient.TypedExecuteSpec<String>>()
+		every { spec.bind(eq(0), any()) } returns spec
+
+		runBlocking {
+			spec.bind<String>(0, null)
+		}
+
+		verify {
+			spec.bind(0, SettableValue.empty(String::class.java))
+		}
+	}
+
 	@Test // gh-162
 	fun bindByNameShouldBindValue() {
 
 		val spec = mockk<DatabaseClient.GenericExecuteSpec>()
+		every { spec.bind(eq("field"), any()) } returns spec
+
+		runBlocking {
+			spec.bind<String>("field", "foo")
+		}
+
+		verify {
+			spec.bind("field", SettableValue.fromOrEmpty("foo", String::class.java))
+		}
+	}
+
+	@Test // gh-162
+	fun typedExecuteSpecBindByNameShouldBindValue() {
+
+		val spec = mockk<DatabaseClient.TypedExecuteSpec<String>>()
 		every { spec.bind(eq("field"), any()) } returns spec
 
 		runBlocking {

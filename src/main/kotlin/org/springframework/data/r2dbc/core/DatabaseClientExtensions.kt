@@ -31,17 +31,37 @@ suspend fun DatabaseClient.GenericExecuteSpec.await() {
  * Extension for [DatabaseClient.BindSpec.bind] providing a variant leveraging reified type parameters
  *
  * @author Mark Paluch
+ * @author Ibanga Enoobong Ime
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-inline fun <reified T : Any> DatabaseClient.BindSpec<*>.bind(index: Int, value: T?) = bind(index, SettableValue.fromOrEmpty(value, T::class.java))
+inline fun <reified T : Any> DatabaseClient.TypedExecuteSpec<*>.bind(index: Int, value: T?) = bind(index, SettableValue.fromOrEmpty(value, T::class.java))
 
 /**
  * Extension for [DatabaseClient.BindSpec.bind] providing a variant leveraging reified type parameters
  *
  * @author Mark Paluch
+ * @author Ibanga Enoobong Ime
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-inline fun <reified T : Any> DatabaseClient.BindSpec<*>.bind(name: String, value: T?) = bind(name, SettableValue.fromOrEmpty(value, T::class.java))
+inline fun <reified T : Any> DatabaseClient.GenericExecuteSpec.bind(index: Int, value: T?) = bind(index, SettableValue.fromOrEmpty(value, T::class.java))
+
+/**
+ * Extension for [DatabaseClient.BindSpec.bind] providing a variant leveraging reified type parameters
+ *
+ * @author Mark Paluch
+ * @author Ibanga Enoobong Ime
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+inline fun <reified T : Any> DatabaseClient.TypedExecuteSpec<*>.bind(name: String, value: T?) = bind(name, SettableValue.fromOrEmpty(value, T::class.java))
+
+/**
+ * Extension for [DatabaseClient.BindSpec.bind] providing a variant leveraging reified type parameters
+ *
+ * @author Mark Paluch
+ * @author Ibanga Enoobong Ime
+ */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+inline fun <reified T : Any> DatabaseClient.GenericExecuteSpec.bind(name: String, value: T?) = bind(name, SettableValue.fromOrEmpty(value, T::class.java))
 
 /**
  * Extension for [DatabaseClient.GenericExecuteSpec. as] providing a
