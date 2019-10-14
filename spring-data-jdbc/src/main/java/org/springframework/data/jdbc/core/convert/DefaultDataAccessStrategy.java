@@ -323,7 +323,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
-			if (skipProperty.test(property)) {
+			if (skipProperty.test(property) || !property.isWritable()) {
 				return;
 			}
 			if (property.isEntity() && !property.isEmbedded()) {

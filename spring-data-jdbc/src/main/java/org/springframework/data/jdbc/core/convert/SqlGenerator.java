@@ -29,7 +29,6 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
@@ -623,7 +622,7 @@ class SqlGenerator {
 				idColumnNames.add(columnName);
 			}
 
-			if (!property.isWritable() || property.isAnnotationPresent(ReadOnlyProperty.class)) {
+			if (!property.isWritable()) {
 				readOnlyColumnNames.add(columnName);
 			}
 		}
