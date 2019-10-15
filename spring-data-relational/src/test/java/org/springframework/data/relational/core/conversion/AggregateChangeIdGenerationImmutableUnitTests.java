@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.conversion;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -30,8 +31,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
@@ -41,7 +42,8 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.lang.Nullable;
 
 /**
- * Unit tests for the {@link AggregateChange} testing the setting of generated ids in aggregates consisting of immutable entities.
+ * Unit tests for the {@link AggregateChange} testing the setting of generated ids in aggregates consisting of immutable
+ * entities.
  *
  * @author Jens Schauder
  * @author Myeonghyeon-Lee
@@ -59,14 +61,12 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalConverter converter = new BasicRelationalConverter(context);
-
 	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity);
 
 	@Test // DATAJDBC-291
 	public void singleRoot() {
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 
 		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
@@ -81,8 +81,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = entity.withSingle(content);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("single", content, null));
 
@@ -90,7 +89,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = aggregateChange.getEntity();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.single.id).isEqualTo(2);
@@ -102,8 +101,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = entity.withContentList(asList(content, content2));
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentList", content, 0));
 		aggregateChange.addAction(createInsert("contentList", content2, 1));
@@ -112,7 +110,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = aggregateChange.getEntity();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList).extracting(c -> c.id).containsExactly(2, 3);
@@ -124,8 +122,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = entity.withContentMap(createContentMap("a", content, "b", content2));
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentMap", content, "a"));
 		aggregateChange.addAction(createInsert("contentMap", content2, "b"));
@@ -147,8 +144,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		DbAction.Insert<?> parentInsert = createInsert("single", content, null);
 		DbAction.Insert<?> insert = createDeepInsert("single", tag1, null, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert);
@@ -172,8 +168,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("tagList", tag1, 0, parentInsert);
 		DbAction.Insert<?> insert2 = createDeepInsert("tagList", tag2, 1, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert1);
@@ -183,7 +178,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = aggregateChange.getEntity();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.single.id).isEqualTo(2);
@@ -201,8 +196,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("tagSet", tag1, null, parentInsert);
 		DbAction.Insert<?> insert2 = createDeepInsert("tagSet", tag2, null, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert1);
@@ -212,7 +206,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = aggregateChange.getEntity();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentSet) //
@@ -237,8 +231,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("single", tag1, null, parentInsert1);
 		DbAction.Insert<?> insert2 = createDeepInsert("single", tag2, null, parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -249,7 +242,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = aggregateChange.getEntity();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList) //
@@ -271,8 +264,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		DbAction.Insert<?> insert2 = createDeepInsert("tagList", tag2, 0, parentInsert2);
 		DbAction.Insert<?> insert3 = createDeepInsert("tagList", tag3, 1, parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -284,7 +276,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = aggregateChange.getEntity();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList) //
@@ -309,8 +301,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		DbAction.Insert<?> insert2 = createDeepInsert("tagMap", tag2, "222", parentInsert2);
 		DbAction.Insert<?> insert3 = createDeepInsert("tagMap", tag3, "333", parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -322,7 +313,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = aggregateChange.getEntity();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentMap.entrySet()) //
@@ -351,8 +342,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("single", tag1, null, parentInsert1);
 		DbAction.Insert<?> insert2 = createDeepInsert("single", tag2, null, parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -363,7 +353,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		entity = aggregateChange.getEntity();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentNoIdList) //
@@ -380,8 +370,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		DbAction.Insert<?> parentInsert = createInsert("embedded.single", tag1, null);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 
@@ -441,11 +430,10 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(DummyEntity root, Object pathValue) {
 		// DefaultPersistentPropertyPath is package-public
-		return new WritingContext(context, entity,
-				new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class, root)).insert().stream()
-						.filter(a -> a instanceof DbAction.Insert).map(DbAction.Insert.class::cast)
-						.filter(a -> a.getEntity() == pathValue).map(DbAction.Insert::getPropertyPath).findFirst()
-						.orElseThrow(() -> new IllegalArgumentException("No matching path found for " + pathValue));
+		return new WritingContext(context, entity, AggregateChange.forSave(root)).insert().stream()
+				.filter(a -> a instanceof DbAction.Insert).map(DbAction.Insert.class::cast)
+				.filter(a -> a.getEntity() == pathValue).map(DbAction.Insert::getPropertyPath).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("No matching path found for " + pathValue));
 	}
 
 	@Value

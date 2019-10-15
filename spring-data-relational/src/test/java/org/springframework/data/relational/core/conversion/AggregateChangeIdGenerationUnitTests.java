@@ -37,7 +37,7 @@ import org.springframework.lang.Nullable;
  * Unit tests for the {@link AggregateChange}.
  *
  * @author Jens Schauder
- * Myeonghyeon-Lee
+ * @author Myeonghyeon-Lee
  */
 public class AggregateChangeIdGenerationUnitTests {
 
@@ -50,14 +50,12 @@ public class AggregateChangeIdGenerationUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalConverter converter = new BasicRelationalConverter(context);
-
 	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity);
 
 	@Test // DATAJDBC-291
 	public void singleRoot() {
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 
 		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
@@ -70,8 +68,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		entity.single = content;
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("single", content, null));
 
@@ -90,8 +87,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		entity.contentList.add(content);
 		entity.contentList.add(content2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentList", content, 0));
 		aggregateChange.addAction(createInsert("contentList", content2, 1));
@@ -111,8 +107,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		entity.contentMap.put("a", content);
 		entity.contentMap.put("b", content2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentMap", content, "a"));
 		aggregateChange.addAction(createInsert("contentMap", content2, "b"));
@@ -132,8 +127,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> parentInsert = createInsert("single", content, null);
 		DbAction.Insert<?> insert = createDeepInsert("single", tag1, null, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert);
@@ -156,8 +150,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("tagList", tag1, 0, parentInsert);
 		DbAction.Insert<?> insert2 = createDeepInsert("tagList", tag2, 1, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert1);
@@ -184,8 +177,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("tagSet", tag1, null, parentInsert);
 		DbAction.Insert<?> insert2 = createDeepInsert("tagSet", tag2, null, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert1);
@@ -219,8 +211,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("single", tag1, null, parentInsert1);
 		DbAction.Insert<?> insert2 = createDeepInsert("single", tag2, null, parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -253,8 +244,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert2 = createDeepInsert("tagList", tag2, 0, parentInsert2);
 		DbAction.Insert<?> insert3 = createDeepInsert("tagList", tag3, 1, parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -292,8 +282,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert2 = createDeepInsert("tagMap", tag2, "222", parentInsert2);
 		DbAction.Insert<?> insert3 = createDeepInsert("tagMap", tag3, "333", parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class,
-				entity);
+		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -348,11 +337,10 @@ public class AggregateChangeIdGenerationUnitTests {
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(DummyEntity root, Object pathValue) {
 		// DefaultPersistentPropertyPath is package-public
-		return new WritingContext(context, entity,
-				new AggregateChange<>(AggregateChange.Kind.SAVE, DummyEntity.class, root)).insert().stream()
-						.filter(a -> a instanceof DbAction.Insert).map(DbAction.Insert.class::cast)
-						.filter(a -> a.getEntity() == pathValue).map(DbAction.Insert::getPropertyPath).findFirst()
-						.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
+		return new WritingContext(context, entity, AggregateChange.forSave(root)).insert().stream()
+				.filter(a -> a instanceof DbAction.Insert).map(DbAction.Insert.class::cast)
+				.filter(a -> a.getEntity() == pathValue).map(DbAction.Insert::getPropertyPath).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
 
 	private static class DummyEntity {

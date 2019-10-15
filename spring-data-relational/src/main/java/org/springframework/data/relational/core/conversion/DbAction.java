@@ -262,6 +262,9 @@ public interface DbAction<T> {
 		 */
 		Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifiers();
 
+		// TODO: Encapsulate propertyPath and qualifier in object: PropertyPathWithListIndex,
+		// PropertyPathWithMapIndex, PropertyPathInSet, PropertyPathWithoutQualifier
+		// Probably we need better names.
 		@Nullable
 		default Pair<PersistentPropertyPath<RelationalPersistentProperty>, Object> getQualifier() {
 			Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = getQualifiers();
@@ -272,13 +275,13 @@ public interface DbAction<T> {
 				throw new IllegalStateException("Can't handle more then on qualifier");
 			}
 
-			Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> entry = qualifiers.entrySet().iterator().next();
+			Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> entry = qualifiers.entrySet().iterator()
+					.next();
 			if (entry.getValue() == null) {
 				return null;
 			}
 			return Pair.of(entry.getKey(), entry.getValue());
 		};
-
 
 		@Override
 		default Class<T> getEntityType() {
