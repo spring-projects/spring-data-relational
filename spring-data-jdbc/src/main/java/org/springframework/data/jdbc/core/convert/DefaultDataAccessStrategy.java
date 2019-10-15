@@ -313,7 +313,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	private <S, T> MapSqlParameterSource getParameterSource(S instance, RelationalPersistentEntity<S> persistentEntity,
+	private <S, T> MapSqlParameterSource getParameterSource(@Nullable S instance, RelationalPersistentEntity<S> persistentEntity,
 			String prefix, Predicate<RelationalPersistentProperty> skipProperty) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
@@ -418,7 +418,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private void addConvertedPropertyValue(MapSqlParameterSource parameterSource, RelationalPersistentProperty property,
-			Object value, String paramName) {
+			@Nullable Object value, String paramName) {
 
 		JdbcValue jdbcValue = converter.writeJdbcValue( //
 				value, //
