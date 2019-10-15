@@ -108,7 +108,7 @@ class DatabaseClientExtensionsTests {
 		}
 	}
 
-	@Test // gh-162
+	@Test // gh-162, gh-209
 	fun typedExecuteSpecBindByNameShouldBindValue() {
 
 		val spec = mockk<DatabaseClient.TypedExecuteSpec<String>>()
