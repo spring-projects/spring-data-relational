@@ -26,7 +26,6 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
@@ -331,33 +330,30 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		triggerAfterDelete(entity, id, change);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private <T> AggregateChange<T> createInsertChange(T instance) {
 
-		AggregateChange<T> aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
+		AggregateChange<T> aggregateChange = AggregateChange.forSave(instance);
 		jdbcEntityInsertWriter.write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private <T> AggregateChange<T> createUpdateChange(T instance) {
 
-		AggregateChange<T> aggregateChange = new AggregateChange(Kind.SAVE, instance.getClass(), instance);
+		AggregateChange<T> aggregateChange = AggregateChange.forSave(instance);
 		jdbcEntityUpdateWriter.write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private <T> AggregateChange<T> createDeletingChange(Object id, @Nullable T entity, Class<T> domainType) {
 
-		AggregateChange<T> aggregateChange = new AggregateChange(Kind.DELETE, domainType, entity);
+		AggregateChange<T> aggregateChange = AggregateChange.forDelete(domainType, entity);
 		jdbcEntityDeleteWriter.write(id, aggregateChange);
 		return aggregateChange;
 	}
 
 	private AggregateChange<?> createDeletingChange(Class<?> domainType) {
 
-		AggregateChange<?> aggregateChange = new AggregateChange<>(Kind.DELETE, domainType, null);
+		AggregateChange<?> aggregateChange = AggregateChange.forDelete(domainType, null);
 		jdbcEntityDeleteWriter.write(null, aggregateChange);
 		return aggregateChange;
 	}
