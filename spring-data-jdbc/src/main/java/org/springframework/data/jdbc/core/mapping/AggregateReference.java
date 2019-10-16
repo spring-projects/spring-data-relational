@@ -61,5 +61,4 @@ public interface AggregateReference<T, ID> {
 			return id;
 		}
 	}
-
 }
