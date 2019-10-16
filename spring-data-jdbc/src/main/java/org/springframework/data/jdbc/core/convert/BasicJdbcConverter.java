@@ -75,8 +75,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and a
 	 * {@link JdbcTypeFactory#unsupported() no-op type factory} throwing {@link UnsupportedOperationException} on type
-	 * creation. Use {@link #BasicJdbcConverter(MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and
-	 * large objects into JDBC-specific types.
+	 * creation. Use {@link #BasicJdbcConverter(MappingContext, RelationResolver, CustomConversions, JdbcTypeFactory)}
+	 * (MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and large objects into JDBC-specific types.
 	 *
 	 * @param context must not be {@literal null}.
 	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
@@ -131,6 +131,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		if (AggregateReference.class.isAssignableFrom(type.getType())) {
+
 			if (type.getType().isAssignableFrom(value.getClass())) {
 				return value;
 			}
@@ -297,7 +298,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
-			return new ReadingContext<S>(
+			return new ReadingContext<>(
 					(RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()),
 					resultSet, rootPath.extendBy(property), path.extendBy(property), identifier, key);
 		}
@@ -382,7 +383,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 			ReadingContext<?> newContext = extendBy(property);
 
-			if(shouldCreateEmptyEmbeddedInstance(property) || newContext.hasInstanceValues(idValue)) {
+			if (shouldCreateEmptyEmbeddedInstance(property) || newContext.hasInstanceValues(idValue)) {
 				return newContext.createInstanceInternal(idValue);
 			}
 

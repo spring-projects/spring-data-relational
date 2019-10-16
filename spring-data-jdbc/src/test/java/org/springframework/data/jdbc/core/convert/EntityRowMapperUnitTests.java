@@ -48,7 +48,6 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -131,19 +130,19 @@ public class EntityRowMapperUnitTests {
 				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
 	}
 
-	@Test   // DATAJDBC-427
+	@Test // DATAJDBC-427
 	public void simpleWithReferenceGetProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("id", "name", "trivial_id"), //
-			ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 100L);
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 100L);
 		rs.next();
 
 		WithReference extracted = createRowMapper(WithReference.class).mapRow(rs, 1);
 
 		assertThat(extracted) //
-			.isNotNull() //
-			.extracting(e -> e.id, e -> e.name, e -> e.trivialId) //
-			.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", AggregateReference.to(100L));
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name, e -> e.trivialId) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", AggregateReference.to(100L));
 	}
 
 	@Test // DATAJDBC-113
@@ -176,19 +175,19 @@ public class EntityRowMapperUnitTests {
 				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
 	}
 
-	@Test   // DATAJDBC-427
+	@Test // DATAJDBC-427
 	public void immutableWithReferenceGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("id", "name", "trivial_id"), //
-			ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 100L);
+				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 100L);
 		rs.next();
 
 		WithReferenceImmutable extracted = createRowMapper(WithReferenceImmutable.class).mapRow(rs, 1);
 
 		assertThat(extracted) //
-			.isNotNull() //
-			.extracting(e -> e.id, e -> e.name, e -> e.trivialId) //
-			.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", AggregateReference.to(100L));
+				.isNotNull() //
+				.extracting(e -> e.id, e -> e.name, e -> e.trivialId) //
+				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", AggregateReference.to(100L));
 	}
 
 	// TODO add additional test for multilevel embeddables
@@ -334,7 +333,8 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "ru'Ha'");
 		rs.next();
 
-		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs, 1);
+		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class) //
+				.mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -365,7 +365,8 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, 24);
 		rs.next();
 
-		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class).mapRow(rs, 1);
+		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class)
+				.mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -380,7 +381,8 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
 		rs.next();
 
-		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs, 1);
+		WithNullableEmbeddedImmutableValue extracted = createRowMapper(WithNullableEmbeddedImmutableValue.class) //
+				.mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
@@ -428,7 +430,8 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
 		rs.next();
 
-		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class).mapRow(rs, 1);
+		WithEmbeddedPrimitiveImmutableValue extracted = createRowMapper(WithEmbeddedPrimitiveImmutableValue.class)
+				.mapRow(rs, 1);
 
 		assertThat(extracted) //
 				.isNotNull() //
