@@ -15,24 +15,10 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import lombok.Getter;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -43,13 +29,13 @@ import org.springframework.util.ClassUtils;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-@Getter
 public class AggregateChange<T> {
 
 	private final Kind kind;
 
 	/** Type of the aggregate root to be changed */
 	private final Class<T> entityType;
+
 	private final List<DbAction<?>> actions = new ArrayList<>();
 	/** Aggregate root, to which the change applies, if available */
 	@Nullable private T entity;
@@ -106,100 +92,84 @@ public class AggregateChange<T> {
 		return new AggregateChange<>(Kind.DELETE, entityClass, entity);
 	}
 
+	/**
+	 * Adds an action to this {@code AggregateChange}.
+	 * 
+	 * @param action must not be {@literal null}.
+	 */
+	public void addAction(DbAction<?> action) {
+
+		Assert.notNull(action, "Action must not be null.");
+
+		actions.add(action);
+	}
+
+	/**
+	 * Applies the given consumer to each {@link DbAction} in this {@code AggregateChange}.
+	 * 
+	 * @param consumer must not be {@literal null}.
+	 */
+	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
+
+		Assert.notNull(consumer, "Consumer must not be null.");
+
+		actions.forEach(consumer);
+	}
+
+	/**
+	 * All the actions contained in this {@code AggregateChange}.
+	 * <p>
+	 * The behavior when modifying this list might result in undesired behavior.
+	 * <p>
+	 * Use {@link #addAction(DbAction)} to add actions.
+	 *
+	 * @return Guaranteed to be not {@literal null}.
+	 */
+	public List<DbAction<?>> getActions() {
+		return this.actions;
+	}
+
+	/**
+	 * Returns the {@link Kind} of {@code AggregateChange} this is.
+	 * 
+	 * @return guaranteed to be not {@literal null}.
+	 */
+	public Kind getKind() {
+		return this.kind;
+	}
+
+	/**
+	 * The type of the root of this {@code AggregateChange}.
+	 * 
+	 * @return Guaranteed to be not {@literal null}.
+	 */
+	public Class<T> getEntityType() {
+		return this.entityType;
+	}
+
+	/**
+	 * Set the root object of the {@code AggregateChange}.
+	 *
+	 * @param aggregateRoot may be {@literal null} if the change refers to a list of aggregates or references it by id.
+	 */
 	public void setEntity(@Nullable T aggregateRoot) {
-		// TODO: Check instanceOf compatibility to ensure type contract.
+
+		if (aggregateRoot != null) {
+			Assert.isInstanceOf(entityType, aggregateRoot,
+					String.format("AggregateRoot must be of type %s", entityType.getName()));
+		}
+
 		entity = aggregateRoot;
 	}
 
-	public void executeWith(Interpreter interpreter, RelationalMappingContext context, RelationalConverter converter) {
-
-		actions.forEach(action -> action.executeWith(interpreter));
-
-		T newRoot = populateIdsIfNecessary(context, converter);
-
-		if (newRoot != null) {
-			entity = newRoot;
-		}
-	}
-
+	/**
+	 * The entity to which this {@link AggregateChange} relates.
+	 * 
+	 * @return may be {@literal null}.
+	 */
 	@Nullable
-	private T populateIdsIfNecessary(RelationalMappingContext context, RelationalConverter converter) {
-
-		T newRoot = null;
-
-		// have the actions so that the inserts on the leaves come first.
-		ArrayList<DbAction<?>> reverseActions = new ArrayList<>(actions);
-		Collections.reverse(reverseActions);
-
-		StagedValues cascadingValues = new StagedValues();
-
-		for (DbAction<?> action : reverseActions) {
-
-			if (!(action instanceof DbAction.WithGeneratedId)) {
-				continue;
-			}
-
-			DbAction.WithGeneratedId<?> withGeneratedId = (DbAction.WithGeneratedId<?>) action;
-			Object generatedId = withGeneratedId.getGeneratedId();
-			Object newEntity = setIdAndCascadingProperties(context, converter, withGeneratedId, generatedId, cascadingValues);
-
-			// the id property was immutable so we have to propagate changes up the tree
-			if (newEntity != ((DbAction.WithGeneratedId<?>) action).getEntity()) {
-
-				if (action instanceof DbAction.Insert) {
-					DbAction.Insert insert = (DbAction.Insert) action;
-
-					Pair qualifier = insert.getQualifier();
-
-					cascadingValues.stage(insert.dependingOn, insert.propertyPath,
-							qualifier == null ? null : qualifier.getSecond(), newEntity);
-
-				} else if (action instanceof DbAction.InsertRoot) {
-					newRoot = entityType.cast(newEntity);
-				}
-			}
-		}
-
-		return newRoot;
-	}
-
-	@SuppressWarnings("unchecked")
-	private <S> Object setIdAndCascadingProperties(RelationalMappingContext context, RelationalConverter converter,
-			DbAction.WithGeneratedId<S> action, @Nullable Object generatedId, StagedValues cascadingValues) {
-
-		S originalEntity = action.getEntity();
-
-		RelationalPersistentEntity<S> persistentEntity = (RelationalPersistentEntity<S>) context
-				.getRequiredPersistentEntity(action.getEntityType());
-		PersistentPropertyAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity, originalEntity);
-
-		if (generatedId != null) {
-			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
-		}
-
-		// set values of changed immutables referenced by this entity
-		cascadingValues.forEachPath(action, (persistentPropertyPath, o) -> propertyAccessor
-				.setProperty(getRelativePath(action, persistentPropertyPath), o));
-
-		return propertyAccessor.getBean();
-	}
-
-	@SuppressWarnings("unchecked")
-	private PersistentPropertyPath getRelativePath(DbAction action, PersistentPropertyPath pathToValue) {
-
-		if (action instanceof DbAction.Insert) {
-			return pathToValue.getExtensionForBaseOf(((DbAction.Insert) action).propertyPath);
-		}
-
-		if (action instanceof DbAction.InsertRoot) {
-			return pathToValue;
-		}
-
-		throw new IllegalArgumentException(String.format("DbAction of type %s is not supported.", action.getClass()));
-	}
-
-	public void addAction(DbAction<?> action) {
-		actions.add(action);
+	public T getEntity() {
+		return this.entity;
 	}
 
 	/**
@@ -216,184 +186,6 @@ public class AggregateChange<T> {
 		 * A {@code DELETE} of an aggregate typically involves a {@code delete} on all contained entities.
 		 */
 		DELETE
-	}
-
-	/**
-	 * Accumulates information about staged immutable objects in an aggregate that require updating because their state
-	 * changed because of {@link DbAction} execution.
-	 */
-	private static class StagedValues {
-
-		static final List<MultiValueAggregator> aggregators = Arrays.asList(SetAggregator.INSTANCE, MapAggregator.INSTANCE,
-				ListAggregator.INSTANCE, SingleElementAggregator.INSTANCE);
-
-		Map<DbAction, Map<PersistentPropertyPath, Object>> values = new HashMap<>();
-
-		/**
-		 * Adds a value that needs to be set in an entity higher up in the tree of entities in the aggregate. If the
-		 * attribute to be set is multivalued this method expects only a single element.
-		 *
-		 * @param action The action responsible for persisting the entity that needs the added value set. Must not be
-		 *          {@literal null}.
-		 * @param path The path to the property in which to set the value. Must not be {@literal null}.
-		 * @param qualifier If {@code path} is a qualified multivalued properties this parameter contains the qualifier. May
-		 *          be {@literal null}.
-		 * @param value The value to be set. Must not be {@literal null}.
-		 */
-		@SuppressWarnings("unchecked")
-		<T> void stage(DbAction<?> action, PersistentPropertyPath path, @Nullable Object qualifier, Object value) {
-
-			MultiValueAggregator<T> aggregator = getAggregatorFor(path);
-
-			Map<PersistentPropertyPath, Object> valuesForPath = this.values.computeIfAbsent(action,
-					dbAction -> new HashMap<>());
-
-			T currentValue = (T) valuesForPath.computeIfAbsent(path,
-					persistentPropertyPath -> aggregator.createEmptyInstance());
-
-			Object newValue = aggregator.add(currentValue, qualifier, value);
-
-			valuesForPath.put(path, newValue);
-		}
-
-		private MultiValueAggregator getAggregatorFor(PersistentPropertyPath path) {
-
-			PersistentProperty property = path.getRequiredLeafProperty();
-			for (MultiValueAggregator aggregator : aggregators) {
-				if (aggregator.handles(property)) {
-					return aggregator;
-				}
-			}
-
-			throw new IllegalStateException(String.format("Can't handle path %s", path));
-		}
-
-		/**
-		 * Performs the given action for each entry in this the staging area that are provided by {@link DbAction} until all
-		 * {@link PersistentPropertyPath} have been processed or the action throws an exception. The {@link BiConsumer
-		 * action} is called with each applicable {@link PersistentPropertyPath} and {@code value} that is assignable to the
-		 * property.
-		 *
-		 * @param dbAction
-		 * @param action
-		 */
-		void forEachPath(DbAction<?> dbAction, BiConsumer<PersistentPropertyPath, Object> action) {
-			values.getOrDefault(dbAction, Collections.emptyMap()).forEach(action);
-		}
-	}
-
-	interface MultiValueAggregator<T> {
-
-		default Class<? super T> handledType() {
-			return Object.class;
-		}
-
-		default boolean handles(PersistentProperty property) {
-			return handledType().isAssignableFrom(property.getType());
-		}
-
-		@Nullable
-		T createEmptyInstance();
-
-		T add(@Nullable T aggregate, @Nullable Object qualifier, Object value);
-
-	}
-
-	private enum SetAggregator implements MultiValueAggregator<Set> {
-
-		INSTANCE;
-
-		@Override
-		public Class<Set> handledType() {
-			return Set.class;
-		}
-
-		@Override
-		public Set createEmptyInstance() {
-			return new HashSet();
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public Set add(@Nullable Set set, @Nullable Object qualifier, Object value) {
-
-			Assert.notNull(set, "Set must not be null");
-
-			set.add(value);
-			return set;
-		}
-	}
-
-	private enum ListAggregator implements MultiValueAggregator<List> {
-
-		INSTANCE;
-
-		@Override
-		public boolean handles(PersistentProperty property) {
-			return property.isCollectionLike();
-		}
-
-		@Override
-		public List createEmptyInstance() {
-			return new ArrayList();
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public List add(@Nullable List list, @Nullable Object qualifier, Object value) {
-
-			Assert.notNull(list, "List must not be null.");
-
-			int index = (int) qualifier;
-			if (index >= list.size()) {
-				list.add(value);
-			} else {
-				list.add(index, value);
-			}
-
-			return list;
-		}
-	}
-
-	private enum MapAggregator implements MultiValueAggregator<Map> {
-
-		INSTANCE;
-
-		@Override
-		public Class<Map> handledType() {
-			return Map.class;
-		}
-
-		@Override
-		public Map createEmptyInstance() {
-			return new HashMap();
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public Map add(@Nullable Map map, @Nullable Object qualifier, Object value) {
-
-			Assert.notNull(map, "Map must not be null.");
-
-			map.put(qualifier, value);
-			return map;
-		}
-	}
-
-	private enum SingleElementAggregator implements MultiValueAggregator<Object> {
-
-		INSTANCE;
-
-		@Override
-		@Nullable
-		public Object createEmptyInstance() {
-			return null;
-		}
-
-		@Override
-		public Object add(@Nullable Object __null, @Nullable Object qualifier, Object value) {
-			return value;
-		}
 	}
 
 }

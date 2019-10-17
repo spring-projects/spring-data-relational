@@ -13,55 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.conversion;
+package org.springframework.data.jdbc.core;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Value;
-import lombok.experimental.Wither;
-
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
+import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.Interpreter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
 /**
- * Unit tests for the {@link AggregateChange} testing the setting of generated ids in aggregates consisting of immutable
- * entities.
+ * Unit tests for the {@link AggregateChange}.
  *
  * @author Jens Schauder
  * @author Myeonghyeon-Lee
  */
-public class AggregateChangeIdGenerationImmutableUnitTests {
+public class AggregateChangeIdGenerationUnitTests {
 
 	DummyEntity entity = new DummyEntity();
 	Content content = new Content();
 	Content content2 = new Content();
-	Tag tag1 = new Tag("tag1");
-	Tag tag2 = new Tag("tag2");
-	Tag tag3 = new Tag("tag3");
-	ContentNoId contentNoId = new ContentNoId();
-	ContentNoId contentNoId2 = new ContentNoId();
+	Tag tag1 = new Tag();
+	Tag tag2 = new Tag();
+	Tag tag3 = new Tag();
 
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalConverter converter = new BasicRelationalConverter(context);
 	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity);
+
+	AggregateChangeExecutor executor = new AggregateChangeExecutor(new IdSettingInterpreter(), converter);
 
 	@Test // DATAJDBC-291
 	public void singleRoot() {
@@ -69,9 +65,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
-
-		entity = aggregateChange.getEntity();
+		executor.execute(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 	}
@@ -79,17 +73,15 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void simpleReference() {
 
-		entity = entity.withSingle(content);
+		entity.single = content;
 
 		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("single", content, null));
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
+		executor.execute(aggregateChange);
 
-		entity = aggregateChange.getEntity();
-
-		assertSoftly(softly -> {
+		SoftAssertions.assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.single.id).isEqualTo(2);
@@ -99,18 +91,17 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void listReference() {
 
-		entity = entity.withContentList(asList(content, content2));
+		entity.contentList.add(content);
+		entity.contentList.add(content2);
 
 		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentList", content, 0));
 		aggregateChange.addAction(createInsert("contentList", content2, 1));
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
+		executor.execute(aggregateChange);
 
-		entity = aggregateChange.getEntity();
-
-		assertSoftly(softly -> {
+		SoftAssertions.assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList).extracting(c -> c.id).containsExactly(2, 3);
@@ -120,16 +111,15 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void mapReference() {
 
-		entity = entity.withContentMap(createContentMap("a", content, "b", content2));
+		entity.contentMap.put("a", content);
+		entity.contentMap.put("b", content2);
 
 		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentMap", content, "a"));
 		aggregateChange.addAction(createInsert("contentMap", content2, "b"));
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
-
-		entity = aggregateChange.getEntity();
+		executor.execute(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 		assertThat(entity.contentMap.values()).extracting(c -> c.id).containsExactly(2, 3);
@@ -138,8 +128,8 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void setIdForDeepReference() {
 
-		content = content.withSingle(tag1);
-		entity = entity.withSingle(content);
+		content.single = tag1;
+		entity.single = content;
 
 		DbAction.Insert<?> parentInsert = createInsert("single", content, null);
 		DbAction.Insert<?> insert = createDeepInsert("single", tag1, null, parentInsert);
@@ -149,9 +139,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert);
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
-
-		entity = aggregateChange.getEntity();
+		executor.execute(aggregateChange);
 
 		assertThat(entity.rootId).isEqualTo(1);
 		assertThat(entity.single.id).isEqualTo(2);
@@ -161,8 +149,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void setIdForDeepReferenceElementList() {
 
-		content = content.withTagList(asList(tag1, tag2));
-		entity = entity.withSingle(content);
+		content.tagList.add(tag1);
+		content.tagList.add(tag2);
+		entity.single = content;
 
 		DbAction.Insert<?> parentInsert = createInsert("single", content, null);
 		DbAction.Insert<?> insert1 = createDeepInsert("tagList", tag1, 0, parentInsert);
@@ -174,11 +163,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
+		executor.execute(aggregateChange);
 
-		entity = aggregateChange.getEntity();
-
-		assertSoftly(softly -> {
+		SoftAssertions.assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.single.id).isEqualTo(2);
@@ -189,8 +176,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void setIdForDeepElementSetElementSet() {
 
-		content = content.withTagSet(Stream.of(tag1, tag2).collect(Collectors.toSet()));
-		entity = entity.withContentSet(singleton(content));
+		content.tagSet.add(tag1);
+		content.tagSet.add(tag2);
+		entity.contentSet.add(content);
 
 		DbAction.Insert<?> parentInsert = createInsert("contentSet", content, null);
 		DbAction.Insert<?> insert1 = createDeepInsert("tagSet", tag1, null, parentInsert);
@@ -202,15 +190,13 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
+		executor.execute(aggregateChange);
 
-		entity = aggregateChange.getEntity();
-
-		assertSoftly(softly -> {
+		SoftAssertions.assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentSet) //
-					.extracting(c -> c.id) //
+					.extracting(c -> content.id) //
 					.containsExactly(2); //
 			softly.assertThat(entity.contentSet.stream() //
 					.flatMap(c -> c.tagSet.stream())) //
@@ -222,9 +208,10 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void setIdForDeepElementListSingleReference() {
 
-		content = content.withSingle(tag1);
-		content2 = content2.withSingle(tag2);
-		entity = entity.withContentList(asList(content, content2));
+		content.single = tag1;
+		content2.single = tag2;
+		entity.contentList.add(content);
+		entity.contentList.add(content2);
 
 		DbAction.Insert<?> parentInsert1 = createInsert("contentList", content, 0);
 		DbAction.Insert<?> parentInsert2 = createInsert("contentList", content2, 1);
@@ -238,11 +225,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		aggregateChange.addAction(insert1);
 		aggregateChange.addAction(insert2);
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
+		executor.execute(aggregateChange);
 
-		entity = aggregateChange.getEntity();
-
-		assertSoftly(softly -> {
+		SoftAssertions.assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList) //
@@ -254,9 +239,11 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void setIdForDeepElementListElementList() {
 
-		content = content.withTagList(singletonList(tag1));
-		content2 = content2.withTagList(asList(tag2, tag3));
-		entity = entity.withContentList(asList(content, content2));
+		content.tagList.add(tag1);
+		content2.tagList.add(tag2);
+		content2.tagList.add(tag3);
+		entity.contentList.add(content);
+		entity.contentList.add(content2);
 
 		DbAction.Insert<?> parentInsert1 = createInsert("contentList", content, 0);
 		DbAction.Insert<?> parentInsert2 = createInsert("contentList", content2, 1);
@@ -272,11 +259,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		aggregateChange.addAction(insert2);
 		aggregateChange.addAction(insert3);
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
+		executor.execute(aggregateChange);
 
-		entity = aggregateChange.getEntity();
-
-		assertSoftly(softly -> {
+		SoftAssertions.assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList) //
@@ -292,8 +277,11 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@Test // DATAJDBC-291
 	public void setIdForDeepElementMapElementMap() {
 
-		content = content.withTagMap(createTagMap("111", tag1, "222", tag2, "333", tag3));
-		entity = entity.withContentMap(createContentMap("one", content, "two", content2));
+		content.tagMap.put("111", tag1);
+		content2.tagMap.put("222", tag2);
+		content2.tagMap.put("333", tag3);
+		entity.contentMap.put("one", content);
+		entity.contentMap.put("two", content2);
 
 		DbAction.Insert<?> parentInsert1 = createInsert("contentMap", content, "one");
 		DbAction.Insert<?> parentInsert2 = createInsert("contentMap", content2, "two");
@@ -309,11 +297,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		aggregateChange.addAction(insert2);
 		aggregateChange.addAction(insert3);
 
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
+		executor.execute(aggregateChange);
 
-		entity = aggregateChange.getEntity();
-
-		assertSoftly(softly -> {
+		SoftAssertions.assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentMap.entrySet()) //
@@ -330,78 +316,6 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		});
 	}
 
-	@Test // DATAJDBC-291
-	public void setIdForDeepElementListSingleReferenceWithIntermittentNoId() {
-
-		contentNoId = contentNoId.withSingle(tag1);
-		contentNoId2 = contentNoId2.withSingle(tag2);
-		entity = entity.withContentNoIdList(asList(contentNoId, contentNoId2));
-
-		DbAction.Insert<?> parentInsert1 = createInsert("contentNoIdList", contentNoId, 0);
-		DbAction.Insert<?> parentInsert2 = createInsert("contentNoIdList", contentNoId2, 1);
-		DbAction.Insert<?> insert1 = createDeepInsert("single", tag1, null, parentInsert1);
-		DbAction.Insert<?> insert2 = createDeepInsert("single", tag2, null, parentInsert2);
-
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
-		aggregateChange.addAction(rootInsert);
-		aggregateChange.addAction(parentInsert1);
-		aggregateChange.addAction(parentInsert2);
-		aggregateChange.addAction(insert1);
-		aggregateChange.addAction(insert2);
-
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
-
-		entity = aggregateChange.getEntity();
-
-		assertSoftly(softly -> {
-
-			softly.assertThat(entity.rootId).isEqualTo(1);
-			softly.assertThat(entity.contentNoIdList) //
-					.extracting(c -> c.single.id) //
-					.containsExactly(2, 3); //
-		});
-	}
-
-	@Test // DATAJDBC-291
-	public void setIdForEmbeddedDeepReference() {
-
-		contentNoId = contentNoId2.withSingle(tag1);
-		entity = entity.withEmbedded(contentNoId);
-
-		DbAction.Insert<?> parentInsert = createInsert("embedded.single", tag1, null);
-
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
-		aggregateChange.addAction(rootInsert);
-		aggregateChange.addAction(parentInsert);
-
-		aggregateChange.executeWith(new IdSettingInterpreter(), context, converter);
-
-		entity = aggregateChange.getEntity();
-
-		assertThat(entity.rootId).isEqualTo(1);
-		assertThat(entity.embedded.single.id).isEqualTo(2);
-	}
-
-	private static Map<String, Content> createContentMap(Object... keysAndValues) {
-
-		Map<String, Content> contentMap = new HashMap<>();
-
-		for (int i = 0; i < keysAndValues.length; i += 2) {
-			contentMap.put((String) keysAndValues[i], (Content) keysAndValues[i + 1]);
-		}
-		return unmodifiableMap(contentMap);
-	}
-
-	private static Map<String, Tag> createTagMap(Object... keysAndValues) {
-
-		Map<String, Tag> contentMap = new HashMap<>();
-
-		for (int i = 0; i < keysAndValues.length; i += 2) {
-			contentMap.put((String) keysAndValues[i], (Tag) keysAndValues[i + 1]);
-		}
-		return unmodifiableMap(contentMap);
-	}
-
 	DbAction.Insert<?> createInsert(String propertyName, Object value, @Nullable Object key) {
 
 		DbAction.Insert<Object> insert = new DbAction.Insert<>(value,
@@ -414,8 +328,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, Object key,
 			@Nullable DbAction.Insert<?> parentInsert) {
 
-		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, toPath(entity, value), parentInsert);
-		insert.getQualifiers().put(toPath(parentInsert.getPropertyPath().toDotPath() + "." + propertyName), key);
+		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = toPath(parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
+		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, propertyPath, parentInsert);
+		insert.getQualifiers().put(propertyPath, key);
 		return insert;
 	}
 
@@ -428,92 +343,34 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
 
-	PersistentPropertyPath<RelationalPersistentProperty> toPath(DummyEntity root, Object pathValue) {
-		// DefaultPersistentPropertyPath is package-public
-		return new WritingContext(context, entity, AggregateChange.forSave(root)).insert().stream()
-				.filter(a -> a instanceof DbAction.Insert).map(DbAction.Insert.class::cast)
-				.filter(a -> a.getEntity() == pathValue).map(DbAction.Insert::getPropertyPath).findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No matching path found for " + pathValue));
-	}
-
-	@Value
-	@Wither
-	@AllArgsConstructor
 	private static class DummyEntity {
 
 		@Id Integer rootId;
+
 		Content single;
-		Set<Content> contentSet;
-		List<Content> contentList;
-		Map<String, Content> contentMap;
-		List<ContentNoId> contentNoIdList;
-		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) ContentNoId embedded;
 
-		DummyEntity() {
+		Set<Content> contentSet = new HashSet<>();
 
-			rootId = null;
-			single = null;
-			contentSet = emptySet();
-			contentList = emptyList();
-			contentMap = emptyMap();
-			contentNoIdList = emptyList();
-			embedded = new ContentNoId();
-		}
+		List<Content> contentList = new ArrayList<>();
+
+		Map<String, Content> contentMap = new HashMap<>();
 	}
 
-	@Value
-	@Wither
-	@AllArgsConstructor
 	private static class Content {
 
 		@Id Integer id;
-		Tag single;
-		Set<Tag> tagSet;
-		List<Tag> tagList;
-		Map<String, Tag> tagMap;
-
-		Content() {
-
-			id = null;
-			single = null;
-			tagSet = emptySet();
-			tagList = emptyList();
-			tagMap = emptyMap();
-		}
-	}
-
-	@Value
-	@Wither
-	@AllArgsConstructor
-	private static class ContentNoId {
 
 		Tag single;
-		Set<Tag> tagSet;
-		List<Tag> tagList;
-		Map<String, Tag> tagMap;
 
-		ContentNoId() {
+		Set<Tag> tagSet = new HashSet<>();
 
-			single = null;
-			tagSet = emptySet();
-			tagList = emptyList();
-			tagMap = emptyMap();
-		}
+		List<Tag> tagList = new ArrayList<>();
+
+		Map<String, Tag> tagMap = new HashMap<>();
 	}
 
-	@Value
-	@Wither
-	@AllArgsConstructor
 	private static class Tag {
-
 		@Id Integer id;
-
-		String name;
-
-		Tag(String name) {
-			id = null;
-			this.name = name;
-		}
 	}
 
 	private static class IdSettingInterpreter implements Interpreter {
@@ -521,16 +378,13 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		@Override
 		public <T> void interpret(DbAction.Insert<T> insert) {
-
-			if (insert.getEntityType().getSimpleName().endsWith("NoId")) {
-				return;
-			}
 			insert.setGeneratedId(++id);
 		}
 
 		@Override
 		public <T> void interpret(DbAction.InsertRoot<T> insert) {
 			insert.setGeneratedId(++id);
+
 		}
 
 		@Override

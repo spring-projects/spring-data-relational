@@ -60,6 +60,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	private final RelationalEntityUpdateWriter jdbcEntityUpdateWriter;
 
 	private final DataAccessStrategy accessStrategy;
+	private final AggregateChangeExecutor executor;
 
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
 
@@ -91,6 +92,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 		this.interpreter = new DefaultJdbcInterpreter(context, accessStrategy);
 
+		this.executor = new AggregateChangeExecutor(interpreter, converter);
+
 		setEntityCallbacks(EntityCallbacks.create(publisher));
 	}
 
@@ -120,6 +123,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 		this.interpreter = new DefaultJdbcInterpreter(context, accessStrategy);
+
+		this.executor = new AggregateChangeExecutor(interpreter, converter);
 	}
 
 	/**
@@ -292,7 +297,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		AggregateChange<?> change = createDeletingChange(domainType);
-		change.executeWith(interpreter, context, converter);
+		executor.execute(change);
 	}
 
 	private <T> T store(T aggregateRoot, Function<T, AggregateChange<T>> changeCreator,
@@ -309,7 +314,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		change.setEntity(aggregateRoot);
 
-		change.executeWith(interpreter, context, converter);
+		executor.execute(change);
 
 		Object identifier = persistentEntity.getIdentifierAccessor(change.getEntity()).getIdentifier();
 
@@ -325,7 +330,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		entity = triggerBeforeDelete(entity, id, change);
 		change.setEntity(entity);
 
-		change.executeWith(interpreter, context, converter);
+		executor.execute(change);
 
 		triggerAfterDelete(entity, id, change);
 	}
