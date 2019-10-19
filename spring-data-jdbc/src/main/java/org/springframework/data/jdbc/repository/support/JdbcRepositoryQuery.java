@@ -17,6 +17,11 @@ package org.springframework.data.jdbc.repository.support;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -103,9 +108,16 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		if (queryMethod.isModifyingQuery()) {
 			return createModifyingQueryExecutor(query);
 		}
+
+		if (queryMethod.isOpenStreamQuery()) {
+			QueryExecutor<Object> innerExecutor = createRowMapperOpenQueryStreamExecutor(query, rowMapper, extractor);
+			return createOpenStreamQueryExecutor(innerExecutor);
+		}
+
 		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
 			QueryExecutor<Object> innerExecutor = extractor != null ? createResultSetExtractorQueryExecutor(query, extractor)
 					: createListRowMapperQueryExecutor(query, rowMapper);
+
 			return createCollectionQueryExecutor(innerExecutor);
 		}
 
@@ -170,6 +182,19 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		};
 	}
 
+	private QueryExecutor<Object> createOpenStreamQueryExecutor(QueryExecutor<Object> executor) {
+		return parameters -> {
+
+			Stream<?> result = (Stream<?>) executor.execute(parameters);
+
+			Assert.notNull(result, "A stream valued result must never be null.");
+
+			return result.peek(element -> {
+				publishAfterLoad(element);
+			});
+		};
+	}
+
 	private QueryExecutor<Object> createListRowMapperQueryExecutor(String query, RowMapper<?> rowMapper) {
 		return parameters -> operations.query(query, parameters, rowMapper);
 	}
@@ -181,6 +206,21 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private QueryExecutor<Object> createResultSetExtractorQueryExecutor(String query,
 			ResultSetExtractor<?> resultSetExtractor) {
 		return parameters -> operations.query(query, parameters, resultSetExtractor);
+	}
+
+	private QueryExecutor<Object> createRowMapperOpenQueryStreamExecutor(String query, RowMapper rowMapper, ResultSetExtractor extractor) {
+		JdbcOpenRowSetTemplate openResultSetNamedParameterJdbcTemplate =
+				new JdbcOpenRowSetTemplate(operations.getJdbcOperations());
+		return parameters -> {
+			final JdbcOpenSqlRowSet rowSet =
+					openResultSetNamedParameterJdbcTemplate.queryForOpenCursorRowSet(query, parameters, queryMethod.getStreamQueryFetchSized());
+
+			final Spliterator<Object> spliterator = Spliterators
+					.spliteratorUnknownSize(new JdbcOpenSqlRowSetIterator<Object>(rowSet, rowMapper, extractor), Spliterator.IMMUTABLE);
+			final Supplier<Spliterator<Object>> supplier = () -> spliterator;
+			return StreamSupport.stream(supplier, Spliterator.IMMUTABLE, false)
+                    .onClose(rowSet::close);
+		};
 	}
 
 	/*

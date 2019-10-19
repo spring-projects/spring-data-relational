@@ -21,6 +21,7 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jdbc.repository.query.QueryStream;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryMethod;
@@ -94,5 +95,25 @@ public class JdbcQueryMethod extends QueryMethod {
 
 		Query queryAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, Query.class);
 		return (T) AnnotationUtils.getValue(queryAnnotation, attribute);
+	}
+
+	/**
+	 * Returns whether the resulting {@link java.util.stream.Stream} will be
+	 * backed by a {@link JdbcOpenSqlRowSet}
+	 * @return if the {@link java.util.stream.Stream} is backed by an {@link JdbcOpenSqlRowSet}, returns true
+	 */
+	public boolean isOpenStreamQuery() {
+		return AnnotatedElementUtils.findMergedAnnotation(method, QueryStream.class) != null;
+	}
+
+	/**
+	 * Returns the fetch size used by the backing {@link JdbcOpenSqlRowSet} to fetch more rows
+	 * when needed.
+	 * @return the number of rows to fetch when needed.
+	 */
+	@Nullable
+	public Integer getStreamQueryFetchSized() {
+		QueryStream queryStreamAnnotation = AnnotatedElementUtils.findMergedAnnotation(method, QueryStream.class);
+		return (Integer) AnnotationUtils.getValue(queryStreamAnnotation, "fetchSize");
 	}
 }
