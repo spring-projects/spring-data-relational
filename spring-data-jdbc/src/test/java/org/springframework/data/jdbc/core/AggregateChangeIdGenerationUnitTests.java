@@ -325,10 +325,11 @@ public class AggregateChangeIdGenerationUnitTests {
 		return insert;
 	}
 
-	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, Object key,
-			@Nullable DbAction.Insert<?> parentInsert) {
+	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, @Nullable Object key,
+			DbAction.Insert<?> parentInsert) {
 
-		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = toPath(parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
+		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = toPath(
+				parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
 		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, propertyPath, parentInsert);
 		insert.getQualifiers().put(propertyPath, key);
 		return insert;
@@ -339,7 +340,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		PersistentPropertyPaths<?, RelationalPersistentProperty> persistentPropertyPaths = context
 				.findPersistentPropertyPaths(DummyEntity.class, p -> true);
 
-		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst()
+		return persistentPropertyPaths.filter(p -> path.equals(p.toDotPath())).stream().findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
 
