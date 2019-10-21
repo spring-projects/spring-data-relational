@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -95,7 +95,7 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
 	@Value
-	@Wither
+	@With
 	static class DummyEntity {
 
 		@Id Long id;
@@ -104,7 +104,7 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	private static class Embeddable {
 
 		Long attr1;

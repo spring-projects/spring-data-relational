@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import lombok.experimental.Wither;
+import lombok.With;
 
 import org.apache.ibatis.type.Alias;
 import org.springframework.data.annotation.Id;
@@ -26,7 +26,7 @@ import org.springframework.data.annotation.Id;
 @Alias("DummyEntity")
 class DummyEntity {
 
-	@Wither @Id final Long id;
+	@With @Id final Long id;
 	final String name;
 
 	public DummyEntity(Long id, String name) {

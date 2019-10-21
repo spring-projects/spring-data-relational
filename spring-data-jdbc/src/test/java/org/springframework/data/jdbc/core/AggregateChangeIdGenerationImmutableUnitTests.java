@@ -22,7 +22,7 @@ import static org.assertj.core.api.SoftAssertions.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.util.HashMap;
 import java.util.List;
@@ -436,7 +436,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class DummyEntity {
 
@@ -461,7 +461,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class Content {
 
@@ -482,7 +482,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class ContentNoId {
 
@@ -501,7 +501,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@AllArgsConstructor
 	private static class Tag {
 

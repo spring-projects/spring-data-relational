@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 import junit.framework.AssertionFailedError;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -235,7 +235,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
 	@Value
-	@Wither
+	@With
 	@RequiredArgsConstructor
 	static class DummyEntity {
 		@Id Long id;

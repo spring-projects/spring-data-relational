@@ -19,7 +19,7 @@ import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
@@ -270,7 +270,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	static class LegoSet {
 
 		@Id Long id;
@@ -280,7 +280,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	static class Manual {
 
 		@Id Long id;
@@ -288,7 +288,7 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	static class Author {
 
 		@Id Long id;
