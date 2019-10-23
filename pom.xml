@@ -30,7 +30,7 @@
 		<postgresql.version>42.2.5</postgresql.version>
 		<mysql.version>5.1.47</mysql.version>
 		<jasync.version>1.0.6</jasync.version>
-		<r2dbc-mysql.version>0.8.0.RC1</r2dbc-mysql.version>
+		<r2dbc-mysql.version>0.8.0.RC2</r2dbc-mysql.version>
 		<r2dbc-spi-test.version>0.8.0.RC2</r2dbc-spi-test.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
 		<r2dbc-releasetrain.version>Arabba-RC2</r2dbc-releasetrain.version>
