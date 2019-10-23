@@ -391,7 +391,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
 					resultFunction, //
-					it -> resultFunction.apply(it).flatMap(Result::getRowsUpdated).next(), //
+					it -> sumRowsUpdated(resultFunction, it), //
 					mappingFunction);
 		}
 

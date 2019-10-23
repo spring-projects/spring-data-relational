@@ -56,7 +56,7 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 
 		@Override
 		public Mono<Integer> rowsUpdated() {
-			return Mono.empty();
+			return Mono.just(0);
 		}
 	};
 
