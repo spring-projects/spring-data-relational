@@ -120,7 +120,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, converter, accessStrategy);
 
 		SimpleJdbcRepository<?, Object> repository = new SimpleJdbcRepository<>(template,
-				context.getPersistentEntity(repositoryInformation.getDomainType()));
+				context.getRequiredPersistentEntity(repositoryInformation.getDomainType()));
 
 		if (entityCallbacks != null) {
 			template.setEntityCallbacks(entityCallbacks);
