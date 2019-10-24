@@ -1473,7 +1473,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 *
 	 * @see Connection#close()
 	 */
-	private class CloseSuppressingInvocationHandler implements InvocationHandler {
+	private static class CloseSuppressingInvocationHandler implements InvocationHandler {
 
 		private final Connection target;
 
@@ -1493,13 +1493,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				// Use hashCode of PersistenceManager proxy.
 				return System.identityHashCode(proxy);
 			} else if (method.getName().equals("unwrap")) {
-				if (((Class<?>) args[0]).isInstance(proxy)) {
-					return proxy;
-				}
-			} else if (method.getName().equals("isWrapperFor")) {
-				if (((Class<?>) args[0]).isInstance(proxy)) {
-					return true;
-				}
+				return target;
 			} else if (method.getName().equals("close")) {
 				// Handle close method: suppress, not valid.
 				return Mono.error(new UnsupportedOperationException("Close is not supported!"));
