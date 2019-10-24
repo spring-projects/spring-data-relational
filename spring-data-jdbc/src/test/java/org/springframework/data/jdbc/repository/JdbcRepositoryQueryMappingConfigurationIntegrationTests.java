@@ -15,7 +15,10 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,9 +46,6 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
 /**
  * Very simple use cases for creation and usage of {@link ResultSetExtractor}s in JdbcRepository.
  *
@@ -66,7 +66,7 @@ public class JdbcRepositoryQueryMappingConfigurationIntegrationTests {
 		Class<?> testClass() {
 			return JdbcRepositoryQueryMappingConfigurationIntegrationTests.class;
 		}
-		
+
 		@Bean
 		QueryMappingConfiguration mappers() {
 			return new DefaultQueryMappingConfiguration();
@@ -78,7 +78,7 @@ public class JdbcRepositoryQueryMappingConfigurationIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired CarRepository carRepository;
-	
+
 	@Test // DATAJDBC-290
 	public void customFindAllCarsUsesConfiguredResultSetExtractor() {
 
@@ -88,28 +88,27 @@ public class JdbcRepositoryQueryMappingConfigurationIntegrationTests {
 		assertThat(cars).hasSize(1);
 		assertThat(cars).allMatch(car -> CAR_MODEL.equals(car.getModel()));
 	}
-	
+
 	interface CarRepository extends CrudRepository<Car, Long> {
 
 		@Query(value = "select * from car", resultSetExtractorClass = CarResultSetExtractor.class)
 		List<Car> customFindAll();
 	}
-	
+
 	@Data
 	@AllArgsConstructor
 	static class Car {
 
-		@Id
-		private Long id;
+		@Id private Long id;
 		private String model;
 	}
-	
+
 	static class CarResultSetExtractor implements ResultSetExtractor<List<Car>> {
 
 		@Override
 		public List<Car> extractData(ResultSet rs) throws SQLException, DataAccessException {
 			return Arrays.asList(new Car(1L, CAR_MODEL));
 		}
-		
+
 	}
 }

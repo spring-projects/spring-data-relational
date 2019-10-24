@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
