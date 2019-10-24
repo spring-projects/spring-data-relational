@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
@@ -145,7 +146,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	@Configuration
 	@ComponentScan("org.springframework.data.jdbc.testing")
-	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@EnableJdbcRepositories(includeFilters = @ComponentScan.Filter(type = FilterType.REGEX,
+			pattern = ".*\\.JdbcRepositoryIdGenerationIntegrationTests\\$.*"), considerNestedRepositories = true)
 	static class TestConfiguration {
 
 		AtomicLong lastId = new AtomicLong(0);

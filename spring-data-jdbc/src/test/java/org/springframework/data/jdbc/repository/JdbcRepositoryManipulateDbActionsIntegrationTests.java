@@ -33,7 +33,9 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
@@ -185,7 +187,8 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@EnableJdbcRepositories(includeFilters = @ComponentScan.Filter(type = FilterType.REGEX,
+			pattern = ".*\\.JdbcRepositoryManipulateDbActionsIntegrationTests\\$.*"), considerNestedRepositories = true)
 	static class Config {
 
 		static long lastLogId;
