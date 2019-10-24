@@ -19,7 +19,8 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
 import io.r2dbc.spi.Wrapped;
-import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
+
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -47,8 +48,8 @@ public class DelegatingConnectionFactory implements ConnectionFactory, Wrapped<C
 	 * @see io.r2dbc.spi.ConnectionFactory#create()
 	 */
 	@Override
-	public Publisher<? extends Connection> create() {
-		return targetConnectionFactory.create();
+	public Mono<? extends Connection> create() {
+		return Mono.from(targetConnectionFactory.create());
 	}
 
 	/**
