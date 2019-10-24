@@ -23,7 +23,7 @@ import java.lang.annotation.*;
  * {@link java.sql.ResultSet} that will fetch rows as needed. It is responsibility of
  * the client code to close all resources via {@link java.util.stream.Stream#close()}.
  *
- * @author detinho
+ * @author Marcos Vinicius da Silva
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

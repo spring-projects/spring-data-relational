@@ -26,7 +26,7 @@ import org.springframework.jdbc.core.RowMapper;
  * An iterator implementation that wraps a {@link JdbcOpenSqlRowSet} and applies
  * an {@link RowMapper} or {@link ResultSetExtractor} to each row.
  *
- * @author detinho
+ * @author Marcos Vinicius da Silva
  */
 class JdbcOpenSqlRowSetIterator<T> implements Iterator<T> {
     private final JdbcOpenSqlRowSet openCursorSqlRowSet;

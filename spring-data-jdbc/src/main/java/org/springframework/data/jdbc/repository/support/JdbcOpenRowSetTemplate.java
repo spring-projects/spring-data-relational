@@ -32,7 +32,7 @@ import org.springframework.util.Assert;
 /**
  * An extended {@link NamedParameterJdbcTemplate} to return an {@link JdbcOpenSqlRowSet}.
  *
- * @author detinho
+ * @author Marcos Vinicius da Silva
  */
 class JdbcOpenRowSetTemplate extends NamedParameterJdbcTemplate {
 

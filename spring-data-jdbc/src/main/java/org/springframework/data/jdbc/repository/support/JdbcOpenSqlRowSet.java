@@ -35,7 +35,7 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
  * the {@link DataSource} that originated the {@link ResultSet} and releases
  * the resources when {@link JdbcOpenSqlRowSet#close()} is called.
  *
- * @author detinho
+ * @author Marcos Vinicius da Silva
  */
 class JdbcOpenSqlRowSet extends ResultSetWrappingSqlRowSet implements AutoCloseable {
     private final DataSource dataSource;
