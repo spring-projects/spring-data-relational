@@ -15,9 +15,13 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Locale;
 
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 
 /**
@@ -55,4 +59,11 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 		return getModuleName().toLowerCase(Locale.US);
 	}
 
+	/**
+	 * In strict mode only domain types having a {@link Table} annotation get a repository.
+	 */
+	@Override
+	protected Collection<Class<? extends Annotation>> getIdentifyingAnnotations() {
+		return Collections.singleton(Table.class);
+	}
 }
