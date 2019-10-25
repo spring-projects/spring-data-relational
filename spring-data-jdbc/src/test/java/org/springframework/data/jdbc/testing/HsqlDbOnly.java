@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 /**
  * Run the annotated test only against a HsqlDb database.
  *
- * Requires the use of
+ * Requires the use of {@code @ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)} on the test.
  *
  * @author Jens Schauder
  */
