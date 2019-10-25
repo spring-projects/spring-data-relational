@@ -30,9 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
@@ -61,10 +59,7 @@ public class JdbcRepositoryQueryMappingConfigurationIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(
-			includeFilters = @ComponentScan.Filter(type = FilterType.REGEX,
-					pattern = ".*\\.JdbcRepositoryQueryMappingConfigurationIntegrationTests\\$.*"),
-			considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true)
 	static class Config {
 
 		@Bean

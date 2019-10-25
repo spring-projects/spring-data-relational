@@ -37,7 +37,6 @@ import org.springframework.data.repository.config.RepositoryConfigurationSource;
  * Unit tests for {@link JdbcRepositoryConfigExtension}.
  *
  * @author Jens Schauder
- * @since 1.2
  */
 public class JdbcRepositoryConfigExtensionUnitTests {
 
@@ -54,9 +53,11 @@ public class JdbcRepositoryConfigExtensionUnitTests {
 
 		JdbcRepositoryConfigExtension extension = new JdbcRepositoryConfigExtension();
 
-		Collection<RepositoryConfiguration<RepositoryConfigurationSource>> configs = extension.getRepositoryConfigurations(configurationSource, loader, true);
+		Collection<RepositoryConfiguration<RepositoryConfigurationSource>> configs = extension
+				.getRepositoryConfigurations(configurationSource, loader, true);
 
-		assertThat(configs).extracting(config -> config.getRepositoryInterface()).containsExactly(SampleRepository.class.getName());
+		assertThat(configs).extracting(config -> config.getRepositoryInterface())
+				.containsExactly(SampleRepository.class.getName());
 	}
 
 	@EnableJdbcRepositories(considerNestedRepositories = true)
@@ -69,5 +70,7 @@ public class JdbcRepositoryConfigExtensionUnitTests {
 
 	interface SampleRepository extends Repository<Sample, Long> {}
 
-	interface UnannotatedRepository extends Repository<Object, Long> {}
+	static class Unannotated {}
+
+	interface UnannotatedRepository extends Repository<Unannotated, Long> {}
 }

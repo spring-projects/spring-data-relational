@@ -146,8 +146,7 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	@Configuration
 	@ComponentScan("org.springframework.data.jdbc.testing")
-	@EnableJdbcRepositories(includeFilters = @ComponentScan.Filter(type = FilterType.REGEX,
-			pattern = ".*\\.JdbcRepositoryIdGenerationIntegrationTests\\$.*"), considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true)
 	static class TestConfiguration {
 
 		AtomicLong lastId = new AtomicLong(0);

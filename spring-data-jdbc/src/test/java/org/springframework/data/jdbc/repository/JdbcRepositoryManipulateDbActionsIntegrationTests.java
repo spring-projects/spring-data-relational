@@ -187,8 +187,7 @@ public class JdbcRepositoryManipulateDbActionsIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(includeFilters = @ComponentScan.Filter(type = FilterType.REGEX,
-			pattern = ".*\\.JdbcRepositoryManipulateDbActionsIntegrationTests\\$.*"), considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true)
 	static class Config {
 
 		static long lastLogId;
