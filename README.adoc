@@ -30,10 +30,10 @@ Here is a quick teaser of an application using Spring Data Repositories in Java:
 ----
 public interface PersonRepository extends CrudRepository<Person, Long> {
 
-	@Query("SELECT * FROM person WHERE lastname = :lastname")
+  @Query("SELECT * FROM person WHERE lastname = :lastname")
   Flux<Person> findByLastname(String lastname);
 
-	@Query("SELECT * FROM person WHERE firstname LIKE :lastname")
+  @Query("SELECT * FROM person WHERE firstname LIKE :lastname")
   Flux<Person> findByFirstnameLike(String firstname);
 }
 
