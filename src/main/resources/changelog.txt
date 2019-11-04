@@ -1,6 +1,16 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.1.RELEASE (2019-11-04)
+---------------------------------------------
+* DATAJDBC-437 - Spring Data JDBC does not consider properly strict configuration mode.
+* DATAJDBC-434 - CONTRIBUTING.adoc is missing.
+* DATAJDBC-431 - @ReadOnlyProperty is not honoured by Spring Data JDBC.
+* DATAJDBC-428 - EntityRowMapper can not extract AggregateReference field for immutable entity.
+* DATAJDBC-427 - Implements equalsAndHashCode for AggregateReference.
+* DATAJDBC-423 - Release 1.1.1 (Moore SR1).
+
+
 Changes in version 1.0.12.RELEASE (2019-11-04)
 ----------------------------------------------
 * DATAJDBC-437 - Spring Data JDBC does not consider properly strict configuration mode.
