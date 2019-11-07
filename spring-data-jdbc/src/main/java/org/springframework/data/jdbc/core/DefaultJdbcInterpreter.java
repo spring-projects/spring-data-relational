@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.Collections;
 import java.util.Map;
 
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
@@ -46,6 +47,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 @RequiredArgsConstructor
 class DefaultJdbcInterpreter implements Interpreter {
@@ -82,7 +84,12 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(Update<T> update) {
-		accessStrategy.update(update.getEntity(), update.getEntityType());
+		boolean updated = accessStrategy.update(update.getEntity(), update.getEntityType());
+		if (!updated) {
+			Object idValue = getIdFrom(update);
+			throw new TransientDataAccessResourceException(String.format(
+				"Failed to update entity [%s]. Id [%s] does not exist.", update.getEntityType(), idValue));
+		}
 	}
 
 	/*
@@ -91,7 +98,12 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(UpdateRoot<T> update) {
-		accessStrategy.update(update.getEntity(), update.getEntityType());
+		boolean updated = accessStrategy.update(update.getEntity(), update.getEntityType());
+		if (!updated) {
+			Object idValue = getIdFrom(update);
+			throw new TransientDataAccessResourceException(String.format(
+				"Failed to update root [%s]. Id [%s] does not exist.", update.getEntityType(), idValue));
+		}
 	}
 
 	/*

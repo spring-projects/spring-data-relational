@@ -48,6 +48,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.HsqlDbOnly;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -67,6 +68,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Thomas Lang
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 @ContextConfiguration
 @Transactional
@@ -201,6 +203,14 @@ public class JdbcAggregateTemplateIntegrationTests {
 		softly.assertThat(template.findAll(Manual.class)).describedAs("Manuals failed to delete").isEmpty();
 
 		softly.assertAll();
+	}
+
+	@Test(expected = DbActionExecutionException.class)  // DATAJDBC-438
+	public void updateFailedRootDoesNotExist() {
+		LegoSet entity = new LegoSet();
+		entity.setId(100L);	// not exist
+
+		template.save(entity);
 	}
 
 	@Test // DATAJDBC-112
