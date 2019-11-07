@@ -25,12 +25,14 @@ import java.util.List;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
+import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
@@ -40,6 +42,7 @@ import org.springframework.data.relational.domain.Identifier;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 public class DefaultJdbcInterpreterUnitTests {
 
@@ -151,6 +154,15 @@ public class DefaultJdbcInterpreterUnitTests {
 						tuple("root_with_list_key", 3, Integer.class), // midlevel key
 						tuple("with_list_key", 6, Integer.class) // lowlevel key
 				);
+	}
+
+	@Test(expected = TransientDataAccessResourceException.class) // DATAJDBC-438
+	public void throwExceptionUpdateFailedRootDoesNotExist() {
+		container.id = CONTAINER_ID;
+		UpdateRoot<Container> containerUpdate = new UpdateRoot<>(container);
+		when(dataAccessStrategy.update(container, Container.class)).thenReturn(false);
+
+		interpreter.interpret(containerUpdate);
 	}
 
 	@SuppressWarnings("unused")
