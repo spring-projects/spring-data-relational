@@ -1,19 +1,5 @@
 language: java
 
-matrix:
-  include:
-    - jdk: openjdk8
-      env: JDK='Open JDK 8'
-    - jdk: openjdk9
-      env: JDK='Open JDK 9'
-    - jdk: openjdk10
-      env:
-      - JDK='Open JDK 10'
-      - NO_JACOCO='true'
-    - jdk: openjdk11
-      env:
-      - JDK='Open JDK 11'
-      - NO_JACOCO='true'
 cache:
   directories:
     - $HOME/.m2
@@ -27,5 +13,5 @@ install: true
 
 script:
   - "echo 'microsoft/mssql-server-linux:2017-CU6' > spring-data-jdbc/src/test/resources/container-license-acceptance.txt"
-  - "mvn -version"
-  - "mvn clean dependency:list test -Pall-dbs${NO_JACOCO:+',no-jacoco'} -Dsort -U"
+  - "./mvnw -version"
+  - "./mvnw -Pjava11 clean dependency:list test -Pall-dbs${NO_JACOCO:+',no-jacoco'} -Dsort -U"
