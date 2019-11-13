@@ -117,7 +117,6 @@ public class RelationalEntityWriterUnitTests {
 				);
 	}
 
-
 	@Test // DATAJDBC-112
 	public void newEntityWithReferenceGetsConvertedToTwoInserts() {
 
@@ -551,6 +550,7 @@ public class RelationalEntityWriterUnitTests {
 						tuple(InsertRoot.class, EmbeddedReferenceChainEntity.class, "", EmbeddedReferenceChainEntity.class, false) //
 				);
 	}
+
 	@Test // DATAJDBC-417
 	public void savingInnerNullEmbeddedWithEntity() {
 
@@ -570,7 +570,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
-						tuple(InsertRoot.class, RootWithEmbeddedReferenceChainEntity.class, "", RootWithEmbeddedReferenceChainEntity.class, false), //
+						tuple(InsertRoot.class, RootWithEmbeddedReferenceChainEntity.class, "",
+								RootWithEmbeddedReferenceChainEntity.class, false), //
 						tuple(Insert.class, EmbeddedReferenceChainEntity.class, "other", EmbeddedReferenceChainEntity.class, true) //
 				);
 	}
@@ -636,6 +637,7 @@ public class RelationalEntityWriterUnitTests {
 		@Id final Long id;
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") ElementReference other;
 	}
+
 	@RequiredArgsConstructor
 	static class RootWithEmbeddedReferenceChainEntity {
 

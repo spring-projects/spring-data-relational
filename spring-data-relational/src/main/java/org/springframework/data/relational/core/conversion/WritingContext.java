@@ -16,7 +16,7 @@
 package org.springframework.data.relational.core.conversion;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +36,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Bastian Wilhelm
+ * @author Mark Paluch
  */
 class WritingContext {
 
@@ -116,6 +117,7 @@ class WritingContext {
 		return actions;
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<DbAction<?>> insertAll(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
 		List<DbAction<?>> actions = new ArrayList<>();
@@ -126,7 +128,6 @@ class WritingContext {
 			DbAction.Insert<Object> insert;
 			if (node.getPath().getRequiredLeafProperty().isQualified()) {
 
-				@SuppressWarnings("unchecked")
 				Pair<Object, Object> value = (Pair) node.getValue();
 				insert = new DbAction.Insert<>(value.getSecond(), path, parentAction);
 				insert.getQualifiers().put(node.getPath(), value.getFirst());
@@ -240,8 +241,9 @@ class WritingContext {
 	@Nullable
 	private Object getFromRootValue(PersistentPropertyPath<RelationalPersistentProperty> path) {
 
-		if (path.getLength() == 0)
+		if (path.getLength() == 0) {
 			return entity;
+		}
 
 		Object parent = getFromRootValue(path.getParentPath());
 		if (parent == null) {
@@ -274,7 +276,11 @@ class WritingContext {
 				}
 			}
 		} else if (path.getRequiredLeafProperty().isCollectionLike()) { // collection value
-			((Collection<?>) value).forEach(v -> nodes.add(new PathNode(path, parentNode, v)));
+			if (value.getClass().isArray()) {
+				Arrays.asList((Object[]) value).forEach(v -> nodes.add(new PathNode(path, parentNode, v)));
+			} else {
+				((Iterable<?>) value).forEach(v -> nodes.add(new PathNode(path, parentNode, v)));
+			}
 		} else { // single entity value
 			nodes.add(new PathNode(path, parentNode, value));
 		}
