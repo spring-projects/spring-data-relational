@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-
+import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -156,13 +156,18 @@ public class DefaultJdbcInterpreterUnitTests {
 				);
 	}
 
-	@Test(expected = TransientDataAccessResourceException.class) // DATAJDBC-438
+	@Test // DATAJDBC-438
 	public void throwExceptionUpdateFailedRootDoesNotExist() {
+
 		container.id = CONTAINER_ID;
 		UpdateRoot<Container> containerUpdate = new UpdateRoot<>(container);
 		when(dataAccessStrategy.update(container, Container.class)).thenReturn(false);
 
-		interpreter.interpret(containerUpdate);
+		assertThatExceptionOfType(IncorrectUpdateSemanticsDataAccessException.class).isThrownBy(() -> {
+			interpreter.interpret(containerUpdate);
+		}) //
+				.withMessageContaining(Long.toString(CONTAINER_ID)) //
+				.withMessageContaining(container.toString());
 	}
 
 	@SuppressWarnings("unused")

@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.Collections;
 import java.util.Map;
 
-import org.springframework.dao.TransientDataAccessResourceException;
+import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
@@ -52,6 +52,7 @@ import org.springframework.util.Assert;
 @RequiredArgsConstructor
 class DefaultJdbcInterpreter implements Interpreter {
 
+	public static final String UPDATE_FAILED = "Failed to update entity [%s]. Id [%s] not found in database.";
 	private final RelationalMappingContext context;
 	private final DataAccessStrategy accessStrategy;
 
@@ -84,11 +85,11 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(Update<T> update) {
-		boolean updated = accessStrategy.update(update.getEntity(), update.getEntityType());
-		if (!updated) {
-			Object idValue = getIdFrom(update);
-			throw new TransientDataAccessResourceException(String.format(
-				"Failed to update entity [%s]. Id [%s] does not exist.", update.getEntityType(), idValue));
+
+		if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
+
+			throw new IncorrectUpdateSemanticsDataAccessException(
+					String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
 		}
 	}
 
@@ -98,11 +99,11 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(UpdateRoot<T> update) {
-		boolean updated = accessStrategy.update(update.getEntity(), update.getEntityType());
-		if (!updated) {
-			Object idValue = getIdFrom(update);
-			throw new TransientDataAccessResourceException(String.format(
-				"Failed to update root [%s]. Id [%s] does not exist.", update.getEntityType(), idValue));
+
+		if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
+
+			throw new IncorrectUpdateSemanticsDataAccessException(
+					String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
 		}
 	}
 

@@ -86,7 +86,6 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
-
 		doReturn(true).when(dataAccessStrategy).update(any(), any());
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher,

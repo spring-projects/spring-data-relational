@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,6 +41,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -205,12 +205,15 @@ public class JdbcAggregateTemplateIntegrationTests {
 		softly.assertAll();
 	}
 
-	@Test(expected = DbActionExecutionException.class)  // DATAJDBC-438
+	@Test // DATAJDBC-438
 	public void updateFailedRootDoesNotExist() {
-		LegoSet entity = new LegoSet();
-		entity.setId(100L);	// not exist
 
-		template.save(entity);
+		LegoSet entity = new LegoSet();
+		entity.setId(100L); // does not exist in the database
+
+		assertThatExceptionOfType(DbActionExecutionException.class) //
+				.isThrownBy(() -> template.save(entity)) //
+				.withCauseInstanceOf(IncorrectUpdateSemanticsDataAccessException.class);
 	}
 
 	@Test // DATAJDBC-112
@@ -622,7 +625,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 		template.save(entity);
 
 		assertThat(
-				jdbcTemplate.queryForObject("SELECT read_only FROM with_read_only", Collections.emptyMap(), String.class)).isEqualTo("from-db");
+				jdbcTemplate.queryForObject("SELECT read_only FROM with_read_only", Collections.emptyMap(), String.class))
+						.isEqualTo("from-db");
 	}
 
 	private static NoIdMapChain4 createNoIdMapTree() {
@@ -886,8 +890,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	static class WithReadOnly {
 		@Id Long id;
 		String name;
-		@ReadOnlyProperty
-		String readOnly;
+		@ReadOnlyProperty String readOnly;
 	}
 
 	@Configuration
