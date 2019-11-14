@@ -123,10 +123,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty#getColumnName()
-	 */
 	@Override
 	public String getColumnName() {
 		return columnName.get();
