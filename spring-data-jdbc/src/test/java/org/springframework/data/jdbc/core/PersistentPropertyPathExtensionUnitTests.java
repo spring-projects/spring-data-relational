@@ -21,17 +21,18 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.mapping.model.Property;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.core.mapping.*;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
-import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 import static org.assertj.core.api.SoftAssertions.*;
 
 /**
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  */
 public class PersistentPropertyPathExtensionUnitTests {
 
@@ -143,6 +144,33 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
+	@Test // DATAJDBC-444
+	public void getColumnAlias() {
+		CustomMappingContext customContext = new CustomMappingContext();
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(extPath("second.third2.value").getColumnAlias()).isEqualTo("second_thrdvalue");
+			softly.assertThat(extPath(customContext, "second.third2.value").getColumnAlias())
+				.isEqualTo("second_thrdvalue_x");
+			softly.assertThat(extPath("second.third.value").getColumnAlias()).isEqualTo("second_third_value");
+			softly.assertThat(extPath(customContext, "second.third.value").getColumnAlias())
+				.isEqualTo("second_third_value_x");
+			softly.assertThat(extPath("secondList.third2.value").getColumnAlias()).isEqualTo("secondList_thrdvalue");
+			softly.assertThat(extPath(customContext, "secondList.third2.value").getColumnAlias())
+				.isEqualTo("secondList_thrdvalue_x");
+			softly.assertThat(extPath("secondList.third.value").getColumnAlias()).isEqualTo("secondList_third_value");
+			softly.assertThat(extPath(customContext, "secondList.third.value").getColumnAlias())
+				.isEqualTo("secondList_third_value_x");
+			softly.assertThat(extPath("second2.third2.value").getColumnAlias()).isEqualTo("secthrdvalue");
+			softly.assertThat(extPath(customContext, "second2.third2.value").getColumnAlias())
+				.isEqualTo("secthrdvalue_x");
+			softly.assertThat(extPath("second2.third.value").getColumnAlias()).isEqualTo("secthird_value");
+			softly.assertThat(extPath(customContext, "second2.third.value").getColumnAlias())
+				.isEqualTo("secthird_value_x");
+		});
+	}
+
 	@Test // DATAJDBC-359
 	public void idDefiningPath() {
 
@@ -207,10 +235,15 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 	@NotNull
 	private PersistentPropertyPathExtension extPath(String path) {
-		return new PersistentPropertyPathExtension(context, createSimplePath(path));
+		return extPath(this.context, path);
 	}
 
-	PersistentPropertyPath<RelationalPersistentProperty> createSimplePath(String path) {
+	@NotNull
+	private PersistentPropertyPathExtension extPath(RelationalMappingContext context, String path) {
+		return new PersistentPropertyPathExtension(context, createSimplePath(context, path));
+	}
+
+	PersistentPropertyPath<RelationalPersistentProperty> createSimplePath(RelationalMappingContext context, String path) {
 		return PropertyPathTestingUtils.toPath(path, DummyEntity.class, context);
 	}
 
@@ -241,4 +274,26 @@ public class PersistentPropertyPathExtensionUnitTests {
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "sec") Second second2;
 	}
 
+	// DATAJDBC-444
+	private static class CustomMappingContext extends RelationalMappingContext {
+		@Override
+		protected RelationalPersistentProperty createPersistentProperty(
+			Property property, RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
+			return new CustomRelationalPersistentProperty(property, owner, simpleTypeHolder, this);
+		}
+	}
+
+	// DATAJDBC-444
+	private static class CustomRelationalPersistentProperty extends BasicRelationalPersistentProperty {
+		public CustomRelationalPersistentProperty(
+			Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
+			SimpleTypeHolder simpleTypeHolder, RelationalMappingContext context) {
+			super(property, owner, simpleTypeHolder, context);
+		}
+
+		@Override
+		public String getColumnAlias() {
+			return getColumnName() + "_x";
+		}
+	}
 }

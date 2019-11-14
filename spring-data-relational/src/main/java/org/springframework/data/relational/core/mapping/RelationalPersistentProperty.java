@@ -24,6 +24,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Bastian Wilhelm
+ * @author Myeonghyeon Lee
  */
 public interface RelationalPersistentProperty extends PersistentProperty<RelationalPersistentProperty> {
 
@@ -35,6 +36,15 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * @return the name of the column backing this property.
 	 */
 	String getColumnName();
+
+	/**
+	 * Returns the alias of the column backing this property.
+	 *
+	 * @return the alias of the column backing this property.
+	 */
+	default String getColumnAlias() {
+		return getColumnName();
+	}
 
 	/**
 	 * The type to be used to store this property in the database. Multidimensional arrays are unwrapped to reflect a

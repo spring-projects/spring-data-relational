@@ -29,7 +29,10 @@ import java.util.function.BiConsumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.model.Property;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 
 /**
@@ -39,6 +42,7 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
  * @author Oliver Gierke
  * @author Florian Lüdiger
  * @author Bastian Wilhelm
+ * @author Myeonghyeon Lee
  */
 public class BasicRelationalPersistentPropertyUnitTests {
 
@@ -159,6 +163,19 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		softly.assertAll();
 	}
 
+	@Test // DATAJDBC-444
+	public void testColumnAlias() {
+		CustomMappingContext mappingContext = new CustomMappingContext();
+		RelationalPersistentEntity<?> customEntity = mappingContext.getRequiredPersistentEntity(DummyEntity.class);
+
+		assertThat(entity.getRequiredPersistentProperty("name").getColumnAlias()).isEqualTo("dummy_name");
+		assertThat(customEntity.getRequiredPersistentProperty("name").getColumnAlias()).isEqualTo("dummy_name_x");
+		assertThat(entity.getRequiredPersistentProperty("localDateTime").getColumnAlias())
+			.isEqualTo("dummy_last_updated_at");
+		assertThat(customEntity.getRequiredPersistentProperty("localDateTime").getColumnAlias())
+			.isEqualTo("dummy_last_updated_at_x");
+	}
+
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Class<?> expected) {
 
@@ -221,4 +238,27 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 	@SuppressWarnings("unused")
 	private static class OtherEntity {}
+
+	// DATAJDBC-444
+	private static class CustomMappingContext extends RelationalMappingContext {
+		@Override
+		protected RelationalPersistentProperty createPersistentProperty(
+			Property property, RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
+			return new CustomRelationalPersistentProperty(property, owner, simpleTypeHolder, this);
+		}
+	}
+
+	// DATAJDBC-444
+	private static class CustomRelationalPersistentProperty extends BasicRelationalPersistentProperty {
+		public CustomRelationalPersistentProperty(
+			Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
+			SimpleTypeHolder simpleTypeHolder, RelationalMappingContext context) {
+			super(property, owner, simpleTypeHolder, context);
+		}
+
+		@Override
+		public String getColumnAlias() {
+			return getColumnName() + "_x";
+		}
+	}
 }
