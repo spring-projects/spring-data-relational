@@ -20,7 +20,6 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -29,16 +28,15 @@ import org.springframework.util.Assert;
  * available used in SQL generation and conversion
  *
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
-@EqualsAndHashCode(exclude = { "columnAlias", "context" })
+@EqualsAndHashCode(exclude = { "context" })
 public class PersistentPropertyPathExtension {
 
 	private final RelationalPersistentEntity<?> entity;
 	private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context;
-
-	private final Lazy<String> columnAlias = Lazy.of(() -> prefixWithTableAlias(getColumnName()));
 
 	/**
 	 * Creates the empty path referencing the root itself.
@@ -191,7 +189,11 @@ public class PersistentPropertyPathExtension {
 	 * @throws IllegalStateException when called on an empty path.
 	 */
 	public String getColumnAlias() {
-		return columnAlias.get();
+
+		Assert.state(path != null, "Path is null");
+
+		return prefixWithTableAlias(
+			assembleColumnName(path.getRequiredLeafProperty().getColumnAlias()));
 	}
 
 	/**
