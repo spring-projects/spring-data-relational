@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.2.RELEASE (2019-11-18)
+---------------------------------------------
+* DATAJDBC-441 - Indent MyBatis integration sections in the documentation.
+* DATAJDBC-440 - Release 1.1.2 (Moore SR2).
+* DATAJDBC-417 - Saving an aggregate with null embeddable referencing an entity fails.
+
+
 Changes in version 1.0.13.RELEASE (2019-11-18)
 ----------------------------------------------
 * DATAJDBC-439 - Release 1.0.13 (Lovelace SR13).
