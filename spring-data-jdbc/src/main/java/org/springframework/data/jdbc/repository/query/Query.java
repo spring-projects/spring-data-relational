@@ -31,6 +31,7 @@ import org.springframework.jdbc.core.RowMapper;
  * parameters will get bound to the arguments of the annotated method.
  *
  * @author Jens Schauder
+ * @author Moises Cisneros
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -41,7 +42,13 @@ public @interface Query {
 	/**
 	 * The SQL statement to execute when the annotated method gets invoked.
 	 */
-	String value();
+	String value() default "";
+
+	/**
+	 * The named query to be used. If not defined, the name of
+	 * {@code $ domainClass}.${queryMethodName}} will be used.
+	 */
+	String name() default "";
 
 	/**
 	 * Optional {@link RowMapper} to use to convert the result of the query to domain class instances. Cannot be used

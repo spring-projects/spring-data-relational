@@ -28,9 +28,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.core.NamedQueries;
+import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -40,6 +43,8 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -49,12 +54,14 @@ import java.util.HashMap;
 @ContextConfiguration
 @Transactional
 public class JdbcRepositoryIntegrationTests {
+	public static final String DUMMY_SELECT_NAME = "DUMMY.SELECT";
 
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired JdbcRepositoryFactory factory;
+		@Autowired
+		JdbcRepositoryFactory factory;
 
 		@Bean
 		Class<?> testClass() {
@@ -65,14 +72,28 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
+		
+		@Bean
+		DummyEntityQueryNameRepository dummyentityquerynamerepository() {
+			return factory.getRepository(DummyEntityQueryNameRepository.class);
+		}
+		
+		
+		
 
 	}
 
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
+	@ClassRule
+	public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule
+	public SpringMethodRule methodRule = new SpringMethodRule();
 
-	@Autowired NamedParameterJdbcTemplate template;
-	@Autowired DummyEntityRepository repository;
+	@Autowired
+	NamedParameterJdbcTemplate template;
+	@Autowired
+	DummyEntityRepository repository;
+	@Autowired
+	DummyEntityQueryNameRepository dummyentityquerynamerepository;
 
 	@Test // DATAJDBC-95
 	public void savesAnEntity() {
@@ -244,6 +265,13 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.findById(-1L)).isEmpty();
 	}
 
+	@Test // DATAJDBC-234
+	public void findAllQueryName() {
+		// NOT saving anything, so DB is empty
+		repository.save(createDummyEntity());
+		assertThat(dummyentityquerynamerepository.findAllQueryName().size() > 0);
+	}
+
 	private static DummyEntity createDummyEntity() {
 
 		DummyEntity entity = new DummyEntity();
@@ -252,12 +280,21 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+
+	}
+
+	interface DummyEntityQueryNameRepository extends CrudRepository<DummyEntity, Long> {
+
+		@Query(name = DUMMY_SELECT_NAME)
+		List<DummyEntity> findAllQueryName();
+
 	}
 
 	@Data
 	static class DummyEntity {
 
 		String name;
-		@Id private Long idProp;
+		@Id
+		private Long idProp;
 	}
 }

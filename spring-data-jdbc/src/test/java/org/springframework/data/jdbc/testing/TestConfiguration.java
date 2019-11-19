@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.testing;
 
 import java.util.Optional;
+import java.util.Properties;
 
 import javax.sql.DataSource;
 
@@ -43,6 +44,8 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.repository.core.NamedQueries;
+import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -63,12 +66,19 @@ public class TestConfiguration {
 	@Autowired DataSource dataSource;
 	@Autowired ApplicationEventPublisher publisher;
 	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
+	public static final String DUMMY_SELECT_VALUE = "SELECT * FROM DUMMY_ENTITY";
+	public static final String DUMMY_SELECT_NAME = "DUMMY.SELECT";
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
 			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			JdbcConverter converter) {
-		return new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher, namedParameterJdbcTemplate());
+		Properties properties = new Properties();
+		properties.setProperty(DUMMY_SELECT_NAME, DUMMY_SELECT_VALUE);
+		NamedQueries namedQueries = new PropertiesBasedNamedQueries(properties);		
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher, namedParameterJdbcTemplate());
+		factory.setNamedQueries(namedQueries);
+		return factory;
 	}
 
 	@Bean
