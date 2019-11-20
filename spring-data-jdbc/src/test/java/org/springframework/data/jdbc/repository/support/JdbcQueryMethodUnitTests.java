@@ -42,6 +42,7 @@ public class JdbcQueryMethodUnitTests {
 
 	public static final String DUMMY_SELECT_VALUE = "SELECT something";
 	public static final String DUMMY_SELECT_NAME = "DUMMY.SELECT";
+	public static final String DUMMY_SELECT_METHOD = "queryWhitoutQueryAnnotation";
 	public static final String DUMMY_SELECT_NAME_VALUE= "SELECT something NAME AND VALUE";
 
 	@Test // DATAJDBC-165
@@ -124,7 +125,7 @@ public class JdbcQueryMethodUnitTests {
 
 		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
 		Properties properties = new Properties();
-		properties.setProperty(DUMMY_SELECT_NAME, DUMMY_SELECT_VALUE);
+		properties.setProperty(DUMMY_SELECT_METHOD, DUMMY_SELECT_VALUE);
 		NamedQueries nameQueries = new PropertiesBasedNamedQueries(properties);
 
 		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
@@ -132,11 +133,11 @@ public class JdbcQueryMethodUnitTests {
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(
 				JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryWhitoutQueryAnnotation"), metadata,
 				mock(ProjectionFactory.class), nameQueries);
-		assertThat(queryMethod.getAnnotatedQuery()).isEqualTo("queryWhitoutQueryAnnotation");
+		assertThat(queryMethod.getAnnotatedQuery()).isEqualTo(DUMMY_SELECT_VALUE);
 
 	}
 
-	@Query(value = DUMMY_SELECT_VALUE)
+	@Query(value = DUMMY_SELECT_VALUE, rowMapperClass = CustomRowMapper.class)
 	private void queryMethod() {
 	}
 

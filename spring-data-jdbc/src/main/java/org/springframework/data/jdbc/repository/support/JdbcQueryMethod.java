@@ -96,7 +96,7 @@ public class JdbcQueryMethod extends QueryMethod {
 		String annotatedName = getMergedAnnotationAttribute("name");
 		return (StringUtils.hasText(annotatedName) && this.namedQueries.hasQuery(annotatedName))
 				? this.namedQueries.getQuery(annotatedName)
-				: super.getName();
+				: this.namedQueries.getQuery(super.getName());
 	}
 
 	/*
