@@ -40,9 +40,8 @@ class JdbcOpenRowSetTemplate extends NamedParameterJdbcTemplate {
         super(classicJdbcTemplate);
     }
 
-    JdbcOpenSqlRowSet queryForOpenCursorRowSet(String sql, SqlParameterSource paramSource, Integer fetchSize)  {
+    JdbcOpenSqlRowSet queryForOpenCursorRowSet(String sql, SqlParameterSource paramSource)  {
         Assert.state(this.getJdbcTemplate().getDataSource() != null, "No DataSource set");
-        Assert.state(fetchSize != null, "No fetchSize set");
 
         Connection connection = DataSourceUtils.getConnection(this.getJdbcTemplate().getDataSource());
         PreparedStatementCreator preparedStatementCreator = this.getPreparedStatementCreator(sql, paramSource);
@@ -50,7 +49,9 @@ class JdbcOpenRowSetTemplate extends NamedParameterJdbcTemplate {
         ResultSet resultSet = null;
         try {
             preparedStatement = preparedStatementCreator.createPreparedStatement(connection);
-            preparedStatement.setFetchSize(fetchSize);
+            if (this.getJdbcTemplate().getFetchSize() >= 0) {
+                preparedStatement.setFetchSize(this.getJdbcTemplate().getFetchSize());
+            }
             resultSet = preparedStatement.executeQuery();
 
             return new JdbcOpenSqlRowSet(this.getJdbcTemplate().getDataSource(), resultSet);

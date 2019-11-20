@@ -109,12 +109,12 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 			return createModifyingQueryExecutor(query);
 		}
 
-		if (queryMethod.isOpenStreamQuery()) {
+		if (queryMethod.isStreamQuery()) {
 			QueryExecutor<Object> innerExecutor = createRowMapperOpenQueryStreamExecutor(query, rowMapper, extractor);
 			return createOpenStreamQueryExecutor(innerExecutor);
 		}
 
-		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
+		if (queryMethod.isCollectionQuery()) {
 			QueryExecutor<Object> innerExecutor = extractor != null ? createResultSetExtractorQueryExecutor(query, extractor)
 					: createListRowMapperQueryExecutor(query, rowMapper);
 
@@ -213,7 +213,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 				new JdbcOpenRowSetTemplate(operations.getJdbcOperations());
 		return parameters -> {
 			final JdbcOpenSqlRowSet rowSet =
-					openResultSetNamedParameterJdbcTemplate.queryForOpenCursorRowSet(query, parameters, queryMethod.getStreamQueryFetchSized());
+					openResultSetNamedParameterJdbcTemplate.queryForOpenCursorRowSet(query, parameters);
 
 			final Spliterator<Object> spliterator = Spliterators
 					.spliteratorUnknownSize(new JdbcOpenSqlRowSetIterator<Object>(rowSet, rowMapper, extractor), Spliterator.IMMUTABLE);
