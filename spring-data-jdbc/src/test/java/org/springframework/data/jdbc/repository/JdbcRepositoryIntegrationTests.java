@@ -77,10 +77,6 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntityQueryNameRepository dummyentityquerynamerepository() {
 			return factory.getRepository(DummyEntityQueryNameRepository.class);
 		}
-		
-		
-		
-
 	}
 
 	@ClassRule
