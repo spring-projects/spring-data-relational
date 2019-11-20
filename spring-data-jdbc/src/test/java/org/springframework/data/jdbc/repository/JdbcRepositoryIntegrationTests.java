@@ -267,7 +267,6 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Test // DATAJDBC-234
 	public void findAllQueryName() {
-		// NOT saving anything, so DB is empty
 		repository.save(createDummyEntity());
 		assertThat(dummyentityquerynamerepository.findAllQueryName().size() > 0);
 	}
