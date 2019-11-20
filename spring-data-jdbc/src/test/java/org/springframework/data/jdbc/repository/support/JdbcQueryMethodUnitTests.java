@@ -37,6 +37,7 @@ import org.springframework.jdbc.core.RowMapper;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Moises Cisneros
  */
 public class JdbcQueryMethodUnitTests {
 
