@@ -15,7 +15,8 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import lombok.Value;
 
@@ -35,8 +36,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
+import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.Nullable;
@@ -163,11 +167,26 @@ public class QueryAnnotationHsqlIntegrationTests {
 		repository.save(dummyEntity("a"));
 		repository.save(dummyEntity("b"));
 
-		Stream<DummyEntity> entities = repository.findAllWithReturnTypeIsStream();
+		try (Stream<DummyEntity> entities = repository.findAllWithReturnTypeIsStream()) {
 
-		assertThat(entities) //
-				.extracting(e -> e.name) //
-				.containsExactlyInAnyOrder("a", "b");
+			assertThat(entities) //
+					.extracting(e -> e.name) //
+					.containsExactlyInAnyOrder("a", "b");
+		}
+
+	}
+
+	@Test // DATAJDBC-356
+	public void executeCustomQueryWithReturnTypeIsStreamAndPublishEvents() {
+
+		repository.save(dummyEntity("a"));
+		repository.save(dummyEntity("b"));
+
+		try (Stream<DummyEntity> entities = repository.findAllWithReturnTypeIsStream()) {
+
+			assertThat(entities) //
+					.allMatch(dummyEntity -> dummyEntity.loaded);
+		}
 
 	}
 
@@ -283,6 +302,14 @@ public class QueryAnnotationHsqlIntegrationTests {
 		Class<?> testClass() {
 			return QueryAnnotationHsqlIntegrationTests.class;
 		}
+
+		@Bean
+		AfterLoadCallback<DummyEntity> dummyEntityAfterLoadCallback() {
+			return (dummy) -> {
+				dummy.loaded = true;
+				return dummy;
+			};
+		}
 	}
 
 	private static class DummyEntity {
@@ -290,6 +317,9 @@ public class QueryAnnotationHsqlIntegrationTests {
 		@Id Long id;
 
 		String name;
+
+		@Transient
+		boolean loaded = false;
 	}
 
 	private interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
