@@ -2,19 +2,18 @@ language: java
 
 matrix:
   include:
-    - jdk: oraclejdk8
-      env: JDK='Oracle JDK 8'
-    - jdk: oraclejdk9
-      env: JDK='Oracle JDK 9'
-    - env:
-      - JDK='Oracle JDK 10'
+    - jdk: openjdk8
+      env: JDK='Open JDK 8'
+    - jdk: openjdk9
+      env: JDK='Open JDK 9'
+    - jdk: openjdk10
+      env:
+      - JDK='Open JDK 10'
       - NO_JACOCO='true'
-      before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -F 10
-    - env:
-      - JDK='Oracle JDK 11'
+    - jdk: openjdk11
+      env:
+      - JDK='Open JDK 11'
       - NO_JACOCO='true'
-      before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -F 11
-
 cache:
   directories:
     - $HOME/.m2
