@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -99,7 +99,6 @@ public class JdbcQueryMethodUnitTests {
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(
 				JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethodName"), metadata,
 				mock(ProjectionFactory.class), nameQueries);
-		System.out.println("getAnnotatedQuery: "+queryMethod.getAnnotatedQuery());
 		assertThat(queryMethod.getAnnotatedQuery()).isEqualTo(DUMMY_SELECT_VALUE);
 
 	}
@@ -138,15 +137,15 @@ public class JdbcQueryMethodUnitTests {
 
 	}
 
-	@Query(value = DUMMY_SELECT_VALUE, rowMapperClass = CustomRowMapper.class)
+	@Query(value = DUMMY_SELECT_VALUE)
 	private void queryMethod() {
 	}
 
-	@Query(name = DUMMY_SELECT_NAME, rowMapperClass = CustomRowMapper.class)
+	@Query(name = DUMMY_SELECT_NAME)
 	private void queryMethodName() {
 	}
 
-	@Query(value = DUMMY_SELECT_NAME_VALUE, name = DUMMY_SELECT_NAME, rowMapperClass = CustomRowMapper.class)
+	@Query(value = DUMMY_SELECT_NAME_VALUE, name = DUMMY_SELECT_NAME)
 	private void queryMethodNameAndValue() {
 	}
 
