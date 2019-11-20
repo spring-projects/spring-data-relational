@@ -24,27 +24,32 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.QueryNamedTestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
+
+import javax.annotation.PostConstruct;
+;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -57,12 +62,11 @@ public class JdbcRepositoryIntegrationTests {
 	public static final String DUMMY_SELECT_NAME = "DUMMY.SELECT";
 
 	@Configuration
-	@Import(TestConfiguration.class)
+	@Import(QueryNamedTestConfiguration.class)
 	static class Config {
 
 		@Autowired
-		JdbcRepositoryFactory factory;
-
+		 JdbcRepositoryFactory factory;
 		@Bean
 		Class<?> testClass() {
 			return JdbcRepositoryIntegrationTests.class;
@@ -71,12 +75,7 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
-		}
-		
-		@Bean
-		DummyEntityQueryNameRepository dummyentityquerynamerepository() {
-			return factory.getRepository(DummyEntityQueryNameRepository.class);
-		}
+		}				
 	}
 
 	@ClassRule
@@ -84,12 +83,8 @@ public class JdbcRepositoryIntegrationTests {
 	@Rule
 	public SpringMethodRule methodRule = new SpringMethodRule();
 
-	@Autowired
-	NamedParameterJdbcTemplate template;
-	@Autowired
-	DummyEntityRepository repository;
-	@Autowired
-	DummyEntityQueryNameRepository dummyentityquerynamerepository;
+	@Autowired 	NamedParameterJdbcTemplate template;
+	@Autowired 	DummyEntityRepository repository;
 
 	@Test // DATAJDBC-95
 	public void savesAnEntity() {
@@ -263,12 +258,13 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Test // DATAJDBC-234
 	public void findAllQueryName() {
+		
 		repository.save(createDummyEntity());
-		assertThat(dummyentityquerynamerepository.findAllQueryName().size() > 0);
+		assertThat(repository.findAllQueryName().size() > 0);
 	}
 
 	private static DummyEntity createDummyEntity() {
-
+		
 		DummyEntity entity = new DummyEntity();
 		entity.setName("Entity Name");
 		return entity;
@@ -276,18 +272,12 @@ public class JdbcRepositoryIntegrationTests {
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
-	}
-
-	interface DummyEntityQueryNameRepository extends CrudRepository<DummyEntity, Long> {
-
 		@Query(name = DUMMY_SELECT_NAME)
 		List<DummyEntity> findAllQueryName();
-
 	}
 
 	@Data
 	static class DummyEntity {
-
 		String name;
 		@Id
 		private Long idProp;

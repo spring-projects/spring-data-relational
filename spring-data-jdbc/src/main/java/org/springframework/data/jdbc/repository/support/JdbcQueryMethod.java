@@ -72,7 +72,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	public String getQueryValue() {
+	 String getQueryValue() {
 		return getMergedAnnotationAttribute("value");
 	}
 
@@ -83,7 +83,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	public String getQueryName() {
+	 String getQueryName() {
 		return getMergedAnnotationAttribute("name");
 	}
 	/**
@@ -92,7 +92,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	public String getNamedQuery() {
+	 String getNamedQuery() {
 		String annotatedName = getMergedAnnotationAttribute("name");
 		return (StringUtils.hasText(annotatedName) && this.namedQueries.hasQuery(annotatedName))
 				? this.namedQueries.getQuery(annotatedName)

@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -25,11 +26,13 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -66,21 +69,13 @@ public class TestConfiguration {
 	@Autowired DataSource dataSource;
 	@Autowired ApplicationEventPublisher publisher;
 	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
-	public static final String DUMMY_SELECT_VALUE = "SELECT * FROM DUMMY_ENTITY";
-	public static final String DUMMY_SELECT_NAME = "DUMMY.SELECT";
-
+	
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
 			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			JdbcConverter converter) {
-		Properties properties = new Properties();
-		properties.setProperty(DUMMY_SELECT_NAME, DUMMY_SELECT_VALUE);
-		NamedQueries namedQueries = new PropertiesBasedNamedQueries(properties);		
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher, namedParameterJdbcTemplate());
-		factory.setNamedQueries(namedQueries);
-		return factory;
+			JdbcConverter converter) throws IOException {
+		return new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher, namedParameterJdbcTemplate());
 	}
-
 	@Bean
 	NamedParameterJdbcOperations namedParameterJdbcTemplate() {
 		return new NamedParameterJdbcTemplate(dataSource);
