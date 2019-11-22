@@ -15,7 +15,6 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,6 +23,7 @@ import java.util.List;
 
 import org.reactivestreams.Publisher;
 
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.PreparedOperation;
@@ -37,6 +37,7 @@ import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 /**
@@ -83,8 +84,16 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		return this.databaseClient.update() //
 				.table(this.entity.getJavaType()) //
 				.table(this.entity.getTableName()).using(objectToSave) //
-				.then() //
-				.thenReturn(objectToSave);
+				.fetch().rowsUpdated().handle((rowsUpdated, sink) -> {
+
+					if (rowsUpdated == 0) {
+						sink.error(new TransientDataAccessResourceException(
+								String.format("Failed to update table [%s]. Row with Id [%s] does not exist.",
+										this.entity.getTableName(), this.entity.getId(objectToSave))));
+					} else {
+						sink.next(objectToSave);
+					}
+				});
 	}
 
 	/* (non-Javadoc)

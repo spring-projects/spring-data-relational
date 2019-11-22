@@ -29,6 +29,7 @@ import org.junit.runner.RunWith;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
 import org.springframework.test.context.ContextConfiguration;
@@ -81,5 +82,19 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 
 		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
 		assertThat(map).containsEntry("name", "SCHAUFELRADBAGGER").containsEntry("manual", 12).containsKey("id");
+	}
+
+	@Test // gh-232
+	public void updateShouldFailIfRowDoesNotExist() {
+
+		LegoSet legoSet = new LegoSet(9999, "SCHAUFELRADBAGGER", 12);
+
+		repository.save(legoSet) //
+				.as(StepVerifier::create) //
+				.verifyErrorSatisfies(actual -> {
+
+					assertThat(actual).isInstanceOf(TransientDataAccessException.class)
+							.hasMessage("Failed to update table [legoset]. Row with Id [9999] does not exist.");
+				});
 	}
 }
