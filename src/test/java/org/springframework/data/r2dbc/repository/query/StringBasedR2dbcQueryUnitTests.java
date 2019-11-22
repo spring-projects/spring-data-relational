@@ -32,6 +32,7 @@ import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec;
+import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -140,16 +141,16 @@ public class StringBasedR2dbcQueryUnitTests {
 	@SuppressWarnings("unused")
 	private interface SampleRepository extends Repository<Person, String> {
 
-		@Query("SELECT * FROM person WHERE lastname = $1")
+		@org.springframework.data.r2dbc.repository.Query("SELECT * FROM person WHERE lastname = $1")
 		Person findByLastname(String lastname);
 
-		@Query("SELECT * FROM person WHERE lastname = :lastname")
+		@org.springframework.data.r2dbc.repository.Query("SELECT * FROM person WHERE lastname = :lastname")
 		Person findByNamedParameter(@Param("lastname") String lastname);
 
 		@Query("SELECT * FROM person WHERE lastname = :unknown")
 		Person findNotByNamedBindMarker(String lastname);
 
-		@Query("SELECT * FROM person WHERE lastname = @lastname")
+		@org.springframework.data.r2dbc.repository.Query("SELECT * FROM person WHERE lastname = @lastname")
 		Person findByNamedBindMarker(@Param("lastname") String lastname);
 	}
 

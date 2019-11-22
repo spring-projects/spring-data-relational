@@ -16,13 +16,13 @@
 package org.springframework.data.r2dbc.repository;
 
 import io.r2dbc.spi.ConnectionFactory;
-import org.junit.Ignore;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import org.springframework.context.annotation.Bean;
@@ -31,7 +31,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
-import org.springframework.data.r2dbc.repository.query.Query;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
