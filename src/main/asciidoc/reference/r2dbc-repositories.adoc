@@ -122,3 +122,7 @@ The annotated query uses native bind markers, which are Postgres bind markers in
 NOTE: R2DBC repositories do not support query derivation.
 
 NOTE: R2DBC repositories internally bind parameters to placeholders with `Statement.bind(…)` by index.
+
+:projection-collection: Flux
+include::../{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+2]
+
