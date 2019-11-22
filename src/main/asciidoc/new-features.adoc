@@ -1,6 +1,11 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.1-0-0-RELEASE]]
+== What's New in Spring Data R2DBC 1.0.0 RELEASE
+
+* `@Modifying` annotation for query methods to consume affected row count
+
 [[new-features.1-0-0-RC1]]
 == What's New in Spring Data R2DBC 1.0.0 RC1
 

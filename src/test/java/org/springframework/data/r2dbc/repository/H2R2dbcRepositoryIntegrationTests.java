@@ -18,11 +18,14 @@ package org.springframework.data.r2dbc.repository;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import javax.sql.DataSource;
 
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +46,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @ContextConfiguration
 public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIntegrationTests {
+
+	@Autowired private H2LegoSetRepository repository;
 
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
@@ -76,6 +81,30 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		return H2LegoSetRepository.class;
 	}
 
+	@Test // gh-235
+	public void shouldReturnUpdateCount() {
+
+		shouldInsertNewItems();
+
+		repository.updateManual(42).as(StepVerifier::create).expectNext(2L).verifyComplete();
+	}
+
+	@Test // gh-235
+	public void shouldReturnUpdateSuccess() {
+
+		shouldInsertNewItems();
+
+		repository.updateManualAndReturnBoolean(42).as(StepVerifier::create).expectNext(true).verifyComplete();
+	}
+
+	@Test // gh-235
+	public void shouldNotReturnUpdateCount() {
+
+		shouldInsertNewItems();
+
+		repository.updateManualAndReturnNothing(42).as(StepVerifier::create).verifyComplete();
+	}
+
 	interface H2LegoSetRepository extends LegoSetRepository {
 
 		@Override
@@ -93,5 +122,17 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		@Override
 		@Query("SELECT id FROM legoset")
 		Flux<Integer> findAllIds();
+
+		@Query("UPDATE legoset set manual = :manual")
+		@Modifying
+		Mono<Long> updateManual(int manual);
+
+		@Query("UPDATE legoset set manual = :manual")
+		@Modifying
+		Mono<Boolean> updateManualAndReturnBoolean(int manual);
+
+		@Query("UPDATE legoset set manual = :manual")
+		@Modifying
+		Mono<Void> updateManualAndReturnNothing(int manual);
 	}
 }

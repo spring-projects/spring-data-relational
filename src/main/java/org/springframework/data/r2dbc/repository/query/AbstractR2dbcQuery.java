@@ -24,8 +24,8 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.FetchSpec;
 import org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec;
+import org.springframework.data.r2dbc.core.FetchSpec;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingConverter;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingExecution;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -108,7 +108,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
 		String tableName = method.getEntityInformation().getTableName();
 
-		R2dbcQueryExecution execution = getExecution(
+		R2dbcQueryExecution execution = getExecution(processor.getReturnedType(),
 				new ResultProcessingConverter(processor, converter.getMappingContext(), instantiators));
 
 		return execution.execute(fetchSpec, processor.getReturnedType().getDomainType(), tableName);
@@ -124,14 +124,35 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	/**
 	 * Returns the execution instance to use.
 	 *
+	 * @param returnedType must not be {@literal null}.
 	 * @param resultProcessing must not be {@literal null}.
 	 * @return
 	 */
-	private R2dbcQueryExecution getExecution(Converter<Object, Object> resultProcessing) {
-		return new ResultProcessingExecution(getExecutionToWrap(), resultProcessing);
+	private R2dbcQueryExecution getExecution(ReturnedType returnedType, Converter<Object, Object> resultProcessing) {
+		return new ResultProcessingExecution(getExecutionToWrap(returnedType), resultProcessing);
 	}
 
-	private R2dbcQueryExecution getExecutionToWrap() {
+	private R2dbcQueryExecution getExecutionToWrap(ReturnedType returnedType) {
+
+		if (method.isModifyingQuery()) {
+
+			if (Boolean.class.isAssignableFrom(returnedType.getReturnedType())) {
+				return (q, t, c) -> q.rowsUpdated().map(integer -> integer > 0);
+			}
+
+			if (Number.class.isAssignableFrom(returnedType.getReturnedType())) {
+
+				return (q, t, c) -> q.rowsUpdated().map(integer -> {
+					return converter.getConversionService().convert(integer, returnedType.getReturnedType());
+				});
+			}
+
+			if (Void.class.isAssignableFrom(returnedType.getReturnedType())) {
+				return (q, t, c) -> q.rowsUpdated().then();
+			}
+
+			return (q, t, c) -> q.rowsUpdated();
+		}
 
 		if (method.isCollectionQuery()) {
 			return (q, t, c) -> q.all();

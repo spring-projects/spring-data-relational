@@ -19,17 +19,21 @@ import static org.assertj.core.api.Assertions.*;
 
 import reactor.core.publisher.Mono;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.repository.Repository;
@@ -59,7 +63,15 @@ public class R2dbcQueryMethodUnitTests {
 		assertThat(metadata.getTableName()).isEqualTo("contact");
 	}
 
-	@Test
+	@Test // gh-235
+	public void detectsModifyingQuery() throws Exception {
+
+		R2dbcQueryMethod queryMethod = queryMethod(SampleRepository.class, "method");
+
+		assertThat(queryMethod.isModifyingQuery()).isTrue();
+	}
+
+	@Test // gh-235
 	public void detectsTableNameFromRepoTypeIfReturnTypeNotAssignable() throws Exception {
 
 		R2dbcQueryMethod queryMethod = queryMethod(SampleRepository.class, "differentTable");
@@ -67,6 +79,7 @@ public class R2dbcQueryMethodUnitTests {
 
 		assertThat(metadata.getJavaType()).isAssignableFrom(Address.class);
 		assertThat(metadata.getTableName()).isEqualTo("contact");
+		assertThat(queryMethod.isModifyingQuery()).isFalse();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -126,6 +139,7 @@ public class R2dbcQueryMethodUnitTests {
 
 	interface SampleRepository extends Repository<Contact, Long> {
 
+		@MyModifyingAnnotation
 		List<Contact> method();
 
 		List<Address> differentTable();
@@ -138,4 +152,10 @@ public class R2dbcQueryMethodUnitTests {
 	static class Contact {}
 
 	static class Address {}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Modifying
+	public @interface MyModifyingAnnotation {
+	}
+
 }
