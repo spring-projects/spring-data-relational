@@ -125,17 +125,17 @@ The properties of the following types are currently supported:
 * References to other entities. They are considered a one-to-one relationship, or an embedded type.
 It is optional for one-to-one relationship entities to have an `id` attribute.
 The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
-You can change this name by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)`.
+You can change this name by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)`.
 Embedded entities do not need an `id`.
 If one is present it gets ignored.
 
 * `Set<some entity>` is considered a one-to-many relationship.
 The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
-You can change this name by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)`.
+You can change this name by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)`.
 
 * `Map<simple type, some entity>` is considered a qualified one-to-many relationship.
 The table of the referenced entity is expected to have two additional columns: One named the same as the table of the referencing entity for the foreign key and one with the same name and an additional `_key` suffix for the map key.
-You can change this behavior by implementing `NamingStrategy.getReverseColumnName(RelationalPersistentProperty property)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
+You can change this behavior by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)` and `NamingStrategy.getKeyColumn(RelationalPersistentProperty property)`, respectively.
 Alternatively you may annotate the attribute with `@MappedCollection(idColumn="your_column_name", keyColumn="your_key_column_name")`
 
 * `List<some entity>` is mapped as a  `Map<Integer, some entity>`.
