@@ -15,8 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.util.Collections.emptySet;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -49,6 +50,7 @@ import org.springframework.data.relational.domain.Identifier;
  * @author Oleksandr Kucher
  * @author Bastian Wilhelm
  * @author Mark Paluch
+ * @author Tom Hombergs
  */
 public class SqlGeneratorUnitTests {
 
@@ -172,7 +174,9 @@ public class SqlGeneratorUnitTests {
 	public void findAllByPropertyWithMultipartIdentifier() {
 
 		// this would get called when ListParent is the element type of a Set
-		String sql = sqlGenerator.getFindAllByProperty(Identifier.of("backref", "some-value", String.class).withPart("backref_key", "key-value", Object.class), null, false);
+		String sql = sqlGenerator.getFindAllByProperty(
+				Identifier.of("backref", "some-value", String.class).withPart("backref_key", "key-value", Object.class), null,
+				false);
 
 		assertThat(sql).contains("SELECT", //
 				"dummy_entity.id1 AS id1", //
@@ -185,9 +189,7 @@ public class SqlGeneratorUnitTests {
 				"FROM dummy_entity ", //
 				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
-				"dummy_entity.backref = :backref",
-				"dummy_entity.backref_key = :backref_key"
-		);
+				"dummy_entity.backref = :backref", "dummy_entity.backref_key = :backref_key");
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
@@ -227,6 +229,21 @@ public class SqlGeneratorUnitTests {
 				+ "LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id " //
 				+ "WHERE dummy_entity.backref = :backref " + "ORDER BY key-column");
+	}
+
+	@Test // DATAJDBC-219
+	public void updateWithVersion() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class);
+
+		assertThat(sqlGenerator.getUpdateWithVersion()).containsSequence( //
+				"UPDATE", //
+				"versioned_entity", //
+				"SET", //
+				"WHERE", //
+				"id1 = :id", //
+				"AND", //
+				"version = :___oldOptimisticLockingVersion");
 	}
 
 	@Test // DATAJDBC-264
@@ -538,6 +555,10 @@ public class SqlGeneratorUnitTests {
 		Set<Element> elements;
 		Map<Integer, Element> mappedElements;
 		AggregateReference<OtherAggregate, Long> other;
+	}
+
+	static class VersionedEntity extends DummyEntity {
+		@Version Integer version;
 	}
 
 	@SuppressWarnings("unused")

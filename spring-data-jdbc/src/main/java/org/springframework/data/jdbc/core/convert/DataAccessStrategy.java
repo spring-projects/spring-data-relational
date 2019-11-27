@@ -29,6 +29,7 @@ import org.springframework.lang.Nullable;
  * complete aggregates.
  *
  * @author Jens Schauder
+ * @author Tyler Van Gorder
  */
 public interface DataAccessStrategy extends RelationResolver {
 
@@ -74,14 +75,42 @@ public interface DataAccessStrategy extends RelationResolver {
 	<T> boolean update(T instance, Class<T> domainType);
 
 	/**
-	 * deletes a single row identified by the id, from the table identified by the domainType. Does not handle cascading
+	 * Updates the data of a single entity in the database and enforce optimistic record locking using the previousVersion
+	 * property. Referenced entities don't get handled.
+	 * <P>
+	 * The statement will be of the form : {@code UPDATE … SET … WHERE ID = :id and VERSION_COLUMN = :previousVersion }
+	 * and throw an optimistic record locking exception if no rows have been updated.
+	 *
+	 * @param instance the instance to save. Must not be {@code null}.
+	 * @param domainType the type of the instance to save. Must not be {@code null}.
+	 * @param previousVersion The previous version assigned to the instance being saved.
+	 * @param <T> the type of the instance to save.
+	 * @return whether the update actually updated a row.
+	 */
+	<T> boolean updateWithVersion(T instance, Class<T> domainType, Number previousVersion);
+
+	/**
+	 * Deletes a single row identified by the id, from the table identified by the domainType. Does not handle cascading
 	 * deletes.
+	 * <P>
+	 * The statement will be of the form : {@code DELETE FROM … WHERE ID = :id and VERSION_COLUMN = :version } and throw
+	 * an optimistic record locking exception if no rows have been updated.
 	 *
 	 * @param id the id of the row to be deleted. Must not be {@code null}.
 	 * @param domainType the type of entity to be deleted. Implicitly determines the table to operate on. Must not be
 	 *          {@code null}.
 	 */
 	void delete(Object id, Class<?> domainType);
+
+	/**
+	 * Deletes a single entity from the database and enforce optimistic record locking using the version property. Does
+	 * not handle cascading deletes.
+	 *
+	 * @param id the id of the row to be deleted. Must not be {@code null}.
+	 * @param domainType the type of entity to be deleted. Implicitly determines the table to operate on. Must not be
+	 *          {@code null}.
+	 */
+	<T> void deleteWithVersion(T instance, Class<T> domainType);
 
 	/**
 	 * Deletes all entities reachable via {@literal propertyPath} from the instance identified by {@literal rootId}.

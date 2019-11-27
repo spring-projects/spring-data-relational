@@ -35,6 +35,7 @@ import org.springframework.lang.Nullable;
  * @param <T> the type of the entity that is affected by this action.
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Tyler Van Gorder
  */
 public interface DbAction<T> {
 
@@ -92,16 +93,16 @@ public interface DbAction<T> {
 	}
 
 	/**
-	 * Represents an insert statement for the root of an aggregate.
+	 * Represents an insert statement for the root of an aggregate. Upon a successful insert, the initial version and generated ids are populated.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Data
 	@RequiredArgsConstructor
-	class InsertRoot<T> implements WithEntity<T>, WithGeneratedId<T> {
+	class InsertRoot<T> implements WithVersion<T>, WithGeneratedId<T> {
 
-		@NonNull private final T entity;
-
+		@NonNull private T entity;
+		private Number nextVersion;
 		private Object generatedId;
 
 		@Override
@@ -128,14 +129,15 @@ public interface DbAction<T> {
 	}
 
 	/**
-	 * Represents an insert statement for the root of an aggregate.
+	 * Represents an update statement for the aggregate root.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Value
-	class UpdateRoot<T> implements WithEntity<T> {
+	@Data
+	class UpdateRoot<T> implements WithVersion<T> {
 
-		@NonNull private final T entity;
+		@NonNull private T entity;
+		@Nullable Number nextVersion;
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -148,7 +150,7 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Value
+	@Data
 	class Merge<T> implements WithDependingOn<T>, WithPropertyPath<T> {
 
 		@NonNull T entity;
@@ -181,7 +183,7 @@ public interface DbAction<T> {
 	}
 
 	/**
-	 * Represents a delete statement for a aggregate root.
+	 * Represents a delete statement for a aggregate root when only the ID is known.
 	 * <p>
 	 * Note that deletes for contained entities that reference the root are to be represented by separate
 	 * {@link DbAction}s.
@@ -189,10 +191,11 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Value
-	class DeleteRoot<T> implements DbAction<T> {
+	class DeleteRoot<T> implements WithEntity<T> {
 
+		@NonNull Object id;
+		@Nullable T entity;
 		@NonNull Class<T> entityType;
-		@NonNull Object rootId;
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -346,5 +349,9 @@ public interface DbAction<T> {
 		default Class<T> getEntityType() {
 			return (Class<T>) getPropertyPath().getRequiredLeafProperty().getActualType();
 		}
+	}
+	interface WithVersion<T> extends WithEntity<T> {
+		Number getNextVersion();
+		void setNextVersion(Number nextVersion);
 	}
 }

@@ -15,19 +15,24 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.data.jdbc.core.PropertyPathTestingUtils.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.data.jdbc.core.PropertyPathTestingUtils.toPath;
 
 import java.util.List;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
-import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
@@ -50,9 +55,9 @@ public class DefaultJdbcInterpreterUnitTests {
 	static final String BACK_REFERENCE = "container";
 
 	RelationalMappingContext context = new JdbcMappingContext();
-
+	JdbcConverter converter = new BasicJdbcConverter(context, (Identifier, path) -> null);
 	DataAccessStrategy dataAccessStrategy = mock(DataAccessStrategy.class);
-	DefaultJdbcInterpreter interpreter = new DefaultJdbcInterpreter(context, dataAccessStrategy);
+	DefaultJdbcInterpreter interpreter = new DefaultJdbcInterpreter(converter, context, dataAccessStrategy);
 
 	Container container = new Container();
 	Element element = new Element();

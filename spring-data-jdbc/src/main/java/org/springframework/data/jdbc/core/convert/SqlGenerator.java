@@ -37,7 +37,24 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.AssignValue;
+import org.springframework.data.relational.core.sql.Assignments;
+import org.springframework.data.relational.core.sql.BindMarker;
+import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.Delete;
+import org.springframework.data.relational.core.sql.DeleteBuilder;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.Insert;
+import org.springframework.data.relational.core.sql.InsertBuilder;
+import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.SelectBuilder;
+import org.springframework.data.relational.core.sql.StatementBuilder;
+import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.Update;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.Lazy;
@@ -52,11 +69,14 @@ import org.springframework.util.Assert;
  * @author Bastian Wilhelm
  * @author Oleksandr Kucher
  * @author Mark Paluch
+ * @author Tom Hombergs
+ * @author Tyler Van Gorder
  */
 class SqlGenerator {
 
-	private static final Pattern parameterPattern = Pattern.compile("\\W");
+	static final String VERSION_SQL_PARAMETER_NAME = "___oldOptimisticLockingVersion";
 
+	private static final Pattern parameterPattern = Pattern.compile("\\W");
 	private final RelationalPersistentEntity<?> entity;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 
@@ -71,8 +91,10 @@ class SqlGenerator {
 	private final Lazy<String> countSql = Lazy.of(this::createCountSql);
 
 	private final Lazy<String> updateSql = Lazy.of(this::createUpdateSql);
+	private final Lazy<String> updateWithVersionSql = Lazy.of(this::createUpdateWithVersionSql);
 
 	private final Lazy<String> deleteByIdSql = Lazy.of(this::createDeleteSql);
+	private final Lazy<String> deleteByIdAndVersionSql = Lazy.of(this::createDeleteByIdAndVersionSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 
 	/**
@@ -243,6 +265,15 @@ class SqlGenerator {
 	}
 
 	/**
+	 * Create a {@code UPDATE … SET … WHERE ID = :id and VERSION_COLUMN = :___oldOptimisticLockingVersion } statement.
+	 *
+	 * @return
+	 */
+	String getUpdateWithVersion() {
+		return updateWithVersionSql.get();
+	}
+
+	/**
 	 * Create a {@code SELECT COUNT(*) FROM …} statement.
 	 *
 	 * @return
@@ -258,6 +289,15 @@ class SqlGenerator {
 	 */
 	String getDeleteById() {
 		return deleteByIdSql.get();
+	}
+
+	/**
+	 * Create a {@code DELETE FROM … WHERE :id = … and :___oldOptimisticLockingVersion = ...} statement.
+	 *
+	 * @return
+	 */
+	String getDeleteByIdAndVersion() {
+		return deleteByIdAndVersionSql.get();
 	}
 
 	/**
@@ -461,7 +501,6 @@ class SqlGenerator {
 	}
 
 	private String createUpdateSql() {
-
 		Table table = getTable();
 
 		List<AssignValue> assignments = columns.getUpdateableColumns() //
@@ -474,7 +513,28 @@ class SqlGenerator {
 		Update update = Update.builder() //
 				.table(table) //
 				.set(assignments) //
+				.where(getIdColumn().isEqualTo(getBindMarker(entity.getIdColumn()))).build();
+
+		return render(update);
+	}
+
+	private String createUpdateWithVersionSql() {
+
+		Table table = getTable();
+
+		List<AssignValue> assignments = columns.getUpdateableColumns() //
+				.stream() //
+				.map(columnName -> Assignments.value( //
+						table.column(columnName), //
+						getBindMarker(columnName))) //
+				.collect(Collectors.toList());
+
+		Update update = null;
+		update = Update.builder() //
+				.table(table) //
+				.set(assignments) //
 				.where(getIdColumn().isEqualTo(getBindMarker(entity.getIdColumn()))) //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER_NAME))) //
 				.build();
 
 		return render(update);
@@ -485,6 +545,18 @@ class SqlGenerator {
 		Table table = getTable();
 
 		Delete delete = Delete.builder().from(table).where(getIdColumn().isEqualTo(SQL.bindMarker(":id"))) //
+				.build();
+
+		return render(delete);
+	}
+
+	private String createDeleteByIdAndVersionSql() {
+		Table table = getTable();
+
+		Delete delete = Delete.builder() //
+				.from(table) //
+				.where(getIdColumn().isEqualTo(SQL.bindMarker(":id"))) //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER_NAME))) //
 				.build();
 
 		return render(delete);
@@ -549,6 +621,10 @@ class SqlGenerator {
 
 	private Column getIdColumn() {
 		return sqlContext.getIdColumn();
+	}
+
+	private Column getVersionColumn() {
+		return sqlContext.getVersionColumn();
 	}
 
 	/**

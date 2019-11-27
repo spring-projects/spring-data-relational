@@ -70,11 +70,29 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#updateWithVersion(java.lang.Object, java.lang.Class, java.lang.Number)
+	 */
+	@Override
+	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
+		return collect(das -> das.updateWithVersion(instance, domainType, previousVersion));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, java.lang.Class)
 	 */
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 		collectVoid(das -> das.delete(id, domainType));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class)
+	 */
+	@Override
+	public <T> void deleteWithVersion(T instance, Class<T> domainType) {
+		collectVoid(das -> das.deleteWithVersion(instance, domainType));
 	}
 
 	/*

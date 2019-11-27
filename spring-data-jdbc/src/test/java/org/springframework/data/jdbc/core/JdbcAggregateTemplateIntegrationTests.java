@@ -15,11 +15,17 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Value;
+import lombok.experimental.Wither;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
@@ -42,8 +49,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.HsqlDbOnly;
@@ -69,6 +78,8 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Thomas Lang
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Tom Hombergs
+ * @author Tyler Van Gorder
  */
 @ContextConfiguration
 @Transactional
@@ -629,6 +640,116 @@ public class JdbcAggregateTemplateIntegrationTests {
 						.isEqualTo("from-db");
 	}
 
+	@Test // DATAJDBC-219 Test that immutable version attribute works as expected.
+	public void saveAndUpdateAggregateWithImmutableVersion() {
+		AggregateWithImmutableVersion aggregate = new AggregateWithImmutableVersion(null, null);
+		aggregate = template.save(aggregate);
+
+		Long id = aggregate.getId();
+
+		AggregateWithImmutableVersion reloadedAggregate = template.findById(id, aggregate.getClass());
+		assertThat(reloadedAggregate.getVersion()).isEqualTo(1L)
+				.withFailMessage("version field should initially have the value 1");
+		reloadedAggregate = template.save(reloadedAggregate);
+
+		AggregateWithImmutableVersion updatedAggregate = template.findById(id, aggregate.getClass());
+		assertThat(updatedAggregate.getVersion()).isEqualTo(2L)
+				.withFailMessage("version field should increment by one with each save");
+
+		assertThatThrownBy(() -> template.save(new AggregateWithImmutableVersion(id, 1L)))
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+				.withFailMessage("saving an aggregate with an outdated version should raise an exception");
+
+		assertThatThrownBy(() -> template.save(new AggregateWithImmutableVersion(id, 3L)))
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+				.withFailMessage("saving an aggregate with a future version should raise an exception");
+	}
+
+	@Test // DATAJDBC-219 Test that a delete with a version attribute works as expected.
+	public void deleteAggregateWithVersion() {
+
+		AggregateWithImmutableVersion aggregate = new AggregateWithImmutableVersion(null, null);
+		aggregate = template.save(aggregate);
+
+		//Should have an ID and a version of 1.
+		final Long id = aggregate.getId();
+
+		assertThatThrownBy(() -> template.delete(new AggregateWithImmutableVersion(id, 0L), AggregateWithImmutableVersion.class))
+			.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+			.withFailMessage("deleting an aggregate with an outdated version should raise an exception");
+
+		assertThatThrownBy(() -> template.delete(new AggregateWithImmutableVersion(id, 3L), AggregateWithImmutableVersion.class))
+			.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+			.withFailMessage("deleting an aggregate with a future version should raise an exception");
+
+
+		//This should succeed
+		template.delete(aggregate, AggregateWithImmutableVersion.class);
+
+
+		aggregate = new AggregateWithImmutableVersion(null, null);
+		aggregate = template.save(aggregate);
+
+		//This should succeed, as version will not be used.
+		template.deleteById(aggregate.getId(), AggregateWithImmutableVersion.class);
+
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithLongVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithLongVersion(), Number::longValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithPrimitiveLongVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithPrimitiveLongVersion(), Number::longValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithIntegerVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithIntegerVersion(), Number::intValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithPrimitiveIntegerVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithPrimitiveIntegerVersion(), Number::intValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithShortVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithShortVersion(), Number::shortValue);
+	}
+
+	@Test // DATAJDBC-219
+	public void saveAndUpdateAggregateWithPrimitiveShortVersion() {
+		saveAndUpdateAggregateWithVersion(new AggregateWithPrimitiveShortVersion(), Number::shortValue);
+	}
+
+	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
+			Function<Number, T> toConcreteNumber) {
+
+		template.save(aggregate);
+
+		VersionedAggregate reloadedAggregate = template.findById(aggregate.getId(), aggregate.getClass());
+		assertThat(reloadedAggregate.getVersion()).isEqualTo(toConcreteNumber.apply(1))
+				.withFailMessage("version field should initially have the value 1");
+		template.save(reloadedAggregate);
+
+		VersionedAggregate updatedAggregate = template.findById(aggregate.getId(), aggregate.getClass());
+		assertThat(updatedAggregate.getVersion()).isEqualTo(toConcreteNumber.apply(2))
+				.withFailMessage("version field should increment by one with each save");
+
+		reloadedAggregate.setVersion(toConcreteNumber.apply(1));
+		assertThatThrownBy(() -> template.save(reloadedAggregate))
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+				.withFailMessage("saving an aggregate with an outdated version should raise an exception");
+
+		reloadedAggregate.setVersion(toConcreteNumber.apply(3));
+		assertThatThrownBy(() -> template.save(reloadedAggregate))
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
+				.withFailMessage("saving an aggregate with a future version should raise an exception");
+	}
+
 	private static NoIdMapChain4 createNoIdMapTree() {
 
 		NoIdMapChain4 chain4 = new NoIdMapChain4();
@@ -891,6 +1012,109 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long id;
 		String name;
 		@ReadOnlyProperty String readOnly;
+	}
+	@Data
+	static abstract class VersionedAggregate {
+
+		@Id private Long id;
+
+		abstract Number getVersion();
+
+		abstract void setVersion(Number newVersion);
+	}
+
+	@Value
+	@Wither
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithImmutableVersion {
+
+		@Id private Long id;
+		@Version private final Long version;
+
+	}
+
+	@Data
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithLongVersion extends VersionedAggregate {
+
+		@Version private Long version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (Long) newVersion;
+		}
+	}
+
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithPrimitiveLongVersion extends VersionedAggregate {
+
+		@Version private long version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (long) newVersion;
+		}
+
+		@Override
+		Number getVersion() {
+			return this.version;
+		}
+	}
+
+	@Data
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithIntegerVersion extends VersionedAggregate {
+
+		@Version private Integer version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (Integer) newVersion;
+		}
+	}
+
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithPrimitiveIntegerVersion extends VersionedAggregate {
+
+		@Version private int version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (int) newVersion;
+		}
+
+		@Override
+		Number getVersion() {
+			return this.version;
+		}
+	}
+
+	@Data
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithShortVersion extends VersionedAggregate {
+
+		@Version private Short version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (Short) newVersion;
+		}
+	}
+
+	@Table("VERSIONED_AGGREGATE")
+	static class AggregateWithPrimitiveShortVersion extends VersionedAggregate {
+
+		@Version private short version;
+
+		@Override
+		void setVersion(Number newVersion) {
+			this.version = (short) newVersion;
+		}
+
+		@Override
+		Number getVersion() {
+			return this.version;
+		}
 	}
 
 	@Configuration

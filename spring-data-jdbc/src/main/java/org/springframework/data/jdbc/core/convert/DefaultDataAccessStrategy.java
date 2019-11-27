@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import static org.springframework.data.jdbc.core.convert.SqlGenerator.VERSION_SQL_PARAMETER_NAME;
+
 import java.sql.JDBCType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,11 +30,13 @@ import java.util.function.Predicate;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -55,6 +59,8 @@ import org.springframework.util.Assert;
  * @author Thomas Lang
  * @author Bastian Wilhelm
  * @author Christoph Strobl
+ * @author Tom Hombergs
+ * @author Tyler Van Gorder
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -135,9 +141,32 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <S> boolean update(S instance, Class<S> domainType) {
 
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
-
 		return operations.update(sql(domainType).getUpdate(),
 				getParameterSource(instance, persistentEntity, "", Predicates.includeAll())) != 0;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#updateWithVersion(java.lang.Object, java.lang.Class, java.lang.Number)
+	 */
+	@Override
+	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
+
+		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
+
+		// Adjust update statement to set the new version and use the old version in where clause.
+		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
+				Predicates.includeAll());
+		parameterSource.addValue(VERSION_SQL_PARAMETER_NAME, previousVersion);
+
+		int affectedRows = operations.update(sql(domainType).getUpdateWithVersion(), parameterSource);
+
+		if (affectedRows == 0) {
+			throw new OptimisticLockingFailureException(
+					String.format("Optimistic lock exception on saving entity of type %s.", persistentEntity.getName()));
+		}
+
+		return true;
 	}
 
 	/*
@@ -151,6 +180,33 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
 
 		operations.update(deleteByIdSql, parameter);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class)
+	 */
+	@Override
+	public <T> void deleteWithVersion(T instance, Class<T> domainType) {
+
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
+		Object id = getIdValueOrNull(instance, persistentEntity);
+		Assert.notNull(id, "Cannot delete an instance without it's ID being populated.");
+
+		if (!persistentEntity.hasVersionProperty()) {
+			delete(id, domainType);
+			return;
+		}
+
+		Number oldVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(instance, persistentEntity, converter);
+		MapSqlParameterSource parameterSource = createIdParameterSource(id, domainType);
+		parameterSource.addValue(VERSION_SQL_PARAMETER_NAME, oldVersion);
+		int affectedRows = operations.update(sql(domainType).getDeleteByIdAndVersion(), parameterSource);
+
+		if (affectedRows == 0) {
+			throw new OptimisticLockingFailureException(
+					String.format("Optimistic lock exception deleting entity of type %s.", persistentEntity.getName()));
+		}
 	}
 
 	/*

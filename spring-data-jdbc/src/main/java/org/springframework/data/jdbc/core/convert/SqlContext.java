@@ -42,6 +42,13 @@ class SqlContext {
 		return table.column(entity.getIdColumn());
 	}
 
+	Column getVersionColumn() {
+		if (!entity.hasVersionProperty()) {
+			return null;
+		}
+		return table.column(entity.getVersionProperty().getColumnName());
+	}
+	
 	Table getTable() {
 		return table;
 	}
