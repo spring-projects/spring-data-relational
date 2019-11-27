@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.Collections;
 import java.util.Map;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
@@ -34,6 +33,8 @@ import org.springframework.data.relational.core.conversion.DbAction.Merge;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.conversion.Interpreter;
+import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -48,11 +49,13 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Tyler Van Gorder
  */
 @RequiredArgsConstructor
 class DefaultJdbcInterpreter implements Interpreter {
 
 	public static final String UPDATE_FAILED = "Failed to update entity [%s]. Id [%s] not found in database.";
+	private final RelationalConverter converter;
 	private final RelationalMappingContext context;
 	private final DataAccessStrategy accessStrategy;
 
@@ -62,10 +65,13 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(Insert<T> insert) {
-
 		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), getParentKeys(insert));
-
 		insert.setGeneratedId(id);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> RelationalPersistentEntity<T> getRequiredPersistentEntity(Class<T> type) {
+		return (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type);
 	}
 
 	/*
@@ -75,8 +81,24 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(InsertRoot<T> insert) {
 
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Collections.emptyMap());
-		insert.setGeneratedId(id);
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(insert.getEntityType());
+
+		if (persistentEntity.hasVersionProperty()) {
+			// The interpreter is responsible for setting the initial version on the entity prior to calling insert.
+			Number version = RelationalEntityVersionUtils.getVersionNumberFromEntity(insert.getEntity(), persistentEntity,
+					converter);
+			if (version != null && version.longValue() > 0) {
+				throw new IllegalArgumentException("The entity cannot be inserted because it already has a version.");
+			}
+			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(insert.getEntity(), 1, persistentEntity,
+					converter);
+			Object id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty());
+			insert.setNextVersion(1);
+			insert.setGeneratedId(id);
+		} else {
+			Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());
+			insert.setGeneratedId(id);
+		}
 	}
 
 	/*
@@ -100,10 +122,31 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(UpdateRoot<T> update) {
 
-		if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(update.getEntityType());
 
-			throw new IncorrectUpdateSemanticsDataAccessException(
-					String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
+		if (persistentEntity.hasVersionProperty()) {
+			// If the root aggregate has a version property, increment it.
+			Number previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(update.getEntity(),
+					persistentEntity, converter);
+			Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
+
+			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(update.getEntity(),
+					previousVersion.longValue() + 1, persistentEntity,
+					converter);
+
+				if (accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
+					// Successful update, set the in-memory version on the action.
+					update.setNextVersion(previousVersion);
+				} else {
+				throw new IncorrectUpdateSemanticsDataAccessException(
+						String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
+				}
+		} else {
+			if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
+
+				throw new IncorrectUpdateSemanticsDataAccessException(
+						String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
+			}
 		}
 	}
 
@@ -135,7 +178,16 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(DeleteRoot<T> delete) {
-		accessStrategy.delete(delete.getRootId(), delete.getEntityType());
+
+		if (delete.getEntity() != null) {
+			RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(delete.getEntityType());
+			if (persistentEntity.hasVersionProperty()) {
+				accessStrategy.deleteWithVersion(delete.getEntity(), delete.getEntityType());
+				return;
+			}
+		}
+
+		accessStrategy.delete(delete.getId(), delete.getEntityType());
 	}
 
 	/*
@@ -177,13 +229,13 @@ class DefaultJdbcInterpreter implements Interpreter {
 		PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, action.getPropertyPath());
 		PersistentPropertyPathExtension idPath = path.getIdDefiningParentPath();
 
-		DbAction.WithEntity idOwningAction = getIdOwningAction(action, idPath);
+		DbAction.WithEntity<?> idOwningAction = getIdOwningAction(action, idPath);
 
 		return getIdFrom(idOwningAction);
 	}
 
-	@SuppressWarnings("unchecked")
-	private DbAction.WithEntity getIdOwningAction(DbAction.WithEntity action, PersistentPropertyPathExtension idPath) {
+	private DbAction.WithEntity<?> getIdOwningAction(DbAction.WithEntity<?> action,
+			PersistentPropertyPathExtension idPath) {
 
 		if (!(action instanceof DbAction.WithDependingOn)) {
 
@@ -193,7 +245,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 			return action;
 		}
 
-		DbAction.WithDependingOn withDependingOn = (DbAction.WithDependingOn) action;
+		DbAction.WithDependingOn<?> withDependingOn = (DbAction.WithDependingOn<?>) action;
 
 		if (idPath.matches(withDependingOn.getPropertyPath())) {
 			return action;
@@ -202,7 +254,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 		return getIdOwningAction(withDependingOn.getDependingOn(), idPath);
 	}
 
-	private Object getIdFrom(DbAction.WithEntity idOwningAction) {
+	private Object getIdFrom(DbAction.WithEntity<?> idOwningAction) {
 
 		if (idOwningAction instanceof DbAction.WithGeneratedId) {
 
@@ -221,4 +273,5 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 		return identifier;
 	}
+
 }

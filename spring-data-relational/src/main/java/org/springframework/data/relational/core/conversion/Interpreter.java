@@ -57,5 +57,5 @@ public interface Interpreter {
 
 	<T> void interpret(DeleteAll<T> delete);
 
-	<T> void interpret(DeleteAllRoot<T> DeleteAllRoot);
+	<T> void interpret(DeleteAllRoot<T> deleteAllRoot);
 }

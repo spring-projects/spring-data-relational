@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -33,6 +34,7 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.Pair;
@@ -45,6 +47,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Tyler Van Gorder
  * @since 1.2
  */
 class AggregateChangeExecutor {
@@ -60,7 +63,6 @@ class AggregateChangeExecutor {
 		this.context = converter.getMappingContext();
 	}
 
-	@SuppressWarnings("unchecked")
 	<T> void execute(AggregateChange<T> aggregateChange) {
 
 		List<DbAction<?>> actions = new ArrayList<>();
@@ -70,17 +72,42 @@ class AggregateChangeExecutor {
 			actions.add(action);
 		});
 
-		T newRoot = (T) populateIdsIfNecessary(actions);
-
+		T newRoot = populateIdsIfNecessary(actions);
 		if (newRoot != null) {
+			newRoot = populateRootVersionIfNecessary(newRoot, actions);
 			aggregateChange.setEntity(newRoot);
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Nullable
-	private Object populateIdsIfNecessary(List<DbAction<?>> actions) {
+	private <T> T populateRootVersionIfNecessary(T newRoot, List<DbAction<?>> actions) {
 
-		Object newRoot = null;
+		// Does the root entity have a version attribute?
+		RelationalPersistentEntity<T> persistentEntity = (RelationalPersistentEntity<T>) context
+				.getRequiredPersistentEntity(newRoot.getClass());
+		if (!persistentEntity.hasVersionProperty()) {
+			return newRoot;
+		}
+
+		// Find the root action
+		Optional<DbAction<?>> rootAction = actions.parallelStream().filter(action -> action instanceof DbAction.WithVersion)
+				.findFirst();
+
+		if (!rootAction.isPresent()) {
+			// This really should never happen.
+			return newRoot;
+		}
+		DbAction.WithVersion<T> versionAction = (DbAction.WithVersion<T>) rootAction.get();
+
+		return RelationalEntityVersionUtils.setVersionNumberOnEntity(newRoot,
+				versionAction.getNextVersion(), persistentEntity, converter);
+	}
+
+	@Nullable
+	private <T> T populateIdsIfNecessary(List<DbAction<?>> actions) {
+
+		T newRoot = null;
 
 		// have the actions so that the inserts on the leaves come first.
 		List<DbAction<?>> reverseActions = new ArrayList<>(actions);
@@ -102,15 +129,15 @@ class AggregateChangeExecutor {
 			if (newEntity != ((DbAction.WithGeneratedId<?>) action).getEntity()) {
 
 				if (action instanceof DbAction.Insert) {
-					DbAction.Insert insert = (DbAction.Insert) action;
+					DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
 
-					Pair qualifier = insert.getQualifier();
+					Pair<?, ?> qualifier = insert.getQualifier();
 
 					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
 							qualifier == null ? null : qualifier.getSecond(), newEntity);
 
 				} else if (action instanceof DbAction.InsertRoot) {
-					newRoot = newEntity;
+					newRoot = (T) newEntity;
 				}
 			}
 		}
@@ -140,7 +167,7 @@ class AggregateChangeExecutor {
 	}
 
 	@SuppressWarnings("unchecked")
-	private PersistentPropertyPath getRelativePath(DbAction action, PersistentPropertyPath pathToValue) {
+	private PersistentPropertyPath<?> getRelativePath(DbAction<?> action, PersistentPropertyPath<?> pathToValue) {
 
 		if (action instanceof DbAction.Insert) {
 			return pathToValue.getExtensionForBaseOf(((DbAction.Insert) action).getPropertyPath());

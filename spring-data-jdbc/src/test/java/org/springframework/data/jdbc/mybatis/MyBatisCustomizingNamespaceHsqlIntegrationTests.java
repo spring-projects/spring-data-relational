@@ -15,7 +15,7 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import junit.framework.AssertionFailedError;
 
@@ -34,8 +34,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.test.context.ActiveProfiles;
@@ -109,7 +113,10 @@ public class MyBatisCustomizingNamespaceHsqlIntegrationTests {
 		@Primary
 		MyBatisDataAccessStrategy dataAccessStrategy(SqlSession sqlSession) {
 
-			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession);
+			RelationalMappingContext context = new JdbcMappingContext();
+			JdbcConverter converter = new BasicJdbcConverter(context, (Identifier, path) -> null);
+		
+			MyBatisDataAccessStrategy strategy = new MyBatisDataAccessStrategy(sqlSession, context, converter);
 
 			strategy.setNamespaceStrategy(new NamespaceStrategy() {
 				@Override

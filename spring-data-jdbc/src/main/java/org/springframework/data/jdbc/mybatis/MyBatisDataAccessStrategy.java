@@ -15,9 +15,10 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import static java.util.Arrays.*;
+import static java.util.Arrays.asList;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.ibatis.exceptions.PersistenceException;
@@ -52,10 +53,12 @@ import org.springframework.util.Assert;
  * @author Kazuki Shimizu
  * @author Oliver Gierke
  * @author Mark Paluch
+ * @author Tyler Van Gorder
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	private static final Logger LOG = LoggerFactory.getLogger(MyBatisDataAccessStrategy.class);
+	private static final String VERSION_SQL_PARAMETER_NAME_OLD = "___oldOptimisticLockingVersion";
 
 	private final SqlSession sqlSession;
 	private NamespaceStrategy namespaceStrategy = NamespaceStrategy.DEFAULT_INSTANCE;
@@ -81,7 +84,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
 		// created. That is the purpose of the DelegatingAccessStrategy.
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
-		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession);
+		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession, context, converter);
 		myBatisDataAccessStrategy.setNamespaceStrategy(namespaceStrategy);
 
 		CascadingDataAccessStrategy cascadingDataAccessStrategy = new CascadingDataAccessStrategy(
@@ -111,7 +114,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 *
 	 * @param sqlSession Must be non {@literal null}.
 	 */
-	public MyBatisDataAccessStrategy(SqlSession sqlSession) {
+	public MyBatisDataAccessStrategy(SqlSession sqlSession, RelationalMappingContext context, JdbcConverter converter) {
 		this.sqlSession = sqlSession;
 	}
 
@@ -166,6 +169,20 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#updateWithVersion(java.lang.Object, java.lang.Class, java.lang.Number)
+	 */
+	@Override
+	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
+
+		Map<String, Object> additionalValues = new HashMap<>();
+		additionalValues.put(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion);
+
+		return sqlSession().update(namespace(domainType) + ".updateWithVersion",
+				new MyBatisContext(null, instance, domainType, additionalValues)) != 0;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, java.lang.Class)
 	 */
 	@Override
@@ -173,6 +190,17 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 		sqlSession().delete(namespace(domainType) + ".delete",
 				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class)
+	 */
+	@Override
+	public <T> void deleteWithVersion(T instance, Class<T> domainType) {
+
+		sqlSession().delete(namespace(domainType) + ".deleteWithVersion",
+				new MyBatisContext(null, instance, domainType, Collections.emptyMap()));
 	}
 
 	/*

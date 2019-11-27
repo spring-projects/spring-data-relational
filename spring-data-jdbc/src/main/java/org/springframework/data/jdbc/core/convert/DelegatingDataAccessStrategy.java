@@ -62,6 +62,15 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#updateWithVersion(java.lang.Object, java.lang.Class, java.lang.Number)
+	 */
+	@Override
+	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number nextVersion) {
+		return delegate.updateWithVersion(instance, domainType, nextVersion);
+
+	}
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PersistentPropertyPath)
 	 */
 	@Override
@@ -76,6 +85,15 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 		delegate.delete(id, domainType);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteWithVersion(java.lang.Object, java.lang.Class)
+	 */
+	@Override
+	public <T> void deleteWithVersion(T instance, Class<T> domainType) {
+		delegate.deleteWithVersion(instance, domainType);
 	}
 
 	/*

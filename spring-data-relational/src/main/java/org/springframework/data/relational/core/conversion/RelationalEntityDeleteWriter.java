@@ -27,7 +27,9 @@ import org.springframework.util.Assert;
 
 /**
  * Converts an entity that is about to be deleted into {@link DbAction}s inside a {@link AggregateChange} that need to
- * be executed against the database to recreate the appropriate state in the database.
+ * be executed against the database to recreate the appropriate state in the database. If the {@link AggregateChange}
+ * has a reference to the entity and the entity has a version attribute, the delete will include an optimistic record
+ * locking check.
  *
  * @author Jens Schauder
  * @author Mark Paluch
@@ -58,7 +60,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 		if (id == null) {
 			deleteAll(aggregateChange.getEntityType()).forEach(aggregateChange::addAction);
 		} else {
-			deleteById(id, aggregateChange).forEach(aggregateChange::addAction);
+			deleteRoot(id, aggregateChange).forEach(aggregateChange::addAction);
 		}
 	}
 
@@ -67,8 +69,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 		List<DbAction<?>> actions = new ArrayList<>();
 
 		context.findPersistentPropertyPaths(entityType, PersistentProperty::isEntity)
-				.filter(p -> !p.getRequiredLeafProperty().isEmbedded())
-				.forEach(p -> actions.add(new DbAction.DeleteAll<>(p)));
+				.filter(p -> !p.getRequiredLeafProperty().isEmbedded()).forEach(p -> actions.add(new DbAction.DeleteAll<>(p)));
 
 		Collections.reverse(actions);
 
@@ -78,10 +79,10 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 		return actions;
 	}
 
-	private <T> List<DbAction<?>> deleteById(Object id, AggregateChange<T> aggregateChange) {
+	private <T> List<DbAction<?>> deleteRoot(Object id, AggregateChange<T> aggregateChange) {
 
 		List<DbAction<?>> actions = new ArrayList<>(deleteReferencedEntities(id, aggregateChange));
-		actions.add(new DbAction.DeleteRoot<>(aggregateChange.getEntityType(), id));
+		actions.add(new DbAction.DeleteRoot<>(id, aggregateChange.getEntity(), aggregateChange.getEntityType()));
 
 		return actions;
 	}
@@ -97,8 +98,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 		List<DbAction<?>> actions = new ArrayList<>();
 
 		context.findPersistentPropertyPaths(aggregateChange.getEntityType(), PersistentProperty::isEntity)
-				.filter(p -> !p.getRequiredLeafProperty().isEmbedded())
-				.forEach(p -> actions.add(new DbAction.Delete<>(id, p)));
+				.filter(p -> !p.getRequiredLeafProperty().isEmbedded()).forEach(p -> actions.add(new DbAction.Delete<>(id, p)));
 
 		Collections.reverse(actions);
 

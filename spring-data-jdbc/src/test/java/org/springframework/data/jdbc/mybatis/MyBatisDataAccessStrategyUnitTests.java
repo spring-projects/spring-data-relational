@@ -15,10 +15,18 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 
@@ -29,6 +37,8 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -44,11 +54,12 @@ import org.springframework.data.relational.domain.Identifier;
 public class MyBatisDataAccessStrategyUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext();
+	JdbcConverter converter = new BasicJdbcConverter(context, (Identifier, path) -> null);
 
 	SqlSession session = mock(SqlSession.class);
 	ArgumentCaptor<MyBatisContext> captor = ArgumentCaptor.forClass(MyBatisContext.class);
 
-	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session);
+	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session, context, converter);
 
 	PersistentPropertyPath<RelationalPersistentProperty> path = PropertyPathTestingUtils.toPath("one.two",
 			DummyEntity.class, context);

@@ -31,10 +31,20 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityUpdateWriter;
-import org.springframework.data.relational.core.conversion.RelationalEntityWriter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.relational.core.mapping.event.AfterDeleteCallback;
+import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
+import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
+import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
+import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
+import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
+import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
+import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
+import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
+import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -51,10 +61,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final ApplicationEventPublisher publisher;
 	private final RelationalMappingContext context;
-	private final RelationalConverter converter;
 	private final Interpreter interpreter;
 
-	private final RelationalEntityWriter jdbcEntityWriter;
 	private final RelationalEntityDeleteWriter jdbcEntityDeleteWriter;
 	private final RelationalEntityInsertWriter jdbcEntityInsertWriter;
 	private final RelationalEntityUpdateWriter jdbcEntityUpdateWriter;
@@ -83,14 +91,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		this.publisher = publisher;
 		this.context = context;
-		this.converter = converter;
 		this.accessStrategy = dataAccessStrategy;
 
-		this.jdbcEntityWriter = new RelationalEntityWriter(context);
 		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
-		this.interpreter = new DefaultJdbcInterpreter(context, accessStrategy);
+		this.interpreter = new DefaultJdbcInterpreter(converter, context, accessStrategy);
 
 		this.executor = new AggregateChangeExecutor(interpreter, converter);
 
@@ -115,15 +121,12 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		this.publisher = publisher;
 		this.context = context;
-		this.converter = converter;
 		this.accessStrategy = dataAccessStrategy;
 
-		this.jdbcEntityWriter = new RelationalEntityWriter(context);
 		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
-		this.interpreter = new DefaultJdbcInterpreter(context, accessStrategy);
-
+		this.interpreter = new DefaultJdbcInterpreter(converter, context, accessStrategy);
 		this.executor = new AggregateChangeExecutor(interpreter, converter);
 	}
 
