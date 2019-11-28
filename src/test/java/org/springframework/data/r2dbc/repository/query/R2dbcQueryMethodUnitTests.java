@@ -72,6 +72,14 @@ public class R2dbcQueryMethodUnitTests {
 	}
 
 	@Test // gh-235
+	public void detectsNotModifyingQuery() throws Exception {
+
+		R2dbcQueryMethod queryMethod = queryMethod(SampleRepository.class, "differentTable");
+
+		assertThat(queryMethod.isModifyingQuery()).isFalse();
+	}
+
+	@Test
 	public void detectsTableNameFromRepoTypeIfReturnTypeNotAssignable() throws Exception {
 
 		R2dbcQueryMethod queryMethod = queryMethod(SampleRepository.class, "differentTable");
@@ -79,7 +87,6 @@ public class R2dbcQueryMethodUnitTests {
 
 		assertThat(metadata.getJavaType()).isAssignableFrom(Address.class);
 		assertThat(metadata.getTableName()).isEqualTo("contact");
-		assertThat(queryMethod.isModifyingQuery()).isFalse();
 	}
 
 	@Test(expected = IllegalArgumentException.class)

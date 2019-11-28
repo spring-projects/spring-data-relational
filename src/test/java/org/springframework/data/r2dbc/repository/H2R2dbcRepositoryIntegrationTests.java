@@ -90,6 +90,14 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	@Test // gh-235
+	public void shouldReturnUpdateCountAsDouble() {
+
+		shouldInsertNewItems();
+
+		repository.updateManualAndReturnDouble(42).as(StepVerifier::create).expectNext(2.0).verifyComplete();
+	}
+
+	@Test // gh-235
 	public void shouldReturnUpdateSuccess() {
 
 		shouldInsertNewItems();
@@ -134,5 +142,9 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		@Query("UPDATE legoset set manual = :manual")
 		@Modifying
 		Mono<Void> updateManualAndReturnNothing(int manual);
+
+		@Query("UPDATE legoset set manual = :manual")
+		@Modifying
+		Mono<Double> updateManualAndReturnDouble(int manual);
 	}
 }

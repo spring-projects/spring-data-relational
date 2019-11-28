@@ -142,9 +142,9 @@ Mono<Integer> setFixedFirstnameFor(String firstname, String lastname);
 
 The result of a modifying query can be:
 
-* `Void` to discard update count and await completion
-* `Integer` emitting the affected rows count
-* `Boolean` to emit whether at least one row was updated
+* `Void` to discard update count and await completion.
+* `Integer` or another numeric type emitting the affected rows count.
+* `Boolean` to emit whether at least one row was updated.
 
 The `@Modifying` annotation is only relevant in combination with the `@Query` annotation.
 Derived custom methods do not require this annotation.
