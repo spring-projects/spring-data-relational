@@ -61,7 +61,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 
 	private final Method method;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
-	private final Optional<org.springframework.data.r2dbc.repository.Query> query;
+	private final Optional<Query> query;
 	private final boolean modifying;
 
 	private @Nullable RelationalEntityMetadata<?> metadata;
@@ -112,7 +112,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 
 		this.method = method;
 		this.query = Optional.ofNullable(
-				AnnotatedElementUtils.findMergedAnnotation(method, org.springframework.data.r2dbc.repository.Query.class));
+				AnnotatedElementUtils.findMergedAnnotation(method, Query.class));
 		this.modifying = AnnotatedElementUtils.hasAnnotation(method, Modifying.class);
 	}
 
@@ -209,14 +209,14 @@ public class R2dbcQueryMethod extends QueryMethod {
 	}
 
 	/**
-	 * Returns the required query string declared in a {@link org.springframework.data.r2dbc.repository.Query} annotation
+	 * Returns the required query string declared in a {@link Query} annotation
 	 * or throws {@link IllegalStateException} if neither the annotation found nor the attribute was specified.
 	 *
 	 * @return the query string.
 	 * @throws IllegalStateException in case query method has no annotated query.
 	 */
 	public String getRequiredAnnotatedQuery() {
-		return this.query.map(org.springframework.data.r2dbc.repository.Query::value)
+		return this.query.map(Query::value)
 				.orElseThrow(() -> new IllegalStateException("Query method " + this + " has no annotated query"));
 	}
 
@@ -225,13 +225,13 @@ public class R2dbcQueryMethod extends QueryMethod {
 	 *
 	 * @return the optional query annotation.
 	 */
-	Optional<org.springframework.data.r2dbc.repository.Query> getQueryAnnotation() {
+	Optional<Query> getQueryAnnotation() {
 		return this.query;
 	}
 
 	/**
 	 * @return {@literal true} if the {@link Method} is annotated with
-	 *         {@link org.springframework.data.r2dbc.repository.Query}.
+	 *         {@link Query}.
 	 */
 	public boolean hasAnnotatedQuery() {
 		return getQueryAnnotation().isPresent();

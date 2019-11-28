@@ -141,16 +141,16 @@ public class StringBasedR2dbcQueryUnitTests {
 	@SuppressWarnings("unused")
 	private interface SampleRepository extends Repository<Person, String> {
 
-		@org.springframework.data.r2dbc.repository.Query("SELECT * FROM person WHERE lastname = $1")
+		@Query("SELECT * FROM person WHERE lastname = $1")
 		Person findByLastname(String lastname);
 
-		@org.springframework.data.r2dbc.repository.Query("SELECT * FROM person WHERE lastname = :lastname")
+		@Query("SELECT * FROM person WHERE lastname = :lastname")
 		Person findByNamedParameter(@Param("lastname") String lastname);
 
 		@Query("SELECT * FROM person WHERE lastname = :unknown")
 		Person findNotByNamedBindMarker(String lastname);
 
-		@org.springframework.data.r2dbc.repository.Query("SELECT * FROM person WHERE lastname = @lastname")
+		@Query("SELECT * FROM person WHERE lastname = @lastname")
 		Person findByNamedBindMarker(@Param("lastname") String lastname);
 	}
 
