@@ -15,12 +15,8 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.tuple;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -642,27 +638,29 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-219 Test that immutable version attribute works as expected.
 	public void saveAndUpdateAggregateWithImmutableVersion() {
+
 		AggregateWithImmutableVersion aggregate = new AggregateWithImmutableVersion(null, null);
 		aggregate = template.save(aggregate);
 
 		Long id = aggregate.getId();
 
 		AggregateWithImmutableVersion reloadedAggregate = template.findById(id, aggregate.getClass());
-		assertThat(reloadedAggregate.getVersion()).isEqualTo(1L)
-				.withFailMessage("version field should initially have the value 1");
-		reloadedAggregate = template.save(reloadedAggregate);
+		assertThat(reloadedAggregate.getVersion()).describedAs("version field should initially have the value 1")
+				.isEqualTo(1L);
+
+		template.save(reloadedAggregate);
 
 		AggregateWithImmutableVersion updatedAggregate = template.findById(id, aggregate.getClass());
-		assertThat(updatedAggregate.getVersion()).isEqualTo(2L)
-				.withFailMessage("version field should increment by one with each save");
+		assertThat(updatedAggregate.getVersion()).describedAs("version field should increment by one with each save")
+				.isEqualTo(2L);
 
 		assertThatThrownBy(() -> template.save(new AggregateWithImmutableVersion(id, 1L)))
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
-				.withFailMessage("saving an aggregate with an outdated version should raise an exception");
+				.describedAs("saving an aggregate with an outdated version should raise an exception")
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 
 		assertThatThrownBy(() -> template.save(new AggregateWithImmutableVersion(id, 3L)))
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
-				.withFailMessage("saving an aggregate with a future version should raise an exception");
+				.describedAs("saving an aggregate with a future version should raise an exception")
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 	}
 
 	@Test // DATAJDBC-219 Test that a delete with a version attribute works as expected.
@@ -671,26 +669,26 @@ public class JdbcAggregateTemplateIntegrationTests {
 		AggregateWithImmutableVersion aggregate = new AggregateWithImmutableVersion(null, null);
 		aggregate = template.save(aggregate);
 
-		//Should have an ID and a version of 1.
+		// Should have an ID and a version of 1.
 		final Long id = aggregate.getId();
 
-		assertThatThrownBy(() -> template.delete(new AggregateWithImmutableVersion(id, 0L), AggregateWithImmutableVersion.class))
-			.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
-			.withFailMessage("deleting an aggregate with an outdated version should raise an exception");
+		assertThatThrownBy(
+				() -> template.delete(new AggregateWithImmutableVersion(id, 0L), AggregateWithImmutableVersion.class))
+						.describedAs("deleting an aggregate with an outdated version should raise an exception")
+						.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 
-		assertThatThrownBy(() -> template.delete(new AggregateWithImmutableVersion(id, 3L), AggregateWithImmutableVersion.class))
-			.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
-			.withFailMessage("deleting an aggregate with a future version should raise an exception");
+		assertThatThrownBy(
+				() -> template.delete(new AggregateWithImmutableVersion(id, 3L), AggregateWithImmutableVersion.class))
+						.describedAs("deleting an aggregate with a future version should raise an exception")
+						.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 
-
-		//This should succeed
+		// This should succeed
 		template.delete(aggregate, AggregateWithImmutableVersion.class);
-
 
 		aggregate = new AggregateWithImmutableVersion(null, null);
 		aggregate = template.save(aggregate);
 
-		//This should succeed, as version will not be used.
+		// This should succeed, as version will not be used.
 		template.deleteById(aggregate.getId(), AggregateWithImmutableVersion.class);
 
 	}
@@ -1013,6 +1011,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		String name;
 		@ReadOnlyProperty String readOnly;
 	}
+
 	@Data
 	static abstract class VersionedAggregate {
 

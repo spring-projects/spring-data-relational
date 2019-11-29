@@ -174,11 +174,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
 
-		Map<String, Object> additionalValues = new HashMap<>();
-		additionalValues.put(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion);
 
 		return sqlSession().update(namespace(domainType) + ".updateWithVersion",
-				new MyBatisContext(null, instance, domainType, additionalValues)) != 0;
+				new MyBatisContext(null, instance, domainType, Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion))) != 0;
 	}
 
 	/*
@@ -197,10 +195,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class)
 	 */
 	@Override
-	public <T> void deleteWithVersion(T instance, Class<T> domainType) {
+	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 
 		sqlSession().delete(namespace(domainType) + ".deleteWithVersion",
-				new MyBatisContext(null, instance, domainType, Collections.emptyMap()));
+				new MyBatisContext(id, null, domainType, Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion)));
 	}
 
 	/*

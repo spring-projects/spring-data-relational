@@ -3,6 +3,11 @@
 
 This section covers the significant changes for each version.
 
+[[new-features.2-0-0]]
+== What's New in Spring Data JDBC 2.0
+
+* Optimistic Locking support.
+
 [[new-features.1-0-0]]
 == What's New in Spring Data JDBC 1.0
 
@@ -13,3 +18,4 @@ This section covers the significant changes for each version.
 * Event support.
 * Auditing.
 * `CustomConversions`.
+

@@ -26,6 +26,7 @@ import org.springframework.data.relational.core.sql.Table;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Tyler Van Gorder
  * @since 1.1
  */
 class SqlContext {
@@ -43,10 +44,7 @@ class SqlContext {
 	}
 
 	Column getVersionColumn() {
-		if (!entity.hasVersionProperty()) {
-			return null;
-		}
-		return table.column(entity.getVersionProperty().getColumnName());
+		return table.column(entity.getRequiredVersionProperty().getColumnName());
 	}
 	
 	Table getTable() {

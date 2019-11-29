@@ -48,6 +48,7 @@ import org.springframework.data.relational.domain.Identifier;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Tyler Van Gorder
  */
 public class DefaultJdbcInterpreterUnitTests {
 

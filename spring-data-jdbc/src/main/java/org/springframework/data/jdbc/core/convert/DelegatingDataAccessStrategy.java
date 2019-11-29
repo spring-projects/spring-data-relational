@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  * cyclic dependencies.
  *
  * @author Jens Schauder
+ * @author Tyler Van Gorder
  * @since 1.1
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
@@ -89,11 +90,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteWithVersion(java.lang.Object, java.lang.Class)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteWithVersion(java.lang.Object, java.lang.Class, Number)
 	 */
 	@Override
-	public <T> void deleteWithVersion(T instance, Class<T> domainType) {
-		delegate.deleteWithVersion(instance, domainType);
+	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
+		delegate.deleteWithVersion(id, domainType, previousVersion);
 	}
 
 	/*

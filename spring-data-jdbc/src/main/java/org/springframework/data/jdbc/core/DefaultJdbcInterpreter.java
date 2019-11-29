@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.Map;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
@@ -55,6 +56,7 @@ import org.springframework.util.Assert;
 class DefaultJdbcInterpreter implements Interpreter {
 
 	public static final String UPDATE_FAILED = "Failed to update entity [%s]. Id [%s] not found in database.";
+	public static final String UPDATE_FAILED_OPTIMISTIC_LOCKING = "Failed to update entity [%s]. The entity was updated since it was rea or it isn't in the database at all.";
 	private final RelationalConverter converter;
 	private final RelationalMappingContext context;
 	private final DataAccessStrategy accessStrategy;
@@ -65,13 +67,9 @@ class DefaultJdbcInterpreter implements Interpreter {
 	 */
 	@Override
 	public <T> void interpret(Insert<T> insert) {
+
 		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), getParentKeys(insert));
 		insert.setGeneratedId(id);
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T> RelationalPersistentEntity<T> getRequiredPersistentEntity(Class<T> type) {
-		return (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type);
 	}
 
 	/*
@@ -83,22 +81,17 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(insert.getEntityType());
 
+		Object id;
 		if (persistentEntity.hasVersionProperty()) {
-			// The interpreter is responsible for setting the initial version on the entity prior to calling insert.
-			Number version = RelationalEntityVersionUtils.getVersionNumberFromEntity(insert.getEntity(), persistentEntity,
-					converter);
-			if (version != null && version.longValue() > 0) {
-				throw new IllegalArgumentException("The entity cannot be inserted because it already has a version.");
-			}
+
 			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(insert.getEntity(), 1, persistentEntity,
 					converter);
-			Object id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty());
+			id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty());
 			insert.setNextVersion(1);
-			insert.setGeneratedId(id);
 		} else {
-			Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());
-			insert.setGeneratedId(id);
+			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());
 		}
+		insert.setGeneratedId(id);
 	}
 
 	/*
@@ -125,23 +118,25 @@ class DefaultJdbcInterpreter implements Interpreter {
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(update.getEntityType());
 
 		if (persistentEntity.hasVersionProperty()) {
+
 			// If the root aggregate has a version property, increment it.
 			Number previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(update.getEntity(),
 					persistentEntity, converter);
+
 			Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
 
 			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(update.getEntity(),
-					previousVersion.longValue() + 1, persistentEntity,
-					converter);
+					previousVersion.longValue() + 1, persistentEntity, converter);
 
-				if (accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
-					// Successful update, set the in-memory version on the action.
-					update.setNextVersion(previousVersion);
-				} else {
-				throw new IncorrectUpdateSemanticsDataAccessException(
-						String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
-				}
+			if (accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
+				// Successful update, set the in-memory version on the action.
+				update.setNextVersion(previousVersion);
+			} else {
+				throw new OptimisticLockingFailureException(
+						String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
+			}
 		} else {
+
 			if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
 
 				throw new IncorrectUpdateSemanticsDataAccessException(
@@ -179,10 +174,12 @@ class DefaultJdbcInterpreter implements Interpreter {
 	@Override
 	public <T> void interpret(DeleteRoot<T> delete) {
 
-		if (delete.getEntity() != null) {
+		if (delete.getPreviousVersion() != null) {
+
 			RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(delete.getEntityType());
 			if (persistentEntity.hasVersionProperty()) {
-				accessStrategy.deleteWithVersion(delete.getEntity(), delete.getEntityType());
+
+				accessStrategy.deleteWithVersion(delete.getId(), delete.getEntityType(), delete.getPreviousVersion());
 				return;
 			}
 		}
@@ -272,6 +269,11 @@ class DefaultJdbcInterpreter implements Interpreter {
 		Assert.state(identifier != null, "Couldn't get obtain a required id value");
 
 		return identifier;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> RelationalPersistentEntity<T> getRequiredPersistentEntity(Class<T> type) {
+		return (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(type);
 	}
 
 }

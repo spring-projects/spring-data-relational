@@ -31,6 +31,7 @@ import org.springframework.data.relational.domain.Identifier;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Tyler Van Gorder
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -91,8 +92,8 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class)
 	 */
 	@Override
-	public <T> void deleteWithVersion(T instance, Class<T> domainType) {
-		collectVoid(das -> das.deleteWithVersion(instance, domainType));
+	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
+		collectVoid(das -> das.deleteWithVersion(id, domainType, previousVersion));
 	}
 
 	/*

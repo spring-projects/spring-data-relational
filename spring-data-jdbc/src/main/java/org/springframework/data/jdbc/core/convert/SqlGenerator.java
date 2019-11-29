@@ -37,24 +37,7 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.AssignValue;
-import org.springframework.data.relational.core.sql.Assignments;
-import org.springframework.data.relational.core.sql.BindMarker;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.Delete;
-import org.springframework.data.relational.core.sql.DeleteBuilder;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Expressions;
-import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.Insert;
-import org.springframework.data.relational.core.sql.InsertBuilder;
-import org.springframework.data.relational.core.sql.SQL;
-import org.springframework.data.relational.core.sql.Select;
-import org.springframework.data.relational.core.sql.SelectBuilder;
-import org.springframework.data.relational.core.sql.StatementBuilder;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.Update;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.Lazy;
@@ -501,25 +484,20 @@ class SqlGenerator {
 	}
 
 	private String createUpdateSql() {
-		Table table = getTable();
-
-		List<AssignValue> assignments = columns.getUpdateableColumns() //
-				.stream() //
-				.map(columnName -> Assignments.value( //
-						table.column(columnName), //
-						getBindMarker(columnName))) //
-				.collect(Collectors.toList());
-
-		Update update = Update.builder() //
-				.table(table) //
-				.set(assignments) //
-				.where(getIdColumn().isEqualTo(getBindMarker(entity.getIdColumn()))).build();
-
-		return render(update);
+		return render(createBaseUpdate().build());
 	}
 
 	private String createUpdateWithVersionSql() {
 
+		Update update = createBaseUpdate() //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER_NAME))) //
+				.build();
+
+		return render(update);
+	}
+
+	private UpdateBuilder.UpdateWhereAndOr createBaseUpdate() {
+
 		Table table = getTable();
 
 		List<AssignValue> assignments = columns.getUpdateableColumns() //
@@ -529,37 +507,27 @@ class SqlGenerator {
 						getBindMarker(columnName))) //
 				.collect(Collectors.toList());
 
-		Update update = null;
-		update = Update.builder() //
+		return Update.builder() //
 				.table(table) //
 				.set(assignments) //
-				.where(getIdColumn().isEqualTo(getBindMarker(entity.getIdColumn()))) //
-				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER_NAME))) //
-				.build();
-
-		return render(update);
+				.where(getIdColumn().isEqualTo(getBindMarker(entity.getIdColumn())));
 	}
 
 	private String createDeleteSql() {
+		return render(createBaseDeleteById(getTable()).build());
+	}
 
-		Table table = getTable();
+	private String createDeleteByIdAndVersionSql() {
 
-		Delete delete = Delete.builder().from(table).where(getIdColumn().isEqualTo(SQL.bindMarker(":id"))) //
+		Delete delete = createBaseDeleteById(getTable()) //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER_NAME))) //
 				.build();
 
 		return render(delete);
 	}
 
-	private String createDeleteByIdAndVersionSql() {
-		Table table = getTable();
-
-		Delete delete = Delete.builder() //
-				.from(table) //
-				.where(getIdColumn().isEqualTo(SQL.bindMarker(":id"))) //
-				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER_NAME))) //
-				.build();
-
-		return render(delete);
+	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
+		return Delete.builder().from(table).where(getIdColumn().isEqualTo(SQL.bindMarker(":id")));
 	}
 
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,

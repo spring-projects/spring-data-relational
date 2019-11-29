@@ -80,7 +80,6 @@ class AggregateChangeExecutor {
 	}
 
 	@SuppressWarnings("unchecked")
-	@Nullable
 	private <T> T populateRootVersionIfNecessary(T newRoot, List<DbAction<?>> actions) {
 
 		// Does the root entity have a version attribute?
@@ -98,12 +97,13 @@ class AggregateChangeExecutor {
 			// This really should never happen.
 			return newRoot;
 		}
-		DbAction.WithVersion<T> versionAction = (DbAction.WithVersion<T>) rootAction.get();
+		DbAction.WithVersion versionAction = (DbAction.WithVersion) rootAction.get();
 
-		return RelationalEntityVersionUtils.setVersionNumberOnEntity(newRoot,
-				versionAction.getNextVersion(), persistentEntity, converter);
+		return RelationalEntityVersionUtils.setVersionNumberOnEntity(newRoot, versionAction.getNextVersion(),
+				persistentEntity, converter);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Nullable
 	private <T> T populateIdsIfNecessary(List<DbAction<?>> actions) {
 
@@ -145,7 +145,6 @@ class AggregateChangeExecutor {
 		return newRoot;
 	}
 
-	@SuppressWarnings("unchecked")
 	private <S> Object setIdAndCascadingProperties(DbAction.WithGeneratedId<S> action, @Nullable Object generatedId,
 			AggregateChangeExecutor.StagedValues cascadingValues) {
 

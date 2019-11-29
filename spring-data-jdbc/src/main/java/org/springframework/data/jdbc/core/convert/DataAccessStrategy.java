@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.util.Map;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -75,7 +76,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	<T> boolean update(T instance, Class<T> domainType);
 
 	/**
-	 * Updates the data of a single entity in the database and enforce optimistic record locking using the previousVersion
+	 * Updates the data of a single entity in the database and enforce optimistic record locking using the {@code previousVersion}
 	 * property. Referenced entities don't get handled.
 	 * <P>
 	 * The statement will be of the form : {@code UPDATE … SET … WHERE ID = :id and VERSION_COLUMN = :previousVersion }
@@ -86,6 +87,8 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param previousVersion The previous version assigned to the instance being saved.
 	 * @param <T> the type of the instance to save.
 	 * @return whether the update actually updated a row.
+	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the the optimistic locking version check failed.
+	 * @since 2.0
 	 */
 	<T> boolean updateWithVersion(T instance, Class<T> domainType, Number previousVersion);
 
@@ -109,8 +112,11 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param id the id of the row to be deleted. Must not be {@code null}.
 	 * @param domainType the type of entity to be deleted. Implicitly determines the table to operate on. Must not be
 	 *          {@code null}.
+	 * @param previousVersion The previous version assigned to the instance being saved.
+	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the the optimistic locking version check failed.
+	 * @since 2.0
 	 */
-	<T> void deleteWithVersion(T instance, Class<T> domainType);
+	<T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion);
 
 	/**
 	 * Deletes all entities reachable via {@literal propertyPath} from the instance identified by {@literal rootId}.

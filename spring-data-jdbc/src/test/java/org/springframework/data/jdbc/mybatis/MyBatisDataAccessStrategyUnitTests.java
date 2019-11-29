@@ -50,6 +50,7 @@ import org.springframework.data.relational.domain.Identifier;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Tyler Van Gorder
  */
 public class MyBatisDataAccessStrategyUnitTests {
 

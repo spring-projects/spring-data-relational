@@ -22,6 +22,7 @@ import java.util.List;
 import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -34,6 +35,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Bastian Wilhelm
+ * @author Tyler Van Gorder
  */
 public class RelationalEntityDeleteWriter implements EntityWriter<Object, AggregateChange<?>> {
 
@@ -82,7 +84,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 	private <T> List<DbAction<?>> deleteRoot(Object id, AggregateChange<T> aggregateChange) {
 
 		List<DbAction<?>> actions = new ArrayList<>(deleteReferencedEntities(id, aggregateChange));
-		actions.add(new DbAction.DeleteRoot<>(id, aggregateChange.getEntity(), aggregateChange.getEntityType()));
+		actions.add(new DbAction.DeleteRoot<>(id, aggregateChange.getEntityType(), getVersion(aggregateChange)));
 
 		return actions;
 	}
@@ -103,5 +105,24 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Aggreg
 		Collections.reverse(actions);
 
 		return actions;
+	}
+
+	@Nullable
+	private Number getVersion(AggregateChange<?> aggregateChange) {
+
+		RelationalPersistentEntity<?> persistentEntity = context
+				.getRequiredPersistentEntity(aggregateChange.getEntityType());
+		if (!persistentEntity.hasVersionProperty()) {
+			return null;
+		}
+
+		Object entity = aggregateChange.getEntity();
+
+		if (entity == null) {
+			return null;
+		}
+
+		return (Number) persistentEntity.getPropertyAccessor(entity)
+				.getProperty(persistentEntity.getRequiredVersionProperty());
 	}
 }

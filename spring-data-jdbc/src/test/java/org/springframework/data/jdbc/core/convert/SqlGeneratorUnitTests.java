@@ -15,8 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static java.util.Collections.emptySet;
-import static org.assertj.core.api.Assertions.assertThat;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Map;
 import java.util.Set;
@@ -174,9 +174,9 @@ public class SqlGeneratorUnitTests {
 	public void findAllByPropertyWithMultipartIdentifier() {
 
 		// this would get called when ListParent is the element type of a Set
-		String sql = sqlGenerator.getFindAllByProperty(
-				Identifier.of("backref", "some-value", String.class).withPart("backref_key", "key-value", Object.class), null,
-				false);
+		Identifier parentIdentifier = Identifier.of("backref", "some-value", String.class) //
+				.withPart("backref_key", "key-value", Object.class);
+		String sql = sqlGenerator.getFindAllByProperty(parentIdentifier, null, false);
 
 		assertThat(sql).contains("SELECT", //
 				"dummy_entity.id1 AS id1", //
@@ -189,7 +189,8 @@ public class SqlGeneratorUnitTests {
 				"FROM dummy_entity ", //
 				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
-				"dummy_entity.backref = :backref", "dummy_entity.backref_key = :backref_key");
+				"dummy_entity.backref = :backref", //
+				"dummy_entity.backref_key = :backref_key");
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111

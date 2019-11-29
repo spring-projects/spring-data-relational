@@ -53,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Kazuki Shimizu
  * @author Jens Schauder
+ * @author Tyler Van Gorder
  */
 @ContextConfiguration
 @ActiveProfiles("hsql")

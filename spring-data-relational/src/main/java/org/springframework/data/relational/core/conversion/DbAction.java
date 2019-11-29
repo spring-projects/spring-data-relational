@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -93,15 +94,16 @@ public interface DbAction<T> {
 	}
 
 	/**
-	 * Represents an insert statement for the root of an aggregate. Upon a successful insert, the initial version and generated ids are populated.
+	 * Represents an insert statement for the root of an aggregate. Upon a successful insert, the initial version and
+	 * generated ids are populated.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Data
 	@RequiredArgsConstructor
-	class InsertRoot<T> implements WithVersion<T>, WithGeneratedId<T> {
+	class InsertRoot<T> implements WithVersion, WithGeneratedId<T> {
 
-		@NonNull private T entity;
+		@NonNull final T entity;
 		private Number nextVersion;
 		private Object generatedId;
 
@@ -134,9 +136,9 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Data
-	class UpdateRoot<T> implements WithVersion<T> {
+	class UpdateRoot<T> implements WithEntity<T>, WithVersion {
 
-		@NonNull private T entity;
+		@NonNull final T entity;
 		@Nullable Number nextVersion;
 
 		@Override
@@ -150,7 +152,7 @@ public interface DbAction<T> {
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
-	@Data
+	@Value
 	class Merge<T> implements WithDependingOn<T>, WithPropertyPath<T> {
 
 		@NonNull T entity;
@@ -191,11 +193,11 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	@Value
-	class DeleteRoot<T> implements WithEntity<T> {
+	class DeleteRoot<T> implements DbAction<T>{
 
-		@NonNull Object id;
-		@Nullable T entity;
-		@NonNull Class<T> entityType;
+		@NonNull final Object id;
+		@NonNull final Class<T> entityType;
+		@Nullable final Number previousVersion;
 
 		@Override
 		public void doExecuteWith(Interpreter interpreter) {
@@ -284,7 +286,7 @@ public interface DbAction<T> {
 				return null;
 			}
 			return Pair.of(entry.getKey(), entry.getValue());
-		};
+		}
 
 		@Override
 		default Class<T> getEntityType() {
@@ -350,8 +352,11 @@ public interface DbAction<T> {
 			return (Class<T>) getPropertyPath().getRequiredLeafProperty().getActualType();
 		}
 	}
-	interface WithVersion<T> extends WithEntity<T> {
+
+	interface WithVersion {
+
 		Number getNextVersion();
+
 		void setNextVersion(Number nextVersion);
 	}
 }

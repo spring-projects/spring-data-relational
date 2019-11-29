@@ -184,23 +184,17 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class, java.lang.Number)
 	 */
 	@Override
-	public <T> void deleteWithVersion(T instance, Class<T> domainType) {
+	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
+
+		Assert.notNull(id, "Id must not be null.");
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
-		Object id = getIdValueOrNull(instance, persistentEntity);
-		Assert.notNull(id, "Cannot delete an instance without it's ID being populated.");
 
-		if (!persistentEntity.hasVersionProperty()) {
-			delete(id, domainType);
-			return;
-		}
-
-		Number oldVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(instance, persistentEntity, converter);
 		MapSqlParameterSource parameterSource = createIdParameterSource(id, domainType);
-		parameterSource.addValue(VERSION_SQL_PARAMETER_NAME, oldVersion);
+		parameterSource.addValue(VERSION_SQL_PARAMETER_NAME, previousVersion);
 		int affectedRows = operations.update(sql(domainType).getDeleteByIdAndVersion(), parameterSource);
 
 		if (affectedRows == 0) {
