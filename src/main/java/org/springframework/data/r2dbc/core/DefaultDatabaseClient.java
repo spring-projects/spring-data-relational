@@ -386,7 +386,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				return statement;
 			};
 
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(executeFunction.apply(it).execute());
+			Function<Connection, Flux<Result>> resultFunction = toExecuteFunction(sql, executeFunction);
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
@@ -707,7 +707,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			String sql = getRequiredSql(preparedOperation);
 			Function<Connection, Statement> selectFunction = wrapPreparedOperation(sql, preparedOperation);
-			Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(selectFunction.apply(it).execute());
+			Function<Connection, Flux<Result>> resultFunction = DefaultDatabaseClient.toExecuteFunction(sql, selectFunction);
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
@@ -1377,7 +1377,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		String sql = getRequiredSql(operation);
 		Function<Connection, Statement> insertFunction = wrapPreparedOperation(sql, operation)
 				.andThen(statement -> statement.returnGeneratedValues());
-		Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(insertFunction.apply(it).execute());
+		Function<Connection, Flux<Result>> resultFunction = toExecuteFunction(sql, insertFunction);
 
 		return new DefaultSqlResult<>(this, //
 				sql, //
@@ -1390,7 +1390,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		String sql = getRequiredSql(operation);
 		Function<Connection, Statement> executeFunction = wrapPreparedOperation(sql, operation);
-		Function<Connection, Flux<Result>> resultFunction = it -> Flux.from(executeFunction.apply(it).execute());
+		Function<Connection, Flux<Result>> resultFunction = toExecuteFunction(sql, executeFunction);
 
 		return new DefaultSqlResult<>(this, //
 				sql, //
@@ -1418,6 +1418,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			operation.bindTo(new StatementWrapper(statement));
 
 			return statement;
+		};
+	}
+
+	private static Function<Connection, Flux<Result>> toExecuteFunction(String sql,
+			Function<Connection, Statement> executeFunction) {
+
+		return it -> {
+
+			Flux<Result> from = Flux.defer(() -> executeFunction.apply(it).execute()).cast(Result.class);
+			return from.checkpoint("SQL \"" + sql + "\" [DatabaseClient]");
 		};
 	}
 
