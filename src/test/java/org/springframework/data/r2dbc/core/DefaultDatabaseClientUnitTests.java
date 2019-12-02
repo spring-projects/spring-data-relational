@@ -21,6 +21,7 @@ import static org.springframework.data.r2dbc.query.Criteria.*;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Statement;
+import io.r2dbc.spi.Result;
 import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -309,5 +310,36 @@ public class DefaultDatabaseClientUnitTests {
 		verify(statement).bind(0, "foo");
 		verify(statement).bind(1, (Object) 1);
 		verify(statement).bind(2, (Object) 2);
+	}
+
+	@Test // gh-243
+	public void rowsUpdatedShouldEmitSingleValue() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement("DROP TABLE tab;")).thenReturn(statement);
+		Result result = mock(Result.class);
+		doReturn(Flux.just(result)).when(statement).execute();
+
+		DefaultDatabaseClient databaseClient = (DefaultDatabaseClient) DatabaseClient.builder()
+				.connectionFactory(connectionFactory)
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
+
+		when(result.getRowsUpdated()).thenReturn(Mono.empty());
+
+		databaseClient.execute("DROP TABLE tab;") //
+				.fetch() //
+				.rowsUpdated() //
+				.as(StepVerifier::create) //
+				.expectNextCount(1)
+				.verifyComplete();
+
+		when(result.getRowsUpdated()).thenReturn(Mono.just(2));
+
+		databaseClient.execute("DROP TABLE tab;") //
+				.fetch() //
+				.rowsUpdated() //
+				.as(StepVerifier::create) //
+				.expectNextCount(1)
+				.verifyComplete();
 	}
 }
