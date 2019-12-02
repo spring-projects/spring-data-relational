@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,51 +20,50 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link MySqlDialect}.
- *
- * @author Mark Paluch
+ * Unit tests for the {@link HsqlDbDialect}.
+ * 
  * @author Jens Schauder
  */
-public class MySqlDialectUnitTests {
+public class HsqlDbDialectUnitTests {
 
-	@Test // DATAJDBC-278
+	@Test // DATAJDBC-386
 	public void shouldNotSupportArrays() {
 
-		ArrayColumns arrayColumns = MySqlDialect.INSTANCE.getArraySupport();
+		ArrayColumns arrayColumns = HsqlDbDialect.INSTANCE.getArraySupport();
 
 		assertThat(arrayColumns.isSupported()).isFalse();
 	}
 
-	@Test // DATAJDBC-278
+	@Test // DATAJDBC-386
 	public void shouldRenderLimit() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = HsqlDbDialect.INSTANCE.limit();
 
 		assertThat(limit.getClausePosition()).isEqualTo(LimitClause.Position.AFTER_ORDER_BY);
 		assertThat(limit.getLimit(10)).isEqualTo("LIMIT 10");
 	}
 
-	@Test // DATAJDBC-278
+	@Test // DATAJDBC-386
 	public void shouldRenderOffset() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = HsqlDbDialect.INSTANCE.limit();
 
-		assertThat(limit.getOffset(10)).isEqualTo("LIMIT 10, 18446744073709551615");
+		assertThat(limit.getOffset(10)).isEqualTo("OFFSET 10");
 	}
 
-	@Test // DATAJDBC-278
+	@Test // DATAJDBC-386
 	public void shouldRenderLimitOffset() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = HsqlDbDialect.INSTANCE.limit();
 
-		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("LIMIT 10, 20");
+		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("OFFSET 10 LIMIT 20");
 	}
 
 	@Test // DATAJDBC-386
 	public void shouldQuoteIdentifiersUsingBackticks() {
 
-		String abcQuoted = MySqlDialect.INSTANCE.getIdentifierProcessing().quote("abc");
+		String abcQuoted = HsqlDbDialect.INSTANCE.getIdentifierProcessing().quote("abc");
 
-		assertThat(abcQuoted).isEqualTo("`abc`");
+		assertThat(abcQuoted).isEqualTo("\"abc\"");
 	}
 }

@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,10 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -54,7 +58,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	JdbcOperations jdbcOperations = mock(JdbcOperations.class);
 	RelationalMappingContext context = new JdbcMappingContext();
 
-	HashMap<String, Object> additionalParameters = new HashMap<>();
+	HashMap<SqlIdentifier, Object> additionalParameters = new HashMap<>();
 	ArgumentCaptor<SqlParameterSource> paramSourceCaptor = ArgumentCaptor.forClass(SqlParameterSource.class);
 
 	JdbcConverter converter;
@@ -62,12 +66,14 @@ public class DefaultDataAccessStrategyUnitTests {
 
 	@Before
 	public void before() {
+
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
+		Dialect dialect = HsqlDbDialect.INSTANCE;
 
 		converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(jdbcOperations));
 		accessStrategy = new DefaultDataAccessStrategy( //
-				new SqlGeneratorSource(context), //
+				new SqlGeneratorSource(context, dialect), //
 				context, //
 				converter, //
 				namedJdbcOperations);
@@ -78,12 +84,12 @@ public class DefaultDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-146
 	public void additionalParameterForIdDoesNotLeadToDuplicateParameters() {
 
-		additionalParameters.put("id", ID_FROM_ADDITIONAL_VALUES);
+		additionalParameters.put(SqlIdentifier.quoted("ID"), ID_FROM_ADDITIONAL_VALUES);
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
-		verify(namedJdbcOperations).update(eq("INSERT INTO dummy_entity (id) VALUES (:id)"), paramSourceCaptor.capture(),
-				any(KeyHolder.class));
+		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\" (\"ID\") VALUES (:ID)"),
+				paramSourceCaptor.capture(), any(KeyHolder.class));
 	}
 
 	@Test // DATAJDBC-146
@@ -91,16 +97,16 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
 
-		additionalParameters.put("reference", ID_FROM_ADDITIONAL_VALUES);
+		additionalParameters.put(unquoted("reference"), ID_FROM_ADDITIONAL_VALUES);
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
 
 		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
 		assertThat(sqlCaptor.getValue()) //
-				.containsSequence("INSERT INTO dummy_entity (", "id", ") VALUES (", ":id", ")") //
-				.containsSequence("INSERT INTO dummy_entity (", "reference", ") VALUES (", ":reference", ")");
-		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
+				.containsSequence("INSERT INTO \"DUMMY_ENTITY\" (", "\"ID\"", ") VALUES (", ":ID", ")") //
+				.containsSequence("INSERT INTO \"DUMMY_ENTITY\" (", "reference", ") VALUES (", ":reference", ")");
+		assertThat(paramSourceCaptor.getValue().getValue("ID")).isEqualTo(ORIGINAL_ID);
 	}
 
 	@Test // DATAJDBC-235
@@ -113,7 +119,7 @@ public class DefaultDataAccessStrategyUnitTests {
 				new DefaultJdbcTypeFactory(jdbcOperations));
 
 		DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
-				new SqlGeneratorSource(context), //
+				new SqlGeneratorSource(context, HsqlDbDialect.INSTANCE), //
 				context, //
 				converter, //
 				namedJdbcOperations);
@@ -128,8 +134,8 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
-		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
-		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");
+		assertThat(paramSourceCaptor.getValue().getValue("ID")).isEqualTo(ORIGINAL_ID);
+		assertThat(paramSourceCaptor.getValue().getValue("FLAG")).isEqualTo("T");
 	}
 
 	@RequiredArgsConstructor

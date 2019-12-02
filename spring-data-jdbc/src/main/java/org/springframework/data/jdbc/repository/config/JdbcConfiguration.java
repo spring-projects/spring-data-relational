@@ -34,6 +34,8 @@ import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -102,12 +104,15 @@ public class JdbcConfiguration {
 	 * @param context
 	 * @param converter
 	 * @param operations
+	 * @param dialect
 	 * @return
 	 */
 	@Bean
 	public JdbcAggregateOperations jdbcAggregateOperations(ApplicationEventPublisher publisher,
-			RelationalMappingContext context, JdbcConverter converter, NamedParameterJdbcOperations operations) {
-		return new JdbcAggregateTemplate(publisher, context, converter, dataAccessStrategy(context, converter, operations));
+			RelationalMappingContext context, JdbcConverter converter, NamedParameterJdbcOperations operations,
+			Dialect dialect) {
+		return new JdbcAggregateTemplate(publisher, context, converter,
+				dataAccessStrategy(context, converter, operations, dialect));
 	}
 
 	/**
@@ -117,11 +122,17 @@ public class JdbcConfiguration {
 	 * @param context
 	 * @param converter
 	 * @param operations
+	 * @param dialect
 	 * @return
 	 */
 	@Bean
 	public DataAccessStrategy dataAccessStrategy(RelationalMappingContext context, JdbcConverter converter,
-			NamedParameterJdbcOperations operations) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter, operations);
+			NamedParameterJdbcOperations operations, Dialect dialect) {
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, dialect), context, converter, operations);
+	}
+
+	@Bean
+	public Dialect dialect() {
+		return HsqlDbDialect.INSTANCE;
 	}
 }

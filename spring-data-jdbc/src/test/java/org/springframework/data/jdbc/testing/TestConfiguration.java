@@ -38,6 +38,7 @@ import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
@@ -86,10 +87,10 @@ public class TestConfiguration {
 	@Bean
 	DataAccessStrategy defaultDataAccessStrategy(
 			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
-			JdbcConverter converter) {
+			JdbcConverter converter, Dialect dialect) {
 
-		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(new SqlGeneratorSource(context),
-				context, converter, template);
+		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(
+				new SqlGeneratorSource(context, dialect), context, converter, template);
 
 		return defaultDataAccessStrategy;
 	}

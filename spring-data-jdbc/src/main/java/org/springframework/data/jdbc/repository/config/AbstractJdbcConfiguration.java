@@ -34,6 +34,8 @@ import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -71,8 +73,8 @@ public class AbstractJdbcConfiguration {
 	}
 
 	/**
-	 * Creates a {@link RelationalConverter} using the configured {@link #jdbcMappingContext(Optional)}. Will get
-	 * {@link #jdbcCustomConversions()} applied.
+	 * Creates a {@link RelationalConverter} using the configured
+	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions)}. Will get {@link #jdbcCustomConversions()} applied.
 	 *
 	 * @see #jdbcMappingContext(Optional, JdbcCustomConversions)
 	 * @see #jdbcCustomConversions()
@@ -125,7 +127,12 @@ public class AbstractJdbcConfiguration {
 	 */
 	@Bean
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
-			RelationalMappingContext context) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, jdbcConverter, operations);
+			RelationalMappingContext context, Dialect dialect) {
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, dialect), context, jdbcConverter, operations);
+	}
+
+	@Bean
+	Dialect dialect() {
+		return HsqlDbDialect.INSTANCE;
 	}
 }

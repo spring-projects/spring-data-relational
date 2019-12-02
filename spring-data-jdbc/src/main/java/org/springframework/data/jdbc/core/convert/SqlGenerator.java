@@ -17,14 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import lombok.Value;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,6 +33,8 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -57,11 +52,15 @@ import org.springframework.util.Assert;
  */
 class SqlGenerator {
 
-	static final String VERSION_SQL_PARAMETER_NAME = "___oldOptimisticLockingVersion";
+	static final SqlIdentifier VERSION_SQL_PARAMETER = SqlIdentifier.unquoted("___oldOptimisticLockingVersion");
+	static final SqlIdentifier ID_SQL_PARAMETER = SqlIdentifier.unquoted("id");
+	static final SqlIdentifier IDS_SQL_PARAMETER = SqlIdentifier.unquoted("ids");
+	static final SqlIdentifier ROOT_ID_PARAMETER = SqlIdentifier.unquoted("rootId");
 
 	private static final Pattern parameterPattern = Pattern.compile("\\W");
 	private final RelationalPersistentEntity<?> entity;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private final IdentifierProcessing identifierProcessing;
 
 	private final SqlContext sqlContext;
 	private final Columns columns;
@@ -82,15 +81,18 @@ class SqlGenerator {
 
 	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
-	 *
+	 * 
 	 * @param mappingContext must not be {@literal null}.
 	 * @param entity must not be {@literal null}.
+	 * @param identifierProcessing must not be {@literal null}.
 	 */
-	SqlGenerator(RelationalMappingContext mappingContext, RelationalPersistentEntity<?> entity) {
+	SqlGenerator(RelationalMappingContext mappingContext, RelationalPersistentEntity<?> entity,
+			IdentifierProcessing identifierProcessing) {
 
 		this.mappingContext = mappingContext;
 		this.entity = entity;
-		this.sqlContext = new SqlContext(entity);
+		this.identifierProcessing = identifierProcessing;
+		this.sqlContext = new SqlContext(entity, identifierProcessing);
 		this.columns = new Columns(entity, mappingContext);
 	}
 
@@ -103,7 +105,7 @@ class SqlGenerator {
 	 * @param filterColumn the column to apply the IN-condition to.
 	 * @return the IN condition
 	 */
-	private static Condition getSubselectCondition(PersistentPropertyPathExtension path,
+	private Condition getSubselectCondition(PersistentPropertyPathExtension path,
 			Function<Column, Condition> rootCondition, Column filterColumn) {
 
 		PersistentPropertyPathExtension parentPath = path.getParentPath();
@@ -115,9 +117,10 @@ class SqlGenerator {
 			return rootCondition.apply(filterColumn);
 		}
 
-		Table subSelectTable = SQL.table(parentPath.getTableName());
-		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
-		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
+		Table subSelectTable = SQL.table(parentPath.getTableName().toSql(identifierProcessing));
+		Column idColumn = subSelectTable.column(parentPath.getIdColumnName().toSql(identifierProcessing));
+		Column selectFilterColumn = subSelectTable
+				.column(parentPath.getEffectiveIdColumnName().toSql(identifierProcessing));
 
 		Condition innerCondition;
 
@@ -139,8 +142,8 @@ class SqlGenerator {
 		return filterColumn.in(select);
 	}
 
-	private static BindMarker getBindMarker(String columnName) {
-		return SQL.bindMarker(":" + parameterPattern.matcher(columnName).replaceAll(""));
+	private BindMarker getBindMarker(SqlIdentifier columnName) {
+		return SQL.bindMarker(":" + parameterPattern.matcher(columnName.toColumnName(identifierProcessing)).replaceAll(""));
 	}
 
 	/**
@@ -174,7 +177,7 @@ class SqlGenerator {
 	 *          keyColumn must not be {@code null}.
 	 * @return a SQL String.
 	 */
-	String getFindAllByProperty(Identifier parentIdentifier, @Nullable String keyColumn, boolean ordered) {
+	String getFindAllByProperty(Identifier parentIdentifier, @Nullable SqlIdentifier keyColumn, boolean ordered) {
 
 		Assert.isTrue(keyColumn != null || !ordered,
 				"If the SQL statement should be ordered a keyColumn to order by must be provided.");
@@ -182,7 +185,7 @@ class SqlGenerator {
 		SelectBuilder.SelectWhere builder = selectBuilder( //
 				keyColumn == null //
 						? Collections.emptyList() //
-						: Collections.singleton(keyColumn) //
+						: Collections.singleton(keyColumn.toSql(identifierProcessing)) //
 		);
 
 		Table table = getTable();
@@ -191,7 +194,9 @@ class SqlGenerator {
 		SelectBuilder.SelectWhereAndOr withWhereClause = builder.where(condition);
 
 		Select select = ordered //
-				? withWhereClause.orderBy(table.column(keyColumn).as(keyColumn)).build() //
+				? withWhereClause
+						.orderBy(table.column(keyColumn.toSql(identifierProcessing)).as(keyColumn.toSql(identifierProcessing)))
+						.build() //
 				: withWhereClause.build();
 
 		return render(select);
@@ -200,9 +205,10 @@ class SqlGenerator {
 	private Condition buildConditionForBackReference(Identifier parentIdentifier, Table table) {
 
 		Condition condition = null;
-		for (String backReferenceColumn : parentIdentifier.toMap().keySet()) {
+		for (SqlIdentifier backReferenceColumn : parentIdentifier.toMap().keySet()) {
 
-			Condition newCondition = table.column(backReferenceColumn).isEqualTo(getBindMarker(backReferenceColumn));
+			Condition newCondition = table.column(backReferenceColumn.toSql(identifierProcessing))
+					.isEqualTo(getBindMarker(backReferenceColumn));
 			condition = condition == null ? newCondition : condition.and(newCondition);
 		}
 
@@ -214,7 +220,7 @@ class SqlGenerator {
 	/**
 	 * Create a {@code SELECT COUNT(id) FROM … WHERE :id = …} statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getExists() {
 		return existsSql.get();
@@ -223,7 +229,7 @@ class SqlGenerator {
 	/**
 	 * Create a {@code SELECT … FROM … WHERE :id = …} statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getFindOne() {
 		return findOneSql.get();
@@ -232,16 +238,16 @@ class SqlGenerator {
 	/**
 	 * Create a {@code INSERT INTO … (…) VALUES(…)} statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
-	String getInsert(Set<String> additionalColumns) {
+	String getInsert(Set<SqlIdentifier> additionalColumns) {
 		return createInsertSql(additionalColumns);
 	}
 
 	/**
 	 * Create a {@code UPDATE … SET …} statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getUpdate() {
 		return updateSql.get();
@@ -250,7 +256,7 @@ class SqlGenerator {
 	/**
 	 * Create a {@code UPDATE … SET … WHERE ID = :id and VERSION_COLUMN = :___oldOptimisticLockingVersion } statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getUpdateWithVersion() {
 		return updateWithVersionSql.get();
@@ -259,7 +265,7 @@ class SqlGenerator {
 	/**
 	 * Create a {@code SELECT COUNT(*) FROM …} statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getCount() {
 		return countSql.get();
@@ -268,7 +274,7 @@ class SqlGenerator {
 	/**
 	 * Create a {@code DELETE FROM … WHERE :id = …} statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getDeleteById() {
 		return deleteByIdSql.get();
@@ -277,7 +283,7 @@ class SqlGenerator {
 	/**
 	 * Create a {@code DELETE FROM … WHERE :id = … and :___oldOptimisticLockingVersion = ...} statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getDeleteByIdAndVersion() {
 		return deleteByIdAndVersionSql.get();
@@ -286,7 +292,7 @@ class SqlGenerator {
 	/**
 	 * Create a {@code DELETE FROM … WHERE :ids in (…)} statement.
 	 *
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String getDeleteByList() {
 		return deleteByListSql.get();
@@ -296,7 +302,7 @@ class SqlGenerator {
 	 * Create a {@code DELETE} query and optionally filter by {@link PersistentPropertyPath}.
 	 *
 	 * @param path can be {@literal null}.
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String createDeleteAllSql(@Nullable PersistentPropertyPath<RelationalPersistentProperty> path) {
 
@@ -315,16 +321,16 @@ class SqlGenerator {
 	 * Create a {@code DELETE} query and filter by {@link PersistentPropertyPath}.
 	 *
 	 * @param path must not be {@literal null}.
-	 * @return
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	String createDeleteByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
 		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
-				filterColumn -> filterColumn.isEqualTo(getBindMarker("rootId")));
+				filterColumn -> filterColumn.isEqualTo(getBindMarker(ROOT_ID_PARAMETER)));
 	}
 
 	private String createFindOneSql() {
 
-		Select select = selectBuilder().where(getIdColumn().isEqualTo(getBindMarker("id"))) //
+		Select select = selectBuilder().where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
 				.build();
 
 		return render(select);
@@ -379,8 +385,8 @@ class SqlGenerator {
 	/**
 	 * Create a {@link Column} for {@link PersistentPropertyPathExtension}.
 	 *
-	 * @param path
-	 * @return
+	 * @param path the path to the column in question.
+	 * @return the statement as a {@link String}. Guaranteed to be not {@literal null}.
 	 */
 	@Nullable
 	Column getColumn(PersistentPropertyPathExtension path) {
@@ -425,14 +431,14 @@ class SqlGenerator {
 
 		return new Join( //
 				currentTable, //
-				currentTable.column(path.getReverseColumnName()), //
-				parentTable.column(idDefiningParentPath.getIdColumnName()) //
+				currentTable.column(path.getReverseColumnName().toSql(identifierProcessing)), //
+				parentTable.column(idDefiningParentPath.getIdColumnName().toSql(identifierProcessing)) //
 		);
 	}
 
 	private String createFindAllInListSql() {
 
-		Select select = selectBuilder().where(getIdColumn().in(getBindMarker("ids"))).build();
+		Select select = selectBuilder().where(getIdColumn().in(getBindMarker(IDS_SQL_PARAMETER))).build();
 
 		return render(select);
 	}
@@ -444,7 +450,7 @@ class SqlGenerator {
 		Select select = StatementBuilder //
 				.select(Functions.count(getIdColumn())) //
 				.from(table) //
-				.where(getIdColumn().isEqualTo(getBindMarker("id"))) //
+				.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
 				.build();
 
 		return render(select);
@@ -462,21 +468,22 @@ class SqlGenerator {
 		return render(select);
 	}
 
-	private String createInsertSql(Set<String> additionalColumns) {
+	private String createInsertSql(Set<SqlIdentifier> additionalColumns) {
 
 		Table table = getTable();
 
-		Set<String> columnNamesForInsert = new LinkedHashSet<>(columns.getInsertableColumns());
+		Set<SqlIdentifier> columnNamesForInsert = new TreeSet<>(Comparator.comparing(id -> id.toSql(identifierProcessing)));
+		columnNamesForInsert.addAll(columns.getInsertableColumns());
 		columnNamesForInsert.addAll(additionalColumns);
 
 		InsertBuilder.InsertIntoColumnsAndValuesWithBuild insert = Insert.builder().into(table);
 
-		for (String cn : columnNamesForInsert) {
-			insert = insert.column(table.column(cn));
+		for (SqlIdentifier cn : columnNamesForInsert) {
+			insert = insert.column(table.column(cn.toSql(identifierProcessing)));
 		}
 
 		InsertBuilder.InsertValuesWithBuild insertWithValues = null;
-		for (String cn : columnNamesForInsert) {
+		for (SqlIdentifier cn : columnNamesForInsert) {
 			insertWithValues = (insertWithValues == null ? insert : insertWithValues).values(getBindMarker(cn));
 		}
 
@@ -490,7 +497,8 @@ class SqlGenerator {
 	private String createUpdateWithVersionSql() {
 
 		Update update = createBaseUpdate() //
-				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER_NAME))) //
+				.and(getVersionColumn()
+						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.toColumnName(identifierProcessing)))) //
 				.build();
 
 		return render(update);
@@ -503,7 +511,7 @@ class SqlGenerator {
 		List<AssignValue> assignments = columns.getUpdateableColumns() //
 				.stream() //
 				.map(columnName -> Assignments.value( //
-						table.column(columnName), //
+						table.column(columnName.toSql(identifierProcessing)), //
 						getBindMarker(columnName))) //
 				.collect(Collectors.toList());
 
@@ -520,7 +528,8 @@ class SqlGenerator {
 	private String createDeleteByIdAndVersionSql() {
 
 		Delete delete = createBaseDeleteById(getTable()) //
-				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER_NAME))) //
+				.and(getVersionColumn()
+						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.toColumnName(identifierProcessing)))) //
 				.build();
 
 		return render(delete);
@@ -533,13 +542,13 @@ class SqlGenerator {
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
 			Function<Column, Condition> rootCondition) {
 
-		Table table = SQL.table(path.getTableName());
+		Table table = SQL.table(path.getTableName().toSql(identifierProcessing));
 
 		DeleteBuilder.DeleteWhere builder = Delete.builder() //
 				.from(table);
 		Delete delete;
 
-		Column filterColumn = table.column(path.getReverseColumnName());
+		Column filterColumn = table.column(path.getReverseColumnName().toSql(identifierProcessing));
 
 		if (path.getLength() == 1) {
 
@@ -561,7 +570,7 @@ class SqlGenerator {
 
 		Delete delete = Delete.builder() //
 				.from(table) //
-				.where(getIdColumn().in(getBindMarker("ids"))) //
+				.where(getIdColumn().in(getBindMarker(IDS_SQL_PARAMETER))) //
 				.build();
 
 		return render(delete);
@@ -609,17 +618,18 @@ class SqlGenerator {
 	 * Value object encapsulating column name caches.
 	 *
 	 * @author Mark Paluch
+	 * @author Jens Schauder
 	 */
 	static class Columns {
 
 		private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 
-		private final List<String> columnNames = new ArrayList<>();
-		private final List<String> idColumnNames = new ArrayList<>();
-		private final List<String> nonIdColumnNames = new ArrayList<>();
-		private final Set<String> readOnlyColumnNames = new HashSet<>();
-		private final Set<String> insertableColumns;
-		private final Set<String> updateableColumns;
+		private final List<SqlIdentifier> columnNames = new ArrayList<>();
+		private final List<SqlIdentifier> idColumnNames = new ArrayList<>();
+		private final List<SqlIdentifier> nonIdColumnNames = new ArrayList<>();
+		private final Set<SqlIdentifier> readOnlyColumnNames = new HashSet<>();
+		private final Set<SqlIdentifier> insertableColumns;
+		private final Set<SqlIdentifier> updateableColumns;
 
 		Columns(RelationalPersistentEntity<?> entity,
 				MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
@@ -628,12 +638,12 @@ class SqlGenerator {
 
 			populateColumnNameCache(entity, "");
 
-			Set<String> insertable = new LinkedHashSet<>(nonIdColumnNames);
+			Set<SqlIdentifier> insertable = new LinkedHashSet<>(nonIdColumnNames);
 			insertable.removeAll(readOnlyColumnNames);
 
 			this.insertableColumns = Collections.unmodifiableSet(insertable);
 
-			Set<String> updateable = new LinkedHashSet<>(columnNames);
+			Set<SqlIdentifier> updateable = new LinkedHashSet<>(columnNames);
 
 			updateable.removeAll(idColumnNames);
 			updateable.removeAll(readOnlyColumnNames);
@@ -656,7 +666,7 @@ class SqlGenerator {
 
 		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix) {
 
-			String columnName = prefix + property.getColumnName();
+			SqlIdentifier columnName = property.getColumnName().prefix(prefix);
 
 			columnNames.add(columnName);
 
@@ -684,14 +694,14 @@ class SqlGenerator {
 		/**
 		 * @return Column names that can be used for {@code INSERT}.
 		 */
-		Set<String> getInsertableColumns() {
+		Set<SqlIdentifier> getInsertableColumns() {
 			return insertableColumns;
 		}
 
 		/**
 		 * @return Column names that can be used for {@code UPDATE}.
 		 */
-		Set<String> getUpdateableColumns() {
+		Set<SqlIdentifier> getUpdateableColumns() {
 			return updateableColumns;
 		}
 	}

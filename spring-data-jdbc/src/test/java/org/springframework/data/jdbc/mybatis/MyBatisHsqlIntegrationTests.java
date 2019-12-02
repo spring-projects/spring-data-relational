@@ -35,6 +35,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -56,6 +57,36 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("hsql")
 @Transactional
 public class MyBatisHsqlIntegrationTests {
+
+	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
+	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
+	@Autowired SqlSessionFactory sqlSessionFactory;
+	@Autowired DummyEntityRepository repository;
+
+	@Test // DATAJDBC-123
+	public void mybatisSelfTest() {
+
+		SqlSession session = sqlSessionFactory.openSession();
+
+		session.selectList("org.springframework.data.jdbc.mybatis.DummyEntityMapper.findById");
+	}
+
+	@Test // DATAJDBC-123
+	public void myBatisGetsUsedForInsertAndSelect() {
+
+		DummyEntity entity = new DummyEntity(null, "some name");
+		DummyEntity saved = repository.save(entity);
+
+		assertThat(saved.id).isNotNull();
+
+		DummyEntity reloaded = repository.findById(saved.id).orElseThrow(AssertionFailedError::new);
+
+		assertThat(reloaded).isNotNull().extracting(e -> e.id, e -> e.name);
+	}
+
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+
+	}
 
 	@org.springframework.context.annotation.Configuration
 	@Import(TestConfiguration.class)
@@ -94,38 +125,7 @@ public class MyBatisHsqlIntegrationTests {
 				SqlSession sqlSession, EmbeddedDatabase db) {
 
 			return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, converter,
-					new NamedParameterJdbcTemplate(db), sqlSession);
+					new NamedParameterJdbcTemplate(db), sqlSession, HsqlDbDialect.INSTANCE);
 		}
-	}
-
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
-
-	@Autowired SqlSessionFactory sqlSessionFactory;
-	@Autowired DummyEntityRepository repository;
-
-	@Test // DATAJDBC-123
-	public void mybatisSelfTest() {
-
-		SqlSession session = sqlSessionFactory.openSession();
-
-		session.selectList("org.springframework.data.jdbc.mybatis.DummyEntityMapper.findById");
-	}
-
-	@Test // DATAJDBC-123
-	public void myBatisGetsUsedForInsertAndSelect() {
-
-		DummyEntity entity = new DummyEntity(null, "some name");
-		DummyEntity saved = repository.save(entity);
-
-		assertThat(saved.id).isNotNull();
-
-		DummyEntity reloaded = repository.findById(saved.id).orElseThrow(AssertionFailedError::new);
-
-		assertThat(reloaded).isNotNull().extracting(e -> e.id, e -> e.name);
-	}
-
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
-
 	}
 }

@@ -18,6 +18,7 @@ package org.springframework.data.relational.repository.query;
 import lombok.Getter;
 
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.util.Assert;
 
 /**
@@ -56,7 +57,7 @@ public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetada
 	/* (non-Javadoc)
 	 * @see org.springframework.data.relational.repository.query.RelationalEntityMetadata#getTableName()
 	 */
-	public String getTableName() {
+	public SqlIdentifier getTableName() {
 		return tableEntity.getTableName();
 	}
 }

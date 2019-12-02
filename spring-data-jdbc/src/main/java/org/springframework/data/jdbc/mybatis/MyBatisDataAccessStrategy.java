@@ -15,11 +15,11 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import static java.util.Arrays.asList;
+import static java.util.Arrays.*;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
@@ -34,9 +34,12 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -61,6 +64,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	private static final String VERSION_SQL_PARAMETER_NAME_OLD = "___oldOptimisticLockingVersion";
 
 	private final SqlSession sqlSession;
+	private final IdentifierProcessing identifierProcessing;
 	private NamespaceStrategy namespaceStrategy = NamespaceStrategy.DEFAULT_INSTANCE;
 
 	/**
@@ -68,8 +72,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * uses a {@link DefaultDataAccessStrategy}
 	 */
 	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
-			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession) {
-		return createCombinedAccessStrategy(context, converter, operations, sqlSession, NamespaceStrategy.DEFAULT_INSTANCE);
+			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession, Dialect dialect) {
+		return createCombinedAccessStrategy(context, converter, operations, sqlSession, NamespaceStrategy.DEFAULT_INSTANCE,
+				dialect);
 	}
 
 	/**
@@ -78,19 +83,20 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	public static DataAccessStrategy createCombinedAccessStrategy(RelationalMappingContext context,
 			JdbcConverter converter, NamedParameterJdbcOperations operations, SqlSession sqlSession,
-			NamespaceStrategy namespaceStrategy) {
+			NamespaceStrategy namespaceStrategy, Dialect dialect) {
 
 		// the DefaultDataAccessStrategy needs a reference to the returned DataAccessStrategy. This creates a dependency
 		// cycle. In order to create it, we need something that allows to defer closing the cycle until all the elements are
 		// created. That is the purpose of the DelegatingAccessStrategy.
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
-		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession, context, converter);
+		MyBatisDataAccessStrategy myBatisDataAccessStrategy = new MyBatisDataAccessStrategy(sqlSession,
+				dialect.getIdentifierProcessing());
 		myBatisDataAccessStrategy.setNamespaceStrategy(namespaceStrategy);
 
 		CascadingDataAccessStrategy cascadingDataAccessStrategy = new CascadingDataAccessStrategy(
 				asList(myBatisDataAccessStrategy, delegatingDataAccessStrategy));
 
-		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context);
+		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, dialect);
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
 				sqlGeneratorSource, //
 				context, //
@@ -109,13 +115,17 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * Use a {@link SqlSessionTemplate} for {@link SqlSession} or a similar implementation tying the session to the proper
 	 * transaction. Note that the resulting {@link DataAccessStrategy} only handles MyBatis. It does not include the
 	 * functionality of the {@link DefaultDataAccessStrategy} which one normally still wants. Use
-	 * {@link #createCombinedAccessStrategy(RelationalMappingContext, JdbcConverter, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy)}
+	 * {@link #createCombinedAccessStrategy(RelationalMappingContext, JdbcConverter, NamedParameterJdbcOperations, SqlSession, NamespaceStrategy, Dialect)}
 	 * to create such a {@link DataAccessStrategy}.
 	 *
 	 * @param sqlSession Must be non {@literal null}.
+	 * @param identifierProcessing the {@link IdentifierProcessing} applied to {@link SqlIdentifier} instances in order to
+	 *          turn them into {@link String}
 	 */
-	public MyBatisDataAccessStrategy(SqlSession sqlSession, RelationalMappingContext context, JdbcConverter converter) {
+	public MyBatisDataAccessStrategy(SqlSession sqlSession, IdentifierProcessing identifierProcessing) {
+
 		this.sqlSession = sqlSession;
+		this.identifierProcessing = identifierProcessing;
 	}
 
 	/**
@@ -135,9 +145,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	public <T> Object insert(T instance, Class<T> domainType, Map<SqlIdentifier, Object> additionalParameters) {
 
-		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType, additionalParameters);
+		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType,
+				convertToParameterMap(additionalParameters));
 		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
 
 		return myBatisContext.getId();
@@ -150,7 +161,8 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 
-		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType, identifier.toMap());
+		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType,
+				convertToParameterMap(identifier.toMap()));
 		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
 
 		return myBatisContext.getId();
@@ -174,9 +186,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
 
-
-		return sqlSession().update(namespace(domainType) + ".updateWithVersion",
-				new MyBatisContext(null, instance, domainType, Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion))) != 0;
+		String statement = namespace(domainType) + ".updateWithVersion";
+		MyBatisContext parameter = new MyBatisContext(null, instance, domainType,
+				Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion));
+		return sqlSession().update(statement, parameter) != 0;
 	}
 
 	/*
@@ -186,8 +199,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 
-		sqlSession().delete(namespace(domainType) + ".delete",
-				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
+		String statement = namespace(domainType) + ".delete";
+		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
+		sqlSession().delete(statement, parameter);
 	}
 
 	/*
@@ -197,8 +211,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 
-		sqlSession().delete(namespace(domainType) + ".deleteWithVersion",
-				new MyBatisContext(id, null, domainType, Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion)));
+		String statement = namespace(domainType) + ".deleteWithVersion";
+		MyBatisContext parameter = new MyBatisContext(id, null, domainType,
+				Collections.singletonMap(VERSION_SQL_PARAMETER_NAME_OLD, previousVersion));
+		sqlSession().delete(statement, parameter);
 	}
 
 	/*
@@ -208,10 +224,12 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
-		sqlSession().delete(
-				namespace(propertyPath.getBaseProperty().getOwner().getType()) + ".delete-" + toDashPath(propertyPath),
-				new MyBatisContext(rootId, null, propertyPath.getRequiredLeafProperty().getTypeInformation().getType(),
-						Collections.emptyMap()));
+		Class<?> ownerType = propertyPath.getBaseProperty().getOwner().getType();
+		String statement = namespace(ownerType) + ".delete-" + toDashPath(propertyPath);
+		Class<?> leafType = propertyPath.getRequiredLeafProperty().getTypeInformation().getType();
+		MyBatisContext parameter = new MyBatisContext(rootId, null, leafType, Collections.emptyMap());
+
+		sqlSession().delete(statement, parameter);
 	}
 
 	/*
@@ -221,10 +239,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 
-		sqlSession().delete( //
-				namespace(domainType) + ".deleteAll", //
-				new MyBatisContext(null, null, domainType, Collections.emptyMap()) //
-		);
+		String statement = namespace(domainType) + ".deleteAll";
+		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
+		sqlSession().delete(statement, parameter);
 	}
 
 	/*
@@ -237,10 +254,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		Class<?> baseType = propertyPath.getBaseProperty().getOwner().getType();
 		Class<?> leafType = propertyPath.getRequiredLeafProperty().getTypeInformation().getType();
 
-		sqlSession().delete( //
-				namespace(baseType) + ".deleteAll-" + toDashPath(propertyPath), //
-				new MyBatisContext(null, null, leafType, Collections.emptyMap()) //
-		);
+		String statement = namespace(baseType) + ".deleteAll-" + toDashPath(propertyPath);
+		MyBatisContext parameter = new MyBatisContext(null, null, leafType, Collections.emptyMap());
+		sqlSession().delete(statement, parameter);
 	}
 
 	/*
@@ -249,8 +265,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
-		return sqlSession().selectOne(namespace(domainType) + ".findById",
-				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
+
+		String statement = namespace(domainType) + ".findById";
+		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
+		return sqlSession().selectOne(statement, parameter);
 	}
 
 	/*
@@ -259,8 +277,10 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
-		return sqlSession().selectList(namespace(domainType) + ".findAll",
-				new MyBatisContext(null, null, domainType, Collections.emptyMap()));
+
+		String statement = namespace(domainType) + ".findAll";
+		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
+		return sqlSession().selectList(statement, parameter);
 	}
 
 	/*
@@ -299,9 +319,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
 
-		return sqlSession().selectList(
-				namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName(),
-				new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap()));
+		String statement = namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName();
+		MyBatisContext parameter = new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap());
+		return sqlSession().selectList(statement, parameter);
 	}
 
 	/*
@@ -311,8 +331,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
-		return sqlSession().selectOne(namespace(domainType) + ".existsById",
-				new MyBatisContext(id, null, domainType, Collections.emptyMap()));
+		String statement = namespace(domainType) + ".existsById";
+		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
+		return sqlSession().selectOne(statement, parameter);
 	}
 
 	/*
@@ -321,8 +342,16 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public long count(Class<?> domainType) {
-		return sqlSession().selectOne(namespace(domainType) + ".count",
-				new MyBatisContext(null, null, domainType, Collections.emptyMap()));
+
+		String statement = namespace(domainType) + ".count";
+		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
+		return sqlSession().selectOne(statement, parameter);
+	}
+
+	private Map<String, Object> convertToParameterMap(Map<SqlIdentifier, Object> additionalParameters) {
+
+		return additionalParameters.entrySet().stream() //
+				.collect(Collectors.toMap(e -> e.getKey().toSql(identifierProcessing), Map.Entry::getValue));
 	}
 
 	private String namespace(Class<?> domainType) {
