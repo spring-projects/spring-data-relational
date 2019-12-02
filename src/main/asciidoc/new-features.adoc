@@ -3,6 +3,14 @@
 
 This section covers the significant changes for each version.
 
+[[new-features.1-1-0]]
+== What's New in Spring Data JDBC 1.1
+
+* `@Embedded` entities support.
+* Store `byte[]` as `BINARY`.
+* Dedicated `insert` method in the `JdbcAggregateTemplate`.
+* Read only property support.
+
 [[new-features.1-0-0]]
 == What's New in Spring Data JDBC 1.0
 
