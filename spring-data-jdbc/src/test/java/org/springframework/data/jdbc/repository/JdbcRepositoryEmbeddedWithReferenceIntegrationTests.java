@@ -244,7 +244,7 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 	@Data
 	private static class Embeddable {
 
-		@Column("id")
+		@Column("ID")
 		DummyEntity2 dummyEntity2;
 
 		String test;
@@ -253,6 +253,7 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 	@Data
 	private static class DummyEntity2 {
 
+		@Column("ID")
 		@Id Long id;
 
 		String test;

@@ -31,6 +31,8 @@ public class SqlServerDialect extends AbstractDialect {
 	 */
 	public static final SqlServerDialect INSTANCE = new SqlServerDialect();
 
+	protected SqlServerDialect() {	}
+
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
 		/*

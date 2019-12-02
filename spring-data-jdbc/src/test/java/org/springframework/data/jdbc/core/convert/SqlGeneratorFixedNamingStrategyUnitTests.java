@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
@@ -23,10 +24,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.SqlIdentifier.SimpleSqlIdentifier;
 
 /**
  * Unit tests the {@link SqlGenerator} with a fixed {@link NamingStrategy} implementation containing a hard wired
@@ -39,31 +43,31 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 	final NamingStrategy fixedCustomTablePrefixStrategy = new NamingStrategy() {
 
 		@Override
-		public String getSchema() {
-			return "FixedCustomSchema";
+		public SqlIdentifier getSchema() {
+			return unquoted("FixedCustomSchema");
 		}
 
 		@Override
-		public String getTableName(Class<?> type) {
-			return "FixedCustomTablePrefix_" + type.getSimpleName();
+		public SqlIdentifier getTableName(Class<?> type) {
+			return unquoted("FixedCustomTablePrefix_" + type.getSimpleName());
 		}
 
 		@Override
-		public String getColumnName(RelationalPersistentProperty property) {
-			return "FixedCustomPropertyPrefix_" + property.getName();
+		public SimpleSqlIdentifier getColumnName(RelationalPersistentProperty property) {
+			return unquoted("FixedCustomPropertyPrefix_" + property.getName());
 		}
 	};
 
 	final NamingStrategy upperCaseLowerCaseStrategy = new NamingStrategy() {
 
 		@Override
-		public String getTableName(Class<?> type) {
-			return type.getSimpleName().toUpperCase();
+		public SqlIdentifier getTableName(Class<?> type) {
+			return unquoted(type.getSimpleName().toUpperCase());
 		}
 
 		@Override
-		public String getColumnName(RelationalPersistentProperty property) {
-			return property.getName().toLowerCase();
+		public SimpleSqlIdentifier getColumnName(RelationalPersistentProperty property) {
+			return unquoted(property.getName().toLowerCase());
 		}
 	};
 
@@ -83,8 +87,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 						"FixedCustomSchema.FixedCustomTablePrefix_DummyEntity.FixedCustomPropertyPrefix_id AS FixedCustomPropertyPrefix_id,") //
 				.contains(
 						"FixedCustomSchema.FixedCustomTablePrefix_DummyEntity.FixedCustomPropertyPrefix_name AS FixedCustomPropertyPrefix_name,") //
-				.contains("ref.FixedCustomPropertyPrefix_l1id AS ref_FixedCustomPropertyPrefix_l1id") //
-				.contains("ref.FixedCustomPropertyPrefix_content AS ref_FixedCustomPropertyPrefix_content") //
+				.contains("\"REF\".FixedCustomPropertyPrefix_l1id AS ref_FixedCustomPropertyPrefix_l1id") //
+				.contains("\"REF\".FixedCustomPropertyPrefix_content AS ref_FixedCustomPropertyPrefix_content") //
 				.contains("FROM FixedCustomSchema.FixedCustomTablePrefix_DummyEntity");
 		softAssertions.assertAll();
 	}
@@ -101,8 +105,8 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 				.startsWith("SELECT") //
 				.contains("DUMMYENTITY.id AS id,") //
 				.contains("DUMMYENTITY.name AS name,") //
-				.contains("ref.l1id AS ref_l1id") //
-				.contains("ref.content AS ref_content") //
+				.contains("\"REF\".l1id AS ref_l1id") //
+				.contains("\"REF\".content AS ref_content") //
 				.contains("FROM DUMMYENTITY");
 		softAssertions.assertAll();
 	}
@@ -115,7 +119,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(getPath("ref"));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.dummy_entity = :rootId");
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.\"DUMMY_ENTITY\" = :rootId");
 	}
 
 	@Test // DATAJDBC-107
@@ -126,10 +130,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further"));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity.referenced_entity IN "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity.\"REFERENCED_ENTITY\" IN "
 				+ "(SELECT FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.FixedCustomPropertyPrefix_l1id "
 				+ "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.dummy_entity = :rootId)");
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.\"DUMMY_ENTITY\" = :rootId)");
 	}
 
 	@Test // DATAJDBC-107
@@ -150,7 +154,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteAllSql(getPath("ref"));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.dummy_entity IS NOT NULL");
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.\"DUMMY_ENTITY\" IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-107
@@ -161,10 +165,10 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further"));
 
 		assertThat(sql).isEqualTo("DELETE FROM FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity.referenced_entity IN "
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_SecondLevelReferencedEntity.\"REFERENCED_ENTITY\" IN "
 				+ "(SELECT FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.FixedCustomPropertyPrefix_l1id "
 				+ "FROM FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity "
-				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.dummy_entity IS NOT NULL)");
+				+ "WHERE FixedCustomSchema.FixedCustomTablePrefix_ReferencedEntity.\"DUMMY_ENTITY\" IS NOT NULL)");
 	}
 
 	@Test // DATAJDBC-113
@@ -189,7 +193,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-		return new SqlGenerator(context, persistentEntity);
+		return new SqlGenerator(context, persistentEntity, IdentifierProcessing.ANSI);
 	}
 
 	@SuppressWarnings("unused")

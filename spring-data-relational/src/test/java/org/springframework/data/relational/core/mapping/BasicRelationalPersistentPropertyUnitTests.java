@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import lombok.Data;
 
@@ -82,9 +83,9 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
 
-		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo("dummy_name");
+		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo(quoted("dummy_name"));
 		assertThat(entity.getRequiredPersistentProperty("localDateTime").getColumnName())
-				.isEqualTo("dummy_last_updated_at");
+				.isEqualTo(quoted("dummy_last_updated_at"));
 	}
 
 	@Test // DATAJDBC-218
@@ -92,8 +93,8 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 		RelationalPersistentProperty listProperty = entity.getRequiredPersistentProperty("someList");
 
-		assertThat(listProperty.getReverseColumnName()).isEqualTo("dummy_column_name");
-		assertThat(listProperty.getKeyColumn()).isEqualTo("dummy_key_column_name");
+		assertThat(listProperty.getReverseColumnName()).isEqualTo(quoted("dummy_column_name"));
+		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
 	}
 
 	@Test // DATAJDBC-111
@@ -148,10 +149,10 @@ public class BasicRelationalPersistentPropertyUnitTests {
 				.assertThat(p.isCollectionLike() && !p.isEntity()).describedAs(s + " contains either simple types or entities")
 				.isNotEqualTo(p.isCollectionLike() && p.isEntity());
 
-		checkEitherOr.accept(listOfString,"listOfString");
-		checkEitherOr.accept(arrayOfString,"arrayOfString");
-		checkEitherOr.accept(listOfEntity,"listOfEntity");
-		checkEitherOr.accept(arrayOfEntity,"arrayOfEntity");
+		checkEitherOr.accept(listOfString, "listOfString");
+		checkEitherOr.accept(arrayOfString, "arrayOfString");
+		checkEitherOr.accept(listOfEntity, "listOfEntity");
+		checkEitherOr.accept(arrayOfEntity, "arrayOfEntity");
 
 		softly.assertThat(arrayOfString.getColumnType()).isEqualTo(String[].class);
 		softly.assertThat(listOfString.getColumnType()).isEqualTo(String[].class);
@@ -183,7 +184,8 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private final List<OtherEntity> listOfEntity;
 		private final OtherEntity[] arrayOfEntity;
 
-		@MappedCollection(idColumn = "dummy_column_name", keyColumn = "dummy_key_column_name") private List<Integer> someList;
+		@MappedCollection(idColumn = "dummy_column_name",
+				keyColumn = "dummy_key_column_name") private List<Integer> someList;
 
 		// DATACMNS-106
 		private @Column("dummy_name") String name;

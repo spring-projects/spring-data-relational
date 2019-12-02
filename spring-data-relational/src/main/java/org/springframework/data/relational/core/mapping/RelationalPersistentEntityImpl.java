@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.StringUtils;
@@ -34,7 +35,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 		implements RelationalPersistentEntity<T> {
 
 	private final NamingStrategy namingStrategy;
-	private final Lazy<Optional<String>> tableName;
+	private final Lazy<Optional<SqlIdentifier>> tableName;
 
 	/**
 	 * Creates a new {@link RelationalPersistentEntityImpl} for the given {@link TypeInformation}.
@@ -50,6 +51,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 				findAnnotation(Table.class)) //
 				.map(Table::value) //
 				.filter(StringUtils::hasText) //
+				.map(name -> SqlIdentifier.quoted(name).withAdjustableLetterCasing()) //
 		);
 	}
 
@@ -58,7 +60,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity#getTableName()
 	 */
 	@Override
-	public String getTableName() {
+	public SqlIdentifier getTableName() {
 		return tableName.get().orElseGet(() -> namingStrategy.getQualifiedTableName(getType()));
 	}
 
@@ -67,7 +69,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntity#getIdColumn()
 	 */
 	@Override
-	public String getIdColumn() {
+	public SqlIdentifier getIdColumn() {
 		return getRequiredIdProperty().getColumnName();
 	}
 

@@ -15,6 +15,10 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
+
+import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.domain.SqlIdentifier.*;
 import org.springframework.data.util.ParsingUtils;
 import org.springframework.util.Assert;
 
@@ -45,34 +49,34 @@ public interface NamingStrategy {
 	 *
 	 * @return Empty String representing no schema
 	 */
-	default String getSchema() {
-		return "";
+	default SqlIdentifier getSchema() {
+		return SqlIdentifier.EMPTY;
 	}
 
 	/**
 	 * The name of the table to be used for persisting entities having the type passed as an argument. The default
 	 * implementation takes the {@code type.getSimpleName()} and separates camel case parts with '_'.
 	 */
-	default String getTableName(Class<?> type) {
+	default SqlIdentifier getTableName(Class<?> type) {
 
 		Assert.notNull(type, "Type must not be null.");
 
-		return ParsingUtils.reconcatenateCamelCase(type.getSimpleName(), "_");
+		return quoted(ParsingUtils.reconcatenateCamelCase(type.getSimpleName(), "_")).withAdjustableLetterCasing();
 	}
 
 	/**
 	 * Defaults to return the given {@link RelationalPersistentProperty}'s name with the parts of a camel case name
 	 * separated by '_';
 	 */
-	default String getColumnName(RelationalPersistentProperty property) {
+	default SimpleSqlIdentifier getColumnName(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 
-		return ParsingUtils.reconcatenateCamelCase(property.getName(), "_");
+		return quoted(ParsingUtils.reconcatenateCamelCase(property.getName(), "_")).withAdjustableLetterCasing();
 	}
 
-	default String getQualifiedTableName(Class<?> type) {
-		return this.getSchema() + (this.getSchema().equals("") ? "" : ".") + this.getTableName(type);
+	default SqlIdentifier getQualifiedTableName(Class<?> type) {
+		return this.getSchema().concat(this.getTableName(type));
 	}
 
 	/**
@@ -81,14 +85,14 @@ public interface NamingStrategy {
 	 * @param property The property who's column name in the owner table is required
 	 * @return a column name. Must not be {@code null}.
 	 */
-	default String getReverseColumnName(RelationalPersistentProperty property) {
+	default SqlIdentifier getReverseColumnName(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 
 		return property.getOwner().getTableName();
 	}
 
-	default String getReverseColumnName(PersistentPropertyPathExtension path) {
+	default SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
 
 		return getTableName(path.getIdDefiningParentPath().getLeafEntity().getType());
 	}
@@ -99,10 +103,10 @@ public interface NamingStrategy {
 	 * 
 	 * @return name of the key column. Must not be {@code null}.
 	 */
-	default String getKeyColumn(RelationalPersistentProperty property) {
+	default SqlIdentifier getKeyColumn(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 
-		return getReverseColumnName(property) + "_key";
+		return getReverseColumnName(property).suffix("_key");
 	}
 }

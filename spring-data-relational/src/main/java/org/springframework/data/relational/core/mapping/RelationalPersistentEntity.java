@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.model.MutablePersistentEntity;
+import org.springframework.data.relational.domain.SqlIdentifier;
 
 /**
  * A {@link org.springframework.data.mapping.PersistentEntity} interface with additional methods for JDBC/RDBMS related
@@ -31,12 +32,12 @@ public interface RelationalPersistentEntity<T> extends MutablePersistentEntity<T
 	 *
 	 * @return the table name.
 	 */
-	String getTableName();
+	SqlIdentifier getTableName();
 
 	/**
 	 * Returns the column representing the identifier.
 	 *
 	 * @return will never be {@literal null}.
 	 */
-	String getIdColumn();
+	SqlIdentifier getIdColumn();
 }

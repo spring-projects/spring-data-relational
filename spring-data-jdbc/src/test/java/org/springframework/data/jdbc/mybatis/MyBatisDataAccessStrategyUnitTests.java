@@ -15,18 +15,12 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import java.util.Collections;
 
@@ -44,6 +38,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.IdentifierProcessing;
 
 /**
  * Unit tests for the {@link MyBatisDataAccessStrategy}, mainly ensuring that the correct statements get's looked up.
@@ -60,7 +55,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	SqlSession session = mock(SqlSession.class);
 	ArgumentCaptor<MyBatisContext> captor = ArgumentCaptor.forClass(MyBatisContext.class);
 
-	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session, context, converter);
+	MyBatisDataAccessStrategy accessStrategy = new MyBatisDataAccessStrategy(session, IdentifierProcessing.ANSI);
 
 	PersistentPropertyPath<RelationalPersistentProperty> path = PropertyPathTestingUtils.toPath("one.two",
 			DummyEntity.class, context);
@@ -74,7 +69,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void insert() {
 
-		accessStrategy.insert("x", String.class, Collections.singletonMap("key", "value"));
+		accessStrategy.insert("x", String.class, Collections.singletonMap(unquoted("key"), "value"));
 
 		verify(session).insert(eq("java.lang.StringMapper.insert"), captor.capture());
 

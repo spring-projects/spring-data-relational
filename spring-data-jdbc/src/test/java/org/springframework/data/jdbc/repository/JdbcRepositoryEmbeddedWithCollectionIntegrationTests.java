@@ -250,13 +250,13 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_")
 		Embeddable embeddable;
 	}
 
 	@Data
 	private static class Embeddable {
-		@MappedCollection(idColumn = "id", keyColumn = "order_key")
+		@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY")
 		List<DummyEntity2> list = new ArrayList<>();
 
 		String test;

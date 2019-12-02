@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.repository.query;
-
-import org.springframework.data.relational.domain.SqlIdentifier;
-import org.springframework.data.repository.core.EntityInformation;
+package org.springframework.data.relational.core.dialect;
 
 /**
- * Relational database-specific {@link EntityInformation}.
- *
- * @author Mark Paluch
+ * The {@link Dialect} to be used with MariaDb. Since we haven't encountered any significant differences between MariaDb
+ * and Mysql its instance is actually {@link MySqlDialect#INSTANCE}, although that might change at any time.
+ * 
+ * @author Jens Schauder
  */
-public interface RelationalEntityInformation<T, ID> extends EntityInformation<T, ID> {
+public class MariaDbDialect extends MySqlDialect{
 
-	/**
-	 * Returns the name of the table the entity shall be persisted to.
-	 *
-	 * @return
-	 */
-	SqlIdentifier getTableName();
+	public static final Dialect INSTANCE = MySqlDialect.INSTANCE;
+
+	protected MariaDbDialect() {	}
 }

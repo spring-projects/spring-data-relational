@@ -15,8 +15,13 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
+import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
+
 /**
- * An SQL dialect for MySQL.
+ * A SQL dialect for MySQL.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -28,6 +33,8 @@ public class MySqlDialect extends AbstractDialect {
 	 * Singleton instance.
 	 */
 	public static final MySqlDialect INSTANCE = new MySqlDialect();
+
+	protected MySqlDialect() {	}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
@@ -79,5 +86,10 @@ public class MySqlDialect extends AbstractDialect {
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
+	}
+
+	@Override
+	public IdentifierProcessing getIdentifierProcessing() {
+		return new DefaultIdentifierProcessing(new Quoting("`"), LetterCasing.LOWER_CASE);
 	}
 }

@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
@@ -36,7 +37,7 @@ public class RelationalPersistentEntityImplUnitTests {
 
 		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummySubEntity.class);
 
-		assertThat(entity.getTableName()).isEqualTo("dummy_sub_entity");
+		assertThat(entity.getTableName()).isEqualTo(quoted("dummy_sub_entity"));
 	}
 
 	@Test // DATAJDBC-294
@@ -44,7 +45,7 @@ public class RelationalPersistentEntityImplUnitTests {
 
 		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummySubEntity.class);
 
-		assertThat(entity.getIdColumn()).isEqualTo("renamedId");
+		assertThat(entity.getIdColumn()).isEqualTo(quoted("renamedId"));
 	}
 
 	@Test // DATAJDBC-296
@@ -52,7 +53,7 @@ public class RelationalPersistentEntityImplUnitTests {
 
 		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummyEntityWithEmptyAnnotation.class);
 
-		assertThat(entity.getTableName()).isEqualTo("dummy_entity_with_empty_annotation");
+		assertThat(entity.getTableName()).isEqualTo(quoted("dummy_entity_with_empty_annotation"));
 	}
 
 	@Table("dummy_sub_entity")

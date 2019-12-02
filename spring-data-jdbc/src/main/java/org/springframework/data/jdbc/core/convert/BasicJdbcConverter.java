@@ -37,12 +37,14 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.IdentifierProcessing;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -69,6 +71,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
 	private final JdbcTypeFactory typeFactory;
+	private final IdentifierProcessing identifierProcessing = HsqlDbDialect.INSTANCE.getIdentifierProcessing();
 
 	private RelationResolver relationResolver;
 
@@ -374,7 +377,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				return readEntityFrom(property, path);
 			}
 
-			Object value = getObjectFromResultSet(path.extendBy(property).getColumnAlias());
+			Object value = getObjectFromResultSet(
+					path.extendBy(property).getColumnAlias().toColumnName(identifierProcessing));
 			return readValue(value, property.getTypeInformation());
 		}
 
@@ -428,7 +432,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			if (idProperty != null) {
 				idValue = newContext.readFrom(idProperty);
 			} else {
-				idValue = newContext.getObjectFromResultSet(path.extendBy(property).getReverseColumnNameAlias());
+				idValue = newContext.getObjectFromResultSet(
+						path.extendBy(property).getReverseColumnNameAlias().toColumnName(identifierProcessing));
 			}
 
 			if (idValue == null) {

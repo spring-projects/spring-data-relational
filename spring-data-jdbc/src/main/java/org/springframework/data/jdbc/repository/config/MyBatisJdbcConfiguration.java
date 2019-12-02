@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
@@ -43,8 +44,8 @@ public class MyBatisJdbcConfiguration extends AbstractJdbcConfiguration {
 	@Bean
 	@Override
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
-			RelationalMappingContext context) {
+			RelationalMappingContext context, Dialect dialect) {
 
-		return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, jdbcConverter, operations, session);
+		return MyBatisDataAccessStrategy.createCombinedAccessStrategy(context, jdbcConverter, operations, session, dialect);
 	}
 }

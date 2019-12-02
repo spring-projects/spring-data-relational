@@ -15,7 +15,8 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import lombok.Data;
 
@@ -27,7 +28,6 @@ import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
@@ -89,9 +89,9 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo("dummy_name");
+		assertThat(entity.getRequiredPersistentProperty("name").getColumnName()).isEqualTo(quoted("dummy_name"));
 		assertThat(entity.getRequiredPersistentProperty("localDateTime").getColumnName())
-				.isEqualTo("dummy_last_updated_at");
+				.isEqualTo(quoted("dummy_last_updated_at"));
 	}
 
 	@Test // DATAJDBC-218
@@ -101,8 +101,8 @@ public class BasicJdbcPersistentPropertyUnitTests {
 				.getRequiredPersistentEntity(DummyEntity.class) //
 				.getRequiredPersistentProperty("someList");
 
-		assertThat(listProperty.getReverseColumnName()).isEqualTo("dummy_column_name");
-		assertThat(listProperty.getKeyColumn()).isEqualTo("dummy_key_column_name");
+		assertThat(listProperty.getReverseColumnName()).isEqualTo(quoted("dummy_column_name"));
+		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
 	}
 
 	@Test // DATAJDBC-221
@@ -125,8 +125,8 @@ public class BasicJdbcPersistentPropertyUnitTests {
 				.getRequiredPersistentEntity(WithCollections.class) //
 				.getRequiredPersistentProperty("someList");
 
-		assertThat(listProperty.getKeyColumn()).isEqualTo("some_key");
-		assertThat(listProperty.getReverseColumnName()).isEqualTo("some_value");
+		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("some_key"));
+		assertThat(listProperty.getReverseColumnName()).isEqualTo(quoted("some_value"));
 	}
 
 	@Test // DATAJDBC-331
@@ -136,8 +136,8 @@ public class BasicJdbcPersistentPropertyUnitTests {
 				.getRequiredPersistentEntity(WithCollections.class) //
 				.getRequiredPersistentProperty("overrideList");
 
-		assertThat(listProperty.getKeyColumn()).isEqualTo("override_key");
-		assertThat(listProperty.getReverseColumnName()).isEqualTo("override_id");
+		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("override_key"));
+		assertThat(listProperty.getReverseColumnName()).isEqualTo(quoted("override_id"));
 	}
 
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
@@ -146,6 +146,11 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		RelationalPersistentProperty property = persistentEntity.getRequiredPersistentProperty(propertyName);
 
 		softly.assertThat(property.getColumnType()).describedAs(propertyName).isEqualTo(expected);
+	}
+
+	@SuppressWarnings("unused")
+	private enum SomeEnum {
+		ALPHA
 	}
 
 	@Data
@@ -186,10 +191,5 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		@Column(value = "some_value", keyColumn = "some_key") List<Integer> someList;
 		@Column(value = "some_value", keyColumn = "some_key") @MappedCollection(idColumn = "override_id",
 				keyColumn = "override_key") List<Integer> overrideList;
-	}
-
-	@SuppressWarnings("unused")
-	private enum SomeEnum {
-		ALPHA
 	}
 }

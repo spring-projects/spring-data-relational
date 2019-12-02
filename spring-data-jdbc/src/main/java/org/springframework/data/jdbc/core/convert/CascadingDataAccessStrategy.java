@@ -24,6 +24,7 @@ import java.util.function.Function;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.SqlIdentifier;
 
 /**
  * Delegates each methods to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
@@ -47,7 +48,7 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	public <T> Object insert(T instance, Class<T> domainType, Map<SqlIdentifier, Object> additionalParameters) {
 		return collect(das -> das.insert(instance, domainType, additionalParameters));
 	}
 

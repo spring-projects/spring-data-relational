@@ -21,8 +21,11 @@ import javax.annotation.PostConstruct;
 import javax.script.ScriptException;
 import javax.sql.DataSource;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.jdbc.ext.ScriptUtils;
 
@@ -60,6 +63,11 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 		dataSource.setDatabaseName(MYSQL_CONTAINER.getDatabaseName());
 
 		return dataSource;
+	}
+
+	@Bean
+	Dialect dialect() {
+		return MySqlDialect.INSTANCE;
 	}
 
 	@PostConstruct

@@ -15,13 +15,11 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static org.springframework.data.jdbc.core.convert.SqlGenerator.VERSION_SQL_PARAMETER_NAME;
+import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.JDBCType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +34,16 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.KeyHolder;
@@ -98,7 +97,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	@Nullable
+	public <T> Object insert(T instance, Class<T> domainType, Map<SqlIdentifier, Object> additionalParameters) {
 		return insert(instance, domainType, Identifier.from(additionalParameters));
 	}
 
@@ -109,11 +109,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 
-		KeyHolder holder = new GeneratedKeyHolder();
+		SqlGenerator sqlGenerator = sql(domainType);
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
-				PersistentProperty::isIdProperty);
+		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
+				PersistentProperty::isIdProperty, getIdentifierProcessing());
 
 		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
 
@@ -124,8 +124,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
 		}
 
+		KeyHolder holder = new GeneratedKeyHolder();
+
 		operations.update( //
-				sql(domainType).getInsert(new HashSet<>(Arrays.asList(parameterSource.getParameterNames()))), //
+				sqlGenerator.getInsert(new HashSet<>(parameterSource.getIdentifiers())), //
 				parameterSource, //
 				holder //
 		);
@@ -142,7 +144,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 		return operations.update(sql(domainType).getUpdate(),
-				getParameterSource(instance, persistentEntity, "", Predicates.includeAll())) != 0;
+				getParameterSource(instance, persistentEntity, "", Predicates.includeAll(), getIdentifierProcessing())) != 0;
 	}
 
 	/*
@@ -155,13 +157,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		RelationalPersistentEntity<S> persistentEntity = getRequiredPersistentEntity(domainType);
 
 		// Adjust update statement to set the new version and use the old version in where clause.
-		MapSqlParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
-				Predicates.includeAll());
-		parameterSource.addValue(VERSION_SQL_PARAMETER_NAME, previousVersion);
+		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
+				Predicates.includeAll(), getIdentifierProcessing());
+		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
 
 		int affectedRows = operations.update(sql(domainType).getUpdateWithVersion(), parameterSource);
 
 		if (affectedRows == 0) {
+
 			throw new OptimisticLockingFailureException(
 					String.format("Optimistic lock exception on saving entity of type %s.", persistentEntity.getName()));
 		}
@@ -177,7 +180,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public void delete(Object id, Class<?> domainType) {
 
 		String deleteByIdSql = sql(domainType).getDeleteById();
-		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
+		SqlParameterSource parameter = createIdParameterSource(id, domainType);
 
 		operations.update(deleteByIdSql, parameter);
 	}
@@ -193,8 +196,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		MapSqlParameterSource parameterSource = createIdParameterSource(id, domainType);
-		parameterSource.addValue(VERSION_SQL_PARAMETER_NAME, previousVersion);
+		SqlIdentifierParameterSource parameterSource = createIdParameterSource(id, domainType);
+		parameterSource.addValue(VERSION_SQL_PARAMETER, previousVersion);
 		int affectedRows = operations.update(sql(domainType).getDeleteByIdAndVersion(), parameterSource);
 
 		if (affectedRows == 0) {
@@ -216,11 +219,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		RelationalPersistentProperty referencingProperty = propertyPath.getLeafProperty();
 		Assert.notNull(referencingProperty, "No property found matching the PropertyPath " + propertyPath);
 
-		String format = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
+		String delete = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
 
-		HashMap<String, Object> parameters = new HashMap<>();
-		parameters.put("rootId", rootId);
-		operations.update(format, parameters);
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(getIdentifierProcessing());
+		parameters.addValue(ROOT_ID_PARAMETER, rootId);
+		operations.update(delete, parameters);
 	}
 
 	/*
@@ -265,7 +268,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> T findById(Object id, Class<T> domainType) {
 
 		String findOneSql = sql(domainType).getFindOne();
-		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
+		SqlIdentifierParameterSource parameter = createIdParameterSource(id, domainType);
 
 		try {
 			return operations.queryForObject(findOneSql, parameter, (RowMapper<T>) getEntityRowMapper(domainType));
@@ -297,9 +300,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 
 		RelationalPersistentProperty idProperty = getRequiredPersistentEntity(domainType).getRequiredIdProperty();
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(getIdentifierProcessing());
 
-		addConvertedPropertyValuesAsList(parameterSource, idProperty, ids, "ids");
+		addConvertedPropertyValuesAsList(parameterSource, idProperty, ids, IDS_SQL_PARAMETER);
 
 		String findAllInListSql = sql(domainType).getFindAllInList();
 
@@ -324,12 +327,20 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String findAllByProperty = sql(actualType) //
 				.getFindAllByProperty(identifier, path.getQualifierColumn(), path.isOrdered());
 
-		MapSqlParameterSource parameters = new MapSqlParameterSource(identifier.toMap());
-
 		RowMapper<?> rowMapper = path.isMap() ? this.getMapEntityRowMapper(path, identifier)
 				: this.getEntityRowMapper(path, identifier);
 
-		return operations.query(findAllByProperty, parameters, (RowMapper<Object>) rowMapper);
+		return operations.query(findAllByProperty, createParameterSource(identifier, getIdentifierProcessing()),
+				(RowMapper<Object>) rowMapper);
+	}
+
+	private SqlParameterSource createParameterSource(Identifier identifier, IdentifierProcessing identifierProcessing) {
+
+		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(identifierProcessing);
+
+		identifier.toMap().forEach(parameterSource::addValue);
+
+		return parameterSource;
 	}
 
 	/*
@@ -355,7 +366,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
 		String existsSql = sql(domainType).getExists();
-		MapSqlParameterSource parameter = createIdParameterSource(id, domainType);
+		SqlParameterSource parameter = createIdParameterSource(id, domainType);
 
 		Boolean result = operations.queryForObject(existsSql, parameter, Boolean.class);
 		Assert.state(result != null, "The result of an exists query must not be null");
@@ -363,10 +374,11 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	private <S, T> MapSqlParameterSource getParameterSource(@Nullable S instance, RelationalPersistentEntity<S> persistentEntity,
-			String prefix, Predicate<RelationalPersistentProperty> skipProperty) {
+	private <S, T> SqlIdentifierParameterSource getParameterSource(@Nullable S instance,
+			RelationalPersistentEntity<S> persistentEntity, String prefix,
+			Predicate<RelationalPersistentProperty> skipProperty, IdentifierProcessing identifierProcessing) {
 
-		MapSqlParameterSource parameters = new MapSqlParameterSource();
+		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(identifierProcessing);
 
 		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
@@ -384,13 +396,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 				Object value = propertyAccessor.getProperty(property);
 				RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property.getType());
-				MapSqlParameterSource additionalParameters = getParameterSource((T) value,
-						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty);
-				parameters.addValues(additionalParameters.getValues());
+				SqlIdentifierParameterSource additionalParameters = getParameterSource((T) value,
+						(RelationalPersistentEntity<T>) embeddedEntity, prefix + property.getEmbeddedPrefix(), skipProperty,
+						identifierProcessing);
+				parameters.addAll(additionalParameters);
 			} else {
 
 				Object value = propertyAccessor.getProperty(property);
-				String paramName = prefix + property.getColumnName();
+				SqlIdentifier paramName = property.getColumnName().prefix(prefix);
 
 				addConvertedPropertyValue(parameters, property, value, paramName);
 			}
@@ -434,7 +447,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				return null;
 			}
 
-			return keys.get(persistentEntity.getIdColumn());
+			return keys.get(persistentEntity.getIdColumn().toColumnName(getIdentifierProcessing()));
 		}
 	}
 
@@ -448,55 +461,58 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private RowMapper<?> getMapEntityRowMapper(PersistentPropertyPathExtension path, Identifier identifier) {
 
-		String keyColumn = path.getQualifierColumn();
+		SqlIdentifier keyColumn = path.getQualifierColumn();
 		Assert.notNull(keyColumn, () -> "KeyColumn must not be null for " + path);
 
-		return new MapEntityRowMapper<>(path, converter, identifier, keyColumn);
+		return new MapEntityRowMapper<>(path, converter, identifier, keyColumn, getIdentifierProcessing());
 	}
 
-	private <T> MapSqlParameterSource createIdParameterSource(Object id, Class<T> domainType) {
+	private <T> SqlIdentifierParameterSource createIdParameterSource(Object id, Class<T> domainType) {
 
-		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(getIdentifierProcessing());
 
 		addConvertedPropertyValue( //
 				parameterSource, //
 				getRequiredPersistentEntity(domainType).getRequiredIdProperty(), //
 				id, //
-				"id" //
+				ID_SQL_PARAMETER //
 		);
 		return parameterSource;
 	}
 
-	private void addConvertedPropertyValue(MapSqlParameterSource parameterSource, RelationalPersistentProperty property,
-			@Nullable Object value, String paramName) {
-
-		JdbcValue jdbcValue = converter.writeJdbcValue( //
-				value, //
-				property.getColumnType(), //
-				property.getSqlType() //
-		);
-
-		parameterSource.addValue(paramName, jdbcValue.getValue(), JdbcUtil.sqlTypeFor(jdbcValue.getJdbcType()));
+	private IdentifierProcessing getIdentifierProcessing() {
+		return sqlGeneratorSource.getDialect().getIdentifierProcessing();
 	}
 
-	private void addConvertedPropertyValue(MapSqlParameterSource parameterSource, String name, Object value,
-			Class<?> type) {
+	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
+			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
+
+		addConvertedValue(parameterSource, value, name, property.getColumnType(), property.getSqlType());
+	}
+
+	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,
+			Class<?> javaType) {
+
+		addConvertedValue(parameterSource, value, name, javaType, JdbcUtil.sqlTypeFor(javaType));
+	}
+
+	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,
+			SqlIdentifier paramName, Class<?> javaType, int sqlType) {
 
 		JdbcValue jdbcValue = converter.writeJdbcValue( //
 				value, //
-				type, //
-				JdbcUtil.sqlTypeFor(type) //
+				javaType, //
+				sqlType //
 		);
 
 		parameterSource.addValue( //
-				name, //
+				paramName, //
 				jdbcValue.getValue(), //
-				JdbcUtil.sqlTypeFor(jdbcValue.getJdbcType()) //
-		);
+				JdbcUtil.sqlTypeFor(jdbcValue.getJdbcType()));
 	}
 
-	private void addConvertedPropertyValuesAsList(MapSqlParameterSource parameterSource,
-			RelationalPersistentProperty property, Iterable<?> values, String paramName) {
+	private void addConvertedPropertyValuesAsList(SqlIdentifierParameterSource parameterSource,
+			RelationalPersistentProperty property, Iterable<?> values, SqlIdentifier paramName) {
 
 		List<Object> convertedIds = new ArrayList<>();
 		JdbcValue jdbcValue = null;

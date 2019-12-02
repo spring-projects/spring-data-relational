@@ -16,6 +16,8 @@
 package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.domain.SqlIdentifier.SimpleSqlIdentifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -34,7 +36,7 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 *
 	 * @return the name of the column backing this property.
 	 */
-	String getColumnName();
+	SimpleSqlIdentifier getColumnName();
 
 	/**
 	 * The type to be used to store this property in the database. Multidimensional arrays are unwrapped to reflect a
@@ -61,14 +63,14 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * @deprecated Use {@link #getReverseColumnName(PersistentPropertyPathExtension)} instead.
 	 */
 	@Deprecated
-	String getReverseColumnName();
+	SqlIdentifier getReverseColumnName();
 
-	default String getReverseColumnName(PersistentPropertyPathExtension path) {
+	default SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
 		return getReverseColumnName();
 	}
 
 	@Nullable
-	String getKeyColumn();
+	SqlIdentifier getKeyColumn();
 
 	/**
 	 * Returns if this property is a qualified property, i.e. a property referencing multiple elements that can get picked

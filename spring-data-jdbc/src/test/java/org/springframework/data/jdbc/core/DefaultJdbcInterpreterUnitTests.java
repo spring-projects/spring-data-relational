@@ -15,14 +15,11 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.data.jdbc.core.PropertyPathTestingUtils.toPath;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.data.jdbc.core.PropertyPathTestingUtils.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import java.util.List;
 
@@ -52,9 +49,8 @@ import org.springframework.data.relational.domain.Identifier;
  */
 public class DefaultJdbcInterpreterUnitTests {
 
+	public static final SimpleSqlIdentifier BACK_REFERENCE = quoted("container");
 	static final long CONTAINER_ID = 23L;
-	static final String BACK_REFERENCE = "container";
-
 	RelationalMappingContext context = new JdbcMappingContext();
 	JdbcConverter converter = new BasicJdbcConverter(context, (Identifier, path) -> null);
 	DataAccessStrategy dataAccessStrategy = mock(DataAccessStrategy.class);
@@ -156,9 +152,10 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		assertThat(argumentCaptor.getValue().getParts()) //
 				.extracting("name", "value", "targetType") //
-				.containsOnly(tuple("root_with_list", CONTAINER_ID, Long.class), // the top level id
-						tuple("root_with_list_key", 3, Integer.class), // midlevel key
-						tuple("with_list_key", 6, Integer.class) // lowlevel key
+				.containsOnly(tuple(quoted("root_with_list"), CONTAINER_ID, Long.class), // the top
+																																									// level id
+						tuple(quoted("root_with_list_key"), 3, Integer.class), // midlevel key
+						tuple(quoted("with_list_key"), 6, Integer.class) // lowlevel key
 				);
 	}
 

@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,11 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
+import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.domain.SqlIdentifier.*;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -54,7 +60,7 @@ import org.springframework.data.relational.domain.Identifier;
  */
 public class SqlGeneratorUnitTests {
 
-	static final Identifier BACKREF = Identifier.of("backref", "some-value", String.class);
+	static final Identifier BACKREF = Identifier.of(unquoted("backref"), "some-value", String.class);
 
 	SqlGenerator sqlGenerator;
 	NamingStrategy namingStrategy = new PrefixingNamingStrategy();
@@ -67,9 +73,14 @@ public class SqlGeneratorUnitTests {
 
 	SqlGenerator createSqlGenerator(Class<?> type) {
 
+		return createSqlGenerator(type, new DefaultIdentifierProcessing(new Quoting(""), LetterCasing.AS_IS));
+	}
+
+	SqlGenerator createSqlGenerator(Class<?> type, IdentifierProcessing identifierProcessing) {
+
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
 
-		return new SqlGenerator(context, persistentEntity);
+		return new SqlGenerator(context, persistentEntity, identifierProcessing);
 	}
 
 	@Test // DATAJDBC-112
@@ -174,8 +185,8 @@ public class SqlGeneratorUnitTests {
 	public void findAllByPropertyWithMultipartIdentifier() {
 
 		// this would get called when ListParent is the element type of a Set
-		Identifier parentIdentifier = Identifier.of("backref", "some-value", String.class) //
-				.withPart("backref_key", "key-value", Object.class);
+		Identifier parentIdentifier = Identifier.of(unquoted("backref"), "some-value", String.class) //
+				.withPart(unquoted("backref_key"), "key-value", Object.class);
 		String sql = sqlGenerator.getFindAllByProperty(parentIdentifier, null, false);
 
 		assertThat(sql).contains("SELECT", //
@@ -197,7 +208,7 @@ public class SqlGeneratorUnitTests {
 	public void findAllByPropertyWithKey() {
 
 		// this would get called when ListParent is th element type of a Map
-		String sql = sqlGenerator.getFindAllByProperty(BACKREF, "key-column", false);
+		String sql = sqlGenerator.getFindAllByProperty(BACKREF, unquoted("key-column"), false);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
@@ -219,7 +230,7 @@ public class SqlGeneratorUnitTests {
 	public void findAllByPropertyWithKeyOrdered() {
 
 		// this would get called when ListParent is th element type of a Map
-		String sql = sqlGenerator.getFindAllByProperty(BACKREF, "key-column", true);
+		String sql = sqlGenerator.getFindAllByProperty(BACKREF, unquoted("key-column"), true);
 
 		assertThat(sql).isEqualTo("SELECT dummy_entity.id1 AS id1, dummy_entity.x_name AS x_name, " //
 				+ "dummy_entity.x_other AS x_other, " //
@@ -235,16 +246,16 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-219
 	public void updateWithVersion() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class, IdentifierProcessing.ANSI);
 
 		assertThat(sqlGenerator.getUpdateWithVersion()).containsSequence( //
 				"UPDATE", //
-				"versioned_entity", //
+				"\"VERSIONED_ENTITY\"", //
 				"SET", //
 				"WHERE", //
-				"id1 = :id", //
+				"\"ID1\" = :ID1", //
 				"AND", //
-				"version = :___oldOptimisticLockingVersion");
+				"\"X_VERSION\" = :___oldOptimisticLockingVersion");
 	}
 
 	@Test // DATAJDBC-264
@@ -260,66 +271,69 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-334
 	public void getInsertForQuotedColumnName() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class, IdentifierProcessing.ANSI);
 
 		String insert = sqlGenerator.getInsert(emptySet());
 
-		assertThat(insert)
-				.isEqualTo("INSERT INTO entity_with_quoted_column_name " + "(\"test_@123\") " + "VALUES (:test_123)");
+		assertThat(insert).isEqualTo("INSERT INTO \"ENTITY_WITH_QUOTED_COLUMN_NAME\" " //
+				+ "(\"TEST\"\"_@123\") " + "VALUES (:TEST_123)");
 	}
 
 	@Test // DATAJDBC-266
 	public void joinForOneToOneWithoutIdIncludesTheBackReferenceOfTheOuterJoin() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(ParentOfNoIdChild.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(ParentOfNoIdChild.class, IdentifierProcessing.ANSI);
 
 		String findAll = sqlGenerator.getFindAll();
 
-		assertThat(findAll).containsSequence("SELECT", "child.parent_of_no_id_child AS child_parent_of_no_id_child",
-				"FROM");
+		assertThat(findAll).containsSequence("SELECT",
+				"\"CHILD\".\"PARENT_OF_NO_ID_CHILD\" AS \"CHILD_PARENT_OF_NO_ID_CHILD\"", "FROM");
 	}
 
 	@Test // DATAJDBC-262
 	public void update() {
 
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, IdentifierProcessing.ANSI);
+
 		assertThat(sqlGenerator.getUpdate()).containsSequence( //
 				"UPDATE", //
-				"dummy_entity", //
+				"\"DUMMY_ENTITY\"", //
 				"SET", //
 				"WHERE", //
-				"id1 = :id");
+				"\"ID1\" = :ID");
 	}
 
 	@Test // DATAJDBC-324
 	public void readOnlyPropertyExcludedFromQuery_when_generateUpdateSql() {
 
-		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class, IdentifierProcessing.ANSI);
 
 		assertThat(sqlGenerator.getUpdate()).isEqualToIgnoringCase( //
-				"UPDATE entity_with_read_only_property " //
-						+ "SET x_name = :x_name " //
-						+ "WHERE entity_with_read_only_property.x_id = :x_id" //
+				"UPDATE \"ENTITY_WITH_READ_ONLY_PROPERTY\" " //
+						+ "SET \"X_NAME\" = :X_NAME " //
+						+ "WHERE \"ENTITY_WITH_READ_ONLY_PROPERTY\".\"X_ID\" = :X_ID" //
 		);
 	}
 
 	@Test // DATAJDBC-334
 	public void getUpdateForQuotedColumnName() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class, IdentifierProcessing.ANSI);
 
 		String update = sqlGenerator.getUpdate();
 
-		assertThat(update).isEqualTo("UPDATE entity_with_quoted_column_name " + "SET \"test_@123\" = :test_123 "
-				+ "WHERE entity_with_quoted_column_name.\"test_@id\" = :test_id");
+		assertThat(update).isEqualTo("UPDATE \"ENTITY_WITH_QUOTED_COLUMN_NAME\" " //
+				+ "SET \"TEST\"\"_@123\" = :TEST_123 " //
+				+ "WHERE \"ENTITY_WITH_QUOTED_COLUMN_NAME\".\"TEST\"\"_@ID\" = :TEST_ID");
 	}
 
 	@Test // DATAJDBC-324
 	public void readOnlyPropertyExcludedFromQuery_when_generateInsertSql() {
 
-		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class, IdentifierProcessing.ANSI);
 
 		assertThat(sqlGenerator.getInsert(emptySet())).isEqualToIgnoringCase( //
-				"INSERT INTO entity_with_read_only_property (x_name) " //
+				"INSERT INTO \"ENTITY_WITH_READ_ONLY_PROPERTY\" (\"X_NAME\") " //
 						+ "VALUES (:x_name)" //
 		);
 	}
@@ -340,7 +354,7 @@ public class SqlGeneratorUnitTests {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
 
-		assertThat(sqlGenerator.getFindAllByProperty(BACKREF, "key-column", true)).isEqualToIgnoringCase( //
+		assertThat(sqlGenerator.getFindAllByProperty(BACKREF, unquoted("key-column"), true)).isEqualToIgnoringCase( //
 				"SELECT " //
 						+ "entity_with_read_only_property.x_id AS x_id, " //
 						+ "entity_with_read_only_property.x_name AS x_name, " //
@@ -434,14 +448,15 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-340
 	public void joinForSimpleReference() {
 
+		SqlGenerator.Join join = generateJoin("ref", DummyEntity.class);
+
 		SoftAssertions.assertSoftly(softly -> {
 
-			SqlGenerator.Join join = generateJoin("ref", DummyEntity.class);
-			softly.assertThat(join.getJoinTable().getName()).isEqualTo("referenced_entity");
+			softly.assertThat(join.getJoinTable().getName()).isEqualTo("\"REFERENCED_ENTITY\"");
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("dummy_entity");
-			softly.assertThat(join.getParentId().getName()).isEqualTo("id1");
-			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("dummy_entity");
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("\"DUMMY_ENTITY\"");
+			softly.assertThat(join.getParentId().getName()).isEqualTo("\"ID1\"");
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("\"DUMMY_ENTITY\"");
 		});
 	}
 
@@ -465,37 +480,39 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-340
 	public void joinForSecondLevelReference() {
 
+		SqlGenerator.Join join = generateJoin("ref.further", DummyEntity.class);
+
 		SoftAssertions.assertSoftly(softly -> {
 
-			SqlGenerator.Join join = generateJoin("ref.further", DummyEntity.class);
-			softly.assertThat(join.getJoinTable().getName()).isEqualTo("second_level_referenced_entity");
+			softly.assertThat(join.getJoinTable().getName()).isEqualTo("\"SECOND_LEVEL_REFERENCED_ENTITY\"");
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("referenced_entity");
-			softly.assertThat(join.getParentId().getName()).isEqualTo("x_l1id");
-			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("referenced_entity");
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("\"REFERENCED_ENTITY\"");
+			softly.assertThat(join.getParentId().getName()).isEqualTo("\"X_L1ID\"");
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("\"REFERENCED_ENTITY\"");
 		});
 	}
 
 	@Test // DATAJDBC-340
 	public void joinForOneToOneWithoutId() {
 
+		SqlGenerator.Join join = generateJoin("child", ParentOfNoIdChild.class);
+		Table joinTable = join.getJoinTable();
+
 		SoftAssertions.assertSoftly(softly -> {
 
-			SqlGenerator.Join join = generateJoin("child", ParentOfNoIdChild.class);
-			Table joinTable = join.getJoinTable();
-			softly.assertThat(joinTable.getName()).isEqualTo("no_id_child");
+			softly.assertThat(joinTable.getName()).isEqualTo("\"NO_ID_CHILD\"");
 			softly.assertThat(joinTable).isInstanceOf(Aliased.class);
-			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo("child");
+			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo("\"CHILD\"");
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(joinTable);
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("parent_of_no_id_child");
-			softly.assertThat(join.getParentId().getName()).isEqualTo("x_id");
-			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("parent_of_no_id_child");
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("\"PARENT_OF_NO_ID_CHILD\"");
+			softly.assertThat(join.getParentId().getName()).isEqualTo("\"X_ID\"");
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("\"PARENT_OF_NO_ID_CHILD\"");
 
 		});
 	}
 
 	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
-		return createSqlGenerator(type)
+		return createSqlGenerator(type, IdentifierProcessing.ANSI)
 				.getJoin(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
 	}
 
@@ -504,7 +521,7 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("id", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly("id1", "dummy_entity", null, "id1");
+				.containsExactly("\"ID1\"", "\"DUMMY_ENTITY\"", null, "\"ID1\"");
 	}
 
 	@Test // DATAJDBC-340
@@ -512,7 +529,7 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("ref.l1id", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
-				.containsExactly("x_l1id", "referenced_entity", "ref", "ref_x_l1id");
+				.containsExactly("\"X_L1ID\"", "\"REFERENCED_ENTITY\"", "\"REF\"", "\"REF_X_L1ID\"");
 	}
 
 	@Test // DATAJDBC-340
@@ -526,7 +543,8 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("child", ParentOfNoIdChild.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
-				.containsExactly("parent_of_no_id_child", "no_id_child", "child", "child_parent_of_no_id_child");
+				.containsExactly("\"PARENT_OF_NO_ID_CHILD\"", "\"NO_ID_CHILD\"", "\"CHILD\"",
+						"\"CHILD_PARENT_OF_NO_ID_CHILD\"");
 	}
 
 	private String getAlias(Object maybeAliased) {
@@ -539,7 +557,7 @@ public class SqlGeneratorUnitTests {
 
 	private org.springframework.data.relational.core.sql.Column generatedColumn(String path, Class<?> type) {
 
-		return createSqlGenerator(type)
+		return createSqlGenerator(type, IdentifierProcessing.ANSI)
 				.getColumn(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
 	}
 
@@ -599,8 +617,8 @@ public class SqlGeneratorUnitTests {
 	private static class PrefixingNamingStrategy implements NamingStrategy {
 
 		@Override
-		public String getColumnName(RelationalPersistentProperty property) {
-			return "x_" + NamingStrategy.super.getColumnName(property);
+		public SimpleSqlIdentifier getColumnName(RelationalPersistentProperty property) {
+			return NamingStrategy.super.getColumnName(property).prefix("x_");
 		}
 
 	}
@@ -621,8 +639,10 @@ public class SqlGeneratorUnitTests {
 
 	static class EntityWithQuotedColumnName {
 
-		@Id @Column("\"test_@id\"") Long id;
-		@Column("\"test_@123\"") String name;
+		// these column names behave like single double quote in the name since the get quoted and then doubling the double
+		// quote escapes it.
+		@Id @Column("test\"\"_@id") Long id;
+		@Column("test\"\"_@123") String name;
 	}
 
 	@SuppressWarnings("unused")

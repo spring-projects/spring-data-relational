@@ -16,6 +16,7 @@
 package org.springframework.data.relational.repository.query;
 
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.repository.core.EntityMetadata;
 
 /**
@@ -30,7 +31,7 @@ public interface RelationalEntityMetadata<T> extends EntityMetadata<T> {
 	 *
 	 * @return
 	 */
-	String getTableName();
+	SqlIdentifier getTableName();
 
 	/**
 	 * Returns the {@link RelationalPersistentEntity} that supposed to determine the table to be queried.

@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +26,6 @@ import java.util.function.Consumer;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.core.convert.SqlGenerator;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -33,6 +33,10 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
+import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.domain.SqlIdentifier;
 
 /**
  * Unit tests to verify a contextual {@link NamingStrategy} implementation that customizes using a user-centric
@@ -52,8 +56,8 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	private final NamingStrategy contextualNamingStrategy = new NamingStrategy() {
 
 		@Override
-		public String getSchema() {
-			return userHandler.get();
+		public SqlIdentifier getSchema() {
+			return unquoted(userHandler.get());
 		}
 	};
 
@@ -87,8 +91,11 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 
 			String sql = sqlGenerator.createDeleteByPath(getPath("ref"));
 
-			assertThat(sql).isEqualTo(
-					"DELETE FROM " + user + ".referenced_entity WHERE " + user + ".referenced_entity.dummy_entity = :rootId");
+			assertThat(sql).isEqualTo( //
+					"DELETE FROM " //
+							+ user + ".referenced_entity WHERE " //
+							+ user + ".referenced_entity.dummy_entity = :rootId" //
+			);
 		});
 	}
 
@@ -213,7 +220,8 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		return new SqlGenerator(context, persistentEntity);
+		return new SqlGenerator(context, persistentEntity,
+				new DefaultIdentifierProcessing(new Quoting(""), LetterCasing.AS_IS));
 	}
 
 	@SuppressWarnings("unused")

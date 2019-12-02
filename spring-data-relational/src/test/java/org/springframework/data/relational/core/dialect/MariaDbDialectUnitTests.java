@@ -20,17 +20,16 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link MySqlDialect}.
+ * Unit tests for {@link MariaDbDialect}.
  *
- * @author Mark Paluch
  * @author Jens Schauder
  */
-public class MySqlDialectUnitTests {
+public class MariaDbDialectUnitTests {
 
 	@Test // DATAJDBC-278
 	public void shouldNotSupportArrays() {
 
-		ArrayColumns arrayColumns = MySqlDialect.INSTANCE.getArraySupport();
+		ArrayColumns arrayColumns = MariaDbDialect.INSTANCE.getArraySupport();
 
 		assertThat(arrayColumns.isSupported()).isFalse();
 	}
@@ -38,7 +37,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-278
 	public void shouldRenderLimit() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = MariaDbDialect.INSTANCE.limit();
 
 		assertThat(limit.getClausePosition()).isEqualTo(LimitClause.Position.AFTER_ORDER_BY);
 		assertThat(limit.getLimit(10)).isEqualTo("LIMIT 10");
@@ -47,7 +46,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-278
 	public void shouldRenderOffset() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = MariaDbDialect.INSTANCE.limit();
 
 		assertThat(limit.getOffset(10)).isEqualTo("LIMIT 10, 18446744073709551615");
 	}
@@ -55,7 +54,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-278
 	public void shouldRenderLimitOffset() {
 
-		LimitClause limit = MySqlDialect.INSTANCE.limit();
+		LimitClause limit = MariaDbDialect.INSTANCE.limit();
 
 		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("LIMIT 10, 20");
 	}
@@ -63,7 +62,7 @@ public class MySqlDialectUnitTests {
 	@Test // DATAJDBC-386
 	public void shouldQuoteIdentifiersUsingBackticks() {
 
-		String abcQuoted = MySqlDialect.INSTANCE.getIdentifierProcessing().quote("abc");
+		String abcQuoted = MariaDbDialect.INSTANCE.getIdentifierProcessing().quote("abc");
 
 		assertThat(abcQuoted).isEqualTo("`abc`");
 	}

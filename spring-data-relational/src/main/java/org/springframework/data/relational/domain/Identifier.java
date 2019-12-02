@@ -69,9 +69,9 @@ public final class Identifier {
 	 * @param targetType must not be {@literal null}.
 	 * @return the {@link Identifier} for {@code name}, {@code value}, and a {@link Class target type}.
 	 */
-	public static Identifier of(String name, Object value, Class<?> targetType) {
+	public static Identifier of(SqlIdentifier name, Object value, Class<?> targetType) {
 
-		Assert.hasText(name, "Name must not be empty!");
+		Assert.notNull(name, "Name must not be empty!");
 		Assert.notNull(targetType, "Target type must not be null!");
 
 		return new Identifier(Collections.singletonList(new SingleIdentifierValue(name, value, targetType)));
@@ -83,7 +83,7 @@ public final class Identifier {
 	 * @param map must not be {@literal null}.
 	 * @return the {@link Identifier} from a {@link Map} of name to value tuples.
 	 */
-	public static Identifier from(Map<String, Object> map) {
+	public static Identifier from(Map<SqlIdentifier, Object> map) {
 
 		Assert.notNull(map, "Map must not be null!");
 
@@ -111,9 +111,9 @@ public final class Identifier {
 	 * @return the {@link Identifier} containing all existing keys and the key part for {@code name}, {@code value}, and a
 	 *         {@link Class target type}.
 	 */
-	public Identifier withPart(String name, Object value, Class<?> targetType) {
+	public Identifier withPart(SqlIdentifier name, Object value, Class<?> targetType) {
 
-		Assert.hasText(name, "Name must not be empty!");
+		Assert.notNull(name, "Name must not be null!");
 		Assert.notNull(targetType, "Target type must not be null!");
 
 		boolean overwritten = false;
@@ -141,9 +141,9 @@ public final class Identifier {
 	 *
 	 * @return a {@link Map} containing the identifier name to value tuples.
 	 */
-	public Map<String, Object> toMap() {
+	public Map<SqlIdentifier, Object> toMap() {
 
-		Map<String, Object> result = new LinkedHashMap<>();
+		Map<SqlIdentifier, Object> result = new LinkedHashMap<>();
 		forEach((name, value, type) -> result.put(name, value));
 		return result;
 	}
@@ -188,7 +188,7 @@ public final class Identifier {
 	@AllArgsConstructor(access = AccessLevel.PRIVATE)
 	static class SingleIdentifierValue {
 
-		String name;
+		SqlIdentifier name;
 		Object value;
 		Class<?> targetType;
 	}
@@ -204,11 +204,11 @@ public final class Identifier {
 
 		/**
 		 * Performs this operation on the given arguments.
-		 *
+		 * 
 		 * @param name
 		 * @param value
 		 * @param targetType
 		 */
-		void accept(String name, Object value, Class<?> targetType);
+		void accept(SqlIdentifier name, Object value, Class<?> targetType);
 	}
 }

@@ -20,6 +20,8 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.domain.SqlIdentifier;
 
 /**
  * Utility to get from path to SQL DSL elements.
@@ -33,36 +35,41 @@ class SqlContext {
 
 	private final RelationalPersistentEntity<?> entity;
 	private final Table table;
+	private final IdentifierProcessing identifierProcessing;
 
-	SqlContext(RelationalPersistentEntity<?> entity) {
+	SqlContext(RelationalPersistentEntity<?> entity, IdentifierProcessing identifierProcessing) {
+
+		this.identifierProcessing = identifierProcessing;
 		this.entity = entity;
-		this.table = SQL.table(entity.getTableName());
+		this.table = SQL.table(entity.getTableName().toSql(this.identifierProcessing));
 	}
 
 	Column getIdColumn() {
-		return table.column(entity.getIdColumn());
+		return table.column(entity.getIdColumn().toSql(identifierProcessing));
 	}
 
 	Column getVersionColumn() {
-		return table.column(entity.getRequiredVersionProperty().getColumnName());
+		return table.column(entity.getRequiredVersionProperty().getColumnName().toSql(identifierProcessing));
 	}
-	
+
 	Table getTable() {
 		return table;
 	}
 
 	Table getTable(PersistentPropertyPathExtension path) {
 
-		String tableAlias = path.getTableAlias();
-		Table table = SQL.table(path.getTableName());
-		return tableAlias == null ? table : table.as(tableAlias);
+		SqlIdentifier tableAlias = path.getTableAlias();
+		Table table = SQL.table(path.getTableName().toSql(identifierProcessing));
+		return tableAlias == null ? table : table.as(tableAlias.toSql(identifierProcessing));
 	}
 
 	Column getColumn(PersistentPropertyPathExtension path) {
-		return getTable(path).column(path.getColumnName()).as(path.getColumnAlias());
+		return getTable(path).column(path.getColumnName().toSql(identifierProcessing))
+				.as(path.getColumnAlias().toSql(identifierProcessing));
 	}
 
 	Column getReverseColumn(PersistentPropertyPathExtension path) {
-		return getTable(path).column(path.getReverseColumnName()).as(path.getReverseColumnNameAlias());
+		return getTable(path).column(path.getReverseColumnName().toSql(identifierProcessing))
+				.as(path.getReverseColumnNameAlias().toSql(identifierProcessing));
 	}
 }

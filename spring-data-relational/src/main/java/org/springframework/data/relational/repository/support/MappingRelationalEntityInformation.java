@@ -16,6 +16,7 @@
 package org.springframework.data.relational.repository.support;
 
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.core.support.PersistentEntityInformation;
 import org.springframework.lang.Nullable;
@@ -32,7 +33,7 @@ public class MappingRelationalEntityInformation<T, ID> extends PersistentEntityI
 		implements RelationalEntityInformation<T, ID> {
 
 	private final RelationalPersistentEntity<T> entityMetadata;
-	private final @Nullable String customTableName;
+	private final @Nullable SqlIdentifier customTableName;
 	private final Class<ID> fallbackIdType;
 
 	/**
@@ -81,14 +82,14 @@ public class MappingRelationalEntityInformation<T, ID> extends PersistentEntityI
 		super(entity);
 
 		this.entityMetadata = entity;
-		this.customTableName = customTableName;
+		this.customTableName = customTableName == null ? null : SqlIdentifier.quoted(customTableName);
 		this.fallbackIdType = idType != null ? idType : (Class<ID>) Long.class;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.springframework.data.relational.repository.query.RelationalEntityInformation#getTableName()
 	 */
-	public String getTableName() {
+	public SqlIdentifier getTableName() {
 		return customTableName == null ? entityMetadata.getTableName() : customTableName;
 	}
 

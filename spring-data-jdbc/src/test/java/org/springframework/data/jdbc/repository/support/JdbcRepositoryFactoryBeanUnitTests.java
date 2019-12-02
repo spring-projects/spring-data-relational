@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -60,6 +61,8 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	@Mock DataAccessStrategy dataAccessStrategy;
 	@Mock ApplicationEventPublisher publisher;
 	@Mock(answer = Answers.RETURNS_DEEP_STUBS) ListableBeanFactory beanFactory;
+	@Mock
+	Dialect dialect;
 
 	RelationalMappingContext mappingContext;
 
@@ -86,6 +89,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		factoryBean.setConverter(new BasicJdbcConverter(mappingContext, dataAccessStrategy));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.setBeanFactory(beanFactory);
+		factoryBean.setDialect(dialect);
 		factoryBean.afterPropertiesSet();
 
 		assertThat(factoryBean.getObject()).isNotNull();
@@ -113,6 +117,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		factoryBean.setConverter(new BasicJdbcConverter(mappingContext, dataAccessStrategy));
 		factoryBean.setApplicationEventPublisher(publisher);
 		factoryBean.setBeanFactory(beanFactory);
+		factoryBean.setDialect(dialect);
 		factoryBean.afterPropertiesSet();
 
 		assertThat(factoryBean.getObject()).isNotNull();

@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
@@ -46,5 +48,10 @@ class HsqlDataSourceConfiguration {
 				.ignoreFailedDrops(true) //
 				.addScript(TestUtils.createScriptName(context, "hsql")) //
 				.build();
+	}
+
+	@Bean
+	Dialect dialect() {
+		return HsqlDbDialect.INSTANCE;
 	}
 }

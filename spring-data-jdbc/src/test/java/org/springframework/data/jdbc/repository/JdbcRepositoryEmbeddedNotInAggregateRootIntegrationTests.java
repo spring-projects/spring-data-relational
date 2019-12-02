@@ -237,17 +237,18 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 		String test;
 
-		@Column("id")
+		@Column("ID")
 		DummyEntity2 dummyEntity2;
 	}
 
 	@Data
 	static class DummyEntity2 {
+		@Column("ID")
 		@Id Long id;
 
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_")
 		Embeddable embeddable;
 	}
 

@@ -18,8 +18,11 @@ package org.springframework.data.jdbc.testing;
 import javax.sql.DataSource;
 
 import org.postgresql.ds.PGSimpleDataSource;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -53,6 +56,11 @@ public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 		dataSource.setPassword(POSTGRESQL_CONTAINER.getPassword());
 
 		return dataSource;
+	}
+
+	@Bean
+	Dialect dialect() {
+		return PostgresDialect.INSTANCE;
 	}
 
 	/*

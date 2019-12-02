@@ -28,6 +28,7 @@ import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.mapping.callback.EntityCallbacks;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
@@ -56,6 +57,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private NamedParameterJdbcOperations operations;
 	private EntityCallbacks entityCallbacks;
+	private Dialect dialect;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
@@ -97,6 +99,11 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 		super.setMappingContext(mappingContext);
 		this.mappingContext = mappingContext;
+	}
+
+	@Autowired
+	protected void setDialect(Dialect dialect) {
+		this.dialect = dialect;
 	}
 
 	/**
@@ -167,7 +174,9 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 			this.dataAccessStrategy = this.beanFactory.getBeanProvider(DataAccessStrategy.class) //
 					.getIfAvailable(() -> {
 
-						SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(this.mappingContext);
+						Assert.state(this.dialect != null, "Dialect is required and must not be null!");
+
+						SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(this.mappingContext, this.dialect);
 						return new DefaultDataAccessStrategy(sqlGeneratorSource, this.mappingContext, this.converter,
 								this.operations);
 					});

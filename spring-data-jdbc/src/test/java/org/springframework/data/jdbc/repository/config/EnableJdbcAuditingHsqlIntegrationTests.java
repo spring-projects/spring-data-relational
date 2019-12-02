@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.config;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import lombok.Data;
 
@@ -44,6 +45,7 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.test.context.ActiveProfiles;
@@ -271,8 +273,8 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 			return new NamingStrategy() {
 
-				public String getTableName(@NotNull Class<?> type) {
-					return "DummyEntity";
+				public SqlIdentifier getTableName(@NotNull Class<?> type) {
+					return unquoted("DummyEntity");
 				}
 			};
 		}
