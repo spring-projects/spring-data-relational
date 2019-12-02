@@ -40,9 +40,9 @@ import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -69,7 +69,6 @@ public class EnableJdbcRepositoriesIntegrationTests {
 			"dataAccessStrategy");
 	public static final RowMapper DUMMY_ENTITY_ROW_MAPPER = mock(RowMapper.class);
 	public static final RowMapper STRING_ROW_MAPPER = mock(RowMapper.class);
-	public static final ResultSetExtractor<Integer> INTEGER_RESULT_SET_EXTRACTOR = mock(ResultSetExtractor.class);
 
 	@Autowired JdbcRepositoryFactoryBean factoryBean;
 	@Autowired DummyRepository repository;
@@ -153,8 +152,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		@Bean("qualifierDataAccessStrategy")
 		DataAccessStrategy defaultDataAccessStrategy(
 				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
-				RelationalMappingContext context, JdbcConverter converter) {
-			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context), context, converter, template);
+				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
+			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, dialect), context, converter, template);
 		}
 	}
 }

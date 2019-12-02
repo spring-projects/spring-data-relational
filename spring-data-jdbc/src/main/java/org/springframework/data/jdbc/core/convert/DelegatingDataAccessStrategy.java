@@ -20,6 +20,7 @@ import java.util.Map;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.util.Assert;
 
 /**
@@ -39,7 +40,7 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters) {
+	public <T> Object insert(T instance, Class<T> domainType, Map<SqlIdentifier, Object> additionalParameters) {
 		return delegate.insert(instance, domainType, additionalParameters);
 	}
 
@@ -70,6 +71,7 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		return delegate.updateWithVersion(instance, domainType, nextVersion);
 
 	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PersistentPropertyPath)

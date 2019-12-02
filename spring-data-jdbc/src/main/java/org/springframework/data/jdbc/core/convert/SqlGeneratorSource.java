@@ -19,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.domain.IdentifierProcessing;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
@@ -33,8 +35,17 @@ public class SqlGeneratorSource {
 
 	private final Map<Class<?>, SqlGenerator> CACHE = new ConcurrentReferenceHashMap<>();
 	private final RelationalMappingContext context;
+	private final Dialect dialect;
+
+	/**
+	 * @return the {@link Dialect} used by the created {@link SqlGenerator} instances. Guaranteed to be not {@literal null}.
+	 */
+	public Dialect getDialect() {
+		return dialect;
+	}
+
 
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
-		return CACHE.computeIfAbsent(domainType, t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t)));
+		return CACHE.computeIfAbsent(domainType, t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t), dialect.getIdentifierProcessing()));
 	}
 }

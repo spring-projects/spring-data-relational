@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.mapping.model;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import lombok.Data;
 
@@ -27,6 +28,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.domain.SqlIdentifier;
 
 /**
  * Unit tests for the default {@link NamingStrategy}.
@@ -44,42 +46,42 @@ public class NamingStrategyUnitTests {
 
 	@Test // DATAJDBC-184
 	public void getTableName() {
-		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
+		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo(quoted("dummy_entity"));
 	}
 
 	@Test // DATAJDBC-184
 	public void getColumnName() {
 
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))) //
-				.isEqualTo("id");
+				.isEqualTo(quoted("id"));
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))) //
-				.isEqualTo("created_at");
+				.isEqualTo(quoted("created_at"));
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("dummySubEntities"))) //
-				.isEqualTo("dummy_sub_entities");
+				.isEqualTo(quoted("dummy_sub_entities"));
 	}
 
 	@Test // DATAJDBC-184
 	public void getReverseColumnName() {
 		assertThat(target.getReverseColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo("dummy_entity");
+				.isEqualTo(quoted("dummy_entity"));
 	}
 
 	@Test // DATAJDBC-184
 	public void getKeyColumn() {
 
 		assertThat(target.getKeyColumn(persistentEntity.getPersistentProperty("dummySubEntities"))) //
-				.isEqualTo("dummy_entity_key");
+				.isEqualTo(quoted("dummy_entity_key"));
 	}
 
 	@Test // DATAJDBC-184
 	public void getSchema() {
-		assertThat(target.getSchema()).isEmpty();
+		assertThat(target.getSchema()).isEqualTo(SqlIdentifier.EMPTY);
 	}
 
 	@Test // DATAJDBC-184
 	public void getQualifiedTableName() {
 
-		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
+		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo(quoted("dummy_entity"));
 	}
 
 	@Data

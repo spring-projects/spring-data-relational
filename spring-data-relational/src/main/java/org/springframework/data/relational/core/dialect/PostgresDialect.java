@@ -17,6 +17,10 @@ package org.springframework.data.relational.core.dialect;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
+import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -32,6 +36,8 @@ public class PostgresDialect extends AbstractDialect {
 	 * Singleton instance.
 	 */
 	public static final PostgresDialect INSTANCE = new PostgresDialect();
+
+	protected PostgresDialect() {}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
@@ -115,5 +121,10 @@ public class PostgresDialect extends AbstractDialect {
 
 			return ClassUtils.resolvePrimitiveIfNecessary(userType);
 		}
+	}
+
+	@Override
+	public IdentifierProcessing getIdentifierProcessing() {
+		return new DefaultIdentifierProcessing(Quoting.ANSI, LetterCasing.LOWER_CASE);
 	}
 }

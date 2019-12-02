@@ -30,6 +30,8 @@ import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
+import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.domain.SqlIdentifier.SimpleSqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Optionals;
 import org.springframework.lang.Nullable;
@@ -58,9 +60,9 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	private final RelationalMappingContext context;
-	private final Lazy<String> columnName;
-	private final Lazy<Optional<String>> collectionIdColumnName;
-	private final Lazy<String> collectionKeyColumnName;
+	private final Lazy<SimpleSqlIdentifier> columnName;
+	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
+	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
 	private final Lazy<String> embeddedPrefix;
 	private final Lazy<Class<?>> columnType = Lazy.of(this::doGetColumnType);
@@ -91,17 +93,24 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)) //
 				.map(Column::value) //
 				.filter(StringUtils::hasText) //
+				.map(name -> SqlIdentifier.quoted(name).withAdjustableLetterCasing()) //
 				.orElseGet(() -> context.getNamingStrategy().getColumnName(this)));
 
 		this.collectionIdColumnName = Lazy.of(() -> Optionals
-				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::idColumn),
-						Optional.ofNullable(findAnnotation(Column.class)).map(Column::value)) //
-				.filter(StringUtils::hasText).findFirst());
+				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)) //
+						.map(MappedCollection::idColumn), //
+						Optional.ofNullable(findAnnotation(Column.class)) //
+								.map(Column::value)) //
+				.filter(StringUtils::hasText) //
+				.findFirst() //
+				.map(name -> SqlIdentifier.quoted(name).withAdjustableLetterCasing())); //
 
-		this.collectionKeyColumnName = Lazy.of(() -> Optionals
-				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn),
+		this.collectionKeyColumnName = Lazy.of(() -> Optionals //
+				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn), //
 						Optional.ofNullable(findAnnotation(Column.class)).map(Column::keyColumn)) //
-				.filter(StringUtils::hasText).findFirst().orElseGet(() -> context.getNamingStrategy().getKeyColumn(this)));
+				.filter(StringUtils::hasText).findFirst() //
+				.map(name -> (SqlIdentifier) SqlIdentifier.quoted(name).withAdjustableLetterCasing()) //
+				.orElseGet(() -> context.getNamingStrategy().getKeyColumn(this)));
 	}
 
 	/*
@@ -128,7 +137,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty#getColumnName()
 	 */
 	@Override
-	public String getColumnName() {
+	public SimpleSqlIdentifier getColumnName() {
 		return columnName.get();
 	}
 
@@ -178,18 +187,18 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Override
-	public String getReverseColumnName() {
+	public SqlIdentifier getReverseColumnName() {
 		return collectionIdColumnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(this));
 	}
 
 	@Override
-	public String getReverseColumnName(PersistentPropertyPathExtension path) {
+	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
 
 		return collectionIdColumnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(path));
 	}
 
 	@Override
-	public String getKeyColumn() {
+	public SqlIdentifier getKeyColumn() {
 		return isQualified() ? collectionKeyColumnName.get() : null;
 	}
 

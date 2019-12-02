@@ -22,6 +22,7 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -46,7 +47,8 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @deprecated since 1.1, use {@link #insert(Object, Class, Identifier)} instead.
 	 */
 	@Deprecated
-	<T> Object insert(T instance, Class<T> domainType, Map<String, Object> additionalParameters);
+	@Nullable
+	<T> Object insert(T instance, Class<T> domainType, Map<SqlIdentifier, Object> additionalParameters);
 
 	/**
 	 * Inserts a the data of a single entity. Referenced entities don't get handled.
@@ -76,8 +78,8 @@ public interface DataAccessStrategy extends RelationResolver {
 	<T> boolean update(T instance, Class<T> domainType);
 
 	/**
-	 * Updates the data of a single entity in the database and enforce optimistic record locking using the {@code previousVersion}
-	 * property. Referenced entities don't get handled.
+	 * Updates the data of a single entity in the database and enforce optimistic record locking using the
+	 * {@code previousVersion} property. Referenced entities don't get handled.
 	 * <P>
 	 * The statement will be of the form : {@code UPDATE … SET … WHERE ID = :id and VERSION_COLUMN = :previousVersion }
 	 * and throw an optimistic record locking exception if no rows have been updated.
@@ -87,7 +89,8 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param previousVersion The previous version assigned to the instance being saved.
 	 * @param <T> the type of the instance to save.
 	 * @return whether the update actually updated a row.
-	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the the optimistic locking version check failed.
+	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the the
+	 *           optimistic locking version check failed.
 	 * @since 2.0
 	 */
 	<T> boolean updateWithVersion(T instance, Class<T> domainType, Number previousVersion);
@@ -113,7 +116,8 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param domainType the type of entity to be deleted. Implicitly determines the table to operate on. Must not be
 	 *          {@code null}.
 	 * @param previousVersion The previous version assigned to the instance being saved.
-	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the the optimistic locking version check failed.
+	 * @throws OptimisticLockingFailureException if the update fails to update at least one row assuming the the
+	 *           optimistic locking version check failed.
 	 * @since 2.0
 	 */
 	<T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion);

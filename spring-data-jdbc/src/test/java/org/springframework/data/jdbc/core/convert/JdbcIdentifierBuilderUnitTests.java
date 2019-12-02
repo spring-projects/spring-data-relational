@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.core.PropertyPathTestingUtils.*;
+import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						tuple("dummy_entity", "eins", UUID.class) //
+						tuple(quoted("dummy_entity"), "eins", UUID.class) //
 				);
 	}
 
@@ -63,8 +64,8 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactlyInAnyOrder( //
-						tuple("dummy_entity", "parent-eins", UUID.class), //
-						tuple("dummy_entity_key", "map-key-eins", String.class) //
+						tuple(quoted("dummy_entity"), "parent-eins", UUID.class), //
+						tuple(quoted("dummy_entity_key"), "map-key-eins", String.class) //
 				);
 	}
 
@@ -81,8 +82,8 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactlyInAnyOrder( //
-						tuple("dummy_entity", "parent-eins", UUID.class), //
-						tuple("dummy_entity_key", "list-index-eins", Integer.class) //
+						tuple(quoted("dummy_entity"), "parent-eins", UUID.class), //
+						tuple(quoted("dummy_entity_key"), "list-index-eins", Integer.class) //
 				);
 	}
 
@@ -96,7 +97,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						tuple("dummy_entity", "parent-eins", UUID.class) //
+						tuple(quoted("dummy_entity"), "parent-eins", UUID.class) //
 				);
 	}
 
@@ -110,7 +111,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						tuple("dummy_entity", "parent-eins", UUID.class) //
+						tuple(quoted("dummy_entity"), "parent-eins", UUID.class) //
 				);
 	}
 

@@ -89,6 +89,109 @@ public class JdbcAggregateTemplateIntegrationTests {
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
 	LegoSet legoSet = createLegoSet();
 
+	/**
+	 * creates an instance of {@link NoIdListChain4} with the following properties:
+	 * <ul>
+	 * <li>Each element has two children with indices 0 and 1.</li>
+	 * <li>the xxxValue of each element is a {@literal v} followed by the indices used to navigate to the given instance.
+	 * </li>
+	 * </ul>
+	 */
+	private static NoIdListChain4 createNoIdTree() {
+
+		NoIdListChain4 chain4 = new NoIdListChain4();
+		chain4.fourValue = "v";
+
+		IntStream.of(0, 1).forEach(i -> {
+
+			NoIdListChain3 c3 = new NoIdListChain3();
+			c3.threeValue = chain4.fourValue + i;
+			chain4.chain3.add(c3);
+
+			IntStream.of(0, 1).forEach(j -> {
+
+				NoIdListChain2 c2 = new NoIdListChain2();
+				c2.twoValue = c3.threeValue + j;
+				c3.chain2.add(c2);
+
+				IntStream.of(0, 1).forEach(k -> {
+
+					NoIdListChain1 c1 = new NoIdListChain1();
+					c1.oneValue = c2.twoValue + k;
+					c2.chain1.add(c1);
+
+					IntStream.of(0, 1).forEach(m -> {
+
+						NoIdListChain0 c0 = new NoIdListChain0();
+						c0.zeroValue = c1.oneValue + m;
+						c1.chain0.add(c0);
+					});
+				});
+			});
+		});
+
+		return chain4;
+	}
+
+	private static NoIdMapChain4 createNoIdMapTree() {
+
+		NoIdMapChain4 chain4 = new NoIdMapChain4();
+		chain4.fourValue = "v";
+
+		IntStream.of(0, 1).forEach(i -> {
+
+			NoIdMapChain3 c3 = new NoIdMapChain3();
+			c3.threeValue = chain4.fourValue + i;
+			chain4.chain3.put(asString(i), c3);
+
+			IntStream.of(0, 1).forEach(j -> {
+
+				NoIdMapChain2 c2 = new NoIdMapChain2();
+				c2.twoValue = c3.threeValue + j;
+				c3.chain2.put(asString(j), c2);
+
+				IntStream.of(0, 1).forEach(k -> {
+
+					NoIdMapChain1 c1 = new NoIdMapChain1();
+					c1.oneValue = c2.twoValue + k;
+					c2.chain1.put(asString(k), c1);
+
+					IntStream.of(0, 1).forEach(it -> {
+
+						NoIdMapChain0 c0 = new NoIdMapChain0();
+						c0.zeroValue = c1.oneValue + it;
+						c1.chain0.put(asString(it), c0);
+					});
+				});
+			});
+		});
+
+		return chain4;
+	}
+
+	private static String asString(int i) {
+		return "_" + i;
+	}
+
+	private static void assumeNot(String dbProfileName) {
+
+		Assume.assumeTrue("true"
+				.equalsIgnoreCase(ProfileValueUtils.retrieveProfileValueSource(JdbcAggregateTemplateIntegrationTests.class)
+						.get("current.database.is.not." + dbProfileName)));
+	}
+
+	private static LegoSet createLegoSet() {
+
+		LegoSet entity = new LegoSet();
+		entity.setName("Star Destroyer");
+
+		Manual manual = new Manual();
+		manual.setContent("Accelerates to 99% of light speed. Destroys almost everything. See https://what-if.xkcd.com/1/");
+		entity.setManual(manual);
+
+		return entity;
+	}
+
 	@Test // DATAJDBC-112
 	public void saveAndLoadAnEntityWithReferencedEntityById() {
 
@@ -550,50 +653,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 		});
 	}
 
-	/**
-	 * creates an instance of {@link NoIdListChain4} with the following properties:
-	 * <ul>
-	 * <li>Each element has two children with indices 0 and 1.</li>
-	 * <li>the xxxValue of each element is a {@literal v} followed by the indices used to navigate to the given instance.
-	 * </li>
-	 * </ul>
-	 */
-	private static NoIdListChain4 createNoIdTree() {
-
-		NoIdListChain4 chain4 = new NoIdListChain4();
-		chain4.fourValue = "v";
-
-		IntStream.of(0, 1).forEach(i -> {
-
-			NoIdListChain3 c3 = new NoIdListChain3();
-			c3.threeValue = chain4.fourValue + i;
-			chain4.chain3.add(c3);
-
-			IntStream.of(0, 1).forEach(j -> {
-
-				NoIdListChain2 c2 = new NoIdListChain2();
-				c2.twoValue = c3.threeValue + j;
-				c3.chain2.add(c2);
-
-				IntStream.of(0, 1).forEach(k -> {
-
-					NoIdListChain1 c1 = new NoIdListChain1();
-					c1.oneValue = c2.twoValue + k;
-					c2.chain1.add(c1);
-
-					IntStream.of(0, 1).forEach(m -> {
-
-						NoIdListChain0 c0 = new NoIdListChain0();
-						c0.zeroValue = c1.oneValue + m;
-						c1.chain0.add(c0);
-					});
-				});
-			});
-		});
-
-		return chain4;
-	}
-
 	@Test // DATAJDBC-223
 	public void saveAndLoadLongChainOfMapsWithoutIds() {
 
@@ -758,55 +817,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 				.withFailMessage("saving an aggregate with a future version should raise an exception");
 	}
 
-	private static NoIdMapChain4 createNoIdMapTree() {
-
-		NoIdMapChain4 chain4 = new NoIdMapChain4();
-		chain4.fourValue = "v";
-
-		IntStream.of(0, 1).forEach(i -> {
-
-			NoIdMapChain3 c3 = new NoIdMapChain3();
-			c3.threeValue = chain4.fourValue + i;
-			chain4.chain3.put(asString(i), c3);
-
-			IntStream.of(0, 1).forEach(j -> {
-
-				NoIdMapChain2 c2 = new NoIdMapChain2();
-				c2.twoValue = c3.threeValue + j;
-				c3.chain2.put(asString(j), c2);
-
-				IntStream.of(0, 1).forEach(k -> {
-
-					NoIdMapChain1 c1 = new NoIdMapChain1();
-					c1.oneValue = c2.twoValue + k;
-					c2.chain1.put(asString(k), c1);
-
-					IntStream.of(0, 1).forEach(it -> {
-
-						NoIdMapChain0 c0 = new NoIdMapChain0();
-						c0.zeroValue = c1.oneValue + it;
-						c1.chain0.put(asString(it), c0);
-					});
-				});
-			});
-		});
-
-		return chain4;
-	}
-
-	private static String asString(int i) {
-		return "_" + i;
-	}
-
 	private Long count(String tableName) {
 		return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName, emptyMap(), Long.class);
-	}
-
-	private static void assumeNot(String dbProfileName) {
-
-		Assume.assumeTrue("true"
-				.equalsIgnoreCase(ProfileValueUtils.retrieveProfileValueSource(JdbcAggregateTemplateIntegrationTests.class)
-						.get("current.database.is.not." + dbProfileName)));
 	}
 
 	private static class ArrayOwner {
@@ -834,18 +846,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long id;
 
 		Set<String> digits = new HashSet<>();
-	}
-
-	private static LegoSet createLegoSet() {
-
-		LegoSet entity = new LegoSet();
-		entity.setName("Star Destroyer");
-
-		Manual manual = new Manual();
-		manual.setContent("Accelerates to 99% of light speed. Destroys almost everything. See https://what-if.xkcd.com/1/");
-		entity.setManual(manual);
-
-		return entity;
 	}
 
 	@Data
@@ -1060,13 +1060,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Version private long version;
 
 		@Override
-		void setVersion(Number newVersion) {
-			this.version = (long) newVersion;
+		Number getVersion() {
+			return this.version;
 		}
 
 		@Override
-		Number getVersion() {
-			return this.version;
+		void setVersion(Number newVersion) {
+			this.version = (long) newVersion;
 		}
 	}
 
@@ -1088,13 +1088,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Version private int version;
 
 		@Override
-		void setVersion(Number newVersion) {
-			this.version = (int) newVersion;
+		Number getVersion() {
+			return this.version;
 		}
 
 		@Override
-		Number getVersion() {
-			return this.version;
+		void setVersion(Number newVersion) {
+			this.version = (int) newVersion;
 		}
 	}
 
@@ -1116,13 +1116,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Version private short version;
 
 		@Override
-		void setVersion(Number newVersion) {
-			this.version = (short) newVersion;
+		Number getVersion() {
+			return this.version;
 		}
 
 		@Override
-		Number getVersion() {
-			return this.version;
+		void setVersion(Number newVersion) {
+			this.version = (short) newVersion;
 		}
 	}
 
