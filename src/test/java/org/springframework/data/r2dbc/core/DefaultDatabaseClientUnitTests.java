@@ -20,8 +20,8 @@ import static org.springframework.data.r2dbc.query.Criteria.*;
 
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
-import io.r2dbc.spi.Statement;
 import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Statement;
 import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -45,6 +45,7 @@ import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
  * Unit tests for {@link DefaultDatabaseClient}.
  *
  * @author Mark Paluch
+ * @author Ferdinand Jacobs
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultDatabaseClientUnitTests {
@@ -330,7 +331,7 @@ public class DefaultDatabaseClientUnitTests {
 				.fetch() //
 				.rowsUpdated() //
 				.as(StepVerifier::create) //
-				.expectNextCount(1)
+				.expectNextCount(1) //
 				.verifyComplete();
 
 		when(result.getRowsUpdated()).thenReturn(Mono.just(2));
@@ -339,7 +340,16 @@ public class DefaultDatabaseClientUnitTests {
 				.fetch() //
 				.rowsUpdated() //
 				.as(StepVerifier::create) //
-				.expectNextCount(1)
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		when(result.getRowsUpdated()).thenReturn(Flux.just(1, 2, 3));
+
+		databaseClient.execute("DROP TABLE tab;") //
+				.fetch() //
+				.rowsUpdated() //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
 				.verifyComplete();
 	}
 }
