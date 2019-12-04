@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.3.RELEASE (2019-12-04)
+---------------------------------------------
+* DATAJDBC-451 - The documentation is missing the what's new section for Moor.
+* DATAJDBC-447 - Fix JDK 8 Travis build.
+* DATAJDBC-446 - Release 1.1.3 (Moore SR3).
+
+
 Changes in version 1.0.14.RELEASE (2019-12-04)
 ----------------------------------------------
 * DATAJDBC-448 - NamingStrategy: Documentation referencing wrong ReverseColumnName method.
@@ -299,6 +306,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
