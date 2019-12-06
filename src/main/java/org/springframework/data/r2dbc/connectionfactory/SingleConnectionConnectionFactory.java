@@ -42,8 +42,9 @@ import org.springframework.util.Assert;
  * will never call close on the Connection handle if it is SmartDataSource-aware (e.g. uses
  * {@link ConnectionFactoryUtils#releaseConnection(io.r2dbc.spi.Connection, ConnectionFactory)}).
  * <p>
- * If client code will call {@link #close()} in the assumption of a pooled Connection, like when using persistence
- * tools, set "suppressClose" to "true". This will return a close-suppressing proxy instead of the physical Connection.
+ * If client code will call {@link Connection#close()} in the assumption of a pooled Connection, like when using
+ * persistence tools, set "suppressClose" to "true". This will return a close-suppressing proxy instead of the physical
+ * Connection.
  * <p>
  * This is primarily intended for testing. For example, it enables easy testing outside an application server, for code
  * that expects to work on a {@link ConnectionFactory}.
@@ -99,7 +100,7 @@ public class SingleConnectionConnectionFactory extends DelegatingConnectionFacto
 	 * @param target underlying target {@link Connection}.
 	 * @param metadata {@link ConnectionFactory} metadata to be associated with this {@link ConnectionFactory}.
 	 * @param suppressClose if the {@link Connection} should be wrapped with a {@link Connection} that suppresses
-	 *          {@code close()} calls (to allow for normal {@link #close()} usage in applications that expect a pooled
+	 *          {@code close()} calls (to allow for normal {@code close()} usage in applications that expect a pooled
 	 *          {@link Connection} but do not know our {@link SmartConnectionFactory} interface).
 	 */
 	public SingleConnectionConnectionFactory(Connection target, ConnectionFactoryMetadata metadata,

@@ -422,7 +422,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	 *
 	 * @param con the transactional R2DBC Connection
 	 * @param definition the current transaction definition
-	 * @param definition the transaction object
+	 * @param transaction the transaction object
 	 * @see #setEnforceReadOnly
 	 */
 	protected Mono<Void> prepareTransactionalConnection(Connection con, TransactionDefinition definition,

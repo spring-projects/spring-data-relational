@@ -28,8 +28,7 @@ import org.springframework.data.r2dbc.dialect.BindTarget;
  *
  * @param <T> underlying operation source.
  * @author Mark Paluch
- * @see org.springframework.data.r2dbc.core.DatabaseClient
- * @see org.springframework.data.r2dbc.core.DatabaseClient.SqlSpec#sql(Supplier)
+ * @see org.springframework.data.r2dbc.core.DatabaseClient#execute(Supplier)
  */
 public interface PreparedOperation<T> extends QueryOperation {
 

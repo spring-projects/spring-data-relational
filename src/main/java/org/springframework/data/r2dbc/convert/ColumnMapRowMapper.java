@@ -89,7 +89,7 @@ public class ColumnMapRowMapper implements BiFunction<Row, RowMetadata, Map<Stri
 	/**
 	 * Retrieve a R2DBC object value for the specified column.
 	 * <p>
-	 * The default implementation uses the {@link Row#get(Object)} method.
+	 * The default implementation uses the {@link Row#get(int)} method.
 	 *
 	 * @param row is the {@link Row} holding the data.
 	 * @param index is the column index.

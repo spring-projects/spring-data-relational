@@ -280,6 +280,7 @@
 	</dependencies>
 
 	<build>
+
 		<plugins>
 
 			<!--
@@ -301,6 +302,22 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<links>
+						<link>https://docs.spring.io/spring/docs/${spring}/javadoc-api/
+						</link>
+						<link>
+							https://docs.spring.io/spring-data/commons/docs/current/api/
+						</link>
+						<link>https://docs.oracle.com/javase/8/docs/api/</link>
+						<link>https://r2dbc.io/spec/0.8.0.RELEASE/api/</link>
+					</links>
+				</configuration>
 			</plugin>
 
 			<plugin>

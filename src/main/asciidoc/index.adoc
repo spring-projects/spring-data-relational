@@ -41,3 +41,9 @@ include::reference/r2dbc-initialization.adoc[leveloffset=+1]
 include::reference/mapping.adoc[leveloffset=+1]
 
 include::reference/kotlin.adoc[leveloffset=+1]
+
+[[appendix]]
+= Appendix
+
+:numbered!:
+include::{spring-data-commons-docs}/repository-query-return-types-reference.adoc[leveloffset=+1]

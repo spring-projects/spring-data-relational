@@ -61,8 +61,6 @@ public class NamedParameterExpander {
 
 	/**
 	 * Create a new enabled instance of {@link NamedParameterExpander}.
-	 *
-	 * @return a new enabled instance of {@link NamedParameterExpander}.
 	 */
 	public NamedParameterExpander() {}
 

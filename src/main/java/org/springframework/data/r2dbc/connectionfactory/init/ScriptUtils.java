@@ -67,10 +67,10 @@ public abstract class ScriptUtils {
 	 * End of file (EOF) SQL statement separator: {@code "^^^ END OF SCRIPT ^^^"}.
 	 * <p/>
 	 * This value may be supplied as the {@code separator} to
-	 * {@link #executeSqlScript(Connection, EncodedResource, boolean, boolean, String, String, String, String)} to denote
-	 * that an SQL script contains a single statement (potentially spanning multiple lines) with no explicit statement
-	 * separator. Note that such a script should not actually contain this value; it is merely a <em>virtual</em>
-	 * statement separator.
+	 * {@link #executeSqlScript(Connection, EncodedResource, DataBufferFactory, boolean, boolean, String, String, String, String)}
+	 * to denote that an SQL script contains a single statement (potentially spanning multiple lines) with no explicit
+	 * statement separator. Note that such a script should not actually contain this value; it is merely a
+	 * <em>virtual</em> statement separator.
 	 */
 	public static final String EOF_STATEMENT_SEPARATOR = "^^^ END OF SCRIPT ^^^";
 

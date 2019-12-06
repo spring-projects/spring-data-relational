@@ -97,8 +97,8 @@ public interface BindMarkersFactory {
 	 *          actual identifier.
 	 * @param maxLength maximal length of parameter names when using name hints.
 	 * @return a {@link BindMarkersFactory} using {@code prefix} and {@code beginWith}.
-	 * @see io.r2dbc.spi.Statement#bindNull(Object, Class)
-	 * @see io.r2dbc.spi.Statement#bind(Object, Object)
+	 * @see io.r2dbc.spi.Statement#bindNull(String, Class)
+	 * @see io.r2dbc.spi.Statement#bind(String, Object)
 	 */
 	static BindMarkersFactory named(String prefix, String namePrefix, int maxLength) {
 		return named(prefix, namePrefix, maxLength, Function.identity());
@@ -117,8 +117,8 @@ public interface BindMarkersFactory {
 	 * @param hintFilterFunction filter {@link Function} to consider database-specific limitations in bind marker/variable
 	 *          names such as ASCII chars only.
 	 * @return a {@link BindMarkersFactory} using {@code prefix} and {@code beginWith}.
-	 * @see io.r2dbc.spi.Statement#bindNull(Object, Class)
-	 * @see io.r2dbc.spi.Statement#bind(Object, Object)
+	 * @see io.r2dbc.spi.Statement#bindNull(String, Class)
+	 * @see io.r2dbc.spi.Statement#bind(String, Object)
 	 */
 	static BindMarkersFactory named(String prefix, String namePrefix, int maxLength,
 			Function<String, String> hintFilterFunction) {

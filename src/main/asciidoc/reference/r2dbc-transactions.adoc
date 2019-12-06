@@ -6,7 +6,6 @@ Relational databases typically associate a transaction with a single transport c
 Consequently, using different connections results in using different transactions.
 Spring Data R2DBC includes transaction-awareness in `DatabaseClient` that lets you group multiple statements within the same transaction by using {spring-framework-ref}/data-access.html#transaction[Spring's Transaction Management].
 Spring Data R2DBC provides an implementation for `ReactiveTransactionManager` with `R2dbcTransactionManager`.
-See <<r2dbc.connections.R2dbcTransactionManager>> for further details.
 
 The following example shows how to programmatically manage a transaction
 

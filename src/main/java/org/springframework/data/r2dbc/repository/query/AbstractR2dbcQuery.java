@@ -165,7 +165,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 * Creates a {@link BindableQuery} instance using the given {@link ParameterAccessor}
 	 *
 	 * @param accessor must not be {@literal null}.
-	 * @return
+	 * @return the {@link BindableQuery}.
 	 */
 	protected abstract BindableQuery createQuery(RelationalParameterAccessor accessor);
 }
