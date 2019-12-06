@@ -22,14 +22,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
+
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.mapping.SettableValue;
-import org.springframework.data.r2dbc.query.BoundAssignments;
-import org.springframework.data.r2dbc.query.Update;
-import org.springframework.data.r2dbc.query.UpdateMapper;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.AssignValue;
@@ -89,6 +87,21 @@ public class UpdateMapperUnitTests {
 
 		mapped.getBindings().apply(bindTarget);
 		verifyZeroInteractions(bindTarget);
+	}
+
+	@Test // gh-195
+	public void shouldMapMultipleFields() {
+
+		Update update = Update.update("c1", "a").set("c2", "b").set("c3", "c");
+
+		BoundAssignments mapped = map(update);
+
+		Map<String, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
+
+		assertThat(update.getAssignments()).hasSize(3);
+		assertThat(assignments).hasSize(3).containsEntry("c1", SQL.bindMarker("$1")).containsEntry("c2",
+				SQL.bindMarker("$2"));
 	}
 
 	private BoundAssignments map(Update update) {
