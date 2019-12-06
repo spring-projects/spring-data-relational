@@ -1,6 +1,28 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.0.0.RELEASE (2019-12-06)
+---------------------------------------------
+* #245 - Upgrade to Spring Data Moore SR3.
+* #244 - Add checkpoint for SQL execution.
+* #243 - Add tests for create and drop statements.
+* #242 - Upgrade to R2DBC 0.8.0.RELEASE (Arabba-RELEASE).
+* #239 - Add documentation for projecting query methods.
+* #238 - Add Modifying query annotation.
+* #237 - Move @Query annotation to org.springframework.data.r2dbc.repository.
+* #236 - Enable artifactory-maven-plugin.
+* #232 - Guard save(…) with provided Id with TransientDataAccessException if row does not exist.
+* #228 - Use consistently spaces instead of tabs in readme code samples.
+* #219 - Upgrade to r2dbc-mysql 0.8.0 RC2.
+* #216 - ConnectionFactoryInitializer.execute(…) does not subscribe to DatabasePopulatorUtils.execute.
+* #213 - Provide Kotlin extensions on UpdatedRowsFetchSpec.
+* #209 - Kotlin bind extension loses specific type information.
+* #208 - Upgrade to R2DBC Arabba RC2.
+* #205 - Release 1.0 GA.
+* #204 - Add SingleConnectionConnectionFactory.
+* #139 - Overriding list of custom objects type property conversion.
+
+
 Changes in version 1.0.0.RC1 (2019-10-01)
 -----------------------------------------
 * #202 - Upgrade to r2dbc-mysql 0.8.0 RC1.
@@ -124,5 +146,6 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
