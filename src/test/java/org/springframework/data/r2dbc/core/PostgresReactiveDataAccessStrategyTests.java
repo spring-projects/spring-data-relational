@@ -20,12 +20,16 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
 
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.mapping.SettableValue;
 
 /**
  * {@link PostgresDialect} specific tests for {@link ReactiveDataAccessStrategy}.
@@ -69,6 +73,56 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		assertThat((Integer[]) row.get("myarray").getValue()).contains(1, 2, 3);
 	}
 
+	@Test // gh-139
+	public void shouldConvertToArray() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
+
+		WithArray withArray = new WithArray();
+		withArray.stringArray = new String[] { "hello", "world" };
+		withArray.stringList = Arrays.asList("hello", "world");
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withArray);
+
+		assertThat(outboundRow) //
+				.containsEntry("string_array", SettableValue.from(new String[] { "hello", "world" }))
+				.containsEntry("string_list", SettableValue.from(new String[] { "hello", "world" }));
+	}
+
+	@Test // gh-139
+	public void shouldApplyCustomConversion() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
+
+		WithConversion withConversion = new WithConversion();
+		withConversion.myObjects = Arrays.asList(new MyObject("one"), new MyObject("two"));
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withConversion);
+
+		assertThat(outboundRow) //
+				.containsEntry("my_objects", SettableValue.from("[one, two]"));
+	}
+
+	@Test // gh-139
+	public void shouldApplyCustomConversionForNull() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
+
+		WithConversion withConversion = new WithConversion();
+		withConversion.myObjects = null;
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withConversion);
+
+		assertThat(outboundRow) //
+				.containsKey("my_objects");
+
+		SettableValue value = outboundRow.get("my_objects");
+		assertThat(value.isEmpty()).isTrue();
+		assertThat(value.getType()).isEqualTo(String.class);
+	}
+
 	@RequiredArgsConstructor
 	static class WithMultidimensionalArray {
 
@@ -79,5 +133,40 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	static class WithIntegerCollection {
 
 		final List<Integer> myarray;
+	}
+
+	static class WithArray {
+
+		String[] stringArray;
+		List<String> stringList;
+	}
+
+	static class WithConversion {
+
+		List<MyObject> myObjects;
+	}
+
+	static class MyObject {
+		String foo;
+
+		public MyObject(String foo) {
+			this.foo = foo;
+		}
+
+		@Override
+		public String toString() {
+			return foo;
+		}
+	}
+
+	@WritingConverter
+	enum MyObjectsToStringConverter implements Converter<List<MyObject>, String> {
+
+		INSTANCE;
+
+		@Override
+		public String convert(List<MyObject> myObjects) {
+			return myObjects.toString();
+		}
 	}
 }

@@ -101,7 +101,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		storeConverters.addAll(R2dbcCustomConversions.STORE_CONVERTERS);
 
 		R2dbcCustomConversions customConversions = new R2dbcCustomConversions(
-				StoreConversions.of(dialect.getSimpleTypeHolder(), storeConverters), storeConverters);
+				StoreConversions.of(dialect.getSimpleTypeHolder(), storeConverters), converters);
 
 		R2dbcMappingContext context = new R2dbcMappingContext();
 		context.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
@@ -215,7 +215,20 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	}
 
 	private boolean shouldConvertArrayValue(RelationalPersistentProperty property, SettableValue value) {
-		return property.isCollectionLike();
+
+		if (!property.isCollectionLike()) {
+			return false;
+		}
+
+		if (value.hasValue() && (value.getValue() instanceof Collection || value.getValue().getClass().isArray())) {
+			return true;
+		}
+
+		if (Collection.class.isAssignableFrom(value.getType()) || value.getType().isArray()) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private SettableValue getArrayValue(SettableValue value, RelationalPersistentProperty property) {

@@ -56,7 +56,13 @@ public interface ReactiveDataAccessStrategy {
 	 */
 	OutboundRow getOutboundRow(Object object);
 
-	// TODO: Broaden T to Mono<T>/Flux<T> for reactive relational data access?
+	/**
+	 * Returns a {@link BiFunction row mapping function} to map {@link Row rows} to {@code T}.
+	 *
+	 * @param typeToRead
+	 * @param <T>
+	 * @return
+	 */
 	<T> BiFunction<Row, RowMetadata, T> getRowMapper(Class<T> typeToRead);
 
 	/**
