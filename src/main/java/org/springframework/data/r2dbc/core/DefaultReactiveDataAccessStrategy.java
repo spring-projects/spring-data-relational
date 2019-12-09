@@ -47,6 +47,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Default {@link ReactiveDataAccessStrategy} implementation.
@@ -244,7 +245,17 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			throw new InvalidDataAccessResourceUsageException(
 					"Dialect " + this.dialect.getClass().getName() + " does not support array columns");
 		}
-		Class<?> actualType = property.getActualType();
+
+		Class<?> actualType = null;
+		if (value instanceof Collection) {
+			actualType = CollectionUtils.findCommonElementType((Collection<?>) value);
+		} else if (value.getClass().isArray()) {
+			actualType = value.getClass().getComponentType();
+		}
+
+		if (actualType == null) {
+			actualType = property.getActualType();
+		}
 
 		if (value.isEmpty()) {
 

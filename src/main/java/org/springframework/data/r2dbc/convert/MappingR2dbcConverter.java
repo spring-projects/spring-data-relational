@@ -19,13 +19,16 @@ import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
+import org.springframework.core.CollectionFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.convert.CustomConversions;
@@ -49,6 +52,7 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Converter for R2DBC.
@@ -164,11 +168,74 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			}
 
 			Object value = row.get(identifier);
-			return getPotentiallyConvertedSimpleRead(value, property.getTypeInformation().getType());
+			return readValue(value, property.getTypeInformation());
 
 		} catch (Exception o_O) {
 			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
 		}
+	}
+
+	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
+
+		if (null == value) {
+			return null;
+		}
+
+		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
+			return getConversionService().convert(value, type.getType());
+		} else if (value instanceof Collection || value.getClass().isArray()) {
+			return readCollectionOrArray(asCollection(value), type);
+		} else {
+			return getPotentiallyConvertedSimpleRead(value, type.getType());
+		}
+	}
+
+	/**
+	 * Reads the given value into a collection of the given {@link TypeInformation}.
+	 *
+	 * @param source must not be {@literal null}.
+	 * @param targetType must not be {@literal null}.
+	 * @return the converted {@link Collection} or array, will never be {@literal null}.
+	 */
+	@SuppressWarnings("unchecked")
+	private Object readCollectionOrArray(Collection<?> source, TypeInformation<?> targetType) {
+
+		Assert.notNull(targetType, "Target type must not be null!");
+
+		Class<?> collectionType = targetType.isSubTypeOf(Collection.class) //
+				? targetType.getType() //
+				: List.class;
+
+		TypeInformation<?> componentType = targetType.getComponentType() != null //
+				? targetType.getComponentType() //
+				: ClassTypeInformation.OBJECT;
+		Class<?> rawComponentType = componentType.getType();
+
+		Collection<Object> items = targetType.getType().isArray() //
+				? new ArrayList<>(source.size()) //
+				: CollectionFactory.createCollection(collectionType, rawComponentType, source.size());
+
+		if (source.isEmpty()) {
+			return getPotentiallyConvertedSimpleRead(items, targetType.getType());
+		}
+
+		for (Object element : source) {
+
+			if (!Object.class.equals(rawComponentType) && element instanceof Collection) {
+				if (!rawComponentType.isArray() && !ClassUtils.isAssignable(Iterable.class, rawComponentType)) {
+					throw new MappingException(String.format(
+							"Cannot convert %1$s of type %2$s into an instance of %3$s! Implement a custom Converter<%2$s, %3$s> and register it with the CustomConversions",
+							element, element.getClass(), rawComponentType));
+				}
+			}
+			if (element instanceof List) {
+				items.add(readCollectionOrArray((Collection<Object>) element, componentType));
+			} else {
+				items.add(getPotentiallyConvertedSimpleRead(element, rawComponentType));
+			}
+		}
+
+		return getPotentiallyConvertedSimpleRead(items, targetType.getType());
 	}
 
 	/**
@@ -283,20 +350,85 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 				continue;
 			}
 
-			if (!getConversions().isSimpleType(value.getClass())) {
-
-				RelationalPersistentEntity<?> nestedEntity = getMappingContext().getPersistentEntity(property.getActualType());
-				if (nestedEntity != null) {
-					throw new InvalidDataAccessApiUsageException("Nested entities are not supported");
-				}
+			if (getConversions().isSimpleType(value.getClass())) {
+				writeSimpleInternal(sink, value, property);
+			} else {
+				writePropertyInternal(sink, value, property);
 			}
-
-			writeSimpleInternal(sink, value, property);
 		}
 	}
 
 	private void writeSimpleInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
 		sink.put(property.getColumnName(), SettableValue.from(getPotentiallyConvertedSimpleWrite(value)));
+	}
+
+	private void writePropertyInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
+
+		TypeInformation<?> valueType = ClassTypeInformation.from(value.getClass());
+
+		if (valueType.isCollectionLike()) {
+
+			if (valueType.getActualType() != null && valueType.getRequiredActualType().isCollectionLike()) {
+
+				// pass-thru nested collections
+				writeSimpleInternal(sink, value, property);
+				return;
+			}
+
+			List<Object> collectionInternal = createCollection(asCollection(value), property);
+			sink.put(property.getColumnName(), SettableValue.from(collectionInternal));
+			return;
+		}
+
+		throw new InvalidDataAccessApiUsageException("Nested entities are not supported");
+	}
+
+	/**
+	 * Writes the given {@link Collection} using the given {@link RelationalPersistentProperty} information.
+	 *
+	 * @param collection must not be {@literal null}.
+	 * @param property must not be {@literal null}.
+	 * @return
+	 */
+	protected List<Object> createCollection(Collection<?> collection, RelationalPersistentProperty property) {
+		return writeCollectionInternal(collection, property.getTypeInformation(), new ArrayList<>());
+	}
+
+	/**
+	 * Populates the given {@link Collection sink} with converted values from the given {@link Collection source}.
+	 *
+	 * @param source the collection to create a {@link Collection} for, must not be {@literal null}.
+	 * @param type the {@link TypeInformation} to consider or {@literal null} if unknown.
+	 * @param sink the {@link Collection} to write to.
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	private List<Object> writeCollectionInternal(Collection<?> source, @Nullable TypeInformation<?> type,
+			Collection<?> sink) {
+
+		TypeInformation<?> componentType = null;
+
+		List<Object> collection = sink instanceof List ? (List<Object>) sink : new ArrayList<>(sink);
+
+		if (type != null) {
+			componentType = type.getComponentType();
+		}
+
+		for (Object element : source) {
+
+			Class<?> elementType = element == null ? null : element.getClass();
+
+			if (elementType == null || getConversions().isSimpleType(elementType)) {
+				collection.add(getPotentiallyConvertedSimpleWrite(element,
+						componentType != null ? componentType.getType() : Object.class));
+			} else if (element instanceof Collection || elementType.isArray()) {
+				collection.add(writeCollectionInternal(asCollection(element), componentType, new ArrayList<>()));
+			} else {
+				throw new InvalidDataAccessApiUsageException("Nested entities are not supported");
+			}
+		}
+
+		return collection;
 	}
 
 	private void writeNullInternal(OutboundRow sink, RelationalPersistentProperty property) {
@@ -321,17 +453,36 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	}
 
 	/**
-	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple Mongo type.
-	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.
+	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple type. Returns
+	 * the converted value if so. If not, we perform special enum handling or simply return the value as is.
 	 *
 	 * @param value
 	 * @return
 	 */
 	@Nullable
 	private Object getPotentiallyConvertedSimpleWrite(@Nullable Object value) {
+		return getPotentiallyConvertedSimpleWrite(value, Object.class);
+	}
+
+	/**
+	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple type. Returns
+	 * the converted value if so. If not, we perform special enum handling or simply return the value as is.
+	 *
+	 * @param value
+	 * @return
+	 */
+	@Nullable
+	private Object getPotentiallyConvertedSimpleWrite(@Nullable Object value, Class<?> typeHint) {
 
 		if (value == null) {
 			return null;
+		}
+
+		if (Object.class != typeHint) {
+
+			if (getConversionService().canConvert(value.getClass(), typeHint)) {
+				value = getConversionService().convert(value, typeHint);
+			}
 		}
 
 		Optional<Class<?>> customTarget = getConversions().getCustomWriteTarget(value.getClass());
@@ -350,7 +501,18 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	@Override
 	public Object getArrayValue(ArrayColumns arrayColumns, RelationalPersistentProperty property, Object value) {
 
-		Class<?> targetType = arrayColumns.getArrayType(property.getActualType());
+		Class<?> actualType = null;
+		if (value instanceof Collection) {
+			actualType = CollectionUtils.findCommonElementType((Collection<?>) value);
+		} else if (value.getClass().isArray()) {
+			actualType = value.getClass().getComponentType();
+		}
+
+		if (actualType == null) {
+			actualType = property.getActualType();
+		}
+
+		Class<?> targetType = arrayColumns.getArrayType(actualType);
 
 		if (!property.isArray() || !targetType.isAssignableFrom(value.getClass())) {
 
@@ -425,6 +587,23 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 	private <R> RelationalPersistentEntity<R> getRequiredPersistentEntity(Class<R> type) {
 		return (RelationalPersistentEntity<R>) getMappingContext().getRequiredPersistentEntity(type);
+	}
+
+	/**
+	 * Returns given object as {@link Collection}. Will return the {@link Collection} as is if the source is a
+	 * {@link Collection} already, will convert an array into a {@link Collection} or simply create a single element
+	 * collection for everything else.
+	 *
+	 * @param source
+	 * @return
+	 */
+	private static Collection<?> asCollection(Object source) {
+
+		if (source instanceof Collection) {
+			return (Collection<?>) source;
+		}
+
+		return source.getClass().isArray() ? CollectionUtils.arrayToList(source) : Collections.singleton(source);
 	}
 
 	private static Map<String, ColumnMetadata> createMetadataMap(RowMetadata metadata) {

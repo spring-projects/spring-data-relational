@@ -8,6 +8,7 @@ import io.r2dbc.spi.RowMetadata;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -111,6 +112,20 @@ public class EntityRowMapperUnitTests {
 		assertThat(result.boxedIntegers).contains(3, 11);
 	}
 
+	@Test // gh-252
+	public void shouldReadEnums() {
+
+		EntityRowMapper<WithEnumCollections> mapper = getRowMapper(WithEnumCollections.class);
+		when(rowMock.get("enum_array")).thenReturn((new String[] { "ONE", "TWO" }));
+		when(rowMock.get("set_of_enum")).thenReturn((new String[] { "ONE", "THREE" }));
+		when(rowMock.get("enum_set")).thenReturn((new String[] { "ONE", "TWO" }));
+
+		WithEnumCollections result = mapper.apply(rowMock, metadata);
+		assertThat(result.enumArray).contains(MyEnum.ONE, MyEnum.TWO);
+		assertThat(result.setOfEnum).contains(MyEnum.ONE, MyEnum.THREE);
+		assertThat(result.enumSet).contains(MyEnum.ONE, MyEnum.TWO);
+	}
+
 	private <T> EntityRowMapper<T> getRowMapper(Class<T> type) {
 		return new EntityRowMapper<>(type, strategy.getConverter());
 	}
@@ -135,4 +150,16 @@ public class EntityRowMapperUnitTests {
 		Integer[] boxedIntegers;
 		int[] primitiveIntegers;
 	}
+
+	static class WithEnumCollections {
+
+		MyEnum[] enumArray;
+		Set<MyEnum> setOfEnum;
+		EnumSet<MyEnum> enumSet;
+	}
+
+	enum MyEnum {
+		ONE, TWO, THREE;
+	}
+
 }

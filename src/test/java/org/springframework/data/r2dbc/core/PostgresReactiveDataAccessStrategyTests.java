@@ -21,7 +21,9 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -123,6 +125,40 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		assertThat(value.getType()).isEqualTo(String.class);
 	}
 
+	@Test // gh-252
+	public void shouldConvertSetOfEnumToString() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
+
+		WithEnumCollections withEnums = new WithEnumCollections();
+		withEnums.enumSet = EnumSet.of(MyEnum.ONE, MyEnum.TWO);
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
+
+		assertThat(outboundRow).containsKey("enum_set");
+
+		SettableValue value = outboundRow.get("enum_set");
+		assertThat(value.getValue()).isEqualTo(new String[] { "ONE", "TWO" });
+	}
+
+	@Test // gh-252
+	public void shouldConvertArrayOfEnumToString() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
+
+		WithEnumCollections withEnums = new WithEnumCollections();
+		withEnums.enumArray = new MyEnum[] { MyEnum.ONE, MyEnum.TWO };
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
+
+		assertThat(outboundRow).containsKey("enum_array");
+
+		SettableValue value = outboundRow.get("enum_array");
+		assertThat(value.getValue()).isEqualTo(new String[] { "ONE", "TWO" });
+	}
+
 	@RequiredArgsConstructor
 	static class WithMultidimensionalArray {
 
@@ -141,6 +177,12 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		List<String> stringList;
 	}
 
+	static class WithEnumCollections {
+
+		MyEnum[] enumArray;
+		Set<MyEnum> enumSet;
+	}
+
 	static class WithConversion {
 
 		List<MyObject> myObjects;
@@ -157,6 +199,10 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		public String toString() {
 			return foo;
 		}
+	}
+
+	enum MyEnum {
+		ONE, TWO, THREE;
 	}
 
 	@WritingConverter
