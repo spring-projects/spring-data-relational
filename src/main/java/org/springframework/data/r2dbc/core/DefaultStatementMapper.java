@@ -192,14 +192,14 @@ class DefaultStatementMapper implements StatementMapper {
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
 		Table table = Table.create(updateSpec.getTable());
 
+		if (updateSpec.getUpdate() == null || updateSpec.getUpdate().getAssignments().isEmpty()) {
+			throw new IllegalArgumentException("UPDATE contains no assignments");
+		}
+
 		BoundAssignments boundAssignments = this.updateMapper.getMappedObject(bindMarkers,
 				updateSpec.getUpdate().getAssignments(), table, entity);
 
 		Bindings bindings;
-
-		if (boundAssignments.getAssignments().isEmpty()) {
-			throw new IllegalStateException("UPDATE contains no assignments");
-		}
 
 		bindings = boundAssignments.getBindings();
 

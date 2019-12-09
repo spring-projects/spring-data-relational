@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.r2dbc.query.Criteria.*;
 
@@ -37,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
@@ -351,5 +353,24 @@ public class DefaultDatabaseClientUnitTests {
 				.as(StepVerifier::create) //
 				.expectNextCount(1) //
 				.verifyComplete();
+	}
+
+	@Test // gh-250
+	public void shouldThrowExceptionForSingleColumnObjectUpdate() {
+
+		DefaultDatabaseClient databaseClient = (DefaultDatabaseClient) DatabaseClient.builder()
+				.connectionFactory(connectionFactory) //
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)) //
+				.build();
+
+		assertThatIllegalArgumentException().isThrownBy(() -> databaseClient.update() //
+				.table(IdOnly.class) //
+				.using(new IdOnly()) //
+				.then()).withMessageContaining("UPDATE contains no assignments");
+	}
+
+	static class IdOnly {
+
+		@Id String id;
 	}
 }
