@@ -15,16 +15,13 @@
  */
 package org.springframework.data.r2dbc.convert;
 
-import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
@@ -604,17 +601,6 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		}
 
 		return source.getClass().isArray() ? CollectionUtils.arrayToList(source) : Collections.singleton(source);
-	}
-
-	private static Map<String, ColumnMetadata> createMetadataMap(RowMetadata metadata) {
-
-		Map<String, ColumnMetadata> columns = new LinkedHashMap<>();
-
-		for (ColumnMetadata column : metadata.getColumnMetadatas()) {
-			columns.put(column.getName(), column);
-		}
-
-		return columns;
 	}
 
 	private static class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
