@@ -33,7 +33,7 @@ public interface PersonRepository extends CrudRepository<Person, Long> {
   @Query("SELECT * FROM person WHERE lastname = :lastname")
   Flux<Person> findByLastname(String lastname);
 
-  @Query("SELECT * FROM person WHERE firstname LIKE :lastname")
+  @Query("SELECT * FROM person WHERE firstname LIKE :firstname")
   Flux<Person> findByFirstnameLike(String firstname);
 }
 
