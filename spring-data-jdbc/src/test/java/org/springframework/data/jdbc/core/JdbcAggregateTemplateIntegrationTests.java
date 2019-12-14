@@ -49,6 +49,8 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.HsqlDbOnly;
@@ -76,6 +78,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Myeonghyeon Lee
  * @author Tom Hombergs
  * @author Tyler Van Gorder
+ * @author Milan Milanov
  */
 @ContextConfiguration
 @Transactional
@@ -87,7 +90,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
-	LegoSet legoSet = createLegoSet();
+	LegoSet legoSet = createLegoSet("Star Destroyer");
 
 	/**
 	 * creates an instance of {@link NoIdListChain4} with the following properties:
@@ -180,10 +183,10 @@ public class JdbcAggregateTemplateIntegrationTests {
 						.get("current.database.is.not." + dbProfileName)));
 	}
 
-	private static LegoSet createLegoSet() {
+	private static LegoSet createLegoSet(String name) {
 
 		LegoSet entity = new LegoSet();
-		entity.setName("Star Destroyer");
+		entity.setName(name);
 
 		Manual manual = new Manual();
 		manual.setContent("Accelerates to 99% of light speed. Destroys almost everything. See https://what-if.xkcd.com/1/");
@@ -222,6 +225,39 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloadedLegoSets).hasSize(1).extracting("id", "manual.id", "manual.content")
 				.contains(tuple(legoSet.getId(), legoSet.getManual().getId(), legoSet.getManual().getContent()));
+	}
+
+	@Test // DATAJDBC-101
+	public void saveAndLoadManyEntitiesWithReferencedEntitySorted() {
+		template.save(createLegoSet("Lava"));
+		template.save(createLegoSet("Star"));
+		template.save(createLegoSet("Frozen"));
+
+		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, Sort.by("name"));
+
+		assertThat(reloadedLegoSets).hasSize(3).extracting("name").isEqualTo(Arrays.asList("Frozen", "Lava", "Star"));
+	}
+
+	@Test // DATAJDBC-101
+	public void saveAndLoadManyEntitiesWithReferencedEntityPaged() {
+		template.save(createLegoSet("Lava"));
+		template.save(createLegoSet("Star"));
+		template.save(createLegoSet("Frozen"));
+
+		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, PageRequest.of(1, 1));
+
+		assertThat(reloadedLegoSets).hasSize(1).extracting("name").isEqualTo(singletonList("Star"));
+	}
+
+	@Test // DATAJDBC-101
+	public void saveAndLoadManyEntitiesWithReferencedEntitySortedAndPaged() {
+		template.save(createLegoSet("Lava"));
+		template.save(createLegoSet("Star"));
+		template.save(createLegoSet("Frozen"));
+
+		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, PageRequest.of(1, 2, Sort.by("name")));
+
+		assertThat(reloadedLegoSets).hasSize(1).extracting("name").isEqualTo(singletonList("Star"));
 	}
 
 	@Test // DATAJDBC-112

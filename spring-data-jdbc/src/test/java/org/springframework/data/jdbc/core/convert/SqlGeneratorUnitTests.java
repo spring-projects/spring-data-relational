@@ -28,11 +28,17 @@ import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
+import org.springframework.data.jdbc.testing.AnsiDialect;
+import org.springframework.data.jdbc.testing.NonQuotingDialect;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
@@ -42,10 +48,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.domain.IdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.domain.SqlIdentifier.*;
 
 /**
@@ -57,6 +59,7 @@ import org.springframework.data.relational.domain.SqlIdentifier.*;
  * @author Bastian Wilhelm
  * @author Mark Paluch
  * @author Tom Hombergs
+ * @author Milan Milanov
  */
 public class SqlGeneratorUnitTests {
 
@@ -73,14 +76,14 @@ public class SqlGeneratorUnitTests {
 
 	SqlGenerator createSqlGenerator(Class<?> type) {
 
-		return createSqlGenerator(type, new DefaultIdentifierProcessing(new Quoting(""), LetterCasing.AS_IS));
+		return createSqlGenerator(type, NonQuotingDialect.INSTANCE);
 	}
 
-	SqlGenerator createSqlGenerator(Class<?> type, IdentifierProcessing identifierProcessing) {
+	SqlGenerator createSqlGenerator(Class<?> type, Dialect dialect) {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
 
-		return new SqlGenerator(context, persistentEntity, identifierProcessing);
+		return new SqlGenerator(context, persistentEntity, dialect);
 	}
 
 	@Test // DATAJDBC-112
@@ -159,6 +162,103 @@ public class SqlGeneratorUnitTests {
 		String sql = sqlGenerator.createDeleteByPath(getPath("mappedElements", DummyEntity.class));
 
 		assertThat(sql).isEqualTo("DELETE FROM element WHERE element.dummy_entity = :rootId");
+	}
+
+	@Test // DATAJDBC-101
+	public void findAllSortedByUnsorted() {
+
+		String sql = sqlGenerator.getFindAll(Sort.unsorted());
+
+		assertThat(sql).doesNotContain("ORDER BY");
+	}
+
+	@Test // DATAJDBC-101
+	public void findAllSortedBySingleField() {
+
+		String sql = sqlGenerator.getFindAll(Sort.by("x_name"));
+
+		assertThat(sql).contains("SELECT", //
+				"dummy_entity.id1 AS id1", //
+				"dummy_entity.x_name AS x_name", //
+				"dummy_entity.x_other AS x_other", //
+				"ref.x_l1id AS ref_x_l1id", //
+				"ref.x_content AS ref_x_content", //
+				"ref_further.x_l2id AS ref_further_x_l2id", //
+				"ref_further.x_something AS ref_further_x_something", //
+				"FROM dummy_entity ", //
+				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
+				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
+				"ORDER BY x_name ASC");
+	}
+
+	@Test // DATAJDBC-101
+	public void findAllSortedByMultipleFields() {
+
+		String sql = sqlGenerator.getFindAll(
+				Sort.by(new Sort.Order(Sort.Direction.DESC, "x_name"), new Sort.Order(Sort.Direction.ASC, "x_other")));
+
+		assertThat(sql).contains("SELECT", //
+				"dummy_entity.id1 AS id1", //
+				"dummy_entity.x_name AS x_name", //
+				"dummy_entity.x_other AS x_other", //
+				"ref.x_l1id AS ref_x_l1id", //
+				"ref.x_content AS ref_x_content", //
+				"ref_further.x_l2id AS ref_further_x_l2id", //
+				"ref_further.x_something AS ref_further_x_something", //
+				"FROM dummy_entity ", //
+				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
+				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
+				"ORDER BY x_name DESC", //
+				"x_other ASC");
+	}
+
+	@Test // DATAJDBC-101
+	public void findAllPagedByUnpaged() {
+
+		String sql = sqlGenerator.getFindAll(Pageable.unpaged());
+
+		assertThat(sql).doesNotContain("ORDER BY").doesNotContain("FETCH FIRST").doesNotContain("OFFSET");
+	}
+
+	@Test // DATAJDBC-101
+	public void findAllPaged() {
+
+		String sql = sqlGenerator.getFindAll(PageRequest.of(2, 20));
+
+		assertThat(sql).contains("SELECT", //
+				"dummy_entity.id1 AS id1", //
+				"dummy_entity.x_name AS x_name", //
+				"dummy_entity.x_other AS x_other", //
+				"ref.x_l1id AS ref_x_l1id", //
+				"ref.x_content AS ref_x_content", //
+				"ref_further.x_l2id AS ref_further_x_l2id", //
+				"ref_further.x_something AS ref_further_x_something", //
+				"FROM dummy_entity ", //
+				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
+				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
+				"OFFSET 40 ROWS", //
+				"FETCH FIRST 20 ROWS ONLY");
+	}
+
+	@Test // DATAJDBC-101
+	public void findAllPagedAndSorted() {
+
+		String sql = sqlGenerator.getFindAll(PageRequest.of(3, 10, Sort.by("x_name")));
+
+		assertThat(sql).contains("SELECT", //
+				"dummy_entity.id1 AS id1", //
+				"dummy_entity.x_name AS x_name", //
+				"dummy_entity.x_other AS x_other", //
+				"ref.x_l1id AS ref_x_l1id", //
+				"ref.x_content AS ref_x_content", //
+				"ref_further.x_l2id AS ref_further_x_l2id", //
+				"ref_further.x_something AS ref_further_x_something", //
+				"FROM dummy_entity ", //
+				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
+				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
+				"ORDER BY x_name ASC", //
+				"OFFSET 30 ROWS", //
+				"FETCH FIRST 10 ROWS ONLY");
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
@@ -246,7 +346,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-219
 	public void updateWithVersion() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class, IdentifierProcessing.ANSI);
+		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class, AnsiDialect.INSTANCE);
 
 		assertThat(sqlGenerator.getUpdateWithVersion()).containsSequence( //
 				"UPDATE", //
@@ -271,7 +371,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-334
 	public void getInsertForQuotedColumnName() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class, IdentifierProcessing.ANSI);
+		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class, AnsiDialect.INSTANCE);
 
 		String insert = sqlGenerator.getInsert(emptySet());
 
@@ -282,7 +382,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-266
 	public void joinForOneToOneWithoutIdIncludesTheBackReferenceOfTheOuterJoin() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(ParentOfNoIdChild.class, IdentifierProcessing.ANSI);
+		SqlGenerator sqlGenerator = createSqlGenerator(ParentOfNoIdChild.class, AnsiDialect.INSTANCE);
 
 		String findAll = sqlGenerator.getFindAll();
 
@@ -293,7 +393,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-262
 	public void update() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, IdentifierProcessing.ANSI);
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, AnsiDialect.INSTANCE);
 
 		assertThat(sqlGenerator.getUpdate()).containsSequence( //
 				"UPDATE", //
@@ -306,7 +406,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-324
 	public void readOnlyPropertyExcludedFromQuery_when_generateUpdateSql() {
 
-		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class, IdentifierProcessing.ANSI);
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class, AnsiDialect.INSTANCE);
 
 		assertThat(sqlGenerator.getUpdate()).isEqualToIgnoringCase( //
 				"UPDATE \"ENTITY_WITH_READ_ONLY_PROPERTY\" " //
@@ -318,7 +418,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-334
 	public void getUpdateForQuotedColumnName() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class, IdentifierProcessing.ANSI);
+		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class, AnsiDialect.INSTANCE);
 
 		String update = sqlGenerator.getUpdate();
 
@@ -330,7 +430,7 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-324
 	public void readOnlyPropertyExcludedFromQuery_when_generateInsertSql() {
 
-		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class, IdentifierProcessing.ANSI);
+		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class, AnsiDialect.INSTANCE);
 
 		assertThat(sqlGenerator.getInsert(emptySet())).isEqualToIgnoringCase( //
 				"INSERT INTO \"ENTITY_WITH_READ_ONLY_PROPERTY\" (\"X_NAME\") " //
@@ -512,7 +612,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
-		return createSqlGenerator(type, IdentifierProcessing.ANSI)
+		return createSqlGenerator(type, AnsiDialect.INSTANCE)
 				.getJoin(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
 	}
 
@@ -557,7 +657,7 @@ public class SqlGeneratorUnitTests {
 
 	private org.springframework.data.relational.core.sql.Column generatedColumn(String path, Class<?> type) {
 
-		return createSqlGenerator(type, IdentifierProcessing.ANSI)
+		return createSqlGenerator(type, AnsiDialect.INSTANCE)
 				.getColumn(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
 	}
 

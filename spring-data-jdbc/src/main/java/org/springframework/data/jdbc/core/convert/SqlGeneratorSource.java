@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.domain.IdentifierProcessing;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
@@ -29,6 +28,7 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  * domain type, the same generator will get returned.
  *
  * @author Jens Schauder
+ * @author Milan Milanov
  */
 @RequiredArgsConstructor
 public class SqlGeneratorSource {
@@ -38,14 +38,15 @@ public class SqlGeneratorSource {
 	private final Dialect dialect;
 
 	/**
-	 * @return the {@link Dialect} used by the created {@link SqlGenerator} instances. Guaranteed to be not {@literal null}.
+	 * @return the {@link Dialect} used by the created {@link SqlGenerator} instances. Guaranteed to be not
+	 *         {@literal null}.
 	 */
 	public Dialect getDialect() {
 		return dialect;
 	}
 
-
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
-		return CACHE.computeIfAbsent(domainType, t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t), dialect.getIdentifierProcessing()));
+		return CACHE.computeIfAbsent(domainType,
+				t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t), dialect));
 	}
 }

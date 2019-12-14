@@ -21,9 +21,13 @@ import lombok.RequiredArgsConstructor;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Oliver Gierke
+ * @author Milan Milanov
  */
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
+public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID>, PagingAndSortingRepository<T, ID> {
 
 	private final @NonNull JdbcAggregateOperations entityOperations;
 	private final @NonNull PersistentEntity<T, ?> entity;
@@ -143,5 +148,23 @@ public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID> {
 	@Override
 	public void deleteAll() {
 		entityOperations.deleteAll(entity.getType());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.PagingAndSortingRepository#findAll(org.springframework.data.domain.Sort sort)
+	 */
+	@Override
+	public Iterable<T> findAll(Sort sort) {
+		return entityOperations.findAll(entity.getType(), sort);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.PagingAndSortingRepository#findAll(org.springframework.data.domain.Pageable pageable)
+	 */
+	@Override
+	public Page<T> findAll(Pageable pageable) {
+		return entityOperations.findAll(entity.getType(), pageable);
 	}
 }

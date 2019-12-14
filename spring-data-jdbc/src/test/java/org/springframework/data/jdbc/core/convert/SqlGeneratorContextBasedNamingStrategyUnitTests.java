@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
+import org.springframework.data.jdbc.testing.NonQuotingDialect;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -220,8 +221,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		return new SqlGenerator(context, persistentEntity,
-				new DefaultIdentifierProcessing(new Quoting(""), LetterCasing.AS_IS));
+		return new SqlGenerator(context, persistentEntity, NonQuotingDialect.INSTANCE);
 	}
 
 	@SuppressWarnings("unused")

@@ -25,6 +25,7 @@ import org.springframework.util.Assert;
  * Represents a field in the {@code ORDER BY} clause.
  *
  * @author Mark Paluch
+ * @author Milan Milanov
  * @since 1.1
  */
 public class OrderByField extends AbstractSegment {
@@ -52,6 +53,17 @@ public class OrderByField extends AbstractSegment {
 	 */
 	public static OrderByField from(Column column) {
 		return new OrderByField(column, null, NullHandling.NATIVE);
+	}
+
+	/**
+	 * Creates a new {@link OrderByField} from a {@link Column} applying a given ordering.
+	 *
+	 * @param column must not be {@literal null}.
+	 * @param direction order direction
+	 * @return the {@link OrderByField}.
+	 */
+	public static OrderByField from(Column column, Direction direction) {
+		return new OrderByField(column, direction, NullHandling.NATIVE);
 	}
 
 	/**

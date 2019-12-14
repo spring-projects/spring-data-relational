@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
@@ -33,6 +35,7 @@ import org.springframework.data.relational.domain.SqlIdentifier;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Tyler Van Gorder
+ * @author Milan Milanov
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -186,6 +189,24 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 		return collect(das -> das.existsById(id, domainType));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Sort)
+	 */
+	@Override
+	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+		return collect(das -> das.findAll(domainType, sort));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Pageable)
+	 */
+	@Override
+	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
+		return collect(das -> das.findAll(domainType, pageable));
 	}
 
 	private <T> T collect(Function<DataAccessStrategy, T> function) {

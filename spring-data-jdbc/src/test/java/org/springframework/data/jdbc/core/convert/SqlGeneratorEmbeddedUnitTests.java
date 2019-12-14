@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.testing.NonQuotingDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
@@ -53,8 +54,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 	SqlGenerator createSqlGenerator(Class<?> type) {
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
-		return new SqlGenerator(context, persistentEntity,
-				new DefaultIdentifierProcessing(new Quoting(""), LetterCasing.AS_IS));
+		return new SqlGenerator(context, persistentEntity, NonQuotingDialect.INSTANCE);
 	}
 
 	@Test // DATAJDBC-111

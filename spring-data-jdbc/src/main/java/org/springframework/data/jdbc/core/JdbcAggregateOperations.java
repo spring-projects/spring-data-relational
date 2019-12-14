@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.core;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 
 /**
@@ -22,6 +25,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Thomas Lang
+ * @author Milan Milanov
  */
 public interface JdbcAggregateOperations {
 
@@ -128,4 +132,24 @@ public interface JdbcAggregateOperations {
 	 * @return whether the aggregate exists.
 	 */
 	<T> boolean existsById(Object id, Class<T> domainType);
+
+	/**
+	 * Load all aggregates of a given type, sorted.
+	 *
+	 * @param domainType the type of the aggregate roots. Must not be {@code null}.
+	 * @param <T> the type of the aggregate roots. Must not be {@code null}.
+	 * @param sort the sorting information. Must not be {@code null}.
+	 * @return Guaranteed to be not {@code null}.
+	 */
+	<T> Iterable<T> findAll(Class<T> domainType, Sort sort);
+
+	/**
+	 * Load a page of (potentially sorted) aggregates of a given type.
+	 *
+	 * @param domainType the type of the aggregate roots. Must not be {@code null}.
+	 * @param <T> the type of the aggregate roots. Must not be {@code null}.
+	 * @param pageable the pagination information. Must not be {@code null}.
+	 * @return Guaranteed to be not {@code null}.
+	 */
+	<T> Page<T> findAll(Class<T> domainType, Pageable pageable);
 }

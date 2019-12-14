@@ -27,11 +27,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -53,6 +53,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback
  *
  * @author Christoph Strobl
  * @author Mark Paluch
+ * @author Milan Milanov
  */
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcAggregateTemplateUnitTests {
@@ -138,6 +139,50 @@ public class JdbcAggregateTemplateUnitTests {
 		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class);
+
+		verify(callbacks).callback(AfterLoadCallback.class, alfred1);
+		verify(callbacks).callback(AfterLoadCallback.class, neumann1);
+
+		assertThat(all).containsExactly(alfred2, neumann2);
+	}
+
+	@Test // DATAJDBC-101
+	public void callbackOnLoadSorted() {
+
+		SampleEntity alfred1 = new SampleEntity(23L, "Alfred");
+		SampleEntity alfred2 = new SampleEntity(23L, "Alfred E.");
+
+		SampleEntity neumann1 = new SampleEntity(42L, "Neumann");
+		SampleEntity neumann2 = new SampleEntity(42L, "Alfred E. Neumann");
+
+		when(dataAccessStrategy.findAll(SampleEntity.class, Sort.by("name"))).thenReturn(asList(alfred1, neumann1));
+
+		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
+
+		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, Sort.by("name"));
+
+		verify(callbacks).callback(AfterLoadCallback.class, alfred1);
+		verify(callbacks).callback(AfterLoadCallback.class, neumann1);
+
+		assertThat(all).containsExactly(alfred2, neumann2);
+	}
+
+	@Test // DATAJDBC-101
+	public void callbackOnLoadPaged() {
+
+		SampleEntity alfred1 = new SampleEntity(23L, "Alfred");
+		SampleEntity alfred2 = new SampleEntity(23L, "Alfred E.");
+
+		SampleEntity neumann1 = new SampleEntity(42L, "Neumann");
+		SampleEntity neumann2 = new SampleEntity(42L, "Alfred E. Neumann");
+
+		when(dataAccessStrategy.findAll(SampleEntity.class, PageRequest.of(0, 20))).thenReturn(asList(alfred1, neumann1));
+
+		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
+
+		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, PageRequest.of(0, 20));
 
 		verify(callbacks).callback(AfterLoadCallback.class, alfred1);
 		verify(callbacks).callback(AfterLoadCallback.class, neumann1);
