@@ -723,6 +723,16 @@ public class JdbcAggregateTemplateIntegrationTests {
 		saveAndUpdateAggregateWithVersion(new AggregateWithPrimitiveShortVersion(), Number::shortValue);
 	}
 
+	@Test // DATAJDBC-462
+	public void resavingAnUnversionedEntity() {
+
+		LegoSet legoSet = new LegoSet();
+
+		LegoSet saved = template.save(legoSet);
+
+		template.save(saved);
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 
