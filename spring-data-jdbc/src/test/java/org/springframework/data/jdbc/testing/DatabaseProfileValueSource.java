@@ -27,17 +27,21 @@ import org.springframework.test.annotation.ProfileValueSource;
  */
 public class DatabaseProfileValueSource implements ProfileValueSource {
 
+	static final String SPRING_PROFILES_ACTIVE = "spring.profiles.active";
+	static final String CURRENT_DATABASE_IS_NOT = "current.database.is.not.";
+
 	private final String currentDatabase;
 
 	DatabaseProfileValueSource() {
 
-		currentDatabase = System.getProperty("spring.profiles.active", "hsqldb");
+		String fromEnvironment = System.getenv(SPRING_PROFILES_ACTIVE);
+		currentDatabase = fromEnvironment == null ? System.getProperty(SPRING_PROFILES_ACTIVE, "hsqldb") : fromEnvironment;
 	}
 
 	@Override
 	public String get(String key) {
 
-		if (!key.startsWith("current.database.is.not.")) {
+		if (!key.startsWith(CURRENT_DATABASE_IS_NOT)) {
 			return null;
 		}
 
