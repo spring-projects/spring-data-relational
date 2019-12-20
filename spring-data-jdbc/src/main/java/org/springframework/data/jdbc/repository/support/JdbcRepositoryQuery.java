@@ -16,17 +16,23 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.lang.reflect.Constructor;
+import java.sql.JDBCType;
 import java.util.List;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.callback.EntityCallbacks;
+import org.springframework.data.relational.core.mapping.JdbcCompatibleTypes;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
+import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -56,6 +62,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	private final JdbcQueryMethod queryMethod;
 	private final NamedParameterJdbcOperations operations;
 	private final QueryExecutor<Object> executor;
+	private final JdbcConverter converter;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -69,7 +76,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 	 */
 	JdbcRepositoryQuery(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 			RelationalMappingContext context, JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapper<?> defaultRowMapper) {
+			RowMapper<?> defaultRowMapper, JdbcConverter converter) {
 
 		Assert.notNull(publisher, "Publisher must not be null!");
 		Assert.notNull(context, "Context must not be null!");
@@ -93,6 +100,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 				rowMapper //
 		);
 
+		this.converter = converter;
 	}
 
 	private QueryExecutor<Object> createExecutor(JdbcQueryMethod queryMethod, @Nullable ResultSetExtractor extractor,
@@ -209,11 +217,29 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 
 		queryMethod.getParameters().getBindableParameters().forEach(p -> {
 
-			String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
-			parameters.addValue(parameterName, objects[p.getIndex()]);
+			convertAndAddParameter(parameters, p, objects[p.getIndex()]);
 		});
 
 		return parameters;
+	}
+
+	private void convertAndAddParameter(MapSqlParameterSource parameters, Parameter p, Object value) {
+
+		String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
+
+		Class<?> parameterType = queryMethod.getParameters().getParameter(p.getIndex()).getType();
+		Class conversionTargetType = JdbcCompatibleTypes.INSTANCE.columnTypeForNonEntity(parameterType);
+
+		JdbcValue jdbcValue = converter.writeJdbcValue(value, conversionTargetType,
+				JdbcUtil.sqlTypeFor(conversionTargetType));
+
+		JDBCType jdbcType = jdbcValue.getJdbcType();
+		if (jdbcType == null) {
+
+			parameters.addValue(parameterName, jdbcValue.getValue());
+		}else {
+			parameters.addValue(parameterName, jdbcValue.getValue(), jdbcType.getVendorTypeNumber());
+		}
 	}
 
 	@Nullable
