@@ -456,7 +456,10 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 				Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
 
-				RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
+				RelationalPersistentProperty property = entity.getPersistentProperty(parameterName);
+				if (property == null) {
+					return null;
+				}
 
 				return readOrLoadProperty(idValue, property);
 			});
