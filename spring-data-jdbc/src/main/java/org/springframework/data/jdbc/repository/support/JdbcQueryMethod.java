@@ -22,18 +22,17 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
-import org.springframework.data.repository.core.NamedQueries;
 
 /**
- * {@link QueryMethod} implementation that implements a method by executing the
- * query from a {@link Query} annotation on that method. Binds method arguments
- * to named parameters in the SQL statement.
+ * {@link QueryMethod} implementation that implements a method by executing the query from a {@link Query} annotation on
+ * that method. Binds method arguments to named parameters in the SQL statement.
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
@@ -59,49 +58,50 @@ public class JdbcQueryMethod extends QueryMethod {
 	 *
 	 * @return May be {@code null}.
 	 */
-
 	@Nullable
-	public String getAnnotatedQuery() {
+	String getDeclaredQuery() {
+
 		String annotatedValue = getQueryValue();
 		return StringUtils.hasText(annotatedValue) ? annotatedValue : getNamedQuery();
 	}
 
 	/**
-	 * Returns the annotated query with key value if it exists.
+	 * Returns the annotated query if it exists.
 	 *
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	 String getQueryValue() {
+	private String getQueryValue() {
 		return getMergedAnnotationAttribute("value");
 	}
 
+	/**
+	 * Returns the named query for this method if it exists.
+	 *
+	 * @return May be {@code null}.
+	 */
+	@Nullable
+	private String getNamedQuery() {
+
+		String name = getQueryName();
+		return this.namedQueries.hasQuery(name) ? this.namedQueries.getQuery(name) : null;
+	}
 
 	/**
 	 * Returns the annotated query name.
 	 *
 	 * @return May be {@code null}.
 	 */
-	@Nullable
-	 String getQueryName() {
-		return getMergedAnnotationAttribute("name");
-	}
-	/**
-	 * Returns the annotated query with key name if it exists.
-	 *
-	 * @return May be {@code null}.
-	 */
-	@Nullable
-	 String getNamedQuery() {
+
+	private String getQueryName() {
+
 		String annotatedName = getMergedAnnotationAttribute("name");
-		return (StringUtils.hasText(annotatedName) && this.namedQueries.hasQuery(annotatedName))
-				? this.namedQueries.getQuery(annotatedName)
-				: this.namedQueries.getQuery(super.getName());
+
+		return StringUtils.hasText(annotatedName) ? annotatedName : getNamedQueryName();
 	}
 
 	/*
-	 * Returns the class to be used as {@link
-	 * org.springframework.jdbc.core.RowMapper}
+	 * Returns the class to be used as {@link org.springframework.jdbc.core.RowMapper}
 	 *
 	 * @return May be {@code null}.
 	 */
@@ -111,8 +111,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	}
 
 	/**
-	 * Returns the class to be used as
-	 * {@link org.springframework.jdbc.core.ResultSetExtractor}
+	 * Returns the class to be used as {@link org.springframework.jdbc.core.ResultSetExtractor}
 	 *
 	 * @return May be {@code null}.
 	 */

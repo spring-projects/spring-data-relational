@@ -78,7 +78,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-165
 	public void emptyQueryThrowsException() {
 
-		doReturn(null).when(queryMethod).getAnnotatedQuery();
+		doReturn(null).when(queryMethod).getDeclaredQuery();
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class) //
 				.isThrownBy(
@@ -89,7 +89,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-165
 	public void defaultRowMapperIsUsedByDefault() {
 
-		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(RowMapper.class).when(queryMethod).getRowMapperClass();
 		JdbcRepositoryQuery query = new JdbcRepositoryQuery(publisher, callbacks, context, queryMethod, operations,
 				defaultRowMapper);
@@ -102,7 +102,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-165
 	public void defaultRowMapperIsUsedForNull() {
 
-		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		JdbcRepositoryQuery query = new JdbcRepositoryQuery(publisher, callbacks, context, queryMethod, operations,
 				defaultRowMapper);
 
@@ -114,7 +114,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-165
 	public void customRowMapperIsUsedWhenSpecified() {
 
-		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
 		new JdbcRepositoryQuery(publisher, callbacks, context, queryMethod, operations, defaultRowMapper)
@@ -127,7 +127,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorIsUsedWhenSpecified() {
 
-		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
 
 		new JdbcRepositoryQuery(publisher, callbacks, context, queryMethod, operations, defaultRowMapper)
@@ -145,7 +145,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorAndRowMapperGetCombined() {
 
-		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
@@ -164,7 +164,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-263, DATAJDBC-354
 	public void publishesSingleEventWhenQueryReturnsSingleAggregate() {
 
-		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(false).when(queryMethod).isCollectionQuery();
 		doReturn(new DummyEntity(1L)).when(operations).queryForObject(anyString(), any(SqlParameterSource.class),
 				any(RowMapper.class));
@@ -181,7 +181,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-263, DATAJDBC-354
 	public void publishesAsManyEventsAsReturnedAggregates() {
 
-		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(true).when(queryMethod).isCollectionQuery();
 		doReturn(Arrays.asList(new DummyEntity(1L), new DummyEntity(1L))).when(operations).query(anyString(),
 				any(SqlParameterSource.class), any(RowMapper.class));
@@ -198,7 +198,7 @@ public class JdbcRepositoryQueryUnitTests {
 	@Test // DATAJDBC-400
 	public void publishesCallbacks() {
 
-		doReturn("some sql statement").when(queryMethod).getAnnotatedQuery();
+		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(false).when(queryMethod).isCollectionQuery();
 		DummyEntity dummyEntity = new DummyEntity(1L);
 		doReturn(dummyEntity).when(operations).queryForObject(anyString(), any(SqlParameterSource.class),

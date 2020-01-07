@@ -194,7 +194,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 
 	private String determineQuery() {
 
-		String query = queryMethod.getAnnotatedQuery();
+		String query = queryMethod.getDeclaredQuery();
 
 		if (StringUtils.isEmpty(query)) {
 			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));

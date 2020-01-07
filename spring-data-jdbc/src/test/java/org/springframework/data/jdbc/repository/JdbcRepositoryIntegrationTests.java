@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
+import java.io.IOException;
+import java.util.List;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,26 +33,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.QueryNamedTestConfiguration;
+import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.IOException;
-import java.util.List;
-
-import javax.annotation.PostConstruct;
-;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
@@ -59,14 +54,12 @@ import javax.annotation.PostConstruct;
 @ContextConfiguration
 @Transactional
 public class JdbcRepositoryIntegrationTests {
-	public static final String DUMMY_SELECT_NAME = "DUMMY.SELECT";
 
 	@Configuration
-	@Import(QueryNamedTestConfiguration.class)
+	@Import(TestConfiguration.class)
 	static class Config {
 
-		@Autowired
-		JdbcRepositoryFactory factory;
+		@Autowired JdbcRepositoryFactory factory;
 
 		@Bean
 		Class<?> testClass() {
@@ -76,7 +69,17 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
-		}				
+		}
+
+		@Bean
+		NamedQueries namedQueries() throws IOException {
+
+			PropertiesFactoryBean properties = new PropertiesFactoryBean();
+			properties.setLocation(new ClassPathResource("META-INF/jdbc-named-queries.properties"));
+			properties.afterPropertiesSet();
+			return new PropertiesBasedNamedQueries(properties.getObject());
+
+		}
 	}
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
@@ -256,10 +259,10 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test // DATAJDBC-234
-	public void findAllQueryName() {
+	public void findAllByQueryName() {
 
 		repository.save(createDummyEntity());
-		assertThat(repository.findAllQueryName().size() > 0);
+		assertThat(repository.findAllByNamedQuery()).hasSize(1);
 	}
 
 	private static DummyEntity createDummyEntity() {
@@ -271,8 +274,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
-		@Query(name = DUMMY_SELECT_NAME)
-		List<DummyEntity> findAllQueryName();
+		List<DummyEntity> findAllByNamedQuery();
 	}
 
 	@Data

@@ -16,13 +16,15 @@
 package org.springframework.data.jdbc.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.util.Properties;
 
+import org.jetbrains.annotations.NotNull;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.projection.ProjectionFactory;
@@ -40,117 +42,93 @@ import org.springframework.jdbc.core.RowMapper;
  */
 public class JdbcQueryMethodUnitTests {
 
-	public static final String DUMMY_SELECT_VALUE = "SELECT something";
-	public static final String DUMMY_SELECT_NAME = "DUMMY.SELECT";
-	public static final String DUMMY_SELECT_METHOD = "queryWhitoutQueryAnnotation";
-	public static final String DUMMY_SELECT_NAME_VALUE= "SELECT something NAME AND VALUE";
+	public static final String QUERY_NAME = "DUMMY.SELECT";
+	public static final String QUERY = "SELECT something";
+	public static final String METHOD_WITHOUT_QUERY_ANNOTATION = "methodWithImplicitlyNamedQuery";
+	public static final String QUERY2 = "SELECT something NAME AND VALUE";
+
+	NamedQueries namedQueries;
+	RepositoryMetadata metadata;
+
+	@Before
+	public void before() {
+
+		Properties properties = new Properties();
+		properties.setProperty(QUERY_NAME, QUERY);
+		// String is used as domain class because the methods used for testing aren't part of a repository and therefore the
+		// return type is used as the domain type.
+		properties.setProperty("String." + METHOD_WITHOUT_QUERY_ANNOTATION, QUERY2);
+		namedQueries = new PropertiesBasedNamedQueries(properties);
+
+		metadata = mock(RepositoryMetadata.class);
+		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
+	}
 
 	@Test // DATAJDBC-165
 	public void returnsSqlStatement() throws NoSuchMethodException {
 
-		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
+		JdbcQueryMethod queryMethod = createJdbcQueryMethod("queryMethod");
 
-		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
-		Properties properties = new Properties();
-		properties.setProperty(DUMMY_SELECT_NAME, DUMMY_SELECT_VALUE);
-		NamedQueries nameQueries = new PropertiesBasedNamedQueries(properties);
-		JdbcQueryMethod queryMethod = new JdbcQueryMethod(
-				JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethod"), metadata,
-				mock(ProjectionFactory.class), nameQueries);
-		assertThat(queryMethod.getAnnotatedQuery()).isEqualTo(DUMMY_SELECT_VALUE);
+		assertThat(queryMethod.getDeclaredQuery()).isEqualTo(QUERY);
 	}
 
 	@Test // DATAJDBC-165
 	public void returnsSpecifiedRowMapperClass() throws NoSuchMethodException {
 
-		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
-
-		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
-		Properties properties = new Properties();
-		properties.setProperty(DUMMY_SELECT_NAME, DUMMY_SELECT_VALUE);
-		NamedQueries nameQueries = new PropertiesBasedNamedQueries(properties);
-
-		JdbcQueryMethod queryMethod = new JdbcQueryMethod(
-				JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethod"), metadata,
-				mock(ProjectionFactory.class), nameQueries);
+		JdbcQueryMethod queryMethod = createJdbcQueryMethod("queryMethod");
 
 		assertThat(queryMethod.getRowMapperClass()).isEqualTo(CustomRowMapper.class);
 	}
 
-
-
-
-
-
-
-
-
 	@Test // DATAJDBC-234
 	public void returnsSqlStatementName() throws NoSuchMethodException {
 
-		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
-
-		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
-
-		Properties properties = new Properties();
-		properties.setProperty(DUMMY_SELECT_NAME, DUMMY_SELECT_VALUE);
-		NamedQueries nameQueries = new PropertiesBasedNamedQueries(properties);
-
-		JdbcQueryMethod queryMethod = new JdbcQueryMethod(
-				JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethodName"), metadata,
-				mock(ProjectionFactory.class), nameQueries);
-		assertThat(queryMethod.getAnnotatedQuery()).isEqualTo(DUMMY_SELECT_VALUE);
-
-	}
-	@Test // DATAJDBC-234
-	public void returnsSqlStatementNameAndValue() throws NoSuchMethodException {
-
-		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
-
-		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
-
-		Properties properties = new Properties();
-		properties.setProperty(DUMMY_SELECT_NAME, DUMMY_SELECT_VALUE);
-		NamedQueries nameQueries = new PropertiesBasedNamedQueries(properties);
-
-		JdbcQueryMethod queryMethod = new JdbcQueryMethod(
-				JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryMethodNameAndValue"), metadata,
-				mock(ProjectionFactory.class), nameQueries);
-		assertThat(queryMethod.getAnnotatedQuery()).isEqualTo(DUMMY_SELECT_NAME_VALUE);
+		JdbcQueryMethod queryMethod = createJdbcQueryMethod("queryMethodName");
+		assertThat(queryMethod.getDeclaredQuery()).isEqualTo(QUERY);
 
 	}
 
 	@Test // DATAJDBC-234
-	public void returnsNullNoSqlQuery() throws NoSuchMethodException {
+	public void returnsSpecifiedSqlStatementIfNameAndValueAreGiven() throws NoSuchMethodException {
 
-		RepositoryMetadata metadata = mock(RepositoryMetadata.class);
-		Properties properties = new Properties();
-		properties.setProperty(DUMMY_SELECT_METHOD, DUMMY_SELECT_VALUE);
-		NamedQueries nameQueries = new PropertiesBasedNamedQueries(properties);
-
-		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
-
-		JdbcQueryMethod queryMethod = new JdbcQueryMethod(
-				JdbcQueryMethodUnitTests.class.getDeclaredMethod("queryWhitoutQueryAnnotation"), metadata,
-				mock(ProjectionFactory.class), nameQueries);
-		assertThat(queryMethod.getAnnotatedQuery()).isEqualTo(DUMMY_SELECT_VALUE);
+		JdbcQueryMethod queryMethod = createJdbcQueryMethod("queryMethodWithNameAndValue");
+		assertThat(queryMethod.getDeclaredQuery()).isEqualTo(QUERY2);
 
 	}
 
-	@Query(value = DUMMY_SELECT_VALUE, rowMapperClass = CustomRowMapper.class)
-	private void queryMethod() {
+	@NotNull
+	private JdbcQueryMethod createJdbcQueryMethod(String methodName) throws NoSuchMethodException {
+
+		Method method = JdbcQueryMethodUnitTests.class.getDeclaredMethod(methodName);
+		return new JdbcQueryMethod(method, metadata, mock(ProjectionFactory.class), namedQueries);
 	}
 
-	@Query(name = DUMMY_SELECT_NAME)
-	private void queryMethodName() {
+	@Test // DATAJDBC-234
+	public void returnsImplicitlyNamedQuery() throws NoSuchMethodException {
+
+		JdbcQueryMethod queryMethod = createJdbcQueryMethod("methodWithImplicitlyNamedQuery");
+		assertThat(queryMethod.getDeclaredQuery()).isEqualTo(QUERY2);
 	}
 
-	@Query(value = DUMMY_SELECT_NAME_VALUE, name = DUMMY_SELECT_NAME)
-	private void queryMethodNameAndValue() {
+	@Test // DATAJDBC-234
+	public void returnsNullIfNoQueryIsFound() throws NoSuchMethodException {
+
+		JdbcQueryMethod queryMethod = createJdbcQueryMethod("methodWithoutAnyQuery");
+		assertThat(queryMethod.getDeclaredQuery()).isEqualTo(null);
 	}
 
-	private void queryWhitoutQueryAnnotation() {
-	}
+	@Query(value = QUERY, rowMapperClass = CustomRowMapper.class)
+	private void queryMethod() {}
+
+	@Query(name = QUERY_NAME)
+	private void queryMethodName() {}
+
+	@Query(value = QUERY2, name = QUERY_NAME)
+	private void queryMethodWithNameAndValue() {}
+
+	private void methodWithImplicitlyNamedQuery() {}
+
+	private void methodWithoutAnyQuery() {}
 
 	private class CustomRowMapper implements RowMapper<Object> {
 

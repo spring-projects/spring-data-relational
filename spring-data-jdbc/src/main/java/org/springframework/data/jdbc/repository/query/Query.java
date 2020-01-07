@@ -46,7 +46,7 @@ public @interface Query {
 
 	/**
 	 * The named query to be used. If not defined, the name of
-	 * {@code $ domainClass}.${queryMethodName}} will be used.
+	 * {@code ${domainClass}.${queryMethodName}} will be used.
 	 */
 	String name() default "";
 
