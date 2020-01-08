@@ -388,7 +388,7 @@ This section offers some specific information about the implementation and use o
 [[jdbc.query-methods.strategies]]
 === Query Lookup Strategies
 
-The JDBC module supports defining a query manually only as a String in a `@Query` annotation.
+The JDBC module supports defining a query manually as a String in a `@Query` annotation or as named query in a property file.
 Deriving a query from the name of the method is currently not supported.
 
 [[jdbc.query-methods.at-query]]
@@ -411,6 +411,19 @@ public interface UserRepository extends CrudRepository<User, Long> {
 NOTE: Spring fully supports Java 8’s parameter name discovery based on the `-parameters` compiler flag. By using this flag in your build as an alternative to debug information, you can omit the `@Param` annotation for named parameters.
 
 NOTE: Spring Data JDBC supports only named parameters.
+
+
+[[jdbc.query-methods.named-query]]
+=== Named Queries
+
+If no query is given in an annotation as described in the previous section Spring Data JDBC will try to locate a named query.
+There are two ways how the name of the query can be determined.
+The default is to take the _domain class_ of the query, i.e. the aggregate root of the repository, take its simple name and append the name of the method separated by a `.`.
+Alternatively the `@Query` annotation has a `name` attribute which can be used to specify the name of a query to be looked up.
+
+Named queries are expected to be provided in the property file `META-INF/jdbc-named-queries.properties` on the classpath.
+
+The location of that file may be changed by setting a value to `@EnableJdbcRepositories.namedQueriesLocation`.
 
 
 [[jdbc.query-methods.at-query.custom-rowmapper]]
