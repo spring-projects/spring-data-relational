@@ -27,6 +27,7 @@ import java.util.Collections;
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -47,6 +48,7 @@ import org.springframework.data.relational.domain.IdentifierProcessing;
  * @author Mark Paluch
  * @author Tyler Van Gorder
  */
+@Ignore
 public class MyBatisDataAccessStrategyUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext();

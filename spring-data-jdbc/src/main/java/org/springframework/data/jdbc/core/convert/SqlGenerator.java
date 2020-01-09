@@ -17,7 +17,16 @@ package org.springframework.data.jdbc.core.convert;
 
 import lombok.Value;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -143,7 +152,7 @@ class SqlGenerator {
 	}
 
 	private BindMarker getBindMarker(SqlIdentifier columnName) {
-		return SQL.bindMarker(":" + parameterPattern.matcher(columnName.toColumnName(identifierProcessing)).replaceAll(""));
+		return SQL.bindMarker(":" + parameterPattern.matcher(columnName.getReference(identifierProcessing)).replaceAll(""));
 	}
 
 	/**
@@ -498,7 +507,7 @@ class SqlGenerator {
 
 		Update update = createBaseUpdate() //
 				.and(getVersionColumn()
-						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.toColumnName(identifierProcessing)))) //
+						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.getReference(identifierProcessing)))) //
 				.build();
 
 		return render(update);
@@ -529,7 +538,7 @@ class SqlGenerator {
 
 		Delete delete = createBaseDeleteById(getTable()) //
 				.and(getVersionColumn()
-						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.toColumnName(identifierProcessing)))) //
+						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.getReference(identifierProcessing)))) //
 				.build();
 
 		return render(delete);
@@ -537,7 +546,7 @@ class SqlGenerator {
 
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
 		return Delete.builder().from(table)
-				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + ID_SQL_PARAMETER.toColumnName(identifierProcessing))));
+				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + ID_SQL_PARAMETER.getReference(identifierProcessing))));
 	}
 
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
@@ -667,7 +676,7 @@ class SqlGenerator {
 
 		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix) {
 
-			SqlIdentifier columnName = property.getColumnName().prefix(prefix);
+			SqlIdentifier columnName = property.getColumnName().transform(prefix::concat);
 
 			columnNames.add(columnName);
 

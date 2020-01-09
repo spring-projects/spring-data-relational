@@ -18,7 +18,7 @@ package org.springframework.data.relational.domain;
 /**
  * An interface describing the processing steps for the conversion of {@link SqlIdentifier} to SQL snippets or column
  * names.
- * 
+ *
  * @author Jens Schauder
  * @since 2.0
  */
@@ -28,7 +28,23 @@ public interface IdentifierProcessing {
 	 * An {@link IdentifierProcessing} that can be used for databases adhering to the SQL standard which uses double
 	 * quotes ({@literal "}) for quoting and makes unquoted literals equivalent to upper case.
 	 */
-	IdentifierProcessing ANSI = new DefaultIdentifierProcessing(Quoting.ANSI, LetterCasing.UPPER_CASE);
+	IdentifierProcessing ANSI = create(Quoting.ANSI, LetterCasing.UPPER_CASE);
+
+	/**
+	 * An {@link IdentifierProcessing} without applying transformations.
+	 */
+	IdentifierProcessing NONE = create(Quoting.NONE, LetterCasing.AS_IS);
+
+	/**
+	 * Create a {@link IdentifierProcessing} rule given {@link Quoting} and {@link LetterCasing} rules.
+	 *
+	 * @param quoting quoting rules.
+	 * @param letterCasing {@link LetterCasing} rules for identifier normalization.
+	 * @return a new {@link IdentifierProcessing} object.
+	 */
+	static DefaultIdentifierProcessing create(Quoting quoting, LetterCasing letterCasing) {
+		return new DefaultIdentifierProcessing(quoting, letterCasing);
+	}
 
 	/**
 	 * Converts a {@link String} representing a bare name of an identifier to a {@link String} with proper quoting
@@ -43,40 +59,15 @@ public interface IdentifierProcessing {
 	 * Standardizes the use of upper and lower case letters in an identifier in such a way that semantically the same
 	 * identifier results from the quoted and the unquoted version. If this is not possible use of
 	 * {@link LetterCasing#AS_IS} is recommended.
-	 * 
+	 *
 	 * @param identifier an identifier with arbitrary upper and lower cases. must not be {@literal null}.
 	 * @return an identifier with standardized use of upper and lower case letter. Guaranteed to be not {@literal null}.
 	 */
 	String standardizeLetterCase(String identifier);
 
 	/**
-	 * An {@link IdentifierProcessing} implementation based on two implementations for the quoting and for the letter case
-	 * standardization.
-	 */
-	class DefaultIdentifierProcessing implements IdentifierProcessing {
-
-		private final Quoting quoting;
-		private final LetterCasing letterCasing;
-
-		public DefaultIdentifierProcessing(Quoting quoting, LetterCasing letterCasing) {
-			this.quoting = quoting;
-			this.letterCasing = letterCasing;
-		}
-
-		@Override
-		public String quote(String identifier) {
-			return quoting.apply(identifier);
-		}
-
-		@Override
-		public String standardizeLetterCase(String identifier) {
-			return letterCasing.apply(identifier);
-		}
-	}
-
-	/**
 	 * A conversion from unquoted identifiers to quoted identifiers.
-	 * 
+	 *
 	 * @author Jens Schauder
 	 * @since 2.0
 	 */
@@ -84,12 +75,14 @@ public interface IdentifierProcessing {
 
 		public static final Quoting ANSI = new Quoting("\"");
 
+		public static final Quoting NONE = new Quoting("");
+
 		private final String prefix;
 		private final String suffix;
 
 		/**
 		 * Constructs a {@literal Quoting} with potential different prefix and suffix used for quoting.
-		 * 
+		 *
 		 * @param prefix a {@literal String} prefixed before the name for quoting it.
 		 * @param suffix a {@literal String} suffixed at the end of the name for quoting it.
 		 */
@@ -101,7 +94,7 @@ public interface IdentifierProcessing {
 
 		/**
 		 * Constructs a {@literal Quoting} with the same {@literal String} appended in front and end of an identifier.
-		 * 
+		 *
 		 * @param quoteCharacter the value appended at the beginning and the end of a name in order to quote it.
 		 */
 		public Quoting(String quoteCharacter) {

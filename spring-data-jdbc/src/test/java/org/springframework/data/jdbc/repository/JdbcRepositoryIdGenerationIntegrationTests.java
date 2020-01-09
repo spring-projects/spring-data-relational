@@ -167,8 +167,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 			return new NamingStrategy() {
 
 				@Override
-				public SqlIdentifier getTableName(Class<?> type) {
-					return unquoted(type.getSimpleName().toUpperCase());
+				public String getTableName(Class<?> type) {
+					return type.getSimpleName().toUpperCase();
 				}
 			};
 		}

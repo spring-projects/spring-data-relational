@@ -40,6 +40,7 @@ import org.springframework.data.relational.core.conversion.BasicRelationalConver
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.Interpreter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -446,7 +447,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		List<Content> contentList;
 		Map<String, Content> contentMap;
 		List<ContentNoId> contentNoIdList;
-		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL) ContentNoId embedded;
+		@Embedded(onEmpty = Embedded.OnEmpty.USE_NULL, prefix = "fooBar") ContentNoId embedded;
 
 		DummyEntity() {
 
@@ -485,8 +486,9 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@With
 	@AllArgsConstructor
 	private static class ContentNoId {
-
-		Tag single;
+		// "foo_bar_single"
+		// "FOO_BAR_TAG_SET"
+		@Column("single") Tag single;
 		Set<Tag> tagSet;
 		List<Tag> tagList;
 		Map<String, Tag> tagMap;

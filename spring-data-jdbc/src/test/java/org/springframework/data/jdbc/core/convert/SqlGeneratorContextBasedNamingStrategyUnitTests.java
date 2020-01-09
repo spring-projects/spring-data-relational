@@ -33,7 +33,7 @@ import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
+import org.springframework.data.relational.domain.IdentifierProcessing;
 import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.domain.SqlIdentifier;
@@ -56,8 +56,8 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	private final NamingStrategy contextualNamingStrategy = new NamingStrategy() {
 
 		@Override
-		public SqlIdentifier getSchema() {
-			return unquoted(userHandler.get());
+		public String getSchema() {
+			return userHandler.get();
 		}
 	};
 
@@ -221,7 +221,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
 		return new SqlGenerator(context, persistentEntity,
-				new DefaultIdentifierProcessing(new Quoting(""), LetterCasing.AS_IS));
+				IdentifierProcessing.create(new Quoting(""), LetterCasing.AS_IS));
 	}
 
 	@SuppressWarnings("unused")

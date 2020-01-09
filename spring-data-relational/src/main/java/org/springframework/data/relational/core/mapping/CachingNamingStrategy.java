@@ -18,8 +18,6 @@ package org.springframework.data.relational.core.mapping;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.data.relational.domain.SqlIdentifier;
-import org.springframework.data.relational.domain.SqlIdentifier.SimpleSqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentReferenceHashMap;
@@ -34,12 +32,12 @@ class CachingNamingStrategy implements NamingStrategy {
 
 	private final NamingStrategy delegate;
 
-	private final Map<RelationalPersistentProperty, SimpleSqlIdentifier> columnNames = new ConcurrentHashMap<>();
-	private final Map<RelationalPersistentProperty, SqlIdentifier> keyColumns = new ConcurrentHashMap<>();
-	private final Map<Class<?>, SqlIdentifier> qualifiedTableNames = new ConcurrentReferenceHashMap<>();
-	private final Map<Class<?>, SqlIdentifier> tableNames = new ConcurrentReferenceHashMap<>();
+	private final Map<RelationalPersistentProperty, String> columnNames = new ConcurrentHashMap<>();
+	private final Map<RelationalPersistentProperty, String> keyColumns = new ConcurrentHashMap<>();
+	private final Map<Class<?>, String> qualifiedTableNames = new ConcurrentReferenceHashMap<>();
+	private final Map<Class<?>, String> tableNames = new ConcurrentReferenceHashMap<>();
 
-	private final Lazy<SqlIdentifier> schema;
+	private final Lazy<String> schema;
 
 	/**
 	 * Creates a new {@link CachingNamingStrategy} with the given delegate {@link NamingStrategy}.
@@ -59,7 +57,7 @@ class CachingNamingStrategy implements NamingStrategy {
 	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getKeyColumn(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
 	 */
 	@Override
-	public SqlIdentifier getKeyColumn(RelationalPersistentProperty property) {
+	public String getKeyColumn(RelationalPersistentProperty property) {
 		return keyColumns.computeIfAbsent(property, delegate::getKeyColumn);
 	}
 
@@ -68,7 +66,7 @@ class CachingNamingStrategy implements NamingStrategy {
 	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getQualifiedTableName(java.lang.Class)
 	 */
 	@Override
-	public SqlIdentifier getQualifiedTableName(Class<?> type) {
+	public String getQualifiedTableName(Class<?> type) {
 		return qualifiedTableNames.computeIfAbsent(type, delegate::getQualifiedTableName);
 	}
 
@@ -77,7 +75,7 @@ class CachingNamingStrategy implements NamingStrategy {
 	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getTableName(java.lang.Class)
 	 */
 	@Override
-	public SqlIdentifier getTableName(Class<?> type) {
+	public String getTableName(Class<?> type) {
 		return tableNames.computeIfAbsent(type, delegate::getTableName);
 	}
 
@@ -86,7 +84,7 @@ class CachingNamingStrategy implements NamingStrategy {
 	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getReverseColumnName(org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension)
 	 */
 	@Override
-	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
+	public String getReverseColumnName(PersistentPropertyPathExtension path) {
 		return delegate.getReverseColumnName(path);
 	}
 
@@ -95,7 +93,7 @@ class CachingNamingStrategy implements NamingStrategy {
 	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getReverseColumnName(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
 	 */
 	@Override
-	public SqlIdentifier getReverseColumnName(RelationalPersistentProperty property) {
+	public String getReverseColumnName(RelationalPersistentProperty property) {
 		return delegate.getReverseColumnName(property);
 	}
 
@@ -104,7 +102,7 @@ class CachingNamingStrategy implements NamingStrategy {
 	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getSchema()
 	 */
 	@Override
-	public SqlIdentifier getSchema() {
+	public String getSchema() {
 		return schema.get();
 	}
 
@@ -113,7 +111,7 @@ class CachingNamingStrategy implements NamingStrategy {
 	 * @see org.springframework.data.relational.core.mapping.NamingStrategy#getColumnName(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
 	 */
 	@Override
-	public SimpleSqlIdentifier getColumnName(RelationalPersistentProperty property) {
+	public String getColumnName(RelationalPersistentProperty property) {
 		return columnNames.computeIfAbsent(property, delegate::getColumnName);
 	}
 }

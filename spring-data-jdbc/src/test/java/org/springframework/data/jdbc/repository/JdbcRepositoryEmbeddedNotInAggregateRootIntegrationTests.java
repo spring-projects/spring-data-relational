@@ -237,7 +237,7 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 		String test;
 
-		@Column("id")
+		@Column("ID")
 		DummyEntity2 dummyEntity2;
 	}
 

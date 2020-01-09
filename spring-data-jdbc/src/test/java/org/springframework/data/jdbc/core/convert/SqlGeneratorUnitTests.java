@@ -25,6 +25,7 @@ import java.util.Set;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -43,10 +44,8 @@ import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.relational.domain.IdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
 import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
-import org.springframework.data.relational.domain.SqlIdentifier.*;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -73,7 +72,7 @@ public class SqlGeneratorUnitTests {
 
 	SqlGenerator createSqlGenerator(Class<?> type) {
 
-		return createSqlGenerator(type, new DefaultIdentifierProcessing(new Quoting(""), LetterCasing.AS_IS));
+		return createSqlGenerator(type, IdentifierProcessing.create(new Quoting(""), LetterCasing.AS_IS));
 	}
 
 	SqlGenerator createSqlGenerator(Class<?> type, IdentifierProcessing identifierProcessing) {
@@ -253,7 +252,7 @@ public class SqlGeneratorUnitTests {
 				"\"VERSIONED_ENTITY\"", //
 				"SET", //
 				"WHERE", //
-				"\"ID1\" = :ID1", //
+				"\"id1\" = :id1", //
 				"AND", //
 				"\"X_VERSION\" = :___oldOptimisticLockingVersion");
 	}
@@ -276,7 +275,7 @@ public class SqlGeneratorUnitTests {
 		String insert = sqlGenerator.getInsert(emptySet());
 
 		assertThat(insert).isEqualTo("INSERT INTO \"ENTITY_WITH_QUOTED_COLUMN_NAME\" " //
-				+ "(\"TEST\"\"_@123\") " + "VALUES (:TEST_123)");
+				+ "(\"test\"\"_@123\") " + "VALUES (:test_123)");
 	}
 
 	@Test // DATAJDBC-266
@@ -287,7 +286,7 @@ public class SqlGeneratorUnitTests {
 		String findAll = sqlGenerator.getFindAll();
 
 		assertThat(findAll).containsSequence("SELECT",
-				"\"CHILD\".\"PARENT_OF_NO_ID_CHILD\" AS \"CHILD_PARENT_OF_NO_ID_CHILD\"", "FROM");
+				"\"child\".\"PARENT_OF_NO_ID_CHILD\" AS \"CHILD_PARENT_OF_NO_ID_CHILD\"", "FROM");
 	}
 
 	@Test // DATAJDBC-262
@@ -300,7 +299,7 @@ public class SqlGeneratorUnitTests {
 				"\"DUMMY_ENTITY\"", //
 				"SET", //
 				"WHERE", //
-				"\"ID1\" = :ID");
+				"\"id1\" = :id1");
 	}
 
 	@Test // DATAJDBC-324
@@ -323,8 +322,8 @@ public class SqlGeneratorUnitTests {
 		String update = sqlGenerator.getUpdate();
 
 		assertThat(update).isEqualTo("UPDATE \"ENTITY_WITH_QUOTED_COLUMN_NAME\" " //
-				+ "SET \"TEST\"\"_@123\" = :TEST_123 " //
-				+ "WHERE \"ENTITY_WITH_QUOTED_COLUMN_NAME\".\"TEST\"\"_@ID\" = :TEST_ID");
+				+ "SET \"test\"\"_@123\" = :test_123 " //
+				+ "WHERE \"ENTITY_WITH_QUOTED_COLUMN_NAME\".\"test\"\"_@id\" = :test_id");
 	}
 
 	@Test // DATAJDBC-324
@@ -455,7 +454,7 @@ public class SqlGeneratorUnitTests {
 			softly.assertThat(join.getJoinTable().getName()).isEqualTo("\"REFERENCED_ENTITY\"");
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
 			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("\"DUMMY_ENTITY\"");
-			softly.assertThat(join.getParentId().getName()).isEqualTo("\"ID1\"");
+			softly.assertThat(join.getParentId().getName()).isEqualTo("\"id1\"");
 			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("\"DUMMY_ENTITY\"");
 		});
 	}
@@ -502,7 +501,7 @@ public class SqlGeneratorUnitTests {
 
 			softly.assertThat(joinTable.getName()).isEqualTo("\"NO_ID_CHILD\"");
 			softly.assertThat(joinTable).isInstanceOf(Aliased.class);
-			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo("\"CHILD\"");
+			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo("\"child\"");
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(joinTable);
 			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("\"PARENT_OF_NO_ID_CHILD\"");
 			softly.assertThat(join.getParentId().getName()).isEqualTo("\"X_ID\"");
@@ -521,7 +520,7 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("id", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly("\"ID1\"", "\"DUMMY_ENTITY\"", null, "\"ID1\"");
+				.containsExactly("\"id1\"", "\"DUMMY_ENTITY\"", null, "\"id1\"");
 	}
 
 	@Test // DATAJDBC-340
@@ -529,7 +528,7 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("ref.l1id", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
-				.containsExactly("\"X_L1ID\"", "\"REFERENCED_ENTITY\"", "\"REF\"", "\"REF_X_L1ID\"");
+				.containsExactly("\"X_L1ID\"", "\"REFERENCED_ENTITY\"", "\"ref\"", "\"REF_X_L1ID\"");
 	}
 
 	@Test // DATAJDBC-340
@@ -543,7 +542,7 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("child", ParentOfNoIdChild.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
-				.containsExactly("\"PARENT_OF_NO_ID_CHILD\"", "\"NO_ID_CHILD\"", "\"CHILD\"",
+				.containsExactly("\"PARENT_OF_NO_ID_CHILD\"", "\"NO_ID_CHILD\"", "\"child\"",
 						"\"CHILD_PARENT_OF_NO_ID_CHILD\"");
 	}
 
@@ -617,8 +616,8 @@ public class SqlGeneratorUnitTests {
 	private static class PrefixingNamingStrategy implements NamingStrategy {
 
 		@Override
-		public SimpleSqlIdentifier getColumnName(RelationalPersistentProperty property) {
-			return NamingStrategy.super.getColumnName(property).prefix("x_");
+		public String getColumnName(RelationalPersistentProperty property) {
+			return "x_" + NamingStrategy.super.getColumnName(property);
 		}
 
 	}

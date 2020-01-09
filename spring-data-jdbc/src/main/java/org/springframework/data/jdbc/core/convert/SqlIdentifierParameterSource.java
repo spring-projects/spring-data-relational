@@ -28,7 +28,7 @@ import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
 /**
  * Implementation of the {@link org.springframework.jdbc.core.namedparam.SqlParameterSource} interface based on
  * {@link SqlIdentifier} instead of {@link String} for names.
- * 
+ *
  * @author Jens Schauder
  * @since 2.0
  */
@@ -68,7 +68,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 	void addValue(SqlIdentifier identifier, Object value, int sqlType) {
 
 		identifiers.add(identifier);
-		String name = identifier.toColumnName(identifierProcessing);
+		String name = identifier.getReference(identifierProcessing);
 		namesToValues.put(name, value);
 		registerSqlType(name, sqlType);
 	}
@@ -77,7 +77,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
 		for (SqlIdentifier identifier : others.getIdentifiers()) {
 
-			String name = identifier.toColumnName(identifierProcessing);
+			String name = identifier.getReference(identifierProcessing);
 			addValue(identifier, others.getValue(name), others.getSqlType(name));
 		}
 	}

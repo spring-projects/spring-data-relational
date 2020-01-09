@@ -15,53 +15,34 @@
  */
 package org.springframework.data.relational.domain;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.StringJoiner;
-
-import org.springframework.util.Assert;
+import java.util.function.UnaryOperator;
 
 /**
- * Represents a named object that exists in the database like a table name or a column name
- * 
+ * Represents a named object that exists in the database like a table name or a column name. SQL identifiers are created
+ * from a {@link String name} with specifying whether the name should be quoted or unquoted.
+ * <p>
+ * {@link SqlIdentifier} renders its name using {@link IdentifierProcessing} rules. Use
+ * {@link #getReference(IdentifierProcessing)} to refer to an object using the identifier when e.g. obtaining values
+ * from a result or providing values for a prepared statement. {@link #toSql(IdentifierProcessing)} renders the
+ * identifier for SQL statement usage.
+ * <p>
+ * {@link SqlIdentifier} objects are immutable. Calling transformational methods such as
+ * {@link #transform(UnaryOperator)} creates a new instance.
+ *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 2.0
  */
 public interface SqlIdentifier {
 
-	SimpleSqlIdentifier prefix(SqlIdentifier prefix, String separator);
-
-	SqlIdentifier suffix(String suffix);
-
-	SqlIdentifier concat(SqlIdentifier second);
-
-	String toSql(IdentifierProcessing processing);
-
-	String toColumnName(IdentifierProcessing processing);
-
-	static SimpleSqlIdentifier quoted(String name) {
-		return new SimpleSqlIdentifier(name, true, true);
-	}
-
-	static SimpleSqlIdentifier unquoted(String name) {
-		return new SimpleSqlIdentifier(name, false, true);
-	}
-
+	/**
+	 * Null-object.
+	 */
 	SqlIdentifier EMPTY = new SqlIdentifier() {
 
 		@Override
-		public SimpleSqlIdentifier prefix(SqlIdentifier prefix, String separator) {
-			throw new UnsupportedOperationException("We can't prefix an empty DatabaseObjectIdentifier");
-		}
-
-		@Override
-		public SqlIdentifier suffix(String suffix) {
-			throw new UnsupportedOperationException("We can't suffix an empty DatabaseObjectIdentifier");
-		}
-
-		@Override
-		public SqlIdentifier concat(SqlIdentifier second) {
-			return second;
+		public SqlIdentifier transform(UnaryOperator<String> transformationFunction) {
+			return this;
 		}
 
 		@Override
@@ -70,7 +51,7 @@ public interface SqlIdentifier {
 		}
 
 		@Override
-		public String toColumnName(IdentifierProcessing processing) {
+		public String getReference(IdentifierProcessing processing) {
 			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create column names");
 		}
 
@@ -79,141 +60,64 @@ public interface SqlIdentifier {
 		}
 	};
 
-	final class SimpleSqlIdentifier implements SqlIdentifier {
+	/**
+	 * Return the reference name after applying {@link IdentifierProcessing} rules. The reference name is used for
+	 * programmatic access to the object identified by this {@link SqlIdentifier}.
+	 *
+	 * @param processing identifier processing rules.
+	 * @return
+	 */
+	String getReference(IdentifierProcessing processing);
 
-		private final String name;
-		private final boolean quoted;
-		private final boolean fixedLetterCasing;
+	/**
+	 * Return the identifier for SQL usage after applying {@link IdentifierProcessing} rules. The identifier name is used
+	 * to construct SQL statements.
+	 *
+	 * @param processing identifier processing rules.
+	 * @return
+	 */
+	String toSql(IdentifierProcessing processing);
 
-		private SimpleSqlIdentifier(String name, boolean quoted, boolean fixedLetterCasing) {
+	/**
+	 * Transform the SQL identifier name by applying a {@link UnaryOperator transformation function}. The transformation
+	 * function must return a valid, {@literal non-null} identifier {@link String}.
+	 *
+	 * @param transformationFunction the transformation function. Must return a {@literal non-null} identifier
+	 *          {@link String}.
+	 * @return a new {@link SqlIdentifier} with the transformation applied.
+	 */
+	SqlIdentifier transform(UnaryOperator<String> transformationFunction);
 
-			Assert.hasText(name, "A database object must have at least on name part.");
-
-			this.name = name;
-			this.quoted = quoted;
-			this.fixedLetterCasing = fixedLetterCasing;
-		}
-
-		public SimpleSqlIdentifier withAdjustableLetterCasing() {
-			return new SimpleSqlIdentifier(name, quoted, false);
-		}
-
-		public SimpleSqlIdentifier prefix(String prefix) {
-			return new SimpleSqlIdentifier(prefix + name, quoted, fixedLetterCasing);
-		}
-
-		@Override
-		public SimpleSqlIdentifier prefix(SqlIdentifier prefix, String separator) {
-
-			Assert.isInstanceOf(SimpleSqlIdentifier.class, prefix, "Prefixing is only supported for simple SqlIdentifier");
-
-			return new SimpleSqlIdentifier(((SimpleSqlIdentifier) prefix).name + separator + name, quoted, fixedLetterCasing);
-		}
-
-		public SimpleSqlIdentifier suffix(String suffix) {
-			return new SimpleSqlIdentifier(name + suffix, quoted, fixedLetterCasing);
-		}
-
-		@Override
-		public boolean equals(Object o) {
-
-			if (this == o)
-				return true;
-			if (o == null || getClass() != o.getClass())
-				return false;
-			SimpleSqlIdentifier that = (SimpleSqlIdentifier) o;
-			return quoted == that.quoted && Objects.equals(name, that.name);
-		}
-
-		@Override
-		public int hashCode() {
-
-			int result = Objects.hash(quoted);
-			result = 31 * result + name.hashCode();
-			return result;
-		}
-
-		@Override
-		public String toString() {
-			return "DatabaseObjectIdentifier{" + "name=" + name + ", quoted=" + quoted + '}';
-		}
-
-		@Override
-		public SqlIdentifier concat(SqlIdentifier second) {
-			// TODO: this is completely broken and needs fixing.
-			return new CombinedSqlIdentifier(this, (SimpleSqlIdentifier) second);
-		}
-
-		@Override
-		public String toSql(IdentifierProcessing processing) {
-
-			return quoted ? processing.quote(toColumnName(processing)) : toColumnName(processing);
-		}
-
-		@Override
-		public String toColumnName(IdentifierProcessing processing) {
-			return fixedLetterCasing ? name : processing.standardizeLetterCase(name);
-		}
+	/**
+	 * Create a new quoted identifier given {@code name}.
+	 *
+	 * @param name the identifier.
+	 * @return a new quoted identifier given {@code name}.
+	 */
+	static SqlIdentifier quoted(String name) {
+		return new DefaultSqlIdentifier(name, true);
 	}
 
-	final class CombinedSqlIdentifier implements SqlIdentifier {
+	/**
+	 * Create a new unquoted identifier given {@code name}.
+	 *
+	 * @param name the identifier.
+	 * @return a new unquoted identifier given {@code name}.
+	 */
+	static SqlIdentifier unquoted(String name) {
+		return new DefaultSqlIdentifier(name, false);
+	}
 
-		private final SimpleSqlIdentifier[] parts;
-
-		private CombinedSqlIdentifier(SimpleSqlIdentifier... parts) {
-			this.parts = parts;
-		}
-
-		@Override
-		public SqlIdentifier concat(SqlIdentifier second) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public SimpleSqlIdentifier prefix(SqlIdentifier prefix, String separator) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public SqlIdentifier suffix(String suffix) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public String toSql(IdentifierProcessing processing) {
-
-			StringJoiner stringJoiner = new StringJoiner(".");
-
-			for (SimpleSqlIdentifier namePart : parts) {
-				stringJoiner.add(namePart.toSql(processing));
-			}
-
-			return stringJoiner.toString();
-		}
-
-		@Override
-		public String toColumnName(IdentifierProcessing processing) {
-			throw new UnsupportedOperationException("A CombinedSqlIdentifier can't be used as a column name");
-		}
-
-		@Override
-		public String toString() {
-			return "CombinedDatabaseObjectIdentifier{" + "parts=" + Arrays.toString(parts) + '}';
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o)
-				return true;
-			if (o == null || getClass() != o.getClass())
-				return false;
-			CombinedSqlIdentifier that = (CombinedSqlIdentifier) o;
-			return Arrays.equals(parts, that.parts);
-		}
-
-		@Override
-		public int hashCode() {
-			return Arrays.hashCode(parts);
-		}
+	/**
+	 * Create a new composite {@link SqlIdentifier} from one or more {@link SqlIdentifier}s.
+	 * <p>
+	 * Composite identifiers do not allow {@link #transform(UnaryOperator)} transformation.
+	 * </p>
+	 *
+	 * @param sqlIdentifiers the elements of the new identifier.
+	 * @return the new composite identifier.
+	 */
+	static SqlIdentifier from(SqlIdentifier... sqlIdentifiers) {
+		return new CompositeSqlIdentifier(sqlIdentifiers);
 	}
 }

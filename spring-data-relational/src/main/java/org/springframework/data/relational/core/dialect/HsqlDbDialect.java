@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.data.relational.domain.IdentifierProcessing;
+
 /**
  * A {@link Dialect} for HsqlDb.
  *
@@ -53,5 +55,4 @@ public class HsqlDbDialect extends AbstractDialect {
 			return Position.AFTER_ORDER_BY;
 		}
 	};
-
 }

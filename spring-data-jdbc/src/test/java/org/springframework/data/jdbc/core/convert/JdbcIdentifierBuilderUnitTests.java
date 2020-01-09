@@ -47,7 +47,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						tuple(quoted("dummy_entity"), "eins", UUID.class) //
+						tuple(quoted("DUMMY_ENTITY"), "eins", UUID.class) //
 				);
 	}
 
@@ -64,8 +64,8 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactlyInAnyOrder( //
-						tuple(quoted("dummy_entity"), "parent-eins", UUID.class), //
-						tuple(quoted("dummy_entity_key"), "map-key-eins", String.class) //
+						tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class), //
+						tuple(quoted("DUMMY_ENTITY_KEY"), "map-key-eins", String.class) //
 				);
 	}
 
@@ -82,8 +82,8 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactlyInAnyOrder( //
-						tuple(quoted("dummy_entity"), "parent-eins", UUID.class), //
-						tuple(quoted("dummy_entity_key"), "list-index-eins", Integer.class) //
+						tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class), //
+						tuple(quoted("DUMMY_ENTITY_KEY"), "list-index-eins", Integer.class) //
 				);
 	}
 
@@ -97,7 +97,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						tuple(quoted("dummy_entity"), "parent-eins", UUID.class) //
+						tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class) //
 				);
 	}
 
@@ -111,7 +111,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						tuple(quoted("dummy_entity"), "parent-eins", UUID.class) //
+						tuple(quoted("DUMMY_ENTITY"), "parent-eins", UUID.class) //
 				);
 	}
 

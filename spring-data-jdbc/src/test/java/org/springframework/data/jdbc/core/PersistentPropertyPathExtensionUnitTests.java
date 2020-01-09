@@ -99,13 +99,13 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(extPath(entity).getTableName()).isEqualTo(quoted("dummy_entity"));
-			softly.assertThat(extPath("second").getTableName()).isEqualTo(quoted("second"));
-			softly.assertThat(extPath("second.third2").getTableName()).isEqualTo(quoted("second"));
-			softly.assertThat(extPath("second.third2.value").getTableName()).isEqualTo(quoted("second"));
-			softly.assertThat(extPath("secondList.third2").getTableName()).isEqualTo(quoted("second"));
-			softly.assertThat(extPath("secondList.third2.value").getTableName()).isEqualTo(quoted("second"));
-			softly.assertThat(extPath("secondList").getTableName()).isEqualTo(quoted("second"));
+			softly.assertThat(extPath(entity).getTableName()).isEqualTo(quoted("DUMMY_ENTITY"));
+			softly.assertThat(extPath("second").getTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("second.third2").getTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("second.third2.value").getTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("secondList.third2").getTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("secondList.third2.value").getTableName()).isEqualTo(quoted("SECOND"));
+			softly.assertThat(extPath("secondList").getTableName()).isEqualTo(quoted("SECOND"));
 		});
 	}
 
@@ -134,12 +134,12 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(extPath("second.third2.value").getColumnName()).isEqualTo(quoted("thrdvalue"));
-			softly.assertThat(extPath("second.third.value").getColumnName()).isEqualTo(quoted("value"));
-			softly.assertThat(extPath("secondList.third2.value").getColumnName()).isEqualTo(quoted("thrdvalue"));
-			softly.assertThat(extPath("secondList.third.value").getColumnName()).isEqualTo(quoted("value"));
-			softly.assertThat(extPath("second2.third2.value").getColumnName()).isEqualTo(quoted("secthrdvalue"));
-			softly.assertThat(extPath("second2.third.value").getColumnName()).isEqualTo(quoted("value"));
+			softly.assertThat(extPath("second.third2.value").getColumnName()).isEqualTo(quoted("THRDVALUE"));
+			softly.assertThat(extPath("second.third.value").getColumnName()).isEqualTo(quoted("VALUE"));
+			softly.assertThat(extPath("secondList.third2.value").getColumnName()).isEqualTo(quoted("THRDVALUE"));
+			softly.assertThat(extPath("secondList.third.value").getColumnName()).isEqualTo(quoted("VALUE"));
+			softly.assertThat(extPath("second2.third2.value").getColumnName()).isEqualTo(quoted("SECTHRDVALUE"));
+			softly.assertThat(extPath("second2.third.value").getColumnName()).isEqualTo(quoted("VALUE"));
 		});
 	}
 
@@ -164,15 +164,15 @@ public class PersistentPropertyPathExtensionUnitTests {
 
 		assertSoftly(softly -> {
 
-			softly.assertThat(extPath("second.third2").getReverseColumnName()).isEqualTo(quoted("dummy_entity"));
-			softly.assertThat(extPath("second.third").getReverseColumnName()).isEqualTo(quoted("dummy_entity"));
-			softly.assertThat(extPath("secondList.third2").getReverseColumnName()).isEqualTo(quoted("dummy_entity"));
-			softly.assertThat(extPath("secondList.third").getReverseColumnName()).isEqualTo(quoted("dummy_entity"));
-			softly.assertThat(extPath("second2.third2").getReverseColumnName()).isEqualTo(quoted("dummy_entity"));
-			softly.assertThat(extPath("second2.third").getReverseColumnName()).isEqualTo(quoted("dummy_entity"));
-			softly.assertThat(extPath("withId.second.third2.value").getReverseColumnName()).isEqualTo(quoted("with_id"));
-			softly.assertThat(extPath("withId.second.third").getReverseColumnName()).isEqualTo(quoted("with_id"));
-			softly.assertThat(extPath("withId.second2.third").getReverseColumnName()).isEqualTo(quoted("with_id"));
+			softly.assertThat(extPath("second.third2").getReverseColumnName()).isEqualTo(quoted("DUMMY_ENTITY"));
+			softly.assertThat(extPath("second.third").getReverseColumnName()).isEqualTo(quoted("DUMMY_ENTITY"));
+			softly.assertThat(extPath("secondList.third2").getReverseColumnName()).isEqualTo(quoted("DUMMY_ENTITY"));
+			softly.assertThat(extPath("secondList.third").getReverseColumnName()).isEqualTo(quoted("DUMMY_ENTITY"));
+			softly.assertThat(extPath("second2.third2").getReverseColumnName()).isEqualTo(quoted("DUMMY_ENTITY"));
+			softly.assertThat(extPath("second2.third").getReverseColumnName()).isEqualTo(quoted("DUMMY_ENTITY"));
+			softly.assertThat(extPath("withId.second.third2.value").getReverseColumnName()).isEqualTo(quoted("WITH_ID"));
+			softly.assertThat(extPath("withId.second.third").getReverseColumnName()).isEqualTo(quoted("WITH_ID"));
+			softly.assertThat(extPath("withId.second2.third").getReverseColumnName()).isEqualTo(quoted("WITH_ID"));
 		});
 	}
 

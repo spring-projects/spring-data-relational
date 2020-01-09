@@ -60,7 +60,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.domain.SqlIdentifier.SimpleSqlIdentifier;
 import org.springframework.data.repository.query.Param;
 import org.springframework.util.Assert;
 
@@ -81,8 +80,8 @@ public class EntityRowMapperUnitTests {
 	public static final long ID_FOR_ENTITY_NOT_REFERENCING_MAP = 23L;
 	public static final NamingStrategy X_APPENDING_NAMINGSTRATEGY = new NamingStrategy() {
 		@Override
-		public SimpleSqlIdentifier getColumnName(RelationalPersistentProperty property) {
-			return NamingStrategy.super.getColumnName(property).suffix("x");
+		public String getColumnName(RelationalPersistentProperty property) {
+			return NamingStrategy.super.getColumnName(property).concat("x");
 		}
 	};
 

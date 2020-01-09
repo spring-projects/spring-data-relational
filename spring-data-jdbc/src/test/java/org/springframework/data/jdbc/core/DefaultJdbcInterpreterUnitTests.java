@@ -38,6 +38,7 @@ import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.relational.domain.SqlIdentifier;
 
 /**
  * Unit tests for {@link DefaultJdbcInterpreter}
@@ -49,7 +50,7 @@ import org.springframework.data.relational.domain.Identifier;
  */
 public class DefaultJdbcInterpreterUnitTests {
 
-	public static final SimpleSqlIdentifier BACK_REFERENCE = quoted("container");
+	public static final SqlIdentifier BACK_REFERENCE = quoted("CONTAINER");
 	static final long CONTAINER_ID = 23L;
 	RelationalMappingContext context = new JdbcMappingContext();
 	JdbcConverter converter = new BasicJdbcConverter(context, (Identifier, path) -> null);
@@ -152,10 +153,10 @@ public class DefaultJdbcInterpreterUnitTests {
 
 		assertThat(argumentCaptor.getValue().getParts()) //
 				.extracting("name", "value", "targetType") //
-				.containsOnly(tuple(quoted("root_with_list"), CONTAINER_ID, Long.class), // the top
+				.containsOnly(tuple(quoted("ROOT_WITH_LIST"), CONTAINER_ID, Long.class), // the top
 																																									// level id
-						tuple(quoted("root_with_list_key"), 3, Integer.class), // midlevel key
-						tuple(quoted("with_list_key"), 6, Integer.class) // lowlevel key
+						tuple(quoted("ROOT_WITH_LIST_KEY"), 3, Integer.class), // midlevel key
+						tuple(quoted("WITH_LIST_KEY"), 6, Integer.class) // lowlevel key
 				);
 	}
 

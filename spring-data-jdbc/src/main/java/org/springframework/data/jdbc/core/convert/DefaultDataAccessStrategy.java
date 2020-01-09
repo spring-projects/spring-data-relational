@@ -403,7 +403,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			} else {
 
 				Object value = propertyAccessor.getProperty(property);
-				SqlIdentifier paramName = property.getColumnName().prefix(prefix);
+				SqlIdentifier paramName = property.getColumnName().transform(prefix::concat);
 
 				addConvertedPropertyValue(parameters, property, value, paramName);
 			}
@@ -447,7 +447,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				return null;
 			}
 
-			return keys.get(persistentEntity.getIdColumn().toColumnName(getIdentifierProcessing()));
+			return keys.get(persistentEntity.getIdColumn().getReference(getIdentifierProcessing()));
 		}
 	}
 

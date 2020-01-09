@@ -237,14 +237,14 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_")
 		Embeddable embeddable;
 	}
 
 	@Data
 	private static class Embeddable {
 
-		@Column("id")
+		@Column("ID")
 		DummyEntity2 dummyEntity2;
 
 		String test;

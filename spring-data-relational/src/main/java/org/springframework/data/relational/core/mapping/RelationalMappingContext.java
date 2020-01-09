@@ -37,6 +37,7 @@ public class RelationalMappingContext
 		extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
 
 	@Getter private final NamingStrategy namingStrategy;
+	private boolean forceQuote = true;
 
 	/**
 	 * Creates a new {@link RelationalMappingContext}.
@@ -59,13 +60,37 @@ public class RelationalMappingContext
 		setSimpleTypeHolder(SimpleTypeHolder.DEFAULT);
 	}
 
+	/**
+	 * Return whether quoting should be enabled for all table and column names. Quoting is enabled by default.
+	 *
+	 * @return
+	 * @since 2.0
+	 */
+	public boolean isForceQuote() {
+		return forceQuote;
+	}
+
+	/**
+	 * Enable/disable quoting for all tables and column names.
+	 *
+	 * @param forceQuote
+	 */
+	public void setForceQuote(boolean forceQuote) {
+		this.forceQuote = forceQuote;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.mapping.context.AbstractMappingContext#createPersistentEntity(org.springframework.data.util.TypeInformation)
 	 */
 	@Override
 	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
-		return new RelationalPersistentEntityImpl<>(typeInformation, this.namingStrategy);
+
+		RelationalPersistentEntityImpl<T> entity = new RelationalPersistentEntityImpl<>(typeInformation,
+				this.namingStrategy);
+		entity.setForceQuote(isForceQuote());
+
+		return entity;
 	}
 
 	/*
@@ -75,6 +100,11 @@ public class RelationalMappingContext
 	@Override
 	protected RelationalPersistentProperty createPersistentProperty(Property property,
 			RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
-		return new BasicRelationalPersistentProperty(property, owner, simpleTypeHolder, this);
+
+		BasicRelationalPersistentProperty persistentProperty = new BasicRelationalPersistentProperty(property, owner,
+				simpleTypeHolder, this);
+		persistentProperty.setForceQuote(isForceQuote());
+
+		return persistentProperty;
 	}
 }

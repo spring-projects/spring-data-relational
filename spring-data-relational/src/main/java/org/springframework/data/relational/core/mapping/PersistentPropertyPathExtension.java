@@ -20,8 +20,8 @@ import lombok.EqualsAndHashCode;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.domain.IdentifierProcessing;
 import org.springframework.data.relational.domain.SqlIdentifier;
-import org.springframework.data.relational.domain.SqlIdentifier.SimpleSqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -394,15 +394,18 @@ public class PersistentPropertyPathExtension {
 
 		if (path.getLength() == 1) {
 			Assert.notNull(prefix, "Prefix mus not be null.");
-			return SqlIdentifier.quoted(prefix).withAdjustableLetterCasing();
+			return SqlIdentifier.quoted(prefix);
 		}
 
 		PersistentPropertyPathExtension parentPath = getParentPath();
-		return parentPath.isEmbedded() ? parentPath.assembleTableAlias().suffix(prefix)
-				: parentPath.assembleTableAlias().suffix("_" + prefix);
+		SqlIdentifier sqlIdentifier = parentPath.assembleTableAlias();
+
+		return parentPath.isEmbedded() ? sqlIdentifier.transform(name -> name.concat(prefix))
+				: sqlIdentifier.transform(name -> name + "_" + prefix);
+
 	}
 
-	private SqlIdentifier assembleColumnName(SimpleSqlIdentifier suffix) {
+	private SqlIdentifier assembleColumnName(SqlIdentifier suffix) {
 
 		Assert.state(path != null, "Path is null");
 
@@ -419,7 +422,7 @@ public class PersistentPropertyPathExtension {
 
 		String embeddedPrefix = parentLeaf.getEmbeddedPrefix();
 
-		return getParentPath().assembleColumnName(suffix.prefix(embeddedPrefix));
+		return getParentPath().assembleColumnName(suffix.transform(embeddedPrefix::concat));
 	}
 
 	private RelationalPersistentEntity<?> getRequiredLeafEntity() {
@@ -429,7 +432,8 @@ public class PersistentPropertyPathExtension {
 	private SqlIdentifier prefixWithTableAlias(SqlIdentifier columnName) {
 
 		SqlIdentifier tableAlias = getTableAlias();
-		return tableAlias == null ? columnName : columnName.prefix(tableAlias, "_");
+		return tableAlias == null ? columnName
+				: columnName.transform(name -> tableAlias.getReference(IdentifierProcessing.NONE) + "_" + name);
 	}
 
 }

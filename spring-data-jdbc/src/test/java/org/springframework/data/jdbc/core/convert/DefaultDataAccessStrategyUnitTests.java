@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.core.convert.converter.Converter;
@@ -49,6 +50,7 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Jens Schauder
  * @author Mark Paluch
  */
+@Ignore
 public class DefaultDataAccessStrategyUnitTests {
 
 	public static final long ID_FROM_ADDITIONAL_VALUES = 23L;

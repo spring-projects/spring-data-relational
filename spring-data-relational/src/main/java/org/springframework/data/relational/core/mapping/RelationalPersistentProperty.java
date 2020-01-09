@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.relational.domain.SqlIdentifier;
-import org.springframework.data.relational.domain.SqlIdentifier.SimpleSqlIdentifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -36,7 +35,7 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 *
 	 * @return the name of the column backing this property.
 	 */
-	SimpleSqlIdentifier getColumnName();
+	SqlIdentifier getColumnName();
 
 	/**
 	 * The type to be used to store this property in the database. Multidimensional arrays are unwrapped to reflect a

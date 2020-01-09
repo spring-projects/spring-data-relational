@@ -273,8 +273,8 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 			return new NamingStrategy() {
 
-				public SqlIdentifier getTableName(@NotNull Class<?> type) {
-					return unquoted("DummyEntity");
+				public String getTableName(@NotNull Class<?> type) {
+					return "DummyEntity";
 				}
 			};
 		}

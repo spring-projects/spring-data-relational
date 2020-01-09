@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.mapping;
 
 import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
+import org.springframework.data.relational.domain.IdentifierProcessing;
 import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.relational.domain.SqlIdentifier.*;
 import org.springframework.data.util.ParsingUtils;
@@ -28,7 +29,7 @@ import org.springframework.util.Assert;
  * <p>
  * NOTE: Can also be used as an adapter. Create a lambda or an anonymous subclass and override any settings to implement
  * a different strategy on the fly.
- * 
+ *
  * @author Greg Turnquist
  * @author Michael Simons
  * @author Kazuki Shimizu
@@ -49,34 +50,34 @@ public interface NamingStrategy {
 	 *
 	 * @return Empty String representing no schema
 	 */
-	default SqlIdentifier getSchema() {
-		return SqlIdentifier.EMPTY;
+	default String getSchema() {
+		return "";
 	}
 
 	/**
 	 * The name of the table to be used for persisting entities having the type passed as an argument. The default
 	 * implementation takes the {@code type.getSimpleName()} and separates camel case parts with '_'.
 	 */
-	default SqlIdentifier getTableName(Class<?> type) {
+	default String getTableName(Class<?> type) {
 
 		Assert.notNull(type, "Type must not be null.");
 
-		return quoted(ParsingUtils.reconcatenateCamelCase(type.getSimpleName(), "_")).withAdjustableLetterCasing();
+		return ParsingUtils.reconcatenateCamelCase(type.getSimpleName(), "_");
 	}
 
 	/**
 	 * Defaults to return the given {@link RelationalPersistentProperty}'s name with the parts of a camel case name
 	 * separated by '_';
 	 */
-	default SimpleSqlIdentifier getColumnName(RelationalPersistentProperty property) {
+	default String getColumnName(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 
-		return quoted(ParsingUtils.reconcatenateCamelCase(property.getName(), "_")).withAdjustableLetterCasing();
+		return ParsingUtils.reconcatenateCamelCase(property.getName(), "_");
 	}
 
-	default SqlIdentifier getQualifiedTableName(Class<?> type) {
-		return this.getSchema().concat(this.getTableName(type));
+	default String getQualifiedTableName(Class<?> type) {
+		return this.getSchema() + (this.getSchema().equals("") ? "" : ".") + this.getTableName(type);
 	}
 
 	/**
@@ -85,14 +86,14 @@ public interface NamingStrategy {
 	 * @param property The property who's column name in the owner table is required
 	 * @return a column name. Must not be {@code null}.
 	 */
-	default SqlIdentifier getReverseColumnName(RelationalPersistentProperty property) {
+	default String getReverseColumnName(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 
-		return property.getOwner().getTableName();
+		return property.getOwner().getTableName().getReference(IdentifierProcessing.NONE);
 	}
 
-	default SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
+	default String getReverseColumnName(PersistentPropertyPathExtension path) {
 
 		return getTableName(path.getIdDefiningParentPath().getLeafEntity().getType());
 	}
@@ -100,13 +101,13 @@ public interface NamingStrategy {
 	/**
 	 * For a map valued reference A -> Map&gt;X,B&lt; this is the name of the column in the table for B holding the key of
 	 * the map.
-	 * 
+	 *
 	 * @return name of the key column. Must not be {@code null}.
 	 */
-	default SqlIdentifier getKeyColumn(RelationalPersistentProperty property) {
+	default String getKeyColumn(RelationalPersistentProperty property) {
 
 		Assert.notNull(property, "Property must not be null.");
 
-		return getReverseColumnName(property).suffix("_key");
+		return getReverseColumnName(property) + "_key";
 	}
 }

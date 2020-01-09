@@ -18,13 +18,13 @@ package org.springframework.data.relational.domain;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
-import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
+
 import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
 
 /**
  * unit tests for {@link DefaultIdentifierProcessing}.
- * 
+ *
  * @author Jens Schauder
  */
 public class DefaultIdentifierProcessingUnitTests {
@@ -32,7 +32,7 @@ public class DefaultIdentifierProcessingUnitTests {
 	@Test // DATAJDBC-386
 	public void ansiConformProcessing() {
 
-		DefaultIdentifierProcessing processing = new DefaultIdentifierProcessing(Quoting.ANSI, LetterCasing.UPPER_CASE);
+		DefaultIdentifierProcessing processing = IdentifierProcessing.create(Quoting.ANSI, LetterCasing.UPPER_CASE);
 
 		assertThat(processing.quote("something")).isEqualTo("\"something\"");
 		assertThat(processing.standardizeLetterCase("aBc")).isEqualTo("ABC");
@@ -41,7 +41,7 @@ public class DefaultIdentifierProcessingUnitTests {
 	@Test // DATAJDBC-386
 	public void twoCharacterAsIs() {
 
-		DefaultIdentifierProcessing processing = new DefaultIdentifierProcessing(new Quoting("[", "]"), LetterCasing.AS_IS);
+		DefaultIdentifierProcessing processing = IdentifierProcessing.create(new Quoting("[", "]"), LetterCasing.AS_IS);
 
 		assertThat(processing.quote("something")).isEqualTo("[something]");
 		assertThat(processing.standardizeLetterCase("aBc")).isEqualTo("aBc");

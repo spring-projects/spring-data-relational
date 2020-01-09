@@ -378,7 +378,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			}
 
 			Object value = getObjectFromResultSet(
-					path.extendBy(property).getColumnAlias().toColumnName(identifierProcessing));
+					path.extendBy(property).getColumnAlias().getReference(identifierProcessing));
 			return readValue(value, property.getTypeInformation());
 		}
 
@@ -433,7 +433,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				idValue = newContext.readFrom(idProperty);
 			} else {
 				idValue = newContext.getObjectFromResultSet(
-						path.extendBy(property).getReverseColumnNameAlias().toColumnName(identifierProcessing));
+						path.extendBy(property).getReverseColumnNameAlias().getReference(identifierProcessing));
 			}
 
 			if (idValue == null) {

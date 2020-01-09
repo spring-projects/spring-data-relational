@@ -251,7 +251,7 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		@Id Long id;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") CascadedEmbeddable prefixedEmbeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_") CascadedEmbeddable prefixedEmbeddable;
 
 		@Embedded(onEmpty = OnEmpty.USE_NULL) CascadedEmbeddable embeddable;
 	}
@@ -260,7 +260,7 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 	static class CascadedEmbeddable {
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix2_")
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX2_")
 		Embeddable embeddable;
 	}
 
