@@ -81,7 +81,7 @@ class SqlGenerator {
 
 	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
-	 * 
+	 *
 	 * @param mappingContext must not be {@literal null}.
 	 * @param entity must not be {@literal null}.
 	 * @param identifierProcessing must not be {@literal null}.
@@ -536,7 +536,8 @@ class SqlGenerator {
 	}
 
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
-		return Delete.builder().from(table).where(getIdColumn().isEqualTo(SQL.bindMarker(":id")));
+		return Delete.builder().from(table)
+				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + ID_SQL_PARAMETER.toColumnName(identifierProcessing))));
 	}
 
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
