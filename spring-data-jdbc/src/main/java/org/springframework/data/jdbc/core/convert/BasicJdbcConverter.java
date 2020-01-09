@@ -44,7 +44,7 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -378,7 +378,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			}
 
 			Object value = getObjectFromResultSet(
-					path.extendBy(property).getColumnAlias().toColumnName(identifierProcessing));
+					path.extendBy(property).getColumnAlias().getReference(identifierProcessing));
 			return readValue(value, property.getTypeInformation());
 		}
 
@@ -433,7 +433,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				idValue = newContext.readFrom(idProperty);
 			} else {
 				idValue = newContext.getObjectFromResultSet(
-						path.extendBy(property).getReverseColumnNameAlias().toColumnName(identifierProcessing));
+						path.extendBy(property).getReverseColumnNameAlias().getReference(identifierProcessing));
 			}
 
 			if (idValue == null) {

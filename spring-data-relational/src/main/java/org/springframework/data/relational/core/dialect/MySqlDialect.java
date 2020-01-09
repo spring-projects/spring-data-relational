@@ -15,10 +15,9 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import org.springframework.data.relational.domain.IdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 
 /**
  * A SQL dialect for MySQL.
@@ -90,6 +89,6 @@ public class MySqlDialect extends AbstractDialect {
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
-		return new DefaultIdentifierProcessing(new Quoting("`"), LetterCasing.LOWER_CASE);
+		return IdentifierProcessing.create(new Quoting("`"), LetterCasing.LOWER_CASE);
 	}
 }

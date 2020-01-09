@@ -16,8 +16,8 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
-import org.springframework.data.relational.domain.IdentifierProcessing;
-import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * Represents a dialect that is implemented by a particular database. Please note that not all features are supported by
@@ -54,8 +54,9 @@ public interface Dialect {
 	SelectRenderContext getSelectContext();
 
 	/**
-	 * Returns the {@link IdentifierProcessing} used for processing {@link SqlIdentifier} when converting them to SQL snippets or parameter names.
-	 * 
+	 * Returns the {@link IdentifierProcessing} used for processing {@link SqlIdentifier} when converting them to SQL
+	 * snippets or parameter names.
+	 *
 	 * @return the {@link IdentifierProcessing}. Guaranteed to be not {@literal null}.
 	 * @since 2.0
 	 */

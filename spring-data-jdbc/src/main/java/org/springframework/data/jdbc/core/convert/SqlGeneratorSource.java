@@ -21,7 +21,6 @@ import java.util.Map;
 
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.domain.IdentifierProcessing;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**

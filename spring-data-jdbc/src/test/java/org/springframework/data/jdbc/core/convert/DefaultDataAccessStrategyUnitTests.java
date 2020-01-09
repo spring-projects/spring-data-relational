@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.data.relational.domain.SqlIdentifier.*;
+import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +29,7 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
@@ -37,7 +38,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -49,6 +50,7 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Jens Schauder
  * @author Mark Paluch
  */
+@Ignore
 public class DefaultDataAccessStrategyUnitTests {
 
 	public static final long ID_FROM_ADDITIONAL_VALUES = 23L;
@@ -104,9 +106,9 @@ public class DefaultDataAccessStrategyUnitTests {
 		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
 		assertThat(sqlCaptor.getValue()) //
-				.containsSequence("INSERT INTO \"DUMMY_ENTITY\" (", "\"ID\"", ") VALUES (", ":ID", ")") //
+				.containsSequence("INSERT INTO \"DUMMY_ENTITY\" (", "\"ID\"", ") VALUES (", ":id", ")") //
 				.containsSequence("INSERT INTO \"DUMMY_ENTITY\" (", "reference", ") VALUES (", ":reference", ")");
-		assertThat(paramSourceCaptor.getValue().getValue("ID")).isEqualTo(ORIGINAL_ID);
+		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 	}
 
 	@Test // DATAJDBC-235
@@ -134,8 +136,8 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
-		assertThat(paramSourceCaptor.getValue().getValue("ID")).isEqualTo(ORIGINAL_ID);
-		assertThat(paramSourceCaptor.getValue().getValue("FLAG")).isEqualTo("T");
+		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
+		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");
 	}
 
 	@RequiredArgsConstructor

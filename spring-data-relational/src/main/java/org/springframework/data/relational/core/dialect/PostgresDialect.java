@@ -17,10 +17,9 @@ package org.springframework.data.relational.core.dialect;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.relational.domain.IdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -125,6 +124,6 @@ public class PostgresDialect extends AbstractDialect {
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
-		return new DefaultIdentifierProcessing(Quoting.ANSI, LetterCasing.LOWER_CASE);
+		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.LOWER_CASE);
 	}
 }

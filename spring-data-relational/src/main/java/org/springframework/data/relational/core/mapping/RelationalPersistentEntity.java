@@ -16,7 +16,7 @@
 package org.springframework.data.relational.core.mapping;
 
 import org.springframework.data.mapping.model.MutablePersistentEntity;
-import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * A {@link org.springframework.data.mapping.PersistentEntity} interface with additional methods for JDBC/RDBMS related

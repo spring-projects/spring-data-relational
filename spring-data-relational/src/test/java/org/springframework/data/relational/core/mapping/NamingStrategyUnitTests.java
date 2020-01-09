@@ -16,15 +16,14 @@
 package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntityImplUnitTests.DummySubEntity;
-import org.springframework.data.relational.domain.SqlIdentifier;
 
 /**
  * Unit tests for the {@link NamingStrategy}.
@@ -42,53 +41,51 @@ public class NamingStrategyUnitTests {
 	@Test
 	public void getTableName() {
 
-		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo(quoted("dummy_entity"));
-		assertThat(target.getTableName(DummySubEntity.class)).isEqualTo(quoted("dummy_sub_entity"));
+		assertThat(target.getTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
+		assertThat(target.getTableName(DummySubEntity.class)).isEqualTo("dummy_sub_entity");
 	}
 
 	@Test
 	public void getColumnName() {
 
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))).isEqualTo(quoted("id"));
-		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt")))
-				.isEqualTo(quoted("created_at"));
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("id"))).isEqualTo("id");
+		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("createdAt"))).isEqualTo("created_at");
 		assertThat(target.getColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo(quoted("dummy_sub_entities"));
+				.isEqualTo("dummy_sub_entities");
 	}
 
 	@Test
 	public void getReverseColumnName() {
 
 		assertThat(target.getReverseColumnName(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo(quoted("dummy_entity"));
+				.isEqualTo("dummy_entity");
 	}
 
 	@Test
 	public void getKeyColumn() {
 
 		assertThat(target.getKeyColumn(persistentEntity.getPersistentProperty("dummySubEntities")))
-				.isEqualTo(quoted("dummy_entity_key"));
+				.isEqualTo("dummy_entity_key");
 	}
 
 	@Test
 	public void getSchema() {
-		assertThat(target.getSchema()).isEqualTo(SqlIdentifier.EMPTY);
+		assertThat(target.getSchema()).isEqualTo("");
 	}
 
 	@Test
 	public void getQualifiedTableName() {
 
-		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo(quoted("dummy_entity"));
+		assertThat(target.getQualifiedTableName(persistentEntity.getType())).isEqualTo("dummy_entity");
 
 		NamingStrategy strategy = new NamingStrategy() {
 			@Override
-			public SqlIdentifier getSchema() {
-				return quoted("schema");
+			public String getSchema() {
+				return "schema";
 			}
 		};
 
-		assertThat(strategy.getQualifiedTableName(persistentEntity.getType()))
-				.isEqualTo(quoted("schema").concat(quoted("dummy_entity")));
+		assertThat(strategy.getQualifiedTableName(persistentEntity.getType())).isEqualTo("schema.dummy_entity");
 	}
 
 	static class DummyEntity {

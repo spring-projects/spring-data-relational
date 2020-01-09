@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.relational.domain.SqlIdentifier.*;
 
 import lombok.Data;
 import lombok.Value;
@@ -39,7 +38,6 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
-import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -167,8 +165,8 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 			return new NamingStrategy() {
 
 				@Override
-				public SqlIdentifier getTableName(Class<?> type) {
-					return unquoted(type.getSimpleName().toUpperCase());
+				public String getTableName(Class<?> type) {
+					return type.getSimpleName().toUpperCase();
 				}
 			};
 		}

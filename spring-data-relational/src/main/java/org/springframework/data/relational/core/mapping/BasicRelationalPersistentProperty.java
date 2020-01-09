@@ -30,8 +30,7 @@ import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
-import org.springframework.data.relational.domain.SqlIdentifier;
-import org.springframework.data.relational.domain.SqlIdentifier.SimpleSqlIdentifier;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Optionals;
 import org.springframework.lang.Nullable;
@@ -60,12 +59,13 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	private final RelationalMappingContext context;
-	private final Lazy<SimpleSqlIdentifier> columnName;
+	private final Lazy<SqlIdentifier> columnName;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
 	private final Lazy<String> embeddedPrefix;
 	private final Lazy<Class<?>> columnType = Lazy.of(this::doGetColumnType);
+	private boolean forceQuote = true;
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
@@ -93,8 +93,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		this.columnName = Lazy.of(() -> Optional.ofNullable(findAnnotation(Column.class)) //
 				.map(Column::value) //
 				.filter(StringUtils::hasText) //
-				.map(name -> SqlIdentifier.quoted(name).withAdjustableLetterCasing()) //
-				.orElseGet(() -> context.getNamingStrategy().getColumnName(this)));
+				.map(this::createSqlIdentifier) //
+				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getColumnName(this))));
 
 		this.collectionIdColumnName = Lazy.of(() -> Optionals
 				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)) //
@@ -103,14 +103,22 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 								.map(Column::value)) //
 				.filter(StringUtils::hasText) //
 				.findFirst() //
-				.map(name -> SqlIdentifier.quoted(name).withAdjustableLetterCasing())); //
+				.map(this::createSqlIdentifier)); //
 
 		this.collectionKeyColumnName = Lazy.of(() -> Optionals //
 				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn), //
 						Optional.ofNullable(findAnnotation(Column.class)).map(Column::keyColumn)) //
 				.filter(StringUtils::hasText).findFirst() //
-				.map(name -> (SqlIdentifier) SqlIdentifier.quoted(name).withAdjustableLetterCasing()) //
-				.orElseGet(() -> context.getNamingStrategy().getKeyColumn(this)));
+				.map(this::createSqlIdentifier) //
+				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getKeyColumn(this))));
+	}
+
+	private SqlIdentifier createSqlIdentifier(String name) {
+		return isForceQuote() ? SqlIdentifier.quoted(name) : SqlIdentifier.unquoted(name);
+	}
+
+	private SqlIdentifier createDerivedSqlIdentifier(String name) {
+		return new DerivedSqlIdentifier(name, isForceQuote());
 	}
 
 	/*
@@ -120,6 +128,14 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	protected Association<RelationalPersistentProperty> createAssociation() {
 		throw new UnsupportedOperationException();
+	}
+
+	boolean isForceQuote() {
+		return forceQuote;
+	}
+
+	void setForceQuote(boolean forceQuote) {
+		this.forceQuote = forceQuote;
 	}
 
 	@Override
@@ -137,7 +153,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty#getColumnName()
 	 */
 	@Override
-	public SimpleSqlIdentifier getColumnName() {
+	public SqlIdentifier getColumnName() {
 		return columnName.get();
 	}
 
@@ -188,13 +204,15 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public SqlIdentifier getReverseColumnName() {
-		return collectionIdColumnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(this));
+		return collectionIdColumnName.get()
+				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getReverseColumnName(this)));
 	}
 
 	@Override
 	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
 
-		return collectionIdColumnName.get().orElseGet(() -> context.getNamingStrategy().getReverseColumnName(path));
+		return collectionIdColumnName.get()
+				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getReverseColumnName(path)));
 	}
 
 	@Override

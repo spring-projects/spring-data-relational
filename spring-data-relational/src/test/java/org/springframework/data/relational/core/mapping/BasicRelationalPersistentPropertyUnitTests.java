@@ -16,7 +16,7 @@
 package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.relational.domain.SqlIdentifier.*;
+import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import lombok.Data;
 

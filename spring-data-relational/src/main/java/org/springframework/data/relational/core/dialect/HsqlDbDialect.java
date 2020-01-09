@@ -24,7 +24,7 @@ public class HsqlDbDialect extends AbstractDialect {
 
 	public static final HsqlDbDialect INSTANCE = new HsqlDbDialect();
 
-	protected HsqlDbDialect() {	}
+	protected HsqlDbDialect() {}
 
 	@Override
 	public LimitClause limit() {
@@ -53,5 +53,4 @@ public class HsqlDbDialect extends AbstractDialect {
 			return Position.AFTER_ORDER_BY;
 		}
 	};
-
 }

@@ -27,6 +27,7 @@ import org.junit.Test;
  * Test package dependencies for violations.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class DependencyTests {
 
@@ -49,6 +50,7 @@ public class DependencyTests {
 				classpath() //
 						// include only Spring Data related classes (for example no JDK code)
 						.including("org.springframework.data.**") //
+						.excluding("org.springframework.data.relational.core.sql.**") //
 						.filterClasspath(new AbstractFunction1<String, Object>() {
 							@Override
 							public Object apply(String s) { //

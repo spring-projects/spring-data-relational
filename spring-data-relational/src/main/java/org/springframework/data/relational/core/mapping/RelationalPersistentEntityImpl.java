@@ -19,7 +19,7 @@ import java.util.Optional;
 
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
-import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.StringUtils;
@@ -36,6 +36,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 
 	private final NamingStrategy namingStrategy;
 	private final Lazy<Optional<SqlIdentifier>> tableName;
+	private boolean forceQuote = true;
 
 	/**
 	 * Creates a new {@link RelationalPersistentEntityImpl} for the given {@link TypeInformation}.
@@ -51,17 +52,33 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 				findAnnotation(Table.class)) //
 				.map(Table::value) //
 				.filter(StringUtils::hasText) //
-				.map(name -> SqlIdentifier.quoted(name).withAdjustableLetterCasing()) //
+				.map(this::createSqlIdentifier) //
 		);
 	}
 
-	/* 
+	private SqlIdentifier createSqlIdentifier(String name) {
+		return isForceQuote() ? SqlIdentifier.quoted(name) : SqlIdentifier.unquoted(name);
+	}
+
+	private SqlIdentifier createDerivedSqlIdentifier(String name) {
+		return new DerivedSqlIdentifier(name, isForceQuote());
+	}
+
+	boolean isForceQuote() {
+		return forceQuote;
+	}
+
+	void setForceQuote(boolean forceQuote) {
+		this.forceQuote = forceQuote;
+	}
+
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity#getTableName()
 	 */
 	@Override
 	public SqlIdentifier getTableName() {
-		return tableName.get().orElseGet(() -> namingStrategy.getQualifiedTableName(getType()));
+		return tableName.get().orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getQualifiedTableName(getType())));
 	}
 
 	/*
@@ -82,7 +99,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 		return String.format("JdbcPersistentEntityImpl<%s>", getType());
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.mapping.model.BasicPersistentEntity#setPersistentPropertyAccessorFactory(org.springframework.data.mapping.model.PersistentPropertyAccessorFactory)
 	 */

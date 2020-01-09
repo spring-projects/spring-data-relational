@@ -32,9 +32,9 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Aliased;
-import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 
 /**
  * Unit tests for the {@link SqlGenerator} in a context of the {@link Embedded} annotation.
@@ -54,7 +54,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	SqlGenerator createSqlGenerator(Class<?> type) {
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
 		return new SqlGenerator(context, persistentEntity,
-				new DefaultIdentifierProcessing(new Quoting(""), LetterCasing.AS_IS));
+				IdentifierProcessing.create(new Quoting(""), LetterCasing.AS_IS));
 	}
 
 	@Test // DATAJDBC-111

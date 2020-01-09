@@ -100,7 +100,7 @@ public class JdbcRepositoryEmbeddedImmutableIntegrationTests {
 
 		@Id Long id;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") Embeddable prefixedEmbeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_") Embeddable prefixedEmbeddable;
 	}
 
 	@Value

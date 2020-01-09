@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.domain;
+package org.springframework.data.relational.core.sql;
 
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
-import org.springframework.data.relational.domain.IdentifierProcessing.DefaultIdentifierProcessing;
-import org.springframework.data.relational.domain.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.domain.IdentifierProcessing.Quoting;
+
+import org.springframework.data.relational.core.sql.DefaultIdentifierProcessing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 
 /**
  * unit tests for {@link DefaultIdentifierProcessing}.
- * 
+ *
  * @author Jens Schauder
  */
 public class DefaultIdentifierProcessingUnitTests {
@@ -32,7 +34,7 @@ public class DefaultIdentifierProcessingUnitTests {
 	@Test // DATAJDBC-386
 	public void ansiConformProcessing() {
 
-		DefaultIdentifierProcessing processing = new DefaultIdentifierProcessing(Quoting.ANSI, LetterCasing.UPPER_CASE);
+		DefaultIdentifierProcessing processing = IdentifierProcessing.create(Quoting.ANSI, LetterCasing.UPPER_CASE);
 
 		assertThat(processing.quote("something")).isEqualTo("\"something\"");
 		assertThat(processing.standardizeLetterCase("aBc")).isEqualTo("ABC");
@@ -41,7 +43,7 @@ public class DefaultIdentifierProcessingUnitTests {
 	@Test // DATAJDBC-386
 	public void twoCharacterAsIs() {
 
-		DefaultIdentifierProcessing processing = new DefaultIdentifierProcessing(new Quoting("[", "]"), LetterCasing.AS_IS);
+		DefaultIdentifierProcessing processing = IdentifierProcessing.create(new Quoting("[", "]"), LetterCasing.AS_IS);
 
 		assertThat(processing.quote("something")).isEqualTo("[something]");
 		assertThat(processing.standardizeLetterCase("aBc")).isEqualTo("aBc");

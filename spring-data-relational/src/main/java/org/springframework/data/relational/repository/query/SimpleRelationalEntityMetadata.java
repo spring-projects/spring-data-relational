@@ -18,7 +18,7 @@ package org.springframework.data.relational.repository.query;
 import lombok.Getter;
 
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.util.Assert;
 
 /**

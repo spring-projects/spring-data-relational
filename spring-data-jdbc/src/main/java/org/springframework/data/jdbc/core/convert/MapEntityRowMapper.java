@@ -24,8 +24,8 @@ import java.util.Map;
 
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.domain.IdentifierProcessing;
-import org.springframework.data.relational.domain.SqlIdentifier;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
 
@@ -49,7 +49,7 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 	@Override
 	public Map.Entry<Object, T> mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-		Object key = rs.getObject(keyColumn.toColumnName(identifierProcessing));
+		Object key = rs.getObject(keyColumn.getReference(identifierProcessing));
 		return new HashMap.SimpleEntry<>(key, mapEntity(rs, key));
 	}
 

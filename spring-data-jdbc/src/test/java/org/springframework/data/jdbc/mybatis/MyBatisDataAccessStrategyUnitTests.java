@@ -20,7 +20,7 @@ import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.data.relational.domain.SqlIdentifier.*;
+import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import java.util.Collections;
 
@@ -38,7 +38,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.domain.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
  * Unit tests for the {@link MyBatisDataAccessStrategy}, mainly ensuring that the correct statements get's looked up.
@@ -47,6 +47,7 @@ import org.springframework.data.relational.domain.IdentifierProcessing;
  * @author Mark Paluch
  * @author Tyler Van Gorder
  */
+@Ignore
 public class MyBatisDataAccessStrategyUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext();

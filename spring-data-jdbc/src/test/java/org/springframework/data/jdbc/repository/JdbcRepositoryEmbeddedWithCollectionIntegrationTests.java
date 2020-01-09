@@ -34,6 +34,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.MappedCollection;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -250,13 +251,13 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_")
 		Embeddable embeddable;
 	}
 
 	@Data
 	private static class Embeddable {
-		@MappedCollection(idColumn = "id", keyColumn = "order_key")
+		@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY")
 		List<DummyEntity2> list = new ArrayList<>();
 
 		String test;

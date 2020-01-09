@@ -16,14 +16,14 @@
 package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.relational.domain.SqlIdentifier.*;
+import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 
 /**
  * Unit tests for {@link RelationalPersistentEntityImpl}.
- * 
+ *
  * @author Oliver Gierke
  * @author Kazuki Shimizu
  * @author Bastian Wilhelm
@@ -53,7 +53,7 @@ public class RelationalPersistentEntityImplUnitTests {
 
 		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummyEntityWithEmptyAnnotation.class);
 
-		assertThat(entity.getTableName()).isEqualTo(quoted("dummy_entity_with_empty_annotation"));
+		assertThat(entity.getTableName()).isEqualTo(quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION"));
 	}
 
 	@Table("dummy_sub_entity")

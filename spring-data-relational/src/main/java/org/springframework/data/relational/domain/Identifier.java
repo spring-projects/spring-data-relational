@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -204,7 +205,7 @@ public final class Identifier {
 
 		/**
 		 * Performs this operation on the given arguments.
-		 * 
+		 *
 		 * @param name
 		 * @param value
 		 * @param targetType
