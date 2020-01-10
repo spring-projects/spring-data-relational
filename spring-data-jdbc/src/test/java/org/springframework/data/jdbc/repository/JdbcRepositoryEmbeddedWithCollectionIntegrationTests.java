@@ -20,6 +20,10 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,10 +34,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.MappedCollection;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -42,9 +48,6 @@ import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
@@ -78,17 +81,23 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
+	@Autowired Dialect dialect;
 
 	@Test // DATAJDBC-111
-	public void savesAnEntity() {
+	public void savesAnEntity() throws SQLException {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-				"id = " + entity.getId())).isEqualTo(1);
+		assertThat(countRowsInTable("dummy_entity", entity.getId())).isEqualTo(1);
+		assertThat(countRowsInTable("dummy_entity2", entity.getId())).isEqualTo(2);
+	}
 
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity2",
-				"id = " + entity.getId())).isEqualTo(2);
+	private int countRowsInTable(String name, long idValue) {
+
+		SqlIdentifier id = SqlIdentifier.quoted("ID");
+		String whereClause = id.toSql(dialect.getIdentifierProcessing()) + " = " + idValue;
+
+		return JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), name, whereClause);
 	}
 
 	@Test // DATAJDBC-111
@@ -100,8 +109,10 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 			assertThat(it.getId()).isEqualTo(entity.getId());
 			assertThat(it.getEmbeddable().getTest()).isEqualTo(entity.getEmbeddable().getTest());
 			assertThat(it.getEmbeddable().getList().size()).isEqualTo(entity.getEmbeddable().getList().size());
-			assertThat(it.getEmbeddable().getList().get(0).getTest()).isEqualTo(entity.getEmbeddable().getList().get(0).getTest());
-			assertThat(it.getEmbeddable().getList().get(1).getTest()).isEqualTo(entity.getEmbeddable().getList().get(1).getTest());
+			assertThat(it.getEmbeddable().getList().get(0).getTest())
+					.isEqualTo(entity.getEmbeddable().getList().get(0).getTest());
+			assertThat(it.getEmbeddable().getList().get(1).getTest())
+					.isEqualTo(entity.getEmbeddable().getList().get(1).getTest());
 		});
 	}
 
@@ -138,8 +149,10 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 			assertThat(it.getId()).isEqualTo(saved.getId());
 			assertThat(it.getEmbeddable().getTest()).isEqualTo(saved.getEmbeddable().getTest());
 			assertThat(it.getEmbeddable().getList().size()).isEqualTo(saved.getEmbeddable().getList().size());
-			assertThat(it.getEmbeddable().getList().get(0).getTest()).isEqualTo(saved.getEmbeddable().getList().get(0).getTest());
-			assertThat(it.getEmbeddable().getList().get(1).getTest()).isEqualTo(saved.getEmbeddable().getList().get(1).getTest());
+			assertThat(it.getEmbeddable().getList().get(0).getTest())
+					.isEqualTo(saved.getEmbeddable().getList().get(0).getTest());
+			assertThat(it.getEmbeddable().getList().get(1).getTest())
+					.isEqualTo(saved.getEmbeddable().getList().get(1).getTest());
 		});
 	}
 
@@ -163,7 +176,8 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 		assertThat(repository.findAll()) //
 				.extracting(d -> d.getEmbeddable().getList().get(0).getTest()) //
-				.containsExactlyInAnyOrder(entity.getEmbeddable().getList().get(0).getTest(), other.getEmbeddable().getList().get(0).getTest());
+				.containsExactlyInAnyOrder(entity.getEmbeddable().getList().get(0).getTest(),
+						other.getEmbeddable().getList().get(0).getTest());
 	}
 
 	@Test // DATAJDBC-111
@@ -246,18 +260,17 @@ public class JdbcRepositoryEmbeddedWithCollectionIntegrationTests {
 
 	@Data
 	private static class DummyEntity {
+		@Column("ID")
 		@Id Long id;
 
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_")
-		Embeddable embeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_") Embeddable embeddable;
 	}
 
 	@Data
 	private static class Embeddable {
-		@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY")
-		List<DummyEntity2> list = new ArrayList<>();
+		@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY") List<DummyEntity2> list = new ArrayList<>();
 
 		String test;
 	}

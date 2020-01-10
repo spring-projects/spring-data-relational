@@ -821,6 +821,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName, emptyMap(), Long.class);
 	}
 
+	@Table("ARRAY_OWNER")
 	private static class ArrayOwner {
 		@Id Long id;
 
@@ -1039,7 +1040,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		@Id private Long id;
 		@Version private final Long version;
-
 	}
 
 	@Data

@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
+import java.sql.SQLException;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,9 +32,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
+import org.springframework.data.relational.domain.SqlIdentifier;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -74,17 +78,24 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
+	@Autowired Dialect dialect;
 
 	@Test // DATAJDBC-111
-	public void savesAnEntity() {
+	public void savesAnEntity() throws SQLException {
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity",
-				"id = " + entity.getId())).isEqualTo(1);
+		assertThat(countRowsInTable("dummy_entity", entity.getId())).isEqualTo(1);
+		assertThat(countRowsInTable("dummy_entity2", entity.getId())).isEqualTo(1);
+	}
 
-		assertThat(JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), "dummy_entity2",
-				"id = " + entity.getId())).isEqualTo(1);
+	private int countRowsInTable(String name, long idValue) {
+
+		SqlIdentifier id = SqlIdentifier.quoted("ID");
+		String whereClause = id.toSql(dialect.getIdentifierProcessing()) + " = " + idValue;
+
+		return   JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(),
+				name, whereClause);
 	}
 
 	@Test // DATAJDBC-111
@@ -95,7 +106,8 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 		assertThat(repository.findById(entity.getId())).hasValueSatisfying(it -> {
 			assertThat(it.getId()).isEqualTo(entity.getId());
 			assertThat(it.getDummyEntity2().getTest()).isEqualTo(entity.getDummyEntity2().getTest());
-			assertThat(it.getDummyEntity2().getEmbeddable().getAttr()).isEqualTo(entity.getDummyEntity2().getEmbeddable().getAttr());
+			assertThat(it.getDummyEntity2().getEmbeddable().getAttr())
+					.isEqualTo(entity.getDummyEntity2().getEmbeddable().getAttr());
 		});
 	}
 
@@ -130,7 +142,8 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 		assertThat(repository.findById(entity.getId())).hasValueSatisfying(it -> {
 			assertThat(it.getDummyEntity2().getTest()).isEqualTo(saved.getDummyEntity2().getTest());
-			assertThat(it.getDummyEntity2().getEmbeddable().getAttr()).isEqualTo(saved.getDummyEntity2().getEmbeddable().getAttr());
+			assertThat(it.getDummyEntity2().getEmbeddable().getAttr())
+					.isEqualTo(saved.getDummyEntity2().getEmbeddable().getAttr());
 		});
 	}
 
@@ -154,7 +167,8 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 		assertThat(repository.findAll()) //
 				.extracting(d -> d.getDummyEntity2().getEmbeddable().getAttr()) //
-				.containsExactlyInAnyOrder(entity.getDummyEntity2().getEmbeddable().getAttr(), other.getDummyEntity2().getEmbeddable().getAttr());
+				.containsExactlyInAnyOrder(entity.getDummyEntity2().getEmbeddable().getAttr(),
+						other.getDummyEntity2().getEmbeddable().getAttr());
 	}
 
 	@Test // DATAJDBC-111
@@ -233,22 +247,20 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 	@Data
 	static class DummyEntity {
-		@Id Long id;
+		@Column("ID") @Id Long id;
 
 		String test;
 
-		@Column("ID")
-		DummyEntity2 dummyEntity2;
+		@Column("ID") DummyEntity2 dummyEntity2;
 	}
 
 	@Data
 	static class DummyEntity2 {
-		@Id Long id;
+		@Column("ID") @Id Long id;
 
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_")
-		Embeddable embeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix_") Embeddable embeddable;
 	}
 
 	@Data
