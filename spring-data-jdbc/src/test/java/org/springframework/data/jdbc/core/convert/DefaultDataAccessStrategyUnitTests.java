@@ -50,7 +50,6 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-@Ignore
 public class DefaultDataAccessStrategyUnitTests {
 
 	public static final long ID_FROM_ADDITIONAL_VALUES = 23L;

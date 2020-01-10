@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -32,7 +31,6 @@ import org.junit.Test;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-@Ignore
 public class IdentifierUnitTests {
 
 	@Test // DATAJDBC-326
