@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -35,7 +34,6 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-@Ignore
 public class IdentifierUnitTests {
 
 	@Test // DATAJDBC-326

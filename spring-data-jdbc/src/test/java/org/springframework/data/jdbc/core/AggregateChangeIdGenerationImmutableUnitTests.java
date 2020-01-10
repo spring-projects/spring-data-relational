@@ -486,8 +486,6 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 	@With
 	@AllArgsConstructor
 	private static class ContentNoId {
-		// "foo_bar_single"
-		// "FOO_BAR_TAG_SET"
 		@Column("single") Tag single;
 		Set<Tag> tagSet;
 		List<Tag> tagList;

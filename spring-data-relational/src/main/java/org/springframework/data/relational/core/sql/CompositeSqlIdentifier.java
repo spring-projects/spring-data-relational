@@ -32,6 +32,7 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 	private final SqlIdentifier[] parts;
 
 	CompositeSqlIdentifier(SqlIdentifier... parts) {
+
 		Assert.notNull(parts, "SqlIdentifier parts must not be null");
 		Assert.noNullElements(parts, "SqlIdentifier parts must not contain null elements");
 		Assert.isTrue(parts.length > 0, "SqlIdentifier parts must not be empty");

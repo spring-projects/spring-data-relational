@@ -47,7 +47,6 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * @author Mark Paluch
  * @author Tyler Van Gorder
  */
-@Ignore
 public class MyBatisDataAccessStrategyUnitTests {
 
 	RelationalMappingContext context = new JdbcMappingContext();
