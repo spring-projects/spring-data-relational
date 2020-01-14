@@ -8,9 +8,9 @@ sudo: false
 
 services:
   - docker
-  - postgresql
 
 install: true
 
 script:
-  - "./mvnw clean dependency:list test -Pno-jacoco -Dsort -U"
+  - "./mvnw -version"
+  - "./mvnw -Pjava11 clean dependency:list test -Dsort -U"
