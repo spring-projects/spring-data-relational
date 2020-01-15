@@ -319,7 +319,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	@SuppressWarnings("unchecked")
 	public Iterable<Object> findAllByPath(Identifier identifier,
-			PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
+			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath) {
 
 		Assert.notNull(identifier, "identifier must not be null.");
 		Assert.notNull(propertyPath, "propertyPath must not be null.");

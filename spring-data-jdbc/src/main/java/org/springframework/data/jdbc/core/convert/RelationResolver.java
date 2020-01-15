@@ -35,5 +35,6 @@ public interface RelationResolver {
 	 * @param path the path from the aggregate root to the entities to be resolved. Must not be {@literal null}.
 	 * @return guaranteed to be not {@literal null}.
 	 */
-	Iterable<Object> findAllByPath(Identifier identifier, PersistentPropertyPath<RelationalPersistentProperty> path);
+	Iterable<Object> findAllByPath(Identifier identifier,
+			PersistentPropertyPath<? extends RelationalPersistentProperty> path);
 }

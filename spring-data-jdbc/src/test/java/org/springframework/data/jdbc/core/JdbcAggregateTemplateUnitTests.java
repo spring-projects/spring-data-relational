@@ -37,7 +37,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.mapping.callback.EntityCallbacks;
-import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -105,7 +105,7 @@ public class JdbcAggregateTemplateUnitTests {
 		SampleEntity last = template.save(first);
 
 		verify(callbacks).callback(BeforeConvertCallback.class, first);
-		verify(callbacks).callback(eq(BeforeSaveCallback.class), eq(second), any(AggregateChange.class));
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), eq(second), any(MutableAggregateChange.class));
 		verify(callbacks).callback(AfterSaveCallback.class, third);
 		assertThat(last).isEqualTo(third);
 	}
@@ -120,7 +120,7 @@ public class JdbcAggregateTemplateUnitTests {
 
 		template.delete(first, SampleEntity.class);
 
-		verify(callbacks).callback(eq(BeforeDeleteCallback.class), eq(first), any(AggregateChange.class));
+		verify(callbacks).callback(eq(BeforeDeleteCallback.class), eq(first), any(MutableAggregateChange.class));
 		verify(callbacks).callback(AfterDeleteCallback.class, second);
 	}
 

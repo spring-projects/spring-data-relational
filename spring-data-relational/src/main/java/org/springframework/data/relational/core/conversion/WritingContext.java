@@ -49,7 +49,7 @@ class WritingContext {
 	private final Map<PathNode, DbAction> previousActions = new HashMap<>();
 	private Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
 
-	WritingContext(RelationalMappingContext context, Object root, AggregateChange<?> aggregateChange) {
+	WritingContext(RelationalMappingContext context, Object root, MutableAggregateChange<?> aggregateChange) {
 
 		this.context = context;
 		this.root = root;
@@ -73,8 +73,7 @@ class WritingContext {
 	}
 
 	/**
-	 * Leaves out the isNew check as defined in #DATAJDBC-282
-	 * Possible Deadlocks in Execution Order in #DATAJDBC-488
+	 * Leaves out the isNew check as defined in #DATAJDBC-282 Possible Deadlocks in Execution Order in #DATAJDBC-488
 	 *
 	 * @return List of {@link DbAction}s
 	 * @see <a href="https://jira.spring.io/browse/DATAJDBC-282">DAJDBC-282</a>
@@ -133,17 +132,18 @@ class WritingContext {
 			if (node.getPath().getRequiredLeafProperty().isQualified()) {
 
 				Pair<Object, Object> value = (Pair) node.getValue();
-				insert = new DbAction.Insert<>(value.getSecond(), path, parentAction);
-				insert.getQualifiers().put(node.getPath(), value.getFirst());
+				Map<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifiers = new HashMap<>();
+				qualifiers.put(node.getPath(), value.getFirst());
 
 				RelationalPersistentEntity<?> parentEntity = context.getRequiredPersistentEntity(parentAction.getEntityType());
 
 				if (!parentEntity.hasIdProperty() && parentAction instanceof DbAction.Insert) {
-					insert.getQualifiers().putAll(((DbAction.Insert<?>) parentAction).getQualifiers());
+					qualifiers.putAll(((DbAction.Insert<?>) parentAction).getQualifiers());
 				}
+				insert = new DbAction.Insert<>(value.getSecond(), path, parentAction, qualifiers);
 
 			} else {
-				insert = new DbAction.Insert<>(node.getValue(), path, parentAction);
+				insert = new DbAction.Insert<>(node.getValue(), path, parentAction, new HashMap<>());
 			}
 			previousActions.put(node, insert);
 			actions.add(insert);

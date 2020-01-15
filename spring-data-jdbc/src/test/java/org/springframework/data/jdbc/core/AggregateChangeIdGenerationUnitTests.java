@@ -15,7 +15,9 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,20 +28,22 @@ import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.DbAction;
-import org.springframework.data.relational.core.conversion.Interpreter;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
 /**
- * Unit tests for the {@link AggregateChange}.
+ * Unit tests for the {@link MutableAggregateChange}.
  *
  * @author Jens Schauder
  * @author Myeonghyeon-Lee
@@ -54,15 +58,17 @@ public class AggregateChangeIdGenerationUnitTests {
 	Tag tag3 = new Tag();
 
 	RelationalMappingContext context = new RelationalMappingContext();
-	RelationalConverter converter = new BasicRelationalConverter(context);
+	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+		throw new UnsupportedOperationException();
+	});
 	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity);
-
-	AggregateChangeExecutor executor = new AggregateChangeExecutor(new IdSettingInterpreter(), converter);
+	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class, new IncrementingIds());
+	AggregateChangeExecutor executor = new AggregateChangeExecutor(converter, accessStrategy);
 
 	@Test // DATAJDBC-291
 	public void singleRoot() {
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 
 		executor.execute(aggregateChange);
@@ -75,7 +81,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		entity.single = content;
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("single", content, null));
 
@@ -94,7 +100,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		entity.contentList.add(content);
 		entity.contentList.add(content2);
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentList", content, 0));
 		aggregateChange.addAction(createInsert("contentList", content2, 1));
@@ -114,7 +120,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		entity.contentMap.put("a", content);
 		entity.contentMap.put("b", content2);
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(createInsert("contentMap", content, "a"));
 		aggregateChange.addAction(createInsert("contentMap", content2, "b"));
@@ -134,7 +140,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> parentInsert = createInsert("single", content, null);
 		DbAction.Insert<?> insert = createDeepInsert("single", tag1, null, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert);
@@ -157,7 +163,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("tagList", tag1, 0, parentInsert);
 		DbAction.Insert<?> insert2 = createDeepInsert("tagList", tag2, 1, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert1);
@@ -184,7 +190,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("tagSet", tag1, null, parentInsert);
 		DbAction.Insert<?> insert2 = createDeepInsert("tagSet", tag2, null, parentInsert);
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert);
 		aggregateChange.addAction(insert1);
@@ -218,7 +224,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert1 = createDeepInsert("single", tag1, null, parentInsert1);
 		DbAction.Insert<?> insert2 = createDeepInsert("single", tag2, null, parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -251,7 +257,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert2 = createDeepInsert("tagList", tag2, 0, parentInsert2);
 		DbAction.Insert<?> insert3 = createDeepInsert("tagList", tag3, 1, parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -289,7 +295,7 @@ public class AggregateChangeIdGenerationUnitTests {
 		DbAction.Insert<?> insert2 = createDeepInsert("tagMap", tag2, "222", parentInsert2);
 		DbAction.Insert<?> insert3 = createDeepInsert("tagMap", tag3, "333", parentInsert2);
 
-		AggregateChange<DummyEntity> aggregateChange = AggregateChange.forSave(entity);
+		MutableAggregateChange<DummyEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 		aggregateChange.addAction(rootInsert);
 		aggregateChange.addAction(parentInsert1);
 		aggregateChange.addAction(parentInsert2);
@@ -318,11 +324,8 @@ public class AggregateChangeIdGenerationUnitTests {
 
 	DbAction.Insert<?> createInsert(String propertyName, Object value, @Nullable Object key) {
 
-		DbAction.Insert<Object> insert = new DbAction.Insert<>(value,
-				context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert);
-		insert.getQualifiers().put(toPath(propertyName), key);
-
-		return insert;
+		return new DbAction.Insert<>(value, context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert,
+				key == null ? emptyMap() : singletonMap(toPath(propertyName), key));
 	}
 
 	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, @Nullable Object key,
@@ -330,9 +333,9 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = toPath(
 				parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
-		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, propertyPath, parentInsert);
-		insert.getQualifiers().put(propertyPath, key);
-		return insert;
+
+		return new DbAction.Insert<>(value, propertyPath, parentInsert,
+				key == null ? emptyMap() : singletonMap(propertyPath, key));
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {
@@ -374,53 +377,28 @@ public class AggregateChangeIdGenerationUnitTests {
 		@Id Integer id;
 	}
 
-	private static class IdSettingInterpreter implements Interpreter {
-		int id = 0;
+	private static class IncrementingIds implements Answer {
+		long id = 1;
 
 		@Override
-		public <T> void interpret(DbAction.Insert<T> insert) {
-			insert.setGeneratedId(++id);
+		public Object answer(InvocationOnMock invocation) throws Throwable {
+
+			if (!invocation.getMethod().getReturnType().equals(Object.class)) {
+				throw new UnsupportedOperationException("This mock does not support this invocation: " + invocation);
+			}
+
+			return id++;
 		}
 
-		@Override
-		public <T> void interpret(DbAction.InsertRoot<T> insert) {
-			insert.setGeneratedId(++id);
+		private DbAction<?> findAction(Object[] arguments) {
 
-		}
+			for (Object argument : arguments) {
 
-		@Override
-		public <T> void interpret(DbAction.Update<T> update) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <T> void interpret(DbAction.UpdateRoot<T> update) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <T> void interpret(DbAction.Merge<T> update) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <T> void interpret(DbAction.Delete<T> delete) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <T> void interpret(DbAction.DeleteRoot<T> deleteRoot) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <T> void interpret(DbAction.DeleteAll<T> delete) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <T> void interpret(DbAction.DeleteAllRoot<T> DeleteAllRoot) {
-			throw new UnsupportedOperationException();
+				if (argument instanceof DbAction) {
+					return (DbAction<?>) argument;
+				}
+			}
+			return null;
 		}
 	}
 }

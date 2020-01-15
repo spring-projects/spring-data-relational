@@ -32,7 +32,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.Interpreter;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityUpdateWriter;
@@ -55,7 +55,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final ApplicationEventPublisher publisher;
 	private final RelationalMappingContext context;
-	private final Interpreter interpreter;
 
 	private final RelationalEntityDeleteWriter jdbcEntityDeleteWriter;
 	private final RelationalEntityInsertWriter jdbcEntityInsertWriter;
@@ -90,9 +89,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
-		this.interpreter = new DefaultJdbcInterpreter(converter, context, accessStrategy);
 
-		this.executor = new AggregateChangeExecutor(interpreter, converter);
+		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
 
 		setEntityCallbacks(EntityCallbacks.create(publisher));
 	}
@@ -120,8 +118,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
-		this.interpreter = new DefaultJdbcInterpreter(converter, context, accessStrategy);
-		this.executor = new AggregateChangeExecutor(interpreter, converter);
+		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
 	}
 
 	/**
@@ -146,7 +143,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(instance.getClass());
 
-		Function<T, AggregateChange<T>> changeCreator = persistentEntity.isNew(instance) ? this::createInsertChange
+		Function<T, MutableAggregateChange<T>> changeCreator = persistentEntity.isNew(instance) ? this::createInsertChange
 				: this::createUpdateChange;
 
 		return store(instance, changeCreator, persistentEntity);
@@ -322,35 +319,35 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(domainType, "Domain type must not be null!");
 
-		AggregateChange<?> change = createDeletingChange(domainType);
+		MutableAggregateChange<?> change = createDeletingChange(domainType);
 		executor.execute(change);
 	}
 
-	private <T> T store(T aggregateRoot, Function<T, AggregateChange<T>> changeCreator,
+	private <T> T store(T aggregateRoot, Function<T, MutableAggregateChange<T>> changeCreator,
 			RelationalPersistentEntity<?> persistentEntity) {
 
 		Assert.notNull(aggregateRoot, "Aggregate instance must not be null!");
 
 		aggregateRoot = triggerBeforeConvert(aggregateRoot);
 
-		AggregateChange<T> change = changeCreator.apply(aggregateRoot);
+		MutableAggregateChange<T> change = changeCreator.apply(aggregateRoot);
 
 		aggregateRoot = triggerBeforeSave(aggregateRoot, change);
 
 		change.setEntity(aggregateRoot);
 
-		executor.execute(change);
+		T entityAfterExecution = executor.execute(change);
 
-		Object identifier = persistentEntity.getIdentifierAccessor(change.getEntity()).getIdentifier();
+		Object identifier = persistentEntity.getIdentifierAccessor(entityAfterExecution).getIdentifier();
 
 		Assert.notNull(identifier, "After saving the identifier must not be null!");
 
-		return triggerAfterSave(change.getEntity(), change);
+		return triggerAfterSave(entityAfterExecution, change);
 	}
 
 	private <T> void deleteTree(Object id, @Nullable T entity, Class<T> domainType) {
 
-		AggregateChange<T> change = createDeletingChange(id, entity, domainType);
+		MutableAggregateChange<T> change = createDeletingChange(id, entity, domainType);
 
 		entity = triggerBeforeDelete(entity, id, change);
 		change.setEntity(entity);
@@ -360,30 +357,30 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		triggerAfterDelete(entity, id, change);
 	}
 
-	private <T> AggregateChange<T> createInsertChange(T instance) {
+	private <T> MutableAggregateChange<T> createInsertChange(T instance) {
 
-		AggregateChange<T> aggregateChange = AggregateChange.forSave(instance);
+		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
 		jdbcEntityInsertWriter.write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
-	private <T> AggregateChange<T> createUpdateChange(T instance) {
+	private <T> MutableAggregateChange<T> createUpdateChange(T instance) {
 
-		AggregateChange<T> aggregateChange = AggregateChange.forSave(instance);
+		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
 		jdbcEntityUpdateWriter.write(instance, aggregateChange);
 		return aggregateChange;
 	}
 
-	private <T> AggregateChange<T> createDeletingChange(Object id, @Nullable T entity, Class<T> domainType) {
+	private <T> MutableAggregateChange<T> createDeletingChange(Object id, @Nullable T entity, Class<T> domainType) {
 
-		AggregateChange<T> aggregateChange = AggregateChange.forDelete(domainType, entity);
+		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forDelete(domainType, entity);
 		jdbcEntityDeleteWriter.write(id, aggregateChange);
 		return aggregateChange;
 	}
 
-	private AggregateChange<?> createDeletingChange(Class<?> domainType) {
+	private MutableAggregateChange<?> createDeletingChange(Class<?> domainType) {
 
-		AggregateChange<?> aggregateChange = AggregateChange.forDelete(domainType, null);
+		MutableAggregateChange<?> aggregateChange = MutableAggregateChange.forDelete(domainType, null);
 		jdbcEntityDeleteWriter.write(null, aggregateChange);
 		return aggregateChange;
 	}
@@ -424,7 +421,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return entityCallbacks.callback(AfterSaveCallback.class, aggregateRoot);
 	}
 
-	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, AggregateChange<T> change) {
+	private <T> void triggerAfterDelete(@Nullable T aggregateRoot, Object id, MutableAggregateChange<T> change) {
 
 		publisher.publishEvent(new AfterDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
 
@@ -434,7 +431,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	@Nullable
-	private <T> T triggerBeforeDelete(@Nullable T aggregateRoot, Object id, AggregateChange<T> change) {
+	private <T> T triggerBeforeDelete(@Nullable T aggregateRoot, Object id, MutableAggregateChange<T> change) {
 
 		publisher.publishEvent(new BeforeDeleteEvent<>(Identifier.of(id), aggregateRoot, change));
 

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 
 /**
  * Unit tests for {@link AbstractRelationalEventListener}.
@@ -46,7 +46,7 @@ public class AbstractRelationalEventListenerUnitTests {
 	@Test // DATAJDBC-454
 	public void beforeConvert() {
 
-		listener.onApplicationEvent(new BeforeConvertEvent<>(dummyEntity, AggregateChange.forDelete(dummyEntity)));
+		listener.onApplicationEvent(new BeforeConvertEvent<>(dummyEntity, MutableAggregateChange.forDelete(dummyEntity)));
 
 		assertThat(events).containsExactly("beforeConvert");
 	}
@@ -54,7 +54,7 @@ public class AbstractRelationalEventListenerUnitTests {
 	@Test // DATAJDBC-454
 	public void beforeSave() {
 
-		listener.onApplicationEvent(new BeforeSaveEvent<>(dummyEntity, AggregateChange.forSave(dummyEntity)));
+		listener.onApplicationEvent(new BeforeSaveEvent<>(dummyEntity, MutableAggregateChange.forSave(dummyEntity)));
 
 		assertThat(events).containsExactly("beforeSave");
 	}
@@ -62,7 +62,7 @@ public class AbstractRelationalEventListenerUnitTests {
 	@Test // DATAJDBC-454
 	public void afterSave() {
 
-		listener.onApplicationEvent(new AfterSaveEvent<>(dummyEntity, AggregateChange.forDelete(dummyEntity)));
+		listener.onApplicationEvent(new AfterSaveEvent<>(dummyEntity, MutableAggregateChange.forDelete(dummyEntity)));
 
 		assertThat(events).containsExactly("afterSave");
 	}
@@ -71,7 +71,7 @@ public class AbstractRelationalEventListenerUnitTests {
 	public void beforeDelete() {
 
 		listener.onApplicationEvent(
-				new BeforeDeleteEvent<>(Identifier.of(23), dummyEntity, AggregateChange.forDelete(dummyEntity)));
+				new BeforeDeleteEvent<>(Identifier.of(23), dummyEntity, MutableAggregateChange.forDelete(dummyEntity)));
 
 		assertThat(events).containsExactly("beforeDelete");
 	}
@@ -80,7 +80,7 @@ public class AbstractRelationalEventListenerUnitTests {
 	public void afterDelete() {
 
 		listener.onApplicationEvent(
-				new AfterDeleteEvent<>(Identifier.of(23), dummyEntity, AggregateChange.forDelete(dummyEntity)));
+				new AfterDeleteEvent<>(Identifier.of(23), dummyEntity, MutableAggregateChange.forDelete(dummyEntity)));
 
 		assertThat(events).containsExactly("afterDelete");
 	}
@@ -91,7 +91,7 @@ public class AbstractRelationalEventListenerUnitTests {
 		String notADummyEntity = "I'm not a dummy entity";
 
 		listener.onApplicationEvent(
-				new AfterDeleteEvent<>(Identifier.of(23), String.class, AggregateChange.forDelete(notADummyEntity)));
+				new AfterDeleteEvent<>(Identifier.of(23), String.class, MutableAggregateChange.forDelete(notADummyEntity)));
 
 		assertThat(events).isEmpty();
 	}

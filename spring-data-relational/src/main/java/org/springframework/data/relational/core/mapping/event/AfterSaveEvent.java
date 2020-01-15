@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 
 /**
  * Gets published after a new instance or a changed instance was saved in the database.
@@ -28,7 +29,8 @@ public class AfterSaveEvent<E> extends RelationalSaveEvent<E> {
 
 	/**
 	 * @param instance the saved entity. Must not be {@literal null}.
-	 * @param change the {@link AggregateChange} encoding the actions performed on the database as part of the delete.
+	 * @param change the {@link MutableAggregateChange} encoding the actions performed on the database as part of the
+	 *          delete.
 	 *          Must not be {@literal null}.
 	 */
 	public AfterSaveEvent(E instance, AggregateChange<E> change) {

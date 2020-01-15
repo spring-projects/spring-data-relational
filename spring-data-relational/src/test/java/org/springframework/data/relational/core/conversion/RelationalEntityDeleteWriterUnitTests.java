@@ -17,13 +17,15 @@ package org.springframework.data.relational.core.conversion;
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
 import org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot;
@@ -45,11 +47,12 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 		SomeEntity entity = new SomeEntity(23L);
 
-		AggregateChange<SomeEntity> aggregateChange = new AggregateChange<>(Kind.DELETE, SomeEntity.class, entity);
+		MutableAggregateChange<SomeEntity> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.DELETE,
+				SomeEntity.class, entity);
 
 		converter.write(entity.id, aggregateChange);
 
-		Assertions.assertThat(aggregateChange.getActions())
+		Assertions.assertThat(extractActions(aggregateChange))
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(Delete.class, YetAnother.class, "other.yetAnother"), //
@@ -61,17 +64,25 @@ public class RelationalEntityDeleteWriterUnitTests {
 	@Test // DATAJDBC-188
 	public void deleteAllDeletesAllEntitiesAndReferencedEntities() {
 
-		AggregateChange<SomeEntity> aggregateChange = new AggregateChange<>(Kind.DELETE, SomeEntity.class, null);
+		MutableAggregateChange<SomeEntity> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.DELETE,
+				SomeEntity.class, null);
 
 		converter.write(null, aggregateChange);
 
-		Assertions.assertThat(aggregateChange.getActions())
+		Assertions.assertThat(extractActions(aggregateChange))
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
 				.containsExactly( //
 						Tuple.tuple(DeleteAll.class, YetAnother.class, "other.yetAnother"), //
 						Tuple.tuple(DeleteAll.class, OtherEntity.class, "other"), //
 						Tuple.tuple(DeleteAllRoot.class, SomeEntity.class, "") //
 				);
+	}
+
+	private List<DbAction<?>> extractActions(MutableAggregateChange<?> aggregateChange) {
+
+		List<DbAction<?>> actions = new ArrayList<>();
+		aggregateChange.forEachAction(actions::add);
+		return actions;
 	}
 
 	@Data
