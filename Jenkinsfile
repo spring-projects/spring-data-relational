@@ -29,9 +29,8 @@ pipeline {
 			}
 			options { timeout(time: 30, unit: 'MINUTES') }
 			steps {
-				sh 'rm -rf ?'
+				sh 'mkdir -p /tmp/jenkins-home'
 				sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,all-dbs clean dependency:list test -Dsort -U -B'
-				sh "chown -R 1001:1001 target"
 			}
 		}
 
@@ -54,9 +53,8 @@ pipeline {
 					}
 					options { timeout(time: 30, unit: 'MINUTES') }
 					steps {
-						sh 'rm -rf ?'
+						sh 'mkdir -p /tmp/jenkins-home'
 						sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,all-dbs,java11 clean dependency:list test -Dsort -U -B'
-						sh "chown -R 1001:1001 target"
 					}
 				}
 
@@ -71,9 +69,8 @@ pipeline {
 					}
 					options { timeout(time: 30, unit: 'MINUTES') }
 					steps {
-						sh 'rm -rf ?'
+						sh 'mkdir -p /tmp/jenkins-home'
 						sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,all-dbs,java11 clean dependency:list test -Dsort -U -B'
-						sh "chown -R 1001:1001 target"
 					}
 				}
 			}
@@ -90,7 +87,7 @@ pipeline {
 				docker {
 					image 'adoptopenjdk/openjdk8:latest'
 					label 'data'
-					args '-v $HOME:/tmp/jenkins-home'
+					args '-v $HOME/.m2:/tmp/jenkins-home/.m2'
 				}
 			}
 			options { timeout(time: 20, unit: 'MINUTES') }
@@ -100,7 +97,7 @@ pipeline {
 			}
 
 			steps {
-				sh 'rm -rf ?'
+				sh 'mkdir -p /tmp/jenkins-home'
 				sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,artifactory ' +
 						'-Dartifactory.server=https://repo.spring.io ' +
 						"-Dartifactory.username=${ARTIFACTORY_USR} " +
@@ -111,7 +108,7 @@ pipeline {
 						'-Dmaven.test.skip=true clean deploy -U -B'
 			}
 		}
-		
+
 		stage('Publish documentation') {
 			when {
 				branch 'master'
@@ -120,7 +117,7 @@ pipeline {
 				docker {
 					image 'adoptopenjdk/openjdk8:latest'
 					label 'data'
-					args '-v $HOME:/tmp/jenkins-home'
+					args '-v $HOME/.m2:/tmp/jenkins-home/.m2'
 				}
 			}
 			options { timeout(time: 20, unit: 'MINUTES') }
@@ -130,6 +127,7 @@ pipeline {
 			}
 
 			steps {
+				sh 'mkdir -p /tmp/jenkins-home'
 				sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,distribute ' +
 						'-Dartifactory.server=https://repo.spring.io ' +
 						"-Dartifactory.username=${ARTIFACTORY_USR} " +
