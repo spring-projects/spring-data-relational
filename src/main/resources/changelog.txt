@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.4.RELEASE (2020-01-15)
+---------------------------------------------
+* DATAJDBC-466 - Update copyright years to 2020.
+* DATAJDBC-458 - Release 1.1.4 (Moore SR4).
+* DATAJDBC-291 - Nested data structure with Spring Data JDBC.
+
+
 Changes in version 1.0.15.RELEASE (2020-01-15)
 ----------------------------------------------
 * DATAJDBC-466 - Update copyright years to 2020.
@@ -312,6 +319,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
