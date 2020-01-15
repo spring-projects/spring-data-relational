@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.15.RELEASE (2020-01-15)
+----------------------------------------------
+* DATAJDBC-466 - Update copyright years to 2020.
+* DATAJDBC-457 - Release 1.0.15 (Lovelace SR15).
+
+
 Changes in version 1.1.3.RELEASE (2019-12-04)
 ---------------------------------------------
 * DATAJDBC-451 - The documentation is missing the what's new section for Moor.
@@ -306,6 +312,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
