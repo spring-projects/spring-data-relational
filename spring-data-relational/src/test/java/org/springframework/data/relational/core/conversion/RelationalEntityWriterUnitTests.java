@@ -32,7 +32,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
 import org.springframework.data.relational.core.conversion.DbAction.Insert;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
@@ -80,12 +79,12 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityGetsConvertedToOneInsert() {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
-		AggregateChange<SingleReferenceEntity> aggregateChange = //
-				new AggregateChange<>(Kind.SAVE, SingleReferenceEntity.class, entity);
+		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
+				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
@@ -102,12 +101,12 @@ public class RelationalEntityWriterUnitTests {
 		EmbeddedReferenceEntity entity = new EmbeddedReferenceEntity(null);
 		entity.other = new Element(2L);
 
-		AggregateChange<EmbeddedReferenceEntity> aggregateChange = //
-				new AggregateChange<>(Kind.SAVE, EmbeddedReferenceEntity.class, entity);
+		MutableAggregateChange<EmbeddedReferenceEntity> aggregateChange = //
+				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
@@ -124,12 +123,12 @@ public class RelationalEntityWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
 		entity.other = new Element(null);
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = //
-				new AggregateChange<>(Kind.SAVE, SingleReferenceEntity.class, entity);
+		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
+				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
@@ -146,12 +145,12 @@ public class RelationalEntityWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = //
-				new AggregateChange<>(Kind.SAVE, SingleReferenceEntity.class, entity);
+		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
+				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
@@ -159,7 +158,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
-						tuple(Delete.class, Element.class, "other", null, false)	//
+						tuple(Delete.class, Element.class, "other", null, false) //
 				);
 	}
 
@@ -169,12 +168,12 @@ public class RelationalEntityWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 		entity.other = new Element(null);
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = new AggregateChange<>(Kind.SAVE,
-				SingleReferenceEntity.class, entity);
+		MutableAggregateChange<SingleReferenceEntity> aggregateChange = new MutableAggregateChange<>(
+				AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
@@ -191,12 +190,12 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptySetResultsInSingleInsert() {
 
 		SetContainer entity = new SetContainer(null);
-		AggregateChange<RelationalEntityWriterUnitTests.SetContainer> aggregateChange = new AggregateChange<>(Kind.SAVE,
+		MutableAggregateChange<SetContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
 				SetContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
@@ -213,10 +212,11 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.add(new Element(null));
 		entity.elements.add(new Element(null));
 
-		AggregateChange<SetContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, SetContainer.class, entity);
+		MutableAggregateChange<SetContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				SetContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, //
+		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
 				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::actualEntityType, //
@@ -243,12 +243,12 @@ public class RelationalEntityWriterUnitTests {
 				new Element(null)) //
 		);
 
-		AggregateChange<CascadingReferenceEntity> aggregateChange = new AggregateChange<>(Kind.SAVE,
-				CascadingReferenceEntity.class, entity);
+		MutableAggregateChange<CascadingReferenceEntity> aggregateChange = new MutableAggregateChange<>(
+				AggregateChange.Kind.SAVE, CascadingReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, //
+		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
 				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::actualEntityType, //
@@ -281,12 +281,12 @@ public class RelationalEntityWriterUnitTests {
 				new Element(null)) //
 		);
 
-		AggregateChange<CascadingReferenceEntity> aggregateChange = new AggregateChange<>(Kind.SAVE,
-				CascadingReferenceEntity.class, entity);
+		MutableAggregateChange<CascadingReferenceEntity> aggregateChange = new MutableAggregateChange<>(
+				AggregateChange.Kind.SAVE, CascadingReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, //
+		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
 				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath, //
 				DbActionTestSupport::actualEntityType, //
@@ -310,11 +310,12 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptyMapResultsInSingleInsert() {
 
 		MapContainer entity = new MapContainer(null);
-		AggregateChange<MapContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, MapContainer.class, entity);
+		MutableAggregateChange<MapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				MapContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, //
+		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
 				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath) //
 				.containsExactly( //
@@ -328,10 +329,11 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("one", new Element(null));
 		entity.elements.put("two", new Element(null));
 
-		AggregateChange<MapContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, MapContainer.class, entity);
+		MutableAggregateChange<MapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				MapContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, //
+		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
 				DbAction::getEntityType, //
 				this::getMapKey, //
 				DbActionTestSupport::extractPath) //
@@ -366,10 +368,11 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("a", new Element(null));
 		entity.elements.put("b", new Element(null));
 
-		AggregateChange<MapContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, MapContainer.class, entity);
+		MutableAggregateChange<MapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				MapContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, //
+		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
 				DbAction::getEntityType, //
 				this::getMapKey, //
 				DbActionTestSupport::extractPath) //
@@ -394,11 +397,12 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptyListResultsInSingleInsert() {
 
 		ListContainer entity = new ListContainer(null);
-		AggregateChange<ListContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, ListContainer.class, entity);
+		MutableAggregateChange<ListContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				ListContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, //
+		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
 				DbAction::getEntityType, //
 				DbActionTestSupport::extractPath) //
 				.containsExactly( //
@@ -412,10 +416,11 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.add(new Element(null));
 		entity.elements.add(new Element(null));
 
-		AggregateChange<ListContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, ListContainer.class, entity);
+		MutableAggregateChange<ListContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				ListContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()).extracting(DbAction::getClass, //
+		assertThat(extractActions(aggregateChange)).extracting(DbAction::getClass, //
 				DbAction::getEntityType, //
 				this::getListKey, //
 				DbActionTestSupport::extractPath) //
@@ -438,11 +443,12 @@ public class RelationalEntityWriterUnitTests {
 		MapContainer entity = new MapContainer(SOME_ENTITY_ID);
 		entity.elements.put("one", new Element(null));
 
-		AggregateChange<MapContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, MapContainer.class, entity);
+		MutableAggregateChange<MapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				MapContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						this::getMapKey, //
@@ -460,11 +466,12 @@ public class RelationalEntityWriterUnitTests {
 		ListContainer entity = new ListContainer(SOME_ENTITY_ID);
 		entity.elements.add(new Element(null));
 
-		AggregateChange<ListContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, ListContainer.class, entity);
+		MutableAggregateChange<ListContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				ListContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						this::getListKey, //
@@ -483,12 +490,12 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.add(new MapContainer(SOME_ENTITY_ID));
 		listMapContainer.maps.get(0).elements.put("one", new Element(null));
 
-		AggregateChange<ListMapContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, ListMapContainer.class,
-				listMapContainer);
+		MutableAggregateChange<ListMapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+				ListMapContainer.class, listMapContainer);
 
 		converter.write(listMapContainer, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						a -> getQualifier(a, listMapContainerMaps), //
@@ -510,12 +517,12 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.add(new NoIdMapContainer());
 		listMapContainer.maps.get(0).elements.put("one", new NoIdElement());
 
-		AggregateChange<NoIdListMapContainer> aggregateChange = new AggregateChange<>(Kind.SAVE, NoIdListMapContainer.class,
-				listMapContainer);
+		MutableAggregateChange<NoIdListMapContainer> aggregateChange = new MutableAggregateChange<>(
+				AggregateChange.Kind.SAVE, NoIdListMapContainer.class, listMapContainer);
 
 		converter.write(listMapContainer, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						a -> getQualifier(a, noIdListMapContainerMaps), //
@@ -536,12 +543,12 @@ public class RelationalEntityWriterUnitTests {
 		EmbeddedReferenceChainEntity entity = new EmbeddedReferenceChainEntity(null);
 		// the embedded is null !!!
 
-		AggregateChange<EmbeddedReferenceChainEntity> aggregateChange = //
-				new AggregateChange<>(Kind.SAVE, EmbeddedReferenceChainEntity.class, entity);
+		MutableAggregateChange<EmbeddedReferenceChainEntity> aggregateChange = //
+				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceChainEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
@@ -559,12 +566,12 @@ public class RelationalEntityWriterUnitTests {
 		root.other = new EmbeddedReferenceChainEntity(null);
 		// the embedded is null !!!
 
-		AggregateChange<RootWithEmbeddedReferenceChainEntity> aggregateChange = //
-				new AggregateChange<>(Kind.SAVE, RootWithEmbeddedReferenceChainEntity.class, root);
+		MutableAggregateChange<RootWithEmbeddedReferenceChainEntity> aggregateChange = //
+				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, RootWithEmbeddedReferenceChainEntity.class, root);
 
 		converter.write(root, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, //
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
@@ -575,6 +582,13 @@ public class RelationalEntityWriterUnitTests {
 								RootWithEmbeddedReferenceChainEntity.class, false), //
 						tuple(Insert.class, EmbeddedReferenceChainEntity.class, "other", EmbeddedReferenceChainEntity.class, true) //
 				);
+	}
+
+	private List<DbAction<?>> extractActions(MutableAggregateChange<?> aggregateChange) {
+
+		List<DbAction<?>> actions = new ArrayList<>();
+		aggregateChange.forEachAction(actions::add);
+		return actions;
 	}
 
 	private CascadingReferenceMiddleElement createMiddleElement(Element first, Element second) {

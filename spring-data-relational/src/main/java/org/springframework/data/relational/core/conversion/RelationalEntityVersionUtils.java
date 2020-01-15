@@ -43,6 +43,7 @@ public class RelationalEntityVersionUtils {
 	@Nullable
 	public static <S> Number getVersionNumberFromEntity(S instance, RelationalPersistentEntity<S> persistentEntity,
 			RelationalConverter converter) {
+
 		if (!persistentEntity.hasVersionProperty()) {
 			throw new IllegalArgumentException("The entity does not have a version property.");
 		}

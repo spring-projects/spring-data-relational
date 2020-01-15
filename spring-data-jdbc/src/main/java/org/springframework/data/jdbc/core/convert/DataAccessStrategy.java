@@ -23,8 +23,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -193,11 +193,11 @@ public interface DataAccessStrategy extends RelationResolver {
 	 */
 	@Override
 	default Iterable<Object> findAllByPath(Identifier identifier,
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
+			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
 		Object rootId = identifier.toMap().get(path.getRequiredLeafProperty().getReverseColumnName());
 		return findAllByProperty(rootId, path.getRequiredLeafProperty());
-	};
+	}
 
 	/**
 	 * Finds all entities reachable via {@literal property} from the instance identified by {@literal rootId}.

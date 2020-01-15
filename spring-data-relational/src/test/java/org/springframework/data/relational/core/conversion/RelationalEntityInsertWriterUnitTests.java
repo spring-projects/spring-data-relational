@@ -19,11 +19,13 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.conversion.AggregateChange.Kind;
 import org.springframework.data.relational.core.conversion.DbAction.InsertRoot;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
@@ -42,12 +44,12 @@ public class RelationalEntityInsertWriterUnitTests {
 	public void newEntityGetsConvertedToOneInsert() {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
-		AggregateChange<SingleReferenceEntity> aggregateChange = //
-				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
+		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
+				new MutableAggregateChange(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
 						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
@@ -60,18 +62,25 @@ public class RelationalEntityInsertWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		AggregateChange<SingleReferenceEntity> aggregateChange = //
-				new AggregateChange(Kind.SAVE, SingleReferenceEntity.class, entity);
+		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
+				new MutableAggregateChange(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
-		assertThat(aggregateChange.getActions()) //
+		assertThat(extractActions(aggregateChange)) //
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath,
 						DbActionTestSupport::actualEntityType, DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
 						tuple(InsertRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
 				);
 
+	}
+
+	private List<DbAction<?>> extractActions(MutableAggregateChange<?> aggregateChange) {
+
+		List<DbAction<?>> actions = new ArrayList<>();
+		aggregateChange.forEachAction(actions::add);
+		return actions;
 	}
 
 	@RequiredArgsConstructor

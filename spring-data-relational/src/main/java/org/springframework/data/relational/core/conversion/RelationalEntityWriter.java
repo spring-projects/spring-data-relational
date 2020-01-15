@@ -21,12 +21,12 @@ import org.springframework.data.convert.EntityWriter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
- * Converts an aggregate represented by its root into an {@link AggregateChange}.
+ * Converts an aggregate represented by its root into an {@link MutableAggregateChange}.
  *
  * @author Jens Schauder
  * @author Mark Paluch
  */
-public class RelationalEntityWriter implements EntityWriter<Object, AggregateChange<?>> {
+public class RelationalEntityWriter implements EntityWriter<Object, MutableAggregateChange<?>> {
 
 	private final RelationalMappingContext context;
 
@@ -39,7 +39,7 @@ public class RelationalEntityWriter implements EntityWriter<Object, AggregateCha
 	 * @see org.springframework.data.convert.EntityWriter#save(java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public void write(Object root, AggregateChange<?> aggregateChange) {
+	public void write(Object root, MutableAggregateChange<?> aggregateChange) {
 
 		List<DbAction<?>> actions = new WritingContext(context, root, aggregateChange).save();
 		actions.forEach(aggregateChange::addAction);

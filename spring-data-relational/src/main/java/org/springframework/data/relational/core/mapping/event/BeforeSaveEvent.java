@@ -16,10 +16,11 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 
 /**
- * Gets published before an entity gets saved to the database. The contained {@link AggregateChange} is mutable and may
- * be changed in order to change the actions that get performed on the database as part of the save operation.
+ * Gets published before an entity gets saved to the database. The contained {@link MutableAggregateChange} is mutable
+ * and may be changed in order to change the actions that get performed on the database as part of the save operation.
  *
  * @author Jens Schauder
  */
@@ -29,7 +30,7 @@ public class BeforeSaveEvent<E> extends RelationalSaveEvent<E> {
 
 	/**
 	 * @param instance the entity about to get saved. Must not be {@literal null}.
-	 * @param change the {@link AggregateChange} that is going to get applied to the database. Must not be
+	 * @param change the {@link MutableAggregateChange} that is going to get applied to the database. Must not be
 	 *          {@literal null}.
 	 */
 	public BeforeSaveEvent(E instance, AggregateChange<E> change) {

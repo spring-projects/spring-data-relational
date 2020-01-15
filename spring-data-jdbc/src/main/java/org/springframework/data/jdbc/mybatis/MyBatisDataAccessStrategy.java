@@ -27,7 +27,6 @@ import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
@@ -300,7 +299,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public Iterable<Object> findAllByPath(Identifier identifier,
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
+			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
 		String statementName = namespace(path.getBaseProperty().getOwner().getType()) + ".findAllByPath-"
 				+ path.toDotPath();

@@ -37,8 +37,8 @@ import org.springframework.util.Assert;
 public class PersistentPropertyPathExtension {
 
 	private final RelationalPersistentEntity<?> entity;
-	private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
-	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context;
+	private final @Nullable PersistentPropertyPath<? extends RelationalPersistentProperty> path;
+	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context;
 
 	private final Lazy<SqlIdentifier> columnAlias = Lazy.of(() -> prefixWithTableAlias(getColumnName()));
 
@@ -49,7 +49,7 @@ public class PersistentPropertyPathExtension {
 	 * @param entity Root entity of the path. Must not be {@literal null}.
 	 */
 	public PersistentPropertyPathExtension(
-			MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(context, "Context must not be null.");
@@ -67,8 +67,8 @@ public class PersistentPropertyPathExtension {
 	 * @param path must not be {@literal null}.
 	 */
 	public PersistentPropertyPathExtension(
-			MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
-			PersistentPropertyPath<RelationalPersistentProperty> path) {
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
 		Assert.notNull(context, "Context must not be null.");
 		Assert.notNull(path, "Path must not be null.");
@@ -319,7 +319,7 @@ public class PersistentPropertyPathExtension {
 	 */
 	public PersistentPropertyPathExtension extendBy(RelationalPersistentProperty property) {
 
-		PersistentPropertyPath<RelationalPersistentProperty> newPath = path == null //
+		PersistentPropertyPath<? extends RelationalPersistentProperty> newPath = path == null //
 				? context.getPersistentPropertyPath(property.getName(), entity.getType()) //
 				: context.getPersistentPropertyPath(path.toDotPath() + "." + property.getName(), entity.getType());
 
@@ -367,7 +367,7 @@ public class PersistentPropertyPathExtension {
 	 * @return Guaranteed to be not {@literal null}.
 	 * @throws IllegalStateException if this path is empty.
 	 */
-	public PersistentPropertyPath<RelationalPersistentProperty> getRequiredPersistentPropertyPath() {
+	public PersistentPropertyPath<? extends RelationalPersistentProperty> getRequiredPersistentPropertyPath() {
 
 		Assert.state(path != null, "No path.");
 
@@ -413,7 +413,7 @@ public class PersistentPropertyPathExtension {
 			return suffix;
 		}
 
-		PersistentPropertyPath<RelationalPersistentProperty> parentPath = path.getParentPath();
+		PersistentPropertyPath<? extends RelationalPersistentProperty> parentPath = path.getParentPath();
 		RelationalPersistentProperty parentLeaf = parentPath.getRequiredLeafProperty();
 
 		if (!parentLeaf.isEmbedded()) {
