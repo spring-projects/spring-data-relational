@@ -22,7 +22,8 @@
 		<dist.key>DATAR2DBC</dist.key>
 
 		<springdata.commons>2.3.0.BUILD-SNAPSHOT</springdata.commons>
-		<springdata.relational>2.0.0.BUILD-SNAPSHOT</springdata.relational>
+		<springdata.jdbc>2.0.0.BUILD-SNAPSHOT</springdata.jdbc>
+		<springdata.relational>${springdata.jdbc}</springdata.relational>
 		<java-module-name>spring.data.r2dbc</java-module-name>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
