@@ -1,6 +1,32 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.0.M1 (2020-01-16)
+----------------------------------------
+* DATAJDBC-469 - Bump version to 2.0.0.
+* DATAJDBC-466 - Update copyright years to 2020.
+* DATAJDBC-462 - MySql doesn't return rows matched by update but rows actually changed by update.
+* DATAJDBC-461 - Make Integration tests react to environment variables and system properties.
+* DATAJDBC-451 - The documentation is missing the what's new section for Moor.
+* DATAJDBC-448 - NamingStrategy: Documentation referencing wrong ReverseColumnName method.
+* DATAJDBC-447 - Fix JDK 8 Travis build.
+* DATAJDBC-442 - Enable Java 11+ builds.
+* DATAJDBC-441 - Indent MyBatis integration sections in the documentation.
+* DATAJDBC-438 - Saving a record with an id that doesn't exist should return an error/warning to caller.
+* DATAJDBC-437 - Spring Data JDBC does not consider properly strict configuration mode.
+* DATAJDBC-436 - Replaces the deprecated @Wither with the new @With.
+* DATAJDBC-434 - CONTRIBUTING.adoc is missing.
+* DATAJDBC-432 - Separation of AggregateChange and MappingContext.
+* DATAJDBC-431 - @ReadOnlyProperty is not honoured by Spring Data JDBC.
+* DATAJDBC-428 - EntityRowMapper can not extract AggregateReference field for immutable entity.
+* DATAJDBC-427 - Implements equalsAndHashCode for AggregateReference.
+* DATAJDBC-424 - Release 2.0 M1 (Neumann).
+* DATAJDBC-417 - Saving an aggregate with null embeddable referencing an entity fails.
+* DATAJDBC-291 - Nested data structure with Spring Data JDBC.
+* DATAJDBC-234 - Support properties file based query declaration mechanism.
+* DATAJDBC-219 - Support for optimistic locking.
+
+
 Changes in version 1.1.4.RELEASE (2020-01-15)
 ---------------------------------------------
 * DATAJDBC-466 - Update copyright years to 2020.
@@ -319,6 +345,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
