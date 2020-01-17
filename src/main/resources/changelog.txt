@@ -1,6 +1,11 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.0.M2 (2020-01-17)
+----------------------------------------
+* DATAJDBC-473 - Release 2.0 M2 (Neumann).
+
+
 Changes in version 2.0.0.M1 (2020-01-16)
 ----------------------------------------
 * DATAJDBC-469 - Bump version to 2.0.0.
@@ -345,6 +350,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
