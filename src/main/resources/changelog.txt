@@ -1,6 +1,11 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.1.0.M2 (2020-01-17)
+----------------------------------------
+* #278 - Release 1.1 M2 (Neumann).
+
+
 Changes in version 1.1.0.M1 (2020-01-16)
 ----------------------------------------
 * #274 - Upgrade to Spring Data Relational 2.0.0.
@@ -154,6 +159,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
