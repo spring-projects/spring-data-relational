@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.core.DatabaseClient;
@@ -106,10 +107,17 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(exceptionTranslator, "ExceptionTranslator must not be null!");
 
+		SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
+		if (context != null) {
+			projectionFactory.setBeanFactory(context);
+			projectionFactory.setBeanClassLoader(context.getClassLoader());
+		}
+
 		return DatabaseClient.builder() //
 				.connectionFactory(lookupConnectionFactory()) //
 				.dataAccessStrategy(dataAccessStrategy) //
 				.exceptionTranslator(exceptionTranslator) //
+				.projectionFactory(projectionFactory) //
 				.build();
 	}
 

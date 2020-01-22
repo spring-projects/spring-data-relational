@@ -40,14 +40,18 @@ Mono<Person> first = databaseClient.select()
 <1> Selecting from a table by name returns row results as `Map<String, Object>` with case-insensitive column name matching.
 <2> The issued query declares a `WHERE` condition on `firstname` and `lastname` columns to filter results.
 <3> Results can be ordered by individual column names, resulting in an `ORDER BY` clause.
-<4> Selecting the one result fetches only a single row. This way of consuming rows expects the query to return exactly a single result.
+<4> Selecting the one result fetches only a single row.
+This way of consuming rows expects the query to return exactly a single result.
 `Mono` emits a `IncorrectResultSizeDataAccessException` if the query yields more than a single result.
 ====
+
+TIP: You can directly apply <<projections,Projections>> to result documents by providing the target type via `as(Class<?>)`.
 
 You can consume Query results in three ways:
 
 * Through object mapping (for example, `as(Class<T>)`) by using Spring Data's mapping-metadata.
-* As `Map<String, Object>` where column names are mapped to their value. Column names are looked up in a case-insensitive way.
+* As `Map<String, Object>` where column names are mapped to their value.
+Column names are looked up in a case-insensitive way.
 * By supplying a mapping `BiFunction` for direct access to R2DBC `Row` and `RowMetadata`.
 
 You can switch between retrieving a single entity and retrieving multiple entities through the following terminating methods:

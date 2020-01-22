@@ -23,6 +23,10 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
+import io.r2dbc.spi.test.MockColumnMetadata;
+import io.r2dbc.spi.test.MockResult;
+import io.r2dbc.spi.test.MockRow;
+import io.r2dbc.spi.test.MockRowMetadata;
 import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -38,7 +42,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
@@ -367,6 +373,127 @@ public class DefaultDatabaseClientUnitTests {
 				.table(IdOnly.class) //
 				.using(new IdOnly()) //
 				.then()).withMessageContaining("UPDATE contains no assignments");
+	}
+
+	@Test // gh-260
+	public void shouldProjectGenericExecuteAs() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement(anyString())).thenReturn(statement);
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
+		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.row(MockRow.builder().identified(0, Object.class, "Walter").build()).build();
+
+		doReturn(Flux.just(result)).when(statement).execute();
+
+		DatabaseClient databaseClient = DatabaseClient.builder() //
+				.connectionFactory(connectionFactory) //
+				.projectionFactory(new SpelAwareProxyProjectionFactory()) //
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)) //
+				.build();
+
+		databaseClient.execute("SELECT * FROM person") //
+				.as(Projection.class) //
+				.fetch() //
+				.one() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+
+					assertThat(actual.getName()).isEqualTo("Walter");
+					assertThat(actual.getGreeting()).isEqualTo("Hello Walter");
+
+				}) //
+				.verifyComplete();
+	}
+
+	@Test // gh-260
+	public void shouldProjectGenericSelectAs() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement(anyString())).thenReturn(statement);
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
+		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.row(MockRow.builder().identified(0, Object.class, "Walter").build()).build();
+
+		doReturn(Flux.just(result)).when(statement).execute();
+
+		DatabaseClient databaseClient = DatabaseClient.builder() //
+				.connectionFactory(connectionFactory) //
+				.projectionFactory(new SpelAwareProxyProjectionFactory()) //
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)) //
+				.build();
+
+		databaseClient.select().from("person") //
+				.project("*") //
+				.as(Projection.class) //
+				.fetch() //
+				.one() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+
+					assertThat(actual.getName()).isEqualTo("Walter");
+					assertThat(actual.getGreeting()).isEqualTo("Hello Walter");
+
+				}) //
+				.verifyComplete();
+	}
+
+	@Test // gh-260
+	public void shouldProjectTypedSelectAs() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement(anyString())).thenReturn(statement);
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
+		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.row(MockRow.builder().identified("name", Object.class, "Walter").build()).build();
+
+		doReturn(Flux.just(result)).when(statement).execute();
+
+		DatabaseClient databaseClient = DatabaseClient.builder() //
+				.connectionFactory(connectionFactory) //
+				.projectionFactory(new SpelAwareProxyProjectionFactory()) //
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)) //
+				.build();
+
+		databaseClient.select().from(Person.class) //
+				.as(Projection.class) //
+				.one() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+
+					assertThat(actual.getName()).isEqualTo("Walter");
+					assertThat(actual.getGreeting()).isEqualTo("Hello Walter");
+
+				}) //
+				.verifyComplete();
+
+	}
+
+	static class Person {
+
+		String name;
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	interface Projection {
+
+		String getName();
+
+		@Value("#{'Hello ' + target.name}")
+		String getGreeting();
 	}
 
 	static class IdOnly {

@@ -49,6 +49,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.UncategorizedR2dbcException;
 import org.springframework.data.r2dbc.connectionfactory.ConnectionFactoryUtils;
 import org.springframework.data.r2dbc.connectionfactory.ConnectionProxy;
@@ -82,13 +83,17 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	private final DefaultDatabaseClientBuilder builder;
 
+	private final ProjectionFactory projectionFactory;
+
 	DefaultDatabaseClient(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy dataAccessStrategy, boolean namedParameters, DefaultDatabaseClientBuilder builder) {
+			ReactiveDataAccessStrategy dataAccessStrategy, boolean namedParameters, ProjectionFactory projectionFactory,
+			DefaultDatabaseClientBuilder builder) {
 
 		this.connector = connector;
 		this.exceptionTranslator = exceptionTranslator;
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.namedParameters = namedParameters;
+		this.projectionFactory = projectionFactory;
 		this.builder = builder;
 	}
 
@@ -544,7 +549,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	@SuppressWarnings("unchecked")
 	protected class DefaultTypedExecuteSpec<T> extends ExecuteSpecSupport implements TypedExecuteSpec<T> {
 
-		private final Class<T> typeToRead;
+		private final @Nullable Class<T> typeToRead;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
 		DefaultTypedExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
@@ -553,7 +558,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			super(byIndex, byName, sqlSupplier);
 
 			this.typeToRead = typeToRead;
-			this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
+
+			if (typeToRead.isInterface()) {
+				this.mappingFunction = ColumnMapRowMapper.INSTANCE
+						.andThen(map -> projectionFactory.createProjection(typeToRead, map));
+			} else {
+				this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
+			}
 		}
 
 		DefaultTypedExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
@@ -638,6 +649,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public <T> TypedSelectSpec<T> from(Class<T> table) {
+
+			assertRegularClass(table);
+
 			return new DefaultTypedSelectSpec<>(table);
 		}
 	}
@@ -735,8 +749,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
+			BiFunction<Row, RowMetadata, R> rowMapper;
+
+			if (resultType.isInterface()) {
+				rowMapper = ColumnMapRowMapper.INSTANCE.andThen(map -> projectionFactory.createProjection(resultType, map));
+			} else {
+				rowMapper = dataAccessStrategy.getRowMapper(resultType);
+			}
+
 			return new DefaultTypedSelectSpec<>(this.table, this.projectedFields, this.criteria, this.sort, this.page,
-					resultType, dataAccessStrategy.getRowMapper(resultType));
+					resultType, rowMapper);
 		}
 
 		@Override
@@ -808,10 +830,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	@SuppressWarnings("unchecked")
 	private class DefaultTypedSelectSpec<T> extends DefaultSelectSpecSupport implements TypedSelectSpec<T> {
 
-		private final @Nullable Class<T> typeToRead;
+		private final Class<T> typeToRead;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
-		DefaultTypedSelectSpec(@Nullable Class<T> typeToRead) {
+		DefaultTypedSelectSpec(Class<T> typeToRead) {
 
 			super(dataAccessStrategy.getTableName(typeToRead));
 
@@ -833,7 +855,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
-			return exchange(dataAccessStrategy.getRowMapper(resultType));
+			BiFunction<Row, RowMetadata, R> rowMapper;
+
+			if (resultType.isInterface()) {
+				rowMapper = dataAccessStrategy.getRowMapper(typeToRead)
+						.andThen(r -> projectionFactory.createProjection(resultType, r));
+			} else {
+				rowMapper = dataAccessStrategy.getRowMapper(resultType);
+			}
+
+			return exchange(rowMapper);
 		}
 
 		@Override
@@ -920,6 +951,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public <T> TypedInsertSpec<T> into(Class<T> table) {
+
+			assertRegularClass(table);
+
 			return new DefaultTypedInsertSpec<>(table, ColumnMapRowMapper.INSTANCE);
 		}
 	}
@@ -1136,6 +1170,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public <T> TypedUpdateSpec<T> table(Class<T> table) {
+
+			assertRegularClass(table);
+
 			return new DefaultTypedUpdateSpec<>(table, null, null);
 		}
 	}
@@ -1297,6 +1334,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		public <T> DefaultDeleteSpec<T> from(Class<T> table) {
+
+			assertRegularClass(table);
+
 			return new DefaultDeleteSpec<>(table, null, null);
 		}
 	}
@@ -1475,6 +1515,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		String sql = sqlSupplier.get();
 		Assert.state(StringUtils.hasText(sql), "SQL returned by SQL supplier must not be empty!");
 		return sql;
+	}
+
+	private static void assertRegularClass(Class<?> table) {
+
+		Assert.notNull(table, "Entity type must not be null");
+		Assert.isTrue(!table.isInterface() && !table.isEnum(),
+				() -> String.format("Entity type %s must be a class", table.getName()));
 	}
 
 	/**

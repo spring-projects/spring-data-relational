@@ -20,6 +20,7 @@ import io.r2dbc.spi.ConnectionFactory;
 
 import java.util.function.Consumer;
 
+import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.core.DatabaseClient.Builder;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
@@ -43,6 +44,8 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 	private boolean namedParameters = true;
 
+	private ProjectionFactory projectionFactory;
+
 	DefaultDatabaseClientBuilder() {}
 
 	DefaultDatabaseClientBuilder(DefaultDatabaseClientBuilder other) {
@@ -53,6 +56,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		this.exceptionTranslator = other.exceptionTranslator;
 		this.accessStrategy = other.accessStrategy;
 		this.namedParameters = other.namedParameters;
+		this.projectionFactory = other.projectionFactory;
 	}
 
 	/*
@@ -107,6 +111,19 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#projectionFactory(ProjectionFactory)
+	 */
+	@Override
+	public Builder projectionFactory(ProjectionFactory factory) {
+
+		Assert.notNull(factory, "ProjectionFactory must not be null!");
+
+		this.projectionFactory = factory;
+		return this;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#build()
 	 */
 	@Override
@@ -126,13 +143,8 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 			accessStrategy = new DefaultReactiveDataAccessStrategy(dialect);
 		}
 
-		return doBuild(this.connectionFactory, exceptionTranslator, accessStrategy, namedParameters,
-				new DefaultDatabaseClientBuilder(this));
-	}
-
-	protected DatabaseClient doBuild(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy accessStrategy, boolean namedParameters, DefaultDatabaseClientBuilder builder) {
-		return new DefaultDatabaseClient(connector, exceptionTranslator, accessStrategy, namedParameters, builder);
+		return new DefaultDatabaseClient(this.connectionFactory, exceptionTranslator, accessStrategy, namedParameters,
+				projectionFactory, new DefaultDatabaseClientBuilder(this));
 	}
 
 	/*

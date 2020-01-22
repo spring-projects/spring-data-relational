@@ -30,6 +30,7 @@ import org.reactivestreams.Publisher;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
@@ -156,6 +157,15 @@ public interface DatabaseClient {
 		 * @see NamedParameterExpander
 		 */
 		Builder namedParameters(boolean enabled);
+
+		/**
+		 * Configures the {@link org.springframework.data.projection.ProjectionFactory projection factory}.
+		 *
+		 * @param factory must not be {@literal null}.
+		 * @return {@code this} {@link Builder}.
+		 * @since 1.1
+		 */
+		Builder projectionFactory(ProjectionFactory factory);
 
 		/**
 		 * Configures a {@link Consumer} to configure this builder.
