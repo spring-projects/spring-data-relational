@@ -320,7 +320,8 @@ public class QueryMapper {
 			typeHint = actualType.getType();
 		}
 
-		return createCondition(column, mappedValue, typeHint, bindings, criteria.getComparator());
+		return createCondition(column, mappedValue, typeHint, bindings, criteria.getComparator(),
+				criteria.isIgnoreCase());
 	}
 
 	/**
@@ -370,7 +371,7 @@ public class QueryMapper {
 	}
 
 	private Condition createCondition(Column column, @Nullable Object mappedValue, Class<?> valueType,
-			MutableBindings bindings, Comparator comparator) {
+			MutableBindings bindings, Comparator comparator, boolean ignoreCase) {
 
 		if (comparator.equals(Comparator.IS_NULL)) {
 			return column.isNull();
@@ -378,6 +379,19 @@ public class QueryMapper {
 
 		if (comparator.equals(Comparator.IS_NOT_NULL)) {
 			return column.isNotNull();
+		}
+
+		if (comparator == Comparator.IS_TRUE) {
+			return column.isEqualTo(SQL.literalOf((Object) ("TRUE")));
+		}
+
+		if (comparator == Comparator.IS_FALSE) {
+			return column.isEqualTo(SQL.literalOf((Object) ("FALSE")));
+		}
+
+		Expression columnExpression = column;
+		if (ignoreCase && String.class == valueType) {
+			columnExpression = new Upper(column);
 		}
 
 		if (comparator == Comparator.NOT_IN || comparator == Comparator.IN) {
@@ -395,14 +409,14 @@ public class QueryMapper {
 					expressions.add(bind(o, valueType, bindings, bindMarker));
 				}
 
-				condition = column.in(expressions.toArray(new Expression[0]));
+				condition = Conditions.in(columnExpression, expressions.toArray(new Expression[0]));
 
 			} else {
 
 				BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
 				Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 
-				condition = column.in(expression);
+				condition = Conditions.in(columnExpression, expression);
 			}
 
 			if (comparator == Comparator.NOT_IN) {
@@ -413,23 +427,40 @@ public class QueryMapper {
 		}
 
 		BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
-		Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 
 		switch (comparator) {
-			case EQ:
-				return column.isEqualTo(expression);
-			case NEQ:
-				return column.isNotEqualTo(expression);
-			case LT:
+			case EQ: {
+				Expression expression = bind(mappedValue, valueType, bindings, bindMarker, ignoreCase);
+				return Conditions.isEqual(columnExpression, expression);
+			}
+			case NEQ: {
+				Expression expression = bind(mappedValue, valueType, bindings, bindMarker, ignoreCase);
+				return Conditions.isEqual(columnExpression, expression).not();
+			}
+			case LT: {
+				Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 				return column.isLess(expression);
-			case LTE:
+			}
+			case LTE: {
+				Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 				return column.isLessOrEqualTo(expression);
-			case GT:
+			}
+			case GT: {
+				Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 				return column.isGreater(expression);
-			case GTE:
+			}
+			case GTE: {
+				Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 				return column.isGreaterOrEqualTo(expression);
-			case LIKE:
-				return column.like(expression);
+			}
+			case LIKE: {
+				Expression expression = bind(mappedValue, valueType, bindings, bindMarker, ignoreCase);
+				return Conditions.like(columnExpression, expression);
+			}
+			case NOT_LIKE: {
+				Expression expression = bind(mappedValue, valueType, bindings, bindMarker, ignoreCase);
+				return NotLike.create(columnExpression, expression);
+			}
 			default:
 				throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
 		}
@@ -459,6 +490,11 @@ public class QueryMapper {
 
 	private Expression bind(@Nullable Object mappedValue, Class<?> valueType, MutableBindings bindings,
 			BindMarker bindMarker) {
+		return bind(mappedValue, valueType, bindings, bindMarker, false);
+	}
+
+	private Expression bind(@Nullable Object mappedValue, Class<?> valueType, MutableBindings bindings,
+			BindMarker bindMarker, boolean ignoreCase) {
 
 		if (mappedValue != null) {
 			bindings.bind(bindMarker, mappedValue);
@@ -466,7 +502,8 @@ public class QueryMapper {
 			bindings.bindNull(bindMarker, valueType);
 		}
 
-		return SQL.bindMarker(bindMarker.getPlaceholder());
+		return ignoreCase ? new Upper(SQL.bindMarker(bindMarker.getPlaceholder()))
+				: SQL.bindMarker(bindMarker.getPlaceholder());
 	}
 
 	/**
@@ -663,6 +700,91 @@ public class QueryMapper {
 		@Override
 		public String toString() {
 			return toSql(IdentifierProcessing.ANSI);
+		}
+	}
+
+	// TODO: include support of NOT LIKE operator into spring-data-relational
+	/**
+	 * Negated LIKE {@link Condition} comparing two {@link Expression}s.
+	 * <p/>
+	 * Results in a rendered condition: {@code <left> NOT LIKE <right>}.
+	 */
+	private static class NotLike implements Segment, Condition {
+		private final Comparison delegate;
+
+		private NotLike(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+			this.delegate = Comparison.create(leftColumnOrExpression, "NOT LIKE", rightColumnOrExpression);
+		}
+
+		/**
+		 * Creates new instance of this class with the given {@link Expression}s.
+		 *
+		 * @param leftColumnOrExpression the left {@link Expression}
+		 * @param rightColumnOrExpression the right {@link Expression}
+		 * @return {@link NotLike} condition
+		 */
+		public static NotLike create(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
+			Assert.notNull(leftColumnOrExpression, "Left expression must not be null!");
+			Assert.notNull(rightColumnOrExpression, "Right expression must not be null!");
+			return new NotLike(leftColumnOrExpression, rightColumnOrExpression);
+		}
+
+		@Override
+		public void visit(Visitor visitor) {
+			Assert.notNull(visitor, "Visitor must not be null!");
+			delegate.visit(visitor);
+		}
+
+		@Override
+		public String toString() {
+			return delegate.toString();
+		}
+	}
+
+	// TODO: include support of functions in WHERE conditions into spring-data-relational
+	/**
+	 * Models the ANSI SQL {@code UPPER} function.
+	 * <p>
+	 * Results in a rendered function: {@code UPPER(<expression>)}.
+	 */
+	private class Upper implements Expression {
+		private Literal<Object> delegate;
+
+		/**
+		 * Creates new instance of this class with the given expression. Only expressions of type {@link Column} and
+		 * {@link org.springframework.data.relational.core.sql.BindMarker} are supported.
+		 *
+		 * @param expression expression to be uppercased (must not be {@literal null})
+		 */
+		private Upper(Expression expression) {
+			Assert.notNull(expression, "Expression must not be null!");
+			String functionArgument;
+			if (expression instanceof org.springframework.data.relational.core.sql.BindMarker) {
+				functionArgument = expression instanceof Named ? ((Named) expression).getName().getReference()
+						: expression.toString();
+			} else if (expression instanceof Column) {
+				functionArgument = "";
+				Table table = ((Column) expression).getTable();
+				if (table != null) {
+					functionArgument = toSql(table.getName()) + ".";
+				}
+				functionArgument += toSql(((Column) expression).getName());
+			} else {
+				throw new IllegalArgumentException("Unable to ignore case expression of type " + expression.getClass().getName()
+						+ ". Only " + Column.class.getName() + " and "
+						+ org.springframework.data.relational.core.sql.BindMarker.class.getName() + " types are supported");
+			}
+			this.delegate = SQL.literalOf((Object) ("UPPER(" + functionArgument + ")"));
+		}
+
+		@Override
+		public void visit(Visitor visitor) {
+			delegate.visit(visitor);
+		}
+
+		@Override
+		public String toString() {
+			return delegate.toString();
 		}
 	}
 }

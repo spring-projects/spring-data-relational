@@ -34,6 +34,7 @@ import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.lang.Nullable;
 
 /**
@@ -175,6 +176,16 @@ public interface StatementMapper {
 	 */
 	default DeleteSpec createDelete(SqlIdentifier table) {
 		return DeleteSpec.create(table);
+	}
+
+	/**
+	 * Returns {@link RenderContext}.
+	 *
+	 * @return {@link RenderContext} instance or {@literal null} if {@link RenderContext} is not available
+	 */
+	@Nullable
+	default RenderContext getRenderContext() {
+		return null;
 	}
 
 	/**

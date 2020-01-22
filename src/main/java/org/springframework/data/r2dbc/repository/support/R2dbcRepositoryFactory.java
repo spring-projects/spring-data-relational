@@ -25,6 +25,7 @@ import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.data.r2dbc.repository.query.PartTreeR2dbcQuery;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
 import org.springframework.data.r2dbc.repository.query.StringBasedR2dbcQuery;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -104,7 +105,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.of(new R2dbcQueryLookupStrategy(this.databaseClient, evaluationContextProvider, this.converter));
+		return Optional.of(new R2dbcQueryLookupStrategy(this.databaseClient, evaluationContextProvider, this.converter,
+				this.dataAccessStrategy));
 	}
 
 	/*
@@ -134,12 +136,15 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		private final DatabaseClient databaseClient;
 		private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 		private final R2dbcConverter converter;
+		private final ReactiveDataAccessStrategy dataAccessStrategy;
 
 		R2dbcQueryLookupStrategy(DatabaseClient databaseClient,
-				QueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter) {
+				QueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter,
+				ReactiveDataAccessStrategy dataAccessStrategy) {
 			this.databaseClient = databaseClient;
 			this.evaluationContextProvider = evaluationContextProvider;
 			this.converter = converter;
+			this.dataAccessStrategy = dataAccessStrategy;
 		}
 
 		/*
@@ -161,9 +166,10 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 			} else if (queryMethod.hasAnnotatedQuery()) {
 				return new StringBasedR2dbcQuery(queryMethod, this.databaseClient, this.converter, EXPRESSION_PARSER,
 						this.evaluationContextProvider);
+			} else {
+				return new PartTreeR2dbcQuery(queryMethod, this.databaseClient, this.converter,
+						this.dataAccessStrategy);
 			}
-
-			throw new UnsupportedOperationException("Query derivation not yet supported!");
 		}
 	}
 }
