@@ -19,14 +19,21 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.spi.Row;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import org.junit.Test;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 
 /**
  * Unit tests for {@link R2dbcMappingContext}.
@@ -45,6 +52,27 @@ public class R2dbcMappingContextUnitTests {
 		context.afterPropertiesSet();
 
 		assertThat(context.getPersistentEntity(ConvertedEntity.class)).isNotNull();
+	}
+
+	@Test // gh-284
+	public void shouldNotCreateEntityForUUID() {
+
+		R2dbcDialect dialect = PostgresDialect.INSTANCE;
+
+		List<Object> converters = new ArrayList<>(dialect.getConverters());
+		converters.addAll(R2dbcCustomConversions.STORE_CONVERTERS);
+
+		CustomConversions.StoreConversions storeConversions = CustomConversions.StoreConversions
+				.of(dialect.getSimpleTypeHolder(), converters);
+
+		R2dbcCustomConversions conversions = new R2dbcCustomConversions(storeConversions, Collections.emptyList());
+
+		R2dbcMappingContext context = new R2dbcMappingContext();
+		context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+		context.afterPropertiesSet();
+
+		assertThat(context.getPersistentEntity(MyEntity.class)).isNotNull();
+		assertThat(context.getPersistentEntity(UUID.class)).isNull();
 	}
 
 	static class ConvertedEntity {
@@ -72,5 +100,10 @@ public class R2dbcMappingContextUnitTests {
 		public ConvertedEntity convert(Row source) {
 			return new ConvertedEntity();
 		}
+	}
+
+	static class MyEntity {
+
+		UUID id;
 	}
 }
