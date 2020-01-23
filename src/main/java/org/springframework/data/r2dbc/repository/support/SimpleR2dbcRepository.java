@@ -30,6 +30,7 @@ import org.springframework.data.r2dbc.core.PreparedOperation;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.StatementMapper;
 import org.springframework.data.r2dbc.query.Criteria;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;
@@ -129,12 +130,12 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		Assert.notNull(id, "Id must not be null!");
 
 		List<String> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
-		String idColumnName = getIdColumnName();
+		String idProperty = getIdProperty().getName();
 
 		StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
 		StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName()) //
 				.withProjection(columns) //
-				.withCriteria(Criteria.where(idColumnName).is(id));
+				.withCriteria(Criteria.where(idProperty).is(id));
 
 		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
 
@@ -160,12 +161,12 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(id, "Id must not be null!");
 
-		String idColumnName = getIdColumnName();
+		String idProperty = getIdProperty().getName();
 
 		StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
 		StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName())
-				.withProjection(Collections.singletonList(idColumnName)) //
-				.withCriteria(Criteria.where(idColumnName).is(id));
+				.withProjection(Collections.singletonList(idProperty)) //
+				.withCriteria(Criteria.where(idProperty).is(id));
 
 		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
 
@@ -217,12 +218,12 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			}
 
 			List<String> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
-			String idColumnName = getIdColumnName();
+			String idProperty = getIdProperty().getName();
 
 			StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
 			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName()) //
 					.withProjection(columns) //
-					.withCriteria(Criteria.where(idColumnName).in(ids));
+					.withCriteria(Criteria.where(idProperty).in(ids));
 
 			PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
 
@@ -238,7 +239,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Table table = Table.create(this.entity.getTableName());
 		Select select = StatementBuilder //
-				.select(Functions.count(table.column(getIdColumnName()))) //
+				.select(Functions.count(table.column(getIdProperty().getColumnName()))) //
 				.from(table) //
 				.build();
 
@@ -260,7 +261,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		return this.databaseClient.delete() //
 				.from(this.entity.getJavaType()) //
 				.table(this.entity.getTableName()) //
-				.matching(Criteria.where(getIdColumnName()).is(id)) //
+				.matching(Criteria.where(getIdProperty().getName()).is(id)) //
 				.fetch() //
 				.rowsUpdated() //
 				.then();
@@ -285,7 +286,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 			return this.databaseClient.delete() //
 					.from(this.entity.getJavaType()) //
 					.table(this.entity.getTableName()) //
-					.matching(Criteria.where(getIdColumnName()).in(ids)) //
+					.matching(Criteria.where(getIdProperty().getName()).in(ids)) //
 					.fetch() //
 					.rowsUpdated();
 		}).then();
@@ -339,12 +340,11 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		return this.databaseClient.delete().from(this.entity.getTableName()).then();
 	}
 
-	private String getIdColumnName() {
+	private RelationalPersistentProperty getIdProperty() {
 
 		return this.converter //
 				.getMappingContext() //
 				.getRequiredPersistentEntity(this.entity.getJavaType()) //
-				.getRequiredIdProperty() //
-				.getColumnName();
+				.getRequiredIdProperty();
 	}
 }
