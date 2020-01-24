@@ -28,7 +28,7 @@ Here is a quick teaser of an application using Spring Data Repositories in Java:
 
 [source,java]
 ----
-public interface PersonRepository extends CrudRepository<Person, Long> {
+public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
 
   @Query("SELECT * FROM person WHERE lastname = :lastname")
   Flux<Person> findByLastname(String lastname);
