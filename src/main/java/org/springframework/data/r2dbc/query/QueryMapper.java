@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
+import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
@@ -39,12 +40,14 @@ import org.springframework.data.r2dbc.query.Criteria.Combinator;
 import org.springframework.data.r2dbc.query.Criteria.Comparator;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
@@ -117,6 +120,51 @@ public class QueryMapper {
 		}
 
 		return Sort.by(mappedOrder);
+	}
+
+	/**
+	 * Map the {@link Expression} object to apply field name mapping using {@link Class the type to read}.
+	 *
+	 * @param expression must not be {@literal null}.
+	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
+	 * @return the mapped {@link Expression}.
+	 * @since 1.1
+	 */
+	public Expression getMappedObject(Expression expression, @Nullable RelationalPersistentEntity<?> entity) {
+
+		if (entity == null) {
+			return expression;
+		}
+
+		if (expression instanceof Column) {
+
+			Column column = (Column) expression;
+			Field field = createPropertyField(entity, column.getName());
+
+			return column instanceof Aliased
+					? Column.aliased(field.getMappedColumnName(), column.getTable(), ((Aliased) column).getAlias())
+					: Column.create(field.getMappedColumnName(), column.getTable());
+		}
+
+		if (expression instanceof SimpleFunction) {
+
+			// Revisit after https://jira.spring.io/browse/DATAJDBC-478
+			SimpleFunction function = (SimpleFunction) expression;
+			DirectFieldAccessor accessor = new DirectFieldAccessor(function);
+
+			List<Expression> arguments = (List<Expression>) accessor.getPropertyValue("expressions");
+			List<Expression> mappedArguments = new ArrayList<>(arguments.size());
+
+			for (Expression argument : arguments) {
+				mappedArguments.add(getMappedObject(argument, entity));
+			}
+
+			SimpleFunction mappedFunction = SimpleFunction.create(function.getFunctionName(), mappedArguments);
+
+			return function instanceof Aliased ? mappedFunction.as(((Aliased) function).getAlias()) : mappedFunction;
+		}
+
+		throw new IllegalArgumentException(String.format("Cannot map %s", expression));
 	}
 
 	/**
@@ -285,6 +333,10 @@ public class QueryMapper {
 			default:
 				throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
 		}
+	}
+
+	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, String key) {
+		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext);
 	}
 
 	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, String key,

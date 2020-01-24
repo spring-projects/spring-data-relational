@@ -205,6 +205,15 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	}
 
 	/**
+	 * Obtain the {@link ReactiveDataAccessStrategy}.
+	 *
+	 * @return a the ReactiveDataAccessStrategy.
+	 */
+	protected ReactiveDataAccessStrategy getDataAccessStrategy() {
+		return dataAccessStrategy;
+	}
+
+	/**
 	 * Release the {@link Connection}.
 	 *
 	 * @param connection to close.
