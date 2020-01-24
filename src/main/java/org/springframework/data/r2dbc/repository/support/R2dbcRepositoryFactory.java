@@ -22,6 +22,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryMethod;
@@ -92,8 +93,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		RelationalEntityInformation<?, ?> entityInformation = getEntityInformation(information.getDomainType(),
 				information);
 
-		return getTargetRepositoryViaReflection(information, entityInformation, this.databaseClient, this.converter,
-				this.dataAccessStrategy);
+		return getTargetRepositoryViaReflection(information, entityInformation,
+				new R2dbcEntityTemplate(this.databaseClient, this.dataAccessStrategy), this.converter);
 	}
 
 	/*

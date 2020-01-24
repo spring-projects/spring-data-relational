@@ -24,11 +24,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
-import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.data.repository.Repository;
@@ -41,18 +42,15 @@ import org.springframework.data.repository.Repository;
 @RunWith(MockitoJUnitRunner.class)
 public class R2dbcRepositoryFactoryUnitTests {
 
+	R2dbcConverter r2dbcConverter = new MappingR2dbcConverter(new R2dbcMappingContext());
+
 	@Mock DatabaseClient databaseClient;
-	@Mock R2dbcConverter r2dbcConverter;
 	@Mock ReactiveDataAccessStrategy dataAccessStrategy;
-	@Mock @SuppressWarnings("rawtypes") MappingContext mappingContext;
-	@Mock @SuppressWarnings("rawtypes") RelationalPersistentEntity entity;
 
 	@Before
 	@SuppressWarnings("unchecked")
 	public void before() {
-		when(mappingContext.getRequiredPersistentEntity(Person.class)).thenReturn(entity);
 		when(dataAccessStrategy.getConverter()).thenReturn(r2dbcConverter);
-		when(r2dbcConverter.getMappingContext()).thenReturn(mappingContext);
 	}
 
 	@Test
@@ -75,5 +73,7 @@ public class R2dbcRepositoryFactoryUnitTests {
 
 	interface MyPersonRepository extends Repository<Person, Long> {}
 
-	static class Person {}
+	static class Person {
+		@Id long id;
+	}
 }

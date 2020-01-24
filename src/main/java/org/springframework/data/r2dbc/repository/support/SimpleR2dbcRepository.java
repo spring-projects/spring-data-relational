@@ -18,17 +18,15 @@ package org.springframework.data.r2dbc.repository.support;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 import org.reactivestreams.Publisher;
 
-import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.PreparedOperation;
+import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.core.StatementMapper;
 import org.springframework.data.r2dbc.query.Criteria;
+import org.springframework.data.r2dbc.query.Query;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.Select;
@@ -38,6 +36,7 @@ import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.data.util.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -51,16 +50,45 @@ import org.springframework.util.Assert;
 public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, ID> {
 
 	private final RelationalEntityInformation<T, ID> entity;
-	private final DatabaseClient databaseClient;
-	private final R2dbcConverter converter;
-	private final ReactiveDataAccessStrategy accessStrategy;
+	private final R2dbcEntityOperations entityOperations;
+	private final Lazy<RelationalPersistentProperty> idProperty;
 
+	/**
+	 * Create a new {@link SimpleR2dbcRepository}.
+	 *
+	 * @param entity
+	 * @param entityOperations
+	 * @param converter
+	 * @since 1.1
+	 */
+	SimpleR2dbcRepository(RelationalEntityInformation<T, ID> entity, R2dbcEntityOperations entityOperations,
+			R2dbcConverter converter) {
+
+		this.entity = entity;
+		this.entityOperations = entityOperations;
+		this.idProperty = Lazy.of(() -> converter //
+				.getMappingContext() //
+				.getRequiredPersistentEntity(this.entity.getJavaType()) //
+				.getRequiredIdProperty());
+	}
+
+	/**
+	 * Create a new {@link SimpleR2dbcRepository}.
+	 *
+	 * @param entity
+	 * @param databaseClient
+	 * @param converter
+	 * @param accessStrategy
+	 */
 	public SimpleR2dbcRepository(RelationalEntityInformation<T, ID> entity, DatabaseClient databaseClient,
 			R2dbcConverter converter, ReactiveDataAccessStrategy accessStrategy) {
+
 		this.entity = entity;
-		this.databaseClient = databaseClient;
-		this.converter = converter;
-		this.accessStrategy = accessStrategy;
+		this.entityOperations = new R2dbcEntityTemplate(databaseClient);
+		this.idProperty = Lazy.of(() -> converter //
+				.getMappingContext() //
+				.getRequiredPersistentEntity(this.entity.getJavaType()) //
+				.getRequiredIdProperty());
 	}
 
 	/* (non-Javadoc)
@@ -73,28 +101,10 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		Assert.notNull(objectToSave, "Object to save must not be null!");
 
 		if (this.entity.isNew(objectToSave)) {
-
-			return this.databaseClient.insert() //
-					.into(this.entity.getJavaType()) //
-					.table(this.entity.getTableName()).using(objectToSave) //
-					.map(this.converter.populateIdIfNecessary(objectToSave)) //
-					.first() //
-					.defaultIfEmpty(objectToSave);
+			return this.entityOperations.insert(objectToSave);
 		}
 
-		return this.databaseClient.update() //
-				.table(this.entity.getJavaType()) //
-				.table(this.entity.getTableName()).using(objectToSave) //
-				.fetch().rowsUpdated().handle((rowsUpdated, sink) -> {
-
-					if (rowsUpdated == 0) {
-						sink.error(new TransientDataAccessResourceException(
-								String.format("Failed to update table [%s]. Row with Id [%s] does not exist.",
-										this.entity.getTableName(), this.entity.getId(objectToSave))));
-					} else {
-						sink.next(objectToSave);
-					}
-				});
+		return this.entityOperations.update(objectToSave);
 	}
 
 	/* (non-Javadoc)
@@ -129,20 +139,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(id, "Id must not be null!");
 
-		List<SqlIdentifier> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
-		String idProperty = getIdProperty().getName();
-
-		StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
-		StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName()) //
-				.withProjection(columns) //
-				.withCriteria(Criteria.where(idProperty).is(id));
-
-		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
-
-		return this.databaseClient.execute(operation) //
-				.as(this.entity.getJavaType()) //
-				.fetch() //
-				.one();
+		return this.entityOperations.selectOne(getIdQuery(id), this.entity.getJavaType());
 	}
 
 	/* (non-Javadoc)
@@ -161,18 +158,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(id, "Id must not be null!");
 
-		String idProperty = getIdProperty().getName();
-
-		StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
-		StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName()).withProjection(idProperty) //
-				.withCriteria(Criteria.where(idProperty).is(id));
-
-		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
-
-		return this.databaseClient.execute(operation) //
-				.map((r, md) -> r) //
-				.first() //
-				.hasElement();
+		return this.entityOperations.exists(getIdQuery(id), this.entity.getJavaType());
 	}
 
 	/* (non-Javadoc)
@@ -188,7 +174,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 */
 	@Override
 	public Flux<T> findAll() {
-		return this.databaseClient.select().from(this.entity.getJavaType()).fetch().all();
+		return this.entityOperations.select(Query.empty(), this.entity.getJavaType());
 	}
 
 	/* (non-Javadoc)
@@ -216,17 +202,9 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				return Flux.empty();
 			}
 
-			List<SqlIdentifier> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
 			String idProperty = getIdProperty().getName();
 
-			StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
-			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName()) //
-					.withProjection(columns) //
-					.withCriteria(Criteria.where(idProperty).in(ids));
-
-			PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
-
-			return this.databaseClient.execute(operation).as(this.entity.getJavaType()).fetch().all();
+			return this.entityOperations.select(Query.query(Criteria.where(idProperty).in(ids)), this.entity.getJavaType());
 		});
 	}
 
@@ -235,17 +213,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	 */
 	@Override
 	public Mono<Long> count() {
-
-		Table table = Table.create(this.accessStrategy.toSql(this.entity.getTableName()));
-		Select select = StatementBuilder //
-				.select(Functions.count(table.column(this.accessStrategy.toSql(getIdProperty().getColumnName())))) //
-				.from(table) //
-				.build();
-
-		return this.databaseClient.execute(SqlRenderer.toString(select)) //
-				.map((r, md) -> r.get(0, Long.class)) //
-				.first() //
-				.defaultIfEmpty(0L);
+		return this.entityOperations.count(Query.empty(), this.entity.getJavaType());
 	}
 
 	/* (non-Javadoc)
@@ -257,13 +225,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(id, "Id must not be null!");
 
-		return this.databaseClient.delete() //
-				.from(this.entity.getJavaType()) //
-				.table(this.entity.getTableName()) //
-				.matching(Criteria.where(getIdProperty().getName()).is(id)) //
-				.fetch() //
-				.rowsUpdated() //
-				.then();
+		return this.entityOperations.delete(getIdQuery(id), this.entity.getJavaType()).then();
 	}
 
 	/* (non-Javadoc)
@@ -274,7 +236,6 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	public Mono<Void> deleteById(Publisher<ID> idPublisher) {
 
 		Assert.notNull(idPublisher, "The Id Publisher must not be null!");
-		StatementMapper statementMapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
 
 		return Flux.from(idPublisher).buffer().filter(ids -> !ids.isEmpty()).concatMap(ids -> {
 
@@ -282,12 +243,9 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				return Flux.empty();
 			}
 
-			return this.databaseClient.delete() //
-					.from(this.entity.getJavaType()) //
-					.table(this.entity.getTableName()) //
-					.matching(Criteria.where(getIdProperty().getName()).in(ids)) //
-					.fetch() //
-					.rowsUpdated();
+			String idProperty = getIdProperty().getName();
+
+			return this.entityOperations.delete(Query.query(Criteria.where(idProperty).in(ids)), this.entity.getJavaType());
 		}).then();
 	}
 
@@ -336,14 +294,14 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	@Override
 	@Transactional
 	public Mono<Void> deleteAll() {
-		return this.databaseClient.delete().from(this.entity.getTableName()).then();
+		return this.entityOperations.delete(Query.empty(), this.entity.getJavaType()).then();
 	}
 
 	private RelationalPersistentProperty getIdProperty() {
+		return this.idProperty.get();
+	}
 
-		return this.converter //
-				.getMappingContext() //
-				.getRequiredPersistentEntity(this.entity.getJavaType()) //
-				.getRequiredIdProperty();
+	private Query getIdQuery(Object id) {
+		return Query.query(Criteria.where(getIdProperty().getName()).is(id));
 	}
 }
