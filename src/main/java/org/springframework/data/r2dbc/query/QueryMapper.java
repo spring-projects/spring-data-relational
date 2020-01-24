@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
-import org.springframework.beans.DirectFieldAccessor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
@@ -40,15 +39,7 @@ import org.springframework.data.r2dbc.query.Criteria.Combinator;
 import org.springframework.data.r2dbc.query.Criteria.Comparator;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.Aliased;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.SQL;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.SimpleFunction;
-import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -114,12 +105,35 @@ public class QueryMapper {
 
 		for (Sort.Order order : sort) {
 
-			Field field = createPropertyField(entity, order.getProperty(), this.mappingContext);
+			Field field = createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
 			mappedOrder.add(
 					Sort.Order.by(toSql(field.getMappedColumnName())).with(order.getNullHandling()).with(order.getDirection()));
 		}
 
 		return Sort.by(mappedOrder);
+	}
+
+	/**
+	 * Map the {@link Sort} object to apply field name mapping using {@link Class the type to read}.
+	 *
+	 * @param sort must not be {@literal null}.
+	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
+	 * @return
+	 * @since 1.1
+	 */
+	public List<OrderByField> getMappedSort(Table table, Sort sort, @Nullable RelationalPersistentEntity<?> entity) {
+
+		List<OrderByField> mappedOrder = new ArrayList<>();
+
+		for (Sort.Order order : sort) {
+
+			Field field = createPropertyField(entity, SqlIdentifier.unquoted(order.getProperty()), this.mappingContext);
+			OrderByField orderBy = OrderByField.from(table.column(field.getMappedColumnName()))
+					.withNullHandling(order.getNullHandling());
+			mappedOrder.add(order.isAscending() ? orderBy.asc() : orderBy.desc());
+		}
+
+		return mappedOrder;
 	}
 
 	/**
@@ -132,7 +146,7 @@ public class QueryMapper {
 	 */
 	public Expression getMappedObject(Expression expression, @Nullable RelationalPersistentEntity<?> entity) {
 
-		if (entity == null) {
+		if (entity == null || expression instanceof AsteriskFromTable) {
 			return expression;
 		}
 
@@ -140,19 +154,17 @@ public class QueryMapper {
 
 			Column column = (Column) expression;
 			Field field = createPropertyField(entity, column.getName());
+			Table table = column.getTable();
 
-			return column instanceof Aliased
-					? Column.aliased(field.getMappedColumnName(), column.getTable(), ((Aliased) column).getAlias())
-					: Column.create(field.getMappedColumnName(), column.getTable());
+			return column instanceof Aliased ? table.column(field.getMappedColumnName()).as(((Aliased) column).getAlias())
+					: table.column(field.getMappedColumnName());
 		}
 
 		if (expression instanceof SimpleFunction) {
 
-			// Revisit after https://jira.spring.io/browse/DATAJDBC-478
 			SimpleFunction function = (SimpleFunction) expression;
-			DirectFieldAccessor accessor = new DirectFieldAccessor(function);
 
-			List<Expression> arguments = (List<Expression>) accessor.getPropertyValue("expressions");
+			List<Expression> arguments = function.getExpressions();
 			List<Expression> mappedArguments = new ArrayList<>(arguments.size());
 
 			for (Expression argument : arguments) {
@@ -218,7 +230,7 @@ public class QueryMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, criteria.getColumn(), this.mappingContext);
-		Column column = table.column(toSql(propertyField.getMappedColumnName()));
+		Column column = table.column(propertyField.getMappedColumnName());
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
 
 		Object mappedValue;
@@ -291,7 +303,7 @@ public class QueryMapper {
 
 				for (Object o : (Iterable<?>) mappedValue) {
 
-					BindMarker bindMarker = bindings.nextMarker(column.getName());
+					BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
 					expressions.add(bind(o, valueType, bindings, bindMarker));
 				}
 
@@ -299,7 +311,7 @@ public class QueryMapper {
 
 			} else {
 
-				BindMarker bindMarker = bindings.nextMarker(column.getName());
+				BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
 				Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 
 				condition = column.in(expression);
@@ -312,7 +324,7 @@ public class QueryMapper {
 			return condition;
 		}
 
-		BindMarker bindMarker = bindings.nextMarker(column.getName());
+		BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
 		Expression expression = bind(mappedValue, valueType, bindings, bindMarker);
 
 		switch (comparator) {
@@ -335,11 +347,11 @@ public class QueryMapper {
 		}
 	}
 
-	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, String key) {
+	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, SqlIdentifier key) {
 		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext);
 	}
 
-	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, String key,
+	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, SqlIdentifier key,
 			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
 		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext);
 	}
@@ -374,14 +386,14 @@ public class QueryMapper {
 	 */
 	protected static class Field {
 
-		protected final String name;
+		protected final SqlIdentifier name;
 
 		/**
 		 * Creates a new {@link Field} without meta-information but the given name.
 		 *
 		 * @param name must not be {@literal null} or empty.
 		 */
-		public Field(String name) {
+		public Field(SqlIdentifier name) {
 
 			Assert.notNull(name, "Name must not be null!");
 			this.name = name;
@@ -393,7 +405,7 @@ public class QueryMapper {
 		 * @return
 		 */
 		public SqlIdentifier getMappedColumnName() {
-			return new PassThruIdentifier(this.name);
+			return this.name;
 		}
 
 		public TypeInformation<?> getTypeHint() {
@@ -419,7 +431,7 @@ public class QueryMapper {
 		 * @param entity must not be {@literal null}.
 		 * @param context must not be {@literal null}.
 		 */
-		protected MetadataBackedField(String name, RelationalPersistentEntity<?> entity,
+		protected MetadataBackedField(SqlIdentifier name, RelationalPersistentEntity<?> entity,
 				MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> context) {
 			this(name, entity, context, null);
 		}
@@ -433,7 +445,7 @@ public class QueryMapper {
 		 * @param context must not be {@literal null}.
 		 * @param property may be {@literal null}.
 		 */
-		protected MetadataBackedField(String name, RelationalPersistentEntity<?> entity,
+		protected MetadataBackedField(SqlIdentifier name, RelationalPersistentEntity<?> entity,
 				MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> context,
 				@Nullable RelationalPersistentProperty property) {
 
@@ -444,7 +456,7 @@ public class QueryMapper {
 			this.entity = entity;
 			this.mappingContext = context;
 
-			this.path = getPath(name);
+			this.path = getPath(name.getReference());
 			this.property = this.path == null ? property : this.path.getLeafProperty();
 		}
 

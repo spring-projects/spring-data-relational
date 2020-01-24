@@ -818,8 +818,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 
-			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.table).withProjection(this.projectedFields)
-					.withSort(this.sort).withPage(this.page);
+			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.table)
+					.withProjection(this.projectedFields.toArray(new SqlIdentifier[0])).withSort(this.sort).withPage(this.page);
 
 			if (this.criteria != null) {
 				selectSpec = selectSpec.withCriteria(this.criteria);
@@ -931,8 +931,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				columns = this.projectedFields;
 			}
 
-			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.table).withProjection(columns)
-					.withPage(this.page).withSort(this.sort);
+			StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.table)
+					.withProjection(columns.toArray(new SqlIdentifier[0])).withPage(this.page).withSort(this.sort);
 
 			if (this.criteria != null) {
 				selectSpec = selectSpec.withCriteria(this.criteria);
@@ -1038,7 +1038,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			StatementMapper.InsertSpec insert = mapper.createInsert(this.table);
 
 			for (SqlIdentifier column : this.byName.keySet()) {
-				insert = insert.withColumn(dataAccessStrategy.toSql(column), this.byName.get(column));
+				insert = insert.withColumn(column, this.byName.get(column));
 			}
 
 			PreparedOperation<?> operation = mapper.getMappedObject(insert);
@@ -1161,7 +1161,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			for (SqlIdentifier column : outboundRow.keySet()) {
 				SettableValue settableValue = outboundRow.get(column);
 				if (settableValue.hasValue()) {
-					insert = insert.withColumn(dataAccessStrategy.toSql(column), settableValue);
+					insert = insert.withColumn(column, settableValue);
 				}
 			}
 

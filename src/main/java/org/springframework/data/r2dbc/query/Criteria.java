@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -35,15 +36,15 @@ public class Criteria {
 	private final @Nullable Criteria previous;
 	private final Combinator combinator;
 
-	private final String column;
+	private final SqlIdentifier column;
 	private final Comparator comparator;
 	private final @Nullable Object value;
 
-	private Criteria(String column, Comparator comparator, @Nullable Object value) {
+	private Criteria(SqlIdentifier column, Comparator comparator, @Nullable Object value) {
 		this(null, Combinator.INITIAL, column, comparator, value);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, String column, Comparator comparator,
+	private Criteria(@Nullable Criteria previous, Combinator combinator, SqlIdentifier column, Comparator comparator,
 			@Nullable Object value) {
 
 		this.previous = previous;
@@ -63,7 +64,7 @@ public class Criteria {
 
 		Assert.hasText(column, "Column name must not be null or empty!");
 
-		return new DefaultCriteriaStep(column);
+		return new DefaultCriteriaStep(SqlIdentifier.unquoted(column));
 	}
 
 	/**
@@ -76,10 +77,10 @@ public class Criteria {
 
 		Assert.hasText(column, "Column name must not be null or empty!");
 
-		return new DefaultCriteriaStep(column) {
+		return new DefaultCriteriaStep(SqlIdentifier.unquoted(column)) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, Object value) {
-				return new Criteria(Criteria.this, Combinator.AND, column, comparator, value);
+				return new Criteria(Criteria.this, Combinator.AND, SqlIdentifier.unquoted(column), comparator, value);
 			}
 		};
 	}
@@ -94,10 +95,10 @@ public class Criteria {
 
 		Assert.hasText(column, "Column name must not be null or empty!");
 
-		return new DefaultCriteriaStep(column) {
+		return new DefaultCriteriaStep(SqlIdentifier.unquoted(column)) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, Object value) {
-				return new Criteria(Criteria.this, Combinator.OR, column, comparator, value);
+				return new Criteria(Criteria.this, Combinator.OR, SqlIdentifier.unquoted(column), comparator, value);
 			}
 		};
 	}
@@ -126,9 +127,9 @@ public class Criteria {
 	}
 
 	/**
-	 * @return the property name.
+	 * @return the column/property name.
 	 */
-	String getColumn() {
+	SqlIdentifier getColumn() {
 		return column;
 	}
 
@@ -268,9 +269,9 @@ public class Criteria {
 	 */
 	static class DefaultCriteriaStep implements CriteriaStep {
 
-		private final String property;
+		private final SqlIdentifier property;
 
-		DefaultCriteriaStep(String property) {
+		DefaultCriteriaStep(SqlIdentifier property) {
 			this.property = property;
 		}
 

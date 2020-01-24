@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.data.r2dbc.query.Query;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -36,7 +37,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		this.template = template;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation#select(java.lang.Class)
 	 */
@@ -58,10 +59,10 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 		private final Query query;
 
-		private final @Nullable String tableName;
+		private final @Nullable SqlIdentifier tableName;
 
 		ReactiveSelectSupport(R2dbcEntityTemplate template, Class<?> domainType, Class<T> returnType, Query query,
-				@Nullable String tableName) {
+				@Nullable SqlIdentifier tableName) {
 			this.template = template;
 			this.domainType = domainType;
 			this.returnType = returnType;
@@ -69,19 +70,19 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			this.tableName = tableName;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.SelectWithTable#from(java.lang.String)
 		 */
 		@Override
-		public SelectWithProjection<T> from(String tableName) {
+		public SelectWithProjection<T> from(SqlIdentifier tableName) {
 
 			Assert.notNull(tableName, "Table name must not be null");
 
 			return new ReactiveSelectSupport<>(this.template, this.domainType, this.returnType, this.query, tableName);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.SelectWithProjection#as(java.lang.Class)
 		 */
@@ -93,7 +94,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return new ReactiveSelectSupport<>(this.template, this.domainType, returnType, this.query, this.tableName);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.SelectWithQuery#matching(org.springframework.data.r2dbc.query.Query)
 		 */
@@ -105,7 +106,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return new ReactiveSelectSupport<>(this.template, this.domainType, this.returnType, query, this.tableName);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#count()
 		 */
@@ -114,7 +115,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return this.template.doCount(this.query, this.domainType, getTableName());
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#exists()
 		 */
@@ -123,7 +124,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return this.template.doExists(this.query, this.domainType, getTableName());
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#first()
 		 */
@@ -132,7 +133,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return this.template.doSelect(this.query.limit(1), this.domainType, getTableName(), this.returnType).first();
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#one()
 		 */
@@ -141,7 +142,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return this.template.doSelect(this.query.limit(2), this.domainType, getTableName(), this.returnType).one();
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveSelectOperation.TerminatingSelect#all()
 		 */
@@ -150,7 +151,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 			return this.template.doSelect(this.query, this.domainType, getTableName(), this.returnType).all();
 		}
 
-		private String getTableName() {
+		private SqlIdentifier getTableName() {
 			return this.tableName != null ? this.tableName : this.template.getTableName(this.domainType);
 		}
 	}

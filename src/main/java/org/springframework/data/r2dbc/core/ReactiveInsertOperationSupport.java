@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.core;
 
 import reactor.core.publisher.Mono;
 
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -52,9 +53,9 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 
 		private final Class<T> domainType;
 
-		private final @Nullable String tableName;
+		private final @Nullable SqlIdentifier tableName;
 
-		ReactiveInsertSupport(R2dbcEntityTemplate template, Class<T> domainType, String tableName) {
+		ReactiveInsertSupport(R2dbcEntityTemplate template, Class<T> domainType, @Nullable SqlIdentifier tableName) {
 			this.template = template;
 			this.domainType = domainType;
 			this.tableName = tableName;
@@ -62,10 +63,10 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveInsertOperation.InsertWithTable#into(java.lang.String)
+		 * @see org.springframework.data.r2dbc.core.ReactiveInsertOperation.InsertWithTable#into(SqlIdentifier)
 		 */
 		@Override
-		public TerminatingInsert<T> into(String tableName) {
+		public TerminatingInsert<T> into(SqlIdentifier tableName) {
 
 			Assert.notNull(tableName, "Table name must not be null");
 
@@ -84,7 +85,7 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 			return this.template.doInsert(object, getTableName());
 		}
 
-		private String getTableName() {
+		private SqlIdentifier getTableName() {
 			return this.tableName != null ? this.tableName : this.template.getTableName(this.domainType);
 		}
 	}

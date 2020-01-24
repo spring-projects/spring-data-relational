@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -32,9 +33,9 @@ public class Update {
 
 	private static final Update EMPTY = new Update(Collections.emptyMap());
 
-	private final Map<String, Object> columnsToUpdate;
+	private final Map<SqlIdentifier, Object> columnsToUpdate;
 
-	private Update(Map<String, Object> columnsToUpdate) {
+	private Update(Map<SqlIdentifier, Object> columnsToUpdate) {
 		this.columnsToUpdate = columnsToUpdate;
 	}
 
@@ -57,6 +58,21 @@ public class Update {
 	 * @return
 	 */
 	public Update set(String column, @Nullable Object value) {
+
+		Assert.hasText(column, "Column for update must not be null or blank");
+
+		return addMultiFieldOperation(SqlIdentifier.unquoted(column), value);
+	}
+
+	/**
+	 * Update a column by assigning a value.
+	 *
+	 * @param column must not be {@literal null}.
+	 * @param value can be {@literal null}.
+	 * @return
+	 * @since 1.1
+	 */
+	public Update set(SqlIdentifier column, @Nullable Object value) {
 		return addMultiFieldOperation(column, value);
 	}
 
@@ -65,15 +81,15 @@ public class Update {
 	 *
 	 * @return
 	 */
-	public Map<String, Object> getAssignments() {
+	public Map<SqlIdentifier, Object> getAssignments() {
 		return Collections.unmodifiableMap(this.columnsToUpdate);
 	}
 
-	private Update addMultiFieldOperation(String key, Object value) {
+	private Update addMultiFieldOperation(SqlIdentifier key, @Nullable Object value) {
 
-		Assert.hasText(key, "Column for update must not be null or blank");
+		Assert.notNull(key, "Column for update must not be null");
 
-		Map<String, Object> updates = new LinkedHashMap<>(this.columnsToUpdate);
+		Map<SqlIdentifier, Object> updates = new LinkedHashMap<>(this.columnsToUpdate);
 		updates.put(key, value);
 
 		return new Update(updates);

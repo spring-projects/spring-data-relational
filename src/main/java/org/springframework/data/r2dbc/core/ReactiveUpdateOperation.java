@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.data.r2dbc.query.Query;
 import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * The {@link ReactiveUpdateOperation} interface allows creation and execution of {@code UPDATE} operations in a fluent
@@ -71,7 +72,21 @@ public interface ReactiveUpdateOperation {
 		 * @throws IllegalArgumentException if {@link String table} is {@literal null} or empty.
 		 * @see UpdateWithQuery
 		 */
-		UpdateWithQuery inTable(String table);
+		default UpdateWithQuery inTable(String table) {
+			return inTable(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Explicitly set the {@link SqlIdentifier name} of the table on which to perform the update.
+		 * <p>
+		 * Skip this step to use the default table derived from the {@link Class domain type}.
+		 *
+		 * @param table {@link SqlIdentifier name} of the table; must not be {@literal null}.
+		 * @return new instance of {@link UpdateWithQuery}.
+		 * @throws IllegalArgumentException if {@link SqlIdentifier table} is {@literal null}.
+		 * @see UpdateWithQuery
+		 */
+		UpdateWithQuery inTable(SqlIdentifier table);
 	}
 
 	/**

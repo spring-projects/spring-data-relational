@@ -34,6 +34,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 
 /**
@@ -54,10 +55,10 @@ public class UpdateMapperUnitTests {
 
 		BoundAssignments mapped = map(update);
 
-		Map<String, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
-		assertThat(assignments).containsEntry("another_name", SQL.bindMarker("$1"));
+		assertThat(assignments).containsEntry(SqlIdentifier.unquoted("another_name"), SQL.bindMarker("$1"));
 	}
 
 	@Test // gh-64
@@ -67,10 +68,10 @@ public class UpdateMapperUnitTests {
 
 		BoundAssignments mapped = map(update);
 
-		Map<String, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
-		assertThat(assignments).containsEntry("another_name", SQL.bindMarker("$1"));
+		assertThat(assignments).containsEntry(SqlIdentifier.unquoted("another_name"), SQL.bindMarker("$1"));
 
 		mapped.getBindings().apply(bindTarget);
 		verify(bindTarget).bindNull(0, String.class);
@@ -87,7 +88,7 @@ public class UpdateMapperUnitTests {
 		assertThat(mapped.getAssignments().get(0).toString()).isEqualTo("person.another_name = NULL");
 
 		mapped.getBindings().apply(bindTarget);
-		verifyZeroInteractions(bindTarget);
+		verifyNoInteractions(bindTarget);
 	}
 
 	@Test // gh-195
@@ -97,12 +98,12 @@ public class UpdateMapperUnitTests {
 
 		BoundAssignments mapped = map(update);
 
-		Map<String, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
+		Map<SqlIdentifier, Expression> assignments = mapped.getAssignments().stream().map(it -> (AssignValue) it)
 				.collect(Collectors.toMap(k -> k.getColumn().getName(), AssignValue::getValue));
 
 		assertThat(update.getAssignments()).hasSize(3);
-		assertThat(assignments).hasSize(3).containsEntry("c1", SQL.bindMarker("$1")).containsEntry("c2",
-				SQL.bindMarker("$2"));
+		assertThat(assignments).hasSize(3).containsEntry(SqlIdentifier.unquoted("c1"), SQL.bindMarker("$1"))
+				.containsEntry(SqlIdentifier.unquoted("c2"), SQL.bindMarker("$2"));
 	}
 
 	private BoundAssignments map(Update update) {

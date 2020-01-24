@@ -16,11 +16,8 @@
 package org.springframework.data.r2dbc.core;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindTarget;
@@ -84,9 +81,9 @@ class DefaultStatementMapper implements StatementMapper {
 	private PreparedOperation<Select> getMappedObject(SelectSpec selectSpec,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Table table = Table.create(toSql(selectSpec.getTable()));
-		List<Column> columns = table.columns(toSql(selectSpec.getProjectedFields()));
-		SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder.select(columns).from(table);
+		Table table = selectSpec.getTable();
+		SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder.select(getSelectList(selectSpec, entity))
+				.from(table);
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
 		Bindings bindings = Bindings.empty();
@@ -102,37 +99,36 @@ class DefaultStatementMapper implements StatementMapper {
 
 		if (selectSpec.getSort().isSorted()) {
 
-			Sort mappedSort = this.updateMapper.getMappedObject(selectSpec.getSort(), entity);
-			selectBuilder.orderBy(createOrderByFields(table, mappedSort));
+			List<OrderByField> sort = this.updateMapper.getMappedSort(table, selectSpec.getSort(), entity);
+			selectBuilder.orderBy(sort);
 		}
 
-		if (selectSpec.getPage().isPaged()) {
+		if (selectSpec.getLimit() > 0) {
+			selectBuilder.limit(selectSpec.getLimit());
+		}
 
-			Pageable page = selectSpec.getPage();
-
-			selectBuilder.limitOffset(page.getPageSize(), page.getOffset());
+		if (selectSpec.getOffset() > 0) {
+			selectBuilder.offset(selectSpec.getOffset());
 		}
 
 		Select select = selectBuilder.build();
 		return new DefaultPreparedOperation<>(select, this.renderContext, bindings);
 	}
 
-	private Collection<? extends OrderByField> createOrderByFields(Table table, Sort sortToUse) {
+	protected List<Expression> getSelectList(SelectSpec selectSpec, @Nullable RelationalPersistentEntity<?> entity) {
 
-		List<OrderByField> fields = new ArrayList<>();
-
-		for (Sort.Order order : sortToUse) {
-
-			OrderByField orderByField = OrderByField.from(table.column(order.getProperty()));
-
-			if (order.getDirection() != null) {
-				fields.add(order.isAscending() ? orderByField.asc() : orderByField.desc());
-			} else {
-				fields.add(orderByField);
-			}
+		if (entity == null) {
+			return selectSpec.getSelectList();
 		}
 
-		return fields;
+		List<Expression> selectList = selectSpec.getSelectList();
+		List<Expression> mapped = new ArrayList<>(selectList.size());
+
+		for (Expression expression : selectList) {
+			mapped.add(updateMapper.getMappedObject(expression, entity));
+		}
+
+		return mapped;
 	}
 
 	/*

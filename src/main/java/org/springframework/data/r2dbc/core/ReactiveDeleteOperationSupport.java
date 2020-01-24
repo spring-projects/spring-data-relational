@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.core;
 import reactor.core.publisher.Mono;
 
 import org.springframework.data.r2dbc.query.Query;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -35,7 +36,7 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 		this.template = template;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation#delete(java.lang.Class)
 	 */
@@ -55,28 +56,29 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 
 		private final Query query;
 
-		private final @Nullable String tableName;
+		private final @Nullable SqlIdentifier tableName;
 
-		ReactiveDeleteSupport(R2dbcEntityTemplate template, Class<?> domainType, Query query, @Nullable String tableName) {
+		ReactiveDeleteSupport(R2dbcEntityTemplate template, Class<?> domainType, Query query,
+				@Nullable SqlIdentifier tableName) {
 			this.template = template;
 			this.domainType = domainType;
 			this.query = query;
 			this.tableName = tableName;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.DeleteWithTable#from(java.lang.String)
+		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.DeleteWithTable#from(SqlIdentifier)
 		 */
 		@Override
-		public DeleteWithQuery from(String tableName) {
+		public DeleteWithQuery from(SqlIdentifier tableName) {
 
-			Assert.hasText(tableName, "Table name must not be null or empty");
+			Assert.notNull(tableName, "Table name must not be null");
 
 			return new ReactiveDeleteSupport(this.template, this.domainType, this.query, tableName);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.DeleteWithQuery#matching(org.springframework.data.r2dbc.query.Query)
 		 */
@@ -88,7 +90,7 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 			return new ReactiveDeleteSupport(this.template, this.domainType, query, this.tableName);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.TerminatingDelete#all()
 		 */
@@ -96,7 +98,7 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 			return this.template.doDelete(this.query, this.domainType, getTableName());
 		}
 
-		private String getTableName() {
+		private SqlIdentifier getTableName() {
 			return this.tableName != null ? this.tableName : this.template.getTableName(this.domainType);
 		}
 	}

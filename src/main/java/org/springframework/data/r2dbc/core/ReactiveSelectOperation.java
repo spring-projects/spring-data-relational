@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.data.r2dbc.query.Query;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * The {@link ReactiveSelectOperation} interface allows creation and execution of {@code SELECT} operations in a fluent
@@ -73,7 +74,21 @@ public interface ReactiveSelectOperation {
 		 * @throws IllegalArgumentException if {@link String table} is {@literal null} or empty.
 		 * @see SelectWithProjection
 		 */
-		SelectWithProjection<T> from(String table);
+		default SelectWithProjection<T> from(String table) {
+			return from(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Explicitly set the {@link SqlIdentifier name} of the table on which to perform the query.
+		 * <p>
+		 * Skip this step to use the default table derived from the {@link Class domain type}.
+		 *
+		 * @param table {@link SqlIdentifier name} of the table; must not be {@literal null}.
+		 * @return new instance of {@link SelectWithProjection}.
+		 * @throws IllegalArgumentException if {@link SqlIdentifier table} is {@literal null}.
+		 * @see SelectWithProjection
+		 */
+		SelectWithProjection<T> from(SqlIdentifier table);
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package org.springframework.data.r2dbc.core;
 
 import reactor.core.publisher.Mono;
+
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * The {@link ReactiveInsertOperation} interface allows creation and execution of {@code INSERT} operations in a fluent
@@ -63,7 +65,20 @@ public interface ReactiveInsertOperation {
 		 * @return new instance of {@link TerminatingInsert}.
 		 * @throws IllegalArgumentException if {@link String table} is {@literal null} or empty.
 		 */
-		TerminatingInsert<T> into(String table);
+		default TerminatingInsert<T> into(String table) {
+			return into(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Explicitly set the {@link SqlIdentifier name} of the table.
+		 * <p>
+		 * Skip this step to use the default table derived from the {@link Class domain type}.
+		 *
+		 * @param table {@link SqlIdentifier name} of the table; must not be {@literal null}.
+		 * @return new instance of {@link TerminatingInsert}.
+		 * @throws IllegalArgumentException if {@link SqlIdentifier table} is {@literal null}.
+		 */
+		TerminatingInsert<T> into(SqlIdentifier table);
 	}
 
 	/**

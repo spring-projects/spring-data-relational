@@ -96,7 +96,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
-		assertThat(statement.getSql()).isEqualTo("SELECT person.id FROM person WHERE person.THE_NAME = $1");
+		assertThat(statement.getSql()).isEqualTo("SELECT person.id FROM person WHERE person.THE_NAME = $1 LIMIT 1");
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Walter"));
 	}
 

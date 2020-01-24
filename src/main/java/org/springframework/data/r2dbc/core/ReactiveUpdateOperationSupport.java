@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.data.r2dbc.query.Query;
 import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -36,7 +37,7 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 		this.template = template;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation#update(java.lang.Class)
 	 */
@@ -56,28 +57,29 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 
 		private final Query query;
 
-		private final @Nullable String tableName;
+		private final @Nullable SqlIdentifier tableName;
 
-		ReactiveUpdateSupport(R2dbcEntityTemplate template, Class<?> domainType, Query query, @Nullable String tableName) {
+		ReactiveUpdateSupport(R2dbcEntityTemplate template, Class<?> domainType, Query query,
+				@Nullable SqlIdentifier tableName) {
 			this.template = template;
 			this.domainType = domainType;
 			this.query = query;
 			this.tableName = tableName;
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation.UpdateWithTable#inTable(java.lang.String)
+		 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation.UpdateWithTable#inTable(SqlIdentifier)
 		 */
 		@Override
-		public UpdateWithQuery inTable(String tableName) {
+		public UpdateWithQuery inTable(SqlIdentifier tableName) {
 
 			Assert.notNull(tableName, "Table name must not be null");
 
 			return new ReactiveUpdateSupport(this.template, this.domainType, this.query, tableName);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation.UpdateWithQuery#matching(org.springframework.data.r2dbc.query.Query)
 		 */
@@ -89,7 +91,7 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 			return new ReactiveUpdateSupport(this.template, this.domainType, query, this.tableName);
 		}
 
-		/* 
+		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.r2dbc.core.ReactiveUpdateOperation.TerminatingUpdate#apply(org.springframework.data.r2dbc.query.Update)
 		 */
@@ -101,7 +103,7 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 			return this.template.doUpdate(this.query, update, this.domainType, getTableName());
 		}
 
-		private String getTableName() {
+		private SqlIdentifier getTableName() {
 			return this.tableName != null ? this.tableName : this.template.getTableName(this.domainType);
 		}
 	}

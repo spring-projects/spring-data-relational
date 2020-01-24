@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,9 @@ import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.Table;
 import org.springframework.lang.Nullable;
 
 /**
@@ -179,19 +182,23 @@ public interface StatementMapper {
 	 */
 	class SelectSpec {
 
-		private final SqlIdentifier table;
-		private final List<SqlIdentifier> projectedFields;
+		private final Table table;
+		private final List<String> projectedFields;
+		private final List<Expression> selectList;
 		private final @Nullable Criteria criteria;
 		private final Sort sort;
-		private final Pageable page;
+		private final long offset;
+		private final int limit;
 
-		protected SelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, @Nullable Criteria criteria,
-				Sort sort, Pageable page) {
+		protected SelectSpec(Table table, List<String> projectedFields, List<Expression> selectList,
+				@Nullable Criteria criteria, Sort sort, int limit, long offset) {
 			this.table = table;
 			this.projectedFields = projectedFields;
+			this.selectList = selectList;
 			this.criteria = criteria;
 			this.sort = sort;
-			this.page = page;
+			this.offset = offset;
+			this.limit = limit;
 		}
 
 		/**
@@ -212,17 +219,12 @@ public interface StatementMapper {
 		 * @since 1.1
 		 */
 		public static SelectSpec create(SqlIdentifier table) {
-			return new SelectSpec(table, Collections.emptyList(), null, Sort.unsorted(), Pageable.unpaged());
+			return new SelectSpec(Table.create(table), Collections.emptyList(), Collections.emptyList(), null,
+					Sort.unsorted(), -1, -1);
 		}
 
-		/**
-		 * Associate {@code projectedFields} with the select and create a new {@link SelectSpec}.
-		 *
-		 * @param projectedFields
-		 * @return the {@link SelectSpec}.
-		 */
-		public SelectSpec withProjection(String... projectedFields) {
-			return withProjection(Arrays.stream(projectedFields).map(SqlIdentifier::unquoted).collect(Collectors.toList()));
+		public SelectSpec doWithTable(BiFunction<Table, SelectSpec, SelectSpec> function) {
+			return function.apply(getTable(), this);
 		}
 
 		/**
@@ -232,12 +234,50 @@ public interface StatementMapper {
 		 * @return the {@link SelectSpec}.
 		 * @since 1.1
 		 */
-		public SelectSpec withProjection(Collection<SqlIdentifier> projectedFields) {
+		public SelectSpec withProjection(String... projectedFields) {
+			return withProjection(Arrays.stream(projectedFields).map(table::column).collect(Collectors.toList()));
+		}
 
-			List<SqlIdentifier> fields = new ArrayList<>(this.projectedFields);
-			fields.addAll(projectedFields);
+		/**
+		 * Associate {@code projectedFields} with the select and create a new {@link SelectSpec}.
+		 *
+		 * @param projectedFields
+		 * @return the {@link SelectSpec}.
+		 * @since 1.1
+		 */
+		public SelectSpec withProjection(SqlIdentifier... projectedFields) {
+			return withProjection(Arrays.stream(projectedFields).map(table::column).collect(Collectors.toList()));
+		}
 
-			return new SelectSpec(this.table, fields, this.criteria, this.sort, this.page);
+		/**
+		 * Associate {@code expressions} with the select list and create a new {@link SelectSpec}.
+		 *
+		 * @param expressions
+		 * @return the {@link SelectSpec}.
+		 * @since 1.1
+		 */
+		public SelectSpec withProjection(Expression... expressions) {
+
+			List<Expression> selectList = new ArrayList<>(this.selectList);
+			selectList.addAll(Arrays.asList(expressions));
+
+			return new SelectSpec(this.table, projectedFields, selectList, this.criteria, this.sort, this.limit, this.offset);
+		}
+
+		/**
+		 * Associate {@code projectedFields} with the select and create a new {@link SelectSpec}.
+		 *
+		 * @param projectedFields
+		 * @return the {@link SelectSpec}.
+		 * @since 1.1
+		 */
+		public SelectSpec withProjection(Collection<Expression> projectedFields) {
+
+			List<Expression> selectList = new ArrayList<>(this.selectList);
+			selectList.addAll(projectedFields);
+
+			return new SelectSpec(this.table, this.projectedFields, selectList, this.criteria, this.sort, this.limit,
+					this.offset);
 		}
 
 		/**
@@ -247,7 +287,8 @@ public interface StatementMapper {
 		 * @return the {@link SelectSpec}.
 		 */
 		public SelectSpec withCriteria(Criteria criteria) {
-			return new SelectSpec(this.table, this.projectedFields, criteria, this.sort, this.page);
+			return new SelectSpec(this.table, this.projectedFields, this.selectList, criteria, this.sort, this.limit,
+					this.offset);
 		}
 
 		/**
@@ -259,10 +300,12 @@ public interface StatementMapper {
 		public SelectSpec withSort(Sort sort) {
 
 			if (sort.isSorted()) {
-				return new SelectSpec(this.table, this.projectedFields, this.criteria, sort, this.page);
+				return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, sort, this.limit,
+						this.offset);
 			}
 
-			return new SelectSpec(this.table, this.projectedFields, this.criteria, this.sort, this.page);
+			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, this.limit,
+					this.offset);
 		}
 
 		/**
@@ -277,19 +320,51 @@ public interface StatementMapper {
 
 				Sort sort = page.getSort();
 
-				return new SelectSpec(this.table, this.projectedFields, this.criteria, sort.isSorted() ? sort : this.sort,
-						page);
+				return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria,
+						sort.isSorted() ? sort : this.sort, page.getPageSize(), page.getOffset());
 			}
 
-			return new SelectSpec(this.table, this.projectedFields, this.criteria, this.sort, page);
+			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, this.limit,
+					this.offset);
 		}
 
-		public SqlIdentifier getTable() {
+		/**
+		 * Associate a result offset with the select and create a new {@link SelectSpec}.
+		 *
+		 * @param page
+		 * @return the {@link SelectSpec}.
+		 */
+		public SelectSpec offset(long offset) {
+			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, this.limit,
+					offset);
+		}
+
+		/**
+		 * Associate a result limit with the select and create a new {@link SelectSpec}.
+		 *
+		 * @param page
+		 * @return the {@link SelectSpec}.
+		 */
+		public SelectSpec limit(int limit) {
+			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, limit,
+					this.offset);
+		}
+
+		public Table getTable() {
 			return this.table;
 		}
 
-		public List<SqlIdentifier> getProjectedFields() {
+		/**
+		 * @return
+		 * @deprecated since 1.1, use {@link #getSelectList()} instead.
+		 */
+		@Deprecated
+		public List<String> getProjectedFields() {
 			return Collections.unmodifiableList(this.projectedFields);
+		}
+
+		public List<Expression> getSelectList() {
+			return Collections.unmodifiableList(selectList);
 		}
 
 		@Nullable
@@ -301,8 +376,12 @@ public interface StatementMapper {
 			return this.sort;
 		}
 
-		public Pageable getPage() {
-			return this.page;
+		public long getOffset() {
+			return this.offset;
+		}
+
+		public int getLimit() {
+			return this.limit;
 		}
 	}
 
@@ -312,9 +391,9 @@ public interface StatementMapper {
 	class InsertSpec {
 
 		private final SqlIdentifier table;
-		private final Map<String, SettableValue> assignments;
+		private final Map<SqlIdentifier, SettableValue> assignments;
 
-		protected InsertSpec(SqlIdentifier table, Map<String, SettableValue> assignments) {
+		protected InsertSpec(SqlIdentifier table, Map<SqlIdentifier, SettableValue> assignments) {
 			this.table = table;
 			this.assignments = assignments;
 		}
@@ -348,8 +427,19 @@ public interface StatementMapper {
 		 * @return the {@link InsertSpec}.
 		 */
 		public InsertSpec withColumn(String column, SettableValue value) {
+			return withColumn(SqlIdentifier.unquoted(column), value);
+		}
 
-			Map<String, SettableValue> values = new LinkedHashMap<>(this.assignments);
+		/**
+		 * Associate a column with a {@link SettableValue} and create a new {@link InsertSpec}.
+		 *
+		 * @param column
+		 * @param value
+		 * @return the {@link InsertSpec}.
+		 */
+		public InsertSpec withColumn(SqlIdentifier column, SettableValue value) {
+
+			Map<SqlIdentifier, SettableValue> values = new LinkedHashMap<>(this.assignments);
 			values.put(column, value);
 
 			return new InsertSpec(this.table, values);
@@ -359,7 +449,7 @@ public interface StatementMapper {
 			return this.table;
 		}
 
-		public Map<String, SettableValue> getAssignments() {
+		public Map<SqlIdentifier, SettableValue> getAssignments() {
 			return Collections.unmodifiableMap(this.assignments);
 		}
 	}

@@ -32,6 +32,7 @@ import org.springframework.data.relational.core.sql.Assignment;
 import org.springframework.data.relational.core.sql.Assignments;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -77,8 +78,8 @@ public class UpdateMapper extends QueryMapper {
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link BoundAssignments}.
 	 */
-	public BoundAssignments getMappedObject(BindMarkers markers, Map<String, ? extends Object> assignments, Table table,
-			@Nullable RelationalPersistentEntity<?> entity) {
+	public BoundAssignments getMappedObject(BindMarkers markers, Map<SqlIdentifier, ? extends Object> assignments,
+			Table table, @Nullable RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(markers, "BindMarkers must not be null!");
 		Assert.notNull(assignments, "Assignments must not be null!");
@@ -95,11 +96,11 @@ public class UpdateMapper extends QueryMapper {
 		return new BoundAssignments(bindings, result);
 	}
 
-	private Assignment getAssignment(String columnName, Object value, MutableBindings bindings, Table table,
+	private Assignment getAssignment(SqlIdentifier columnName, Object value, MutableBindings bindings, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, columnName, getMappingContext());
-		Column column = table.column(toSql(propertyField.getMappedColumnName()));
+		Column column = table.column(propertyField.getMappedColumnName());
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
 
 		Object mappedValue;
@@ -128,7 +129,7 @@ public class UpdateMapper extends QueryMapper {
 
 	private Assignment createAssignment(Column column, Object value, Class<?> type, MutableBindings bindings) {
 
-		BindMarker bindMarker = bindings.nextMarker(column.getName());
+		BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
 		AssignValue assignValue = Assignments.value(column, SQL.bindMarker(bindMarker.getPlaceholder()));
 
 		if (value == null) {

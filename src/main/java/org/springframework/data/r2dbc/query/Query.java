@@ -21,9 +21,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -41,8 +43,7 @@ public class Query {
 
 	private final @Nullable Criteria criteria;
 
-	// TODO: select list should be List<Expression>
-	private final List<String> columns;
+	private final List<SqlIdentifier> columns;
 	private final Sort sort;
 	private final int limit;
 	private final long offset;
@@ -63,14 +64,10 @@ public class Query {
 	 * @param criteria must not be {@literal null}.
 	 */
 	private Query(@Nullable Criteria criteria) {
-		this.criteria = criteria;
-		this.sort = Sort.unsorted();
-		this.columns = Collections.emptyList();
-		this.limit = -1;
-		this.offset = -1;
+		this(criteria, Collections.emptyList(), Sort.unsorted(), -1, -1);
 	}
 
-	private Query(Criteria criteria, List<String> columns, Sort sort, int limit, long offset) {
+	private Query(@Nullable Criteria criteria, List<SqlIdentifier> columns, Sort sort, int limit, long offset) {
 		this.criteria = criteria;
 		this.columns = columns;
 		this.sort = sort;
@@ -97,7 +94,7 @@ public class Query {
 
 		Assert.notNull(columns, "Columns must not be null");
 
-		return columns(Arrays.asList(columns));
+		return withColumns(Arrays.stream(columns).map(SqlIdentifier::unquoted).collect(Collectors.toList()));
 	}
 
 	/**
@@ -110,7 +107,34 @@ public class Query {
 
 		Assert.notNull(columns, "Columns must not be null");
 
-		List<String> newColumns = new ArrayList<>(this.columns);
+		return withColumns(columns.stream().map(SqlIdentifier::unquoted).collect(Collectors.toList()));
+	}
+
+	/**
+	 * Add columns to the query.
+	 *
+	 * @param columns
+	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
+	 * @since 1.1
+	 */
+	public Query columns(SqlIdentifier... columns) {
+
+		Assert.notNull(columns, "Columns must not be null");
+
+		return withColumns(Arrays.asList(columns));
+	}
+
+	/**
+	 * Add columns to the query.
+	 *
+	 * @param columns
+	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
+	 */
+	private Query withColumns(Collection<SqlIdentifier> columns) {
+
+		Assert.notNull(columns, "Columns must not be null");
+
+		List<SqlIdentifier> newColumns = new ArrayList<>(this.columns);
 		newColumns.addAll(columns);
 		return new Query(this.criteria, newColumns, this.sort, this.limit, offset);
 	}
@@ -186,7 +210,7 @@ public class Query {
 	 *
 	 * @return
 	 */
-	public List<String> getColumns() {
+	public List<SqlIdentifier> getColumns() {
 		return columns;
 	}
 
