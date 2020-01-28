@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.util.Assert;
@@ -72,6 +73,14 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 	 */
 	public String getFunctionName() {
 		return functionName;
+	}
+
+	/**
+	 * @return the function arguments.
+	 * @since 2.0
+	 */
+	public List<Expression> getExpressions() {
+		return Collections.unmodifiableList(expressions);
 	}
 
 	/*

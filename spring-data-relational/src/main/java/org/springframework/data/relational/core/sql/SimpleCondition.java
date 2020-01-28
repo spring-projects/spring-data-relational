@@ -50,10 +50,24 @@ public class SimpleCondition extends AbstractSegment implements Condition {
 		return new SimpleCondition(new Column(column, null), comparator, predicate);
 	}
 
+	/**
+	 * @return the condition expression (left-hand-side)
+	 * @since 2.0
+	 */
+	public Expression getExpression() {
+		return expression;
+	}
+
+	/**
+	 * @return the comparator.
+	 */
 	public String getComparator() {
 		return comparator;
 	}
 
+	/**
+	 * @return the condition predicate (right-hand-side)
+	 */
 	public String getPredicate() {
 		return predicate;
 	}
