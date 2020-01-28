@@ -44,6 +44,7 @@ import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -136,7 +137,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		Assert.notNull(expander, "NamedParameterExpander must not be null");
 
 		this.converter = converter;
-		this.updateMapper = new UpdateMapper(converter);
+		this.updateMapper = new UpdateMapper(dialect, converter);
 		this.mappingContext = (MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty>) this.converter
 				.getMappingContext();
 		this.dialect = dialect;
@@ -152,15 +153,15 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getAllColumns(java.lang.Class)
 	 */
 	@Override
-	public List<String> getAllColumns(Class<?> entityType) {
+	public List<SqlIdentifier> getAllColumns(Class<?> entityType) {
 
 		RelationalPersistentEntity<?> persistentEntity = getPersistentEntity(entityType);
 
 		if (persistentEntity == null) {
-			return Collections.singletonList("*");
+			return Collections.singletonList(SqlIdentifier.unquoted("*"));
 		}
 
-		List<String> columnNames = new ArrayList<>();
+		List<SqlIdentifier> columnNames = new ArrayList<>();
 		for (RelationalPersistentProperty property : persistentEntity) {
 			columnNames.add(property.getColumnName());
 		}
@@ -173,11 +174,11 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getIdentifierColumns(java.lang.Class)
 	 */
 	@Override
-	public List<String> getIdentifierColumns(Class<?> entityType) {
+	public List<SqlIdentifier> getIdentifierColumns(Class<?> entityType) {
 
 		RelationalPersistentEntity<?> persistentEntity = getRequiredPersistentEntity(entityType);
 
-		List<String> columnNames = new ArrayList<>();
+		List<SqlIdentifier> columnNames = new ArrayList<>();
 		for (RelationalPersistentProperty property : persistentEntity) {
 
 			if (property.isIdProperty()) {
@@ -308,8 +309,17 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getTableName(java.lang.Class)
 	 */
 	@Override
-	public String getTableName(Class<?> type) {
+	public SqlIdentifier getTableName(Class<?> type) {
 		return getRequiredPersistentEntity(type).getTableName();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#toSql(SqlIdentifier)
+	 */
+	@Override
+	public String toSql(SqlIdentifier identifier) {
+		return this.updateMapper.toSql(identifier);
 	}
 
 	/*

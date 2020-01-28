@@ -18,7 +18,6 @@ package org.springframework.data.r2dbc.repository.support;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
@@ -33,6 +32,7 @@ import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
@@ -129,7 +129,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 
 		Assert.notNull(id, "Id must not be null!");
 
-		List<String> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
+		List<SqlIdentifier> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
 		String idProperty = getIdProperty().getName();
 
 		StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
@@ -164,8 +164,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 		String idProperty = getIdProperty().getName();
 
 		StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
-		StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName())
-				.withProjection(Collections.singletonList(idProperty)) //
+		StatementMapper.SelectSpec selectSpec = mapper.createSelect(this.entity.getTableName()).withProjection(idProperty) //
 				.withCriteria(Criteria.where(idProperty).is(id));
 
 		PreparedOperation<?> operation = mapper.getMappedObject(selectSpec);
@@ -217,7 +216,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 				return Flux.empty();
 			}
 
-			List<String> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
+			List<SqlIdentifier> columns = this.accessStrategy.getAllColumns(this.entity.getJavaType());
 			String idProperty = getIdProperty().getName();
 
 			StatementMapper mapper = this.accessStrategy.getStatementMapper().forType(this.entity.getJavaType());
@@ -237,9 +236,9 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	@Override
 	public Mono<Long> count() {
 
-		Table table = Table.create(this.entity.getTableName());
+		Table table = Table.create(this.accessStrategy.toSql(this.entity.getTableName()));
 		Select select = StatementBuilder //
-				.select(Functions.count(table.column(getIdProperty().getColumnName()))) //
+				.select(Functions.count(table.column(this.accessStrategy.toSql(getIdProperty().getColumnName())))) //
 				.from(table) //
 				.build();
 

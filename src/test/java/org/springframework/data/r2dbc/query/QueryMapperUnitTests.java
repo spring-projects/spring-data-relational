@@ -26,9 +26,10 @@ import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.Table;
 
 /**
@@ -38,8 +39,8 @@ import org.springframework.data.relational.core.sql.Table;
  */
 public class QueryMapperUnitTests {
 
-	R2dbcConverter converter = new MappingR2dbcConverter(new RelationalMappingContext());
-	QueryMapper mapper = new QueryMapper(converter);
+	R2dbcConverter converter = new MappingR2dbcConverter(new R2dbcMappingContext());
+	QueryMapper mapper = new QueryMapper(PostgresDialect.INSTANCE, converter);
 	BindTarget bindTarget = mock(BindTarget.class);
 
 	@Test // gh-64

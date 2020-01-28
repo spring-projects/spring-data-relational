@@ -28,6 +28,7 @@ import org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec;
 import org.springframework.data.r2dbc.core.FetchSpec;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingConverter;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingExecution;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.ParameterAccessor;
@@ -106,7 +107,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		GenericExecuteSpec boundQuery = query.bind(databaseClient.execute(query));
 		FetchSpec<?> fetchSpec = boundQuery.as(resolveResultType(processor)).fetch();
 
-		String tableName = method.getEntityInformation().getTableName();
+		SqlIdentifier tableName = method.getEntityInformation().getTableName();
 
 		R2dbcQueryExecution execution = getExecution(processor.getReturnedType(),
 				new ResultProcessingConverter(processor, converter.getMappingContext(), instantiators));

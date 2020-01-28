@@ -18,8 +18,6 @@ package org.springframework.data.r2dbc.core;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Collections;
-
 import org.junit.Test;
 
 import org.springframework.data.domain.PageRequest;
@@ -73,8 +71,7 @@ public class StatementMapperUnitTests {
 	@Test // gh-148
 	public void shouldMapSelectWithPage() {
 
-		StatementMapper.SelectSpec selectSpec = StatementMapper.SelectSpec.create("table")
-				.withProjection(Collections.singletonList("*"))
+		StatementMapper.SelectSpec selectSpec = StatementMapper.SelectSpec.create("table").withProjection("*")
 				.withPage(PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "id")));
 
 		PreparedOperation<?> preparedOperation = mapper.getMappedObject(selectSpec);

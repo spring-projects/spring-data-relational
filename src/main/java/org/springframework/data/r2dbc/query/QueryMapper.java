@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -32,6 +33,7 @@ import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.Bindings;
 import org.springframework.data.r2dbc.dialect.MutableBindings;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Criteria.Combinator;
 import org.springframework.data.r2dbc.query.Criteria.Comparator;
@@ -40,7 +42,9 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SQL;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
@@ -56,20 +60,38 @@ import org.springframework.util.ClassUtils;
 public class QueryMapper {
 
 	private final R2dbcConverter converter;
+	private final R2dbcDialect dialect;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 
 	/**
 	 * Creates a new {@link QueryMapper} with the given {@link R2dbcConverter}.
 	 *
+	 * @param dialect
 	 * @param converter must not be {@literal null}.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public QueryMapper(R2dbcConverter converter) {
+	public QueryMapper(R2dbcDialect dialect, R2dbcConverter converter) {
 
 		Assert.notNull(converter, "R2dbcConverter must not be null!");
+		Assert.notNull(dialect, "R2dbcDialect must not be null!");
 
 		this.converter = converter;
+		this.dialect = dialect;
 		this.mappingContext = (MappingContext) converter.getMappingContext();
+	}
+
+	/**
+	 * Render a {@link SqlIdentifier} for SQL usage.
+	 *
+	 * @param identifier
+	 * @return
+	 * @since 1.1
+	 */
+	public String toSql(SqlIdentifier identifier) {
+
+		Assert.notNull(identifier, "SqlIdentifier must not be null");
+
+		return identifier.toSql(this.dialect.getIdentifierProcessing());
 	}
 
 	/**
@@ -89,13 +111,9 @@ public class QueryMapper {
 
 		for (Sort.Order order : sort) {
 
-			RelationalPersistentProperty persistentProperty = entity.getPersistentProperty(order.getProperty());
-			if (persistentProperty == null) {
-				mappedOrder.add(order);
-			} else {
-				mappedOrder.add(
-						Sort.Order.by(persistentProperty.getColumnName()).with(order.getNullHandling()).with(order.getDirection()));
-			}
+			Field field = createPropertyField(entity, order.getProperty(), this.mappingContext);
+			mappedOrder.add(
+					Sort.Order.by(toSql(field.getMappedColumnName())).with(order.getNullHandling()).with(order.getDirection()));
 		}
 
 		return Sort.by(mappedOrder);
@@ -152,7 +170,7 @@ public class QueryMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, criteria.getColumn(), this.mappingContext);
-		Column column = table.column(propertyField.getMappedColumnName());
+		Column column = table.column(toSql(propertyField.getMappedColumnName()));
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
 
 		Object mappedValue;
@@ -313,7 +331,7 @@ public class QueryMapper {
 		 */
 		public Field(String name) {
 
-			Assert.hasText(name, "Name must not be null!");
+			Assert.notNull(name, "Name must not be null!");
 			this.name = name;
 		}
 
@@ -322,8 +340,8 @@ public class QueryMapper {
 		 *
 		 * @return
 		 */
-		public String getMappedColumnName() {
-			return this.name;
+		public SqlIdentifier getMappedColumnName() {
+			return new PassThruIdentifier(this.name);
 		}
 
 		public TypeInformation<?> getTypeHint() {
@@ -379,8 +397,9 @@ public class QueryMapper {
 		}
 
 		@Override
-		public String getMappedColumnName() {
-			return this.path == null ? this.name : this.path.toDotPath(RelationalPersistentProperty::getColumnName);
+		public SqlIdentifier getMappedColumnName() {
+			return this.path == null || this.path.getLeafProperty() == null ? super.getMappedColumnName()
+					: this.path.getLeafProperty().getColumnName();
 		}
 
 		/**
@@ -435,6 +454,63 @@ public class QueryMapper {
 			}
 
 			return this.property.getTypeInformation();
+		}
+	}
+
+	static class PassThruIdentifier implements SqlIdentifier {
+
+		final String name;
+
+		PassThruIdentifier(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String getReference(IdentifierProcessing processing) {
+			return name;
+		}
+
+		@Override
+		public String toSql(IdentifierProcessing processing) {
+			return name;
+		}
+
+		@Override
+		public SqlIdentifier transform(UnaryOperator<String> transformationFunction) {
+			return new PassThruIdentifier(transformationFunction.apply(name));
+		}
+
+		/*
+		* (non-Javadoc)
+		* @see java.lang.Object#equals(java.lang.Object)
+		*/
+		@Override
+		public boolean equals(Object o) {
+
+			if (this == o)
+				return true;
+			if (o instanceof SqlIdentifier) {
+				return toString().equals(o.toString());
+			}
+			return false;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#hashCode()
+		 */
+		@Override
+		public int hashCode() {
+			return toString().hashCode();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			return toSql(IdentifierProcessing.ANSI);
 		}
 	}
 }

@@ -44,6 +44,7 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -561,9 +562,10 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		Collection<String> columns = metadata.getColumnNames();
 		Object generatedIdValue = null;
+		String idColumnName = idProperty.getColumnName().getReference(IdentifierProcessing.NONE);
 
-		if (columns.contains(idProperty.getColumnName())) {
-			generatedIdValue = row.get(idProperty.getColumnName());
+		if (columns.contains(idColumnName)) {
+			generatedIdValue = row.get(idColumnName);
 		}
 
 		if (columns.size() == 1) {
@@ -629,7 +631,9 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 
 			RelationalPersistentProperty property = this.entity.getRequiredPersistentProperty(parameter.getName());
-			String column = this.prefix.isEmpty() ? property.getColumnName() : this.prefix + property.getColumnName();
+
+			String reference = property.getColumnName().getReference(IdentifierProcessing.NONE);
+			String column = this.prefix.isEmpty() ? reference : this.prefix + reference;
 
 			try {
 

@@ -21,6 +21,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.core.FetchSpec;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.repository.query.DtoInstantiatingConverter;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
@@ -34,7 +35,7 @@ import org.springframework.util.ClassUtils;
  */
 interface R2dbcQueryExecution {
 
-	Object execute(FetchSpec<?> query, Class<?> type, String tableName);
+	Object execute(FetchSpec<?> query, Class<?> type, SqlIdentifier tableName);
 
 	/**
 	 * An {@link R2dbcQueryExecution} that wraps the results of the given delegate with the given result processing.
@@ -53,7 +54,7 @@ interface R2dbcQueryExecution {
 		 * @see org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution#execute(org.springframework.data.r2dbc.function.FetchSpec, java.lang.Class, java.lang.String)
 		 */
 		@Override
-		public Object execute(FetchSpec<?> query, Class<?> type, String tableName) {
+		public Object execute(FetchSpec<?> query, Class<?> type, SqlIdentifier tableName) {
 			return this.converter.convert(this.delegate.execute(query, type, tableName));
 		}
 	}

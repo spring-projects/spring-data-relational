@@ -33,11 +33,11 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
-import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * Unit tests for {@link MappingR2dbcConverter}.
@@ -46,7 +46,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  */
 public class MappingR2dbcConverterUnitTests {
 
-	RelationalMappingContext mappingContext = new RelationalMappingContext();
+	RelationalMappingContext mappingContext = new R2dbcMappingContext();
 	MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext);
 
 	@Before
@@ -56,7 +56,6 @@ public class MappingR2dbcConverterUnitTests {
 				Arrays.asList(StringToMapConverter.INSTANCE, MapToStringConverter.INSTANCE,
 						CustomConversionPersonToOutboundRowConverter.INSTANCE, RowToCustomConversionPerson.INSTANCE));
 
-		mappingContext = new RelationalMappingContext();
 		mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
 
 		converter = new MappingR2dbcConverter(mappingContext, conversions);
@@ -69,9 +68,10 @@ public class MappingR2dbcConverterUnitTests {
 
 		converter.write(new Person("id", "Walter", "White"), row);
 
-		assertThat(row).containsEntry("id", SettableValue.fromOrEmpty("id", String.class));
-		assertThat(row).containsEntry("firstname", SettableValue.fromOrEmpty("Walter", String.class));
-		assertThat(row).containsEntry("lastname", SettableValue.fromOrEmpty("White", String.class));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), SettableValue.fromOrEmpty("id", String.class));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("firstname"),
+				SettableValue.fromOrEmpty("Walter", String.class));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("lastname"), SettableValue.fromOrEmpty("White", String.class));
 	}
 
 	@Test // gh-41
@@ -111,7 +111,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry("nested", SettableValue.from("map"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("nested"), SettableValue.from("map"));
 	}
 
 	@Test // gh-59
@@ -132,7 +132,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry("condition", SettableValue.from("Mint"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("condition"), SettableValue.from("Mint"));
 	}
 
 	@Test // gh-59
@@ -142,7 +142,7 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(withMap, row);
 
-		assertThat(row).containsEntry("condition", SettableValue.fromOrEmpty(null, String.class));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("condition"), SettableValue.fromOrEmpty(null, String.class));
 	}
 
 	@Test // gh-59
@@ -166,8 +166,8 @@ public class MappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(person, row);
 
-		assertThat(row).containsEntry("foo_column", SettableValue.from("bar")).containsEntry("entity",
-				SettableValue.from("nested_entity"));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("foo_column"), SettableValue.from("bar"))
+				.containsEntry(SqlIdentifier.unquoted("entity"), SettableValue.from("nested_entity"));
 	}
 
 	@Test // gh-59

@@ -24,6 +24,7 @@ import org.springframework.data.r2dbc.dialect.BindMarker;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.Bindings;
 import org.springframework.data.r2dbc.dialect.MutableBindings;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.AssignValue;
@@ -46,10 +47,11 @@ public class UpdateMapper extends QueryMapper {
 	/**
 	 * Creates a new {@link QueryMapper} with the given {@link R2dbcConverter}.
 	 *
+	 * @param dialect must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 */
-	public UpdateMapper(R2dbcConverter converter) {
-		super(converter);
+	public UpdateMapper(R2dbcDialect dialect, R2dbcConverter converter) {
+		super(dialect, converter);
 	}
 
 	/**
@@ -97,7 +99,7 @@ public class UpdateMapper extends QueryMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, columnName, getMappingContext());
-		Column column = table.column(propertyField.getMappedColumnName());
+		Column column = table.column(toSql(propertyField.getMappedColumnName()));
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
 
 		Object mappedValue;

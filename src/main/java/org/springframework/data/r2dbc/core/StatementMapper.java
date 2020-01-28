@@ -16,11 +16,13 @@
 package org.springframework.data.r2dbc.core;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -28,6 +30,7 @@ import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -98,12 +101,34 @@ public interface StatementMapper {
 	}
 
 	/**
+	 * Create a {@code SELECT} specification for {@code table}.
+	 *
+	 * @param table
+	 * @return the {@link SelectSpec}.
+	 * @since 1.1
+	 */
+	default SelectSpec createSelect(SqlIdentifier table) {
+		return SelectSpec.create(table);
+	}
+
+	/**
 	 * Create an {@code INSERT} specification for {@code table}.
 	 *
 	 * @param table
 	 * @return the {@link InsertSpec}.
 	 */
 	default InsertSpec createInsert(String table) {
+		return InsertSpec.create(table);
+	}
+
+	/**
+	 * Create an {@code INSERT} specification for {@code table}.
+	 *
+	 * @param table
+	 * @return the {@link InsertSpec}.
+	 * @since 1.1
+	 */
+	default InsertSpec createInsert(SqlIdentifier table) {
 		return InsertSpec.create(table);
 	}
 
@@ -118,6 +143,17 @@ public interface StatementMapper {
 	}
 
 	/**
+	 * Create an {@code UPDATE} specification for {@code table}.
+	 *
+	 * @param table
+	 * @return the {@link UpdateSpec}.
+	 * @since 1.1
+	 */
+	default UpdateSpec createUpdate(SqlIdentifier table, Update update) {
+		return UpdateSpec.create(table, update);
+	}
+
+	/**
 	 * Create a {@code DELETE} specification for {@code table}.
 	 *
 	 * @param table
@@ -128,18 +164,29 @@ public interface StatementMapper {
 	}
 
 	/**
+	 * Create a {@code DELETE} specification for {@code table}.
+	 *
+	 * @param table
+	 * @return the {@link DeleteSpec}.
+	 * @since 1.1
+	 */
+	default DeleteSpec createDelete(SqlIdentifier table) {
+		return DeleteSpec.create(table);
+	}
+
+	/**
 	 * {@code SELECT} specification.
 	 */
 	class SelectSpec {
 
-		private final String table;
-		private final List<String> projectedFields;
+		private final SqlIdentifier table;
+		private final List<SqlIdentifier> projectedFields;
 		private final @Nullable Criteria criteria;
 		private final Sort sort;
 		private final Pageable page;
 
-		protected SelectSpec(String table, List<String> projectedFields, @Nullable Criteria criteria, Sort sort,
-				Pageable page) {
+		protected SelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, @Nullable Criteria criteria,
+				Sort sort, Pageable page) {
 			this.table = table;
 			this.projectedFields = projectedFields;
 			this.criteria = criteria;
@@ -154,6 +201,17 @@ public interface StatementMapper {
 		 * @return the {@link SelectSpec}.
 		 */
 		public static SelectSpec create(String table) {
+			return create(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Create an {@code SELECT} specification for {@code table}.
+		 *
+		 * @param table
+		 * @return the {@link SelectSpec}.
+		 * @since 1.1
+		 */
+		public static SelectSpec create(SqlIdentifier table) {
 			return new SelectSpec(table, Collections.emptyList(), null, Sort.unsorted(), Pageable.unpaged());
 		}
 
@@ -163,9 +221,20 @@ public interface StatementMapper {
 		 * @param projectedFields
 		 * @return the {@link SelectSpec}.
 		 */
-		public SelectSpec withProjection(Collection<String> projectedFields) {
+		public SelectSpec withProjection(String... projectedFields) {
+			return withProjection(Arrays.stream(projectedFields).map(SqlIdentifier::unquoted).collect(Collectors.toList()));
+		}
 
-			List<String> fields = new ArrayList<>(this.projectedFields);
+		/**
+		 * Associate {@code projectedFields} with the select and create a new {@link SelectSpec}.
+		 *
+		 * @param projectedFields
+		 * @return the {@link SelectSpec}.
+		 * @since 1.1
+		 */
+		public SelectSpec withProjection(Collection<SqlIdentifier> projectedFields) {
+
+			List<SqlIdentifier> fields = new ArrayList<>(this.projectedFields);
 			fields.addAll(projectedFields);
 
 			return new SelectSpec(this.table, fields, this.criteria, this.sort, this.page);
@@ -215,11 +284,11 @@ public interface StatementMapper {
 			return new SelectSpec(this.table, this.projectedFields, this.criteria, this.sort, page);
 		}
 
-		public String getTable() {
+		public SqlIdentifier getTable() {
 			return this.table;
 		}
 
-		public List<String> getProjectedFields() {
+		public List<SqlIdentifier> getProjectedFields() {
 			return Collections.unmodifiableList(this.projectedFields);
 		}
 
@@ -242,10 +311,10 @@ public interface StatementMapper {
 	 */
 	class InsertSpec {
 
-		private final String table;
+		private final SqlIdentifier table;
 		private final Map<String, SettableValue> assignments;
 
-		protected InsertSpec(String table, Map<String, SettableValue> assignments) {
+		protected InsertSpec(SqlIdentifier table, Map<String, SettableValue> assignments) {
 			this.table = table;
 			this.assignments = assignments;
 		}
@@ -257,6 +326,17 @@ public interface StatementMapper {
 		 * @return the {@link InsertSpec}.
 		 */
 		public static InsertSpec create(String table) {
+			return create(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Create an {@code INSERT} specification for {@code table}.
+		 *
+		 * @param table
+		 * @return the {@link InsertSpec}.
+		 * @since 1.1
+		 */
+		public static InsertSpec create(SqlIdentifier table) {
 			return new InsertSpec(table, Collections.emptyMap());
 		}
 
@@ -275,7 +355,7 @@ public interface StatementMapper {
 			return new InsertSpec(this.table, values);
 		}
 
-		public String getTable() {
+		public SqlIdentifier getTable() {
 			return this.table;
 		}
 
@@ -289,12 +369,12 @@ public interface StatementMapper {
 	 */
 	class UpdateSpec {
 
-		private final String table;
+		private final SqlIdentifier table;
 		private final Update update;
 
 		private final @Nullable Criteria criteria;
 
-		protected UpdateSpec(String table, Update update, @Nullable Criteria criteria) {
+		protected UpdateSpec(SqlIdentifier table, Update update, @Nullable Criteria criteria) {
 
 			this.table = table;
 			this.update = update;
@@ -308,6 +388,17 @@ public interface StatementMapper {
 		 * @return the {@link InsertSpec}.
 		 */
 		public static UpdateSpec create(String table, Update update) {
+			return create(SqlIdentifier.unquoted(table), update);
+		}
+
+		/**
+		 * Create an {@code INSERT} specification for {@code table}.
+		 *
+		 * @param table
+		 * @return the {@link InsertSpec}.
+		 * @since 1.1
+		 */
+		public static UpdateSpec create(SqlIdentifier table, Update update) {
 			return new UpdateSpec(table, update, null);
 		}
 
@@ -321,7 +412,7 @@ public interface StatementMapper {
 			return new UpdateSpec(this.table, this.update, criteria);
 		}
 
-		public String getTable() {
+		public SqlIdentifier getTable() {
 			return this.table;
 		}
 
@@ -340,11 +431,11 @@ public interface StatementMapper {
 	 */
 	class DeleteSpec {
 
-		private final String table;
+		private final SqlIdentifier table;
 
 		private final @Nullable Criteria criteria;
 
-		protected DeleteSpec(String table, @Nullable Criteria criteria) {
+		protected DeleteSpec(SqlIdentifier table, @Nullable Criteria criteria) {
 			this.table = table;
 			this.criteria = criteria;
 		}
@@ -356,6 +447,17 @@ public interface StatementMapper {
 		 * @return the {@link DeleteSpec}.
 		 */
 		public static DeleteSpec create(String table) {
+			return create(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Create an {@code DELETE} specification for {@code table}.
+		 *
+		 * @param table
+		 * @return the {@link DeleteSpec}.
+		 * @since 1.1
+		 */
+		public static DeleteSpec create(SqlIdentifier table) {
 			return new DeleteSpec(table, null);
 		}
 
@@ -369,7 +471,7 @@ public interface StatementMapper {
 			return new DeleteSpec(this.table, criteria);
 		}
 
-		public String getTable() {
+		public SqlIdentifier getTable() {
 			return this.table;
 		}
 

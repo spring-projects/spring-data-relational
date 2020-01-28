@@ -32,6 +32,7 @@ import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
@@ -63,7 +64,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	@Before
 	public void setUp() {
 
-		this.mappingContext = new RelationalMappingContext();
+		this.mappingContext = new R2dbcMappingContext();
 		this.converter = new MappingR2dbcConverter(this.mappingContext);
 		this.metadata = AbstractRepositoryMetadata.getMetadata(SampleRepository.class);
 		this.factory = new SpelAwareProxyProjectionFactory();

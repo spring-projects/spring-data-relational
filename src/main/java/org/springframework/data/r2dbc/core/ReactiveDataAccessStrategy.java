@@ -24,6 +24,8 @@ import java.util.function.BiFunction;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -40,13 +42,13 @@ public interface ReactiveDataAccessStrategy {
 	 * @param entityType
 	 * @return all column names for a specific type.
 	 */
-	List<String> getAllColumns(Class<?> entityType);
+	List<SqlIdentifier> getAllColumns(Class<?> entityType);
 
 	/**
 	 * @param entityType
 	 * @return all Id column names for a specific type.
 	 */
-	List<String> getIdentifierColumns(Class<?> entityType);
+	List<SqlIdentifier> getIdentifierColumns(Class<?> entityType);
 
 	/**
 	 * Returns a {@link OutboundRow} that maps column names to a {@link SettableValue} value.
@@ -69,7 +71,7 @@ public interface ReactiveDataAccessStrategy {
 	 * @param type
 	 * @return the table name for the {@link Class entity type}.
 	 */
-	String getTableName(Class<?> type);
+	SqlIdentifier getTableName(Class<?> type);
 
 	/**
 	 * Expand named parameters and return a {@link PreparedOperation} wrapping the given bindings.
@@ -94,6 +96,16 @@ public interface ReactiveDataAccessStrategy {
 	 * @return the {@link R2dbcConverter}.
 	 */
 	R2dbcConverter getConverter();
+
+	/**
+	 * Render a {@link SqlIdentifier} for SQL usage.
+	 *
+	 * @param identifier the identifier to be rendered.
+	 * @return the SQL representation of the identifier with applied, potentially dialect-specific, processing rules.
+	 * @since 1.1
+	 * @see SqlIdentifier#toSql(IdentifierProcessing)
+	 */
+	String toSql(SqlIdentifier identifier);
 
 	/**
 	 * Interface to retrieve parameters for named parameter processing.

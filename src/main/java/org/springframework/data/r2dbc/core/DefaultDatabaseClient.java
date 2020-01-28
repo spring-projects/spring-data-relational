@@ -60,6 +60,7 @@ import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -643,7 +644,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultSelectFromSpec implements SelectFromSpec {
 
 		@Override
-		public GenericSelectSpec from(String table) {
+		public GenericSelectSpec from(SqlIdentifier table) {
 			return new DefaultGenericSelectSpec(table);
 		}
 
@@ -661,15 +662,15 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 */
 	private abstract class DefaultSelectSpecSupport {
 
-		final String table;
-		final List<String> projectedFields;
+		final SqlIdentifier table;
+		final List<SqlIdentifier> projectedFields;
 		final @Nullable Criteria criteria;
 		final Sort sort;
 		final Pageable page;
 
-		DefaultSelectSpecSupport(String table) {
+		DefaultSelectSpecSupport(SqlIdentifier table) {
 
-			Assert.hasText(table, "Table name must not be null!");
+			Assert.notNull(table, "Table name must not be null!");
 
 			this.table = table;
 			this.projectedFields = Collections.emptyList();
@@ -678,7 +679,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.page = Pageable.unpaged();
 		}
 
-		DefaultSelectSpecSupport(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page) {
+		DefaultSelectSpecSupport(SqlIdentifier table, List<SqlIdentifier> projectedFields, Criteria criteria, Sort sort,
+				Pageable page) {
 			this.table = table;
 			this.projectedFields = projectedFields;
 			this.criteria = criteria;
@@ -686,10 +688,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.page = page;
 		}
 
-		public DefaultSelectSpecSupport project(String... selectedFields) {
+		public DefaultSelectSpecSupport project(SqlIdentifier... selectedFields) {
 			Assert.notNull(selectedFields, "Projection fields must not be null!");
 
-			List<String> projectedFields = new ArrayList<>(this.projectedFields.size() + selectedFields.length);
+			List<SqlIdentifier> projectedFields = new ArrayList<>(this.projectedFields.size() + selectedFields.length);
 			projectedFields.addAll(this.projectedFields);
 			projectedFields.addAll(Arrays.asList(selectedFields));
 
@@ -730,17 +732,18 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 					mappingFunction);
 		}
 
-		protected abstract DefaultSelectSpecSupport createInstance(String table, List<String> projectedFields,
+		protected abstract DefaultSelectSpecSupport createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
 				Criteria criteria, Sort sort, Pageable page);
 	}
 
 	private class DefaultGenericSelectSpec extends DefaultSelectSpecSupport implements GenericSelectSpec {
 
-		DefaultGenericSelectSpec(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page) {
+		DefaultGenericSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, Criteria criteria, Sort sort,
+				Pageable page) {
 			super(table, projectedFields, criteria, sort, page);
 		}
 
-		DefaultGenericSelectSpec(String table) {
+		DefaultGenericSelectSpec(SqlIdentifier table) {
 			super(table);
 		}
 
@@ -778,7 +781,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultGenericSelectSpec project(String... selectedFields) {
+		public DefaultGenericSelectSpec project(SqlIdentifier... selectedFields) {
 			return (DefaultGenericSelectSpec) super.project(selectedFields);
 		}
 
@@ -818,8 +821,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		protected DefaultGenericSelectSpec createInstance(String table, List<String> projectedFields, Criteria criteria,
-				Sort sort, Pageable page) {
+		protected DefaultGenericSelectSpec createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
+				Criteria criteria, Sort sort, Pageable page) {
 			return new DefaultGenericSelectSpec(table, projectedFields, criteria, sort, page);
 		}
 	}
@@ -841,8 +844,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
 		}
 
-		DefaultTypedSelectSpec(String table, List<String> projectedFields, Criteria criteria, Sort sort, Pageable page,
-				@Nullable Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
+		DefaultTypedSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, Criteria criteria, Sort sort,
+				Pageable page, @Nullable Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			super(table, projectedFields, criteria, sort, page);
 
@@ -884,7 +887,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultTypedSelectSpec<T> project(String... selectedFields) {
+		public DefaultTypedSelectSpec<T> project(SqlIdentifier... selectedFields) {
 			return (DefaultTypedSelectSpec<T>) super.project(selectedFields);
 		}
 
@@ -910,7 +913,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			List<String> columns;
+			List<SqlIdentifier> columns;
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper().forType(this.typeToRead);
 
 			if (this.projectedFields.isEmpty()) {
@@ -932,8 +935,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		protected DefaultTypedSelectSpec<T> createInstance(String table, List<String> projectedFields, Criteria criteria,
-				Sort sort, Pageable page) {
+		protected DefaultTypedSelectSpec<T> createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
+				Criteria criteria, Sort sort, Pageable page) {
 			return new DefaultTypedSelectSpec<>(table, projectedFields, criteria, sort, page, this.typeToRead,
 					this.mappingFunction);
 		}
@@ -945,7 +948,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultInsertIntoSpec implements InsertIntoSpec {
 
 		@Override
-		public GenericInsertSpec<Map<String, Object>> into(String table) {
+		public GenericInsertSpec<Map<String, Object>> into(SqlIdentifier table) {
 			return new DefaultGenericInsertSpec<>(table, Collections.emptyMap(), ColumnMapRowMapper.INSTANCE);
 		}
 
@@ -963,11 +966,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 */
 	class DefaultGenericInsertSpec<T> implements GenericInsertSpec<T> {
 
-		private final String table;
-		private final Map<String, SettableValue> byName;
+		private final SqlIdentifier table;
+		private final Map<SqlIdentifier, SettableValue> byName;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
-		DefaultGenericInsertSpec(String table, Map<String, SettableValue> byName,
+		DefaultGenericInsertSpec(SqlIdentifier table, Map<SqlIdentifier, SettableValue> byName,
 				BiFunction<Row, RowMetadata, T> mappingFunction) {
 			this.table = table;
 			this.byName = byName;
@@ -975,11 +978,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public GenericInsertSpec<T> value(String field, Object value) {
+		public GenericInsertSpec<T> value(SqlIdentifier field, Object value) {
 
 			Assert.notNull(field, "Field must not be null!");
 
-			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
+			Map<SqlIdentifier, SettableValue> byName = new LinkedHashMap<>(this.byName);
 
 			if (value instanceof SettableValue) {
 				byName.put(field, (SettableValue) value);
@@ -1025,8 +1028,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 			StatementMapper.InsertSpec insert = mapper.createInsert(this.table);
 
-			for (String column : this.byName.keySet()) {
-				insert = insert.withColumn(column, this.byName.get(column));
+			for (SqlIdentifier column : this.byName.keySet()) {
+				insert = insert.withColumn(dataAccessStrategy.toSql(column), this.byName.get(column));
 			}
 
 			PreparedOperation<?> operation = mapper.getMappedObject(insert);
@@ -1040,7 +1043,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultTypedInsertSpec<T, R> implements TypedInsertSpec<T>, InsertSpec<R> {
 
 		private final Class<?> typeToInsert;
-		private final String table;
+		private final SqlIdentifier table;
 		private final Publisher<T> objectToInsert;
 		private final BiFunction<Row, RowMetadata, R> mappingFunction;
 
@@ -1052,7 +1055,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.mappingFunction = mappingFunction;
 		}
 
-		DefaultTypedInsertSpec(Class<?> typeToInsert, String table, Publisher<T> objectToInsert,
+		DefaultTypedInsertSpec(Class<?> typeToInsert, SqlIdentifier table, Publisher<T> objectToInsert,
 				BiFunction<Row, RowMetadata, R> mappingFunction) {
 			this.typeToInsert = typeToInsert;
 			this.table = table;
@@ -1061,9 +1064,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public TypedInsertSpec<T> table(String tableName) {
+		public TypedInsertSpec<T> table(SqlIdentifier tableName) {
 
-			Assert.hasText(tableName, "Table name must not be null or empty!");
+			Assert.notNull(tableName, "Table name must not be null!");
 
 			return new DefaultTypedInsertSpec<>(this.typeToInsert, tableName, this.objectToInsert, this.mappingFunction);
 		}
@@ -1146,10 +1149,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 			StatementMapper.InsertSpec insert = mapper.createInsert(this.table);
 
-			for (String column : outboundRow.keySet()) {
+			for (SqlIdentifier column : outboundRow.keySet()) {
 				SettableValue settableValue = outboundRow.get(column);
 				if (settableValue.hasValue()) {
-					insert = insert.withColumn(column, settableValue);
+					insert = insert.withColumn(dataAccessStrategy.toSql(column), settableValue);
 				}
 			}
 
@@ -1164,7 +1167,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultUpdateTableSpec implements UpdateTableSpec {
 
 		@Override
-		public GenericUpdateSpec table(String table) {
+		public GenericUpdateSpec table(SqlIdentifier table) {
 			return new DefaultGenericUpdateSpec(null, table, null, null);
 		}
 
@@ -1180,11 +1183,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultGenericUpdateSpec implements GenericUpdateSpec, UpdateMatchingSpec {
 
 		private final @Nullable Class<?> typeToUpdate;
-		private final @Nullable String table;
+		private final @Nullable SqlIdentifier table;
 		private final Update assignments;
 		private final Criteria where;
 
-		DefaultGenericUpdateSpec(@Nullable Class<?> typeToUpdate, @Nullable String table, Update assignments,
+		DefaultGenericUpdateSpec(@Nullable Class<?> typeToUpdate, @Nullable SqlIdentifier table, Update assignments,
 				Criteria where) {
 			this.typeToUpdate = typeToUpdate;
 			this.table = table;
@@ -1211,7 +1214,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		public UpdatedRowsFetchSpec fetch() {
 
-			String table;
+			SqlIdentifier table;
 
 			if (StringUtils.isEmpty(this.table)) {
 				table = dataAccessStrategy.getTableName(this.typeToUpdate);
@@ -1227,7 +1230,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return fetch().rowsUpdated().then();
 		}
 
-		private UpdatedRowsFetchSpec exchange(String table) {
+		private UpdatedRowsFetchSpec exchange(SqlIdentifier table) {
 
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 
@@ -1250,10 +1253,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultTypedUpdateSpec<T> implements TypedUpdateSpec<T>, UpdateSpec {
 
 		private final @Nullable Class<T> typeToUpdate;
-		private final @Nullable String table;
+		private final @Nullable SqlIdentifier table;
 		private final T objectToUpdate;
 
-		DefaultTypedUpdateSpec(@Nullable Class<T> typeToUpdate, @Nullable String table, T objectToUpdate) {
+		DefaultTypedUpdateSpec(@Nullable Class<T> typeToUpdate, @Nullable SqlIdentifier table, T objectToUpdate) {
 			this.typeToUpdate = typeToUpdate;
 			this.table = table;
 			this.objectToUpdate = objectToUpdate;
@@ -1268,9 +1271,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public TypedUpdateSpec<T> table(String tableName) {
+		public TypedUpdateSpec<T> table(SqlIdentifier tableName) {
 
-			Assert.hasText(tableName, "Table name must not be null or empty!");
+			Assert.notNull(tableName, "Table name must not be null!");
 
 			return new DefaultTypedUpdateSpec<>(this.typeToUpdate, tableName, this.objectToUpdate);
 		}
@@ -1278,7 +1281,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		public UpdatedRowsFetchSpec fetch() {
 
-			String table;
+			SqlIdentifier table;
 
 			if (StringUtils.isEmpty(this.table)) {
 				table = dataAccessStrategy.getTableName(this.typeToUpdate);
@@ -1294,11 +1297,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return fetch().rowsUpdated().then();
 		}
 
-		private UpdatedRowsFetchSpec exchange(String table) {
+		private UpdatedRowsFetchSpec exchange(SqlIdentifier table) {
 
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
-			Map<String, SettableValue> columns = dataAccessStrategy.getOutboundRow(this.objectToUpdate);
-			List<String> ids = dataAccessStrategy.getIdentifierColumns(this.typeToUpdate);
+			Map<SqlIdentifier, SettableValue> columns = dataAccessStrategy.getOutboundRow(this.objectToUpdate);
+			List<SqlIdentifier> ids = dataAccessStrategy.getIdentifierColumns(this.typeToUpdate);
 
 			if (ids.isEmpty()) {
 				throw new IllegalStateException("No identifier columns in " + this.typeToUpdate.getName() + "!");
@@ -1307,16 +1310,16 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Update update = null;
 
-			for (String column : columns.keySet()) {
+			for (SqlIdentifier column : columns.keySet()) {
 				if (update == null) {
-					update = Update.update(column, columns.get(column));
+					update = Update.update(dataAccessStrategy.toSql(column), columns.get(column));
 				} else {
-					update = update.set(column, columns.get(column));
+					update = update.set(dataAccessStrategy.toSql(column), columns.get(column));
 				}
 			}
 
-			PreparedOperation<?> operation = mapper
-					.getMappedObject(mapper.createUpdate(table, update).withCriteria(Criteria.where(ids.get(0)).is(id)));
+			PreparedOperation<?> operation = mapper.getMappedObject(
+					mapper.createUpdate(table, update).withCriteria(Criteria.where(dataAccessStrategy.toSql(ids.get(0))).is(id)));
 
 			return exchangeUpdate(operation);
 		}
@@ -1328,7 +1331,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultDeleteFromSpec implements DeleteFromSpec {
 
 		@Override
-		public DefaultDeleteSpec<?> from(String table) {
+		public DefaultDeleteSpec<?> from(SqlIdentifier table) {
 			return new DefaultDeleteSpec<>(null, table, null);
 		}
 
@@ -1347,10 +1350,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	class DefaultDeleteSpec<T> implements DeleteMatchingSpec, TypedDeleteSpec<T> {
 
 		private final @Nullable Class<T> typeToDelete;
-		private final @Nullable String table;
+		private final @Nullable SqlIdentifier table;
 		private final Criteria where;
 
-		DefaultDeleteSpec(@Nullable Class<T> typeToDelete, @Nullable String table, Criteria where) {
+		DefaultDeleteSpec(@Nullable Class<T> typeToDelete, @Nullable SqlIdentifier table, Criteria where) {
 			this.typeToDelete = typeToDelete;
 			this.table = table;
 			this.where = where;
@@ -1365,9 +1368,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public TypedDeleteSpec<T> table(String tableName) {
+		public TypedDeleteSpec<T> table(SqlIdentifier tableName) {
 
-			Assert.hasText(tableName, "Table name must not be null or empty!");
+			Assert.notNull(tableName, "Table name must not be null!");
 
 			return new DefaultDeleteSpec<>(this.typeToDelete, tableName, this.where);
 		}
@@ -1375,7 +1378,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		@Override
 		public UpdatedRowsFetchSpec fetch() {
 
-			String table;
+			SqlIdentifier table;
 
 			if (StringUtils.isEmpty(this.table)) {
 				table = dataAccessStrategy.getTableName(this.typeToDelete);
@@ -1391,7 +1394,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return fetch().rowsUpdated().then();
 		}
 
-		private UpdatedRowsFetchSpec exchange(String table) {
+		private UpdatedRowsFetchSpec exchange(SqlIdentifier table) {
 
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 

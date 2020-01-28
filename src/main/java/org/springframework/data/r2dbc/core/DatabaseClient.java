@@ -20,6 +20,7 @@ import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -35,6 +36,7 @@ import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * A non-blocking, reactive client for performing database calls requests with Reactive Streams back pressure. Provides
@@ -277,13 +279,26 @@ public interface DatabaseClient {
 	interface SelectFromSpec {
 
 		/**
-		 * Specify the source {@literal table} to select from.
+		 * Specify the source {@code table} to select from.
 		 *
 		 * @param table must not be {@literal null} or empty.
 		 * @return a {@link GenericSelectSpec} for further configuration of the select. Guaranteed to be not
 		 *         {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		GenericSelectSpec from(String table);
+		default GenericSelectSpec from(String table) {
+			return from(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Specify the source {@code table} to select from.
+		 *
+		 * @param table must not be {@literal null} or empty.
+		 * @return a {@link GenericSelectSpec} for further configuration of the select. Guaranteed to be not
+		 *         {@literal null}.
+		 * @since 1.1
+		 */
+		GenericSelectSpec from(SqlIdentifier table);
 
 		/**
 		 * Specify the source table to select from to using the {@link Class entity class}.
@@ -300,13 +315,26 @@ public interface DatabaseClient {
 	interface InsertIntoSpec {
 
 		/**
-		 * Specify the target {@literal table} to insert into.
+		 * Specify the target {@code table} to insert into.
 		 *
 		 * @param table must not be {@literal null} or empty.
 		 * @return a {@link GenericInsertSpec} for further configuration of the insert. Guaranteed to be not
 		 *         {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		GenericInsertSpec<Map<String, Object>> into(String table);
+		default GenericInsertSpec<Map<String, Object>> into(String table) {
+			return into(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Specify the target {@code table} to insert into.
+		 *
+		 * @param table must not be {@literal null} or empty.
+		 * @return a {@link GenericInsertSpec} for further configuration of the insert. Guaranteed to be not
+		 *         {@literal null}.
+		 * @since 1.1
+		 */
+		GenericInsertSpec<Map<String, Object>> into(SqlIdentifier table);
 
 		/**
 		 * Specify the target table to insert to using the {@link Class entity class}.
@@ -323,13 +351,26 @@ public interface DatabaseClient {
 	interface UpdateTableSpec {
 
 		/**
-		 * Specify the target {@literal table} to update.
+		 * Specify the target {@code table} to update.
 		 *
 		 * @param table must not be {@literal null} or empty.
 		 * @return a {@link GenericUpdateSpec} for further configuration of the update. Guaranteed to be not
 		 *         {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		GenericUpdateSpec table(String table);
+		default GenericUpdateSpec table(String table) {
+			return table(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Specify the target {@code table} to update.
+		 *
+		 * @param table must not be {@literal null} or empty.
+		 * @return a {@link GenericUpdateSpec} for further configuration of the update. Guaranteed to be not
+		 *         {@literal null}.
+		 * @since 1.1
+		 */
+		GenericUpdateSpec table(SqlIdentifier table);
 
 		/**
 		 * Specify the target table to update to using the {@link Class entity class}.
@@ -346,13 +387,26 @@ public interface DatabaseClient {
 	interface DeleteFromSpec {
 
 		/**
-		 * Specify the source {@literal table} to delete from.
+		 * Specify the source {@code table} to delete from.
 		 *
 		 * @param table must not be {@literal null} or empty.
 		 * @return a {@link DeleteMatchingSpec} for further configuration of the delete. Guaranteed to be not
 		 *         {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		DeleteMatchingSpec from(String table);
+		default DeleteMatchingSpec from(String table) {
+			return from(SqlIdentifier.unquoted(table));
+		}
+
+		/**
+		 * Specify the source {@code table} to delete from.
+		 *
+		 * @param table must not be {@literal null} or empty.
+		 * @return a {@link DeleteMatchingSpec} for further configuration of the delete. Guaranteed to be not
+		 *         {@literal null}.
+		 * @since 1.1
+		 */
+		DeleteMatchingSpec from(SqlIdentifier table);
 
 		/**
 		 * Specify the source table to delete from to using the {@link Class entity class}.
@@ -448,8 +502,19 @@ public interface DatabaseClient {
 		 * Configure projected fields.
 		 *
 		 * @param selectedFields must not be {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		S project(String... selectedFields);
+		default S project(String... selectedFields) {
+			return project(Arrays.stream(selectedFields).map(SqlIdentifier::unquoted).toArray(SqlIdentifier[]::new));
+		}
+
+		/**
+		 * Configure projected fields.
+		 *
+		 * @param selectedFields must not be {@literal null}.
+		 * @since 1.1
+		 */
+		S project(SqlIdentifier... selectedFields);
 
 		/**
 		 * Configure a filter {@link Criteria}.
@@ -496,16 +561,41 @@ public interface DatabaseClient {
 		 * @param field must not be {@literal null} or empty.
 		 * @param value the field value to set, must not be {@literal null}. Can be either a scalar value or
 		 *          {@link SettableValue}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		GenericInsertSpec<T> value(String field, Object value);
+		default GenericInsertSpec<T> value(String field, Object value) {
+			return value(SqlIdentifier.unquoted(field), value);
+		}
+
+		/**
+		 * Specify a field and non-{@literal null} value to insert. {@code value} can be either a scalar value or
+		 * {@link SettableValue}.
+		 *
+		 * @param field must not be {@literal null} or empty.
+		 * @param value the field value to set, must not be {@literal null}. Can be either a scalar value or
+		 *          {@link SettableValue}.
+		 */
+		GenericInsertSpec<T> value(SqlIdentifier field, Object value);
 
 		/**
 		 * Specify a {@literal null} value to insert.
 		 *
 		 * @param field must not be {@literal null} or empty.
 		 * @param type must not be {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
 		default GenericInsertSpec<T> nullValue(String field, Class<?> type) {
+			return nullValue(SqlIdentifier.unquoted(field), type);
+		}
+
+		/**
+		 * Specify a {@literal null} value to insert.
+		 *
+		 * @param field must not be {@literal null} or empty.
+		 * @param type must not be {@literal null}.
+		 * @since 1.1
+		 */
+		default GenericInsertSpec<T> nullValue(SqlIdentifier field, Class<?> type) {
 			return value(field, SettableValue.empty(type));
 		}
 	}
@@ -529,8 +619,20 @@ public interface DatabaseClient {
 		 *
 		 * @param tableName must not be {@literal null} or empty.
 		 * @return a {@link TypedInsertSpec} for further configuration of the insert. Guaranteed to be not {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		TypedInsertSpec<T> table(String tableName);
+		default TypedInsertSpec<T> table(String tableName) {
+			return table(SqlIdentifier.unquoted(tableName));
+		}
+
+		/**
+		 * Use the given {@code tableName} as insert target.
+		 *
+		 * @param tableName must not be {@literal null} or empty.
+		 * @return a {@link TypedInsertSpec} for further configuration of the insert. Guaranteed to be not {@literal null}.
+		 * @since 1.1
+		 */
+		TypedInsertSpec<T> table(SqlIdentifier tableName);
 
 		/**
 		 * Insert the given {@link Publisher} to insert one or more objects. Inserts only a single object when calling
@@ -614,8 +716,20 @@ public interface DatabaseClient {
 		 *
 		 * @param tableName must not be {@literal null} or empty.
 		 * @return a {@link TypedUpdateSpec} for further configuration of the update. Guaranteed to be not {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		TypedUpdateSpec<T> table(String tableName);
+		default TypedUpdateSpec<T> table(String tableName) {
+			return table(SqlIdentifier.unquoted(tableName));
+		}
+
+		/**
+		 * Use the given {@code tableName} as update target.
+		 *
+		 * @param tableName must not be {@literal null} or empty.
+		 * @return a {@link TypedUpdateSpec} for further configuration of the update. Guaranteed to be not {@literal null}.
+		 * @since 1.1
+		 */
+		TypedUpdateSpec<T> table(SqlIdentifier tableName);
 	}
 
 	/**
@@ -659,8 +773,20 @@ public interface DatabaseClient {
 		 *
 		 * @param tableName must not be {@literal null} or empty.
 		 * @return a {@link TypedDeleteSpec} for further configuration of the delete. Guaranteed to be not {@literal null}.
+		 * @see SqlIdentifier#unquoted(String)
 		 */
-		TypedDeleteSpec<T> table(String tableName);
+		default TypedDeleteSpec<T> table(String tableName) {
+			return table(SqlIdentifier.unquoted(tableName));
+		}
+
+		/**
+		 * Use the given {@code tableName} as delete target.
+		 *
+		 * @param tableName must not be {@literal null} or empty.
+		 * @return a {@link TypedDeleteSpec} for further configuration of the delete. Guaranteed to be not {@literal null}.
+		 * @since 1.1
+		 */
+		TypedDeleteSpec<T> table(SqlIdentifier tableName);
 
 		/**
 		 * Configure a filter {@link Criteria}.

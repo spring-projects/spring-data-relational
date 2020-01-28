@@ -84,8 +84,8 @@ class DefaultStatementMapper implements StatementMapper {
 	private PreparedOperation<Select> getMappedObject(SelectSpec selectSpec,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
-		Table table = Table.create(selectSpec.getTable());
-		List<Column> columns = table.columns(selectSpec.getProjectedFields());
+		Table table = Table.create(toSql(selectSpec.getTable()));
+		List<Column> columns = table.columns(toSql(selectSpec.getProjectedFields()));
 		SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder.select(columns).from(table);
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
@@ -148,7 +148,7 @@ class DefaultStatementMapper implements StatementMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
-		Table table = Table.create(insertSpec.getTable());
+		Table table = Table.create(toSql(insertSpec.getTable()));
 
 		BoundAssignments boundAssignments = this.updateMapper.getMappedObject(bindMarkers, insertSpec.getAssignments(),
 				table, entity);
@@ -190,7 +190,7 @@ class DefaultStatementMapper implements StatementMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
-		Table table = Table.create(updateSpec.getTable());
+		Table table = Table.create(toSql(updateSpec.getTable()));
 
 		if (updateSpec.getUpdate() == null || updateSpec.getUpdate().getAssignments().isEmpty()) {
 			throw new IllegalArgumentException("UPDATE contains no assignments");
@@ -234,7 +234,7 @@ class DefaultStatementMapper implements StatementMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
-		Table table = Table.create(deleteSpec.getTable());
+		Table table = Table.create(toSql(deleteSpec.getTable()));
 
 		DeleteBuilder.DeleteWhere deleteBuilder = StatementBuilder.delete(table);
 
@@ -253,6 +253,28 @@ class DefaultStatementMapper implements StatementMapper {
 		}
 
 		return new DefaultPreparedOperation<>(delete, this.renderContext, bindings);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.StatementMapper#toSql(SqlIdentifier)
+	 */
+	public String toSql(SqlIdentifier identifier) {
+
+		Assert.notNull(identifier, "SqlIdentifier must not be null");
+
+		return identifier.toSql(this.dialect.getIdentifierProcessing());
+	}
+
+	private List<String> toSql(List<SqlIdentifier> identifiers) {
+
+		List<String> list = new ArrayList<>(identifiers.size());
+
+		for (SqlIdentifier sqlIdentifier : identifiers) {
+			list.add(toSql(sqlIdentifier));
+		}
+
+		return list;
 	}
 
 	/**
