@@ -33,12 +33,14 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 	private final RenderContext context;
 	private final RenderTarget parent;
 	private final StringBuilder joinClause = new StringBuilder();
+	private final ConditionVisitor conditionVisitor;
 	private boolean inCondition = false;
 	private boolean hasSeenCondition = false;
 
 	JoinVisitor(RenderContext context, RenderTarget parent) {
 		this.context = context;
 		this.parent = parent;
+		this.conditionVisitor = new ConditionVisitor(context);
 	}
 
 	/*
@@ -67,12 +69,10 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 			}
 		} else if (segment instanceof Condition) {
 
-			// TODO: Use proper delegation for condition rendering.
 			inCondition = true;
 			if (!hasSeenCondition) {
 				hasSeenCondition = true;
-				joinClause.append(" ON ");
-				joinClause.append(segment);
+				return Delegation.delegateTo(conditionVisitor);
 			}
 		}
 
@@ -88,6 +88,14 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 
 		if (segment instanceof Condition) {
 			inCondition = false;
+
+			if (hasSeenCondition) {
+
+				joinClause.append(" ON ");
+				joinClause.append(conditionVisitor.getRenderedPart());
+
+				hasSeenCondition = false;
+			}
 		}
 		return super.leaveNested(segment);
 	}

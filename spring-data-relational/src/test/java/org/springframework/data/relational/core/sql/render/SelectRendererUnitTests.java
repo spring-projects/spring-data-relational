@@ -17,8 +17,10 @@ package org.springframework.data.relational.core.sql.render;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Ignore;
 import org.junit.Test;
+
+import org.springframework.data.relational.core.dialect.PostgresDialect;
+import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.Expressions;
@@ -26,6 +28,7 @@ import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Select;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.util.StringUtils;
 
@@ -328,5 +331,22 @@ public class SelectRendererUnitTests {
 		String rendered = SqlRenderer.toString(select);
 
 		assertThat(rendered).isEqualTo("SELECT COUNT(foo.*) AS counter FROM foo");
+	}
+
+	@Test // DATAJDBC-479
+	public void shouldRenderWithRenderContext() {
+
+		Table table = Table.create(SqlIdentifier.quoted("my_table"));
+		Table join_table = Table.create(SqlIdentifier.quoted("join_table"));
+		Select select = Select.builder() //
+				.select(Functions.count(table.asterisk()).as("counter"), table.column(SqlIdentifier.quoted("reserved_keyword"))) //
+				.from(table) //
+				.join(join_table).on(table.column("source")).equals(join_table.column("target")).build();
+
+		String rendered = SqlRenderer.create(new RenderContextFactory(PostgresDialect.INSTANCE).createRenderContext())
+				.render(select);
+
+		assertThat(rendered).isEqualTo(
+				"SELECT COUNT(\"my_table\".*) AS counter, \"my_table\".\"reserved_keyword\" FROM \"my_table\" JOIN \"join_table\" ON \"my_table\".source = \"join_table\".target");
 	}
 }
