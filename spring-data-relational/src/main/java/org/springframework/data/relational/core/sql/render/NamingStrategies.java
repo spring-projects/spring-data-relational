@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.function.Function;
 
 import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.util.Assert;
 
@@ -121,23 +122,23 @@ public abstract class NamingStrategies {
 		private final Function<String, String> mappingFunction;
 
 		@Override
-		public String getName(Column column) {
-			return mappingFunction.apply(delegate.getName(column));
+		public SqlIdentifier getName(Column column) {
+			return delegate.getName(column).transform(mappingFunction::apply);
 		}
 
 		@Override
-		public String getReferenceName(Column column) {
-			return mappingFunction.apply(delegate.getReferenceName(column));
+		public SqlIdentifier getReferenceName(Column column) {
+			return delegate.getReferenceName(column).transform(mappingFunction::apply);
 		}
 
 		@Override
-		public String getName(Table table) {
-			return mappingFunction.apply(delegate.getName(table));
+		public SqlIdentifier getName(Table table) {
+			return delegate.getName(table).transform(mappingFunction::apply);
 		}
 
 		@Override
-		public String getReferenceName(Table table) {
-			return mappingFunction.apply(delegate.getReferenceName(table));
+		public SqlIdentifier getReferenceName(Table table) {
+			return delegate.getReferenceName(table).transform(mappingFunction::apply);
 		}
 	}
 }

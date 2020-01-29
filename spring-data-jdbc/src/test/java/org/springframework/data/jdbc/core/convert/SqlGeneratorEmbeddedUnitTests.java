@@ -35,6 +35,7 @@ import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * Unit tests for the {@link SqlGenerator} in a context of the {@link Embedded} annotation.
@@ -48,6 +49,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 	@Before
 	public void setUp() {
+		this.context.setForceQuote(false);
 		this.sqlGenerator = createSqlGenerator(DummyEntity.class);
 	}
 
@@ -201,7 +203,8 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 		assertThat(generatedColumn("embeddable.test", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly("test", "dummy_entity", null, "test");
+				.containsExactly(SqlIdentifier.unquoted("test"), SqlIdentifier.unquoted("dummy_entity"), null,
+						SqlIdentifier.unquoted("test"));
 	}
 
 	@Test // DATAJDBC-340
@@ -224,7 +227,8 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 		assertThat(generatedColumn("prefixedEmbeddable.test", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly("prefix_test", "dummy_entity", null, "prefix_test");
+				.containsExactly(SqlIdentifier.unquoted("prefix_test"), SqlIdentifier.unquoted("dummy_entity"), null,
+						SqlIdentifier.unquoted("prefix_test"));
 	}
 
 	@Test // DATAJDBC-340
@@ -240,7 +244,8 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 		assertThat(generatedColumn("embeddable.embeddable.attr1", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly("attr1", "dummy_entity", null, "attr1");
+				.containsExactly(SqlIdentifier.unquoted("attr1"), SqlIdentifier.unquoted("dummy_entity"), null,
+						SqlIdentifier.unquoted("attr1"));
 	}
 
 	@Test // DATAJDBC-340
@@ -250,11 +255,11 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 		SoftAssertions.assertSoftly(softly -> {
 
-			softly.assertThat(join.getJoinTable().getName()).isEqualTo("other_entity");
+			softly.assertThat(join.getJoinTable().getName()).isEqualTo(SqlIdentifier.unquoted("other_entity"));
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("dummy_entity2");
-			softly.assertThat(join.getParentId().getName()).isEqualTo("id");
-			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("dummy_entity2");
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo(SqlIdentifier.unquoted("dummy_entity2"));
+			softly.assertThat(join.getParentId().getName()).isEqualTo(SqlIdentifier.unquoted("id"));
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo(SqlIdentifier.unquoted("dummy_entity2"));
 		});
 	}
 
@@ -263,7 +268,8 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 		assertThat(generatedColumn("embedded.other.value", DummyEntity2.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly("value", "other_entity", "prefix_other", "prefix_other_value");
+				.containsExactly(SqlIdentifier.unquoted("value"), SqlIdentifier.unquoted("other_entity"),
+						SqlIdentifier.quoted("prefix_other"), SqlIdentifier.unquoted("prefix_other_value"));
 	}
 
 	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
@@ -271,7 +277,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 				.getJoin(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
 	}
 
-	private String getAlias(Object maybeAliased) {
+	private SqlIdentifier getAlias(Object maybeAliased) {
 
 		if (maybeAliased instanceof Aliased) {
 			return ((Aliased) maybeAliased).getAlias();

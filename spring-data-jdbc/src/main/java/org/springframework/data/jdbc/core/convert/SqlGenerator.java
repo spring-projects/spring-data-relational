@@ -40,10 +40,12 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.render.NamingStrategies;
+import org.springframework.data.relational.core.sql.render.RenderContext;
+import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
+import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -69,6 +71,7 @@ class SqlGenerator {
 	private static final Pattern parameterPattern = Pattern.compile("\\W");
 	private final RelationalPersistentEntity<?> entity;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+	private final RenderContext renderContext;
 	private final IdentifierProcessing identifierProcessing;
 
 	private final SqlContext sqlContext;
@@ -101,8 +104,24 @@ class SqlGenerator {
 		this.mappingContext = mappingContext;
 		this.entity = entity;
 		this.identifierProcessing = identifierProcessing;
-		this.sqlContext = new SqlContext(entity, identifierProcessing);
+		this.sqlContext = new SqlContext(entity);
 		this.columns = new Columns(entity, mappingContext);
+		this.renderContext = new RenderContext() {
+			@Override
+			public RenderNamingStrategy getNamingStrategy() {
+				return NamingStrategies.asIs();
+			}
+
+			@Override
+			public IdentifierProcessing getIdentifierProcessing() {
+				return identifierProcessing;
+			}
+
+			@Override
+			public SelectRenderContext getSelect() {
+				return new SelectRenderContext() {};
+			}
+		};
 	}
 
 	/**
@@ -126,10 +145,9 @@ class SqlGenerator {
 			return rootCondition.apply(filterColumn);
 		}
 
-		Table subSelectTable = SQL.table(parentPath.getTableName().toSql(identifierProcessing));
-		Column idColumn = subSelectTable.column(parentPath.getIdColumnName().toSql(identifierProcessing));
-		Column selectFilterColumn = subSelectTable
-				.column(parentPath.getEffectiveIdColumnName().toSql(identifierProcessing));
+		Table subSelectTable = Table.create(parentPath.getTableName());
+		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
+		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
 
 		Condition innerCondition;
 
@@ -191,21 +209,19 @@ class SqlGenerator {
 		Assert.isTrue(keyColumn != null || !ordered,
 				"If the SQL statement should be ordered a keyColumn to order by must be provided.");
 
+		Table table = getTable();
+
 		SelectBuilder.SelectWhere builder = selectBuilder( //
 				keyColumn == null //
 						? Collections.emptyList() //
-						: Collections.singleton(keyColumn.toSql(identifierProcessing)) //
+						: Collections.singleton(keyColumn) //
 		);
-
-		Table table = getTable();
 
 		Condition condition = buildConditionForBackReference(parentIdentifier, table);
 		SelectBuilder.SelectWhereAndOr withWhereClause = builder.where(condition);
 
 		Select select = ordered //
-				? withWhereClause
-						.orderBy(table.column(keyColumn.toSql(identifierProcessing)).as(keyColumn.toSql(identifierProcessing)))
-						.build() //
+				? withWhereClause.orderBy(table.column(keyColumn).as(keyColumn)).build() //
 				: withWhereClause.build();
 
 		return render(select);
@@ -216,8 +232,7 @@ class SqlGenerator {
 		Condition condition = null;
 		for (SqlIdentifier backReferenceColumn : parentIdentifier.toMap().keySet()) {
 
-			Condition newCondition = table.column(backReferenceColumn.toSql(identifierProcessing))
-					.isEqualTo(getBindMarker(backReferenceColumn));
+			Condition newCondition = table.column(backReferenceColumn).isEqualTo(getBindMarker(backReferenceColumn));
 			condition = condition == null ? newCondition : condition.and(newCondition);
 		}
 
@@ -353,7 +368,7 @@ class SqlGenerator {
 		return selectBuilder(Collections.emptyList());
 	}
 
-	private SelectBuilder.SelectWhere selectBuilder(Collection<String> keyColumns) {
+	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns) {
 
 		Table table = getTable();
 
@@ -377,7 +392,7 @@ class SqlGenerator {
 			}
 		}
 
-		for (String keyColumn : keyColumns) {
+		for (SqlIdentifier keyColumn : keyColumns) {
 			columnExpressions.add(table.column(keyColumn).as(keyColumn));
 		}
 
@@ -440,8 +455,8 @@ class SqlGenerator {
 
 		return new Join( //
 				currentTable, //
-				currentTable.column(path.getReverseColumnName().toSql(identifierProcessing)), //
-				parentTable.column(idDefiningParentPath.getIdColumnName().toSql(identifierProcessing)) //
+				currentTable.column(path.getReverseColumnName()), //
+				parentTable.column(idDefiningParentPath.getIdColumnName()) //
 		);
 	}
 
@@ -481,14 +496,14 @@ class SqlGenerator {
 
 		Table table = getTable();
 
-		Set<SqlIdentifier> columnNamesForInsert = new TreeSet<>(Comparator.comparing(id -> id.toSql(identifierProcessing)));
+		Set<SqlIdentifier> columnNamesForInsert = new TreeSet<>(Comparator.comparing(SqlIdentifier::getReference));
 		columnNamesForInsert.addAll(columns.getInsertableColumns());
 		columnNamesForInsert.addAll(additionalColumns);
 
 		InsertBuilder.InsertIntoColumnsAndValuesWithBuild insert = Insert.builder().into(table);
 
 		for (SqlIdentifier cn : columnNamesForInsert) {
-			insert = insert.column(table.column(cn.toSql(identifierProcessing)));
+			insert = insert.column(table.column(cn));
 		}
 
 		InsertBuilder.InsertValuesWithBuild insertWithValues = null;
@@ -520,7 +535,7 @@ class SqlGenerator {
 		List<AssignValue> assignments = columns.getUpdateableColumns() //
 				.stream() //
 				.map(columnName -> Assignments.value( //
-						table.column(columnName.toSql(identifierProcessing)), //
+						table.column(columnName), //
 						getBindMarker(columnName))) //
 				.collect(Collectors.toList());
 
@@ -552,13 +567,13 @@ class SqlGenerator {
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
 			Function<Column, Condition> rootCondition) {
 
-		Table table = SQL.table(path.getTableName().toSql(identifierProcessing));
+		Table table = Table.create(path.getTableName());
 
 		DeleteBuilder.DeleteWhere builder = Delete.builder() //
 				.from(table);
 		Delete delete;
 
-		Column filterColumn = table.column(path.getReverseColumnName().toSql(identifierProcessing));
+		Column filterColumn = table.column(path.getReverseColumnName());
 
 		if (path.getLength() == 1) {
 
@@ -587,19 +602,19 @@ class SqlGenerator {
 	}
 
 	private String render(Select select) {
-		return SqlRenderer.create().render(select);
+		return SqlRenderer.create(renderContext).render(select);
 	}
 
 	private String render(Insert insert) {
-		return SqlRenderer.create().render(insert);
+		return SqlRenderer.create(renderContext).render(insert);
 	}
 
 	private String render(Update update) {
-		return SqlRenderer.create().render(update);
+		return SqlRenderer.create(renderContext).render(update);
 	}
 
 	private String render(Delete delete) {
-		return SqlRenderer.create().render(delete);
+		return SqlRenderer.create(renderContext).render(delete);
 	}
 
 	private Table getTable() {

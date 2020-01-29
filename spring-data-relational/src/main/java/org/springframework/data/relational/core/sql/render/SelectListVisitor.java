@@ -40,7 +40,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	private boolean insideFunction = false; // this is hackery and should be fix with a proper visitor for
 	// subelements.
 
-
 	SelectListVisitor(RenderContext context, RenderTarget target) {
 		this.context = context;
 		this.target = target;
@@ -84,14 +83,14 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Table) {
-			builder.append(context.getNamingStrategy().getReferenceName((Table) segment)).append('.');
+			builder.append(NameRenderer.reference(context, (Table) segment)).append('.');
 		}
 
 		if (segment instanceof SimpleFunction) {
 
 			builder.append(")");
 			if (segment instanceof Aliased) {
-				builder.append(" AS ").append(((Aliased) segment).getAlias());
+				builder.append(" AS ").append(NameRenderer.render(context, (Aliased) segment));
 			}
 
 			insideFunction = false;
@@ -101,9 +100,9 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 			requiresComma = true;
 		} else if (segment instanceof Column) {
 
-			builder.append(context.getNamingStrategy().getName((Column) segment));
+			builder.append(NameRenderer.render(context, (Column) segment));
 			if (segment instanceof Aliased && !insideFunction) {
-				builder.append(" AS ").append(((Aliased) segment).getAlias());
+				builder.append(" AS ").append(NameRenderer.render(context, (Aliased) segment));
 			}
 			requiresComma = true;
 		} else if (segment instanceof AsteriskFromTable) {

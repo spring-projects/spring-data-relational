@@ -41,11 +41,12 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Aliased;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.domain.Identifier;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -451,11 +452,11 @@ public class SqlGeneratorUnitTests {
 
 		SoftAssertions.assertSoftly(softly -> {
 
-			softly.assertThat(join.getJoinTable().getName()).isEqualTo("\"REFERENCED_ENTITY\"");
+			softly.assertThat(join.getJoinTable().getName()).isEqualTo(SqlIdentifier.quoted("REFERENCED_ENTITY"));
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("\"DUMMY_ENTITY\"");
-			softly.assertThat(join.getParentId().getName()).isEqualTo("\"id1\"");
-			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("\"DUMMY_ENTITY\"");
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo(SqlIdentifier.quoted("DUMMY_ENTITY"));
+			softly.assertThat(join.getParentId().getName()).isEqualTo(SqlIdentifier.quoted("id1"));
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo(SqlIdentifier.quoted("DUMMY_ENTITY"));
 		});
 	}
 
@@ -483,11 +484,12 @@ public class SqlGeneratorUnitTests {
 
 		SoftAssertions.assertSoftly(softly -> {
 
-			softly.assertThat(join.getJoinTable().getName()).isEqualTo("\"SECOND_LEVEL_REFERENCED_ENTITY\"");
+			softly.assertThat(join.getJoinTable().getName())
+					.isEqualTo(SqlIdentifier.quoted("SECOND_LEVEL_REFERENCED_ENTITY"));
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("\"REFERENCED_ENTITY\"");
-			softly.assertThat(join.getParentId().getName()).isEqualTo("\"X_L1ID\"");
-			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("\"REFERENCED_ENTITY\"");
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo(SqlIdentifier.quoted("REFERENCED_ENTITY"));
+			softly.assertThat(join.getParentId().getName()).isEqualTo(SqlIdentifier.quoted("X_L1ID"));
+			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo(SqlIdentifier.quoted("REFERENCED_ENTITY"));
 		});
 	}
 
@@ -499,13 +501,14 @@ public class SqlGeneratorUnitTests {
 
 		SoftAssertions.assertSoftly(softly -> {
 
-			softly.assertThat(joinTable.getName()).isEqualTo("\"NO_ID_CHILD\"");
+			softly.assertThat(joinTable.getName()).isEqualTo(SqlIdentifier.quoted("NO_ID_CHILD"));
 			softly.assertThat(joinTable).isInstanceOf(Aliased.class);
-			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo("\"child\"");
+			softly.assertThat(((Aliased) joinTable).getAlias()).isEqualTo(SqlIdentifier.quoted("child"));
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(joinTable);
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo("\"PARENT_OF_NO_ID_CHILD\"");
-			softly.assertThat(join.getParentId().getName()).isEqualTo("\"X_ID\"");
-			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo("\"PARENT_OF_NO_ID_CHILD\"");
+			softly.assertThat(join.getJoinColumn().getName()).isEqualTo(SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD"));
+			softly.assertThat(join.getParentId().getName()).isEqualTo(SqlIdentifier.quoted("X_ID"));
+			softly.assertThat(join.getParentId().getTable().getName())
+					.isEqualTo(SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD"));
 
 		});
 	}
@@ -520,7 +523,8 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("id", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly("\"id1\"", "\"DUMMY_ENTITY\"", null, "\"id1\"");
+				.containsExactly(SqlIdentifier.quoted("id1"), SqlIdentifier.quoted("DUMMY_ENTITY"), null,
+						SqlIdentifier.quoted("id1"));
 	}
 
 	@Test // DATAJDBC-340
@@ -528,7 +532,8 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("ref.l1id", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
-				.containsExactly("\"X_L1ID\"", "\"REFERENCED_ENTITY\"", "\"ref\"", "\"REF_X_L1ID\"");
+				.containsExactly(SqlIdentifier.quoted("X_L1ID"), SqlIdentifier.quoted("REFERENCED_ENTITY"),
+						SqlIdentifier.quoted("ref"), SqlIdentifier.quoted("REF_X_L1ID"));
 	}
 
 	@Test // DATAJDBC-340
@@ -542,11 +547,11 @@ public class SqlGeneratorUnitTests {
 
 		assertThat(generatedColumn("child", ParentOfNoIdChild.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
-				.containsExactly("\"PARENT_OF_NO_ID_CHILD\"", "\"NO_ID_CHILD\"", "\"child\"",
-						"\"CHILD_PARENT_OF_NO_ID_CHILD\"");
+				.containsExactly(SqlIdentifier.quoted("PARENT_OF_NO_ID_CHILD"), SqlIdentifier.quoted("NO_ID_CHILD"),
+						SqlIdentifier.quoted("child"), SqlIdentifier.quoted("CHILD_PARENT_OF_NO_ID_CHILD"));
 	}
 
-	private String getAlias(Object maybeAliased) {
+	private SqlIdentifier getAlias(Object maybeAliased) {
 
 		if (maybeAliased instanceof Aliased) {
 			return ((Aliased) maybeAliased).getAlias();

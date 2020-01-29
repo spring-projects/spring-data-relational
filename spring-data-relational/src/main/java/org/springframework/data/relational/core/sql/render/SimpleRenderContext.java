@@ -17,6 +17,8 @@ package org.springframework.data.relational.core.sql.render;
 
 import lombok.Value;
 
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+
 /**
  * Default {@link RenderContext} implementation.
  *
@@ -27,6 +29,11 @@ import lombok.Value;
 class SimpleRenderContext implements RenderContext {
 
 	private final RenderNamingStrategy namingStrategy;
+
+	@Override
+	public IdentifierProcessing getIdentifierProcessing() {
+		return IdentifierProcessing.NONE;
+	}
 
 	@Override
 	public SelectRenderContext getSelect() {

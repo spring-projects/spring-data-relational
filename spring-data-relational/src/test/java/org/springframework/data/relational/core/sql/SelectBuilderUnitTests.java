@@ -73,7 +73,7 @@ public class SelectBuilderUnitTests {
 		Column foo = table.column("foo");
 
 		Comparison condition = foo.isEqualTo(SQL.literalOf("bar"));
-		Select select = builder.select(foo).from(table.getName()).where(condition).build();
+		Select select = builder.select(foo).from(table).where(condition).build();
 
 		CapturingVisitor visitor = new CapturingVisitor();
 		select.visit(visitor);

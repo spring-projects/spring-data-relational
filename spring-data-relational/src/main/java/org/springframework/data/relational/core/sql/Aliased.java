@@ -26,5 +26,5 @@ public interface Aliased {
 	/**
 	 * @return the alias name.
 	 */
-	String getAlias();
+	SqlIdentifier getAlias();
 }

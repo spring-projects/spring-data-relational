@@ -78,9 +78,17 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 
 		if (this == o)
 			return true;
+
+		if (o instanceof DefaultSqlIdentifier) {
+			if (!quoted && !((DefaultSqlIdentifier) o).quoted) {
+				return toString().equalsIgnoreCase(o.toString());
+			}
+		}
+
 		if (o instanceof SqlIdentifier) {
 			return toString().equals(o.toString());
 		}
+
 		return false;
 	}
 

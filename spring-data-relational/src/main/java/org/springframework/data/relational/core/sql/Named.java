@@ -26,5 +26,5 @@ public interface Named {
 	/**
 	 * @return the name of the underlying element.
 	 */
-	String getName();
+	SqlIdentifier getName();
 }
