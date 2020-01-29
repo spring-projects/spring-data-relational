@@ -85,7 +85,10 @@ public class JdbcMappingContext extends RelationalMappingContext {
 	@Override
 	protected RelationalPersistentProperty createPersistentProperty(Property property,
 			RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
-		return new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder, this.getNamingStrategy());
+		BasicJdbcPersistentProperty persistentProperty = new BasicJdbcPersistentProperty(property, owner, simpleTypeHolder,
+				this.getNamingStrategy());
+		persistentProperty.setForceQuote(isForceQuote());
+		return persistentProperty;
 	}
 
 	@Override

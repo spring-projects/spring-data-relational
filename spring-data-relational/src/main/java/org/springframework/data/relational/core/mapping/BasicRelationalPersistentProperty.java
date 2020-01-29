@@ -128,11 +128,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		throw new UnsupportedOperationException();
 	}
 
-	boolean isForceQuote() {
+	public boolean isForceQuote() {
 		return forceQuote;
 	}
 
-	void setForceQuote(boolean forceQuote) {
+	public void setForceQuote(boolean forceQuote) {
 		this.forceQuote = forceQuote;
 	}
 

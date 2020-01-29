@@ -29,10 +29,19 @@ import org.springframework.util.Assert;
  */
 public class Column extends AbstractSegment implements Expression, Named {
 
-	private final String name;
+	private final SqlIdentifier name;
 	private final Table table;
 
 	Column(String name, Table table) {
+
+		super(table);
+		Assert.notNull(name, "Name must not be null");
+
+		this.name = SqlIdentifier.unquoted(name);
+		this.table = table;
+	}
+
+	Column(SqlIdentifier name, Table table) {
 
 		super(table);
 		Assert.notNull(name, "Name must not be null");
@@ -51,6 +60,22 @@ public class Column extends AbstractSegment implements Expression, Named {
 	public static Column create(String name, Table table) {
 
 		Assert.hasText(name, "Name must not be null or empty");
+		Assert.notNull(table, "Table must not be null");
+
+		return new Column(SqlIdentifier.unquoted(name), table);
+	}
+
+	/**
+	 * Creates a new {@link Column} associated with a {@link Table}.
+	 *
+	 * @param name column name, must not {@literal null}.
+	 * @param table the table, must not be {@literal null}.
+	 * @return the new {@link Column}.
+	 * @since 2.0
+	 */
+	public static Column create(SqlIdentifier name, Table table) {
+
+		Assert.notNull(name, "Name must not be null");
 		Assert.notNull(table, "Table must not be null");
 
 		return new Column(name, table);
@@ -82,6 +107,20 @@ public class Column extends AbstractSegment implements Expression, Named {
 	public Column as(String alias) {
 
 		Assert.hasText(alias, "Alias must not be null or empty");
+
+		return new AliasedColumn(name, table, SqlIdentifier.unquoted(alias));
+	}
+
+	/**
+	 * Creates a new aliased {@link Column}.
+	 *
+	 * @param alias column alias name, must not {@literal null}.
+	 * @return the aliased {@link Column}.
+	 * @since 2.0
+	 */
+	public Column as(SqlIdentifier alias) {
+
+		Assert.notNull(alias, "Alias must not be null");
 
 		return new AliasedColumn(name, table, alias);
 	}
@@ -250,7 +289,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 * @see org.springframework.data.relational.core.sql.Named#getName()
 	 */
 	@Override
-	public String getName() {
+	public SqlIdentifier getName() {
 		return name;
 	}
 
@@ -258,8 +297,8 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 * @return the column name as it is used in references. This can be the actual {@link #getName() name} or an
 	 *         {@link Aliased#getAlias() alias}.
 	 */
-	public String getReferenceName() {
-		return name;
+	public SqlIdentifier getReferenceName() {
+		return getName();
 	}
 
 	/**
@@ -294,9 +333,14 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 */
 	static class AliasedColumn extends Column implements Aliased {
 
-		private final String alias;
+		private final SqlIdentifier alias;
 
 		private AliasedColumn(String name, Table table, String alias) {
+			super(name, table);
+			this.alias = SqlIdentifier.unquoted(alias);
+		}
+
+		private AliasedColumn(SqlIdentifier name, Table table, SqlIdentifier alias) {
 			super(name, table);
 			this.alias = alias;
 		}
@@ -306,7 +350,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 		 * @see org.springframework.data.relational.core.sql.Aliased#getAlias()
 		 */
 		@Override
-		public String getAlias() {
+		public SqlIdentifier getAlias() {
 			return alias;
 		}
 
@@ -315,7 +359,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 		 * @see org.springframework.data.relational.core.sql.Column#getReferenceName()
 		 */
 		@Override
-		public String getReferenceName() {
+		public SqlIdentifier getReferenceName() {
 			return getAlias();
 		}
 

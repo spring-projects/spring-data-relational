@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.dialect;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
@@ -68,7 +69,7 @@ public class RenderContextFactory {
 
 		SelectRenderContext select = dialect.getSelectContext();
 
-		return new DialectRenderContext(namingStrategy, select);
+		return new DialectRenderContext(namingStrategy, dialect.getIdentifierProcessing(), select);
 	}
 
 	/**
@@ -79,6 +80,8 @@ public class RenderContextFactory {
 
 		private final RenderNamingStrategy renderNamingStrategy;
 
+		private final IdentifierProcessing identifierProcessing;
+
 		private final SelectRenderContext selectRenderContext;
 
 		/*
@@ -88,6 +91,15 @@ public class RenderContextFactory {
 		@Override
 		public RenderNamingStrategy getNamingStrategy() {
 			return renderNamingStrategy;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.sql.render.RenderContext#getIdentifierProcessing()
+		 */
+		@Override
+		public IdentifierProcessing getIdentifierProcessing() {
+			return identifierProcessing;
 		}
 
 		/*

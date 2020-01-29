@@ -70,6 +70,17 @@ public interface SqlIdentifier {
 	String getReference(IdentifierProcessing processing);
 
 	/**
+	 * Return the reference name without any further transformation. The reference name is used for programmatic access to
+	 * the object identified by this {@link SqlIdentifier}.
+	 *
+	 * @return
+	 * @see IdentifierProcessing#NONE
+	 */
+	default String getReference() {
+		return getReference(IdentifierProcessing.NONE);
+	}
+
+	/**
 	 * Return the identifier for SQL usage after applying {@link IdentifierProcessing} rules. The identifier name is used
 	 * to construct SQL statements.
 	 *

@@ -61,14 +61,13 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 
 		if (segment instanceof Column) {
 
-			RenderNamingStrategy namingStrategy = context.getNamingStrategy();
 			Column column = (Column) segment;
 
-			value = namingStrategy.getReferenceName(column.getTable()) + "." + namingStrategy.getReferenceName(column);
+			value = NameRenderer.fullyQualifiedReference(context, column);
 		} else if (segment instanceof BindMarker) {
 
 			if (segment instanceof Named) {
-				value = ((Named) segment).getName();
+				value = NameRenderer.render(context, (Named) segment);
 			} else {
 				value = segment.toString();
 			}

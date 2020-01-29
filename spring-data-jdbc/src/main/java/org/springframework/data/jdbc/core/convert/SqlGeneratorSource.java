@@ -40,14 +40,16 @@ public class SqlGeneratorSource {
 	private final Dialect dialect;
 
 	/**
-	 * @return the {@link Dialect} used by the created {@link SqlGenerator} instances. Guaranteed to be not {@literal null}.
+	 * @return the {@link Dialect} used by the created {@link SqlGenerator} instances. Guaranteed to be not
+	 *         {@literal null}.
 	 */
 	public Dialect getDialect() {
 		return dialect;
 	}
 
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
-		return CACHE.computeIfAbsent(domainType, t -> new SqlGenerator(context, converter,
+		return CACHE.computeIfAbsent(domainType,
+				t -> new SqlGenerator(context, converter,
 				context.getRequiredPersistentEntity(t), dialect));
 	}
 }

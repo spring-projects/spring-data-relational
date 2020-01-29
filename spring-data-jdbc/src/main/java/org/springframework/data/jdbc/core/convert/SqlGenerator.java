@@ -35,6 +35,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.Lazy;
@@ -64,7 +65,7 @@ class SqlGenerator {
 	private final JdbcConverter converter;
 	private final RelationalPersistentEntity<?> entity;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
-	private final IdentifierProcessing identifierProcessing;
+	private final RenderContext renderContext;
 
 	private final SqlContext sqlContext;
 	private final SqlRenderer sqlRenderer;
@@ -92,16 +93,15 @@ class SqlGenerator {
 	 * @param entity must not be {@literal null}.
 	 * @param dialect must not be {@literal null}.
 	 */
-	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
-			Dialect dialect) {
+	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter,RelationalPersistentEntity<?> entity, Dialect dialect) {
 
 		this.mappingContext = mappingContext;
 		this.converter = converter;
 		this.entity = entity;
-		this.identifierProcessing = dialect.getIdentifierProcessing();
-		this.sqlContext = new SqlContext(entity, this.identifierProcessing);
+		this.sqlContext = new SqlContext(entity);
 		this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
 		this.columns = new Columns(entity, mappingContext, converter);
+		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
 	}
 
 	/**
@@ -125,10 +125,9 @@ class SqlGenerator {
 			return rootCondition.apply(filterColumn);
 		}
 
-		Table subSelectTable = SQL.table(parentPath.getTableName().toSql(identifierProcessing));
-		Column idColumn = subSelectTable.column(parentPath.getIdColumnName().toSql(identifierProcessing));
-		Column selectFilterColumn = subSelectTable
-				.column(parentPath.getEffectiveIdColumnName().toSql(identifierProcessing));
+		Table subSelectTable = Table.create(parentPath.getTableName());
+		Column idColumn = subSelectTable.column(parentPath.getIdColumnName());
+		Column selectFilterColumn = subSelectTable.column(parentPath.getEffectiveIdColumnName());
 
 		Condition innerCondition;
 
@@ -151,7 +150,7 @@ class SqlGenerator {
 	}
 
 	private BindMarker getBindMarker(SqlIdentifier columnName) {
-		return SQL.bindMarker(":" + parameterPattern.matcher(columnName.getReference(identifierProcessing)).replaceAll(""));
+		return SQL.bindMarker(":" + parameterPattern.matcher(renderReference(columnName)).replaceAll(""));
 	}
 
 	/**
@@ -210,21 +209,19 @@ class SqlGenerator {
 		Assert.isTrue(keyColumn != null || !ordered,
 				"If the SQL statement should be ordered a keyColumn to order by must be provided.");
 
+		Table table = getTable();
+
 		SelectBuilder.SelectWhere builder = selectBuilder( //
 				keyColumn == null //
 						? Collections.emptyList() //
-						: Collections.singleton(keyColumn.toSql(identifierProcessing)) //
+						: Collections.singleton(keyColumn) //
 		);
-
-		Table table = getTable();
 
 		Condition condition = buildConditionForBackReference(parentIdentifier, table);
 		SelectBuilder.SelectWhereAndOr withWhereClause = builder.where(condition);
 
 		Select select = ordered //
-				? withWhereClause
-						.orderBy(table.column(keyColumn.toSql(identifierProcessing)).as(keyColumn.toSql(identifierProcessing)))
-						.build() //
+				? withWhereClause.orderBy(table.column(keyColumn).as(keyColumn)).build() //
 				: withWhereClause.build();
 
 		return render(select);
@@ -235,8 +232,7 @@ class SqlGenerator {
 		Condition condition = null;
 		for (SqlIdentifier backReferenceColumn : parentIdentifier.toMap().keySet()) {
 
-			Condition newCondition = table.column(backReferenceColumn.toSql(identifierProcessing))
-					.isEqualTo(getBindMarker(backReferenceColumn));
+			Condition newCondition = table.column(backReferenceColumn).isEqualTo(getBindMarker(backReferenceColumn));
 			condition = condition == null ? newCondition : condition.and(newCondition);
 		}
 
@@ -372,7 +368,7 @@ class SqlGenerator {
 		return selectBuilder(Collections.emptyList());
 	}
 
-	private SelectBuilder.SelectWhere selectBuilder(Collection<String> keyColumns) {
+	private SelectBuilder.SelectWhere selectBuilder(Collection<SqlIdentifier> keyColumns) {
 
 		Table table = getTable();
 
@@ -396,7 +392,7 @@ class SqlGenerator {
 			}
 		}
 
-		for (String keyColumn : keyColumns) {
+		for (SqlIdentifier keyColumn : keyColumns) {
 			columnExpressions.add(table.column(keyColumn).as(keyColumn));
 		}
 
@@ -485,8 +481,8 @@ class SqlGenerator {
 
 		return new Join( //
 				currentTable, //
-				currentTable.column(path.getReverseColumnName().toSql(identifierProcessing)), //
-				parentTable.column(idDefiningParentPath.getIdColumnName().toSql(identifierProcessing)) //
+				currentTable.column(path.getReverseColumnName()), //
+				parentTable.column(idDefiningParentPath.getIdColumnName()) //
 		);
 	}
 
@@ -526,14 +522,14 @@ class SqlGenerator {
 
 		Table table = getTable();
 
-		Set<SqlIdentifier> columnNamesForInsert = new TreeSet<>(Comparator.comparing(id -> id.toSql(identifierProcessing)));
+		Set<SqlIdentifier> columnNamesForInsert = new TreeSet<>(Comparator.comparing(SqlIdentifier::getReference));
 		columnNamesForInsert.addAll(columns.getInsertableColumns());
 		columnNamesForInsert.addAll(additionalColumns);
 
 		InsertBuilder.InsertIntoColumnsAndValuesWithBuild insert = Insert.builder().into(table);
 
 		for (SqlIdentifier cn : columnNamesForInsert) {
-			insert = insert.column(table.column(cn.toSql(identifierProcessing)));
+			insert = insert.column(table.column(cn));
 		}
 
 		InsertBuilder.InsertValuesWithBuild insertWithValues = null;
@@ -551,8 +547,7 @@ class SqlGenerator {
 	private String createUpdateWithVersionSql() {
 
 		Update update = createBaseUpdate() //
-				.and(getVersionColumn()
-						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.getReference(identifierProcessing)))) //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + renderReference(VERSION_SQL_PARAMETER)))) //
 				.build();
 
 		return render(update);
@@ -565,7 +560,7 @@ class SqlGenerator {
 		List<AssignValue> assignments = columns.getUpdateableColumns() //
 				.stream() //
 				.map(columnName -> Assignments.value( //
-						table.column(columnName.toSql(identifierProcessing)), //
+						table.column(columnName), //
 						getBindMarker(columnName))) //
 				.collect(Collectors.toList());
 
@@ -582,8 +577,7 @@ class SqlGenerator {
 	private String createDeleteByIdAndVersionSql() {
 
 		Delete delete = createBaseDeleteById(getTable()) //
-				.and(getVersionColumn()
-						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.getReference(identifierProcessing)))) //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + renderReference(VERSION_SQL_PARAMETER)))) //
 				.build();
 
 		return render(delete);
@@ -591,19 +585,19 @@ class SqlGenerator {
 
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
 		return Delete.builder().from(table)
-				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + ID_SQL_PARAMETER.getReference(identifierProcessing))));
+				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + renderReference(ID_SQL_PARAMETER))));
 	}
 
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
 			Function<Column, Condition> rootCondition) {
 
-		Table table = SQL.table(path.getTableName().toSql(identifierProcessing));
+		Table table = Table.create(path.getTableName());
 
 		DeleteBuilder.DeleteWhere builder = Delete.builder() //
 				.from(table);
 		Delete delete;
 
-		Column filterColumn = table.column(path.getReverseColumnName().toSql(identifierProcessing));
+		Column filterColumn = table.column(path.getReverseColumnName());
 
 		if (path.getLength() == 1) {
 
@@ -657,6 +651,10 @@ class SqlGenerator {
 
 	private Column getVersionColumn() {
 		return sqlContext.getVersionColumn();
+	}
+
+	private String renderReference(SqlIdentifier identifier) {
+		return identifier.getReference(renderContext.getIdentifierProcessing());
 	}
 
 	private List<OrderByField> extractOrderByFields(Sort sort) {

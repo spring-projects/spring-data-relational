@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;

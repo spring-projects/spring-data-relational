@@ -64,11 +64,11 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 		return new DerivedSqlIdentifier(name, isForceQuote());
 	}
 
-	boolean isForceQuote() {
+	public boolean isForceQuote() {
 		return forceQuote;
 	}
 
-	void setForceQuote(boolean forceQuote) {
+	public void setForceQuote(boolean forceQuote) {
 		this.forceQuote = forceQuote;
 	}
 

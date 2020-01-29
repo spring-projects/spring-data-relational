@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
@@ -32,7 +33,7 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 	private final RenderTarget target;
 	private final boolean considerTablePrefix;
 
-	private @Nullable String tableName;
+	private @Nullable SqlIdentifier tableName;
 
 	ColumnVisitor(RenderContext context, boolean considerTablePrefix, RenderTarget target) {
 		this.context = context;
@@ -47,13 +48,14 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 	@Override
 	Delegation leaveMatched(Column segment) {
 
-		String column = context.getNamingStrategy().getName(segment);
-		StringBuilder builder = new StringBuilder(
-				tableName != null ? tableName.length() + column.length() : column.length());
+		SqlIdentifier column = context.getNamingStrategy().getName(segment);
+		StringBuilder builder = new StringBuilder();
 		if (considerTablePrefix && tableName != null) {
-			builder.append(tableName);
+
+			builder.append(NameRenderer.render(context, SqlIdentifier.from(tableName, column)));
+		} else {
+			builder.append(NameRenderer.render(context, segment));
 		}
-		builder.append(column);
 
 		target.onRendered(builder);
 		return super.leaveMatched(segment);
@@ -67,7 +69,7 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Table) {
-			tableName = context.getNamingStrategy().getReferenceName((Table) segment) + '.';
+			tableName = context.getNamingStrategy().getReferenceName((Table) segment);
 		}
 
 		return super.leaveNested(segment);
