@@ -24,11 +24,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
  * Unit tests the {@link SqlGenerator} with a fixed {@link NamingStrategy} implementation containing a hard wired
@@ -196,7 +196,7 @@ public class SqlGeneratorFixedNamingStrategyUnitTests {
 
 		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-		return new SqlGenerator(context, persistentEntity, IdentifierProcessing.ANSI);
+		return new SqlGenerator(context, persistentEntity, HsqlDbDialect.INSTANCE);
 	}
 
 	@SuppressWarnings("unused")

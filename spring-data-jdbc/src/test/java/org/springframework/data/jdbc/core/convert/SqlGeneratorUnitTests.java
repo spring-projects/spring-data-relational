@@ -80,7 +80,7 @@ public class SqlGeneratorUnitTests {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
 
-		return new SqlGenerator(context, persistentEntity, identifierProcessing);
+		return new SqlGenerator(context, persistentEntity, new IdentifierProcessingAdapter(identifierProcessing));
 	}
 
 	@Test // DATAJDBC-112

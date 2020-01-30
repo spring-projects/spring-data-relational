@@ -35,15 +35,14 @@ import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.*;
-import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
-import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
-import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.Lazy;
@@ -72,7 +71,6 @@ class SqlGenerator {
 	private final RelationalPersistentEntity<?> entity;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 	private final RenderContext renderContext;
-	private final IdentifierProcessing identifierProcessing;
 
 	private final SqlContext sqlContext;
 	private final Columns columns;
@@ -96,32 +94,15 @@ class SqlGenerator {
 	 *
 	 * @param mappingContext must not be {@literal null}.
 	 * @param entity must not be {@literal null}.
-	 * @param identifierProcessing must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
 	 */
-	SqlGenerator(RelationalMappingContext mappingContext, RelationalPersistentEntity<?> entity,
-			IdentifierProcessing identifierProcessing) {
+	SqlGenerator(RelationalMappingContext mappingContext, RelationalPersistentEntity<?> entity, Dialect dialect) {
 
 		this.mappingContext = mappingContext;
 		this.entity = entity;
-		this.identifierProcessing = identifierProcessing;
 		this.sqlContext = new SqlContext(entity);
 		this.columns = new Columns(entity, mappingContext);
-		this.renderContext = new RenderContext() {
-			@Override
-			public RenderNamingStrategy getNamingStrategy() {
-				return NamingStrategies.asIs();
-			}
-
-			@Override
-			public IdentifierProcessing getIdentifierProcessing() {
-				return identifierProcessing;
-			}
-
-			@Override
-			public SelectRenderContext getSelect() {
-				return new SelectRenderContext() {};
-			}
-		};
+		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
 	}
 
 	/**
@@ -170,7 +151,7 @@ class SqlGenerator {
 	}
 
 	private BindMarker getBindMarker(SqlIdentifier columnName) {
-		return SQL.bindMarker(":" + parameterPattern.matcher(columnName.getReference(identifierProcessing)).replaceAll(""));
+		return SQL.bindMarker(":" + parameterPattern.matcher(renderReference(columnName)).replaceAll(""));
 	}
 
 	/**
@@ -521,8 +502,7 @@ class SqlGenerator {
 	private String createUpdateWithVersionSql() {
 
 		Update update = createBaseUpdate() //
-				.and(getVersionColumn()
-						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.getReference(identifierProcessing)))) //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + renderReference(VERSION_SQL_PARAMETER)))) //
 				.build();
 
 		return render(update);
@@ -552,8 +532,7 @@ class SqlGenerator {
 	private String createDeleteByIdAndVersionSql() {
 
 		Delete delete = createBaseDeleteById(getTable()) //
-				.and(getVersionColumn()
-						.isEqualTo(SQL.bindMarker(":" + VERSION_SQL_PARAMETER.getReference(identifierProcessing)))) //
+				.and(getVersionColumn().isEqualTo(SQL.bindMarker(":" + renderReference(VERSION_SQL_PARAMETER)))) //
 				.build();
 
 		return render(delete);
@@ -561,7 +540,7 @@ class SqlGenerator {
 
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
 		return Delete.builder().from(table)
-				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + ID_SQL_PARAMETER.getReference(identifierProcessing))));
+				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + renderReference(ID_SQL_PARAMETER))));
 	}
 
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
@@ -627,6 +606,10 @@ class SqlGenerator {
 
 	private Column getVersionColumn() {
 		return sqlContext.getVersionColumn();
+	}
+
+	private String renderReference(SqlIdentifier identifier) {
+		return identifier.getReference(renderContext.getIdentifierProcessing());
 	}
 
 	/**
