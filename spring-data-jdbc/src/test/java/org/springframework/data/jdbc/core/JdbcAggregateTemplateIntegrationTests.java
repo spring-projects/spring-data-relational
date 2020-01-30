@@ -76,6 +76,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Myeonghyeon Lee
  * @author Tom Hombergs
  * @author Tyler Van Gorder
+ * @author Clemens Hahn
  */
 @ContextConfiguration
 @Transactional
@@ -700,6 +701,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		AggregateWithImmutableVersion aggregate = new AggregateWithImmutableVersion(null, null);
 		aggregate = template.save(aggregate);
+		assertThat(aggregate.version).isEqualTo(1L);
 
 		Long id = aggregate.getId();
 
@@ -707,9 +709,12 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloadedAggregate.getVersion()).describedAs("version field should initially have the value 1")
 				.isEqualTo(1L);
 
-		template.save(reloadedAggregate);
-
+		AggregateWithImmutableVersion saved = template.save(reloadedAggregate);
 		AggregateWithImmutableVersion updatedAggregate = template.findById(id, aggregate.getClass());
+
+		assertThat(saved.version)
+				.describedAs("returned by save(): "+ saved + " vs. returned by findById(): " + updatedAggregate)
+				.isEqualTo(updatedAggregate.version);
 		assertThat(updatedAggregate.getVersion()).describedAs("version field should increment by one with each save")
 				.isEqualTo(2L);
 
