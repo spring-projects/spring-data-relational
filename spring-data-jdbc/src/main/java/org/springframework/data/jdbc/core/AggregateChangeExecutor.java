@@ -68,18 +68,21 @@ class AggregateChangeExecutor {
 		List<DbAction<?>> actions = new ArrayList<>();
 
 		aggregateChange.forEachAction(action -> {
+
 			action.executeWith(interpreter);
 			actions.add(action);
 		});
 
-		T newRoot = populateIdsIfNecessary(actions);
-		if (newRoot != null) {
-			newRoot = populateRootVersionIfNecessary(newRoot, actions);
-			aggregateChange.setEntity(newRoot);
+		T root = populateIdsIfNecessary(actions);
+		root = root == null ? aggregateChange.getEntity() : root;
+
+		if (root != null) {
+
+			root = populateRootVersionIfNecessary(root, actions);
+			aggregateChange.setEntity(root);
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private <T> T populateRootVersionIfNecessary(T newRoot, List<DbAction<?>> actions) {
 
 		// Does the root entity have a version attribute?
@@ -90,7 +93,8 @@ class AggregateChangeExecutor {
 		}
 
 		// Find the root action
-		Optional<DbAction<?>> rootAction = actions.parallelStream().filter(action -> action instanceof DbAction.WithVersion)
+		Optional<DbAction<?>> rootAction = actions.parallelStream() //
+				.filter(action -> action instanceof DbAction.WithVersion) //
 				.findFirst();
 
 		if (!rootAction.isPresent()) {

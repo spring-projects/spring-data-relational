@@ -709,13 +709,15 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloadedAggregate.getVersion()).describedAs("version field should initially have the value 1")
 				.isEqualTo(1L);
 
-		AggregateWithImmutableVersion saved = template.save(reloadedAggregate);
-		AggregateWithImmutableVersion updatedAggregate = template.findById(id, aggregate.getClass());
+		AggregateWithImmutableVersion savedAgain = template.save(reloadedAggregate);
+		AggregateWithImmutableVersion reloadedAgain = template.findById(id, aggregate.getClass());
 
-		assertThat(saved.version)
-				.describedAs("returned by save(): "+ saved + " vs. returned by findById(): " + updatedAggregate)
-				.isEqualTo(updatedAggregate.version);
-		assertThat(updatedAggregate.getVersion()).describedAs("version field should increment by one with each save")
+		assertThat(savedAgain.version)
+				.describedAs("The object returned by save should have an increased version")
+				.isEqualTo(2L);
+
+		assertThat(reloadedAgain.getVersion())
+				.describedAs("version field should increment by one with each save")
 				.isEqualTo(2L);
 
 		assertThatThrownBy(() -> template.save(new AggregateWithImmutableVersion(id, 1L)))

@@ -118,30 +118,37 @@ class DefaultJdbcInterpreter implements Interpreter {
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(update.getEntityType());
 
 		if (persistentEntity.hasVersionProperty()) {
-
-			// If the root aggregate has a version property, increment it.
-			Number previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(update.getEntity(),
-					persistentEntity, converter);
-
-			Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
-
-			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(update.getEntity(),
-					previousVersion.longValue() + 1, persistentEntity, converter);
-
-			if (accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
-				// Successful update, set the in-memory version on the action.
-				update.setNextVersion(previousVersion);
-			} else {
-				throw new OptimisticLockingFailureException(
-						String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
-			}
+			updateWithVersion(update, persistentEntity);
 		} else {
+			updateWithoutVersion(update);
+		}
+	}
 
-			if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
+	private <T> void updateWithoutVersion(UpdateRoot<T> update) {
 
-				throw new IncorrectUpdateSemanticsDataAccessException(
-						String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
-			}
+		if (!accessStrategy.update(update.getEntity(), update.getEntityType())) {
+
+			throw new IncorrectUpdateSemanticsDataAccessException(
+					String.format(UPDATE_FAILED, update.getEntity(), getIdFrom(update)));
+		}
+	}
+
+	private <T> void updateWithVersion(UpdateRoot<T> update, RelationalPersistentEntity<T> persistentEntity) {
+
+		// If the root aggregate has a version property, increment it.
+		Number previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(update.getEntity(),
+				persistentEntity, converter);
+
+		Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
+
+		update.setNextVersion(previousVersion.longValue() + 1);
+		T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(update.getEntity(), update.getNextVersion(),
+				persistentEntity, converter);
+
+		if (!accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
+
+			throw new OptimisticLockingFailureException(
+					String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
 		}
 	}
 
