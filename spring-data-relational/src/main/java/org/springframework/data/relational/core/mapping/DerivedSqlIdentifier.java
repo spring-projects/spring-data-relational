@@ -80,11 +80,14 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	@Override
 	public boolean equals(Object o) {
 
-		if (this == o)
+		if (this == o) {
 			return true;
+		}
+
 		if (o instanceof SqlIdentifier) {
 			return toString().equals(o.toString());
 		}
+
 		return false;
 	}
 

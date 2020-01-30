@@ -76,13 +76,8 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 	@Override
 	public boolean equals(Object o) {
 
-		if (this == o)
+		if (this == o) {
 			return true;
-
-		if (o instanceof DefaultSqlIdentifier) {
-			if (!quoted && !((DefaultSqlIdentifier) o).quoted) {
-				return toString().equalsIgnoreCase(o.toString());
-			}
 		}
 
 		if (o instanceof SqlIdentifier) {
