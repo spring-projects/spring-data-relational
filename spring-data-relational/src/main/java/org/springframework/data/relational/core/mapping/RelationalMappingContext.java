@@ -102,7 +102,7 @@ public class RelationalMappingContext
 			RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {
 
 		BasicRelationalPersistentProperty persistentProperty = new BasicRelationalPersistentProperty(property, owner,
-				simpleTypeHolder, this);
+				simpleTypeHolder, this.namingStrategy);
 		persistentProperty.setForceQuote(isForceQuote());
 
 		return persistentProperty;

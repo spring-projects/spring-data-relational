@@ -15,15 +15,17 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
-import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 
 /**
+ * Extension to {@link BasicRelationalPersistentProperty}.
+ *
  * @author Mark Paluch
  */
 public class BasicJdbcPersistentProperty extends BasicRelationalPersistentProperty {
@@ -35,10 +37,27 @@ public class BasicJdbcPersistentProperty extends BasicRelationalPersistentProper
 	 * @param owner must not be {@literal null}.
 	 * @param simpleTypeHolder must not be {@literal null}.
 	 * @param context must not be {@literal null}
+	 * @deprecated since 2.0, use
+	 *             {@link #BasicJdbcPersistentProperty(Property, PersistentEntity, SimpleTypeHolder, NamingStrategy)}.
 	 */
+	@Deprecated
 	public BasicJdbcPersistentProperty(Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
 			SimpleTypeHolder simpleTypeHolder, RelationalMappingContext context) {
 		super(property, owner, simpleTypeHolder, context);
+	}
+
+	/**
+	 * Creates a new {@link BasicJdbcPersistentProperty}.
+	 *
+	 * @param property must not be {@literal null}.
+	 * @param owner must not be {@literal null}.
+	 * @param simpleTypeHolder must not be {@literal null}.
+	 * @param namingStrategy must not be {@literal null}
+	 * @since 2.0
+	 */
+	public BasicJdbcPersistentProperty(Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
+			SimpleTypeHolder simpleTypeHolder, NamingStrategy namingStrategy) {
+		super(property, owner, simpleTypeHolder, namingStrategy);
 	}
 
 	@Override
