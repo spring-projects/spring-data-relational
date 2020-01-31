@@ -42,8 +42,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.domain.Identifier;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -67,6 +65,7 @@ class SqlGenerator {
 	static final SqlIdentifier ROOT_ID_PARAMETER = SqlIdentifier.unquoted("rootId");
 
 	private static final Pattern parameterPattern = Pattern.compile("\\W");
+	private final JdbcConverter converter;
 	private final RelationalPersistentEntity<?> entity;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 	private final IdentifierProcessing identifierProcessing;
@@ -92,17 +91,19 @@ class SqlGenerator {
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
 	 *
 	 * @param mappingContext must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
 	 * @param entity must not be {@literal null}.
 	 * @param identifierProcessing must not be {@literal null}.
 	 */
-	SqlGenerator(RelationalMappingContext mappingContext, RelationalPersistentEntity<?> entity,
+	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
 			IdentifierProcessing identifierProcessing) {
 
 		this.mappingContext = mappingContext;
+		this.converter = converter;
 		this.entity = entity;
 		this.identifierProcessing = identifierProcessing;
 		this.sqlContext = new SqlContext(entity, identifierProcessing);
-		this.columns = new Columns(entity, mappingContext);
+		this.columns = new Columns(entity, mappingContext, converter);
 	}
 
 	/**
@@ -633,6 +634,7 @@ class SqlGenerator {
 	static class Columns {
 
 		private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
+		private final JdbcConverter converter;
 
 		private final List<SqlIdentifier> columnNames = new ArrayList<>();
 		private final List<SqlIdentifier> idColumnNames = new ArrayList<>();
@@ -642,9 +644,11 @@ class SqlGenerator {
 		private final Set<SqlIdentifier> updateableColumns;
 
 		Columns(RelationalPersistentEntity<?> entity,
-				MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
+				MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext,
+				JdbcConverter converter) {
 
 			this.mappingContext = mappingContext;
+			this.converter = converter;
 
 			populateColumnNameCache(entity, "");
 
@@ -696,7 +700,7 @@ class SqlGenerator {
 			String embeddedPrefix = property.getEmbeddedPrefix();
 
 			RelationalPersistentEntity<?> embeddedEntity = mappingContext
-					.getRequiredPersistentEntity(property.getColumnType());
+					.getRequiredPersistentEntity(converter.getColumnType(property));
 
 			populateColumnNameCache(embeddedEntity, prefix + embeddedPrefix);
 		}

@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import java.lang.reflect.Array;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,7 +27,6 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Optionals;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -49,7 +47,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
 	private final Lazy<String> embeddedPrefix;
-	private final Lazy<Class<?>> columnType = Lazy.of(this::doGetColumnType);
 	private boolean forceQuote = true;
 
 	/**
@@ -142,59 +139,29 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return columnName.get();
 	}
 
-	/**
-	 * The type to be used to store this property in the database.
-	 *
-	 * @return a {@link Class} that is suitable for usage with JDBC drivers
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.mapping.model.AbstractPersistentProperty#getOwner()
 	 */
-	@Override
-	public Class<?> getColumnType() {
-		return columnType.get();
-	}
-
-	private Class<?> doGetColumnType() {
-
-		if (isReference()) {
-			return getReferenceColumnType();
-		}
-
-		if (isEntity()) {
-			Class<?> columnType = getEntityColumnType(getActualType());
-
-			if (columnType != null) {
-				return columnType;
-			}
-		}
-
-		Class<?> componentColumnType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(getActualType());
-
-		while (componentColumnType.isArray()) {
-			componentColumnType = componentColumnType.getComponentType();
-		}
-
-		if (isCollectionLike() && !isEntity()) {
-			return Array.newInstance(componentColumnType, 0).getClass();
-		}
-
-		return componentColumnType;
-	}
-
-	@Override
-	public int getSqlType() {
-		return -1;
-	}
-
 	@Override
 	public RelationalPersistentEntity<?> getOwner() {
 		return (RelationalPersistentEntity<?>) super.getOwner();
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getReverseColumnName()
+	 */
 	@Override
 	public SqlIdentifier getReverseColumnName() {
 		return collectionIdColumnName.get()
 				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getReverseColumnName(this)));
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getReverseColumnName(org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension)
+	 */
 	@Override
 	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
 
@@ -202,16 +169,28 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getReverseColumnName(path)));
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getKeyColumn()
+	 */
 	@Override
 	public SqlIdentifier getKeyColumn() {
 		return isQualified() ? collectionKeyColumnName.get() : null;
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isQualified()
+	 */
 	@Override
 	public boolean isQualified() {
 		return isMap() || isListLike();
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getQualifierColumnType()
+	 */
 	@Override
 	public Class<?> getQualifierColumnType() {
 
@@ -225,16 +204,28 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return Integer.class;
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isOrdered()
+	 */
 	@Override
 	public boolean isOrdered() {
 		return isListLike();
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isEmbedded()
+	 */
 	@Override
 	public boolean isEmbedded() {
 		return isEmbedded.get();
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getEmbeddedPrefix()
+	 */
 	@Override
 	public String getEmbeddedPrefix() {
 		return isEmbedded() ? embeddedPrefix.get() : null;
@@ -254,31 +245,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	private boolean isListLike() {
 		return isCollectionLike() && !Set.class.isAssignableFrom(this.getType());
-	}
-
-	@Nullable
-	private Class<?> getEntityColumnType(Class<?> type) {
-
-		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(type);
-
-		if (persistentEntity == null) {
-			return null;
-		}
-
-		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
-
-		if (idProperty == null) {
-			return null;
-		}
-		return idProperty.getColumnType();
-	}
-
-	private Class<?> getReferenceColumnType() {
-
-		Class<?> componentType = getTypeInformation().getRequiredComponentType().getType();
-		RelationalPersistentEntity<?> referencedEntity = context.getRequiredPersistentEntity(componentType);
-
-		return referencedEntity.getRequiredIdProperty().getColumnType();
 	}
 
 }

@@ -128,7 +128,8 @@ public class AbstractJdbcConfiguration {
 	@Bean
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,
 			RelationalMappingContext context, Dialect dialect) {
-		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, dialect), context, jdbcConverter, operations);
+		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, jdbcConverter, dialect), context,
+				jdbcConverter, operations);
 	}
 
 	@Bean

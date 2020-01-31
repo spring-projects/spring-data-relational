@@ -74,7 +74,7 @@ public class DefaultDataAccessStrategyUnitTests {
 		converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(jdbcOperations));
 		accessStrategy = new DefaultDataAccessStrategy( //
-				new SqlGeneratorSource(context, dialect), //
+				new SqlGeneratorSource(context, converter, dialect), //
 				context, //
 				converter, //
 				namedJdbcOperations);
@@ -120,7 +120,7 @@ public class DefaultDataAccessStrategyUnitTests {
 				new DefaultJdbcTypeFactory(jdbcOperations));
 
 		DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
-				new SqlGeneratorSource(context, HsqlDbDialect.INSTANCE), //
+				new SqlGeneratorSource(context, converter, HsqlDbDialect.INSTANCE), //
 				context, //
 				converter, //
 				namedJdbcOperations);

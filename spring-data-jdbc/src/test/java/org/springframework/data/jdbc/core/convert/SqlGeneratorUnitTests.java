@@ -64,6 +64,9 @@ public class SqlGeneratorUnitTests {
 	SqlGenerator sqlGenerator;
 	NamingStrategy namingStrategy = new PrefixingNamingStrategy();
 	RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+		throw new UnsupportedOperationException();
+	});
 
 	@Before
 	public void setUp() {
@@ -79,7 +82,7 @@ public class SqlGeneratorUnitTests {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
 
-		return new SqlGenerator(context, persistentEntity, identifierProcessing);
+		return new SqlGenerator(context, converter, persistentEntity, identifierProcessing);
 	}
 
 	@Test // DATAJDBC-112

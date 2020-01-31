@@ -23,28 +23,17 @@ import java.util.function.Function;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.Interpreter;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityUpdateWriter;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.core.mapping.event.AfterDeleteCallback;
-import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
-import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
-import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
-import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
-import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
-import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
-import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
-import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
-import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
-import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
-import org.springframework.data.relational.core.mapping.event.Identifier;
+import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -81,8 +70,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @since 1.1
 	 */
-	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context,
-			RelationalConverter converter, DataAccessStrategy dataAccessStrategy) {
+	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context, JdbcConverter converter,
+			DataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(publisher, "ApplicationContext must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
@@ -112,7 +101,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 */
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			RelationalConverter converter, DataAccessStrategy dataAccessStrategy) {
+			JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");

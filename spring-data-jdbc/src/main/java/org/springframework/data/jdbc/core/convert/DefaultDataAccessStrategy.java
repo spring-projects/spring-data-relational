@@ -38,9 +38,9 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -487,7 +487,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
 			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
 
-		addConvertedValue(parameterSource, value, name, property.getColumnType(), property.getSqlType());
+		addConvertedValue(parameterSource, value, name, converter.getColumnType(property), converter.getSqlType(property));
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,
@@ -518,8 +518,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		JdbcValue jdbcValue = null;
 		for (Object id : values) {
 
-			Class<?> columnType = property.getColumnType();
-			int sqlType = property.getSqlType();
+			Class<?> columnType = converter.getColumnType(property);
+			int sqlType = converter.getSqlType(property);
 
 			jdbcValue = converter.writeJdbcValue(id, columnType, sqlType);
 			convertedIds.add(jdbcValue.getValue());

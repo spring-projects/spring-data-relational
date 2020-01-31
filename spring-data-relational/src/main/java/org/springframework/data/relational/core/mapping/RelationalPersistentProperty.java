@@ -37,23 +37,6 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 */
 	SqlIdentifier getColumnName();
 
-	/**
-	 * The type to be used to store this property in the database. Multidimensional arrays are unwrapped to reflect a
-	 * top-level array type (e.g. {@code String[][]} returns {@code String[]}).
-	 *
-	 * @return a {@link Class} that is suitable for usage with JDBC drivers.
-	 * @see org.springframework.data.jdbc.support.JdbcUtil#sqlTypeFor(Class)
-	 */
-	Class<?> getColumnType();
-
-	/**
-	 * The SQL type constant used when using this property as a parameter for a SQL statement.
-	 *
-	 * @return Must not be {@code null}.
-	 * @see java.sql.Types
-	 */
-	int getSqlType();
-
 	@Override
 	RelationalPersistentEntity<?> getOwner();
 

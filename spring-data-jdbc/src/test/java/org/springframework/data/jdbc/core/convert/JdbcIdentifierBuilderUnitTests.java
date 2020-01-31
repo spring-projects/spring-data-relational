@@ -38,11 +38,14 @@ import org.springframework.data.relational.domain.Identifier;
 public class JdbcIdentifierBuilderUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
+	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+		throw new UnsupportedOperationException();
+	});
 
 	@Test // DATAJDBC-326
 	public void parametersWithPropertyKeysUseTheParentPropertyJdbcType() {
 
-		Identifier identifier = JdbcIdentifierBuilder.forBackReferences(getPath("child"), "eins").build();
+		Identifier identifier = JdbcIdentifierBuilder.forBackReferences(converter, getPath("child"), "eins").build();
 
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
@@ -57,7 +60,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		PersistentPropertyPathExtension path = getPath("children");
 
 		Identifier identifier = JdbcIdentifierBuilder //
-				.forBackReferences(path, "parent-eins") //
+				.forBackReferences(converter, path, "parent-eins") //
 				.withQualifier(path, "map-key-eins") //
 				.build();
 
@@ -75,7 +78,7 @@ public class JdbcIdentifierBuilderUnitTests {
 		PersistentPropertyPathExtension path = getPath("moreChildren");
 
 		Identifier identifier = JdbcIdentifierBuilder //
-				.forBackReferences(path, "parent-eins") //
+				.forBackReferences(converter, path, "parent-eins") //
 				.withQualifier(path, "list-index-eins") //
 				.build();
 
@@ -91,7 +94,7 @@ public class JdbcIdentifierBuilderUnitTests {
 	public void backreferenceAcrossEmbeddable() {
 
 		Identifier identifier = JdbcIdentifierBuilder //
-				.forBackReferences(getPath("embeddable.child"), "parent-eins") //
+				.forBackReferences(converter, getPath("embeddable.child"), "parent-eins") //
 				.build();
 
 		assertThat(identifier.getParts()) //
@@ -105,7 +108,7 @@ public class JdbcIdentifierBuilderUnitTests {
 	public void backreferenceAcrossNoId() {
 
 		Identifier identifier = JdbcIdentifierBuilder //
-				.forBackReferences(getPath("noId.child"), "parent-eins") //
+				.forBackReferences(converter, getPath("noId.child"), "parent-eins") //
 				.build();
 
 		assertThat(identifier.getParts()) //

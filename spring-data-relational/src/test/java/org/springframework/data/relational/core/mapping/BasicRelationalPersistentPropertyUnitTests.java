@@ -46,39 +46,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-	@Test // DATAJDBC-104
-	public void enumGetsStoredAsString() {
-
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-
-		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
-			switch (p.getName()) {
-				case "someEnum":
-					assertThat(p.getColumnType()).isEqualTo(String.class);
-					break;
-				case "localDateTime":
-					assertThat(p.getColumnType()).isEqualTo(Date.class);
-					break;
-				case "zonedDateTime":
-					assertThat(p.getColumnType()).isEqualTo(String.class);
-					break;
-				default:
-			}
-		});
-	}
-
-	@Test // DATAJDBC-104, DATAJDBC-1384
-	public void testTargetTypesForPropertyType() {
-
-		SoftAssertions softly = new SoftAssertions();
-
-		checkTargetType(softly, entity, "someEnum", String.class);
-		checkTargetType(softly, entity, "localDateTime", Date.class);
-		checkTargetType(softly, entity, "zonedDateTime", String.class);
-		checkTargetType(softly, entity, "uuid", UUID.class);
-
-		softly.assertAll();
-	}
 
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
@@ -154,19 +121,9 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		checkEitherOr.accept(listOfEntity, "listOfEntity");
 		checkEitherOr.accept(arrayOfEntity, "arrayOfEntity");
 
-		softly.assertThat(arrayOfString.getColumnType()).isEqualTo(String[].class);
-		softly.assertThat(listOfString.getColumnType()).isEqualTo(String[].class);
-
 		softly.assertAll();
 	}
 
-	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
-			String propertyName, Class<?> expected) {
-
-		RelationalPersistentProperty property = persistentEntity.getRequiredPersistentProperty(propertyName);
-
-		softly.assertThat(property.getColumnType()).describedAs(propertyName).isEqualTo(expected);
-	}
 
 	@Data
 	@SuppressWarnings("unused")
