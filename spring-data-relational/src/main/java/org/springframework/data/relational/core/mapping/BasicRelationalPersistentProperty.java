@@ -41,30 +41,46 @@ import org.springframework.util.StringUtils;
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
 
-	private final RelationalMappingContext context;
 	private final Lazy<SqlIdentifier> columnName;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
 	private final Lazy<String> embeddedPrefix;
+	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
 
 	/**
-	 * Creates a new {@link AnnotationBasedPersistentProperty}.
+	 * Creates a new {@link BasicRelationalPersistentProperty}.
 	 *
 	 * @param property must not be {@literal null}.
 	 * @param owner must not be {@literal null}.
 	 * @param simpleTypeHolder must not be {@literal null}.
 	 * @param context must not be {@literal null}
+	 * @since 2.0, use
+	 *        {@link #BasicRelationalPersistentProperty(Property, PersistentEntity, SimpleTypeHolder, NamingStrategy)}.
 	 */
+	@Deprecated
 	public BasicRelationalPersistentProperty(Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
 			SimpleTypeHolder simpleTypeHolder, RelationalMappingContext context) {
+		this(property, owner, simpleTypeHolder, context.getNamingStrategy());
+	}
+
+	/**
+	 * Creates a new {@link BasicRelationalPersistentProperty}.
+	 *
+	 * @param property must not be {@literal null}.
+	 * @param owner must not be {@literal null}.
+	 * @param simpleTypeHolder must not be {@literal null}.
+	 * @param namingStrategy must not be {@literal null}
+	 * @since 2.0
+	 */
+	public BasicRelationalPersistentProperty(Property property, PersistentEntity<?, RelationalPersistentProperty> owner,
+			SimpleTypeHolder simpleTypeHolder, NamingStrategy namingStrategy) {
 
 		super(property, owner, simpleTypeHolder);
+		this.namingStrategy = namingStrategy;
 
-		Assert.notNull(context, "context must not be null.");
-
-		this.context = context;
+		Assert.notNull(namingStrategy, "NamingStrategy must not be null.");
 
 		this.isEmbedded = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)).isPresent());
 
@@ -76,7 +92,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.map(Column::value) //
 				.filter(StringUtils::hasText) //
 				.map(this::createSqlIdentifier) //
-				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getColumnName(this))));
+				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getColumnName(this))));
 
 		this.collectionIdColumnName = Lazy.of(() -> Optionals
 				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)) //
@@ -92,7 +108,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 						Optional.ofNullable(findAnnotation(Column.class)).map(Column::keyColumn)) //
 				.filter(StringUtils::hasText).findFirst() //
 				.map(this::createSqlIdentifier) //
-				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getKeyColumn(this))));
+				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this))));
 	}
 
 	private SqlIdentifier createSqlIdentifier(String name) {
@@ -139,7 +155,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return columnName.get();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.mapping.model.AbstractPersistentProperty#getOwner()
 	 */
@@ -148,17 +164,17 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return (RelationalPersistentEntity<?>) super.getOwner();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getReverseColumnName()
 	 */
 	@Override
 	public SqlIdentifier getReverseColumnName() {
 		return collectionIdColumnName.get()
-				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getReverseColumnName(this)));
+				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(this)));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getReverseColumnName(org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension)
 	 */
@@ -166,10 +182,10 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
 
 		return collectionIdColumnName.get()
-				.orElseGet(() -> createDerivedSqlIdentifier(context.getNamingStrategy().getReverseColumnName(path)));
+				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(path)));
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getKeyColumn()
 	 */
@@ -178,7 +194,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return isQualified() ? collectionKeyColumnName.get() : null;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isQualified()
 	 */
@@ -187,7 +203,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return isMap() || isListLike();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getQualifierColumnType()
 	 */
@@ -204,7 +220,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return Integer.class;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isOrdered()
 	 */
@@ -213,7 +229,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return isListLike();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isEmbedded()
 	 */
@@ -222,7 +238,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return isEmbedded.get();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getEmbeddedPrefix()
 	 */
