@@ -16,11 +16,6 @@
 package org.springframework.data.relational.core.mapping;
 
 import java.lang.reflect.Array;
-import java.time.ZonedDateTime;
-import java.time.temporal.Temporal;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,7 +30,6 @@ import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Optionals;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -161,16 +155,18 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private Class<?> doGetColumnType() {
 
 		if (isReference()) {
-			return columnTypeForReference();
+			return getReferenceColumnType();
 		}
 
-		Class columnType = columnTypeIfEntity(getActualType());
+		if (isEntity()) {
+			Class<?> columnType = getEntityColumnType(getActualType());
 
-		if (columnType != null) {
-			return columnType;
+			if (columnType != null) {
+				return columnType;
+			}
 		}
 
-		Class componentColumnType = JdbcCompatibleTypes.INSTANCE.columnTypeForNonEntity(getActualType());
+		Class<?> componentColumnType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(getActualType());
 
 		while (componentColumnType.isArray()) {
 			componentColumnType = componentColumnType.getComponentType();
@@ -222,7 +218,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		Assert.isTrue(isQualified(), "The qualifier column type is only defined for properties that are qualified");
 
 		if (isMap()) {
-			return getTypeInformation().getComponentType().getType();
+			return getTypeInformation().getRequiredComponentType().getType();
 		}
 
 		// for lists and arrays
@@ -261,7 +257,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	}
 
 	@Nullable
-	private Class columnTypeIfEntity(Class type) {
+	private Class<?> getEntityColumnType(Class<?> type) {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(type);
 
@@ -277,7 +273,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return idProperty.getColumnType();
 	}
 
-	private Class columnTypeForReference() {
+	private Class<?> getReferenceColumnType() {
 
 		Class<?> componentType = getTypeInformation().getRequiredComponentType().getType();
 		RelationalPersistentEntity<?> referencedEntity = context.getRequiredPersistentEntity(componentType);

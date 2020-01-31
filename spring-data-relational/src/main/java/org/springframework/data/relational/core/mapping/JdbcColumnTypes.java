@@ -26,32 +26,33 @@ import org.springframework.util.ClassUtils;
 /**
  * Utility that determines the necessary type conversions between Java types used in the domain model and types
  * compatible with JDBC drivers.
- * 
+ *
  * @author Jens Schauder
  * @since 2.0
  */
-public enum JdbcCompatibleTypes {
+public enum JdbcColumnTypes {
 
 	INSTANCE {
 
-		private final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
-
-		{
-
-			javaToDbType.put(Enum.class, String.class);
-			javaToDbType.put(ZonedDateTime.class, String.class);
-			javaToDbType.put(Temporal.class, Date.class);
-		}
-
-		public Class columnTypeForNonEntity(Class type) {
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public Class<?> resolvePrimitiveType(Class<?> type) {
 
 			return javaToDbType.entrySet().stream() //
 					.filter(e -> e.getKey().isAssignableFrom(type)) //
-					.map(e -> (Class) e.getValue()) //
+					.map(e -> (Class<?>) e.getValue()) //
 					.findFirst() //
-					.orElseGet(() -> ClassUtils.resolvePrimitiveIfNecessary(type));
+					.orElseGet(() -> (Class) ClassUtils.resolvePrimitiveIfNecessary(type));
 		}
 	};
 
-	public abstract Class columnTypeForNonEntity(Class type);
+	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
+
+	static {
+
+		javaToDbType.put(Enum.class, String.class);
+		javaToDbType.put(ZonedDateTime.class, String.class);
+		javaToDbType.put(Temporal.class, Date.class);
+	}
+
+	public abstract Class<?> resolvePrimitiveType(Class<?> type);
 }
