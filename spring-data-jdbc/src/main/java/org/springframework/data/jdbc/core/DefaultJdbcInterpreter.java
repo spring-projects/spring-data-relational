@@ -22,6 +22,7 @@ import java.util.Map;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbAction.Delete;
@@ -34,7 +35,6 @@ import org.springframework.data.relational.core.conversion.DbAction.Merge;
 import org.springframework.data.relational.core.conversion.DbAction.Update;
 import org.springframework.data.relational.core.conversion.DbAction.UpdateRoot;
 import org.springframework.data.relational.core.conversion.Interpreter;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -57,7 +57,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 	public static final String UPDATE_FAILED = "Failed to update entity [%s]. Id [%s] not found in database.";
 	public static final String UPDATE_FAILED_OPTIMISTIC_LOCKING = "Failed to update entity [%s]. The entity was updated since it was rea or it isn't in the database at all.";
-	private final RelationalConverter converter;
+	private final JdbcConverter converter;
 	private final RelationalMappingContext context;
 	private final DataAccessStrategy accessStrategy;
 
@@ -147,8 +147,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 
 		if (!accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
 
-			throw new OptimisticLockingFailureException(
-					String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
+			throw new OptimisticLockingFailureException(String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
 		}
 	}
 
@@ -217,7 +216,7 @@ class DefaultJdbcInterpreter implements Interpreter {
 		Object id = getParentId(action);
 
 		JdbcIdentifierBuilder identifier = JdbcIdentifierBuilder //
-				.forBackReferences(new PersistentPropertyPathExtension(context, action.getPropertyPath()), id);
+				.forBackReferences(converter, new PersistentPropertyPathExtension(context, action.getPropertyPath()), id);
 
 		for (Map.Entry<PersistentPropertyPath<RelationalPersistentProperty>, Object> qualifier : action.getQualifiers()
 				.entrySet()) {

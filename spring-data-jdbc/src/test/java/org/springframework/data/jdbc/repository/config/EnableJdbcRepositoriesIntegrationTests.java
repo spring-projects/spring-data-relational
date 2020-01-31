@@ -153,7 +153,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		DataAccessStrategy defaultDataAccessStrategy(
 				@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
-			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, dialect), context, converter, template);
+			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
+					template);
 		}
 	}
 }

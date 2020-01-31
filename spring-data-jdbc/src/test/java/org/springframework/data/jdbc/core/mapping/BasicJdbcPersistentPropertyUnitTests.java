@@ -50,40 +50,6 @@ public class BasicJdbcPersistentPropertyUnitTests {
 	RelationalMappingContext context = new JdbcMappingContext();
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-	@Test // DATAJDBC-104
-	public void enumGetsStoredAsString() {
-
-		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
-			switch (p.getName()) {
-				case "someEnum":
-					assertThat(p.getColumnType()).isEqualTo(String.class);
-					break;
-				case "localDateTime":
-					assertThat(p.getColumnType()).isEqualTo(Date.class);
-					break;
-				case "zonedDateTime":
-					assertThat(p.getColumnType()).isEqualTo(String.class);
-					break;
-				default:
-			}
-		});
-	}
-
-	@Test // DATAJDBC-104, DATAJDBC-1384
-	public void testTargetTypesForPropertyType() {
-
-		SoftAssertions softly = new SoftAssertions();
-
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
-
-		checkTargetType(softly, persistentEntity, "someEnum", String.class);
-		checkTargetType(softly, persistentEntity, "localDateTime", Date.class);
-		checkTargetType(softly, persistentEntity, "zonedDateTime", String.class);
-		checkTargetType(softly, persistentEntity, "uuid", UUID.class);
-
-		softly.assertAll();
-	}
-
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
 
@@ -103,19 +69,6 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 		assertThat(listProperty.getReverseColumnName()).isEqualTo(quoted("dummy_column_name"));
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
-	}
-
-	@Test // DATAJDBC-221
-	public void referencesAreNotEntitiesAndGetStoredAsTheirId() {
-
-		SoftAssertions softly = new SoftAssertions();
-
-		RelationalPersistentProperty reference = entity.getRequiredPersistentProperty("reference");
-
-		softly.assertThat(reference.isEntity()).isFalse();
-		softly.assertThat(reference.getColumnType()).isEqualTo(Long.class);
-
-		softly.assertAll();
 	}
 
 	@Test // DATAJDBC-331
@@ -138,14 +91,6 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("override_key"));
 		assertThat(listProperty.getReverseColumnName()).isEqualTo(quoted("override_id"));
-	}
-
-	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
-			String propertyName, Class<?> expected) {
-
-		RelationalPersistentProperty property = persistentEntity.getRequiredPersistentProperty(propertyName);
-
-		softly.assertThat(property.getColumnType()).describedAs(propertyName).isEqualTo(expected);
 	}
 
 	@SuppressWarnings("unused")

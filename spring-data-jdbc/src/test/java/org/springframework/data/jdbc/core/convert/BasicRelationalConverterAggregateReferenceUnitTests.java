@@ -20,10 +20,10 @@ import static org.mockito.Mockito.*;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.ClassTypeInformation;
@@ -37,7 +37,7 @@ import org.springframework.data.util.ClassTypeInformation;
 public class BasicRelationalConverterAggregateReferenceUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
-	RelationalConverter converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
+	JdbcConverter converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
 
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
@@ -59,7 +59,7 @@ public class BasicRelationalConverterAggregateReferenceUnitTests {
 
 		AggregateReference<Object, Integer> reference = AggregateReference.to(23);
 
-		Object writeValue = converter.writeValue(reference, ClassTypeInformation.from(property.getColumnType()));
+		Object writeValue = converter.writeValue(reference, ClassTypeInformation.from(converter.getColumnType(property)));
 
 		Assertions.assertThat(writeValue).isEqualTo(23L);
 	}

@@ -42,11 +42,6 @@ public class BasicJdbcPersistentProperty extends BasicRelationalPersistentProper
 	}
 
 	@Override
-	public int getSqlType() {
-		return JdbcUtil.sqlTypeFor(getColumnType());
-	}
-
-	@Override
 	public boolean isReference() {
 		return AggregateReference.class.isAssignableFrom(getRawType());
 	}

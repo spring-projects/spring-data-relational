@@ -26,6 +26,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
@@ -37,9 +38,9 @@ import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 
@@ -96,7 +97,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		CascadingDataAccessStrategy cascadingDataAccessStrategy = new CascadingDataAccessStrategy(
 				asList(myBatisDataAccessStrategy, delegatingDataAccessStrategy));
 
-		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, dialect);
+		SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(context, converter, dialect);
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy( //
 				sqlGeneratorSource, //
 				context, //

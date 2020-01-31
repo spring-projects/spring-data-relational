@@ -28,12 +28,14 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  * domain type, the same generator will get returned.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 @RequiredArgsConstructor
 public class SqlGeneratorSource {
 
 	private final Map<Class<?>, SqlGenerator> CACHE = new ConcurrentReferenceHashMap<>();
 	private final RelationalMappingContext context;
+	private final JdbcConverter converter;
 	private final Dialect dialect;
 
 	/**
@@ -45,6 +47,7 @@ public class SqlGeneratorSource {
 
 
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
-		return CACHE.computeIfAbsent(domainType, t -> new SqlGenerator(context, context.getRequiredPersistentEntity(t), dialect.getIdentifierProcessing()));
+		return CACHE.computeIfAbsent(domainType, t -> new SqlGenerator(context, converter,
+				context.getRequiredPersistentEntity(t), dialect.getIdentifierProcessing()));
 	}
 }

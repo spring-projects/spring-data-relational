@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.core;
 
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
@@ -41,12 +42,13 @@ public class JdbcIdentifierBuilder {
 	/**
 	 * Creates ParentKeys with backreference for the given path and value of the parents id.
 	 */
-	public static JdbcIdentifierBuilder forBackReferences(PersistentPropertyPathExtension path, @Nullable Object value) {
+	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, PersistentPropertyPathExtension path,
+			@Nullable Object value) {
 
 		Identifier identifier = Identifier.of( //
 				path.getReverseColumnName(), //
 				value, //
-				path.getIdDefiningParentPath().getRequiredIdProperty().getColumnType() //
+				converter.getColumnType(path.getIdDefiningParentPath().getRequiredIdProperty()) //
 		);
 
 		return new JdbcIdentifierBuilder(identifier);

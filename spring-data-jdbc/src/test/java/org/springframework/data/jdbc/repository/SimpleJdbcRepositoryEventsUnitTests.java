@@ -83,7 +83,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
 		JdbcConverter converter = new BasicJdbcConverter(context, delegatingDataAccessStrategy, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(operations.getJdbcOperations()));
-		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, HsqlDbDialect.INSTANCE);
+		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, HsqlDbDialect.INSTANCE);
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);

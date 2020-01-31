@@ -43,8 +43,8 @@ import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -73,7 +73,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	private final JdbcTypeFactory typeFactory;
 	private final IdentifierProcessing identifierProcessing = HsqlDbDialect.INSTANCE.getIdentifierProcessing();
 
-	private RelationResolver relationResolver;
+	private final RelationResolver relationResolver;
 
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and a
@@ -115,6 +115,76 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		this.relationResolver = relationResolver;
 		this.typeFactory = typeFactory;
+	}
+
+	@Nullable
+	private Class<?> getEntityColumnType(Class<?> type) {
+
+		RelationalPersistentEntity<?> persistentEntity = getMappingContext().getPersistentEntity(type);
+
+		if (persistentEntity == null) {
+			return null;
+		}
+
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
+
+		if (idProperty == null) {
+			return null;
+		}
+		return getColumnType(idProperty);
+	}
+
+	private Class<?> getReferenceColumnType(RelationalPersistentProperty property) {
+
+		Class<?> componentType = property.getTypeInformation().getRequiredComponentType().getType();
+		RelationalPersistentEntity<?> referencedEntity = getMappingContext().getRequiredPersistentEntity(componentType);
+
+		return getColumnType(referencedEntity.getRequiredIdProperty());
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#getSqlType(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
+	 */
+	@Override
+	public int getSqlType(RelationalPersistentProperty property) {
+		return JdbcUtil.sqlTypeFor(getColumnType(property));
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#getColumnType(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
+	 */
+	@Override
+	public Class<?> getColumnType(RelationalPersistentProperty property) {
+		return doGetColumnType(property);
+	}
+
+	private Class<?> doGetColumnType(RelationalPersistentProperty property) {
+
+		if (property.isReference()) {
+			return getReferenceColumnType(property);
+		}
+
+		if (property.isEntity()) {
+			Class<?> columnType = getEntityColumnType(property.getActualType());
+
+			if (columnType != null) {
+				return columnType;
+			}
+		}
+
+		Class<?> componentColumnType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(property.getActualType());
+
+		while (componentColumnType.isArray()) {
+			componentColumnType = componentColumnType.getComponentType();
+		}
+
+		if (property.isCollectionLike() && !property.isEntity()) {
+			return java.lang.reflect.Array.newInstance(componentColumnType, 0).getClass();
+		}
+
+		return componentColumnType;
 	}
 
 	/*
@@ -469,4 +539,5 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 	}
+
 }

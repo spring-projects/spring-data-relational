@@ -176,7 +176,8 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 
 						Assert.state(this.dialect != null, "Dialect is required and must not be null!");
 
-						SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(this.mappingContext, this.dialect);
+						SqlGeneratorSource sqlGeneratorSource = new SqlGeneratorSource(this.mappingContext, this.converter,
+								this.dialect);
 						return new DefaultDataAccessStrategy(sqlGeneratorSource, this.mappingContext, this.converter,
 								this.operations);
 					});

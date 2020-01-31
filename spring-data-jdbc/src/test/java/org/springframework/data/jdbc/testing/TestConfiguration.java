@@ -90,7 +90,7 @@ public class TestConfiguration {
 			JdbcConverter converter, Dialect dialect) {
 
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(
-				new SqlGeneratorSource(context, dialect), context, converter, template);
+				new SqlGeneratorSource(context, converter, dialect), context, converter, template);
 
 		return defaultDataAccessStrategy;
 	}

@@ -216,9 +216,12 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 	private SqlGenerator configureSqlGenerator(NamingStrategy namingStrategy) {
 
 		RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+		JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+			throw new UnsupportedOperationException();
+		});
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		return new SqlGenerator(context, persistentEntity,
+		return new SqlGenerator(context, converter, persistentEntity,
 				IdentifierProcessing.create(new Quoting(""), LetterCasing.AS_IS));
 	}
 

@@ -44,6 +44,9 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting
 public class SqlGeneratorEmbeddedUnitTests {
 
 	private RelationalMappingContext context = new JdbcMappingContext();
+	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+		throw new UnsupportedOperationException();
+	});
 	private SqlGenerator sqlGenerator;
 
 	@Before
@@ -53,7 +56,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 	SqlGenerator createSqlGenerator(Class<?> type) {
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
-		return new SqlGenerator(context, persistentEntity,
+		return new SqlGenerator(context, converter, persistentEntity,
 				IdentifierProcessing.create(new Quoting(""), LetterCasing.AS_IS));
 	}
 
