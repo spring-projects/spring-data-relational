@@ -26,7 +26,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.callback.EntityCallbacks;
-import org.springframework.data.relational.core.mapping.JdbcCompatibleTypes;
+import org.springframework.data.relational.core.mapping.JdbcColumnTypes;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
@@ -93,7 +93,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		this.queryMethod = queryMethod;
 		this.operations = operations;
 
-		RowMapper rowMapper = determineRowMapper(defaultRowMapper);
+		RowMapper<Object> rowMapper = determineRowMapper(defaultRowMapper);
 		executor = createExecutor( //
 				queryMethod, //
 				determineResultSetExtractor(rowMapper != defaultRowMapper ? rowMapper : null), //
@@ -103,8 +103,8 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		this.converter = converter;
 	}
 
-	private QueryExecutor<Object> createExecutor(JdbcQueryMethod queryMethod, @Nullable ResultSetExtractor extractor,
-			RowMapper rowMapper) {
+	private QueryExecutor<Object> createExecutor(JdbcQueryMethod queryMethod,
+			@Nullable ResultSetExtractor<Object> extractor, RowMapper<Object> rowMapper) {
 
 		String query = determineQuery();
 
@@ -132,15 +132,13 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		return executor.execute(bindParameters(objects));
 	}
 
-	private QueryExecutor<Object> createObjectQueryExecutor(QueryExecutor executor) {
+	private QueryExecutor<Object> createObjectQueryExecutor(QueryExecutor<Object> executor) {
 
 		return parameters -> {
 
 			try {
 
-				Object result;
-
-				result = executor.execute(parameters);
+				Object result = executor.execute(parameters);
 
 				publishAfterLoad(result);
 
@@ -228,7 +226,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
 
 		Class<?> parameterType = queryMethod.getParameters().getParameter(p.getIndex()).getType();
-		Class conversionTargetType = JdbcCompatibleTypes.INSTANCE.columnTypeForNonEntity(parameterType);
+		Class<?> conversionTargetType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(parameterType);
 
 		JdbcValue jdbcValue = converter.writeJdbcValue(value, conversionTargetType,
 				JdbcUtil.sqlTypeFor(conversionTargetType));
@@ -237,16 +235,16 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		if (jdbcType == null) {
 
 			parameters.addValue(parameterName, jdbcValue.getValue());
-		}else {
+		} else {
 			parameters.addValue(parameterName, jdbcValue.getValue(), jdbcType.getVendorTypeNumber());
 		}
 	}
 
 	@Nullable
-	private ResultSetExtractor determineResultSetExtractor(@Nullable RowMapper<?> rowMapper) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private ResultSetExtractor<Object> determineResultSetExtractor(@Nullable RowMapper<Object> rowMapper) {
 
-		Class<? extends ResultSetExtractor> resultSetExtractorClass = (Class<? extends ResultSetExtractor>) queryMethod
-				.getResultSetExtractorClass();
+		Class<? extends ResultSetExtractor> resultSetExtractorClass = queryMethod.getResultSetExtractorClass();
 
 		if (isUnconfigured(resultSetExtractorClass, ResultSetExtractor.class)) {
 			return null;
@@ -262,15 +260,16 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 		return BeanUtils.instantiateClass(resultSetExtractorClass);
 	}
 
-	private RowMapper determineRowMapper(RowMapper<?> defaultMapper) {
+	@SuppressWarnings("unchecked")
+	private RowMapper<Object> determineRowMapper(RowMapper<?> defaultMapper) {
 
 		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
 
 		if (isUnconfigured(rowMapperClass, RowMapper.class)) {
-			return defaultMapper;
+			return (RowMapper<Object>) defaultMapper;
 		}
 
-		return (RowMapper) BeanUtils.instantiateClass(rowMapperClass);
+		return (RowMapper<Object>) BeanUtils.instantiateClass(rowMapperClass);
 	}
 
 	private static boolean isUnconfigured(@Nullable Class<?> configuredClass, Class<?> defaultClass) {
@@ -297,7 +296,6 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 
 			callbacks.callback(AfterLoadCallback.class, entity);
 		}
-
 	}
 
 	private interface QueryExecutor<T> {
