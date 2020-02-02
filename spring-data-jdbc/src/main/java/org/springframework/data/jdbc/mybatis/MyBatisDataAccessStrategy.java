@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.mybatis;
 import static java.util.Arrays.*;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,8 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
@@ -58,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Oliver Gierke
  * @author Mark Paluch
  * @author Tyler Van Gorder
+ * @author Milan Milanov
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -335,6 +339,30 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		String statement = namespace(domainType) + ".existsById";
 		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
 		return sqlSession().selectOne(statement, parameter);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Sort)
+	 */
+	@Override
+	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+		Map<String, Object> additionalContext = new HashMap<>();
+		additionalContext.put("sort", sort);
+		return sqlSession().selectList(namespace(domainType) + ".findAllSorted",
+				new MyBatisContext(null, null, domainType, additionalContext));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Pageable)
+	 */
+	@Override
+	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
+		Map<String, Object> additionalContext = new HashMap<>();
+		additionalContext.put("pageable", pageable);
+		return sqlSession().selectList(namespace(domainType) + ".findAllPaged",
+				new MyBatisContext(null, null, domainType, additionalContext));
 	}
 
 	/*

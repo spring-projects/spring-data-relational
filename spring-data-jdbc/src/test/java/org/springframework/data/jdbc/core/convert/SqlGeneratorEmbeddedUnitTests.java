@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.testing.NonQuotingDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
@@ -32,9 +33,6 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Aliased;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 
 /**
  * Unit tests for the {@link SqlGenerator} in a context of the {@link Embedded} annotation.
@@ -56,8 +54,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 	SqlGenerator createSqlGenerator(Class<?> type) {
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(type);
-		return new SqlGenerator(context, converter, persistentEntity,
-				IdentifierProcessing.create(new Quoting(""), LetterCasing.AS_IS));
+		return new SqlGenerator(context, converter, persistentEntity, NonQuotingDialect.INSTANCE);
 	}
 
 	@Test // DATAJDBC-111

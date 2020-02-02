@@ -19,9 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.IdentifierAccessor;
@@ -45,6 +51,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Thomas Lang
  * @author Christoph Strobl
+ * @author Milan Milanov
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
@@ -221,6 +228,35 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		return accessStrategy.existsById(id, domainType);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Sort)
+	 */
+	@Override
+	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+
+		Assert.notNull(domainType, "Domain type must not be null!");
+
+		Iterable<T> all = accessStrategy.findAll(domainType, sort);
+		return triggerAfterLoad(all);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Pageable)
+	 */
+	@Override
+	public <T> Page<T> findAll(Class<T> domainType, Pageable pageable) {
+
+		Assert.notNull(domainType, "Domain type must not be null!");
+
+		Iterable<T> items = triggerAfterLoad(accessStrategy.findAll(domainType, pageable));
+		long totalCount = accessStrategy.count(domainType);
+
+		return new PageImpl<>(StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList()), pageable,
+				totalCount);
 	}
 
 	/*

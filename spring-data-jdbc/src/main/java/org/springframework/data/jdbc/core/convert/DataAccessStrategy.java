@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.core.convert;
 import java.util.Map;
 
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -32,6 +34,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Tyler Van Gorder
+ * @author Milan Milanov
  */
 public interface DataAccessStrategy extends RelationResolver {
 
@@ -215,4 +218,24 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @return {@code true} if a matching row exists, otherwise {@code false}.
 	 */
 	<T> boolean existsById(Object id, Class<T> domainType);
+
+	/**
+	 * Loads all entities of the given type, sorted.
+	 *
+	 * @param domainType the type of entities to load. Must not be {@code null}.
+	 * @param <T> the type of entities to load.
+	 * @param sort the sorting information. Must not be {@code null}.
+	 * @return Guaranteed to be not {@code null}.
+	 */
+	<T> Iterable<T> findAll(Class<T> domainType, Sort sort);
+
+	/**
+	 * Loads all entities of the given type, paged and sorted.
+	 *
+	 * @param domainType the type of entities to load. Must not be {@code null}.
+	 * @param <T> the type of entities to load.
+	 * @param pageable the pagination information. Must not be {@code null}.
+	 * @return Guaranteed to be not {@code null}.
+	 */
+	<T> Iterable<T> findAll(Class<T> domainType, Pageable pageable);
 }

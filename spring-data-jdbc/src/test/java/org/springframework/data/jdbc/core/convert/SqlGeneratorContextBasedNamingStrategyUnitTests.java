@@ -27,14 +27,12 @@ import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
+import org.springframework.data.jdbc.testing.NonQuotingDialect;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 
 /**
  * Unit tests to verify a contextual {@link NamingStrategy} implementation that customizes using a user-centric
@@ -221,8 +219,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 		});
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		return new SqlGenerator(context, converter, persistentEntity,
-				IdentifierProcessing.create(new Quoting(""), LetterCasing.AS_IS));
+		return new SqlGenerator(context, converter, persistentEntity, NonQuotingDialect.INSTANCE);
 	}
 
 	@SuppressWarnings("unused")
