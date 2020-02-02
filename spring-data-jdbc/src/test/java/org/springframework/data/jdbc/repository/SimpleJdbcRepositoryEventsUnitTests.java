@@ -35,6 +35,9 @@ import org.junit.Test;
 import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
@@ -54,7 +57,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.relational.core.mapping.event.RelationalEvent;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -67,6 +70,7 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Mark Paluch
  * @author Oliver Gierke
  * @author Myeonghyeon Lee
+ * @author Milan Milanov
  */
 public class SimpleJdbcRepositoryEventsUnitTests {
 
@@ -216,6 +220,45 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				);
 	}
 
+	@Test // DATAJDBC-101
+	@SuppressWarnings("rawtypes")
+	public void publishesEventsOnFindAllSorted() {
+
+		DummyEntity entity1 = new DummyEntity(42L);
+		DummyEntity entity2 = new DummyEntity(23L);
+
+		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any(), any(Sort.class));
+
+		repository.findAll(Sort.by("field"));
+
+		assertThat(publisher.events) //
+				.extracting(e -> (Class) e.getClass()) //
+				.containsExactly( //
+						AfterLoadEvent.class, //
+						AfterLoadEvent.class //
+				);
+	}
+
+	@Test // DATAJDBC-101
+	@SuppressWarnings("rawtypes")
+	public void publishesEventsOnFindAllPaged() {
+
+		DummyEntity entity1 = new DummyEntity(42L);
+		DummyEntity entity2 = new DummyEntity(23L);
+
+		doReturn(asList(entity1, entity2)).when(dataAccessStrategy).findAll(any(), any(Pageable.class));
+		doReturn(2L).when(dataAccessStrategy).count(any());
+
+		repository.findAll(PageRequest.of(0, 20));
+
+		assertThat(publisher.events) //
+				.extracting(e -> (Class) e.getClass()) //
+				.containsExactly( //
+						AfterLoadEvent.class, //
+						AfterLoadEvent.class //
+				);
+	}
+
 	private static NamedParameterJdbcOperations createIdGeneratingOperations() {
 
 		Answer<Integer> setIdInKeyHolder = invocation -> {
@@ -235,7 +278,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		return operations;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+	interface DummyEntityRepository extends PagingAndSortingRepository<DummyEntity, Long> {}
 
 	@Value
 	@With

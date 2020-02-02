@@ -29,6 +29,7 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Milan Milanov
  */
 @RequiredArgsConstructor
 public class SqlGeneratorSource {
@@ -45,9 +46,8 @@ public class SqlGeneratorSource {
 		return dialect;
 	}
 
-
 	SqlGenerator getSqlGenerator(Class<?> domainType) {
 		return CACHE.computeIfAbsent(domainType, t -> new SqlGenerator(context, converter,
-				context.getRequiredPersistentEntity(t), dialect.getIdentifierProcessing()));
+				context.getRequiredPersistentEntity(t), dialect));
 	}
 }

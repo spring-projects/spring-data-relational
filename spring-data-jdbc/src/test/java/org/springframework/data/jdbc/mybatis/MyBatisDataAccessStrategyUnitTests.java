@@ -30,6 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -397,6 +399,50 @@ public class MyBatisDataAccessStrategyUnitTests {
 						null, //
 						String.class, //
 						null //
+				);
+	}
+
+	@Test // DATAJDBC-101
+	public void findAllSorted() {
+
+		accessStrategy.findAll(String.class, Sort.by("length"));
+
+		verify(session).selectList(eq("java.lang.StringMapper.findAllSorted"), captor.capture());
+
+		assertThat(captor.getValue()) //
+				.isNotNull() //
+				.extracting( //
+						MyBatisContext::getInstance, //
+						MyBatisContext::getId, //
+						MyBatisContext::getDomainType, //
+						c -> c.get("sort") //
+				).containsExactly( //
+						null, //
+						null, //
+						String.class, //
+						Sort.by("length") //
+				);
+	}
+
+	@Test // DATAJDBC-101
+	public void findAllPaged() {
+
+		accessStrategy.findAll(String.class, PageRequest.of(0, 20));
+
+		verify(session).selectList(eq("java.lang.StringMapper.findAllPaged"), captor.capture());
+
+		assertThat(captor.getValue()) //
+				.isNotNull() //
+				.extracting( //
+						MyBatisContext::getInstance, //
+						MyBatisContext::getId, //
+						MyBatisContext::getDomainType, //
+						c -> c.get("pageable") //
+				).containsExactly( //
+						null, //
+						null, //
+						String.class, //
+						PageRequest.of(0, 20) //
 				);
 	}
 

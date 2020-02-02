@@ -29,6 +29,8 @@ import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -60,6 +62,7 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @author Tom Hombergs
  * @author Tyler Van Gorder
+ * @author Milan Milanov
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -372,6 +375,26 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		Assert.state(result != null, "The result of an exists query must not be null");
 
 		return result;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Sort)
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+		return operations.query(sql(domainType).getFindAll(sort), (RowMapper<T>) getEntityRowMapper(domainType));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Pageable)
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
+		return operations.query(sql(domainType).getFindAll(pageable), (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
 	private <S, T> SqlIdentifierParameterSource getParameterSource(@Nullable S instance,

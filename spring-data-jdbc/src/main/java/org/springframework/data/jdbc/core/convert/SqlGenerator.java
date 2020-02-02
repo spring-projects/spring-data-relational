@@ -31,10 +31,14 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -56,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Tom Hombergs
  * @author Tyler Van Gorder
+ * @author Milan Milanov
  */
 class SqlGenerator {
 
@@ -71,6 +76,7 @@ class SqlGenerator {
 	private final IdentifierProcessing identifierProcessing;
 
 	private final SqlContext sqlContext;
+	private final SqlRenderer sqlRenderer;
 	private final Columns columns;
 
 	private final Lazy<String> findOneSql = Lazy.of(this::createFindOneSql);
@@ -93,16 +99,17 @@ class SqlGenerator {
 	 * @param mappingContext must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param entity must not be {@literal null}.
-	 * @param identifierProcessing must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
 	 */
 	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
-			IdentifierProcessing identifierProcessing) {
+			Dialect dialect) {
 
 		this.mappingContext = mappingContext;
 		this.converter = converter;
 		this.entity = entity;
-		this.identifierProcessing = identifierProcessing;
-		this.sqlContext = new SqlContext(entity, identifierProcessing);
+		this.identifierProcessing = dialect.getIdentifierProcessing();
+		this.sqlContext = new SqlContext(entity, this.identifierProcessing);
+		this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
 		this.columns = new Columns(entity, mappingContext, converter);
 	}
 
@@ -173,6 +180,26 @@ class SqlGenerator {
 	 */
 	String getFindAll() {
 		return findAllSql.get();
+	}
+
+	/**
+	 * Returns a query for selecting all simple properties of an entity, including those for one-to-one relationships,
+	 * sorted by the given parameter.
+	 *
+	 * @return a SQL statement. Guaranteed to be not {@code null}.
+	 */
+	String getFindAll(Sort sort) {
+		return render(selectBuilder(Collections.emptyList(), sort, Pageable.unpaged()).build());
+	}
+
+	/**
+	 * Returns a query for selecting all simple properties of an entity, including those for one-to-one relationships,
+	 * paged and sorted by the given parameter.
+	 *
+	 * @return a SQL statement. Guaranteed to be not {@code null}.
+	 */
+	String getFindAll(Pageable pageable) {
+		return render(selectBuilder(Collections.emptyList(), pageable.getSort(), pageable).build());
 	}
 
 	/**
@@ -392,6 +419,27 @@ class SqlGenerator {
 		return (SelectBuilder.SelectWhere) baseSelect;
 	}
 
+	private SelectBuilder.SelectOrdered selectBuilder(Collection<String> keyColumns, Sort sort, Pageable pageable) {
+		SelectBuilder.SelectWhere baseSelect = this.selectBuilder(keyColumns);
+
+		if (baseSelect instanceof SelectBuilder.SelectFromAndJoin) {
+			if (pageable.isPaged()) {
+				return ((SelectBuilder.SelectFromAndJoin) baseSelect).limitOffset(pageable.getPageSize(), pageable.getOffset())
+						.orderBy(extractOrderByFields(sort));
+			}
+			return ((SelectBuilder.SelectFromAndJoin) baseSelect).orderBy(extractOrderByFields(sort));
+
+		} else if (baseSelect instanceof SelectBuilder.SelectFromAndJoinCondition) {
+			if (pageable.isPaged()) {
+				return ((SelectBuilder.SelectFromAndJoinCondition) baseSelect)
+						.limitOffset(pageable.getPageSize(), pageable.getOffset()).orderBy(extractOrderByFields(sort));
+			}
+			return baseSelect.orderBy(extractOrderByFields(sort));
+		} else {
+			throw new RuntimeException("Unexpected type found!");
+		}
+	}
+
 	/**
 	 * Create a {@link Column} for {@link PersistentPropertyPathExtension}.
 	 *
@@ -588,19 +636,19 @@ class SqlGenerator {
 	}
 
 	private String render(Select select) {
-		return SqlRenderer.create().render(select);
+		return this.sqlRenderer.render(select);
 	}
 
 	private String render(Insert insert) {
-		return SqlRenderer.create().render(insert);
+		return this.sqlRenderer.render(insert);
 	}
 
 	private String render(Update update) {
-		return SqlRenderer.create().render(update);
+		return this.sqlRenderer.render(update);
 	}
 
 	private String render(Delete delete) {
-		return SqlRenderer.create().render(delete);
+		return this.sqlRenderer.render(delete);
 	}
 
 	private Table getTable() {
@@ -613,6 +661,12 @@ class SqlGenerator {
 
 	private Column getVersionColumn() {
 		return sqlContext.getVersionColumn();
+	}
+
+	private List<OrderByField> extractOrderByFields(Sort sort) {
+		return sort.stream()
+				.map(order -> OrderByField.from(Column.create(order.getProperty(), this.getTable()), order.getDirection()))
+				.collect(Collectors.toList());
 	}
 
 	/**

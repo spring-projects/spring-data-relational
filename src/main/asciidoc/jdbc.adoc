@@ -585,6 +585,14 @@ Note that the type used for prefixing the statement name is the name of the aggr
 
 `getDomainType`: The type of the entity to load.
 
+| `findAllSorted` | Select all aggregate roots, sorted | `findAll(Sort)`.|
+
+`getSort`: The sorting specification.
+
+| `findAllPaged` | Select a page of aggregate roots, optionally sorted | `findAll(Page)`.|
+
+`getPageable`: The paging specification.
+
 | `count` | Count the number of aggregate root of the type used as prefix | `count` |
 
 `getDomainType`: The type of aggregate roots to count.
