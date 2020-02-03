@@ -188,6 +188,7 @@ Converters should be annotated with `@ReadingConverter` or `@WritingConverter` i
 
 `TIMESTAMPTZ` in the example is a database specific data type that needs conversion into something more suitable for a domain model.
 
+[[jdbc.entity-persistence.custom-converters.jdbc-value]]
 ==== JdbcValue
 
 Value conversion uses `JdbcValue` to enrich values propagated to JDBC operations with a `java.sql.Types` type.
