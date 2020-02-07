@@ -40,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class SimpleJdbcRepository<T, ID> implements CrudRepository<T, ID>, PagingAndSortingRepository<T, ID> {
+public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T, ID> {
 
 	private final @NonNull JdbcAggregateOperations entityOperations;
 	private final @NonNull PersistentEntity<T, ?> entity;

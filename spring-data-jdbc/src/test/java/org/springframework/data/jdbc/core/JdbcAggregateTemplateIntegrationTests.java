@@ -39,7 +39,6 @@ import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -225,41 +224,51 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class);
 
-		assertThat(reloadedLegoSets).hasSize(1).extracting("id", "manual.id", "manual.content")
-				.contains(tuple(legoSet.getId(), legoSet.getManual().getId(), legoSet.getManual().getContent()));
+		assertThat(reloadedLegoSets) //
+				.extracting("id", "manual.id", "manual.content") //
+				.containsExactly(tuple(legoSet.getId(), legoSet.getManual().getId(), legoSet.getManual().getContent()));
 	}
 
 	@Test // DATAJDBC-101
 	public void saveAndLoadManyEntitiesWithReferencedEntitySorted() {
+
 		template.save(createLegoSet("Lava"));
 		template.save(createLegoSet("Star"));
 		template.save(createLegoSet("Frozen"));
 
 		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, Sort.by("name"));
 
-		assertThat(reloadedLegoSets).hasSize(3).extracting("name").isEqualTo(Arrays.asList("Frozen", "Lava", "Star"));
+		assertThat(reloadedLegoSets) //
+				.extracting("name") //
+				.containsExactly("Frozen", "Lava", "Star");
 	}
 
 	@Test // DATAJDBC-101
 	public void saveAndLoadManyEntitiesWithReferencedEntityPaged() {
+
 		template.save(createLegoSet("Lava"));
 		template.save(createLegoSet("Star"));
 		template.save(createLegoSet("Frozen"));
 
 		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, PageRequest.of(1, 1));
 
-		assertThat(reloadedLegoSets).hasSize(1).extracting("name").isEqualTo(singletonList("Star"));
+		assertThat(reloadedLegoSets) //
+				.extracting("name") //
+				.containsExactly("Star");
 	}
 
 	@Test // DATAJDBC-101
 	public void saveAndLoadManyEntitiesWithReferencedEntitySortedAndPaged() {
+
 		template.save(createLegoSet("Lava"));
 		template.save(createLegoSet("Star"));
 		template.save(createLegoSet("Frozen"));
 
 		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, PageRequest.of(1, 2, Sort.by("name")));
 
-		assertThat(reloadedLegoSets).hasSize(1).extracting("name").isEqualTo(singletonList("Star"));
+		assertThat(reloadedLegoSets) //
+				.extracting("name") //
+				.containsExactly("Star");
 	}
 
 	@Test // DATAJDBC-112
@@ -749,12 +758,10 @@ public class JdbcAggregateTemplateIntegrationTests {
 		AggregateWithImmutableVersion savedAgain = template.save(reloadedAggregate);
 		AggregateWithImmutableVersion reloadedAgain = template.findById(id, aggregate.getClass());
 
-		assertThat(savedAgain.version)
-				.describedAs("The object returned by save should have an increased version")
+		assertThat(savedAgain.version).describedAs("The object returned by save should have an increased version")
 				.isEqualTo(2L);
 
-		assertThat(reloadedAgain.getVersion())
-				.describedAs("version field should increment by one with each save")
+		assertThat(reloadedAgain.getVersion()).describedAs("version field should increment by one with each save")
 				.isEqualTo(2L);
 
 		assertThatThrownBy(() -> template.save(new AggregateWithImmutableVersion(id, 1L)))

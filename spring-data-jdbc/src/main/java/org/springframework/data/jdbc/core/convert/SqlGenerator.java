@@ -17,16 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import lombok.Value;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -420,24 +411,29 @@ class SqlGenerator {
 	}
 
 	private SelectBuilder.SelectOrdered selectBuilder(Collection<String> keyColumns, Sort sort, Pageable pageable) {
-		SelectBuilder.SelectWhere baseSelect = this.selectBuilder(keyColumns);
 
-		if (baseSelect instanceof SelectBuilder.SelectFromAndJoin) {
-			if (pageable.isPaged()) {
-				return ((SelectBuilder.SelectFromAndJoin) baseSelect).limitOffset(pageable.getPageSize(), pageable.getOffset())
-						.orderBy(extractOrderByFields(sort));
-			}
-			return ((SelectBuilder.SelectFromAndJoin) baseSelect).orderBy(extractOrderByFields(sort));
+		SelectBuilder.SelectOrdered sortable = this.selectBuilder(keyColumns);
+		sortable = applyPagination(pageable, sortable);
+		return sortable.orderBy(extractOrderByFields(sort));
 
-		} else if (baseSelect instanceof SelectBuilder.SelectFromAndJoinCondition) {
-			if (pageable.isPaged()) {
-				return ((SelectBuilder.SelectFromAndJoinCondition) baseSelect)
-						.limitOffset(pageable.getPageSize(), pageable.getOffset()).orderBy(extractOrderByFields(sort));
-			}
-			return baseSelect.orderBy(extractOrderByFields(sort));
-		} else {
-			throw new RuntimeException("Unexpected type found!");
+	}
+
+	private SelectBuilder.SelectOrdered applyPagination(Pageable pageable, SelectBuilder.SelectOrdered select) {
+
+		if (!pageable.isPaged()) {
+			return select;
 		}
+
+		Assert.isTrue(select instanceof SelectBuilder.SelectLimitOffset,
+				() -> String.format("Can't apply limit clause to statement of type %s", select.getClass()));
+
+		SelectBuilder.SelectLimitOffset limitable = (SelectBuilder.SelectLimitOffset) select;
+		SelectBuilder.SelectLimitOffset limitResult = limitable.limitOffset(pageable.getPageSize(), pageable.getOffset());
+
+		Assert.state(limitResult instanceof SelectBuilder.SelectOrdered,
+				String.format("The result of applying the limit-clause must be of type SelectOrdered in order to apply the order-by-clause but is of type %s.", select.getClass()));
+
+		return (SelectBuilder.SelectOrdered) limitResult;
 	}
 
 	/**

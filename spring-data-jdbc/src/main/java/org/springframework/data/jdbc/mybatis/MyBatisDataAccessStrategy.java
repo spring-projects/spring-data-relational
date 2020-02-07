@@ -347,6 +347,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
+
 		Map<String, Object> additionalContext = new HashMap<>();
 		additionalContext.put("sort", sort);
 		return sqlSession().selectList(namespace(domainType) + ".findAllSorted",
@@ -359,6 +360,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
+
 		Map<String, Object> additionalContext = new HashMap<>();
 		additionalContext.put("pageable", pageable);
 		return sqlSession().selectList(namespace(domainType) + ".findAllPaged",

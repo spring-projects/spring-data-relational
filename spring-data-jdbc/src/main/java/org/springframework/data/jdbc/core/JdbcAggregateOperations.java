@@ -140,6 +140,7 @@ public interface JdbcAggregateOperations {
 	 * @param <T> the type of the aggregate roots. Must not be {@code null}.
 	 * @param sort the sorting information. Must not be {@code null}.
 	 * @return Guaranteed to be not {@code null}.
+	 * @since 2.0
 	 */
 	<T> Iterable<T> findAll(Class<T> domainType, Sort sort);
 
@@ -150,6 +151,7 @@ public interface JdbcAggregateOperations {
 	 * @param <T> the type of the aggregate roots. Must not be {@code null}.
 	 * @param pageable the pagination information. Must not be {@code null}.
 	 * @return Guaranteed to be not {@code null}.
+	 * @since 2.0
 	 */
 	<T> Page<T> findAll(Class<T> domainType, Pageable pageable);
 }
