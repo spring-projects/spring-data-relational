@@ -278,7 +278,9 @@ public class JdbcRepositoryIntegrationTests {
 
 		repository.saveAll(asList(first, second));
 
-		assertThat(repository.after(now)).containsExactly(second);
+		assertThat(repository.after(now)) //
+				.extracting(DummyEntity::getName) //
+				.containsExactly("second");
 	}
 
 	@Test // DATAJDBC-234
