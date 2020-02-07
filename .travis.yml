@@ -1,8 +1,5 @@
 language: java
 
-jdk:
-  - oraclejdk8
-
 cache:
   directories:
     - $HOME/.m2
@@ -14,4 +11,6 @@ services:
 
 install: true
 
-script: "mvn clean dependency:list test -Pall-dbs -Dsort -U"
+script:
+  - "./mvnw -version"
+  - "./mvnw -Pjava11 clean dependency:list test -Pall-dbs${NO_JACOCO:+',no-jacoco'} -Dsort -U"
