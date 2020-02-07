@@ -601,7 +601,7 @@ For example, the following listener gets invoked before an aggregate gets saved:
 [source,java]
 ----
 @Bean
-public ApplicationListener<BeforeSave> timeStampingSaveTime() {
+public ApplicationListener<BeforeSaveEvent> timeStampingSaveTime() {
 
 	return event -> {
 
