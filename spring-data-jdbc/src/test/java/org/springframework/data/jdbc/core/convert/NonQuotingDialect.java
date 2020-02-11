@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 
 /**
  * Simple {@link Dialect} that provides unquoted {@link IdentifierProcessing}.
  *
  * @author Mark Paluch
+ * @author Milan Milanov
+ * @author Jens Schauder
  */
-public class UnquotedDialect extends AbstractDialect implements Dialect {
+public class NonQuotingDialect extends AbstractDialect implements Dialect {
 
-	public static final UnquotedDialect INSTANCE = new UnquotedDialect();
+	public static final NonQuotingDialect INSTANCE = new NonQuotingDialect();
 
-	private UnquotedDialect() {}
+	private NonQuotingDialect() {}
 
 	@Override
 	public LimitClause limit() {
@@ -41,6 +41,6 @@ public class UnquotedDialect extends AbstractDialect implements Dialect {
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
-		return IdentifierProcessing.create(new Quoting(""), LetterCasing.AS_IS);
+		return IdentifierProcessing.create(new IdentifierProcessing.Quoting(""), IdentifierProcessing.LetterCasing.AS_IS);
 	}
 }

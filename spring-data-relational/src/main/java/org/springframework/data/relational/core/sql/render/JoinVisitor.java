@@ -38,6 +38,7 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 	private boolean hasSeenCondition = false;
 
 	JoinVisitor(RenderContext context, RenderTarget parent) {
+
 		this.context = context;
 		this.parent = parent;
 		this.conditionVisitor = new ConditionVisitor(context);
@@ -87,6 +88,7 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Condition) {
+
 			inCondition = false;
 
 			if (hasSeenCondition) {

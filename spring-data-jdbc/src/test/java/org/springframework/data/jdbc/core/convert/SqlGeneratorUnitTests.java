@@ -37,7 +37,6 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.jdbc.testing.AnsiDialect;
-import org.springframework.data.jdbc.testing.NonQuotingDialect;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
@@ -47,9 +46,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Aliased;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.domain.Identifier;
@@ -243,8 +239,8 @@ public class SqlGeneratorUnitTests {
 				"FROM dummy_entity ", //
 				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
-				"OFFSET 40 ROWS", //
-				"FETCH FIRST 20 ROWS ONLY");
+				"OFFSET 40", //
+				"LIMIT 20");
 	}
 
 	@Test // DATAJDBC-101
@@ -264,8 +260,8 @@ public class SqlGeneratorUnitTests {
 				"LEFT OUTER JOIN referenced_entity AS ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity AS ref_further ON ref_further.referenced_entity = ref.x_l1id", //
 				"ORDER BY x_name ASC", //
-				"OFFSET 30 ROWS", //
-				"FETCH FIRST 10 ROWS ONLY");
+				"OFFSET 30", //
+				"LIMIT 10");
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111

@@ -62,7 +62,6 @@ class SqlGenerator {
 	static final SqlIdentifier ROOT_ID_PARAMETER = SqlIdentifier.unquoted("rootId");
 
 	private static final Pattern parameterPattern = Pattern.compile("\\W");
-	private final JdbcConverter converter;
 	private final RelationalPersistentEntity<?> entity;
 	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 	private final RenderContext renderContext;
@@ -93,10 +92,10 @@ class SqlGenerator {
 	 * @param entity must not be {@literal null}.
 	 * @param dialect must not be {@literal null}.
 	 */
-	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter,RelationalPersistentEntity<?> entity, Dialect dialect) {
+	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
+			Dialect dialect) {
 
 		this.mappingContext = mappingContext;
-		this.converter = converter;
 		this.entity = entity;
 		this.sqlContext = new SqlContext(entity);
 		this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
@@ -406,7 +405,8 @@ class SqlGenerator {
 		return (SelectBuilder.SelectWhere) baseSelect;
 	}
 
-	private SelectBuilder.SelectOrdered selectBuilder(Collection<String> keyColumns, Sort sort, Pageable pageable) {
+	private SelectBuilder.SelectOrdered selectBuilder(Collection<SqlIdentifier> keyColumns, Sort sort,
+			Pageable pageable) {
 
 		SelectBuilder.SelectOrdered sortable = this.selectBuilder(keyColumns);
 		sortable = applyPagination(pageable, sortable);
@@ -426,8 +426,9 @@ class SqlGenerator {
 		SelectBuilder.SelectLimitOffset limitable = (SelectBuilder.SelectLimitOffset) select;
 		SelectBuilder.SelectLimitOffset limitResult = limitable.limitOffset(pageable.getPageSize(), pageable.getOffset());
 
-		Assert.state(limitResult instanceof SelectBuilder.SelectOrdered,
-				String.format("The result of applying the limit-clause must be of type SelectOrdered in order to apply the order-by-clause but is of type %s.", select.getClass()));
+		Assert.state(limitResult instanceof SelectBuilder.SelectOrdered, String.format(
+				"The result of applying the limit-clause must be of type SelectOrdered in order to apply the order-by-clause but is of type %s.",
+				select.getClass()));
 
 		return (SelectBuilder.SelectOrdered) limitResult;
 	}

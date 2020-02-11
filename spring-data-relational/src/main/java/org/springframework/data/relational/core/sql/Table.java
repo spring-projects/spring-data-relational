@@ -36,12 +36,10 @@ public class Table extends AbstractSegment {
 	private final SqlIdentifier name;
 
 	Table(String name) {
-		super();
 		this.name = SqlIdentifier.unquoted(name);
 	}
 
 	Table(SqlIdentifier name) {
-		super();
 		this.name = name;
 	}
 

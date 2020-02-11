@@ -49,15 +49,12 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 	Delegation leaveMatched(Column segment) {
 
 		SqlIdentifier column = context.getNamingStrategy().getName(segment);
-		StringBuilder builder = new StringBuilder();
-		if (considerTablePrefix && tableName != null) {
 
-			builder.append(NameRenderer.render(context, SqlIdentifier.from(tableName, column)));
-		} else {
-			builder.append(NameRenderer.render(context, segment));
-		}
+		CharSequence name = considerTablePrefix && tableName != null
+				? NameRenderer.render(context, SqlIdentifier.from(tableName, column))
+				: NameRenderer.render(context, segment);
 
-		target.onRendered(builder);
+		target.onRendered(name);
 		return super.leaveMatched(segment);
 	}
 

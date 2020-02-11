@@ -22,11 +22,9 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.jdbc.testing.NonQuotingDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
@@ -35,6 +33,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for the {@link SqlGenerator} in a context of the {@link Embedded} annotation.
@@ -203,8 +202,15 @@ public class SqlGeneratorEmbeddedUnitTests {
 	public void columnForEmbeddedProperty() {
 
 		assertThat(generatedColumn("embeddable.test", DummyEntity.class)) //
-				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly(SqlIdentifier.unquoted("test"), SqlIdentifier.unquoted("dummy_entity"), null,
+				.extracting( //
+						c -> c.getName(), //
+						c -> c.getTable().getName(), //
+						c -> getAlias(c.getTable()), //
+						this::getAlias) //
+				.containsExactly( //
+						SqlIdentifier.unquoted("test"), //
+						SqlIdentifier.unquoted("dummy_entity"), //
+						null, //
 						SqlIdentifier.unquoted("test"));
 	}
 
@@ -227,8 +233,15 @@ public class SqlGeneratorEmbeddedUnitTests {
 	public void columnForPrefixedEmbeddedProperty() {
 
 		assertThat(generatedColumn("prefixedEmbeddable.test", DummyEntity.class)) //
-				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly(SqlIdentifier.unquoted("prefix_test"), SqlIdentifier.unquoted("dummy_entity"), null,
+				.extracting( //
+						c -> c.getName(), //
+						c -> c.getTable().getName(), //
+						c -> getAlias(c.getTable()), //
+						this::getAlias) //
+				.containsExactly( //
+						SqlIdentifier.unquoted("prefix_test"), //
+						SqlIdentifier.unquoted("dummy_entity"), //
+						null, //
 						SqlIdentifier.unquoted("prefix_test"));
 	}
 
@@ -268,9 +281,16 @@ public class SqlGeneratorEmbeddedUnitTests {
 	public void columnForEmbeddedWithReferenceProperty() {
 
 		assertThat(generatedColumn("embedded.other.value", DummyEntity2.class)) //
-				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
-				.containsExactly(SqlIdentifier.unquoted("value"), SqlIdentifier.unquoted("other_entity"),
-						SqlIdentifier.quoted("prefix_other"), SqlIdentifier.unquoted("prefix_other_value"));
+				.extracting( //
+						c -> c.getName(), //
+						c -> c.getTable().getName(), //
+						c -> getAlias(c.getTable()), //
+						this::getAlias) //
+				.containsExactly( //
+						SqlIdentifier.unquoted("value"), //
+						SqlIdentifier.unquoted("other_entity"), //
+						SqlIdentifier.quoted("prefix_other"), //
+						SqlIdentifier.unquoted("prefix_other_value"));
 	}
 
 	private SqlGenerator.Join generateJoin(String path, Class<?> type) {
@@ -278,6 +298,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 				.getJoin(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
 	}
 
+	@Nullable
 	private SqlIdentifier getAlias(Object maybeAliased) {
 
 		if (maybeAliased instanceof Aliased) {
@@ -287,6 +308,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	}
 
 	private org.springframework.data.relational.core.sql.Column generatedColumn(String path, Class<?> type) {
+
 		return createSqlGenerator(type)
 				.getColumn(new PersistentPropertyPathExtension(context, PropertyPathTestingUtils.toPath(path, type, context)));
 	}
