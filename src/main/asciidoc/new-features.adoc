@@ -1,6 +1,12 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.1-1-0-RELEASE]]
+== What's New in Spring Data R2DBC 1.1.0 RELEASE
+
+* Introduction of `R2dbcEntityTemplate` for entity-oriented operations.
+* Support interface projections with `DatabaseClient.as(…)`
+
 [[new-features.1-0-0-RELEASE]]
 == What's New in Spring Data R2DBC 1.0.0 RELEASE
 
