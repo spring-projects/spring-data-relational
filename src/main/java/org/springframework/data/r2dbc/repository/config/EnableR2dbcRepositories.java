@@ -122,7 +122,7 @@ public @interface EnableR2dbcRepositories {
 	 *
 	 * @return
 	 */
-	String databaseClientRef() default "databaseClient";
+	String databaseClientRef() default "r2dbcDatabaseClient";
 
 	/**
 	 * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be discovered by the

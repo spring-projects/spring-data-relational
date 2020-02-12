@@ -45,7 +45,7 @@ public class R2dbcRepositoriesRegistrarTests {
 	static class Config {
 
 		@Bean
-		public DatabaseClient databaseClient() {
+		public DatabaseClient r2dbcDatabaseClient() {
 			return mock(DatabaseClient.class);
 		}
 

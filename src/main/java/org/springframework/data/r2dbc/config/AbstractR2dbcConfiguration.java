@@ -100,7 +100,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * @return must not be {@literal null}.
 	 * @throws IllegalArgumentException if any of the required args is {@literal null}.
 	 */
-	@Bean
+	@Bean({ "r2dbcDatabaseClient", "databaseClient" })
 	public DatabaseClient databaseClient(ReactiveDataAccessStrategy dataAccessStrategy,
 			R2dbcExceptionTranslator exceptionTranslator) {
 
