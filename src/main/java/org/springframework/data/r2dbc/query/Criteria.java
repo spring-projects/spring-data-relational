@@ -165,7 +165,6 @@ public class Criteria {
 		 * Creates a {@link Criteria} using equality.
 		 *
 		 * @param value must not be {@literal null}.
-		 * @return
 		 */
 		Criteria is(Object value);
 
@@ -173,7 +172,6 @@ public class Criteria {
 		 * Creates a {@link Criteria} using equality (is not).
 		 *
 		 * @param value must not be {@literal null}.
-		 * @return
 		 */
 		Criteria not(Object value);
 
@@ -181,7 +179,6 @@ public class Criteria {
 		 * Creates a {@link Criteria} using {@code IN}.
 		 *
 		 * @param values must not be {@literal null}.
-		 * @return
 		 */
 		Criteria in(Object... values);
 
@@ -189,15 +186,13 @@ public class Criteria {
 		 * Creates a {@link Criteria} using {@code IN}.
 		 *
 		 * @param values must not be {@literal null}.
-		 * @return
 		 */
-		Criteria in(Collection<? extends Object> values);
+		Criteria in(Collection<?> values);
 
 		/**
 		 * Creates a {@link Criteria} using {@code NOT IN}.
 		 *
 		 * @param values must not be {@literal null}.
-		 * @return
 		 */
 		Criteria notIn(Object... values);
 
@@ -205,15 +200,13 @@ public class Criteria {
 		 * Creates a {@link Criteria} using {@code NOT IN}.
 		 *
 		 * @param values must not be {@literal null}.
-		 * @return
 		 */
-		Criteria notIn(Collection<? extends Object> values);
+		Criteria notIn(Collection<?> values);
 
 		/**
 		 * Creates a {@link Criteria} using less-than ({@literal <}).
 		 *
 		 * @param value must not be {@literal null}.
-		 * @return
 		 */
 		Criteria lessThan(Object value);
 
@@ -221,7 +214,6 @@ public class Criteria {
 		 * Creates a {@link Criteria} using less-than or equal to ({@literal <=}).
 		 *
 		 * @param value must not be {@literal null}.
-		 * @return
 		 */
 		Criteria lessThanOrEquals(Object value);
 
@@ -229,7 +221,6 @@ public class Criteria {
 		 * Creates a {@link Criteria} using greater-than({@literal >}).
 		 *
 		 * @param value must not be {@literal null}.
-		 * @return
 		 */
 		Criteria greaterThan(Object value);
 
@@ -237,7 +228,6 @@ public class Criteria {
 		 * Creates a {@link Criteria} using greater-than or equal to ({@literal >=}).
 		 *
 		 * @param value must not be {@literal null}.
-		 * @return
 		 */
 		Criteria greaterThanOrEquals(Object value);
 
@@ -245,21 +235,18 @@ public class Criteria {
 		 * Creates a {@link Criteria} using {@code LIKE}.
 		 *
 		 * @param value must not be {@literal null}.
-		 * @return
 		 */
 		Criteria like(Object value);
 
 		/**
 		 * Creates a {@link Criteria} using {@code IS NULL}.
 		 *
-		 * @return
 		 */
 		Criteria isNull();
 
 		/**
 		 * Creates a {@link Criteria} using {@code IS NOT NULL}.
 		 *
-		 * @return
 		 */
 		Criteria isNotNull();
 	}

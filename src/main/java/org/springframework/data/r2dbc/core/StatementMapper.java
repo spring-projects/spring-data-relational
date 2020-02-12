@@ -460,11 +460,12 @@ public interface StatementMapper {
 	class UpdateSpec {
 
 		private final SqlIdentifier table;
+		@Nullable
 		private final Update update;
 
 		private final @Nullable Criteria criteria;
 
-		protected UpdateSpec(SqlIdentifier table, Update update, @Nullable Criteria criteria) {
+		protected UpdateSpec(SqlIdentifier table, @Nullable Update update, @Nullable Criteria criteria) {
 
 			this.table = table;
 			this.update = update;
@@ -506,6 +507,7 @@ public interface StatementMapper {
 			return this.table;
 		}
 
+		@Nullable
 		public Update getUpdate() {
 			return this.update;
 		}

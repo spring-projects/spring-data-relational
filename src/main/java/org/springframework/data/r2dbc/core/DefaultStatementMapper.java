@@ -255,22 +255,11 @@ class DefaultStatementMapper implements StatementMapper {
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.StatementMapper#toSql(SqlIdentifier)
 	 */
-	public String toSql(SqlIdentifier identifier) {
+	private String toSql(SqlIdentifier identifier) {
 
 		Assert.notNull(identifier, "SqlIdentifier must not be null");
 
 		return identifier.toSql(this.dialect.getIdentifierProcessing());
-	}
-
-	private List<String> toSql(List<SqlIdentifier> identifiers) {
-
-		List<String> list = new ArrayList<>(identifiers.size());
-
-		for (SqlIdentifier sqlIdentifier : identifiers) {
-			list.add(toSql(sqlIdentifier));
-		}
-
-		return list;
 	}
 
 	/**
@@ -284,7 +273,8 @@ class DefaultStatementMapper implements StatementMapper {
 		private final RenderContext renderContext;
 		private final Bindings bindings;
 
-		public DefaultPreparedOperation(T source, RenderContext renderContext, Bindings bindings) {
+		DefaultPreparedOperation(T source, RenderContext renderContext, Bindings bindings) {
+
 			this.source = source;
 			this.renderContext = renderContext;
 			this.bindings = bindings;

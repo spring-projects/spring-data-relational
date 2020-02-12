@@ -68,6 +68,7 @@ public class Query {
 	}
 
 	private Query(@Nullable Criteria criteria, List<SqlIdentifier> columns, Sort sort, int limit, long offset) {
+
 		this.criteria = criteria;
 		this.columns = columns;
 		this.sort = sort;

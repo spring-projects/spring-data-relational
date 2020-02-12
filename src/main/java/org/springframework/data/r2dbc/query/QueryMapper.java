@@ -156,8 +156,8 @@ public class QueryMapper {
 			Field field = createPropertyField(entity, column.getName());
 			Table table = column.getTable();
 
-			return column instanceof Aliased ? table.column(field.getMappedColumnName()).as(((Aliased) column).getAlias())
-					: table.column(field.getMappedColumnName());
+			Column columnFromTable = table.column(field.getMappedColumnName());
+			return column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable;
 		}
 
 		if (expression instanceof SimpleFunction) {

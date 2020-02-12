@@ -52,17 +52,14 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 	static class ReactiveSelectSupport<T> implements ReactiveSelect<T> {
 
 		private final R2dbcEntityTemplate template;
-
 		private final Class<?> domainType;
-
 		private final Class<T> returnType;
-
 		private final Query query;
-
 		private final @Nullable SqlIdentifier tableName;
 
 		ReactiveSelectSupport(R2dbcEntityTemplate template, Class<?> domainType, Class<T> returnType, Query query,
 				@Nullable SqlIdentifier tableName) {
+
 			this.template = template;
 			this.domainType = domainType;
 			this.returnType = returnType;

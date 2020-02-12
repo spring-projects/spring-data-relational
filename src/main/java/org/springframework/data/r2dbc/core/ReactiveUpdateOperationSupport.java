@@ -52,15 +52,13 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 	static class ReactiveUpdateSupport implements ReactiveUpdate, TerminatingUpdate {
 
 		private final R2dbcEntityTemplate template;
-
 		private final Class<?> domainType;
-
 		private final Query query;
-
 		private final @Nullable SqlIdentifier tableName;
 
 		ReactiveUpdateSupport(R2dbcEntityTemplate template, Class<?> domainType, Query query,
 				@Nullable SqlIdentifier tableName) {
+
 			this.template = template;
 			this.domainType = domainType;
 			this.query = query;

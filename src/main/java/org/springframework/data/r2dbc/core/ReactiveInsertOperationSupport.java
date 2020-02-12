@@ -50,12 +50,11 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 	static class ReactiveInsertSupport<T> implements ReactiveInsert<T> {
 
 		private final R2dbcEntityTemplate template;
-
 		private final Class<T> domainType;
-
 		private final @Nullable SqlIdentifier tableName;
 
 		ReactiveInsertSupport(R2dbcEntityTemplate template, Class<T> domainType, @Nullable SqlIdentifier tableName) {
+
 			this.template = template;
 			this.domainType = domainType;
 			this.tableName = tableName;
