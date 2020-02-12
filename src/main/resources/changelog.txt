@@ -1,6 +1,19 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.0.M3 (2020-02-12)
+----------------------------------------
+* DATAJDBC-484 - Date related tests in JdbcRepositoryIntegrationTests fail with Java 11.
+* DATAJDBC-483 - Correct reference docs.
+* DATAJDBC-481 - Immutable entity class vs optimistic locking: version-field not incremented by save().
+* DATAJDBC-479 - Use SqlIdentifier in Table and Column name.
+* DATAJDBC-478 - Expose arguments of o.s.d.r.c.sql.SimpleFunction.
+* DATAJDBC-474 - Release 2.0 M3 (Neumann).
+* DATAJDBC-464 - Apply conversions to parameters of methods.
+* DATAJDBC-386 - Always quote identifiers.
+* DATAJDBC-101 - Support for PagingRepositories.
+
+
 Changes in version 2.0.0.M2 (2020-01-17)
 ----------------------------------------
 * DATAJDBC-473 - Release 2.0 M2 (Neumann).
@@ -350,6 +363,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
