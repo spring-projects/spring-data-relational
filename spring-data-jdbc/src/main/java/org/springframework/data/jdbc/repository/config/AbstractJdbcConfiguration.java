@@ -48,6 +48,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Mark Paluch
  * @author Michael Simons
  * @author Christoph Strobl
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
@@ -133,7 +134,7 @@ public class AbstractJdbcConfiguration {
 	}
 
 	@Bean
-	Dialect dialect() {
+	public Dialect dialect() {
 		return HsqlDbDialect.INSTANCE;
 	}
 }
