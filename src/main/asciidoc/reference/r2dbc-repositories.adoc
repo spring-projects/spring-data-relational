@@ -149,6 +149,35 @@ The result of a modifying query can be:
 The `@Modifying` annotation is only relevant in combination with the `@Query` annotation.
 Derived custom methods do not require this annotation.
 
+[[r2dbc.entity-persistence.state-detection-strategies]]
+=== Entity State Detection Strategies
+
+The following table describes the strategies that Spring Data R2DBC offers for detecting whether an entity is new:
+
+.Options for detection whether an entity is new in Spring Data R2DBC
+[options = "autowidth"]
+|===============
+|Id-Property inspection (the default)   |By default, the `save()` method inspects the identifier property of the given entity.
+If the identifier property is `null`, then the entity is assumed to be new. Otherwise, it is assumed exist in the datbase.
+|Implementing `Persistable`             |If an entity implements `Persistable`, Spring Data R2DBC delegates the new detection to the `isNew(…)` method of the entity.
+See the link:$$https://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[Javadoc] for details.
+|Implementing `EntityInformation`       |You can customize the `EntityInformation` abstraction used in `SimpleR2dbcRepository`  by creating a subclass of `R2dbcRepositoryFactory` and overriding `getEntityInformation(…)`.
+You then have to register the custom implementation of `R2dbcRepositoryFactory` as a Spring bean.
+Note that this should rarely be necessary. See the link:{spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/repository/support/R2dbcRepositoryFactory.html[Javadoc] for details.
+|===============
+
+[[r2dbc.entity-persistence.id-generation]]
+=== ID Generation
+
+Spring Data R2DBC uses the ID to identify entities.
+The ID of an entity must be annotated with Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Id.html[`@Id`] annotation.
+
+When your database has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
+
+One important constraint is that, after saving an entity, the entity must not be new anymore.
+Note that whether an entity is new is part of the entity's state.
+With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
+
 :projection-collection: Flux
 include::../{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+2]
 
