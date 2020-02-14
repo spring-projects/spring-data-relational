@@ -37,6 +37,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Bastian Wilhelm
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 class WritingContext {
 
@@ -73,14 +74,17 @@ class WritingContext {
 
 	/**
 	 * Leaves out the isNew check as defined in #DATAJDBC-282
+	 * Possible Deadlocks in Execution Order in #DATAJDBC-488
 	 *
 	 * @return List of {@link DbAction}s
 	 * @see <a href="https://jira.spring.io/browse/DATAJDBC-282">DAJDBC-282</a>
+	 * @see <a href="https://jira.spring.io/browse/DATAJDBC-488">DAJDBC-488</a>
 	 */
 	List<DbAction<?>> update() {
 
-		List<DbAction<?>> actions = new ArrayList<>(deleteReferenced());
+		List<DbAction<?>> actions = new ArrayList<>();
 		actions.add(setRootAction(new DbAction.UpdateRoot<>(entity)));
+		actions.addAll(deleteReferenced());
 		actions.addAll(insertReferenced());
 		return actions;
 	}
@@ -94,8 +98,8 @@ class WritingContext {
 			actions.addAll(insertReferenced());
 		} else {
 
-			actions.addAll(deleteReferenced());
 			actions.add(setRootAction(new DbAction.UpdateRoot<>(entity)));
+			actions.addAll(deleteReferenced());
 			actions.addAll(insertReferenced());
 		}
 

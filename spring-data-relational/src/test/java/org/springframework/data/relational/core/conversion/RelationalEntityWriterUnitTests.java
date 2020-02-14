@@ -49,6 +49,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Bastian Wilhelm
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RelationalEntityWriterUnitTests {
@@ -156,9 +157,9 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn) //
-				.containsExactly( //
-						tuple(Delete.class, Element.class, "other", null, false), //
-						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
+				.containsExactly(
+						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
+						tuple(Delete.class, Element.class, "other", null, false)	//
 				);
 	}
 
@@ -180,8 +181,8 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class, "other", null, false), //
 						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
+						tuple(Delete.class, Element.class, "other", null, false), //
 						tuple(Insert.class, Element.class, "other", Element.class, true) //
 				);
 	}
@@ -291,9 +292,9 @@ public class RelationalEntityWriterUnitTests {
 				DbActionTestSupport::actualEntityType, //
 				DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
+						tuple(UpdateRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false), //
 						tuple(Delete.class, Element.class, "other.element", null, false),
 						tuple(Delete.class, CascadingReferenceMiddleElement.class, "other", null, false),
-						tuple(UpdateRoot.class, CascadingReferenceEntity.class, "", CascadingReferenceEntity.class, false), //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
 								true), //
 						tuple(Insert.class, CascadingReferenceMiddleElement.class, "other", CascadingReferenceMiddleElement.class,
@@ -447,8 +448,8 @@ public class RelationalEntityWriterUnitTests {
 						this::getMapKey, //
 						DbActionTestSupport::extractPath) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(UpdateRoot.class, MapContainer.class, null, ""), //
+						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(Insert.class, Element.class, "one", "elements") //
 				);
 	}
@@ -469,8 +470,8 @@ public class RelationalEntityWriterUnitTests {
 						this::getListKey, //
 						DbActionTestSupport::extractPath) //
 				.containsExactly( //
-						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(UpdateRoot.class, ListContainer.class, null, ""), //
+						tuple(Delete.class, Element.class, null, "elements"), //
 						tuple(Insert.class, Element.class, 0, "elements") //
 				);
 	}
@@ -494,9 +495,9 @@ public class RelationalEntityWriterUnitTests {
 						a -> getQualifier(a, listMapContainerElements), //
 						DbActionTestSupport::extractPath) //
 				.containsExactly( //
+						tuple(UpdateRoot.class, ListMapContainer.class, null, null, ""), //
 						tuple(Delete.class, Element.class, null, null, "maps.elements"), //
 						tuple(Delete.class, MapContainer.class, null, null, "maps"), //
-						tuple(UpdateRoot.class, ListMapContainer.class, null, null, ""), //
 						tuple(Insert.class, MapContainer.class, 0, null, "maps"), //
 						tuple(Insert.class, Element.class, null, "one", "maps.elements") //
 				);
@@ -521,9 +522,9 @@ public class RelationalEntityWriterUnitTests {
 						a -> getQualifier(a, noIdListMapContainerElements), //
 						DbActionTestSupport::extractPath) //
 				.containsExactly( //
+						tuple(UpdateRoot.class, NoIdListMapContainer.class, null, null, ""), //
 						tuple(Delete.class, NoIdElement.class, null, null, "maps.elements"), //
 						tuple(Delete.class, NoIdMapContainer.class, null, null, "maps"), //
-						tuple(UpdateRoot.class, NoIdListMapContainer.class, null, null, ""), //
 						tuple(Insert.class, NoIdMapContainer.class, 0, null, "maps"), //
 						tuple(Insert.class, NoIdElement.class, 0, "one", "maps.elements") //
 				);
