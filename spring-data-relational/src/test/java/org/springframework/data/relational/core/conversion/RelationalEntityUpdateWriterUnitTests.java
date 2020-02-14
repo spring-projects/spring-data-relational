@@ -30,6 +30,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * Unit tests for the {@link RelationalEntityUpdateWriter}
  *
  * @author Thomas Lang
+ * @author Myeonghyeon Lee
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RelationalEntityUpdateWriterUnitTests {
@@ -51,8 +52,8 @@ public class RelationalEntityUpdateWriterUnitTests {
 				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath, DbActionTestSupport::actualEntityType,
 						DbActionTestSupport::isWithDependsOn) //
 				.containsExactly( //
-						tuple(DbAction.Delete.class, Element.class, "other", null, false), //
-						tuple(DbAction.UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false) //
+						tuple(DbAction.UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
+						tuple(DbAction.Delete.class, Element.class, "other", null, false)	//
 				);
 	}
 
