@@ -54,6 +54,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Fei Dong
+ * @author Myeonghyeon Lee
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -110,13 +111,15 @@ public class TestConfiguration {
 
 	@Bean
 	JdbcConverter relationalConverter(RelationalMappingContext mappingContext, @Lazy RelationResolver relationResolver,
-			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template) {
+			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
+			Dialect dialect) {
 
 		return new BasicJdbcConverter( //
 				mappingContext, //
 				relationResolver, //
 				conversions, //
-				new DefaultJdbcTypeFactory(template.getJdbcOperations()) //
+				new DefaultJdbcTypeFactory(template.getJdbcOperations()), //
+				dialect.getIdentifierProcessing()
 		);
 	}
 }

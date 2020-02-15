@@ -48,6 +48,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Mark Paluch
  * @author Michael Simons
  * @author Christoph Strobl
+ * @author Myeonghyeon Lee
  * @deprecated Use {@link AbstractJdbcConfiguration} instead.
  */
 @Configuration
@@ -79,9 +80,9 @@ public class JdbcConfiguration {
 	 */
 	@Bean
 	public RelationalConverter relationalConverter(RelationalMappingContext mappingContext,
-			@Lazy RelationResolver relationalResolver) {
+			@Lazy RelationResolver relationalResolver, Dialect dialect) {
 		return new BasicJdbcConverter(mappingContext, relationalResolver, jdbcCustomConversions(),
-				JdbcTypeFactory.unsupported());
+				JdbcTypeFactory.unsupported(), dialect.getIdentifierProcessing());
 	}
 
 	/**

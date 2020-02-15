@@ -49,6 +49,7 @@ import org.springframework.jdbc.support.KeyHolder;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 public class DefaultDataAccessStrategyUnitTests {
 
@@ -72,7 +73,7 @@ public class DefaultDataAccessStrategyUnitTests {
 		Dialect dialect = HsqlDbDialect.INSTANCE;
 
 		converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
-				new DefaultJdbcTypeFactory(jdbcOperations));
+				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
 		accessStrategy = new DefaultDataAccessStrategy( //
 				new SqlGeneratorSource(context, converter, dialect), //
 				context, //
@@ -115,12 +116,13 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
 
+		Dialect dialect = HsqlDbDialect.INSTANCE;
 		JdbcConverter converter = new BasicJdbcConverter(context, relationResolver,
 				new JdbcCustomConversions(Arrays.asList(BooleanToStringConverter.INSTANCE, StringToBooleanConverter.INSTANCE)),
-				new DefaultJdbcTypeFactory(jdbcOperations));
+				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
 
 		DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
-				new SqlGeneratorSource(context, converter, HsqlDbDialect.INSTANCE), //
+				new SqlGeneratorSource(context, converter, dialect), //
 				context, //
 				converter, //
 				namedJdbcOperations);
