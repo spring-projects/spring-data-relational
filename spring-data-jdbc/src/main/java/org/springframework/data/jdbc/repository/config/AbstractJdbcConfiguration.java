@@ -37,7 +37,6 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
@@ -48,6 +47,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Mark Paluch
  * @author Michael Simons
  * @author Christoph Strobl
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
@@ -80,17 +80,18 @@ public class AbstractJdbcConfiguration {
 	 */
 	@Bean
 	public JdbcConverter jdbcConverter(JdbcMappingContext mappingContext, NamedParameterJdbcOperations operations,
-			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions) {
+			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions, Dialect dialect) {
 
 		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations());
 
-		return new BasicJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory);
+		return new BasicJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory,
+			dialect.getIdentifierProcessing());
 	}
 
 	/**
 	 * Register custom {@link Converter}s in a {@link JdbcCustomConversions} object if required. These
 	 * {@link JdbcCustomConversions} will be registered with the
-	 * {@link #jdbcConverter(JdbcMappingContext, NamedParameterJdbcOperations, RelationResolver, JdbcCustomConversions)}.
+	 * {@link #jdbcConverter(JdbcMappingContext, NamedParameterJdbcOperations, RelationResolver, JdbcCustomConversions, Dialect)}.
 	 * Returns an empty {@link JdbcCustomConversions} instance by default.
 	 *
 	 * @return will never be {@literal null}.

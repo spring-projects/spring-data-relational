@@ -37,7 +37,6 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
@@ -71,14 +70,14 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
 	private final JdbcTypeFactory typeFactory;
-	private final IdentifierProcessing identifierProcessing = HsqlDbDialect.INSTANCE.getIdentifierProcessing();
+	private final IdentifierProcessing identifierProcessing;
 
 	private final RelationResolver relationResolver;
 
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and a
 	 * {@link JdbcTypeFactory#unsupported() no-op type factory} throwing {@link UnsupportedOperationException} on type
-	 * creation. Use {@link #BasicJdbcConverter(MappingContext, RelationResolver, CustomConversions, JdbcTypeFactory)}
+	 * creation. Use {@link #BasicJdbcConverter(MappingContext, RelationResolver, CustomConversions, JdbcTypeFactory, IdentifierProcessing)}
 	 * (MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and large objects into JDBC-specific types.
 	 *
 	 * @param context must not be {@literal null}.
@@ -94,6 +93,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		this.relationResolver = relationResolver;
 		this.typeFactory = JdbcTypeFactory.unsupported();
+		this.identifierProcessing = IdentifierProcessing.ANSI;
 	}
 
 	/**
@@ -104,17 +104,37 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 * @param typeFactory must not be {@literal null}
 	 * @since 1.1
 	 */
+	@Deprecated
 	public BasicJdbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory) {
+
+		this(context, relationResolver, conversions, typeFactory, IdentifierProcessing.ANSI);
+	}
+
+	/**
+	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
+	 *
+	 * @param context must not be {@literal null}.
+	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
+	 * @param typeFactory must not be {@literal null}
+	 * @param identifierProcessing must not be {@literal null}
+	 * @since 2.0
+	 */
+	public BasicJdbcConverter(
+		MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+		RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory,
+		IdentifierProcessing identifierProcessing) {
 
 		super(context, conversions);
 
 		Assert.notNull(typeFactory, "JdbcTypeFactory must not be null");
 		Assert.notNull(relationResolver, "RelationResolver must not be null");
+		Assert.notNull(identifierProcessing, "IdentifierProcessing must not be null");
 
 		this.relationResolver = relationResolver;
 		this.typeFactory = typeFactory;
+		this.identifierProcessing = identifierProcessing;
 	}
 
 	@Nullable

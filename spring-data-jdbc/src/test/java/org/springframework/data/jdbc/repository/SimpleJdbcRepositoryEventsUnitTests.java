@@ -47,6 +47,7 @@ import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
@@ -72,6 +73,7 @@ import org.springframework.lang.Nullable;
  * @author Oliver Gierke
  * @author Myeonghyeon Lee
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  */
 public class SimpleJdbcRepositoryEventsUnitTests {
 
@@ -86,9 +88,10 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		RelationalMappingContext context = new JdbcMappingContext();
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
+		Dialect dialect = HsqlDbDialect.INSTANCE;
 		JdbcConverter converter = new BasicJdbcConverter(context, delegatingDataAccessStrategy, new JdbcCustomConversions(),
-				new DefaultJdbcTypeFactory(operations.getJdbcOperations()));
-		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, HsqlDbDialect.INSTANCE);
+				new DefaultJdbcTypeFactory(operations.getJdbcOperations()), dialect.getIdentifierProcessing());
+		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, dialect);
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
