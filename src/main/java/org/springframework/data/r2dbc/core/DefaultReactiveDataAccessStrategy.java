@@ -272,6 +272,15 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getBindValue(SettableValue)
+	 */
+	@Override
+	public SettableValue getBindValue(SettableValue value) {
+		return this.updateMapper.getBindValue(value);
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getRowMapper(java.lang.Class)
 	 */
 	@Override

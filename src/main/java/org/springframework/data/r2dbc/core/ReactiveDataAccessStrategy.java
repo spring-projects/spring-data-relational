@@ -59,6 +59,15 @@ public interface ReactiveDataAccessStrategy {
 	OutboundRow getOutboundRow(Object object);
 
 	/**
+	 * Return a potentially converted {@link SettableValue} for strategies that support type conversion.
+	 *
+	 * @param value must not be {@literal null}.
+	 * @return
+	 * @since 1.1
+	 */
+	SettableValue getBindValue(SettableValue value);
+
+	/**
 	 * Returns a {@link BiFunction row mapping function} to map {@link Row rows} to {@code T}.
 	 *
 	 * @param typeToRead

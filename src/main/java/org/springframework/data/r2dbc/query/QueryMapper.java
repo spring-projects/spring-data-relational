@@ -252,6 +252,21 @@ public class QueryMapper {
 		return createCondition(column, mappedValue, typeHint, bindings, criteria.getComparator());
 	}
 
+	/**
+	 * Potentially convert the {@link SettableValue}.
+	 *
+	 * @param value
+	 * @return
+	 */
+	public SettableValue getBindValue(SettableValue value) {
+
+		if (value.isEmpty()) {
+			return SettableValue.empty(converter.getTargetType(value.getType()));
+		}
+
+		return SettableValue.from(convertValue(value.getValue(), ClassTypeInformation.OBJECT));
+	}
+
 	@Nullable
 	protected Object convertValue(@Nullable Object value, TypeInformation<?> typeInformation) {
 
@@ -264,13 +279,15 @@ public class QueryMapper {
 			List<Object> mapped = new ArrayList<>();
 
 			for (Object o : (Iterable<?>) value) {
-				mapped.add(this.converter.writeValue(o, typeInformation.getActualType()));
+				mapped.add(convertValue(o, typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
+						: ClassTypeInformation.OBJECT));
 			}
+
 			return mapped;
 		}
 
-		if (typeInformation.getType().isAssignableFrom(value.getClass())
-				|| (typeInformation.getType().isArray() && value.getClass().isArray())) {
+		if (value.getClass().isArray()
+				&& (ClassTypeInformation.OBJECT.equals(typeInformation) || typeInformation.isCollectionLike())) {
 			return value;
 		}
 

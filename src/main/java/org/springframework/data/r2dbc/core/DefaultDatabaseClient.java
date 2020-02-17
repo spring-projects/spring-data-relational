@@ -292,26 +292,29 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		return new DefaultGenericExecuteSpec(sqlSupplier);
 	}
 
-	private static void bindByName(Statement statement, Map<String, SettableValue> byName) {
+	private void bindByName(Statement statement, Map<String, SettableValue> byName) {
 
 		byName.forEach((name, o) -> {
 
-			if (o.getValue() != null) {
-				statement.bind(name, o.getValue());
+			SettableValue converted = dataAccessStrategy.getBindValue(o);
+			if (converted.getValue() != null) {
+
+				statement.bind(name, converted.getValue());
 			} else {
-				statement.bindNull(name, o.getType());
+				statement.bindNull(name, converted.getType());
 			}
 		});
 	}
 
-	private static void bindByIndex(Statement statement, Map<Integer, SettableValue> byIndex) {
+	private void bindByIndex(Statement statement, Map<Integer, SettableValue> byIndex) {
 
 		byIndex.forEach((i, o) -> {
 
-			if (o.getValue() != null) {
-				statement.bind(i, o.getValue());
+			SettableValue converted = dataAccessStrategy.getBindValue(o);
+			if (converted.getValue() != null) {
+				statement.bind(i, converted.getValue());
 			} else {
-				statement.bindNull(i, o.getType());
+				statement.bindNull(i, converted.getType());
 			}
 		});
 	}
@@ -366,12 +369,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 						if (byName.containsKey(name)) {
 							remainderByName.remove(name);
-							return byName.get(name);
+							return dataAccessStrategy.getBindValue(byName.get(name));
 						}
 
 						if (byIndex.containsKey(index)) {
 							remainderByIndex.remove(index);
-							return byIndex.get(index);
+							return dataAccessStrategy.getBindValue(byIndex.get(index));
 						}
 
 						return null;

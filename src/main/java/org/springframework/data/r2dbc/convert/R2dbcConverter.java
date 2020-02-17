@@ -64,6 +64,15 @@ public interface R2dbcConverter
 	Object getArrayValue(ArrayColumns arrayColumns, RelationalPersistentProperty property, Object value);
 
 	/**
+	 * Return the target type for a value considering registered converters.
+	 *
+	 * @param valueType must not be {@literal null}.
+	 * @return
+	 * @since 1.1
+	 */
+	Class<?> getTargetType(Class<?> valueType);
+
+	/**
 	 * Returns a {@link java.util.function.Function} that populates the id property of the {@code object} from a
 	 * {@link Row}.
 	 *
@@ -81,4 +90,5 @@ public interface R2dbcConverter
 	 * @return
 	 */
 	<R> R read(Class<R> type, Row source, RowMetadata metadata);
+
 }

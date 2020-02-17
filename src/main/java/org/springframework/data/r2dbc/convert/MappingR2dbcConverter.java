@@ -522,6 +522,20 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		return value;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#getTargetType(Class)
+	 */
+	@Override
+	public Class<?> getTargetType(Class<?> valueType) {
+
+		Optional<Class<?>> writeTarget = getConversions().getCustomWriteTarget(valueType);
+
+		return writeTarget.orElseGet(() -> {
+			return Enum.class.isAssignableFrom(valueType) ? String.class : valueType;
+		});
+	}
+
 	// ----------------------------------
 	// Id handling
 	// ----------------------------------
