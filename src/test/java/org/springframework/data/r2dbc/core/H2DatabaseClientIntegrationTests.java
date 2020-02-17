@@ -19,8 +19,6 @@ import io.r2dbc.spi.ConnectionFactory;
 
 import javax.sql.DataSource;
 
-import org.junit.Ignore;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
 
 /**
@@ -46,6 +44,5 @@ public class H2DatabaseClientIntegrationTests extends AbstractDatabaseClientInte
 	}
 
 	@Override
-	@Ignore("See https://github.com/r2dbc/r2dbc-h2/issues/66")
 	public void shouldTranslateDuplicateKeyException() {}
 }

@@ -28,7 +28,6 @@ import java.util.UUID;
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.core.convert.converter.Converter;
@@ -145,11 +144,6 @@ public class MySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientI
 				.consumeNextWith(actual -> assertThat(actual.getUuidValue()).isNull()) //
 				.verifyComplete();
 	}
-
-	@Ignore("https://github.com/mirromutth/r2dbc-mysql/issues/62")
-	@Test
-	@Override
-	public void insertTypedObjectWithBinary() {}
 
 	@Table("boolean_mapping")
 	@Data

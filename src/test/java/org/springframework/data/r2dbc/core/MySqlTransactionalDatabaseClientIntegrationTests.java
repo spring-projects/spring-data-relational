@@ -23,8 +23,6 @@ import java.time.Duration;
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
@@ -71,17 +69,6 @@ public class MySqlTransactionalDatabaseClientIntegrationTests
 				.fetch().rowsUpdated() //
 				.delayElement(Duration.ofMillis(50)) //
 				.then();
-	}
-
-	@Test
-	@Ignore("https://github.com/mirromutth/r2dbc-mysql/issues/45")
-	@Override
-	public void emitTransactionIds() {}
-
-	@Test
-	@Ignore("https://github.com/mirromutth/r2dbc-mysql/issues/45")
-	public void emitTransactionIdsUsingManagedTransactions() {
-		super.emitTransactionIdsUsingManagedTransactions();
 	}
 
 	@Override
