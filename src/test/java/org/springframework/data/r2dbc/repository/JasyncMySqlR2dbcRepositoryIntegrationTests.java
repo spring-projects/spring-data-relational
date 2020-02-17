@@ -22,7 +22,6 @@ import reactor.core.publisher.Mono;
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import org.springframework.context.annotation.Bean;
@@ -45,7 +44,6 @@ import org.springframework.test.context.junit4.SpringRunner;
  */
 @RunWith(SpringRunner.class)
 @ContextConfiguration
-@Ignore("https://github.com/jasync-sql/jasync-sql/issues/150")
 public class JasyncMySqlR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIntegrationTests {
 
 	@ClassRule public static final ExternalDatabase database = MySqlTestSupport.database();
