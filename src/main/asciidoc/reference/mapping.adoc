@@ -52,14 +52,13 @@ public class MyAppConfig extends AbstractR2dbcConfiguration {
 
   // the following are optional
 
-  @Bean
   @Override
-  public R2dbcCustomConversions r2dbcCustomConversions() {
+  protected List<Object> getCustomConverters() {
 
     List<Converter<?, ?>> converterList = new ArrayList<Converter<?, ?>>();
     converterList.add(new org.springframework.data.r2dbc.test.PersonReadConverter());
     converterList.add(new org.springframework.data.r2dbc.test.PersonWriteConverter());
-    return new R2dbcCustomConversions(getStoreConversions(), converterList);
+    return converterList;
   }
 }
 ----
@@ -224,6 +223,8 @@ The following example of a Spring Converter implementation converts from a `Row`
 }
 ----
 ====
+
+NOTE: R2DBC uses boxed primitives (`Integer.class` instead of `int.class`) to return primitive values.
 
 The following example converts from a `Person` to a `OutboundRow`:
 
