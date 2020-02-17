@@ -30,6 +30,8 @@ import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.Table;
 
 /**
@@ -54,6 +56,64 @@ public class QueryMapperUnitTests {
 
 		bindings.getBindings().apply(bindTarget);
 		verify(bindTarget).bind(0, "foo");
+	}
+
+	@Test // gh-300
+	public void shouldMapSimpleCriteriaWithoutEntity() {
+
+		Criteria criteria = Criteria.where("name").is("foo");
+
+		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);
+
+		BoundCondition bindings = mapper.getMappedObject(markers.create(), criteria, Table.create("person"), null);
+
+		assertThat(bindings.getCondition().toString()).isEqualTo("person.name = ?[$1]");
+
+		bindings.getBindings().apply(bindTarget);
+		verify(bindTarget).bind(0, "foo");
+	}
+
+	@Test // gh-300
+	public void shouldMapExpression() {
+
+		Table table = Table.create("my_table").as("my_aliased_table");
+
+		Expression mappedObject = mapper.getMappedObject(table.column("alternative").as("my_aliased_col"),
+				converter.getMappingContext().getRequiredPersistentEntity(Person.class));
+
+		assertThat(mappedObject).hasToString("my_aliased_table.another_name AS my_aliased_col");
+	}
+
+	@Test // gh-300
+	public void shouldMapCountFunction() {
+
+		Table table = Table.create("my_table").as("my_aliased_table");
+
+		Expression mappedObject = mapper.getMappedObject(Functions.count(table.column("alternative")),
+				converter.getMappingContext().getRequiredPersistentEntity(Person.class));
+
+		assertThat(mappedObject).hasToString("COUNT(my_aliased_table.another_name)");
+	}
+
+	@Test // gh-300
+	public void shouldMapExpressionToUnknownColumn() {
+
+		Table table = Table.create("my_table").as("my_aliased_table");
+
+		Expression mappedObject = mapper.getMappedObject(table.column("unknown").as("my_aliased_col"),
+				converter.getMappingContext().getRequiredPersistentEntity(Person.class));
+
+		assertThat(mappedObject).hasToString("my_aliased_table.unknown AS my_aliased_col");
+	}
+
+	@Test // gh-300
+	public void shouldMapExpressionWithoutEntity() {
+
+		Table table = Table.create("my_table").as("my_aliased_table");
+
+		Expression mappedObject = mapper.getMappedObject(table.column("my_col").as("my_aliased_col"), null);
+
+		assertThat(mappedObject).hasToString("my_aliased_table.my_col AS my_aliased_col");
 	}
 
 	@Test // gh-64
