@@ -224,6 +224,10 @@ The following example of a Spring Converter implementation converts from a `Row`
 ----
 ====
 
+Please note that converters get applied on singular properties.
+Collection properties (e.g. `Collection<Person>`) are iterated and converted element-wise.
+Collection converters (e.g. `Converter<List<Person>>, OutboundRow`) are not supported.
+
 NOTE: R2DBC uses boxed primitives (`Integer.class` instead of `int.class`) to return primitive values.
 
 The following example converts from a `Person` to a `OutboundRow`:
