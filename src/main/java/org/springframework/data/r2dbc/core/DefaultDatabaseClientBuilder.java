@@ -17,6 +17,7 @@
 package org.springframework.data.r2dbc.core;
 
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Statement;
 
 import java.util.function.Consumer;
 
@@ -40,6 +41,8 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 	private @Nullable R2dbcExceptionTranslator exceptionTranslator;
 
+	private ExecuteFunction executeFunction = Statement::execute;
+
 	private ReactiveDataAccessStrategy accessStrategy;
 
 	private boolean namedParameters = true;
@@ -54,6 +57,7 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 
 		this.connectionFactory = other.connectionFactory;
 		this.exceptionTranslator = other.exceptionTranslator;
+		this.executeFunction = other.executeFunction;
 		this.accessStrategy = other.accessStrategy;
 		this.namedParameters = other.namedParameters;
 		this.projectionFactory = other.projectionFactory;
@@ -82,6 +86,19 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 		Assert.notNull(exceptionTranslator, "R2dbcExceptionTranslator must not be null!");
 
 		this.exceptionTranslator = exceptionTranslator;
+		return this;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.DatabaseClient.Builder#executeFunction(org.springframework.data.r2dbc.core.ExecuteFunction)
+	 */
+	@Override
+	public Builder executeFunction(ExecuteFunction executeFunction) {
+
+		Assert.notNull(executeFunction, "ExecuteFunction must not be null!");
+
+		this.executeFunction = executeFunction;
 		return this;
 	}
 
@@ -143,8 +160,8 @@ class DefaultDatabaseClientBuilder implements DatabaseClient.Builder {
 			accessStrategy = new DefaultReactiveDataAccessStrategy(dialect);
 		}
 
-		return new DefaultDatabaseClient(this.connectionFactory, exceptionTranslator, accessStrategy, namedParameters,
-				projectionFactory, new DefaultDatabaseClientBuilder(this));
+		return new DefaultDatabaseClient(this.connectionFactory, exceptionTranslator, executeFunction, accessStrategy,
+				namedParameters, projectionFactory, new DefaultDatabaseClientBuilder(this));
 	}
 
 	/*

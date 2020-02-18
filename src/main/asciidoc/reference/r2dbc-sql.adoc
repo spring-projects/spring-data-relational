@@ -134,7 +134,7 @@ In JDBC, the actual drivers translate `?` bind markers to database-native marker
 
 Spring Data R2DBC lets you use native bind markers or named bind markers with the `:name` syntax.
 
-Named parameter support leverages a `R2dbcDialect` instance  to expand named parameters to native bind markers at the time of query execution, which gives you a certain degree of query portability across various database vendors.
+Named parameter support leverages a `R2dbcDialect` instance to expand named parameters to native bind markers at the time of query execution, which gives you a certain degree of query portability across various database vendors.
 ****
 
 The query-preprocessor unrolls named `Collection` parameters into a series of bind markers to remove the need of dynamic query creation based on the number of arguments.
@@ -159,7 +159,7 @@ tuples.add(new Object[] {"John", 35});
 tuples.add(new Object[] {"Ann",  50});
 
 db.execute("SELECT id, name, state FROM table WHERE (name, age) IN (:tuples)")
-    .bind("tuples", tuples);
+    .bind("tuples", tuples)
 ----
 ====
 
@@ -171,6 +171,38 @@ The following example shows a simpler variant using `IN` predicates:
 [source,java]
 ----
 db.execute("SELECT id, name, state FROM table WHERE age IN (:ages)")
-    .bind("ages", Arrays.asList(35, 50));
+    .bind("ages", Arrays.asList(35, 50))
 ----
 ====
+
+[[r2dbc.datbaseclient.filter]]
+== Statement Filters
+
+You can register a `Statement` filter (`StatementFilterFunction`) through `DatabaseClient` to intercept and modify statements in their execution, as the following example shows:
+
+====
+[source,java]
+----
+db.execute("INSERT INTO table (name, state) VALUES(:name, :state)")
+    .filter((s, next) -> next.execute(s.returnGeneratedValues("id")))
+    .bind("name", …)
+    .bind("state", …)
+----
+====
+
+`DatabaseClient` exposes also simplified `filter(…)` overload accepting `UnaryOperator<Statement>`:
+
+====
+[source,java]
+----
+db.execute("INSERT INTO table (name, state) VALUES(:name, :state)")
+    .filter(s -> s.returnGeneratedValues("id"))
+    .bind("name", …)
+    .bind("state", …)
+
+db.execute("SELECT id, name, state FROM table")
+    .filter(s -> s.fetchSize(25))
+----
+====
+
+`StatementFilterFunction` allow filtering of the executed `Statement` and filtering of `Result` objects.

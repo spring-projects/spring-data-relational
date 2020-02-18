@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.core;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
@@ -26,6 +27,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import org.reactivestreams.Publisher;
 
@@ -37,6 +39,7 @@ import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.util.Assert;
 
 /**
  * A non-blocking, reactive client for performing database calls requests with Reactive Streams back pressure. Provides
@@ -143,6 +146,16 @@ public interface DatabaseClient {
 		Builder exceptionTranslator(R2dbcExceptionTranslator exceptionTranslator);
 
 		/**
+		 * Configures a {@link ExecuteFunction} to execute {@link Statement} objects.
+		 *
+		 * @param executeFunction must not be {@literal null}.
+		 * @return {@code this} {@link Builder}.
+		 * @since 1.1
+		 * @see Statement#execute()
+		 */
+		Builder executeFunction(ExecuteFunction executeFunction);
+
+		/**
 		 * Configures a {@link ReactiveDataAccessStrategy}.
 		 *
 		 * @param accessStrategy must not be {@literal null}.
@@ -186,7 +199,7 @@ public interface DatabaseClient {
 	/**
 	 * Contract for specifying a SQL call along with options leading to the exchange.
 	 */
-	interface GenericExecuteSpec extends BindSpec<GenericExecuteSpec> {
+	interface GenericExecuteSpec extends BindSpec<GenericExecuteSpec>, StatementFilterSpec<GenericExecuteSpec> {
 
 		/**
 		 * Define the target type the result should be mapped to. <br />
@@ -231,7 +244,7 @@ public interface DatabaseClient {
 	/**
 	 * Contract for specifying a SQL call along with options leading to the exchange.
 	 */
-	interface TypedExecuteSpec<T> extends BindSpec<TypedExecuteSpec<T>> {
+	interface TypedExecuteSpec<T> extends BindSpec<TypedExecuteSpec<T>>, StatementFilterSpec<TypedExecuteSpec<T>> {
 
 		/**
 		 * Define the target type the result should be mapped to. <br />
@@ -865,5 +878,32 @@ public interface DatabaseClient {
 		 * @param type must not be {@literal null}.
 		 */
 		S bindNull(String name, Class<?> type);
+	}
+
+	/**
+	 * Contract for applying a {@link StatementFilterFunction}.
+	 *
+	 * @since 1.1
+	 */
+	interface StatementFilterSpec<S extends StatementFilterSpec<S>> {
+
+		/**
+		 * Add the given filter to the end of the filter chain.
+		 *
+		 * @param filter the filter to be added to the chain.
+		 */
+		default S filter(UnaryOperator<Statement> filter) {
+
+			Assert.notNull(filter, "Statement FilterFunction must not be null!");
+
+			return filter((statement, next) -> next.execute(filter.apply(statement)));
+		}
+
+		/**
+		 * Add the given filter to the end of the filter chain.
+		 *
+		 * @param filter the filter to be added to the chain.
+		 */
+		S filter(StatementFilterFunction filter);
 	}
 }

@@ -78,6 +78,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	private final R2dbcExceptionTranslator exceptionTranslator;
 
+	private final ExecuteFunction executeFunction;
+
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 
 	private final boolean namedParameters;
@@ -87,11 +89,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	private final ProjectionFactory projectionFactory;
 
 	DefaultDatabaseClient(ConnectionFactory connector, R2dbcExceptionTranslator exceptionTranslator,
-			ReactiveDataAccessStrategy dataAccessStrategy, boolean namedParameters, ProjectionFactory projectionFactory,
-			DefaultDatabaseClientBuilder builder) {
+			ExecuteFunction executeFunction, ReactiveDataAccessStrategy dataAccessStrategy, boolean namedParameters,
+			ProjectionFactory projectionFactory, DefaultDatabaseClientBuilder builder) {
 
 		this.connector = connector;
 		this.exceptionTranslator = exceptionTranslator;
+		this.executeFunction = executeFunction;
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.namedParameters = namedParameters;
 		this.projectionFactory = projectionFactory;
@@ -264,25 +267,26 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	 * Customization hook.
 	 */
 	protected <T> DefaultTypedExecuteSpec<T> createTypedExecuteSpec(Map<Integer, SettableValue> byIndex,
-			Map<String, SettableValue> byName, Supplier<String> sqlSupplier, Class<T> typeToRead) {
-		return new DefaultTypedExecuteSpec<>(byIndex, byName, sqlSupplier, typeToRead);
+			Map<String, SettableValue> byName, Supplier<String> sqlSupplier, StatementFilterFunction filterFunction,
+			Class<T> typeToRead) {
+		return new DefaultTypedExecuteSpec<>(byIndex, byName, sqlSupplier, filterFunction, typeToRead);
 	}
 
 	/**
 	 * Customization hook.
 	 */
 	protected <T> DefaultTypedExecuteSpec<T> createTypedExecuteSpec(Map<Integer, SettableValue> byIndex,
-			Map<String, SettableValue> byName, Supplier<String> sqlSupplier,
+			Map<String, SettableValue> byName, Supplier<String> sqlSupplier, StatementFilterFunction filterFunction,
 			BiFunction<Row, RowMetadata, T> mappingFunction) {
-		return new DefaultTypedExecuteSpec<>(byIndex, byName, sqlSupplier, mappingFunction);
+		return new DefaultTypedExecuteSpec<>(byIndex, byName, sqlSupplier, filterFunction, mappingFunction);
 	}
 
 	/**
 	 * Customization hook.
 	 */
 	protected ExecuteSpecSupport createGenericExecuteSpec(Map<Integer, SettableValue> byIndex,
-			Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
-		return new DefaultGenericExecuteSpec(byIndex, byName, sqlSupplier);
+			Map<String, SettableValue> byName, Supplier<String> sqlSupplier, StatementFilterFunction filterFunction) {
+		return new DefaultGenericExecuteSpec(byIndex, byName, sqlSupplier, filterFunction);
 	}
 
 	/**
@@ -327,19 +331,22 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		final Map<Integer, SettableValue> byIndex;
 		final Map<String, SettableValue> byName;
 		final Supplier<String> sqlSupplier;
+		final StatementFilterFunction filterFunction;
 
 		ExecuteSpecSupport(Supplier<String> sqlSupplier) {
 
 			this.byIndex = Collections.emptyMap();
 			this.byName = Collections.emptyMap();
 			this.sqlSupplier = sqlSupplier;
+			this.filterFunction = StatementFilterFunctions.empty();
 		}
 
 		ExecuteSpecSupport(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
-				Supplier<String> sqlSupplier) {
+				Supplier<String> sqlSupplier, StatementFilterFunction filterFunction) {
 			this.byIndex = byIndex;
 			this.byName = byName;
 			this.sqlSupplier = sqlSupplier;
+			this.filterFunction = filterFunction;
 		}
 
 		<T> FetchSpec<T> exchange(Supplier<String> sqlSupplier, BiFunction<Row, RowMetadata, T> mappingFunction) {
@@ -404,7 +411,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				return statement;
 			};
 
-			Function<Connection, Flux<Result>> resultFunction = toExecuteFunction(sql, executeFunction);
+			Function<Connection, Flux<Result>> resultFunction = toFunction(sql, filterFunction, executeFunction);
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
@@ -426,7 +433,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				byIndex.put(index, SettableValue.fromOrEmpty(value, value.getClass()));
 			}
 
-			return createInstance(byIndex, this.byName, this.sqlSupplier);
+			return createInstance(byIndex, this.byName, this.sqlSupplier, this.filterFunction);
 		}
 
 		public ExecuteSpecSupport bindNull(int index, Class<?> type) {
@@ -436,7 +443,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Map<Integer, SettableValue> byIndex = new LinkedHashMap<>(this.byIndex);
 			byIndex.put(index, SettableValue.empty(type));
 
-			return createInstance(byIndex, this.byName, this.sqlSupplier);
+			return createInstance(byIndex, this.byName, this.sqlSupplier, this.filterFunction);
 		}
 
 		public ExecuteSpecSupport bind(String name, Object value) {
@@ -455,7 +462,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				byName.put(name, SettableValue.fromOrEmpty(value, value.getClass()));
 			}
 
-			return createInstance(this.byIndex, byName, this.sqlSupplier);
+			return createInstance(this.byIndex, byName, this.sqlSupplier, this.filterFunction);
 		}
 
 		public ExecuteSpecSupport bindNull(String name, Class<?> type) {
@@ -466,7 +473,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			Map<String, SettableValue> byName = new LinkedHashMap<>(this.byName);
 			byName.put(name, SettableValue.empty(type));
 
-			return createInstance(this.byIndex, byName, this.sqlSupplier);
+			return createInstance(this.byIndex, byName, this.sqlSupplier, this.filterFunction);
+		}
+
+		public ExecuteSpecSupport filter(StatementFilterFunction filter) {
+
+			Assert.notNull(filter, "Statement FilterFunction must not be null!");
+
+			return createInstance(this.byIndex, byName, this.sqlSupplier, this.filterFunction.andThen(filter));
 		}
 
 		private void assertNotPreparedOperation() {
@@ -476,8 +490,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		protected ExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
-				Supplier<String> sqlSupplier) {
-			return new ExecuteSpecSupport(byIndex, byName, sqlSupplier);
+				Supplier<String> sqlSupplier, StatementFilterFunction filterFunction) {
+			return new ExecuteSpecSupport(byIndex, byName, sqlSupplier, filterFunction);
 		}
 	}
 
@@ -487,8 +501,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	protected class DefaultGenericExecuteSpec extends ExecuteSpecSupport implements GenericExecuteSpec {
 
 		DefaultGenericExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
-				Supplier<String> sqlSupplier) {
-			super(byIndex, byName, sqlSupplier);
+				Supplier<String> sqlSupplier, StatementFilterFunction filterFunction) {
+			super(byIndex, byName, sqlSupplier, filterFunction);
 		}
 
 		DefaultGenericExecuteSpec(Supplier<String> sqlSupplier) {
@@ -500,7 +514,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
-			return createTypedExecuteSpec(this.byIndex, this.byName, this.sqlSupplier, resultType);
+			return createTypedExecuteSpec(this.byIndex, this.byName, this.sqlSupplier, this.filterFunction, resultType);
 		}
 
 		@Override
@@ -550,9 +564,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		public DefaultGenericExecuteSpec filter(StatementFilterFunction filter) {
+			return (DefaultGenericExecuteSpec) super.filter(filter);
+		}
+
+		@Override
 		protected ExecuteSpecSupport createInstance(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
-				Supplier<String> sqlSupplier) {
-			return createGenericExecuteSpec(byIndex, byName, sqlSupplier);
+				Supplier<String> sqlSupplier, StatementFilterFunction filterFunction) {
+			return createGenericExecuteSpec(byIndex, byName, sqlSupplier, filterFunction);
 		}
 	}
 
@@ -566,9 +585,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
 		DefaultTypedExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
-				Supplier<String> sqlSupplier, Class<T> typeToRead) {
+				Supplier<String> sqlSupplier, StatementFilterFunction filterFunction, Class<T> typeToRead) {
 
-			super(byIndex, byName, sqlSupplier);
+			super(byIndex, byName, sqlSupplier, filterFunction);
 
 			this.typeToRead = typeToRead;
 
@@ -581,9 +600,10 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		DefaultTypedExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
-				Supplier<String> sqlSupplier, BiFunction<Row, RowMetadata, T> mappingFunction) {
+				Supplier<String> sqlSupplier, StatementFilterFunction filterFunction,
+				BiFunction<Row, RowMetadata, T> mappingFunction) {
 
-			super(byIndex, byName, sqlSupplier);
+			super(byIndex, byName, sqlSupplier, filterFunction);
 
 			this.typeToRead = null;
 			this.mappingFunction = mappingFunction;
@@ -594,7 +614,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(resultType, "Result type must not be null!");
 
-			return createTypedExecuteSpec(this.byIndex, this.byName, this.sqlSupplier, resultType);
+			return createTypedExecuteSpec(this.byIndex, this.byName, this.sqlSupplier, this.filterFunction, resultType);
 		}
 
 		@Override
@@ -644,9 +664,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
+		public DefaultTypedExecuteSpec<T> filter(StatementFilterFunction filter) {
+			return (DefaultTypedExecuteSpec<T>) super.filter(filter);
+		}
+
+		@Override
 		protected DefaultTypedExecuteSpec<T> createInstance(Map<Integer, SettableValue> byIndex,
-				Map<String, SettableValue> byName, Supplier<String> sqlSupplier) {
-			return createTypedExecuteSpec(byIndex, byName, sqlSupplier, this.typeToRead);
+				Map<String, SettableValue> byName, Supplier<String> sqlSupplier, StatementFilterFunction filterFunction) {
+			return createTypedExecuteSpec(byIndex, byName, sqlSupplier, filterFunction, this.typeToRead);
 		}
 	}
 
@@ -735,7 +760,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			String sql = getRequiredSql(preparedOperation);
 			Function<Connection, Statement> selectFunction = wrapPreparedOperation(sql, preparedOperation);
-			Function<Connection, Flux<Result>> resultFunction = DefaultDatabaseClient.toExecuteFunction(sql, selectFunction);
+			Function<Connection, Flux<Result>> resultFunction = toFunction(sql, StatementFilterFunctions.empty(),
+					selectFunction);
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
@@ -1432,7 +1458,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		String sql = getRequiredSql(operation);
 		Function<Connection, Statement> insertFunction = wrapPreparedOperation(sql, operation)
 				.andThen(statement -> statement.returnGeneratedValues());
-		Function<Connection, Flux<Result>> resultFunction = toExecuteFunction(sql, insertFunction);
+		Function<Connection, Flux<Result>> resultFunction = toFunction(sql, StatementFilterFunctions.empty(),
+				insertFunction);
 
 		return new DefaultSqlResult<>(this, //
 				sql, //
@@ -1445,7 +1472,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		String sql = getRequiredSql(operation);
 		Function<Connection, Statement> executeFunction = wrapPreparedOperation(sql, operation);
-		Function<Connection, Flux<Result>> resultFunction = toExecuteFunction(sql, executeFunction);
+		Function<Connection, Flux<Result>> resultFunction = toFunction(sql, StatementFilterFunctions.empty(),
+				executeFunction);
 
 		return new DefaultSqlResult<>(this, //
 				sql, //
@@ -1476,12 +1504,15 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		};
 	}
 
-	private static Function<Connection, Flux<Result>> toExecuteFunction(String sql,
-			Function<Connection, Statement> executeFunction) {
+	private Function<Connection, Flux<Result>> toFunction(String sql, StatementFilterFunction filterFunction,
+			Function<Connection, Statement> statementFactory) {
 
 		return it -> {
 
-			Flux<Result> from = Flux.defer(() -> executeFunction.apply(it).execute()).cast(Result.class);
+			Flux<Result> from = Flux.defer(() -> {
+				Statement statement = statementFactory.apply(it);
+				return filterFunction.filter(statement, executeFunction);
+			}).cast(Result.class);
 			return from.checkpoint("SQL \"" + sql + "\" [DatabaseClient]");
 		};
 	}

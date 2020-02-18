@@ -37,6 +37,7 @@ import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.reactivestreams.Publisher;
@@ -468,7 +469,120 @@ public class DefaultDatabaseClientUnitTests {
 
 				}) //
 				.verifyComplete();
+	}
 
+	@Test // gh-189
+	public void shouldApplyExecuteFunction() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement(anyString())).thenReturn(statement);
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
+		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.row(MockRow.builder().identified(0, Object.class, "Walter").build()).build();
+
+		DatabaseClient databaseClient = DatabaseClient.builder() //
+				.connectionFactory(connectionFactory) //
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)) //
+				.executeFunction(it -> Mono.just(result)).build();
+
+		databaseClient.execute("SELECT") //
+				.fetch().all() //
+				.as(StepVerifier::create) //
+				.expectNextCount(1).verifyComplete();
+
+		verify(statement, never()).execute();
+	}
+
+	@Test // gh-189
+	public void shouldApplyStatementFilterFunctions() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement(anyString())).thenReturn(statement);
+		when(statement.returnGeneratedValues(anyString())).thenReturn(statement);
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).build();
+
+		doReturn(Flux.just(result)).when(statement).execute();
+
+		DatabaseClient databaseClient = DatabaseClient.builder() //
+				.connectionFactory(connectionFactory) //
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)) //
+				.build();
+
+		databaseClient.execute("SELECT") //
+				.filter((s, next) -> next.execute(s.returnGeneratedValues("foo"))) //
+				.filter((s, next) -> next.execute(s.returnGeneratedValues("bar"))) //
+				.fetch().all() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		InOrder inOrder = inOrder(statement);
+		inOrder.verify(statement).returnGeneratedValues("foo");
+		inOrder.verify(statement).returnGeneratedValues("bar");
+		inOrder.verify(statement).execute();
+	}
+
+	@Test // gh-189
+	public void shouldApplyStatementFilterFunctionsToTypedExecute() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement(anyString())).thenReturn(statement);
+		when(statement.returnGeneratedValues(anyString())).thenReturn(statement);
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).build();
+
+		doReturn(Flux.just(result)).when(statement).execute();
+
+		DatabaseClient databaseClient = DatabaseClient.builder() //
+				.connectionFactory(connectionFactory) //
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)) //
+				.build();
+
+		databaseClient.execute("SELECT") //
+				.filter((s, next) -> next.execute(s.returnGeneratedValues("foo"))) //
+				.as(Person.class) //
+				.fetch().all() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		verify(statement).returnGeneratedValues("foo");
+	}
+
+	@Test // gh-189
+	public void shouldApplySimpleStatementFilterFunctions() {
+
+		Statement statement = mock(Statement.class);
+		when(connection.createStatement(anyString())).thenReturn(statement);
+		when(statement.returnGeneratedValues(anyString())).thenReturn(statement);
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).build();
+
+		doReturn(Flux.just(result)).when(statement).execute();
+
+		DatabaseClient databaseClient = DatabaseClient.builder() //
+				.connectionFactory(connectionFactory) //
+				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)) //
+				.build();
+
+		databaseClient.execute("SELECT") //
+				.filter(s -> s.returnGeneratedValues("foo")) //
+				.filter(s -> s.returnGeneratedValues("bar")) //
+				.fetch().all() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		InOrder inOrder = inOrder(statement);
+		inOrder.verify(statement).returnGeneratedValues("foo");
+		inOrder.verify(statement).returnGeneratedValues("bar");
+		inOrder.verify(statement).execute();
 	}
 
 	static class Person {
