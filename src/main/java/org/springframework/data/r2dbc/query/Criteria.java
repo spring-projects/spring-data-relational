@@ -17,6 +17,8 @@ package org.springframework.data.r2dbc.query;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -27,31 +29,104 @@ import org.springframework.util.Assert;
  * Central class for creating queries. It follows a fluent API style so that you can easily chain together multiple
  * criteria. Static import of the {@code Criteria.property(…)} method will improve readability as in
  * {@code where(property(…).is(…)}.
+ * <p>
+ * The Criteria API supports composition with a {@link #empty() NULL object} and a {@link #from(List) static factory
+ * method}. Example usage:
+ *
+ * <pre class="code">
+ * Criteria.from(Criteria.where("name").is("Foo"), Criteria.from(Criteria.where("age").greaterThan(42)));
+ * </pre>
+ *
+ * rendering:
+ *
+ * <pre class="code">
+ * WHERE name = 'Foo' AND age > 42
+ * </pre>
  *
  * @author Mark Paluch
  * @author Oliver Drotbohm
  */
 public class Criteria {
 
+	private static final Criteria EMPTY = new Criteria(SqlIdentifier.EMPTY, Comparator.INITIAL, null);
+
 	private final @Nullable Criteria previous;
 	private final Combinator combinator;
+	private final List<Criteria> group;
 
-	private final SqlIdentifier column;
-	private final Comparator comparator;
+	private final @Nullable SqlIdentifier column;
+	private final @Nullable Comparator comparator;
 	private final @Nullable Object value;
 
 	private Criteria(SqlIdentifier column, Comparator comparator, @Nullable Object value) {
-		this(null, Combinator.INITIAL, column, comparator, value);
+		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, value);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, SqlIdentifier column, Comparator comparator,
-			@Nullable Object value) {
+	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group,
+			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
 
 		this.previous = previous;
-		this.combinator = combinator;
+		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
+		this.group = group;
 		this.column = column;
 		this.comparator = comparator;
 		this.value = value;
+	}
+
+	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group) {
+
+		this.previous = previous;
+		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
+		this.group = group;
+		this.column = null;
+		this.comparator = null;
+		this.value = null;
+	}
+
+	/**
+	 * Static factory method to create an empty Criteria.
+	 *
+	 * @return an empty {@link Criteria}.
+	 * @since 1.1
+	 */
+	public static Criteria empty() {
+		return EMPTY;
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it as group with {@code AND} using the provided {@link List Criterias}.
+	 *
+	 * @return new {@link Criteria}.
+	 * @since 1.1
+	 */
+	public static Criteria from(Criteria... criteria) {
+
+		Assert.notNull(criteria, "Criteria must not be null");
+		Assert.noNullElements(criteria, "Criteria must not contain null elements");
+
+		return from(Arrays.asList(criteria));
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it as group with {@code AND} using the provided {@link List Criterias}.
+	 *
+	 * @return new {@link Criteria}.
+	 * @since 1.1
+	 */
+	public static Criteria from(List<Criteria> criteria) {
+
+		Assert.notNull(criteria, "Criteria must not be null");
+		Assert.noNullElements(criteria, "Criteria must not contain null elements");
+
+		if (criteria.isEmpty()) {
+			return EMPTY;
+		}
+
+		if (criteria.size() == 1) {
+			return criteria.get(0);
+		}
+
+		return EMPTY.and(criteria);
 	}
 
 	/**
@@ -77,12 +152,41 @@ public class Criteria {
 
 		Assert.hasText(column, "Column name must not be null or empty!");
 
-		return new DefaultCriteriaStep(SqlIdentifier.unquoted(column)) {
+		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
+		return new DefaultCriteriaStep(identifier) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, Object value) {
-				return new Criteria(Criteria.this, Combinator.AND, SqlIdentifier.unquoted(column), comparator, value);
+				return new Criteria(Criteria.this, Combinator.AND, Collections.emptyList(), identifier, comparator, value);
 			}
 		};
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it as group with {@code AND} using the provided {@link Criteria} group.
+	 *
+	 * @param criteria criteria object.
+	 * @return a new {@link Criteria} object.
+	 * @since 1.1
+	 */
+	public Criteria and(Criteria criteria) {
+
+		Assert.notNull(criteria, "Criteria must not be null!");
+
+		return and(Collections.singletonList(criteria));
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it as group with {@code AND} using the provided {@link Criteria} group.
+	 *
+	 * @param criteria criteria objects.
+	 * @return a new {@link Criteria} object.
+	 * @since 1.1
+	 */
+	public Criteria and(List<Criteria> criteria) {
+
+		Assert.notNull(criteria, "Criteria must not be null!");
+
+		return new Criteria(Criteria.this, Combinator.AND, criteria);
 	}
 
 	/**
@@ -95,12 +199,41 @@ public class Criteria {
 
 		Assert.hasText(column, "Column name must not be null or empty!");
 
-		return new DefaultCriteriaStep(SqlIdentifier.unquoted(column)) {
+		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
+		return new DefaultCriteriaStep(identifier) {
 			@Override
 			protected Criteria createCriteria(Comparator comparator, Object value) {
-				return new Criteria(Criteria.this, Combinator.OR, SqlIdentifier.unquoted(column), comparator, value);
+				return new Criteria(Criteria.this, Combinator.OR, Collections.emptyList(), identifier, comparator, value);
 			}
 		};
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it as group with {@code OR} using the provided {@link Criteria} group.
+	 *
+	 * @param criteria criteria object.
+	 * @return a new {@link Criteria} object.
+	 * @since 1.1
+	 */
+	public Criteria or(Criteria criteria) {
+
+		Assert.notNull(criteria, "Criteria must not be null!");
+
+		return or(Collections.singletonList(criteria));
+	}
+
+	/**
+	 * Create a new {@link Criteria} and combine it as group with {@code OR} using the provided {@link Criteria} group.
+	 *
+	 * @param criteria criteria object.
+	 * @return a new {@link Criteria} object.
+	 * @since 1.1
+	 */
+	public Criteria or(List<Criteria> criteria) {
+
+		Assert.notNull(criteria, "Criteria must not be null!");
+
+		return new Criteria(Criteria.this, Combinator.OR, criteria);
 	}
 
 	/**
@@ -120,15 +253,70 @@ public class Criteria {
 	}
 
 	/**
+	 * @return {@literal true} if this {@link Criteria} is empty.
+	 * @since 1.1
+	 */
+	public boolean isEmpty() {
+
+		if (!doIsEmpty()) {
+			return false;
+		}
+
+		Criteria parent = this.previous;
+
+		while (parent != null) {
+
+			if (!parent.doIsEmpty()) {
+				return false;
+			}
+
+			parent = parent.previous;
+		}
+
+		return true;
+	}
+
+	private boolean doIsEmpty() {
+
+		if (this.comparator == Comparator.INITIAL) {
+			return true;
+		}
+
+		if (this.column != null) {
+			return false;
+		}
+
+		for (Criteria criteria : group) {
+			if (!criteria.isEmpty()) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @return {@literal true} if this {@link Criteria} is empty.
+	 */
+	boolean isGroup() {
+		return !this.group.isEmpty();
+	}
+
+	/**
 	 * @return {@link Combinator} to combine this criteria with a previous one.
 	 */
 	Combinator getCombinator() {
 		return combinator;
 	}
 
+	List<Criteria> getGroup() {
+		return group;
+	}
+
 	/**
 	 * @return the column/property name.
 	 */
+	@Nullable
 	SqlIdentifier getColumn() {
 		return column;
 	}
@@ -136,6 +324,7 @@ public class Criteria {
 	/**
 	 * @return {@link Comparator}.
 	 */
+	@Nullable
 	Comparator getComparator() {
 		return comparator;
 	}
@@ -149,7 +338,7 @@ public class Criteria {
 	}
 
 	enum Comparator {
-		EQ, NEQ, LT, LTE, GT, GTE, IS_NULL, IS_NOT_NULL, LIKE, NOT_IN, IN,
+		INITIAL, EQ, NEQ, LT, LTE, GT, GTE, IS_NULL, IS_NOT_NULL, LIKE, NOT_IN, IN,
 	}
 
 	enum Combinator {
@@ -240,13 +429,11 @@ public class Criteria {
 
 		/**
 		 * Creates a {@link Criteria} using {@code IS NULL}.
-		 *
 		 */
 		Criteria isNull();
 
 		/**
 		 * Creates a {@link Criteria} using {@code IS NOT NULL}.
-		 *
 		 */
 		Criteria isNotNull();
 	}

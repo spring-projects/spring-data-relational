@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.domain.Sort.Order.*;
 
+import java.util.Collections;
+
 import org.junit.Test;
 
 import org.springframework.data.domain.Sort;
@@ -44,6 +46,74 @@ public class QueryMapperUnitTests {
 	R2dbcConverter converter = new MappingR2dbcConverter(new R2dbcMappingContext());
 	QueryMapper mapper = new QueryMapper(PostgresDialect.INSTANCE, converter);
 	BindTarget bindTarget = mock(BindTarget.class);
+
+	@Test // gh-289
+	public void shouldNotMapEmptyCriteria() {
+
+		Criteria criteria = Criteria.empty();
+
+		assertThatIllegalArgumentException().isThrownBy(() -> map(criteria));
+	}
+
+	@Test // gh-289
+	public void shouldNotMapEmptyAndCriteria() {
+
+		Criteria criteria = Criteria.empty().and(Collections.emptyList());
+
+		assertThatIllegalArgumentException().isThrownBy(() -> map(criteria));
+	}
+
+	@Test // gh-289
+	public void shouldNotMapEmptyNestedCriteria() {
+
+		Criteria criteria = Criteria.empty().and(Collections.emptyList()).and(Criteria.empty().and(Criteria.empty()));
+
+		assertThat(criteria.isEmpty()).isTrue();
+		assertThatIllegalArgumentException().isThrownBy(() -> map(criteria));
+	}
+
+	@Test // gh-289
+	public void shouldMapSomeNestedCriteria() {
+
+		Criteria criteria = Criteria.empty().and(Collections.emptyList())
+				.and(Criteria.empty().and(Criteria.where("name").is("Hank")));
+
+		assertThat(criteria.isEmpty()).isFalse();
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition().toString()).isEqualTo("((person.name = ?[$1]))");
+	}
+
+	@Test // gh-289
+	public void shouldMapNestedGroup() {
+
+		Criteria initial = Criteria.empty();
+
+		Criteria criteria = initial.and(Criteria.where("name").is("Foo")).and(Criteria.where("name").is("Bar").or("age")
+				.lessThan(49).or(Criteria.where("name").not("Bar").and("age").greaterThan(49)));
+
+		assertThat(criteria.isEmpty()).isFalse();
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition().toString()).isEqualTo(
+				"(person.name = ?[$1]) AND (person.name = ?[$2] OR person.age < ?[$3] OR (person.name != ?[$4] AND person.age > ?[$5]))");
+	}
+
+	@Test // gh-289
+	public void shouldMapFrom() {
+
+		Criteria criteria = Criteria.from(Criteria.where("name").is("Foo"))
+				.and(Criteria.where("name").is("Bar").or("age").lessThan(49));
+
+		assertThat(criteria.isEmpty()).isFalse();
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition().toString())
+				.isEqualTo("person.name = ?[$1] AND (person.name = ?[$2] OR person.age < ?[$3])");
+	}
 
 	@Test // gh-64
 	public void shouldMapSimpleCriteria() {

@@ -195,8 +195,21 @@ public class QueryMapper {
 		Assert.notNull(criteria, "Criteria must not be null!");
 		Assert.notNull(table, "Table must not be null!");
 
-		Criteria current = criteria;
 		MutableBindings bindings = new MutableBindings(markers);
+
+		if (criteria.isEmpty()) {
+			throw new IllegalArgumentException("Cannot map empty Criteria");
+		}
+
+		Condition mapped = unroll(criteria, table, entity, bindings);
+
+		return new BoundCondition(bindings, mapped);
+	}
+
+	private Condition unroll(Criteria criteria, Table table, @Nullable RelationalPersistentEntity<?> entity,
+			MutableBindings bindings) {
+
+		Criteria current = criteria;
 
 		// reverse unroll criteria chain
 		Map<Criteria, Criteria> forwardChain = new HashMap<>();
@@ -210,23 +223,81 @@ public class QueryMapper {
 		Condition mapped = getCondition(current, bindings, table, entity);
 		while (forwardChain.containsKey(current)) {
 
-			Criteria nextCriteria = forwardChain.get(current);
+			Criteria criterion = forwardChain.get(current);
+			Condition result = null;
 
-			if (nextCriteria.getCombinator() == Combinator.AND) {
-				mapped = mapped.and(getCondition(nextCriteria, bindings, table, entity));
+			Condition condition = getCondition(criterion, bindings, table, entity);
+			if (condition != null) {
+				result = combine(criterion, mapped, criterion.getCombinator(), condition);
 			}
 
-			if (nextCriteria.getCombinator() == Combinator.OR) {
-				mapped = mapped.or(getCondition(nextCriteria, bindings, table, entity));
+			if (result != null) {
+				mapped = result;
 			}
-
-			current = nextCriteria;
+			current = criterion;
 		}
 
-		return new BoundCondition(bindings, mapped);
+		if (mapped == null) {
+			throw new IllegalStateException("Cannot map empty Criteria");
+		}
+
+		return mapped;
 	}
 
+	@Nullable
+	private Condition unrollGroup(List<Criteria> criteria, Table table, Combinator combinator,
+			@Nullable RelationalPersistentEntity<?> entity, MutableBindings bindings) {
+
+		Condition mapped = null;
+		for (Criteria criterion : criteria) {
+
+			if (criterion.isEmpty()) {
+				continue;
+			}
+
+			Condition condition = unroll(criterion, table, entity, bindings);
+
+			mapped = combine(criterion, mapped, combinator, condition);
+		}
+
+		return mapped;
+	}
+
+	@Nullable
 	private Condition getCondition(Criteria criteria, MutableBindings bindings, Table table,
+			@Nullable RelationalPersistentEntity<?> entity) {
+
+		if (criteria.isEmpty()) {
+			return null;
+		}
+
+		if (criteria.isGroup()) {
+
+			Condition condition = unrollGroup(criteria.getGroup(), table, criteria.getCombinator(), entity, bindings);
+
+			return condition == null ? null : Conditions.nest(condition);
+		}
+
+		return mapCondition(criteria, bindings, table, entity);
+	}
+
+	private Condition combine(Criteria criteria, @Nullable Condition currentCondition, Combinator combinator,
+			Condition nextCondition) {
+
+		if (currentCondition == null) {
+			currentCondition = nextCondition;
+		} else if (combinator == Combinator.AND) {
+			currentCondition = currentCondition.and(nextCondition);
+		} else if (combinator == Combinator.OR) {
+			currentCondition = currentCondition.or(nextCondition);
+		} else {
+			throw new IllegalStateException("Combinator " + criteria.getCombinator() + " not supported");
+		}
+
+		return currentCondition;
+	}
+
+	private Condition mapCondition(Criteria criteria, MutableBindings bindings, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, criteria.getColumn(), this.mappingContext);

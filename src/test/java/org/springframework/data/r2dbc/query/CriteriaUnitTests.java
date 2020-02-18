@@ -32,6 +32,27 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  */
 public class CriteriaUnitTests {
 
+	@Test // gh-289
+	public void fromCriteria() {
+
+		Criteria nested1 = where("foo").isNotNull();
+		Criteria nested2 = where("foo").isNull();
+		Criteria criteria = Criteria.from(nested1, nested2);
+
+		assertThat(criteria.isGroup()).isTrue();
+		assertThat(criteria.getGroup()).containsExactly(nested1, nested2);
+		assertThat(criteria.getPrevious()).isEqualTo(Criteria.empty());
+	}
+
+	@Test // gh-289
+	public void fromCriteriaOptimized() {
+
+		Criteria nested = where("foo").is("bar").and("baz").isNotNull();
+		Criteria criteria = Criteria.from(nested);
+
+		assertThat(criteria).isSameAs(nested);
+	}
+
 	@Test // gh-64
 	public void andChainedCriteria() {
 
@@ -41,6 +62,23 @@ public class CriteriaUnitTests {
 		assertThat(criteria.getComparator()).isEqualTo(Comparator.IS_NOT_NULL);
 		assertThat(criteria.getValue()).isNull();
 		assertThat(criteria.getPrevious()).isNotNull();
+		assertThat(criteria.getCombinator()).isEqualTo(Combinator.AND);
+
+		criteria = criteria.getPrevious();
+
+		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getComparator()).isEqualTo(Comparator.EQ);
+		assertThat(criteria.getValue()).isEqualTo("bar");
+	}
+
+	@Test // gh-289
+	public void andGroupedCriteria() {
+
+		Criteria criteria = where("foo").is("bar").and(where("foo").is("baz"));
+
+		assertThat(criteria.isGroup()).isTrue();
+		assertThat(criteria.getGroup()).hasSize(1);
+		assertThat(criteria.getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getCombinator()).isEqualTo(Combinator.AND);
 
 		criteria = criteria.getPrevious();
@@ -61,6 +99,23 @@ public class CriteriaUnitTests {
 		criteria = criteria.getPrevious();
 
 		assertThat(criteria.getPrevious()).isNull();
+		assertThat(criteria.getValue()).isEqualTo("bar");
+	}
+
+	@Test // gh-289
+	public void orGroupedCriteria() {
+
+		Criteria criteria = where("foo").is("bar").or(where("foo").is("baz"));
+
+		assertThat(criteria.isGroup()).isTrue();
+		assertThat(criteria.getGroup()).hasSize(1);
+		assertThat(criteria.getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getCombinator()).isEqualTo(Combinator.OR);
+
+		criteria = criteria.getPrevious();
+
+		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getComparator()).isEqualTo(Comparator.EQ);
 		assertThat(criteria.getValue()).isEqualTo("bar");
 	}
 

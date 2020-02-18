@@ -88,7 +88,7 @@ class DefaultStatementMapper implements StatementMapper {
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
 		Bindings bindings = Bindings.empty();
 
-		if (selectSpec.getCriteria() != null) {
+		if (!selectSpec.getCriteria().isEmpty()) {
 
 			BoundCondition mappedObject = this.updateMapper.getMappedObject(bindMarkers, selectSpec.getCriteria(), table,
 					entity);
@@ -203,7 +203,7 @@ class DefaultStatementMapper implements StatementMapper {
 
 		Update update;
 
-		if (updateSpec.getCriteria() != null) {
+		if (!updateSpec.getCriteria().isEmpty()) {
 
 			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, updateSpec.getCriteria(), table,
 					entity);
@@ -237,7 +237,7 @@ class DefaultStatementMapper implements StatementMapper {
 		Bindings bindings = Bindings.empty();
 
 		Delete delete;
-		if (deleteSpec.getCriteria() != null) {
+		if (!deleteSpec.getCriteria().isEmpty()) {
 
 			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, deleteSpec.getCriteria(), table,
 					entity);
