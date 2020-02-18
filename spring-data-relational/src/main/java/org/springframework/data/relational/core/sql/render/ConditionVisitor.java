@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql.render;
 import org.springframework.data.relational.core.sql.AndCondition;
 import org.springframework.data.relational.core.sql.Comparison;
 import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.ConditionGroup;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.data.relational.core.sql.IsNull;
 import org.springframework.data.relational.core.sql.Like;
@@ -41,7 +42,7 @@ import org.springframework.lang.Nullable;
 class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRenderer {
 
 	private final RenderContext context;
-	private StringBuilder builder = new StringBuilder();
+	private final StringBuilder builder = new StringBuilder();
 
 	ConditionVisitor(RenderContext context) {
 		this.context = context;
@@ -84,6 +85,10 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 
 		if (segment instanceof In) {
 			return new InVisitor(context, builder::append);
+		}
+
+		if (segment instanceof ConditionGroup) {
+			return new ConditionGroupVisitor(context, builder::append);
 		}
 
 		return null;

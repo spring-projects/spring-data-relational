@@ -48,9 +48,19 @@ public interface Condition extends Segment {
 	/**
 	 * Creates a {@link Condition} that negates this {@link Condition}.
 	 *
-	 * @return the negated  {@link Condition}.
+	 * @return the negated {@link Condition}.
 	 */
 	default Condition not() {
 		return new Not(this);
+	}
+
+	/**
+	 * Wraps a {@link Condition} into a condition group that groups the nested {@link Condition} using parentheses.
+	 *
+	 * @return the grouped {@link Condition}.
+	 * @since 2.0
+	 */
+	default Condition group() {
+		return new ConditionGroup(this);
 	}
 }
