@@ -31,6 +31,8 @@ import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.dialect.SqlServerDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 /**
  * Unit tests for {@link NamedParameterUtils}.
@@ -333,6 +335,52 @@ public class NamedParameterUtilsUnitTests {
 				throw new UnsupportedOperationException();
 			}
 		});
+	}
+
+	@Test // gh-310
+	public void multipleEqualCollectionParameterReferencesBindsValueOnce() {
+
+		String sql = "SELECT * FROM person where name IN (:ids) or lastname IN (:ids)";
+
+		BindMarkersFactory factory = BindMarkersFactory.indexed("$", 0);
+
+		MultiValueMap<Integer, Object> bindings = new LinkedMultiValueMap<>();
+
+		PreparedOperation<String> operation = NamedParameterUtils.substituteNamedParameters(sql, factory,
+				new MapBindParameterSource(
+						Collections.singletonMap("ids", SettableValue.from(Arrays.asList("foo", "bar", "baz")))));
+
+		assertThat(operation.toQuery())
+				.isEqualTo("SELECT * FROM person where name IN ($0, $1, $2) or lastname IN ($0, $1, $2)");
+
+		operation.bindTo(new BindTarget() {
+			@Override
+			public void bind(String identifier, Object value) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bind(int index, Object value) {
+				assertThat(index).isIn(0, 1, 2);
+				assertThat(value).isIn("foo", "bar", "baz");
+
+				bindings.add(index, value);
+			}
+
+			@Override
+			public void bindNull(String identifier, Class<?> type) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void bindNull(int index, Class<?> type) {
+				throw new UnsupportedOperationException();
+			}
+		});
+
+		assertThat(bindings).containsEntry(0, Collections.singletonList("foo")) //
+				.containsEntry(1, Collections.singletonList("bar")) //
+				.containsEntry(2, Collections.singletonList("baz"));
 	}
 
 	@Test // gh-138

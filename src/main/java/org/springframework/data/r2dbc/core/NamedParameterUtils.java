@@ -31,7 +31,6 @@ import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 /**
  * Helper methods for named parameter parsing.
@@ -287,6 +286,7 @@ abstract class NamedParameterUtils {
 
 					Iterator<?> entryIter = ((Collection<?>) value).iterator();
 					int k = 0;
+					int counter = 0;
 					while (entryIter.hasNext()) {
 						if (k > 0) {
 							actualSql.append(", ");
@@ -300,11 +300,13 @@ abstract class NamedParameterUtils {
 								if (m > 0) {
 									actualSql.append(", ");
 								}
-								actualSql.append(marker.addPlaceholder());
+								actualSql.append(marker.getPlaceholder(counter));
+								counter++;
 							}
 							actualSql.append(')');
 						} else {
-							actualSql.append(marker.addPlaceholder());
+							actualSql.append(marker.getPlaceholder(counter));
+							counter++;
 						}
 
 					}
@@ -459,12 +461,16 @@ abstract class NamedParameterUtils {
 			}
 
 			String getPlaceholder() {
+				return getPlaceholder(0);
+			}
 
-				if (this.placeholders.isEmpty()) {
-					return addPlaceholder();
+			String getPlaceholder(int counter) {
+
+				while (counter + 1 > this.placeholders.size()) {
+					addPlaceholder();
 				}
 
-				return this.placeholders.get(0).getPlaceholder();
+				return this.placeholders.get(counter).getPlaceholder();
 			}
 		}
 	}
