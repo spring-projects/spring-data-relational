@@ -78,7 +78,14 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	 */
 	@Override
 	public SqlIdentifier getTableName() {
-		return tableName.get().orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getQualifiedTableName(getType())));
+		return tableName.get().orElseGet(() -> {
+
+			String schema = namingStrategy.getSchema();
+			SqlIdentifier tableName = createDerivedSqlIdentifier(namingStrategy.getTableName(getType()));
+
+			return StringUtils.hasText(schema) ? SqlIdentifier.from(createDerivedSqlIdentifier(schema), tableName)
+					: tableName;
+		});
 	}
 
 	/*
