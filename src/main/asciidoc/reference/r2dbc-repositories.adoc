@@ -149,6 +149,35 @@ The result of a modifying query can be:
 The `@Modifying` annotation is only relevant in combination with the `@Query` annotation.
 Derived custom methods do not require this annotation.
 
+[[r2dbc.repositories.queries.spel]]
+=== Queries with SpEL Expressions
+
+Query string definitions can be used together with SpEL expressions to create dynamic queries at runtime.
+SpEL expressions can provide predicate values which are evaluated right before executing the query.
+
+Expressions expose method arguments through an array that contains all the arguments.
+The following query uses `[0]`
+to declare the predicate value for `lastname` (which is equivalent to the `:lastname` parameter binding):
+
+[source,java]
+----
+public interface PersonRepository extends ReactiveCrudRepository<Person, String> {
+
+  @Query("SELECT * FROM person WHERE lastname = :#{[0]} }")
+  List<Person> findByQueryWithExpression(String lastname);
+}
+----
+
+SpEL in query strings can be a powerful way to enhance queries.
+However, they can also accept a broad range of unwanted arguments.
+You should make sure to sanitize strings before passing them to the query to avoid unwanted changes to your query.
+
+Expression support is extensible through the Query SPI: `org.springframework.data.spel.spi.EvaluationContextExtension`.
+The Query SPI can contribute properties and functions and can customize the root object.
+Extensions are retrieved from the application context at the time of SpEL evaluation when the query is built.
+
+TIP: When using SpEL expressions in combination with plain parameters, use named parameter notation instead of native bind markers to ensure a proper binding order.
+
 [[r2dbc.entity-persistence.state-detection-strategies]]
 === Entity State Detection Strategies
 

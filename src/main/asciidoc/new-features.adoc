@@ -14,6 +14,7 @@
 * `@Modifying` annotation for query methods to consume affected row count.
 * Repository `save(…)` with an associated Id terminates with `TransientDataAccessException` if the row does not exist in the database.
 * Added `SingleConnectionConnectionFactory` for testing using connection singletons.
+* Support for {spring-framework-ref}/core.html#expressions[SpEL expressions] in `@Query`.
 
 [[new-features.1-0-0-RC1]]
 == What's New in Spring Data R2DBC 1.0.0 RC1

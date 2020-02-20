@@ -87,6 +87,20 @@ public class StringBasedR2dbcQueryUnitTests {
 		verify(bindSpec).bind(0, "White");
 	}
 
+	@Test // gh-164
+	public void bindsPositionalPropertyCorrectly() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("findByLastnamePositional", String.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind(0, "White");
+	}
+
 	@Test
 	public void bindsByNamedParameter() {
 
@@ -129,6 +143,84 @@ public class StringBasedR2dbcQueryUnitTests {
 		verify(bindSpec).bind(0, "White");
 	}
 
+	@Test // gh-164
+	public void bindsSimpleSpelQuery() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("simpleSpel");
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod());
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind("__synthetic_0__", "hello");
+	}
+
+	@Test // gh-164
+	public void bindsIndexedSpelQuery() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("simpleIndexedSpel", String.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind("__synthetic_0__", "White");
+		verifyNoMoreInteractions(bindSpec);
+	}
+
+	@Test // gh-164
+	public void bindsPositionalSpelQuery() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("simplePositionalSpel", String.class, String.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White", "Walter");
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get())
+				.isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__ and firstname = :firstname");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind("__synthetic_0__", "White");
+		verify(bindSpec).bind("firstname", "Walter");
+		verifyNoMoreInteractions(bindSpec);
+	}
+
+	@Test // gh-164
+	public void bindsPositionalNamedSpelQuery() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("simpleNamedSpel", String.class, String.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White", "Walter");
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get())
+				.isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__ and firstname = :firstname");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind("__synthetic_0__", "White");
+		verify(bindSpec).bind("firstname", "Walter");
+		verifyNoMoreInteractions(bindSpec);
+	}
+
+	@Test // gh-164
+	public void bindsComplexSpelQuery() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("queryWithSpelObject", Person.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), new Person("Walter"));
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind("__synthetic_0__", "Walter");
+		verifyNoMoreInteractions(bindSpec);
+	}
+
 	private StringBasedR2dbcQuery getQueryMethod(String name, Class<?>... args) {
 
 		Method method = ReflectionUtils.findMethod(SampleRepository.class, name, args);
@@ -143,7 +235,10 @@ public class StringBasedR2dbcQueryUnitTests {
 	private interface SampleRepository extends Repository<Person, String> {
 
 		@Query("SELECT * FROM person WHERE lastname = $1")
-		Person findByLastname(String lastname);
+		Person findByLastname(@Param("lastname") String lastname);
+
+		@Query("SELECT * FROM person WHERE lastname = $1")
+		Person findByLastnamePositional(String lastname);
 
 		@Query("SELECT * FROM person WHERE lastname = :lastname")
 		Person findByNamedParameter(@Param("lastname") String lastname);
@@ -153,9 +248,33 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		@Query("SELECT * FROM person WHERE lastname = @lastname")
 		Person findByNamedBindMarker(@Param("lastname") String lastname);
+
+		@Query("SELECT * FROM person WHERE lastname = :#{'hello'}")
+		Person simpleSpel();
+
+		@Query("SELECT * FROM person WHERE lastname = :#{[0]}")
+		Person simpleIndexedSpel(String value);
+
+		@Query("SELECT * FROM person WHERE lastname = :#{[0]} and firstname = :firstname")
+		Person simpleNamedSpel(@Param("value") String value, @Param("firstname") String firstname);
+
+		@Query("SELECT * FROM person WHERE lastname = :#{#value} and firstname = :firstname")
+		Person simplePositionalSpel(@Param("value") String value, @Param("firstname") String firstname);
+
+		@Query("SELECT * FROM person WHERE lastname = :#{#person.name}")
+		Person queryWithSpelObject(@Param("person") Person person);
 	}
 
 	static class Person {
 
+		String name;
+
+		public Person(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
 	}
 }

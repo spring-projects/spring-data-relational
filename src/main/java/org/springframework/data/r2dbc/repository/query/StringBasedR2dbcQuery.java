@@ -15,18 +15,11 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
-
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.DatabaseClient.BindSpec;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
-import org.springframework.data.repository.query.Parameter;
-import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
@@ -34,14 +27,15 @@ import org.springframework.util.Assert;
 /**
  * String-based {@link StringBasedR2dbcQuery} implementation.
  * <p>
- * A {@link StringBasedR2dbcQuery} expects a query method to be annotated with {@link Query} with a SQL query.
+ * A {@link StringBasedR2dbcQuery} expects a query method to be annotated with {@link Query} with a SQL query. Supports
+ * named parameters (if enabled on {@link DatabaseClient}) and SpEL expressions enclosed with {@code :#{…}}.
  *
  * @author Mark Paluch
  */
 public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
-	private final String sql;
-	private final Map<String, Boolean> namedParameters = new ConcurrentHashMap<>();
+	private final ExpressionQuery expressionQuery;
+	private final ExpressionEvaluatingParameterBinder binder;
 
 	/**
 	 * Creates a new {@link StringBasedR2dbcQuery} for the given {@link StringBasedR2dbcQuery}, {@link DatabaseClient},
@@ -78,7 +72,8 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 		Assert.hasText(query, "Query must not be empty");
 
-		this.sql = query;
+		this.expressionQuery = ExpressionQuery.create(query);
+		this.binder = new ExpressionEvaluatingParameterBinder(expressionParser, evaluationContextProvider, expressionQuery);
 	}
 
 	/* (non-Javadoc)
@@ -91,58 +86,14 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 			@Override
 			public <T extends BindSpec<T>> T bind(T bindSpec) {
-
-				T bindSpecToUse = bindSpec;
-
-				Parameters<?, ?> bindableParameters = accessor.getBindableParameters();
-
-				int index = 0;
-				int bindingIndex = 0;
-				for (Object value : accessor.getValues()) {
-
-					Parameter bindableParameter = bindableParameters.getBindableParameter(index++);
-
-					Optional<String> name = bindableParameter.getName();
-					if (isNamedParameter(name)) {
-						if (value == null) {
-							if (accessor.hasBindableNullValue()) {
-								bindSpecToUse = bindSpecToUse.bindNull(name.get(), bindableParameter.getType());
-							}
-						} else {
-							bindSpecToUse = bindSpecToUse.bind(name.get(), value);
-						}
-					} else {
-						if (value == null) {
-							if (accessor.hasBindableNullValue()) {
-								bindSpecToUse = bindSpecToUse.bindNull(bindingIndex++, bindableParameter.getType());
-							}
-						} else {
-							bindSpecToUse = bindSpecToUse.bind(bindingIndex++, value);
-						}
-					}
-				}
-
-				return bindSpecToUse;
-			}
-
-			private boolean isNamedParameter(Optional<String> name) {
-
-				if (!name.isPresent()) {
-					return false;
-				}
-
-				return namedParameters.computeIfAbsent(name.get(), it -> {
-
-					Pattern namedParameterPattern = Pattern.compile("(\\W)" + Pattern.quote(it) + "(\\W|$)");
-					return namedParameterPattern.matcher(this.get()).find();
-				});
-
+				return binder.bind(bindSpec, accessor);
 			}
 
 			@Override
 			public String get() {
-				return sql;
+				return expressionQuery.getQuery();
 			}
 		};
 	}
+
 }
