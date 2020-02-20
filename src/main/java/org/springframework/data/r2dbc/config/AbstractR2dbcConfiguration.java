@@ -44,7 +44,6 @@ import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.r2dbc.support.SqlStateR2dbcExceptionTranslator;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -95,7 +94,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	}
 
 	/**
-	 * Register a {@link DatabaseClient} using {@link #connectionFactory()} and {@link RelationalMappingContext}.
+	 * Register a {@link DatabaseClient} using {@link #connectionFactory()} and {@link ReactiveDataAccessStrategy}.
 	 *
 	 * @return must not be {@literal null}.
 	 * @throws IllegalArgumentException if any of the required args is {@literal null}.
@@ -122,7 +121,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	}
 
 	/**
-	 * Register a {@link RelationalMappingContext} and apply an optional {@link NamingStrategy}.
+	 * Register a {@link R2dbcMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
 	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
 	 * @param r2dbcCustomConversions customized R2DBC conversions.
@@ -130,23 +129,22 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * @throws IllegalArgumentException if any of the required args is {@literal null}.
 	 */
 	@Bean
-	public RelationalMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
+	public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy,
 			R2dbcCustomConversions r2dbcCustomConversions) {
 
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null!");
 
-		R2dbcMappingContext relationalMappingContext = new R2dbcMappingContext(
-				namingStrategy.orElse(NamingStrategy.INSTANCE));
-		relationalMappingContext.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
+		R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
+		context.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
 
-		return relationalMappingContext;
+		return context;
 	}
 
 	/**
 	 * Creates a {@link ReactiveDataAccessStrategy} using the configured
-	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)} RelationalMappingContext}.
+	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)} R2dbcMappingContext}.
 	 *
-	 * @param mappingContext the configured {@link RelationalMappingContext}.
+	 * @param mappingContext the configured {@link R2dbcMappingContext}.
 	 * @param r2dbcCustomConversions customized R2DBC conversions.
 	 * @return must not be {@literal null}.
 	 * @see #r2dbcMappingContext(Optional, R2dbcCustomConversions)
@@ -154,7 +152,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * @throws IllegalArgumentException if any of the {@literal mappingContext} is {@literal null}.
 	 */
 	@Bean
-	public ReactiveDataAccessStrategy reactiveDataAccessStrategy(RelationalMappingContext mappingContext,
+	public ReactiveDataAccessStrategy reactiveDataAccessStrategy(R2dbcMappingContext mappingContext,
 			R2dbcCustomConversions r2dbcCustomConversions) {
 
 		Assert.notNull(mappingContext, "MappingContext must not be null!");
