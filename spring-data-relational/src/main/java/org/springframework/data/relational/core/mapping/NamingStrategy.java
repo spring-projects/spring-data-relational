@@ -72,6 +72,13 @@ public interface NamingStrategy {
 		return ParsingUtils.reconcatenateCamelCase(property.getName(), "_");
 	}
 
+	/**
+	 * @param type
+	 * @return
+	 * @deprecated since 2.0. The method returns a concatenated schema with table name which conflicts with escaping. Use
+	 *             rather {@link #getTableName(Class)} and {@link #getSchema()} independently
+	 */
+	@Deprecated
 	default String getQualifiedTableName(Class<?> type) {
 		return this.getSchema() + (this.getSchema().equals("") ? "" : ".") + this.getTableName(type);
 	}

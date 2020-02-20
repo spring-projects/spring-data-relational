@@ -19,7 +19,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import org.junit.Test;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * Unit tests for {@link RelationalPersistentEntityImpl}.
@@ -27,6 +30,7 @@ import org.springframework.data.annotation.Id;
  * @author Oliver Gierke
  * @author Kazuki Shimizu
  * @author Bastian Wilhelm
+ * @author Mark Paluch
  */
 public class RelationalPersistentEntityImplUnitTests {
 
@@ -56,6 +60,18 @@ public class RelationalPersistentEntityImplUnitTests {
 		assertThat(entity.getTableName()).isEqualTo(quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION"));
 	}
 
+	@Test // DATAJDBC-491
+	public void namingStrategyWithSchemaReturnsCompositeTableName() {
+
+		mappingContext = new RelationalMappingContext(NamingStrategyWithSchema.INSTANCE);
+		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummyEntityWithEmptyAnnotation.class);
+
+		assertThat(entity.getTableName())
+				.isEqualTo(SqlIdentifier.from(quoted("MY_SCHEMA"), quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION")));
+		assertThat(entity.getTableName().toSql(IdentifierProcessing.ANSI))
+				.isEqualTo("\"MY_SCHEMA\".\"DUMMY_ENTITY_WITH_EMPTY_ANNOTATION\"");
+	}
+
 	@Table("dummy_sub_entity")
 	static class DummySubEntity {
 		@Id @Column("renamedId") Long id;
@@ -64,5 +80,14 @@ public class RelationalPersistentEntityImplUnitTests {
 	@Table()
 	static class DummyEntityWithEmptyAnnotation {
 		@Id @Column() Long id;
+	}
+
+	enum NamingStrategyWithSchema implements NamingStrategy {
+		INSTANCE;
+
+		@Override
+		public String getSchema() {
+			return "my_schema";
+		}
 	}
 }
