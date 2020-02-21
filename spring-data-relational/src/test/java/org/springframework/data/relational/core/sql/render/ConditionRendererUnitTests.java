@@ -70,6 +70,17 @@ public class ConditionRendererUnitTests {
 				"WHERE (my_table.left = my_table.right AND my_table.left > my_table.right) OR my_table.left LIKE my_table.right");
 	}
 
+
+	@Test // DATAJDBC-490
+	public void shouldRenderAndGroupOrAandGroup() {
+
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
+				.where(left.isEqualTo(right).and(left.isGreater(right)).group().or(left.like(right).and(right.like(left)).group())).build());
+
+		assertThat(sql).endsWith(
+				"WHERE (my_table.left = my_table.right AND my_table.left > my_table.right) OR (my_table.left LIKE my_table.right AND my_table.right LIKE my_table.left");
+	}
+
 	@Test // DATAJDBC-309
 	public void shouldRenderNotEquals() {
 
