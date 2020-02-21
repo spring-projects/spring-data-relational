@@ -157,7 +157,7 @@ public class RelationalEntityWriterUnitTests {
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
 						DbActionTestSupport::isWithDependsOn) //
-				.containsExactly(
+				.containsExactly( //
 						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
 						tuple(Delete.class, Element.class, "other", null, false)	//
 				);
