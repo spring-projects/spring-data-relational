@@ -20,12 +20,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.With;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
@@ -121,6 +123,71 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 		DummyEntity reloaded = repository.findById(entity.id).orElseThrow(AssertionFailedError::new);
 		assertThat(reloaded.content).hasSize(2);
 		assertThat(exceptions).isEmpty();
+	}
+
+	@Test // DATAJDBC-493
+	@Ignore("failing test")
+	public void updateConcurrencyWithDelete() throws Exception {
+
+		DummyEntity entity = createDummyEntity();
+		entity = repository.save(entity);
+
+		Long targetId = entity.getId();
+		assertThat(targetId).isNotNull();
+
+		List<DummyEntity> concurrencyEntities = createEntityStates(entity);
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(this.transactionManager);
+
+		List<Exception> exceptions = new CopyOnWriteArrayList<>();
+		CountDownLatch startLatch = new CountDownLatch(concurrencyEntities.size() + 1); // latch for all threads to wait on.
+		CountDownLatch doneLatch = new CountDownLatch(concurrencyEntities.size() + 1); // latch for main thread to wait on until all threads are done.
+
+		// update
+		concurrencyEntities.stream() //
+			.map(e -> new Thread(() -> {
+
+				try {
+
+					startLatch.countDown();
+					startLatch.await();
+
+					transactionTemplate.execute(status -> repository.save(e));
+				} catch (Exception ex) {
+					// When the delete execution is complete, the Update execution throws an IncorrectUpdateSemanticsDataAccessException.
+					if (ex.getCause() instanceof IncorrectUpdateSemanticsDataAccessException) {
+						return;
+					}
+
+					exceptions.add(ex);
+				} finally {
+					doneLatch.countDown();
+				}
+			})) //
+			.forEach(Thread::start);
+
+		// delete
+		new Thread(() -> {
+			try {
+
+				startLatch.countDown();
+				startLatch.await();
+
+				transactionTemplate.execute(status -> {
+					repository.deleteById(targetId);
+					return null;
+				});
+			} catch (Exception ex) {
+				exceptions.add(ex);
+			} finally {
+				doneLatch.countDown();
+			}
+		}).start();
+
+		doneLatch.await();
+
+		assertThat(exceptions).isEmpty();
+		assertThat(repository.findById(entity.id)).isEmpty();
 	}
 
 	private List<DummyEntity> createEntityStates(DummyEntity entity) {
