@@ -15,14 +15,20 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static org.assertj.core.api.Assertions.*;
-
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.From;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.LockOptions;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for {@link SqlServerDialect}.
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 public class SqlServerDialectUnitTests {
 
@@ -58,5 +64,16 @@ public class SqlServerDialectUnitTests {
 		LimitClause limit = SqlServerDialect.INSTANCE.limit();
 
 		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("OFFSET 10 ROWS FETCH NEXT 20 ROWS ONLY");
+	}
+
+	@Test // DATAJDBC-498
+	public void shouldRenderLock() {
+
+		LockClause lock = SqlServerDialect.INSTANCE.lock();
+		From from = mock(From.class);
+
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE, from))).isEqualTo("WITH (UPDLOCK, ROWLOCK)");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ, from))).isEqualTo("WITH (HOLDLOCK, ROWLOCK)");
+		assertThat(lock.getClausePosition()).isEqualTo(LockClause.Position.AFTER_FROM_TABLE);
 	}
 }

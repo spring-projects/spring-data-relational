@@ -19,12 +19,14 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.util.Assert;
+import org.springframework.data.relational.core.sql.LockOptions;
 
 /**
  * A SQL dialect for MySQL.
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public class MySqlDialect extends AbstractDialect {
@@ -102,6 +104,37 @@ public class MySqlDialect extends AbstractDialect {
 		}
 	};
 
+	private static final LockClause LOCK_CLAUSE = new LockClause() {
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.LockClause#getLock(LockOptions)
+		 */
+		@Override
+		public String getLock(LockOptions lockOptions) {
+			switch (lockOptions.getLockMode()) {
+
+				case PESSIMISTIC_WRITE:
+					return "FOR UPDATE";
+
+				case PESSIMISTIC_READ:
+					return "LOCK IN SHARE MODE";
+
+				default:
+					return "";
+			}
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.LockClause#getClausePosition()
+		 */
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_ORDER_BY;
+		}
+	};
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.dialect.Dialect#limit()
@@ -109,6 +142,15 @@ public class MySqlDialect extends AbstractDialect {
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
+	 */
+	@Override
+	public LockClause lock() {
+		return LOCK_CLAUSE;
 	}
 
 	/*

@@ -32,6 +32,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Tyler Van Gorder
+ * @author Myeonghyeon Lee
  */
 public interface DbAction<T> {
 
@@ -316,6 +317,56 @@ public interface DbAction<T> {
 
 		public String toString() {
 			return "DbAction.DeleteAllRoot(entityType=" + this.getEntityType() + ")";
+		}
+	}
+
+	/**
+	 * Represents an acquire lock statement for a aggregate root when only the ID is known.
+	 * <p>
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 */
+	final class AcquireLockRoot<T> implements DbAction<T> {
+		private final Object id;
+		private final Class<T> entityType;
+
+		public AcquireLockRoot(Object id, Class<T> entityType) {
+			this.id = id;
+			this.entityType = entityType;
+		}
+
+		public Object getId() {
+			return this.id;
+		}
+
+		public Class<T> getEntityType() {
+			return this.entityType;
+		}
+
+		public String toString() {
+			return "DbAction.AcquireLockRoot(id=" + this.getId() + ", entityType=" + this.getEntityType() + ")";
+		}
+	}
+
+	/**
+	 * Represents an acquire lock statement for all entities that that a reachable via a give path from any aggregate root of a
+	 * given type.
+	 *
+	 * @param <T> type of the entity for which this represents a database interaction.
+	 */
+	final class AcquireLockAllRoot<T> implements DbAction<T> {
+		private final Class<T> entityType;
+
+		public AcquireLockAllRoot(Class<T> entityType) {
+			this.entityType = entityType;
+		}
+
+		public Class<T> getEntityType() {
+			return this.entityType;
+		}
+
+		public String toString() {
+			return "DbAction.AcquireLockAllRoot(entityType=" + this.getEntityType() + ")";
 		}
 	}
 

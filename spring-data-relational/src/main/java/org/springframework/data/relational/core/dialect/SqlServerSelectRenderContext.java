@@ -28,6 +28,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  * </ul>
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 public class SqlServerSelectRenderContext implements SelectRenderContext {
 
@@ -36,14 +37,20 @@ public class SqlServerSelectRenderContext implements SelectRenderContext {
 	private static final String SYNTHETIC_SELECT_LIST = ", ROW_NUMBER() over (ORDER BY (SELECT 1)) AS "
 			+ SYNTHETIC_ORDER_BY_FIELD;
 
+	private final Function<Select, CharSequence> afterFromTable;
 	private final Function<Select, CharSequence> afterOrderBy;
 
 	/**
 	 * Creates a new {@link SqlServerSelectRenderContext}.
 	 *
+	 * @param afterFromTable the delegate {@code afterFromTable} function.
 	 * @param afterOrderBy the delegate {@code afterOrderBy} function.
 	 */
-	protected SqlServerSelectRenderContext(Function<Select, CharSequence> afterOrderBy) {
+	protected SqlServerSelectRenderContext(
+			Function<Select, CharSequence> afterFromTable,
+			Function<Select, CharSequence> afterOrderBy) {
+
+		this.afterFromTable = afterFromTable;
 		this.afterOrderBy = afterOrderBy;
 	}
 
@@ -58,6 +65,12 @@ public class SqlServerSelectRenderContext implements SelectRenderContext {
 
 			return "";
 		};
+	}
+
+	@Override
+	public Function<Select, ? extends CharSequence> afterFromTable() {
+
+		return afterFromTable;
 	}
 
 	@Override

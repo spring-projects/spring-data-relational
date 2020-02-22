@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.LockMode;
 
 /**
  * Delegates each methods to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
@@ -33,6 +34,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Mark Paluch
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -113,6 +115,24 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		collectVoid(das -> das.deleteAll(propertyPath));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
+		collectVoid(das -> das.acquireLockById(id, lockMode, domainType));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockAll(org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
+		collectVoid(das -> das.acquireLockAll(lockMode, domainType));
 	}
 
 	/*

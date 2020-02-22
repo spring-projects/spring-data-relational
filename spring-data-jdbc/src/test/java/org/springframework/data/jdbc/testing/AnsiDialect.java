@@ -20,7 +20,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.relational.core.dialect.AbstractDialect;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.dialect.LimitClause;
+import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -28,6 +30,7 @@ import org.springframework.util.ClassUtils;
  * An SQL dialect for the ANSI SQL standard.
  *
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  * @since 2.0
  */
 public class AnsiDialect extends AbstractDialect {
@@ -78,6 +81,27 @@ public class AnsiDialect extends AbstractDialect {
 		}
 	};
 
+	private static final LockClause LOCK_CLAUSE = new LockClause() {
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.LockClause#getLock(LockOptions)
+		 */
+		@Override
+		public String getLock(LockOptions lockOptions) {
+			return "FOR UPDATE";
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClausePosition()
+		 */
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_ORDER_BY;
+		}
+	};
+
 	private final AnsiArrayColumns ARRAY_COLUMNS = new AnsiArrayColumns();
 
 	/*
@@ -87,6 +111,15 @@ public class AnsiDialect extends AbstractDialect {
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
+	 */
+	@Override
+	public LockClause lock() {
+		return LOCK_CLAUSE;
 	}
 
 	/*

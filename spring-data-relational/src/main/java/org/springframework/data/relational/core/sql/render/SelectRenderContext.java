@@ -25,6 +25,7 @@ import org.springframework.data.relational.core.sql.Select;
  * element without further whitespace processing. Hooks are responsible for adding required surrounding whitespaces.
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public interface SelectRenderContext {
@@ -36,6 +37,16 @@ public interface SelectRenderContext {
 	 * @return render {@link Function} invoked after rendering {@code SELECT} list.
 	 */
 	default Function<Select, ? extends CharSequence> afterSelectList() {
+		return select -> "";
+	}
+
+	/**
+	 * Customization hook: Rendition of a part after {@code FROM} table.
+	 * Renders an empty string by default.
+	 *
+	 * @return render {@link Function} invoked after rendering {@code FROM} table.
+	 */
+	default Function<Select, ? extends CharSequence> afterFromTable() {
 		return select -> "";
 	}
 

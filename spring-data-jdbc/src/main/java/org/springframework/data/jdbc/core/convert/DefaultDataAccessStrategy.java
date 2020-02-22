@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.core.convert;
 import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.JDBCType;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,10 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import org.springframework.dao.DataRetrievalFailureException;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.dao.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.support.JdbcUtil;
@@ -41,7 +40,9 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -62,6 +63,7 @@ import org.springframework.util.Assert;
  * @author Tom Hombergs
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -235,6 +237,27 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		operations.getJdbcOperations()
 				.update(sql(propertyPath.getBaseProperty().getOwner().getType()).createDeleteAllSql(propertyPath));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
+		String acquireLockByIdSql = sql(domainType).getAcquireLockById(lockMode);
+		SqlIdentifierParameterSource parameter = createIdParameterSource(id, domainType);
+		operations.queryForObject(acquireLockByIdSql, parameter, Object.class);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockAll(org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
+		String acquireLockAllSql = sql(domainType).getAcquireLockAll(lockMode);
+		operations.query(acquireLockAllSql, Collections.emptyMap(), new NoMappingResultSetExtractor());
 	}
 
 	/*
@@ -579,6 +602,16 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		@Override
 		public T getBean() {
+			return null;
+		}
+	}
+
+	/**
+	 * The type No mapping result set extractor.
+	 */
+	static class NoMappingResultSetExtractor implements ResultSetExtractor<Object> {
+		@Override
+		public Object extractData(ResultSet resultSet) throws SQLException, DataAccessException {
 			return null;
 		}
 	}

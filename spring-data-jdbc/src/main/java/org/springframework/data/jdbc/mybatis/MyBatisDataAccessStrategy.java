@@ -26,6 +26,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
@@ -41,6 +42,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
@@ -60,6 +62,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -246,6 +249,34 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		String statement = namespace(baseType) + ".deleteAll-" + toDashPath(propertyPath);
 		MyBatisContext parameter = new MyBatisContext(null, null, leafType, Collections.emptyMap());
 		sqlSession().delete(statement, parameter);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
+		String statement = namespace(domainType) + ".acquireLockById";
+		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
+
+		long result = sqlSession().selectOne(statement, parameter);
+		if (result < 1) {
+			throw new EmptyResultDataAccessException(
+				String.format("The lock target does not exist. id: %s, statement: %s", id, statement), 1);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockAll(org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
+		String statement = namespace(domainType) + ".acquireLockAll";
+		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
+
+		sqlSession().selectOne(statement, parameter);
 	}
 
 	/*

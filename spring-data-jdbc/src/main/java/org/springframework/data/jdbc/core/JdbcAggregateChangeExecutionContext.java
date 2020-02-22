@@ -42,6 +42,7 @@ import org.springframework.data.relational.core.conversion.RelationalEntityVersi
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -49,6 +50,7 @@ import org.springframework.util.Assert;
 /**
  * @author Jens Schauder
  * @author Umut Erturk
+ * @author Myeonghyeon Lee
  */
 class JdbcAggregateChangeExecutionContext {
 
@@ -162,6 +164,14 @@ class JdbcAggregateChangeExecutionContext {
 		} else {
 			add(new DbActionExecutionResult());
 		}
+	}
+
+	<T> void executeAcquireLock(DbAction.AcquireLockRoot<T> acquireLock) {
+		accessStrategy.acquireLockById(acquireLock.getId(), LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
+	}
+
+	<T> void executeAcquireLockAllRoot(DbAction.AcquireLockAllRoot<T> acquireLock) {
+		accessStrategy.acquireLockAll(LockMode.PESSIMISTIC_WRITE, acquireLock.getEntityType());
 	}
 
 	private void add(DbActionExecutionResult result) {

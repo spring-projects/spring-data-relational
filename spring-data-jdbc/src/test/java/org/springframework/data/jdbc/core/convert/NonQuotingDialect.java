@@ -19,6 +19,7 @@ import org.springframework.data.relational.core.dialect.AbstractDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.dialect.LimitClause;
+import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
@@ -27,6 +28,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * @author Mark Paluch
  * @author Milan Milanov
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  */
 public class NonQuotingDialect extends AbstractDialect implements Dialect {
 
@@ -37,6 +39,11 @@ public class NonQuotingDialect extends AbstractDialect implements Dialect {
 	@Override
 	public LimitClause limit() {
 		return HsqlDbDialect.INSTANCE.limit();
+	}
+
+	@Override
+	public LockClause lock() {
+		return HsqlDbDialect.INSTANCE.lock();
 	}
 
 	@Override

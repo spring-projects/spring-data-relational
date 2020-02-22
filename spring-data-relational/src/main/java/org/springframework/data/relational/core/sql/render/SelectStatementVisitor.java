@@ -28,6 +28,7 @@ import org.springframework.data.relational.core.sql.Where;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
@@ -124,6 +125,8 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 			if (from.length() != 0) {
 				builder.append(" FROM ").append(from);
 			}
+
+			builder.append(selectRenderContext.afterFromTable().apply(select));
 
 			if (join.length() != 0) {
 				builder.append(' ').append(join);

@@ -26,6 +26,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public interface Dialect {
@@ -36,6 +37,13 @@ public interface Dialect {
 	 * @return the {@link LimitClause} used by this dialect.
 	 */
 	LimitClause limit();
+
+	/**
+	 * Return the {@link LockClause} used by this dialect.
+	 *
+	 * @return the {@link LockClause} used by this dialect.
+	 */
+	LockClause lock();
 
 	/**
 	 * Returns the array support object that describes how array-typed columns are supported by this dialect.

@@ -23,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.lang.Nullable;
 
 /**
@@ -33,6 +34,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  */
 public interface DataAccessStrategy extends RelationResolver {
 
@@ -128,6 +130,23 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @param propertyPath Leading from the root object to the entities to be deleted. Must not be {@code null}.
 	 */
 	void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
+
+	/**
+	 * Acquire Lock
+	 *
+	 * @param id the id of the entity to load. Must not be {@code null}.
+	 * @param lockMode the lock mode for select. Must not be {@code null}.
+	 * @param domainType the domain type of the entity. Must not be {@code null}.
+	 */
+	<T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType);
+
+	/**
+	 * Acquire Lock entities of the given domain type.
+	 *
+	 * @param lockMode the lock mode for select. Must not be {@code null}.
+	 * @param domainType the domain type of the entity. Must not be {@code null}.
+	 */
+	<T> void acquireLockAll(LockMode lockMode, Class<T> domainType);
 
 	/**
 	 * Counts the rows in the table representing the given domain type.

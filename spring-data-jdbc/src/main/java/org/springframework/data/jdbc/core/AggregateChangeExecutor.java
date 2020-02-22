@@ -27,6 +27,7 @@ import org.springframework.lang.Nullable;
  * Executes an {@link MutableAggregateChange}.
  *
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 2.0
  */
 class AggregateChangeExecutor {
@@ -77,6 +78,10 @@ class AggregateChangeExecutor {
 				executionContext.executeDeleteRoot((DbAction.DeleteRoot<?>) action);
 			} else if (action instanceof DbAction.DeleteAllRoot) {
 				executionContext.executeDeleteAllRoot((DbAction.DeleteAllRoot<?>) action);
+			} else if (action instanceof DbAction.AcquireLockRoot) {
+				executionContext.executeAcquireLock((DbAction.AcquireLockRoot<?>) action);
+			} else if (action instanceof DbAction.AcquireLockAllRoot) {
+				executionContext.executeAcquireLockAllRoot((DbAction.AcquireLockAllRoot<?>) action);
 			} else {
 				throw new RuntimeException("unexpected action");
 			}

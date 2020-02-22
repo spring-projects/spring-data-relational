@@ -46,6 +46,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 
@@ -96,16 +97,45 @@ public class SqlGeneratorUnitTests {
 
 		SoftAssertions softAssertions = new SoftAssertions();
 		softAssertions.assertThat(sql) //
-				.startsWith("SELECT") //
-				.contains("dummy_entity.id1 AS id1,") //
-				.contains("dummy_entity.x_name AS x_name,") //
-				.contains("dummy_entity.x_other AS x_other,") //
-				.contains("ref.x_l1id AS ref_x_l1id") //
-				.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
-				.contains("ON ref.dummy_entity = dummy_entity.id1") //
-				.contains("WHERE dummy_entity.id1 = :id") //
-				// 1-N relationships do not get loaded via join
-				.doesNotContain("Element AS elements");
+			.startsWith("SELECT") //
+			.contains("dummy_entity.id1 AS id1,") //
+			.contains("dummy_entity.x_name AS x_name,") //
+			.contains("dummy_entity.x_other AS x_other,") //
+			.contains("ref.x_l1id AS ref_x_l1id") //
+			.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
+			.contains("ON ref.dummy_entity = dummy_entity.id1") //
+			.contains("WHERE dummy_entity.id1 = :id") //
+			// 1-N relationships do not get loaded via join
+			.doesNotContain("Element AS elements");
+		softAssertions.assertAll();
+	}
+
+	@Test // DATAJDBC-493
+	public void getAcquireLockById() {
+
+		String sql = sqlGenerator.getAcquireLockById(LockMode.PESSIMISTIC_WRITE);
+
+		SoftAssertions softAssertions = new SoftAssertions();
+		softAssertions.assertThat(sql) //
+			.startsWith("SELECT") //
+			.contains("dummy_entity.id1") //
+			.contains("WHERE dummy_entity.id1 = :id") //
+			.contains("FOR UPDATE") //
+			.doesNotContain("Element AS elements");
+		softAssertions.assertAll();
+	}
+
+	@Test // DATAJDBC-493
+	public void getAcquireLockAll() {
+
+		String sql = sqlGenerator.getAcquireLockAll(LockMode.PESSIMISTIC_WRITE);
+
+		SoftAssertions softAssertions = new SoftAssertions();
+		softAssertions.assertThat(sql) //
+			.startsWith("SELECT") //
+			.contains("dummy_entity.id1") //
+			.contains("FOR UPDATE") //
+			.doesNotContain("Element AS elements");
 		softAssertions.assertAll();
 	}
 

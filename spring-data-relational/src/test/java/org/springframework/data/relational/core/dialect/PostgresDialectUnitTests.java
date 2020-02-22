@@ -17,13 +17,21 @@ package org.springframework.data.relational.core.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.From;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.Table;
+
+import java.util.Collections;
 
 /**
  * Unit tests for {@link PostgresDialect}.
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 public class PostgresDialectUnitTests {
 
@@ -70,5 +78,17 @@ public class PostgresDialectUnitTests {
 		LimitClause limit = PostgresDialect.INSTANCE.limit();
 
 		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("LIMIT 20 OFFSET 10");
+	}
+
+	@Test // DATAJDBC-498
+	public void shouldRenderLock() {
+
+		LockClause lock = PostgresDialect.INSTANCE.lock();
+		From from = mock(From.class);
+		when(from.getTables()).thenReturn(Collections.singletonList(Table.create("dummy_table")));
+
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE, from))).isEqualTo("FOR UPDATE OF dummy_table");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ, from))).isEqualTo("FOR SHARE OF dummy_table");
+		assertThat(lock.getClausePosition()).isEqualTo(LockClause.Position.AFTER_ORDER_BY);
 	}
 }
