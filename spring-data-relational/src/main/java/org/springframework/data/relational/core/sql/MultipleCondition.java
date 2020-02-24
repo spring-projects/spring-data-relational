@@ -38,6 +38,10 @@ public abstract class MultipleCondition extends AbstractSegment implements Condi
 		this.conditions = Arrays.asList(conditions);
 	}
 
+	public List<Condition> getConditions() {
+		return conditions;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()

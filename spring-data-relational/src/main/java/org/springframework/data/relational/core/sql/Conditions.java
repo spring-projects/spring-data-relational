@@ -44,6 +44,18 @@ public abstract class Conditions {
 	}
 
 	/**
+	 * Creates a grouped {@link Condition} that is enclosed with parentheses. Useful to combine {@code AND} and {@code OR}
+	 * statements.
+	 *
+	 * @param condition the nested condition to be grouped.
+	 * @return a {@link GroupedCondition}.
+	 * @since 2.0
+	 */
+	public static Condition group(Condition condition) {
+		return new GroupedCondition(condition);
+	}
+
+	/**
 	 * Creates a {@code IS NULL} condition.
 	 *
 	 * @param expression the expression to check for nullability, must not be {@literal null}.
