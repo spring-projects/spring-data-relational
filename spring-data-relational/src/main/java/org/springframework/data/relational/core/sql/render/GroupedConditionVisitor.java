@@ -16,24 +16,24 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.ConditionGroup;
+import org.springframework.data.relational.core.sql.GroupedCondition;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
 /**
- * Renderer for {@link ConditionGroup}. Uses a {@link RenderTarget} to call back for render results.
+ * Renderer for {@link GroupedCondition}. Uses a {@link RenderTarget} to call back for render results.
  *
  * @author Mark Paluch
  * @since 2.0
  */
-class ConditionGroupVisitor extends TypedSubtreeVisitor<ConditionGroup> {
+class GroupedConditionVisitor extends TypedSubtreeVisitor<GroupedCondition> {
 
 	private final RenderContext context;
 	private final RenderTarget target;
 
 	private @Nullable ConditionVisitor conditionVisitor;
 
-	ConditionGroupVisitor(RenderContext context, RenderTarget target) {
+	GroupedConditionVisitor(RenderContext context, RenderTarget target) {
 		this.context = context;
 		this.target = target;
 	}

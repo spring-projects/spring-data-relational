@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
 import org.springframework.data.relational.core.sql.Column;
+import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
 
@@ -46,7 +47,7 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderEqualsGroup() {
 
 		String sql = SqlRenderer
-				.toString(StatementBuilder.select(left).from(table).where(left.isEqualTo(right).group()).build());
+				.toString(StatementBuilder.select(left).from(table).where(Conditions.group(left.isEqualTo(right))).build());
 
 		assertThat(sql).endsWith("WHERE (my_table.left = my_table.right)");
 	}
@@ -55,7 +56,7 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderAndGroup() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
-				.where(left.isEqualTo(right).and(left.isGreater(right)).group()).build());
+				.where(Conditions.group(left.isEqualTo(right).and(left.isGreater(right)))).build());
 
 		assertThat(sql).endsWith("WHERE (my_table.left = my_table.right AND my_table.left > my_table.right)");
 	}
@@ -64,21 +65,22 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderAndGroupOr() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
-				.where(left.isEqualTo(right).and(left.isGreater(right)).group().or(left.like(right))).build());
+				.where(Conditions.group(left.isEqualTo(right).and(left.isGreater(right))).or(left.like(right))).build());
 
 		assertThat(sql).endsWith(
 				"WHERE (my_table.left = my_table.right AND my_table.left > my_table.right) OR my_table.left LIKE my_table.right");
 	}
 
-
 	@Test // DATAJDBC-490
-	public void shouldRenderAndGroupOrAandGroup() {
+	public void shouldRenderAndGroupOrAndGroup() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
-				.where(left.isEqualTo(right).and(left.isGreater(right)).group().or(left.like(right).and(right.like(left)).group())).build());
+				.where(Conditions.group(left.isEqualTo(right).and(left.isGreater(right)))
+						.or(Conditions.group(left.like(right).and(right.like(left)))))
+				.build());
 
 		assertThat(sql).endsWith(
-				"WHERE (my_table.left = my_table.right AND my_table.left > my_table.right) OR (my_table.left LIKE my_table.right AND my_table.right LIKE my_table.left");
+				"WHERE (my_table.left = my_table.right AND my_table.left > my_table.right) OR (my_table.left LIKE my_table.right AND my_table.right LIKE my_table.left)");
 	}
 
 	@Test // DATAJDBC-309

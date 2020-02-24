@@ -21,9 +21,9 @@ package org.springframework.data.relational.core.sql;
  * @author Mark Paluch
  * @since 2.0
  */
-public class ConditionGroup extends MultipleCondition implements Condition {
+public class GroupedCondition extends MultipleCondition implements Condition {
 
-	ConditionGroup(Condition condition) {
+	GroupedCondition(Condition condition) {
 		super("", condition);
 	}
 
