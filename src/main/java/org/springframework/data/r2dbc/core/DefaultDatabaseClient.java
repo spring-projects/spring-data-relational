@@ -343,6 +343,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		ExecuteSpecSupport(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
 				Supplier<String> sqlSupplier, StatementFilterFunction filterFunction) {
+
 			this.byIndex = byIndex;
 			this.byName = byName;
 			this.sqlSupplier = sqlSupplier;
