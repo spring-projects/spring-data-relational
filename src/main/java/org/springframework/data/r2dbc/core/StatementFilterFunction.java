@@ -61,5 +61,4 @@ public interface StatementFilterFunction {
 
 		return (request, next) -> filter(request, afterRequest -> afterFilter.filter(afterRequest, next));
 	}
-
 }

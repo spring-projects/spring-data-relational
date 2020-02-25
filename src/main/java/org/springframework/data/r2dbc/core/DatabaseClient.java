@@ -27,7 +27,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 import org.reactivestreams.Publisher;
 
@@ -892,7 +891,7 @@ public interface DatabaseClient {
 		 *
 		 * @param filter the filter to be added to the chain.
 		 */
-		default S filter(UnaryOperator<Statement> filter) {
+		default S filter(Function<? super Statement, ? extends Statement> filter) {
 
 			Assert.notNull(filter, "Statement FilterFunction must not be null!");
 

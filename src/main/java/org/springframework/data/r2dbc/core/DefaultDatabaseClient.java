@@ -275,15 +275,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	/**
 	 * Customization hook.
 	 */
-	protected <T> DefaultTypedExecuteSpec<T> createTypedExecuteSpec(Map<Integer, SettableValue> byIndex,
-			Map<String, SettableValue> byName, Supplier<String> sqlSupplier, StatementFilterFunction filterFunction,
-			BiFunction<Row, RowMetadata, T> mappingFunction) {
-		return new DefaultTypedExecuteSpec<>(byIndex, byName, sqlSupplier, filterFunction, mappingFunction);
-	}
-
-	/**
-	 * Customization hook.
-	 */
 	protected ExecuteSpecSupport createGenericExecuteSpec(Map<Integer, SettableValue> byIndex,
 			Map<String, SettableValue> byName, Supplier<String> sqlSupplier, StatementFilterFunction filterFunction) {
 		return new DefaultGenericExecuteSpec(byIndex, byName, sqlSupplier, filterFunction);
@@ -354,7 +345,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			String sql = getRequiredSql(sqlSupplier);
 
-			Function<Connection, Statement> executeFunction = it -> {
+			Function<Connection, Statement> statementFactory = it -> {
 
 				if (logger.isDebugEnabled()) {
 					logger.debug("Executing SQL statement [" + sql + "]");
@@ -412,7 +403,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				return statement;
 			};
 
-			Function<Connection, Flux<Result>> resultFunction = toFunction(sql, filterFunction, executeFunction);
+			Function<Connection, Flux<Result>> resultFunction = toFunction(sql, filterFunction, statementFactory);
 
 			return new DefaultSqlResult<>(DefaultDatabaseClient.this, //
 					sql, //
@@ -582,7 +573,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	@SuppressWarnings("unchecked")
 	protected class DefaultTypedExecuteSpec<T> extends ExecuteSpecSupport implements TypedExecuteSpec<T> {
 
-		private final @Nullable Class<T> typeToRead;
+		private final Class<T> typeToRead;
 		private final BiFunction<Row, RowMetadata, T> mappingFunction;
 
 		DefaultTypedExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
@@ -598,16 +589,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			} else {
 				this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
 			}
-		}
-
-		DefaultTypedExecuteSpec(Map<Integer, SettableValue> byIndex, Map<String, SettableValue> byName,
-				Supplier<String> sqlSupplier, StatementFilterFunction filterFunction,
-				BiFunction<Row, RowMetadata, T> mappingFunction) {
-
-			super(byIndex, byName, sqlSupplier, filterFunction);
-
-			this.typeToRead = null;
-			this.mappingFunction = mappingFunction;
 		}
 
 		@Override
@@ -717,8 +698,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.page = Pageable.unpaged();
 		}
 
-		DefaultSelectSpecSupport(SqlIdentifier table, List<SqlIdentifier> projectedFields, Criteria criteria, Sort sort,
-				Pageable page) {
+		DefaultSelectSpecSupport(SqlIdentifier table, List<SqlIdentifier> projectedFields, @Nullable Criteria criteria,
+				Sort sort, Pageable page) {
 			this.table = table;
 			this.projectedFields = projectedFields;
 			this.criteria = criteria;
@@ -772,13 +753,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		protected abstract DefaultSelectSpecSupport createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				Criteria criteria, Sort sort, Pageable page);
+				@Nullable Criteria criteria, Sort sort, Pageable page);
 	}
 
 	private class DefaultGenericSelectSpec extends DefaultSelectSpecSupport implements GenericSelectSpec {
 
-		DefaultGenericSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, Criteria criteria, Sort sort,
-				Pageable page) {
+		DefaultGenericSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, @Nullable Criteria criteria,
+				Sort sort, Pageable page) {
 			super(table, projectedFields, criteria, sort, page);
 		}
 
@@ -861,7 +842,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		protected DefaultGenericSelectSpec createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				Criteria criteria, Sort sort, Pageable page) {
+				@Nullable Criteria criteria, Sort sort, Pageable page) {
 			return new DefaultGenericSelectSpec(table, projectedFields, criteria, sort, page);
 		}
 	}
@@ -883,8 +864,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
 		}
 
-		DefaultTypedSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, Criteria criteria, Sort sort,
-				Pageable page, @Nullable Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
+		DefaultTypedSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, @Nullable Criteria criteria,
+				Sort sort, Pageable page, Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			super(table, projectedFields, criteria, sort, page);
 
@@ -975,7 +956,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		protected DefaultTypedSelectSpec<T> createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				Criteria criteria, Sort sort, Pageable page) {
+				@Nullable Criteria criteria, Sort sort, Pageable page) {
 			return new DefaultTypedSelectSpec<>(table, projectedFields, criteria, sort, page, this.typeToRead,
 					this.mappingFunction);
 		}
@@ -1223,11 +1204,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private final @Nullable Class<?> typeToUpdate;
 		private final @Nullable SqlIdentifier table;
-		private final Update assignments;
-		private final Criteria where;
+		private final @Nullable Update assignments;
+		private final @Nullable Criteria where;
 
-		DefaultGenericUpdateSpec(@Nullable Class<?> typeToUpdate, @Nullable SqlIdentifier table, Update assignments,
-				Criteria where) {
+		DefaultGenericUpdateSpec(@Nullable Class<?> typeToUpdate, @Nullable SqlIdentifier table,
+				@Nullable Update assignments, @Nullable Criteria where) {
 			this.typeToUpdate = typeToUpdate;
 			this.table = table;
 			this.assignments = assignments;
@@ -1256,6 +1237,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			SqlIdentifier table;
 
 			if (StringUtils.isEmpty(this.table)) {
+				Assert.state(this.typeToUpdate != null, "Type to update must not be null!");
 				table = dataAccessStrategy.getTableName(this.typeToUpdate);
 			} else {
 				table = this.table;
@@ -1277,6 +1259,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				mapper = mapper.forType(this.typeToUpdate);
 			}
 
+			Assert.state(this.assignments != null, "Update assignments must not be null!");
 			StatementMapper.UpdateSpec update = mapper.createUpdate(table, this.assignments);
 
 			if (this.where != null) {
@@ -1291,11 +1274,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	class DefaultTypedUpdateSpec<T> implements TypedUpdateSpec<T>, UpdateSpec {
 
-		private final @Nullable Class<T> typeToUpdate;
+		private final Class<T> typeToUpdate;
 		private final @Nullable SqlIdentifier table;
-		private final T objectToUpdate;
+		private final @Nullable T objectToUpdate;
 
-		DefaultTypedUpdateSpec(@Nullable Class<T> typeToUpdate, @Nullable SqlIdentifier table, T objectToUpdate) {
+		DefaultTypedUpdateSpec(Class<T> typeToUpdate, @Nullable SqlIdentifier table, @Nullable T objectToUpdate) {
 			this.typeToUpdate = typeToUpdate;
 			this.table = table;
 			this.objectToUpdate = objectToUpdate;
@@ -1390,9 +1373,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private final @Nullable Class<T> typeToDelete;
 		private final @Nullable SqlIdentifier table;
-		private final Criteria where;
+		private final @Nullable Criteria where;
 
-		DefaultDeleteSpec(@Nullable Class<T> typeToDelete, @Nullable SqlIdentifier table, Criteria where) {
+		DefaultDeleteSpec(@Nullable Class<T> typeToDelete, @Nullable SqlIdentifier table, @Nullable Criteria where) {
 			this.typeToDelete = typeToDelete;
 			this.table = table;
 			this.where = where;
@@ -1420,6 +1403,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			SqlIdentifier table;
 
 			if (StringUtils.isEmpty(this.table)) {
+				Assert.state(this.typeToDelete != null, "Type to delete must not be null!");
 				table = dataAccessStrategy.getTableName(this.typeToDelete);
 			} else {
 				table = this.table;
@@ -1608,9 +1592,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			// Invoke method on target Connection.
 			try {
-				Object retVal = method.invoke(this.target, args);
-
-				return retVal;
+				return method.invoke(this.target, args);
 			} catch (InvocationTargetException ex) {
 				throw ex.getTargetException();
 			}
