@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.5.RELEASE (2020-02-26)
+---------------------------------------------
+* DATAJDBC-488 - Deadlock occurs when competing with Jdbc Repository Update.
+* DATAJDBC-483 - Correct reference docs.
+* DATAJDBC-472 - Release 1.1.5 (Moore SR5).
+
+
 Changes in version 1.0.16.RELEASE (2020-02-26)
 ----------------------------------------------
 * DATAJDBC-485 - Travis Build is broken for branch 1.0.x.
@@ -370,6 +377,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
