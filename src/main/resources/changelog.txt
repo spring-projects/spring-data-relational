@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.16.RELEASE (2020-02-26)
+----------------------------------------------
+* DATAJDBC-485 - Travis Build is broken for branch 1.0.x.
+* DATAJDBC-483 - Correct reference docs.
+* DATAJDBC-471 - Release 1.0.16 (Lovelace SR16).
+
+
 Changes in version 2.0.0.M3 (2020-02-12)
 ----------------------------------------
 * DATAJDBC-484 - Date related tests in JdbcRepositoryIntegrationTests fail with Java 11.
@@ -363,6 +370,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
