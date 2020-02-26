@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.lang.Nullable;
+
 import java.util.List;
 import java.util.OptionalLong;
 
@@ -30,6 +32,7 @@ import java.util.OptionalLong;
  * </ol>
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  * @since 1.1
  * @see StatementBuilder
  * @see SelectBuilder
@@ -71,4 +74,7 @@ public interface Select extends Segment, Visitable {
 	 * @return
 	 */
 	boolean isDistinct();
+
+	@Nullable
+	LockMode getLockMode();
 }

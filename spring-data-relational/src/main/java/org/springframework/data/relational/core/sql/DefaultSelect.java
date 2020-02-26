@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  * Default {@link Select} implementation.
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 class DefaultSelect implements Select {
@@ -39,9 +40,10 @@ class DefaultSelect implements Select {
 	private final List<Join> joins;
 	private final @Nullable Where where;
 	private final List<OrderByField> orderBy;
+	private final @Nullable LockMode lockMode;
 
 	DefaultSelect(boolean distinct, List<Expression> selectList, List<Table> from, long limit, long offset,
-			List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy) {
+			List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy, @Nullable LockMode lockMode) {
 
 		this.distinct = distinct;
 		this.selectList = new SelectList(new ArrayList<>(selectList));
@@ -51,6 +53,7 @@ class DefaultSelect implements Select {
 		this.joins = new ArrayList<>(joins);
 		this.orderBy = Collections.unmodifiableList(new ArrayList<>(orderBy));
 		this.where = where != null ? new Where(where) : null;
+		this.lockMode = lockMode;
 	}
 
 	/*
@@ -83,6 +86,16 @@ class DefaultSelect implements Select {
 	@Override
 	public boolean isDistinct() {
 		return distinct;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.Select#getLockMode()
+	 */
+	@Nullable
+	@Override
+	public LockMode getLockMode() {
+		return lockMode;
 	}
 
 	/*

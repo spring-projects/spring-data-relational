@@ -22,6 +22,7 @@ import java.util.Collection;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 1.1
  * @see StatementBuilder
  */
@@ -211,9 +212,9 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Builder exposing {@code FROM}, {@code JOIN}, {@code WHERE} and {@code LIMIT/OFFSET} methods.
+	 * Builder exposing {@code FROM}, {@code JOIN}, {@code WHERE}, {@code LIMIT/OFFSET} and {@code LOCK} methods.
 	 */
-	interface SelectFromAndOrderBy extends SelectFrom, SelectOrdered, SelectLimitOffset, BuildSelect {
+	interface SelectFromAndOrderBy extends SelectFrom, SelectOrdered, SelectLimitOffset, SelectLock, BuildSelect {
 
 		@Override
 		SelectFromAndOrderBy limitOffset(long limit, long offset);
@@ -247,9 +248,10 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Builder exposing {@code FROM}, {@code JOIN}, {@code WHERE} and {@code LIMIT/OFFSET} methods.
+	 * Builder exposing {@code FROM}, {@code JOIN}, {@code WHERE}, {@code LIMIT/OFFSET} and {@code LOCK} methods.
 	 */
-	interface SelectFromAndJoin extends SelectFromAndOrderBy, BuildSelect, SelectJoin, SelectWhere, SelectLimitOffset {
+	interface SelectFromAndJoin
+		extends SelectFromAndOrderBy, BuildSelect, SelectJoin, SelectWhere, SelectLimitOffset, SelectLock {
 
 		/**
 		 * Declare a {@link Table} to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods keep
@@ -315,10 +317,10 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Builder exposing {@code FROM}, {@code WHERE}, {@code LIMIT/OFFSET}, and JOIN {@code AND} continuation methods.
+	 * Builder exposing {@code FROM}, {@code WHERE}, {@code LIMIT/OFFSET}, JOIN {@code AND} and {@code LOCK} continuation methods.
 	 */
 	interface SelectFromAndJoinCondition
-			extends BuildSelect, SelectJoin, SelectWhere, SelectOnCondition, SelectLimitOffset {
+			extends BuildSelect, SelectJoin, SelectWhere, SelectOnCondition, SelectLimitOffset, SelectLock {
 
 		/**
 		 * Apply {@code limit} and {@code offset} parameters to the select statement. To read the first 20 rows from start
@@ -380,9 +382,9 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Builder exposing {@code ORDER BY} methods.
+	 * Builder exposing {@code ORDER BY} and {@code LOCK} methods.
 	 */
-	interface SelectOrdered extends BuildSelect {
+	interface SelectOrdered extends SelectLock, BuildSelect {
 
 		/**
 		 * Add one or more {@link Column columns} to order by.
@@ -410,9 +412,9 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Interface exposing {@code WHERE} methods.
+	 * Interface exposing {@code WHERE}, {@code LOCK} methods.
 	 */
-	interface SelectWhere extends SelectOrdered, BuildSelect {
+	interface SelectWhere extends SelectOrdered, SelectLock, BuildSelect {
 
 		/**
 		 * Apply a {@code WHERE} clause.
@@ -428,7 +430,7 @@ public interface SelectBuilder {
 	/**
 	 * Interface exposing {@code AND}/{@code OR} combinator methods for {@code WHERE} {@link Condition}s.
 	 */
-	interface SelectWhereAndOr extends SelectOrdered, BuildSelect {
+	interface SelectWhereAndOr extends SelectOrdered, SelectLock, BuildSelect {
 
 		/**
 		 * Combine the previous {@code WHERE} {@link Condition} using {@code AND}.
@@ -452,7 +454,7 @@ public interface SelectBuilder {
 	/**
 	 * Interface exposing {@code JOIN} methods.
 	 */
-	interface SelectJoin extends BuildSelect {
+	interface SelectJoin extends SelectLock, BuildSelect {
 
 		/**
 		 * Declare a {@code JOIN} {@code table}.
@@ -518,7 +520,7 @@ public interface SelectBuilder {
 	/**
 	 * Builder exposing JOIN and {@code JOIN … ON} continuation methods.
 	 */
-	interface SelectOnCondition extends SelectJoin, BuildSelect {
+	interface SelectOnCondition extends SelectJoin, SelectLock, BuildSelect {
 
 		/**
 		 * Declare an additional source column in the {@code JOIN}.
@@ -528,6 +530,20 @@ public interface SelectBuilder {
 		 * @see Table#column(String)
 		 */
 		SelectOnConditionComparison and(Expression column);
+	}
+
+	/**
+	 * Lock methods.
+	 */
+	interface SelectLock extends BuildSelect {
+
+		/**
+		 * Apply lock to read.
+		 *
+		 * @param lockMode lockMode to read.
+		 * @return {@code this} builder.
+		 */
+		SelectLock lock(LockMode lockMode);
 	}
 
 	/**

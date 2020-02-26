@@ -31,6 +31,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAndJoin, SelectWhereAndOr {
@@ -43,6 +44,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	private List<Join> joins = new ArrayList<>();
 	private @Nullable Condition where;
 	private List<OrderByField> orderBy = new ArrayList<>();
+	private @Nullable LockMode lockMode;
 
 	/*
 	 * (non-Javadoc)
@@ -267,11 +269,21 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectLock#lock(org.springframework.data.relational.core.sql.LockMode)
+	 */
+	@Override
+	public SelectLock lock(LockMode lockMode) {
+		this.lockMode = lockMode;
+		return this;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.SelectBuilder.BuildSelect#build()
 	 */
 	@Override
 	public Select build() {
-		DefaultSelect select = new DefaultSelect(distinct, selectList, from, limit, offset, joins, where, orderBy);
+		DefaultSelect select = new DefaultSelect(distinct, selectList, from, limit, offset, joins, where, orderBy, lockMode);
 		SelectValidator.validate(select);
 		return select;
 	}
@@ -446,6 +458,16 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		public SelectFromAndJoin offset(long offset) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.offset(offset);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectLock#lock(org.springframework.data.relational.core.sql.LockMode)
+		 */
+		@Override
+		public SelectLock lock(LockMode lockMode) {
+			selectBuilder.join(finishJoin());
+			return selectBuilder.lock(lockMode);
 		}
 
 		/*
