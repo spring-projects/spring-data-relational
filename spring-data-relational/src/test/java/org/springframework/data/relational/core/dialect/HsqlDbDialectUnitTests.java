@@ -18,11 +18,14 @@ package org.springframework.data.relational.core.dialect;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.LockOptions;
 
 /**
  * Unit tests for the {@link HsqlDbDialect}.
  * 
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  */
 public class HsqlDbDialectUnitTests {
 
@@ -65,5 +68,15 @@ public class HsqlDbDialectUnitTests {
 		String abcQuoted = HsqlDbDialect.INSTANCE.getIdentifierProcessing().quote("abc");
 
 		assertThat(abcQuoted).isEqualTo("\"abc\"");
+	}
+
+	@Test // DATAJDBC-498
+	public void shouldRenderLock() {
+
+		LockClause limit = HsqlDbDialect.INSTANCE.lock();
+		LockOptions lockOptions = new LockOptions(LockMode.PESSIMISTIC_WRITE);
+
+		assertThat(limit.getLock(lockOptions)).isEqualTo("FOR UPDATE");
+		assertThat(limit.getClausePosition()).isEqualTo(LockClause.Position.AFTER_ORDER_BY);
 	}
 }

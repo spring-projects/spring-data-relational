@@ -20,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
@@ -27,6 +29,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  * Base class for {@link Dialect} implementations.
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public abstract class AbstractDialect implements Dialect {
@@ -38,9 +41,31 @@ public abstract class AbstractDialect implements Dialect {
 	@Override
 	public SelectRenderContext getSelectContext() {
 
+		Function<Select, ? extends CharSequence> afterFromTable = getAfterFromTable();
 		Function<Select, ? extends CharSequence> afterOrderBy = getAfterOrderBy();
 
-		return new DialectSelectRenderContext(afterOrderBy);
+		return new DialectSelectRenderContext(afterFromTable, afterOrderBy);
+	}
+
+	/**
+	 * Returns a {@link Function afterFromTable Function}. Typically used for table hint for SQL Server.
+	 *
+	 * @return the {@link Function} called on {@code afterFromTable}.
+	 */
+	protected Function<Select, CharSequence> getAfterFromTable() {
+
+		Function<Select, ? extends CharSequence> afterFromTable = select -> "";
+
+		LockClause lockClause = lock();
+		switch (lockClause.getClausePosition()) {
+
+			case AFTER_FROM_TABLE:
+				afterFromTable = new LockRenderFunction(lockClause);
+
+			default:
+		}
+
+		return afterFromTable.andThen(PrependWithLeadingWhitespace.INSTANCE);
 	}
 
 	/**
@@ -50,21 +75,50 @@ public abstract class AbstractDialect implements Dialect {
 	 */
 	protected Function<Select, CharSequence> getAfterOrderBy() {
 
-		Function<Select, ? extends CharSequence> afterOrderBy;
+		Function<Select, ? extends CharSequence> afterOrderByLimit = getAfterOrderByLimit();
+		Function<Select, ? extends CharSequence> afterOrderByLock = getAfterOrderByLock();
 
+		return select -> {
+
+			StringBuilder afterOrderByBuilder = new StringBuilder();
+			afterOrderByBuilder.append(afterOrderByLimit.apply(select));
+			afterOrderByBuilder.append(afterOrderByLock.apply(select));
+			return afterOrderByBuilder.toString();
+		};
+	}
+
+	private Function<Select, ? extends CharSequence> getAfterOrderByLimit() {
 		LimitClause limit = limit();
+
+		Function<Select, ? extends CharSequence> afterOrderByLimit = select -> "";
 
 		switch (limit.getClausePosition()) {
 
 			case AFTER_ORDER_BY:
-				afterOrderBy = new AfterOrderByLimitRenderFunction(limit);
+				afterOrderByLimit = new AfterOrderByLimitRenderFunction(limit);
 				break;
 
 			default:
 				throw new UnsupportedOperationException(String.format("Clause position %s not supported!", limit));
 		}
 
-		return afterOrderBy.andThen(PrependWithLeadingWhitespace.INSTANCE);
+		return afterOrderByLimit.andThen(PrependWithLeadingWhitespace.INSTANCE);
+	}
+
+	private Function<Select, ? extends CharSequence> getAfterOrderByLock() {
+		LockClause lock = lock();
+
+		Function<Select, ? extends CharSequence> afterOrderByLock = select -> "";
+
+		switch (lock.getClausePosition()) {
+
+			case AFTER_ORDER_BY:
+				afterOrderByLock = new LockRenderFunction(lock);
+
+			default:
+		}
+
+		return afterOrderByLock.andThen(PrependWithLeadingWhitespace.INSTANCE);
 	}
 
 	/**
@@ -72,10 +126,24 @@ public abstract class AbstractDialect implements Dialect {
 	 */
 	class DialectSelectRenderContext implements SelectRenderContext {
 
+		private final Function<Select, ? extends CharSequence> afterFromTable;
 		private final Function<Select, ? extends CharSequence> afterOrderBy;
 
-		DialectSelectRenderContext(Function<Select, ? extends CharSequence> afterOrderBy) {
+		DialectSelectRenderContext(
+				Function<Select, ? extends CharSequence> afterFromTable,
+				Function<Select, ? extends CharSequence> afterOrderBy) {
+
+			this.afterFromTable = afterFromTable;
 			this.afterOrderBy = afterOrderBy;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.sql.render.SelectRenderContext#afterFromTable()
+		 */
+		@Override
+		public Function<Select, ? extends CharSequence> afterFromTable() {
+			return afterFromTable;
 		}
 
 		/*
@@ -119,6 +187,31 @@ public abstract class AbstractDialect implements Dialect {
 			}
 
 			return "";
+		}
+	}
+
+	/**
+	 * {@code LOCK} function rendering the {@link LockClause}.
+	 */
+	@RequiredArgsConstructor
+	static class LockRenderFunction implements Function<Select, CharSequence> {
+
+		private final LockClause clause;
+
+		/*
+		 * (non-Javadoc)
+		 * @see java.util.function.Function#apply(java.lang.Object)
+		 */
+		@Override
+		public CharSequence apply(Select select) {
+
+			LockMode lockMode = select.getLockMode();
+
+			if (lockMode == null) {
+				return "";
+			}
+
+			return clause.getLock(new LockOptions(lockMode));
 		}
 	}
 

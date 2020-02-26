@@ -19,11 +19,14 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.LockOptions;
 
 /**
  * Unit tests for {@link PostgresDialect}.
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 public class PostgresDialectUnitTests {
 
@@ -70,5 +73,15 @@ public class PostgresDialectUnitTests {
 		LimitClause limit = PostgresDialect.INSTANCE.limit();
 
 		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("LIMIT 20 OFFSET 10");
+	}
+
+	@Test // DATAJDBC-498
+	public void shouldRenderLock() {
+
+		LockClause lock = PostgresDialect.INSTANCE.lock();
+
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE))).isEqualTo("FOR UPDATE");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ))).isEqualTo("FOR SHARE");
+		assertThat(lock.getClausePosition()).isEqualTo(LockClause.Position.AFTER_ORDER_BY);
 	}
 }

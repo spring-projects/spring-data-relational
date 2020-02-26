@@ -18,12 +18,15 @@ package org.springframework.data.relational.core.dialect;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.LockOptions;
 
 /**
  * Unit tests for {@link MySqlDialect}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  */
 public class MySqlDialectUnitTests {
 
@@ -66,5 +69,15 @@ public class MySqlDialectUnitTests {
 		String abcQuoted = MySqlDialect.INSTANCE.getIdentifierProcessing().quote("abc");
 
 		assertThat(abcQuoted).isEqualTo("`abc`");
+	}
+
+	@Test // DATAJDBC-498
+	public void shouldRenderLock() {
+
+		LockClause lock = MySqlDialect.INSTANCE.lock();
+
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE))).isEqualTo("FOR UPDATE");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ))).isEqualTo("LOCK IN SHARE MODE");
+		assertThat(lock.getClausePosition()).isEqualTo(LockClause.Position.AFTER_ORDER_BY);
 	}
 }

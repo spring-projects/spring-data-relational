@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.data.util.Lazy;
 
@@ -22,6 +23,7 @@ import org.springframework.data.util.Lazy;
  * An SQL dialect for Microsoft SQL Server.
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public class SqlServerDialect extends AbstractDialect {
@@ -72,8 +74,39 @@ public class SqlServerDialect extends AbstractDialect {
 		}
 	};
 
+	private static final LockClause LOCK_CLAUSE = new LockClause() {
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.LockClause#getLimit(LockOptions)
+		 */
+		@Override
+		public String getLock(LockOptions lockOptions) {
+			switch (lockOptions.getLockMode()) {
+
+				case PESSIMISTIC_WRITE:
+					return "WITH (UPDLOCK, ROWLOCK)";
+
+				case PESSIMISTIC_READ:
+					return "WITH (HOLDLOCK, ROWLOCK)";
+
+				default:
+					return "";
+			}
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClausePosition()
+		 */
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_FROM_TABLE;
+		}
+	};
+
 	private final Lazy<SelectRenderContext> selectRenderContext = Lazy
-			.of(() -> new SqlServerSelectRenderContext(getAfterOrderBy()));
+			.of(() -> new SqlServerSelectRenderContext(getAfterFromTable(), getAfterOrderBy()));
 
 	/*
 	 * (non-Javadoc)
@@ -82,6 +115,15 @@ public class SqlServerDialect extends AbstractDialect {
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
+	 */
+	@Override
+	public LockClause lock() {
+		return LOCK_CLAUSE;
 	}
 
 	/*

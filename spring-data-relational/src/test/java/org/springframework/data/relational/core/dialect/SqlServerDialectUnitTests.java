@@ -18,11 +18,14 @@ package org.springframework.data.relational.core.dialect;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.LockOptions;
 
 /**
  * Unit tests for {@link SqlServerDialect}.
  *
  * @author Mark Paluch
+ * @author Myeonghyeon Lee
  */
 public class SqlServerDialectUnitTests {
 
@@ -58,5 +61,15 @@ public class SqlServerDialectUnitTests {
 		LimitClause limit = SqlServerDialect.INSTANCE.limit();
 
 		assertThat(limit.getLimitOffset(20, 10)).isEqualTo("OFFSET 10 ROWS FETCH NEXT 20 ROWS ONLY");
+	}
+
+	@Test // DATAJDBC-498
+	public void shouldRenderLock() {
+
+		LockClause lock = SqlServerDialect.INSTANCE.lock();
+
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE))).isEqualTo("WITH (UPDLOCK, ROWLOCK)");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ))).isEqualTo("WITH (HOLDLOCK, ROWLOCK)");
+		assertThat(lock.getClausePosition()).isEqualTo(LockClause.Position.AFTER_FROM_TABLE);
 	}
 }
