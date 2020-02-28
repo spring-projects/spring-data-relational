@@ -18,6 +18,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Bogdan Ilchyshyn
  */
 public class PostgresTestSupport {
 
@@ -25,6 +26,7 @@ public class PostgresTestSupport {
 
 	public static String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
 			+ "    id          integer CONSTRAINT id PRIMARY KEY,\n" //
+			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    manual      integer NULL\n," //
 			+ "    cert        bytea NULL\n" //
@@ -32,6 +34,7 @@ public class PostgresTestSupport {
 
 	public static String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
 			+ "    id          serial CONSTRAINT id PRIMARY KEY,\n" //
+			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    manual      integer NULL\n" //
 			+ ");";

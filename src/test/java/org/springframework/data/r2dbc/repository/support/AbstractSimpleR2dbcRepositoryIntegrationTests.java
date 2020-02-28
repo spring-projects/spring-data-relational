@@ -33,10 +33,11 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
@@ -53,6 +54,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * Abstract integration tests for {@link SimpleR2dbcRepository} to be ran against various databases.
  *
  * @author Mark Paluch
+ * @author Bogdan Ilchyshyn
  */
 public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
@@ -118,6 +120,42 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	}
 
 	@Test
+	public void shouldSaveNewObjectAndSetVersionIfWrapperVersionPropertyExists() {
+
+		LegoSetVersionable legoSet = new LegoSetVersionable(null, "SCHAUFELRADBAGGER", 12, null);
+
+		repository.save(legoSet) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> assertThat(actual.getVersion()).isEqualTo(0)) //
+				.verifyComplete();
+
+		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
+		assertThat(map) //
+				.containsEntry("name", "SCHAUFELRADBAGGER") //
+				.containsEntry("manual", 12) //
+				.containsEntry("version", 0) //
+				.containsKey("id");
+	}
+
+	@Test
+	public void shouldSaveNewObjectAndSetVersionIfPrimitiveVersionPropertyExists() {
+
+		LegoSetPrimitiveVersionable legoSet = new LegoSetPrimitiveVersionable(null, "SCHAUFELRADBAGGER", 12, -1);
+
+		repository.save(legoSet) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> assertThat(actual.getVersion()).isEqualTo(1)) //
+				.verifyComplete();
+
+		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
+		assertThat(map) //
+				.containsEntry("name", "SCHAUFELRADBAGGER") //
+				.containsEntry("manual", 12) //
+				.containsEntry("version", 1) //
+				.containsKey("id");
+	}
+
+	@Test
 	public void shouldUpdateObject() {
 
 		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
@@ -133,6 +171,44 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 
 		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
 		assertThat(map).containsEntry("name", "SCHAUFELRADBAGGER").containsEntry("manual", 14).containsKey("id");
+	}
+
+	@Test
+	public void shouldUpdateVersionableObjectAndIncreaseVersion() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual, version) VALUES('SCHAUFELRADBAGGER', 12, 42)");
+		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+
+		LegoSetVersionable legoSet = new LegoSetVersionable(id, "SCHAUFELRADBAGGER", 12, 42);
+		legoSet.setManual(14);
+
+		repository.save(legoSet) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		assertThat(legoSet.getVersion()).isEqualTo(43);
+
+		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
+		assertThat(map)
+				.containsEntry("name", "SCHAUFELRADBAGGER") //
+				.containsEntry("manual", 14) //
+				.containsEntry("version", 43) //
+				.containsKey("id");
+	}
+
+	@Test
+	public void shouldFailWithOptimistickLockingWhenVersionDoesNotMatchOnUpdate() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual, version) VALUES('SCHAUFELRADBAGGER', 12, 42)");
+		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+
+		LegoSetVersionable legoSet = new LegoSetVersionable(id, "SCHAUFELRADBAGGER", 12, 0);
+
+		repository.save(legoSet) //
+				.as(StepVerifier::create) //
+				.expectError(OptimisticLockingFailureException.class) //
+				.verify();
 	}
 
 	@Test
@@ -390,6 +466,30 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 		@Override
 		public boolean isNew() {
 			return true;
+		}
+	}
+
+	@Data
+	@Table("legoset")
+	@NoArgsConstructor
+	static class LegoSetVersionable extends LegoSet {
+		@Version Integer version;
+
+		public LegoSetVersionable(Integer id, String name, Integer manual, Integer version) {
+			super(id, name, manual);
+			this.version = version;
+		}
+	}
+
+	@Data
+	@Table("legoset")
+	@NoArgsConstructor
+	static class LegoSetPrimitiveVersionable extends LegoSet {
+		@Version int version;
+
+		public LegoSetPrimitiveVersionable(Integer id, String name, Integer manual, int version) {
+			super(id, name, manual);
+			this.version = version;
 		}
 	}
 }

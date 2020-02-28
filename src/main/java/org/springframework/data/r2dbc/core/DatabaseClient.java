@@ -48,6 +48,7 @@ import org.springframework.util.Assert;
  * to create an instance.
  *
  * @author Mark Paluch
+ * @author Bogdan Ilchyshyn
  */
 public interface DatabaseClient {
 
@@ -729,9 +730,9 @@ public interface DatabaseClient {
 		 *
 		 * @param objectToUpdate the object of which the attributes will provide the values for the update and the primary
 		 *          key. Must not be {@literal null}.
-		 * @return a {@link UpdateSpec} for further configuration of the update. Guaranteed to be not {@literal null}.
+		 * @return a {@link UpdateMatchingSpec} for further configuration of the update. Guaranteed to be not {@literal null}.
 		 */
-		UpdateSpec using(T objectToUpdate);
+		UpdateMatchingSpec using(T objectToUpdate);
 
 		/**
 		 * Use the given {@code tableName} as update target.

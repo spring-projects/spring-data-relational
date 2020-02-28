@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.core;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import org.springframework.dao.OptimisticLockingFailureException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,10 +31,12 @@ import java.util.stream.Collectors;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionInformation;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
@@ -59,6 +62,7 @@ import org.springframework.util.Assert;
  * prepared in an application context and given to services as bean reference.
  *
  * @author Mark Paluch
+ * @author Bogdan Ilchyshyn
  * @since 1.1
  */
 public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware {
@@ -373,12 +377,27 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
+		setVersionIfNecessary(persistentEntity,	entity);
+
 		return this.databaseClient.insert() //
 				.into(persistentEntity.getType()) //
 				.table(tableName).using(entity) //
 				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entity)) //
 				.first() //
 				.defaultIfEmpty(entity);
+	}
+
+	private <T> void setVersionIfNecessary(RelationalPersistentEntity<T> persistentEntity, T entity) {
+		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
+		if (versionProperty == null) {
+			return;
+		}
+
+		Class<?> versionPropertyType = versionProperty.getType();
+		Long version = versionPropertyType.isPrimitive() ? 1L : 0L;
+		ConversionService conversionService = this.dataAccessStrategy.getConverter().getConversionService();
+		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
+		propertyAccessor.setProperty(versionProperty, conversionService.convert(version, versionPropertyType));
 	}
 
 	/*
@@ -392,19 +411,76 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		return this.databaseClient.update() //
+		DatabaseClient.UpdateMatchingSpec updateMatchingSpec = this.databaseClient.update() //
 				.table(persistentEntity.getType()) //
-				.table(persistentEntity.getTableName()).using(entity) //
-				.fetch().rowsUpdated().handle((rowsUpdated, sink) -> {
+				.table(persistentEntity.getTableName()) //
+				.using(entity);
 
-					if (rowsUpdated == 0) {
-						sink.error(new TransientDataAccessResourceException(
-								String.format("Failed to update table [%s]. Row with Id [%s] does not exist.",
-										persistentEntity.getTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier())));
+		DatabaseClient.UpdateSpec updateSpec = updateMatchingSpec;
+		if (persistentEntity.hasVersionProperty()) {
+			updateSpec = updateMatchingSpec.matching(createMatchingVersionCriteria(entity, persistentEntity));
+			incrementVersion(entity, persistentEntity);
+		}
+
+		return updateSpec.fetch() //
+				.rowsUpdated() //
+				.flatMap(rowsUpdated -> rowsUpdated == 0
+						? handleMissingUpdate(entity, persistentEntity) : Mono.just(entity));
+	}
+
+	private <T> Mono<? extends T> handleMissingUpdate(T entity, RelationalPersistentEntity<T> persistentEntity) {
+		if (!persistentEntity.hasVersionProperty()) {
+			return Mono.error(new TransientDataAccessResourceException(
+					formatTransientEntityExceptionMessage(entity, persistentEntity)));
+		}
+
+		return doCount(getByIdQuery(entity, persistentEntity), entity.getClass(), persistentEntity.getTableName())
+				.map(count -> {
+					if (count == 0) {
+						throw new TransientDataAccessResourceException(
+								formatTransientEntityExceptionMessage(entity, persistentEntity));
 					} else {
-						sink.next(entity);
+						throw new OptimisticLockingFailureException(
+								formatOptimisticLockingExceptionMessage(entity, persistentEntity));
 					}
 				});
+	}
+
+	private <T> String formatOptimisticLockingExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
+		return String.format("Failed to update table [%s]. Version does not match for row with Id [%s].",
+				persistentEntity.getTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
+	}
+
+	private <T> String formatTransientEntityExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
+		return String.format("Failed to update table [%s]. Row with Id [%s] does not exist.",
+				persistentEntity.getTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
+	}
+
+	private <T> void incrementVersion(T entity, RelationalPersistentEntity<T> persistentEntity) {
+		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
+		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
+
+		ConversionService conversionService = this.dataAccessStrategy.getConverter().getConversionService();
+		Object currentVersionValue = propertyAccessor.getProperty(versionProperty);
+		long newVersionValue = 1L;
+		if (currentVersionValue != null) {
+			newVersionValue = conversionService.convert(currentVersionValue, Long.class) + 1;
+		}
+		Class<?> versionPropertyType = versionProperty.getType();
+		propertyAccessor.setProperty(versionProperty, conversionService.convert(newVersionValue, versionPropertyType));
+	}
+
+	private <T> Criteria createMatchingVersionCriteria(T entity, RelationalPersistentEntity<T> persistentEntity) {
+		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
+		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
+
+		Object version = propertyAccessor.getProperty(versionProperty);
+		Criteria.CriteriaStep versionColumn = Criteria.where(dataAccessStrategy.toSql(versionProperty.getColumnName()));
+		if (version == null) {
+			return versionColumn.isNull();
+		} else {
+			return versionColumn.is(version);
+		}
 	}
 
 	/*

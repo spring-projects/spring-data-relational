@@ -35,6 +35,7 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
  * Utility class for testing against MySQL.
  *
  * @author Mark Paluch
+ * @author Bogdan Ilchyshyn
  */
 public class MySqlTestSupport {
 
@@ -42,6 +43,7 @@ public class MySqlTestSupport {
 
 	public static String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
 			+ "    id          integer PRIMARY KEY,\n" //
+			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    manual      integer NULL\n," //
 			+ "    cert        varbinary(255) NULL\n" //
@@ -49,6 +51,7 @@ public class MySqlTestSupport {
 
 	public static String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
 			+ "    id          integer AUTO_INCREMENT PRIMARY KEY,\n" //
+			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    manual      integer NULL\n" //
 			+ ") ENGINE=InnoDB;";

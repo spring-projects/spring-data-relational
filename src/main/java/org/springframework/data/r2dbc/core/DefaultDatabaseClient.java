@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Pageable;
@@ -59,6 +58,7 @@ import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
@@ -70,6 +70,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Mark Paluch
  * @author Mingyuan Wu
+ * @author Bogdan Ilchyshyn
  */
 class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
@@ -1198,7 +1199,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			assertRegularClass(table);
 
-			return new DefaultTypedUpdateSpec<>(table, null, null);
+			return new DefaultTypedUpdateSpec<>(table, null, null, null);
 		}
 	}
 
@@ -1287,24 +1288,27 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 	}
 
-	class DefaultTypedUpdateSpec<T> implements TypedUpdateSpec<T>, UpdateSpec {
+	class DefaultTypedUpdateSpec<T> implements TypedUpdateSpec<T>, UpdateMatchingSpec {
 
 		private final Class<T> typeToUpdate;
 		private final @Nullable SqlIdentifier table;
 		private final @Nullable T objectToUpdate;
+		private final @Nullable CriteriaDefinition where;
 
-		DefaultTypedUpdateSpec(Class<T> typeToUpdate, @Nullable SqlIdentifier table, @Nullable T objectToUpdate) {
+		DefaultTypedUpdateSpec(Class<T> typeToUpdate, @Nullable SqlIdentifier table, @Nullable T objectToUpdate,
+				@Nullable CriteriaDefinition where) {
 			this.typeToUpdate = typeToUpdate;
 			this.table = table;
 			this.objectToUpdate = objectToUpdate;
+			this.where = where;
 		}
 
 		@Override
-		public UpdateSpec using(T objectToUpdate) {
+		public UpdateMatchingSpec using(T objectToUpdate) {
 
 			Assert.notNull(objectToUpdate, "Object to update must not be null");
 
-			return new DefaultTypedUpdateSpec<>(this.typeToUpdate, this.table, objectToUpdate);
+			return new DefaultTypedUpdateSpec<>(this.typeToUpdate, this.table, objectToUpdate, this.where);
 		}
 
 		@Override
@@ -1312,7 +1316,15 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(tableName, "Table name must not be null!");
 
-			return new DefaultTypedUpdateSpec<>(this.typeToUpdate, tableName, this.objectToUpdate);
+			return new DefaultTypedUpdateSpec<>(this.typeToUpdate, tableName, this.objectToUpdate, this.where);
+		}
+
+		@Override
+		public UpdateSpec matching(CriteriaDefinition criteria) {
+
+			Assert.notNull(criteria, "Criteria must not be null!");
+
+			return new DefaultTypedUpdateSpec<>(this.typeToUpdate, this.table, this.objectToUpdate, criteria);
 		}
 
 		@Override
@@ -1356,8 +1368,14 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				}
 			}
 
-			PreparedOperation<?> operation = mapper.getMappedObject(mapper.createUpdate(table, update).withCriteria(
-					org.springframework.data.relational.core.query.Criteria.where(dataAccessStrategy.toSql(ids.get(0))).is(id)));
+			Criteria updateCriteria = org.springframework.data.relational.core.query.Criteria
+					.where(dataAccessStrategy.toSql(ids.get(0))).is(id);
+			if (this.where != null) {
+				updateCriteria = updateCriteria.and(this.where);
+			}
+
+			PreparedOperation<?> operation = mapper
+					.getMappedObject(mapper.createUpdate(table, update).withCriteria(updateCriteria));
 
 			return exchangeUpdate(operation);
 		}
