@@ -114,6 +114,7 @@ public class DialectResolver {
 			BUILTIN.put("H2", H2Dialect.INSTANCE);
 			BUILTIN.put("Microsoft SQL Server", SqlServerDialect.INSTANCE);
 			BUILTIN.put("MySQL", MySqlDialect.INSTANCE);
+			BUILTIN.put("MariaDB", MySqlDialect.INSTANCE);
 			BUILTIN.put("PostgreSQL", PostgresDialect.INSTANCE);
 		}
 

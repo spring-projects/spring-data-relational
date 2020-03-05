@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -31,8 +33,10 @@
 		<postgresql.version>42.2.5</postgresql.version>
 		<mysql.version>5.1.47</mysql.version>
 		<jasync.version>1.0.14</jasync.version>
+		<r2dbc-mariadb.version>0.8.1-alpha1</r2dbc-mariadb.version>
 		<r2dbc-spi-test.version>0.8.0.RELEASE</r2dbc-spi-test.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
+		<mariadb-jdbc.version>2.5.4</mariadb-jdbc.version>
 		<r2dbc-releasetrain.version>Arabba-SR2</r2dbc-releasetrain.version>
 		<reactive-streams.version>1.0.3</reactive-streams.version>
 		<netty>4.1.43.Final</netty>
@@ -196,6 +200,13 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.mariadb.jdbc</groupId>
+			<artifactId>mariadb-java-client</artifactId>
+			<version>${mariadb-jdbc.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
 			<version>${mssql-jdbc.version}</version>
@@ -236,6 +247,13 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.mariadb</groupId>
+			<artifactId>r2dbc-mariadb</artifactId>
+			<version>${r2dbc-mariadb.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-spi-test</artifactId>
 			<version>${r2dbc-spi-test.version}</version>
@@ -247,6 +265,18 @@
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>mysql</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>jcl-over-slf4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mariadb</artifactId>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
