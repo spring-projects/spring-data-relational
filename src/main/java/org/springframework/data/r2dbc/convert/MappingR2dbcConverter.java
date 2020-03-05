@@ -580,9 +580,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		if (columns.contains(idColumnName)) {
 			generatedIdValue = row.get(idColumnName);
-		}
-
-		if (columns.size() == 1) {
+		} else if (columns.size() == 1) {
 
 			String key = columns.iterator().next();
 			generatedIdValue = row.get(key);
