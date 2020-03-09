@@ -44,19 +44,19 @@ public class ConditionRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-490
-	public void shouldRenderEqualsGroup() {
+	public void shouldRenderEqualsNested() {
 
 		String sql = SqlRenderer
-				.toString(StatementBuilder.select(left).from(table).where(Conditions.group(left.isEqualTo(right))).build());
+				.toString(StatementBuilder.select(left).from(table).where(Conditions.nest(left.isEqualTo(right))).build());
 
 		assertThat(sql).endsWith("WHERE (my_table.left = my_table.right)");
 	}
 
 	@Test // DATAJDBC-490
-	public void shouldRenderAndGroup() {
+	public void shouldRenderAndNest() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
-				.where(Conditions.group(left.isEqualTo(right).and(left.isGreater(right)))).build());
+				.where(Conditions.nest(left.isEqualTo(right).and(left.isGreater(right)))).build());
 
 		assertThat(sql).endsWith("WHERE (my_table.left = my_table.right AND my_table.left > my_table.right)");
 	}
@@ -65,18 +65,18 @@ public class ConditionRendererUnitTests {
 	public void shouldRenderAndGroupOr() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
-				.where(Conditions.group(left.isEqualTo(right).and(left.isGreater(right))).or(left.like(right))).build());
+				.where(Conditions.nest(left.isEqualTo(right).and(left.isGreater(right))).or(left.like(right))).build());
 
 		assertThat(sql).endsWith(
 				"WHERE (my_table.left = my_table.right AND my_table.left > my_table.right) OR my_table.left LIKE my_table.right");
 	}
 
 	@Test // DATAJDBC-490
-	public void shouldRenderAndGroupOrAndGroup() {
+	public void shouldRenderAndGroupOrAndNested() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
-				.where(Conditions.group(left.isEqualTo(right).and(left.isGreater(right)))
-						.or(Conditions.group(left.like(right).and(right.like(left)))))
+				.where(Conditions.nest(left.isEqualTo(right).and(left.isGreater(right)))
+						.or(Conditions.nest(left.like(right).and(right.like(left)))))
 				.build());
 
 		assertThat(sql).endsWith(

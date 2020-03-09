@@ -18,7 +18,7 @@ package org.springframework.data.relational.core.sql.render;
 import org.springframework.data.relational.core.sql.AndCondition;
 import org.springframework.data.relational.core.sql.Comparison;
 import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.GroupedCondition;
+import org.springframework.data.relational.core.sql.NestedCondition;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.data.relational.core.sql.IsNull;
 import org.springframework.data.relational.core.sql.Like;
@@ -87,7 +87,7 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 			return new InVisitor(context, builder::append);
 		}
 
-		if (segment instanceof GroupedCondition) {
+		if (segment instanceof NestedCondition) {
 			return new GroupedConditionVisitor(context, builder::append);
 		}
 

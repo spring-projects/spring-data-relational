@@ -44,15 +44,15 @@ public abstract class Conditions {
 	}
 
 	/**
-	 * Creates a grouped {@link Condition} that is enclosed with parentheses. Useful to combine {@code AND} and {@code OR}
+	 * Creates a nested {@link Condition} that is enclosed with parentheses. Useful to combine {@code AND} and {@code OR}
 	 * statements.
 	 *
-	 * @param condition the nested condition to be grouped.
-	 * @return a {@link GroupedCondition}.
+	 * @param condition the nested condition.
+	 * @return a {@link NestedCondition}.
 	 * @since 2.0
 	 */
-	public static Condition group(Condition condition) {
-		return new GroupedCondition(condition);
+	public static Condition nest(Condition condition) {
+		return new NestedCondition(condition);
 	}
 
 	/**
