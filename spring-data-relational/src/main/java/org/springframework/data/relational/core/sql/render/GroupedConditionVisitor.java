@@ -16,17 +16,17 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.GroupedCondition;
+import org.springframework.data.relational.core.sql.NestedCondition;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
 /**
- * Renderer for {@link GroupedCondition}. Uses a {@link RenderTarget} to call back for render results.
+ * Renderer for {@link NestedCondition}. Uses a {@link RenderTarget} to call back for render results.
  *
  * @author Mark Paluch
  * @since 2.0
  */
-class GroupedConditionVisitor extends TypedSubtreeVisitor<GroupedCondition> {
+class GroupedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
 
 	private final RenderContext context;
 	private final RenderTarget target;
