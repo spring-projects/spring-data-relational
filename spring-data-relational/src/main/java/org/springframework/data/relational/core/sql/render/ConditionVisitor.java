@@ -88,7 +88,7 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 		}
 
 		if (segment instanceof NestedCondition) {
-			return new GroupedConditionVisitor(context, builder::append);
+			return new NestedConditionVisitor(context, builder::append);
 		}
 
 		return null;

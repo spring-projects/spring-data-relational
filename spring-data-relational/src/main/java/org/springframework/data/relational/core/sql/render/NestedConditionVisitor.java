@@ -26,14 +26,15 @@ import org.springframework.lang.Nullable;
  * @author Mark Paluch
  * @since 2.0
  */
-class GroupedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
+class NestedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
 
 	private final RenderContext context;
 	private final RenderTarget target;
 
 	private @Nullable ConditionVisitor conditionVisitor;
 
-	GroupedConditionVisitor(RenderContext context, RenderTarget target) {
+	NestedConditionVisitor(RenderContext context, RenderTarget target) {
+
 		this.context = context;
 		this.target = target;
 	}
@@ -68,6 +69,7 @@ class GroupedConditionVisitor extends TypedSubtreeVisitor<NestedCondition> {
 	Delegation leaveNested(Visitable segment) {
 
 		if (conditionVisitor != null) {
+
 			target.onRendered("(" + conditionVisitor.getRenderedPart() + ")");
 			conditionVisitor = null;
 		}
