@@ -287,6 +287,7 @@ public class Criteria {
 		}
 
 		for (Criteria criteria : group) {
+
 			if (!criteria.isEmpty()) {
 				return false;
 			}

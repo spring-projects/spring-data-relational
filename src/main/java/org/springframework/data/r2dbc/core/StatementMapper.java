@@ -219,8 +219,11 @@ public interface StatementMapper {
 		 * @since 1.1
 		 */
 		public static SelectSpec create(SqlIdentifier table) {
-			return new SelectSpec(Table.create(table), Collections.emptyList(), Collections.emptyList(), Criteria.empty(),
-					Sort.unsorted(), -1, -1);
+
+			List<String> projectedFields = Collections.emptyList();
+			List<Expression> selectList = Collections.emptyList();
+			return new SelectSpec(Table.create(table), projectedFields, selectList, Criteria.empty(), Sort.unsorted(), -1,
+					-1);
 		}
 
 		public SelectSpec doWithTable(BiFunction<Table, SelectSpec, SelectSpec> function) {
@@ -367,7 +370,6 @@ public interface StatementMapper {
 			return Collections.unmodifiableList(selectList);
 		}
 
-		@Nullable
 		public Criteria getCriteria() {
 			return this.criteria;
 		}
@@ -460,8 +462,7 @@ public interface StatementMapper {
 	class UpdateSpec {
 
 		private final SqlIdentifier table;
-		@Nullable
-		private final Update update;
+		@Nullable private final Update update;
 
 		private final Criteria criteria;
 
