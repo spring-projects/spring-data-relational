@@ -1,6 +1,26 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.1.0.M4 (2020-03-11)
+----------------------------------------
+* #316 - Adapt to Mockito 3.3.
+* #313 - Add builder for ConnectionFactoryInitializer.
+* #311 - AbstractR2dbcConfiguration should use R2dbcMappingContext instead of RelationalMappingContext.
+* #308 - #189 - Accept StatementFilterFunction in DatabaseClient.
+* #307 - Add support for Criteria composition.
+* #306 - Upgrade to JAsync 1.0.14.
+* #305 - Apply registered converters to bind values.
+* #302 - Add documentation for entity-state detection.
+* #301 - Release 1.1 M4 (Neumann).
+* #300 - Extend unit tests for QueryMapper.
+* #290 - Add Kotlin extensions for R2dbcEntityTemplate.
+* #289 - Add support for Criteria composition.
+* #267 - Combined AND and OR predicate in Criteria Builder.
+* #189 - execute(...) should be extended with returning generated keys.
+* #164 - @Query definitions with SpEL expressions.
+* #42 - Add support for MariaDB.
+
+
 Changes in version 1.1.0.M3 (2020-02-12)
 ----------------------------------------
 * #296 - Rename DatabaseClient bean to r2dbcDatabaseClient.
@@ -171,6 +191,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
