@@ -53,7 +53,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author Mark Paluch
  * @author Evgeni Dimitrov
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class JdbcRepositoryFactoryBeanUnitTests {
 
 	JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean;
