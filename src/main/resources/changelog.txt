@@ -1,6 +1,17 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.0.M4 (2020-03-11)
+----------------------------------------
+* DATAJDBC-503 - Adapt to Mockito 3.3 changes.
+* DATAJDBC-492 - AbstractJdbcConfiguration should use JdbcMappingContext instead of RelationalMappingContext.
+* DATAJDBC-491 - Quoting all database identifiers breaks queries to tables in custom schema.
+* DATAJDBC-490 - Support condition nesting.
+* DATAJDBC-488 - Deadlock occurs when competing with Jdbc Repository Update.
+* DATAJDBC-486 - Release 2.0 M4 (Neumann).
+* DATAJDBC-381 - Using backticks in column names leads to failure during INSERT with MySQL.
+
+
 Changes in version 1.1.5.RELEASE (2020-02-26)
 ---------------------------------------------
 * DATAJDBC-488 - Deadlock occurs when competing with Jdbc Repository Update.
@@ -377,6 +388,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
