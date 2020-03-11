@@ -333,7 +333,7 @@ public class DefaultDatabaseClientUnitTests {
 				.connectionFactory(connectionFactory)
 				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
 
-		when(result.getRowsUpdated()).thenReturn(Mono.empty());
+		when(result.getRowsUpdated()).thenReturn(Mono.empty(), Mono.just(2), Flux.just(1, 2, 3));
 
 		databaseClient.execute("DROP TABLE tab;") //
 				.fetch() //
@@ -342,16 +342,12 @@ public class DefaultDatabaseClientUnitTests {
 				.expectNextCount(1) //
 				.verifyComplete();
 
-		when(result.getRowsUpdated()).thenReturn(Mono.just(2));
-
 		databaseClient.execute("DROP TABLE tab;") //
 				.fetch() //
 				.rowsUpdated() //
 				.as(StepVerifier::create) //
 				.expectNextCount(1) //
 				.verifyComplete();
-
-		when(result.getRowsUpdated()).thenReturn(Flux.just(1, 2, 3));
 
 		databaseClient.execute("DROP TABLE tab;") //
 				.fetch() //
