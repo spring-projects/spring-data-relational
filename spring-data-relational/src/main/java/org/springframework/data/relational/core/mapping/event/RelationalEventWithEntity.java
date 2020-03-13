@@ -15,20 +15,30 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import java.util.Optional;
-
-import org.springframework.data.relational.core.conversion.AggregateChange;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * A {@link SimpleRelationalEvent} which is guaranteed to have an entity.
- *
+ * An event that is guaranteed to have an entity.
+ * 
  * @author Jens Schauder
  */
-public class RelationalEventWithEntity extends SimpleRelationalEvent implements WithEntity {
+public class RelationalEventWithEntity extends ApplicationEvent implements WithEntity {
 
 	private static final long serialVersionUID = 4891455396602090638L;
+	private final Object entity;
 
-	RelationalEventWithEntity(Identifier id, Object entity, AggregateChange change) {
-		super(id, Optional.of(entity), change);
+	RelationalEventWithEntity(Object entity) {
+
+		super(entity);
+
+		this.entity = entity;
+	}
+
+	/**
+	 * @return the entity to which this event refers. Guaranteed to be not {@literal null}.
+	 */
+	@Override
+	public Object getEntity() {
+		return entity;
 	}
 }

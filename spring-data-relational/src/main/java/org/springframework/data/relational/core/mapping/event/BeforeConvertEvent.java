@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
 
 /**
  * Gets published before an aggregate gets converted into a database change.
@@ -24,16 +23,19 @@ import org.springframework.data.relational.core.mapping.event.Identifier.Specifi
  * @since 1.1
  * @author Jens Schauder
  */
-public class BeforeConvertEvent extends RelationalEventWithIdAndEntity {
+public class BeforeConvertEvent extends RelationalSaveEvent {
 
-	private static final long serialVersionUID = 3980149746683849019L;
+	private static final long serialVersionUID = -5716795164911939224L;
 
 	/**
-	 * @param id identifier of the saved entity.
-	 * @param instance the saved entity.
-	 * @param change the {@link AggregateChange} encoding the actions performed on the database as part of the delete.
+	 * @param instance the saved entity. Must not be {@literal null}.
+	 * @param change the {@link AggregateChange} encoding the actions to be performed on the database as change. Since
+	 *          this event is fired before the conversion the change is actually empty, but contains information if the
+	 *          aggregate is considered new in {@link AggregateChange#getKind()}. Must not be {@literal null}.
 	 */
-	public BeforeConvertEvent(Specified id, Object instance, AggregateChange change) {
-		super(id, instance, change);
+	public BeforeConvertEvent(Object instance, AggregateChange<?> change) {
+
+		super(instance, change);
+
 	}
 }

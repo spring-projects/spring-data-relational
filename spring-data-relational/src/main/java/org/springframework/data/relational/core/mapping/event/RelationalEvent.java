@@ -15,28 +15,20 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.lang.Nullable;
+
 import java.util.Optional;
 
 /**
- * an event signalling JDBC processing. It offers access to an {@link Identifier} of the aggregate root affected by the
- * event.
+ * an event signalling JDBC processing.
  *
  * @author Oliver Gierke
  */
 public interface RelationalEvent {
 
 	/**
-	 * The identifier of the aggregate root, triggering this event.
-	 *
-	 * @return the source of the event as an {@link Identifier}. Guaranteed to be not {@code null}.
+	 * @return the entity to which this event refers. Might be {@literal null}.
 	 */
-	Identifier getId();
-
-	/**
-	 * Returns the aggregate root the event was triggered for.
-	 *
-	 * @return will never be {@code null}.
-	 */
-	Optional<Object> getOptionalEntity();
-
+	@Nullable
+	Object getEntity();
 }
