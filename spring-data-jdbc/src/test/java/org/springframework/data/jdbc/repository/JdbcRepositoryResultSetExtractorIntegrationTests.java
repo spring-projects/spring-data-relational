@@ -88,19 +88,19 @@ public class JdbcRepositoryResultSetExtractorIntegrationTests {
 
 		// NOT saving anything, so DB is empty
 
-		assertThat(personRepository.findAllPeopleWithAdresses()).isEmpty();
+		assertThat(personRepository.findAllPeopleWithAddresses()).isEmpty();
 	}
 
 	@Test // DATAJDBC-290
-	public void findAllPeopleWithAdressesReturnsOnePersonWithoutAdresses() {
+	public void findAllPeopleWithAddressesReturnsOnePersonWithoutAddresses() {
 
 		personRepository.save(new Person(null, "Joe", null));
 
-		assertThat(personRepository.findAllPeopleWithAdresses()).hasSize(1);
+		assertThat(personRepository.findAllPeopleWithAddresses()).hasSize(1);
 	}
 
 	@Test // DATAJDBC-290
-	public void findAllPeopleWithAdressesReturnsOnePersonWithAdresses() {
+	public void findAllPeopleWithAddressesReturnsOnePersonWithAddresses() {
 
 		final String personName = "Joe";
 		Person savedPerson = personRepository.save(new Person(null, personName, null));
@@ -114,13 +114,13 @@ public class JdbcRepositoryResultSetExtractorIntegrationTests {
 		MapSqlParameterSource paramsAddress2 = buildAddressParameters(savedPerson.getId(), street2);
 		template.update("insert into address (street, person_id) values (:street, :personId)", paramsAddress2);
 
-		List<Person> people = personRepository.findAllPeopleWithAdresses();
+		List<Person> people = personRepository.findAllPeopleWithAddresses();
 
 		assertThat(people).hasSize(1);
 		Person person = people.get(0);
 		assertThat(person.getName()).isEqualTo(personName);
-		assertThat(person.getAdresses()).hasSize(2);
-		assertThat(person.getAdresses()).extracting(a -> a.getStreet()).containsExactlyInAnyOrder(street1, street2);
+		assertThat(person.getAddresses()).hasSize(2);
+		assertThat(person.getAddresses()).extracting(a -> a.getStreet()).containsExactlyInAnyOrder(street1, street2);
 	}
 
 	private MapSqlParameterSource buildAddressParameters(Long id, String streetName) {
@@ -137,7 +137,7 @@ public class JdbcRepositoryResultSetExtractorIntegrationTests {
 		@Query(
 				value = "select p.id, p.name, a.id addrId, a.street from person p left join address a on(p.id = a.person_id)",
 				resultSetExtractorClass = PersonResultSetExtractor.class)
-		List<Person> findAllPeopleWithAdresses();
+		List<Person> findAllPeopleWithAddresses();
 	}
 
 	@Data
@@ -146,7 +146,7 @@ public class JdbcRepositoryResultSetExtractorIntegrationTests {
 
 		@Id private Long id;
 		private String name;
-		private List<Address> adresses;
+		private List<Address> addresses;
 	}
 
 	@Data
@@ -176,13 +176,13 @@ public class JdbcRepositoryResultSetExtractorIntegrationTests {
 					}
 				});
 
-				if (currentPerson.getAdresses() == null) {
-					currentPerson.setAdresses(new ArrayList<>());
+				if (currentPerson.getAddresses() == null) {
+					currentPerson.setAddresses(new ArrayList<>());
 				}
 
 				long addrId = rs.getLong("addrId");
 				if (!rs.wasNull()) {
-					currentPerson.getAdresses().add(new Address(addrId, rs.getString("street")));
+					currentPerson.getAddresses().add(new Address(addrId, rs.getString("street")));
 				}
 			}
 

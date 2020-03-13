@@ -102,7 +102,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 	}
 
 	@Test(expected = IllegalStateException.class) // DATAJDBC-155
-	public void afterPropertiesThowsExceptionWhenNoMappingContextSet() {
+	public void afterPropertiesThrowsExceptionWhenNoMappingContextSet() {
 
 		factoryBean.setMappingContext(null);
 		factoryBean.setApplicationEventPublisher(publisher);

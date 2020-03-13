@@ -46,7 +46,7 @@ public class ConfigurableRowMapperMap implements RowMapperMap {
 	}
 
 	/**
-	 * Returs a {@link RowMapper} for the given type if such a {@link RowMapper} is present. If an exact match is found
+	 * Returns a {@link RowMapper} for the given type if such a {@link RowMapper} is present. If an exact match is found
 	 * that is returned. If not a {@link RowMapper} is returned that produces subtypes of the requested type. If no such
 	 * {@link RowMapper} is found the method returns {@code null}.
 	 *
