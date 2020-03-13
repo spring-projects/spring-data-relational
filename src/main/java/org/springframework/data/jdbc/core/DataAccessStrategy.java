@@ -118,7 +118,7 @@ public interface DataAccessStrategy {
 	 * passed in matches the number of entities returned.
 	 *
 	 * @param ids the Ids of the entities to load. Must not be {@code null}.
-	 * @param domainType the type of entities to laod. Must not be {@code null}.
+	 * @param domainType the type of entities to load. Must not be {@code null}.
 	 * @param <T> type of entities to load.
 	 * @return the loaded entities. Guaranteed to be not {@code null}.
 	 */

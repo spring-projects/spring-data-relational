@@ -54,7 +54,7 @@ class IterableOfEntryToMapConverter implements ConditionalConverter, Converter<I
 
 	/**
 	 * Tries to determine if the {@literal sourceType} can be converted to a {@link Map}. If this can not be determined,
-	 * because the sourceTyppe does not contain information about the element type it returns {@literal true}.
+	 * because the sourceType does not contain information about the element type it returns {@literal true}.
 	 *
 	 * @param sourceType {@link TypeDescriptor} to convert from.
 	 * @param targetType {@link TypeDescriptor} to convert to.

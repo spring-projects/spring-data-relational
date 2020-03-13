@@ -31,14 +31,14 @@ public class MyBatisContext {
 	private final Object id;
 	private final Object instance;
 	private final Class domainType;
-	private final Map<String, Object> additonalValues;
+	private final Map<String, Object> additionalValues;
 
-	public MyBatisContext(@Nullable Object id, @Nullable Object instance, Class domainType, Map<String, Object> additonalValues) {
+	public MyBatisContext(@Nullable Object id, @Nullable Object instance, Class domainType, Map<String, Object> additionalValues) {
 
 		this.id = id;
 		this.instance = instance;
 		this.domainType = domainType;
-		this.additonalValues = additonalValues;
+		this.additionalValues = additionalValues;
 	}
 
 	/**
@@ -79,6 +79,6 @@ public class MyBatisContext {
 	 */
 	@Nullable
 	public Object get(String key) {
-		return additonalValues.get(key);
+		return additionalValues.get(key);
 	}
 }
