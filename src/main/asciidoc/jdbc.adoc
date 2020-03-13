@@ -309,7 +309,7 @@ public class EmbeddedEntity {
     String name;
 }
 ----
-<1> ``Null``s `embeddedEntity` if `name` in `null`. Use `USE_EMPTY` to instanciate `embeddedEntity` with a potential `null` value for the `name` property.
+<1> ``Null``s `embeddedEntity` if `name` in `null`. Use `USE_EMPTY` to instantiate `embeddedEntity` with a potential `null` value for the `name` property.
 ====
 
 If you need a value object multiple times in an entity, this can be achieved with the optional `prefix` element of the `@Embedded` annotation.
@@ -317,7 +317,7 @@ This element represents a prefix and is prepend for each column name in the embe
 
 [TIP]
 ====
-Make use of the shortcuts `@Embedded.Nullable` & `@Embedded.Empty` for `@Embedded(onEmpty = USE_NULL)` and `@Embedded(onEmpty = USE_EMPTY)` to reduce verbositility and simultaneously set JSR-305 `@javax.annotation.Nonnull` accordingly.
+Make use of the shortcuts `@Embedded.Nullable` & `@Embedded.Empty` for `@Embedded(onEmpty = USE_NULL)` and `@Embedded(onEmpty = USE_EMPTY)` to reduce verbosity and simultaneously set JSR-305 `@javax.annotation.Nonnull` accordingly.
 
 [source, java]
 ----
