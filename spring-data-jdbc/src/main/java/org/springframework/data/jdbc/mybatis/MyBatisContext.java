@@ -35,16 +35,16 @@ public class MyBatisContext {
 	private final @Nullable Object instance;
 	private final @Nullable Identifier identifier;
 	private final @Nullable Class domainType;
-	private final Map<String, Object> additonalValues;
+	private final Map<String, Object> additionalValues;
 
 	public MyBatisContext(@Nullable Object id, @Nullable Object instance, @Nullable Class domainType,
-			Map<String, Object> additonalValues) {
+			Map<String, Object> additionalValues) {
 
 		this.id = id;
 		this.identifier = null;
 		this.instance = instance;
 		this.domainType = domainType;
-		this.additonalValues = additonalValues;
+		this.additionalValues = additionalValues;
 	}
 
 	public MyBatisContext(Identifier identifier, @Nullable Object instance, @Nullable Class<?> domainType) {
@@ -53,7 +53,7 @@ public class MyBatisContext {
 		this.identifier = identifier;
 		this.instance = instance;
 		this.domainType = domainType;
-		this.additonalValues = Collections.emptyMap();
+		this.additionalValues = Collections.emptyMap();
 	}
 
 	/**
@@ -104,7 +104,7 @@ public class MyBatisContext {
 	 */
 	@Nullable
 	public Object get(String key) {
-		return additonalValues.get(key);
+		return additionalValues.get(key);
 	}
 
 }

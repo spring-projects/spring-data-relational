@@ -88,7 +88,7 @@ public class JdbcAggregateTemplateUnitTests {
 	}
 
 	@Test // DATAJDBC-378
-	public void findAllByIdWithEmpthListMustReturnEmptyResult() {
+	public void findAllByIdWithEmptyListMustReturnEmptyResult() {
 		assertThat(template.findAllById(emptyList(), SampleEntity.class)).isEmpty();
 	}
 
