@@ -15,23 +15,20 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
-
 /**
  * Gets published after instantiation and setting of all the properties of an entity. This allows to do some
- * postprocessing of entities.
+ * postprocessing of entities if the entities are mutable. For immutable entities use {@link AfterLoadCallback}.
  *
  * @author Jens Schauder
  */
-public class AfterLoadEvent extends RelationalEventWithIdAndEntity {
+public class AfterLoadEvent extends RelationalEventWithEntity {
 
-	private static final long serialVersionUID = -4185777271143436728L;
+	private static final long serialVersionUID = 7343072117054666699L;
 
 	/**
-	 * @param id of the entity
-	 * @param entity the newly instantiated entity.
+	 * @param entity the newly instantiated entity. Must not be {@literal null}.
 	 */
-	public AfterLoadEvent(Specified id, Object entity) {
-		super(id, entity, null);
+	public AfterLoadEvent(Object entity) {
+		super(entity);
 	}
 }

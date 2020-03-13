@@ -15,62 +15,59 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import java.util.Optional;
+import java.util.Objects;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Wrapper for an identifier of an entity. Might either be a {@link Specified} or {@link Unset#UNSET}
+ * Wrapper for an identifier of an entity.
  *
  * @author Jens Schauder
  */
-public interface Identifier {
+public final class Identifier {
+
+	private final Object value;
+
+	private Identifier(Object value) {
+
+		Assert.notNull(value, "Identifier must not be null!");
+
+		this.value = value;
+	}
 
 	/**
-	 * Creates a new {@link Specified} identifier for the given, non-null value.
+	 * Creates a new {@link Identifier} identifier for the given, non-null value.
 	 *
 	 * @param identifier must not be {@literal null}.
 	 * @return will never be {@literal null}.
 	 */
-	static Specified of(Object identifier) {
+	public static Identifier of(Object identifier) {
 
-		Assert.notNull(identifier, "Identifier must not be null!");
-
-		return SpecifiedIdentifier.of(identifier);
-	}
-
-	/**
-	 * Produces an {@link Identifier} of appropriate type depending the argument being {@code null} or not.
-	 *
-	 * @param identifier May be {@code null}.
-	 * @return an {@link Identifier}.
-	 */
-	static Identifier ofNullable(@Nullable Object identifier) {
-		return identifier == null ? Unset.UNSET : of(identifier);
+		return new Identifier(identifier);
 	}
 
 	/**
 	 * Returns the identifier value.
 	 *
-	 * @return will never be {@code null}.
+	 * @return will never be {@literal null}.
 	 */
-	Optional<?> getOptionalValue();
+	public Object getValue() {
+		return value;
+	}
 
-	/**
-	 * A specified identifier that exposes a definitely present identifier value.
-	 *
-	 * @author Oliver Gierke
-	 */
-	interface Specified extends Identifier {
+	@Override
+	public boolean equals(Object o) {
 
-		/**
-		 * Returns the identifier value.
-		 *
-		 * @return will never be {@literal null}.
-		 */
-		default Object getValue() {
-			return getOptionalValue().orElseThrow(() -> new IllegalStateException("Should not happen!"));
-		}
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		Identifier that = (Identifier) o;
+		return value.equals(that.value);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(value);
 	}
 }

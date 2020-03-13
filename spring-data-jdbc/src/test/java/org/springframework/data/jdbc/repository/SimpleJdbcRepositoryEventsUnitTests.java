@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import junit.framework.AssertionFailedError;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.With;
@@ -57,11 +56,13 @@ import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.relational.core.mapping.event.RelationalEvent;
+import org.springframework.data.relational.core.mapping.event.WithId;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.lang.Nullable;
 
 /**
  * Unit tests for application events via {@link SimpleJdbcRepository}.
@@ -143,12 +144,21 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 		assertThat(publisher.events).extracting( //
 				RelationalEvent::getClass, //
-				e -> e.getOptionalEntity().orElseGet(AssertionFailedError::new), //
-				RelationalEvent::getId //
+				this::getEntity, //
+				this::getId //
 		).containsExactly( //
 				Tuple.tuple(BeforeDeleteEvent.class, entity, Identifier.of(23L)), //
 				Tuple.tuple(AfterDeleteEvent.class, entity, Identifier.of(23L)) //
 		);
+	}
+
+	private Identifier getId(RelationalEvent e) {
+		return ((WithId) e).getId();
+	}
+
+	@Nullable
+	private Object getEntity(RelationalEvent e) {
+		return e.getEntity();
 	}
 
 	@Test // DATAJDBC-99

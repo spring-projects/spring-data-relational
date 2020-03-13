@@ -15,18 +15,15 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
-
 /**
- * Interface for {@link SimpleRelationalEvent}s which are guaranteed to have a {@link Specified} identifier. Offers
- * direct access to the {@link Specified} identifier.
+ * Interface for {@link RelationalEvent}s which have an {@link Identifier} but might not have an entity.
  *
  * @author Jens Schauder
  */
 public interface WithId extends RelationalEvent {
 
 	/**
-	 * Events with an identifier will always return a {@link Specified} one.
+	 * Events with an identifier will always return a {@link Identifier} one.
 	 */
-	Specified getId();
+	Identifier getId();
 }

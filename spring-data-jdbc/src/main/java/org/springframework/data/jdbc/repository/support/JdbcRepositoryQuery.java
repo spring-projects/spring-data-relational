@@ -31,7 +31,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
-import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -213,10 +212,8 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
-		queryMethod.getParameters().getBindableParameters().forEach(p -> {
-
-			convertAndAddParameter(parameters, p, objects[p.getIndex()]);
-		});
+		queryMethod.getParameters().getBindableParameters()
+				.forEach(p -> convertAndAddParameter(parameters, p, objects[p.getIndex()]));
 
 		return parameters;
 	}
@@ -291,7 +288,7 @@ class JdbcRepositoryQuery implements RepositoryQuery {
 			Object identifier = e.getIdentifierAccessor(entity).getIdentifier();
 
 			if (identifier != null) {
-				publisher.publishEvent(new AfterLoadEvent(Identifier.of(identifier), entity));
+				publisher.publishEvent(new AfterLoadEvent(entity));
 			}
 
 			callbacks.callback(AfterLoadCallback.class, entity);

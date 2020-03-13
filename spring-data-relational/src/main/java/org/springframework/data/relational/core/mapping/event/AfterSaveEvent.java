@@ -16,23 +16,22 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.mapping.event.Identifier.Specified;
 
 /**
  * Gets published after a new instance or a changed instance was saved in the database.
  *
  * @author Jens Schauder
  */
-public class AfterSaveEvent extends RelationalEventWithIdAndEntity {
+public class AfterSaveEvent extends RelationalSaveEvent {
 
-	private static final long serialVersionUID = 8982085767296982848L;
+	private static final long serialVersionUID = 1681164473866370396L;
 
 	/**
-	 * @param id identifier of the saved entity.
-	 * @param instance the saved entity.
+	 * @param instance the saved entity. Must not be {@literal null}.
 	 * @param change the {@link AggregateChange} encoding the actions performed on the database as part of the delete.
+	 *          Must not be {@literal null}.
 	 */
-	public AfterSaveEvent(Specified id, Object instance, AggregateChange change) {
-		super(id, instance, change);
+	public AfterSaveEvent(Object instance, AggregateChange<?> change) {
+		super(instance, change);
 	}
 }

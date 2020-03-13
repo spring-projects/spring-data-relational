@@ -15,24 +15,16 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import java.util.Optional;
+import org.springframework.data.relational.core.conversion.AggregateChange;
 
 /**
- * An unset identifier. Always returns {@link Optional#empty()} as value.
- *
- * @author Jens Schaude
- * @author Oliver Gierke
+ * {@link RelationalEvent} that represents a change to an aggregate and therefore has an {@link AggregateChange}
+ * @author Jens Schauder
  */
-enum Unset implements Identifier {
+public interface WithAggregateChange extends RelationalEvent {
 
-	UNSET;
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.mapping.event.Identifier#getOptionalValue()
+	/**
+	 * @return Guaranteed to be not {@literal null}.
 	 */
-	@Override
-	public Optional<Object> getOptionalValue() {
-		return Optional.empty();
-	}
+	AggregateChange<?> getAggregateChange();
 }
