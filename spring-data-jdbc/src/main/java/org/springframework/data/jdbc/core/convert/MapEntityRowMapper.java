@@ -23,9 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
 
@@ -54,6 +54,6 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 	}
 
 	private T mapEntity(ResultSet resultSet, Object key) {
-		return converter.mapRow(path, resultSet, identifier, key);
+		return converter.mapRow(path, new ResultSetWrapper(resultSet), identifier, key);
 	}
 }

@@ -290,6 +290,18 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.findAllByNamedQuery()).hasSize(1);
 	}
 
+	@Test // DATAJDBC-341
+	public void findWithMissingQuery() {
+
+		DummyEntity dummy = repository.save(createDummyEntity());
+
+		DummyEntity loaded = repository.withMissingColumn(dummy.idProp);
+
+		assertThat(loaded.idProp).isEqualTo(dummy.idProp);
+		assertThat(loaded.name).isNull();
+		assertThat(loaded.pointInTime).isNull();
+	}
+
 	private static DummyEntity createDummyEntity() {
 
 		DummyEntity entity = new DummyEntity();
@@ -304,6 +316,9 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE POINT_IN_TIME > :threshhold")
 		List<DummyEntity> after(@Param("threshhold")Instant threshhold);
+
+		@Query("SELECT id_Prop from dummy_entity where id_Prop = :id")
+		DummyEntity withMissingColumn(@Param("id")Long id);
 
 	}
 
