@@ -64,8 +64,11 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	@Override
 	public T mapRow(ResultSet resultSet, int rowNumber) {
 
-		return path == null ? converter.mapRow(entity, resultSet, rowNumber)
-				: converter.mapRow(path, resultSet, identifier, rowNumber);
+		ResultSetWrapper wrappedResultSet = new ResultSetWrapper(resultSet);
+
+		return path == null //
+				? converter.mapRow(entity, wrappedResultSet, rowNumber) //
+				: converter.mapRow(path, wrappedResultSet, identifier, rowNumber);
 	}
 
 }

@@ -10,6 +10,7 @@ This section covers the significant changes for each version.
 * Support for `PagingAndSortingRepository`.
 * Full Support for H2.
 * All SQL identifiers know get quoted by default.
+* Missing column no longer cause exceptions as long as they are not required by the persitence constructor.
 
 [[new-features.1-1-0]]
 == What's New in Spring Data JDBC 1.1
