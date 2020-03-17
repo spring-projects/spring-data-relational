@@ -1237,7 +1237,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			SqlIdentifier table;
 
 			if (StringUtils.isEmpty(this.table)) {
+
 				Assert.state(this.typeToUpdate != null, "Type to update must not be null!");
+
 				table = dataAccessStrategy.getTableName(this.typeToUpdate);
 			} else {
 				table = this.table;
@@ -1260,6 +1262,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			}
 
 			Assert.state(this.assignments != null, "Update assignments must not be null!");
+
 			StatementMapper.UpdateSpec update = mapper.createUpdate(table, this.assignments);
 
 			if (this.where != null) {
@@ -1403,7 +1406,9 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			SqlIdentifier table;
 
 			if (StringUtils.isEmpty(this.table)) {
+
 				Assert.state(this.typeToDelete != null, "Type to delete must not be null!");
+
 				table = dataAccessStrategy.getTableName(this.typeToDelete);
 			} else {
 				table = this.table;
@@ -1495,6 +1500,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		return it -> {
 
 			Flux<Result> from = Flux.defer(() -> {
+
 				Statement statement = statementFactory.apply(it);
 				return filterFunction.filter(statement, executeFunction);
 			}).cast(Result.class);
