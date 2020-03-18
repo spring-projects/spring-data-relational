@@ -15,15 +15,21 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.lang.NonNull;
+
 /**
  * Interface for events which are guaranteed to have an entity.
  *
  * @author Jens Schauder
  */
-public interface WithEntity extends RelationalEvent {
+public interface WithEntity<E> extends RelationalEvent<E> {
 
 	/**
+	 * Overridden in order to change nullability.
+	 *
 	 * @return will never be {@literal null}.
 	 */
-	Object getEntity();
+	@Override
+	@NonNull
+	E getEntity();
 }

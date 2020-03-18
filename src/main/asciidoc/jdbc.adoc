@@ -609,16 +609,29 @@ For example, the following listener gets invoked before an aggregate gets saved:
 [source,java]
 ----
 @Bean
-public ApplicationListener<BeforeSaveEvent> timeStampingSaveTime() {
+public ApplicationListener<BeforeSaveEvent> loggingSaves() {
 
 	return event -> {
 
 		Object entity = event.getEntity();
-		if (entity instanceof Category) {
-			Category category = (Category) entity;
-			category.timeStamp();
-		}
+		LOG.info("{} is getting saved.";
 	};
+}
+----
+====
+
+If you want to handle events only for a specific domain type you may derive your listener from `AbstractRelationalEventListener` and overwrite one or more of the `onXXX` methods,
+where `XXX` stands for an event type. It will only get invoked for events related to the domain type you used in the declaration and provides typed events, so no casting of the entity is required.
+
+====
+[source,java]
+----
+public class PersonLoadListener extends AbstractRelationalEventListener<Person> {
+
+	@Override
+	protected void onAfterLoad(AfterLoadEvent<Person> personLoad) {
+		LOG.info(personLoad.getEntity().setLoadTimeStamp(new Date());
+	}
 }
 ----
 ====

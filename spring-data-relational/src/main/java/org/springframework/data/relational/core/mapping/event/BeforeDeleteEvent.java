@@ -24,7 +24,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  */
-public class BeforeDeleteEvent extends RelationalDeleteEvent {
+public class BeforeDeleteEvent<E> extends RelationalDeleteEvent<E> {
 
 	private static final long serialVersionUID = -137285843224094551L;
 
@@ -33,7 +33,7 @@ public class BeforeDeleteEvent extends RelationalDeleteEvent {
 	 * @param entity the entity about to get deleted. May be {@literal null}.
 	 * @param change the {@link AggregateChange} encoding the planned actions to be performed on the database.
 	 */
-	public <T> BeforeDeleteEvent(Identifier id, @Nullable Object entity, AggregateChange<?> change) {
+	public BeforeDeleteEvent(Identifier id, @Nullable E entity, AggregateChange<E> change) {
 		super(id, entity, change);
 	}
 

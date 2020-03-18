@@ -25,22 +25,22 @@ import org.springframework.util.Assert;
  * {@link AggregateChange} and may also have an entity if the entity was provided to the method performing the delete.
  * 
  * @author Jens Schauder
+ * @since 2.0
  */
-abstract public class RelationalDeleteEvent extends ApplicationEvent implements WithId, WithAggregateChange {
+public abstract class RelationalDeleteEvent<E> extends AbstractRelationalEvent<E> implements WithId<E>, WithAggregateChange<E> {
 
 	private static final long serialVersionUID = -8071323168471611098L;
 
 	private final Identifier id;
-	@Nullable private final Object entity;
-	private final AggregateChange<?> change;
+	@Nullable private final E entity;
+	private final AggregateChange<E> change;
 
 	/**
 	 * @param id the identifier of the aggregate that gets deleted. Must not be {@literal null}.
 	 * @param entity is the aggregate root that gets deleted. Might be {@literal null}.
 	 * @param change the {@link AggregateChange} for the deletion containing more detailed information about the deletion
-	 *          process.
 	 */
-	RelationalDeleteEvent(Identifier id, @Nullable Object entity, AggregateChange<?> change) {
+	RelationalDeleteEvent(Identifier id, @Nullable E entity, AggregateChange<E> change) {
 
 		super(id);
 
@@ -59,13 +59,17 @@ abstract public class RelationalDeleteEvent extends ApplicationEvent implements 
 
 	@Override
 	@Nullable
-	public Object getEntity() {
+	public E getEntity() {
 		return entity;
 	}
 
 	@Override
-	public AggregateChange<?> getAggregateChange() {
+	public AggregateChange<E> getAggregateChange() {
 		return change;
 	}
 
+	@Override
+	public Class<? extends E> getType() {
+		return change.getEntityType();
+	}
 }

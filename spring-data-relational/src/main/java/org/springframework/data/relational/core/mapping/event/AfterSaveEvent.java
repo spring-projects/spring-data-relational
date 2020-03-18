@@ -22,7 +22,7 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
  *
  * @author Jens Schauder
  */
-public class AfterSaveEvent extends RelationalSaveEvent {
+public class AfterSaveEvent<E> extends RelationalSaveEvent<E> {
 
 	private static final long serialVersionUID = 1681164473866370396L;
 
@@ -31,7 +31,7 @@ public class AfterSaveEvent extends RelationalSaveEvent {
 	 * @param change the {@link AggregateChange} encoding the actions performed on the database as part of the delete.
 	 *          Must not be {@literal null}.
 	 */
-	public AfterSaveEvent(Object instance, AggregateChange<?> change) {
+	public AfterSaveEvent(E instance, AggregateChange<E> change) {
 		super(instance, change);
 	}
 }

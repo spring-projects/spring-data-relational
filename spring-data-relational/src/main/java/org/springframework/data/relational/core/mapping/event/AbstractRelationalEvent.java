@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,25 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-/**
- * Gets published after instantiation and setting of all the properties of an entity. This allows to do some
- * postprocessing of entities if the entities are mutable. For immutable entities use {@link AfterLoadCallback}.
- *
- * @author Jens Schauder
- */
-public class AfterLoadEvent<E> extends RelationalEventWithEntity<E> {
+import org.springframework.context.ApplicationEvent;
 
-	private static final long serialVersionUID = 7343072117054666699L;
+/**
+ * Base class for mapping events of Spring Data Relational
+ *
+ * @param <E> the type this event refers to.
+ * @author Mark Paluch
+ * @author Jens Schauder
+ * @since 2.0
+ */
+public abstract class AbstractRelationalEvent<E> extends ApplicationEvent implements RelationalEvent<E> {
 
 	/**
-	 * @param entity the newly instantiated entity. Must not be {@literal null}.
+	 * Creates an event with the given source.
+	 * The source might be an entity or an id of an entity, depending on the actual event subclass.
+	 *
+	 * @param source must not be {@literal null}.
 	 */
-	public AfterLoadEvent(E entity) {
-		super(entity);
+	public AbstractRelationalEvent(Object source) {
+		super(source);
 	}
 }

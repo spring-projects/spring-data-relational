@@ -17,18 +17,25 @@ package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.lang.Nullable;
 
-import java.util.Optional;
-
 /**
  * an event signalling JDBC processing.
  *
+ * @param <E> the type of the entity to which the event relates.
  * @author Oliver Gierke
+ * @author Mark Paluch
+ * @author Jens Schauder
  */
-public interface RelationalEvent {
+public interface RelationalEvent<E> {
 
 	/**
 	 * @return the entity to which this event refers. Might be {@literal null}.
 	 */
 	@Nullable
-	Object getEntity();
+	E getEntity();
+
+	/**
+	 * @return the type of the entity to which the event relates.
+	 * @since 2.0
+	 */
+	Class<? extends E> getType();
 }
