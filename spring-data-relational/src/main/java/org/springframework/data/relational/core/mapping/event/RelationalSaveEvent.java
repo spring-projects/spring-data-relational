@@ -1,4 +1,4 @@
-package org.springframework.data.relational.core.mapping.event;/*
+/*
  * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,23 @@ package org.springframework.data.relational.core.mapping.event;/*
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.util.Assert;
 
 /**
- * Events triggered during saving of an aggregate.
- * Events of this type always have an {@link AggregateChange} and an entity.
+ * Events triggered during saving of an aggregate. Events of this type always have an {@link AggregateChange} and an
+ * entity.
+ * 
+ * @author Jens Schauder
+ * @since 2.0
  */
-public abstract class RelationalSaveEvent extends RelationalEventWithEntity implements WithAggregateChange{
+public abstract class RelationalSaveEvent<E> extends RelationalEventWithEntity<E> implements WithAggregateChange<E> {
 
-	private final AggregateChange<?> change;
+	private final AggregateChange<E> change;
 
-	RelationalSaveEvent(Object entity, AggregateChange<?> change) {
+	RelationalSaveEvent(E entity, AggregateChange<E> change) {
 
 		super(entity);
 
@@ -35,7 +39,7 @@ public abstract class RelationalSaveEvent extends RelationalEventWithEntity impl
 	}
 
 	@Override
-	public AggregateChange<?> getAggregateChange() {
+	public AggregateChange<E> getAggregateChange() {
 		return change;
 	}
 }

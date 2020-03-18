@@ -22,12 +22,12 @@ import org.springframework.context.ApplicationEvent;
  * 
  * @author Jens Schauder
  */
-public class RelationalEventWithEntity extends ApplicationEvent implements WithEntity {
+public class RelationalEventWithEntity<E> extends AbstractRelationalEvent<E> implements WithEntity<E> {
 
 	private static final long serialVersionUID = 4891455396602090638L;
-	private final Object entity;
+	private final E entity;
 
-	RelationalEventWithEntity(Object entity) {
+	RelationalEventWithEntity(E entity) {
 
 		super(entity);
 
@@ -38,7 +38,12 @@ public class RelationalEventWithEntity extends ApplicationEvent implements WithE
 	 * @return the entity to which this event refers. Guaranteed to be not {@literal null}.
 	 */
 	@Override
-	public Object getEntity() {
+	public E getEntity() {
 		return entity;
+	}
+
+	@Override
+	public Class<? extends E> getType() {
+		return (Class<? extends E>) entity.getClass();
 	}
 }

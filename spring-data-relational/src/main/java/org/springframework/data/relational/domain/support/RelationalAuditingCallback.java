@@ -21,7 +21,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
-import org.springframework.data.relational.core.mapping.event.Identifier;
 
 /**
  * {@link BeforeConvertCallback} to capture auditing information on persisting and updating entities.

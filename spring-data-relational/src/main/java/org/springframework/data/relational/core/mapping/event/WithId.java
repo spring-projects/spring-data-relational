@@ -20,7 +20,7 @@ package org.springframework.data.relational.core.mapping.event;
  *
  * @author Jens Schauder
  */
-public interface WithId extends RelationalEvent {
+public interface WithId<E> extends RelationalEvent<E> {
 
 	/**
 	 * Events with an identifier will always return a {@link Identifier} one.

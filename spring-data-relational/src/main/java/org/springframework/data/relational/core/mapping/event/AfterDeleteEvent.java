@@ -23,8 +23,9 @@ import org.springframework.lang.Nullable;
  * not depends on the delete method used.
  *
  * @author Jens Schauder
+ * @since 2.0
  */
-public class AfterDeleteEvent extends RelationalDeleteEvent {
+public class AfterDeleteEvent<E> extends RelationalDeleteEvent<E> {
 
 	private static final long serialVersionUID = 2615043444207870206L;
 
@@ -34,7 +35,7 @@ public class AfterDeleteEvent extends RelationalDeleteEvent {
 	 * @param change the {@link AggregateChange} encoding the actions that were performed on the database as part of the
 	 *          delete operation. Must not be {@literal null}.
 	 */
-	public AfterDeleteEvent(Identifier id, @Nullable Object instance, AggregateChange<?> change) {
+	public AfterDeleteEvent(Identifier id, @Nullable E instance, AggregateChange<E> change) {
 		super(id, instance, change);
 	}
 
