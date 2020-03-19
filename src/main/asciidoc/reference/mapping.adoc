@@ -155,8 +155,8 @@ The `MappingR2dbcConverter` can use metadata to drive the mapping of objects to 
 * `@Id`: Applied at the field level to mark the primary key.
 * `@Table`: Applied at the class level to indicate this class is a candidate for mapping to the database.
 You can specify the name of the table where the database is stored.
-* `@Transient`: By default, all private fields are mapped to the row. This annotation excludes the field where it is applied from being stored in the database
-* `@PersistenceConstructor`: Marks a given constructor -- even a package protected one -- to use when instantiating the object from the database. Constructor arguments are mapped by name to the key values in the retrieved row.
+* `@Transient`: By default, all fields are mapped to the row. This annotation excludes the field where it is applied from being stored in the database. Transient properties cannot be used within a persistence constructor as the converter cannot materialize a value for the constructor argument.
+* `@PersistenceConstructor`: Marks a given constructor -- even a package protected one -- to use when instantiating the object from the database. Constructor arguments are mapped by name to the values in the retrieved row.
 * `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, allowing the name to be different than the field name of the class.
 
 The mapping metadata infrastructure is defined in the separate `spring-data-commons` project that is technology-agnostic.
