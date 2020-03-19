@@ -110,13 +110,12 @@ class ExpressionEvaluatingParameterBinder {
 			Parameters<?, ?> bindableParameters) {
 
 		T bindSpecToUse = bindSpec;
-		int index = 0;
 		int bindingIndex = 0;
 
-		for (Object value : values) {
 
-			Parameter bindableParameter = bindableParameters.getBindableParameter(index++);
+		for (Parameter bindableParameter : bindableParameters) {
 
+			Object value = values[bindableParameter.getIndex()];
 			Optional<String> name = bindableParameter.getName();
 
 			if ((name.isPresent() && isNamedParameterUsed(name)) || !expressionQuery.getBindings().isEmpty()) {
