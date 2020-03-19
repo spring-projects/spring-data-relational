@@ -15,6 +15,11 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import org.reactivestreams.Publisher;
+
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.mapping.context.MappingContext;
@@ -82,11 +87,29 @@ interface R2dbcQueryExecution {
 		@Override
 		public Object convert(Object source) {
 
-			ReturnedType returnedType = this.processor.getReturnedType();
+			ReturnedType returnedType = processor.getReturnedType();
 
-			if (Void.class == returnedType.getReturnedType()
-					|| ClassUtils.isPrimitiveOrWrapper(returnedType.getReturnedType())) {
+			if (ClassUtils.isPrimitiveOrWrapper(returnedType.getReturnedType())) {
 				return source;
+			}
+
+			if (!mappingContext.hasPersistentEntityFor(returnedType.getReturnedType())) {
+				return source;
+			}
+
+			if (Void.class == returnedType.getReturnedType()) {
+
+				if (source instanceof Mono) {
+					return ((Mono<?>) source).then();
+				}
+
+				if (source instanceof Publisher) {
+					return Flux.from((Publisher<?>) source).then();
+				}
+
+				if (ClassUtils.isPrimitiveOrWrapper(returnedType.getReturnedType())) {
+					return source;
+				}
 			}
 
 			Converter<Object, Object> converter = new DtoInstantiatingConverter(returnedType.getReturnedType(),
