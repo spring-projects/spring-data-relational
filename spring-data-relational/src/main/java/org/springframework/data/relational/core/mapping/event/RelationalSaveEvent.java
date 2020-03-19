@@ -21,7 +21,7 @@ import org.springframework.util.Assert;
 /**
  * Events triggered during saving of an aggregate. Events of this type always have an {@link AggregateChange} and an
  * entity.
- * 
+ *
  * @author Jens Schauder
  * @since 2.0
  */
@@ -34,7 +34,6 @@ public abstract class RelationalSaveEvent<E> extends RelationalEventWithEntity<E
 		super(entity);
 
 		Assert.notNull(change, "Change must not be null");
-
 		this.change = change;
 	}
 

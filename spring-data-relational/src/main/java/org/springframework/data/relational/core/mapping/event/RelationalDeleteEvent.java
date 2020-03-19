@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import org.springframework.context.ApplicationEvent;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -23,16 +22,17 @@ import org.springframework.util.Assert;
 /**
  * Super class for events produced during deleting an aggregate. Such events have an {@link Identifier} and an
  * {@link AggregateChange} and may also have an entity if the entity was provided to the method performing the delete.
- * 
+ *
  * @author Jens Schauder
  * @since 2.0
  */
-public abstract class RelationalDeleteEvent<E> extends AbstractRelationalEvent<E> implements WithId<E>, WithAggregateChange<E> {
+public abstract class RelationalDeleteEvent<E> extends AbstractRelationalEvent<E>
+		implements WithId<E>, WithAggregateChange<E> {
 
 	private static final long serialVersionUID = -8071323168471611098L;
 
 	private final Identifier id;
-	@Nullable private final E entity;
+	private final @Nullable E entity;
 	private final AggregateChange<E> change;
 
 	/**
@@ -69,7 +69,7 @@ public abstract class RelationalDeleteEvent<E> extends AbstractRelationalEvent<E
 	}
 
 	@Override
-	public Class<? extends E> getType() {
+	public Class<E> getType() {
 		return change.getEntityType();
 	}
 }

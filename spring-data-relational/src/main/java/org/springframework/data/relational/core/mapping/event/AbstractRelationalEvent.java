@@ -28,8 +28,8 @@ import org.springframework.context.ApplicationEvent;
 public abstract class AbstractRelationalEvent<E> extends ApplicationEvent implements RelationalEvent<E> {
 
 	/**
-	 * Creates an event with the given source.
-	 * The source might be an entity or an id of an entity, depending on the actual event subclass.
+	 * Creates an event with the given source. The source might be an entity or an id of an entity, depending on the
+	 * actual event subclass.
 	 *
 	 * @param source must not be {@literal null}.
 	 */

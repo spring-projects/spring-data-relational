@@ -609,7 +609,7 @@ For example, the following listener gets invoked before an aggregate gets saved:
 [source,java]
 ----
 @Bean
-public ApplicationListener<BeforeSaveEvent> loggingSaves() {
+public ApplicationListener<BeforeSaveEvent<Object>> loggingSaves() {
 
 	return event -> {
 
@@ -621,7 +621,7 @@ public ApplicationListener<BeforeSaveEvent> loggingSaves() {
 ====
 
 If you want to handle events only for a specific domain type you may derive your listener from `AbstractRelationalEventListener` and overwrite one or more of the `onXXX` methods,
-where `XXX` stands for an event type. It will only get invoked for events related to the domain type you used in the declaration and provides typed events, so no casting of the entity is required.
+where `XXX` stands for an event type. Callback methods will only get invoked for events related to the domain type and their subtypes so you don't require further casting.
 
 ====
 [source,java]
@@ -630,7 +630,7 @@ public class PersonLoadListener extends AbstractRelationalEventListener<Person> 
 
 	@Override
 	protected void onAfterLoad(AfterLoadEvent<Person> personLoad) {
-		LOG.info(personLoad.getEntity().setLoadTimeStamp(new Date());
+		LOG.info(personLoad.getEntity());
 	}
 }
 ----

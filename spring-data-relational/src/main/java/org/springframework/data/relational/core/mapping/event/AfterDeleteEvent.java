@@ -19,8 +19,8 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.lang.Nullable;
 
 /**
- * Gets published after deletion of an entity. It will have a {@link Identifier} identifier. If the entity is {@literal null} or
- * not depends on the delete method used.
+ * Gets published after deletion of an entity. It will have a {@link Identifier} identifier. If the entity is
+ * {@literal null} or not depends on the delete method used.
  *
  * @author Jens Schauder
  * @since 2.0
@@ -38,6 +38,4 @@ public class AfterDeleteEvent<E> extends RelationalDeleteEvent<E> {
 	public AfterDeleteEvent(Identifier id, @Nullable E instance, AggregateChange<E> change) {
 		super(id, instance, change);
 	}
-
-
 }

@@ -24,11 +24,13 @@ import org.springframework.core.GenericTypeResolver;
  * Base class to implement domain class specific {@link ApplicationListener} classes.
  *
  * @param <E>
+ * @author Jens Schauder
  * @since 2.0
  */
 public class AbstractRelationalEventListener<E> implements ApplicationListener<AbstractRelationalEvent<?>> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AbstractRelationalEventListener.class);
+
 	private final Class<?> domainClass;
 
 	/**

@@ -34,8 +34,6 @@ public class BeforeConvertEvent<E> extends RelationalSaveEvent<E> {
 	 *          aggregate is considered new in {@link AggregateChange#getKind()}. Must not be {@literal null}.
 	 */
 	public BeforeConvertEvent(E instance, AggregateChange<E> change) {
-
 		super(instance, change);
-
 	}
 }

@@ -37,5 +37,5 @@ public interface RelationalEvent<E> {
 	 * @return the type of the entity to which the event relates.
 	 * @since 2.0
 	 */
-	Class<? extends E> getType();
+	Class<E> getType();
 }

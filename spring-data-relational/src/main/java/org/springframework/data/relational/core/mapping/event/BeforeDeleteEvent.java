@@ -36,5 +36,4 @@ public class BeforeDeleteEvent<E> extends RelationalDeleteEvent<E> {
 	public BeforeDeleteEvent(Identifier id, @Nullable E entity, AggregateChange<E> change) {
 		super(id, entity, change);
 	}
-
 }

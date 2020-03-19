@@ -15,11 +15,9 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import org.springframework.context.ApplicationEvent;
-
 /**
  * An event that is guaranteed to have an entity.
- * 
+ *
  * @author Jens Schauder
  */
 public class RelationalEventWithEntity<E> extends AbstractRelationalEvent<E> implements WithEntity<E> {
@@ -42,8 +40,9 @@ public class RelationalEventWithEntity<E> extends AbstractRelationalEvent<E> imp
 		return entity;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<? extends E> getType() {
-		return (Class<? extends E>) entity.getClass();
+	public Class<E> getType() {
+		return (Class<E>) entity.getClass();
 	}
 }

@@ -25,7 +25,7 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
 
 /**
  * Unit tests for {@link AbstractRelationalEventListener}.
- * 
+ *
  * @author Mark Paluch
  * @author Jens Schauder
  */
@@ -33,7 +33,7 @@ public class AbstractRelationalEventListenerUnitTests {
 
 	List<String> events = new ArrayList<>();
 	EventListenerUnderTest listener = new EventListenerUnderTest();
-	private DummyEntity dummyEntity = new DummyEntity();
+	DummyEntity dummyEntity = new DummyEntity();
 
 	@Test // DATAJDBC-454
 	public void afterLoad() {
@@ -91,7 +91,7 @@ public class AbstractRelationalEventListenerUnitTests {
 		String notADummyEntity = "I'm not a dummy entity";
 
 		listener.onApplicationEvent(
-				new AfterDeleteEvent<>(Identifier.of(23), notADummyEntity, AggregateChange.forDelete(notADummyEntity)));
+				new AfterDeleteEvent<>(Identifier.of(23), String.class, AggregateChange.forDelete(notADummyEntity)));
 
 		assertThat(events).isEmpty();
 	}
