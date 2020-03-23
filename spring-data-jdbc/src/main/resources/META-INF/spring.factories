@@ -1,1 +1,2 @@
 org.springframework.data.repository.core.support.RepositoryFactorySupport=org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory
+org.springframework.data.jdbc.repository.config.JdbcDialectResolver$JdbcDialectProvider=org.springframework.data.jdbc.repository.config.JdbcDialectResolver.DefaultDialectProvider

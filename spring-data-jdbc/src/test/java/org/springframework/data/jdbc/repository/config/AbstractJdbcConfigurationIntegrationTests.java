@@ -32,6 +32,8 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -58,7 +60,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 					.map(context::getBean) //
 					.forEach(it -> assertThat(it).isNotNull());
 
-		}, AbstractJdbcConfiguration.class, Infrastructure.class);
+		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
 	}
 
 	protected static void assertApplicationContext(Consumer<ConfigurableApplicationContext> verification,
@@ -74,7 +76,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 	}
 
 	@Configuration
-	static class Infrastructure {
+	static class        Infrastructure {
 
 		@Bean
 		public NamedParameterJdbcOperations jdbcOperations() {
@@ -83,4 +85,14 @@ public class AbstractJdbcConfigurationIntegrationTests {
 			return new NamedParameterJdbcTemplate(jdbcOperations);
 		}
 	}
+
+	static class AbstractJdbcConfigurationUnderTest extends AbstractJdbcConfiguration {
+
+		@Override
+		@Bean
+		public Dialect dialect(NamedParameterJdbcOperations template) {
+			return HsqlDbDialect.INSTANCE;
+		}
+	}
+
 }

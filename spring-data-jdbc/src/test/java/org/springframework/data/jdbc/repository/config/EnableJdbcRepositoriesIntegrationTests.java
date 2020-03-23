@@ -156,5 +156,10 @@ public class EnableJdbcRepositoriesIntegrationTests {
 			return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
 					template);
 		}
+
+		@Bean
+		Dialect dialect(@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations template) {
+			return JdbcDialectResolver.getDialect(template);
+		}
 	}
 }

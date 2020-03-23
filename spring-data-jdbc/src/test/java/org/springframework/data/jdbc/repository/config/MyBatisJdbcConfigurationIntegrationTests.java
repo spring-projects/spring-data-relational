@@ -27,6 +27,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.mybatis.MyBatisDataAccessStrategy;
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.HsqlDbDialect;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -50,7 +53,7 @@ public class MyBatisJdbcConfigurationIntegrationTests extends AbstractJdbcConfig
 						assertThat(strategies.get(0)).isInstanceOf(MyBatisDataAccessStrategy.class);
 					});
 
-		}, MyBatisJdbcConfiguration.class, MyBatisInfrastructure.class);
+		}, MyBatisJdbcConfigurationUnderTest.class, MyBatisInfrastructure.class);
 	}
 
 	@Configuration
@@ -59,6 +62,15 @@ public class MyBatisJdbcConfigurationIntegrationTests extends AbstractJdbcConfig
 		@Bean
 		public SqlSession session() {
 			return mock(SqlSession.class);
+		}
+	}
+
+	public static class MyBatisJdbcConfigurationUnderTest extends MyBatisJdbcConfiguration {
+
+		@Override
+		@Bean
+		public Dialect dialect(NamedParameterJdbcOperations template) {
+			return HsqlDbDialect.INSTANCE;
 		}
 	}
 }

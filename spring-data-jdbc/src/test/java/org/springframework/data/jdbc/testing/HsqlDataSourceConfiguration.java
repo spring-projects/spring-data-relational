@@ -49,9 +49,4 @@ class HsqlDataSourceConfiguration {
 				.addScript(TestUtils.createScriptName(context, "hsql")) //
 				.build();
 	}
-
-	@Bean
-	Dialect dialect() {
-		return HsqlDbDialect.INSTANCE;
-	}
 }

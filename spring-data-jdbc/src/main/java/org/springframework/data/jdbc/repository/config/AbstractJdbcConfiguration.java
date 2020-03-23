@@ -35,7 +35,6 @@ import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
@@ -132,7 +131,7 @@ public class AbstractJdbcConfiguration {
 	}
 
 	@Bean
-	Dialect dialect() {
-		return HsqlDbDialect.INSTANCE;
+	public Dialect dialect(NamedParameterJdbcOperations template) {
+		return JdbcDialectResolver.getDialect(template);
 	}
 }
