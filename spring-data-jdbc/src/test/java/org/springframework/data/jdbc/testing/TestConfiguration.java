@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.repository.config.JdbcDialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -118,5 +119,10 @@ public class TestConfiguration {
 				conversions, //
 				new DefaultJdbcTypeFactory(template.getJdbcOperations()) //
 		);
+	}
+
+	@Bean
+	Dialect dialect(NamedParameterJdbcOperations template) {
+		return JdbcDialectResolver.getDialect(template);
 	}
 }

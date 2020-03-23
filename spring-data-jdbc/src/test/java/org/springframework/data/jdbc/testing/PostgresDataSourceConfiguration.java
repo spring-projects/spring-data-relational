@@ -58,11 +58,6 @@ public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 		return dataSource;
 	}
 
-	@Bean
-	Dialect dialect() {
-		return PostgresDialect.INSTANCE;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.testing.DataSourceFactoryBean#customizePopulator(org.springframework.jdbc.datasource.init.ResourceDatabasePopulator)

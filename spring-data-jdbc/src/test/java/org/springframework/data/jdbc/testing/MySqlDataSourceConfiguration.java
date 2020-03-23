@@ -65,11 +65,6 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 		return dataSource;
 	}
 
-	@Bean
-	Dialect dialect() {
-		return MySqlDialect.INSTANCE;
-	}
-
 	@PostConstruct
 	public void initDatabase() throws SQLException, ScriptException {
 		ScriptUtils.executeSqlScript(createDataSource().getConnection(), null, "DROP DATABASE test;CREATE DATABASE test;");

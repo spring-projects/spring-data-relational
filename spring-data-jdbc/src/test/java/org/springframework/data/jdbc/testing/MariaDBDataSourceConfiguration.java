@@ -22,11 +22,8 @@ import javax.script.ScriptException;
 import javax.sql.DataSource;
 
 import org.mariadb.jdbc.MariaDbDataSource;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.MariaDbDialect;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.jdbc.ext.ScriptUtils;
 
@@ -62,11 +59,6 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 		} catch (SQLException sqlex) {
 			throw new RuntimeException(sqlex);
 		}
-	}
-
-	@Bean
-	Dialect dialect() {
-		return MariaDbDialect.INSTANCE;
 	}
 
 	@PostConstruct
