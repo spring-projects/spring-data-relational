@@ -15,9 +15,9 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import java.awt.*;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,9 +30,12 @@ import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.ConnectionCallback;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.lang.Nullable;
 
 /**
  * Resolves a {@link Dialect} from a {@link DataSource} using {@link JdbcDialectProvider}. Dialect resolution uses
@@ -66,8 +69,7 @@ public class JdbcDialectResolver {
 				.flatMap(Optionals::toStream) //
 				.findFirst() //
 				.orElseThrow(() -> new NoDialectException(
-						String.format("Cannot determine a dialect for %s. Please provide a Dialect.",
-								template)));
+						String.format("Cannot determine a dialect for %s. Please provide a Dialect.", template)));
 	}
 
 	/**
@@ -82,7 +84,8 @@ public class JdbcDialectResolver {
 		/**
 		 * Returns a {@link Dialect} for a {@link DataSource}.
 		 *
-		 * @param template the {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate} to be used with the {@link Dialect}.
+		 * @param template the {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate} to be used with
+		 *          the {@link Dialect}.
 		 * @return {@link Optional} containing the {@link Dialect} if the {@link JdbcDialectProvider} can provide a dialect
 		 *         object, otherwise {@link Optional#empty()}.
 		 */
@@ -94,28 +97,54 @@ public class JdbcDialectResolver {
 		@Override
 		public Optional<Dialect> getDialect(NamedParameterJdbcOperations template) {
 
-			return template.getJdbcOperations().execute((ConnectionCallback<Optional<Dialect>>) (connection) ->{
+			JdbcOperations operations = template.getJdbcOperations();
+			return Optional.ofNullable(operations.execute((ConnectionCallback<Dialect>) DefaultDialectProvider::getDialect));
 
-				DatabaseMetaData metaData = connection.getMetaData();
+		}
 
-				String name = metaData.getDatabaseProductName().toLowerCase();
+		@Nullable
+		private static Dialect getDialect(Connection connection) throws SQLException {
 
-				if (name.contains("hsql")) {
-					return Optional.of(HsqlDbDialect.INSTANCE);
-				}
-				if (name.contains("mysql")) { // catches also mariadb
-					return Optional.of(MySqlDialect.INSTANCE);
-				}
-				if (name.contains("postgresql")) {
-					return Optional.of(PostgresDialect.INSTANCE);
-				}
-				if (name.contains("microsoft")) {
-					return Optional.of(SqlServerDialect.INSTANCE);
-				}
+			DatabaseMetaData metaData = connection.getMetaData();
 
-				return Optional.empty();
-			});
+			String name = metaData.getDatabaseProductName().toLowerCase();
 
+			if (name.contains("hsql")) {
+				return HsqlDbDialect.INSTANCE;
+			}
+			if (name.contains("mysql")) { // catches also mariadb
+				return new MySqlDialect(getIdentifierProcessing(metaData));
+			}
+			if (name.contains("postgresql")) {
+				return PostgresDialect.INSTANCE;
+			}
+			if (name.contains("microsoft")) {
+				return SqlServerDialect.INSTANCE;
+			}
+
+			return null;
+		}
+
+		private static IdentifierProcessing getIdentifierProcessing(DatabaseMetaData metaData) throws SQLException {
+
+			// getIdentifierQuoteString() returns a space " " if identifier quoting is not
+			// supported.
+			final String quoteString = metaData.getIdentifierQuoteString();
+			final IdentifierProcessing.Quoting quoting = " ".equals(quoteString) ? IdentifierProcessing.Quoting.NONE : new IdentifierProcessing.Quoting(quoteString);
+
+			final IdentifierProcessing.LetterCasing letterCasing;
+			// IdentifierProcessing tries to mimic the behavior of unquoted identifiers for their quoted variants.
+			if (metaData.supportsMixedCaseIdentifiers()) {
+				letterCasing = IdentifierProcessing.LetterCasing.AS_IS;
+			} else if (metaData.storesUpperCaseIdentifiers()) {
+				letterCasing = IdentifierProcessing.LetterCasing.UPPER_CASE;
+			} else if (metaData.storesLowerCaseIdentifiers()) {
+				letterCasing = IdentifierProcessing.LetterCasing.LOWER_CASE;
+			} else { // this shouldn't happen since one of the previous cases should be true.
+				// But if it does happen, we go with the ANSI default.
+				letterCasing = IdentifierProcessing.LetterCasing.UPPER_CASE;
+			}
+			return IdentifierProcessing.create(quoting, letterCasing);
 		}
 	}
 
@@ -129,7 +158,7 @@ public class JdbcDialectResolver {
 		 *
 		 * @param msg the detail message
 		 */
-		public NoDialectException(String msg) {
+		NoDialectException(String msg) {
 			super(msg);
 		}
 	}
