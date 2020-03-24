@@ -32,8 +32,15 @@ public class MySqlDialect extends AbstractDialect {
 	 * Singleton instance.
 	 */
 	public static final MySqlDialect INSTANCE = new MySqlDialect();
+	private IdentifierProcessing identifierProcessing;
 
-	protected MySqlDialect() {	}
+	protected MySqlDialect() {
+		this(IdentifierProcessing.create(new Quoting("`"), LetterCasing.LOWER_CASE));
+	}
+
+	public MySqlDialect(IdentifierProcessing identifierProcessing) {
+		this.identifierProcessing = identifierProcessing;
+	}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
@@ -89,6 +96,6 @@ public class MySqlDialect extends AbstractDialect {
 
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
-		return IdentifierProcessing.create(new Quoting("`"), LetterCasing.LOWER_CASE);
+		return identifierProcessing;
 	}
 }
