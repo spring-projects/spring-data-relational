@@ -102,22 +102,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 * @param context must not be {@literal null}.
 	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
 	 * @param typeFactory must not be {@literal null}
-	 * @since 1.1
-	 */
-	@Deprecated
-	public BasicJdbcConverter(
-			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-			RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory) {
-
-		this(context, relationResolver, conversions, typeFactory, IdentifierProcessing.ANSI);
-	}
-
-	/**
-	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
-	 *
-	 * @param context must not be {@literal null}.
-	 * @param relationResolver used to fetch additional relations from the database. Must not be {@literal null}.
-	 * @param typeFactory must not be {@literal null}
 	 * @param identifierProcessing must not be {@literal null}
 	 * @since 2.0
 	 */

@@ -117,6 +117,7 @@ public class DefaultDataAccessStrategyUnitTests {
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
 
 		Dialect dialect = HsqlDbDialect.INSTANCE;
+
 		JdbcConverter converter = new BasicJdbcConverter(context, relationResolver,
 				new JdbcCustomConversions(Arrays.asList(BooleanToStringConverter.INSTANCE, StringToBooleanConverter.INSTANCE)),
 				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
