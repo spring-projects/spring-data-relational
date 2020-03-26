@@ -129,7 +129,6 @@
 									</includes>
 									<excludes>
 										<exclude>**/*HsqlIntegrationTests.java</exclude>
-										<exclude>**/*H2IntegrationTests.java</exclude>
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mysql</spring.profiles.active>
@@ -148,7 +147,6 @@
 									</includes>
 									<excludes>
 										<exclude>**/*HsqlIntegrationTests.java</exclude>
-										<exclude>**/*H2IntegrationTests.java</exclude>
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>postgres</spring.profiles.active>
@@ -167,7 +165,6 @@
 									</includes>
 									<excludes>
 										<exclude>**/*HsqlIntegrationTests.java</exclude>
-										<exclude>**/*H2IntegrationTests.java</exclude>
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mariadb</spring.profiles.active>
