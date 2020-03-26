@@ -529,11 +529,12 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(new String[] { "one", "two", "three" });
 	}
 
-	@Test // DATAJDBC-259
+	@Test // DATAJDBC-259, DATAJDBC-512
 	public void saveAndLoadAnEntityWithMultidimensionalArray() {
 
 		// MySQL and other do not support array datatypes. See
 		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
+		assumeNot("h2");
 		assumeNot("mysql");
 		assumeNot("mariadb");
 		assumeNot("mssql");

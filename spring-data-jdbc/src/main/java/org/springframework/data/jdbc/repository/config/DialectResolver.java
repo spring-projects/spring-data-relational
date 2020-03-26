@@ -27,6 +27,7 @@ import javax.sql.DataSource;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
@@ -109,6 +110,9 @@ public class DialectResolver {
 
 			if (name.contains("hsql")) {
 				return HsqlDbDialect.INSTANCE;
+			}
+			if (name.contains("h2")) {
+				return H2Dialect.INSTANCE;
 			}
 			if (name.contains("mysql")) { // catches also mariadb
 				return new MySqlDialect(getIdentifierProcessing(metaData));
