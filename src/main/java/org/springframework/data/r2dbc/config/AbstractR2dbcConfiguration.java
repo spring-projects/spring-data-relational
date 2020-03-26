@@ -87,7 +87,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 *
 	 * @param connectionFactory the configured {@link ConnectionFactory}.
 	 * @return the resolved {@link R2dbcDialect}.
-	 * @throws UnsupportedOperationException if the {@link R2dbcDialect} cannot be determined.
+	 * @throws org.springframework.data.r2dbc.dialect.DialectResolver.NoDialectException if the {@link R2dbcDialect} cannot be determined.
 	 */
 	public R2dbcDialect getDialect(ConnectionFactory connectionFactory) {
 		return DialectResolver.getDialect(connectionFactory);
