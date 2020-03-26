@@ -26,6 +26,7 @@
 
 		<degraph-check.version>0.1.4</degraph-check.version>
 
+		<h2.version>1.4.200</h2.version>
 		<hsqldb.version>2.2.8</hsqldb.version>
 		<mssql.version>7.0.0.jre8</mssql.version>
 		<mybatis.version>3.5.0</mybatis.version>
@@ -99,6 +100,24 @@
 						<artifactId>maven-surefire-plugin</artifactId>
 						<executions>
 							<execution>
+								<id>h2-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>h2</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
 								<id>mysql-test</id>
 								<phase>test</phase>
 								<goals>
@@ -110,6 +129,7 @@
 									</includes>
 									<excludes>
 										<exclude>**/*HsqlIntegrationTests.java</exclude>
+										<exclude>**/*H2IntegrationTests.java</exclude>
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mysql</spring.profiles.active>
@@ -128,6 +148,7 @@
 									</includes>
 									<excludes>
 										<exclude>**/*HsqlIntegrationTests.java</exclude>
+										<exclude>**/*H2IntegrationTests.java</exclude>
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>postgres</spring.profiles.active>
@@ -146,6 +167,7 @@
 									</includes>
 									<excludes>
 										<exclude>**/*HsqlIntegrationTests.java</exclude>
+										<exclude>**/*H2IntegrationTests.java</exclude>
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mariadb</spring.profiles.active>

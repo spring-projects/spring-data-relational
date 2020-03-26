@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,23 @@
  */
 package org.springframework.data.jdbc.testing;
 
-import java.util.Arrays;
-
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
 /**
- * {@link DataSource} setup for HSQL.
+ * {@link DataSource} setup for H2.
  *
- * @author Jens Schauder
- * @author Oliver Gierke
+ * @author Mark Paluch
  */
 @Configuration
-@Profile({ "hsql", "default" })
-class HsqlDataSourceConfiguration {
+@Profile({ "h2" })
+class H2DataSourceConfiguration {
 
 	@Autowired Class<?> context;
 
@@ -46,10 +40,10 @@ class HsqlDataSourceConfiguration {
 
 		return new EmbeddedDatabaseBuilder() //
 				.generateUniqueName(true) //
-				.setType(EmbeddedDatabaseType.HSQL) //
+				.setType(EmbeddedDatabaseType.H2) //
 				.setScriptEncoding("UTF-8") //
 				.ignoreFailedDrops(true) //
-				.addScript(TestUtils.createScriptName(context, "hsql")) //
+				.addScript(TestUtils.createScriptName(context, "h2")) //
 				.build();
 	}
 }

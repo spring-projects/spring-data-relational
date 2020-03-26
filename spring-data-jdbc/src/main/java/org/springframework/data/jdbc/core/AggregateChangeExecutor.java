@@ -158,7 +158,7 @@ class AggregateChangeExecutor {
 				.getRequiredPersistentEntity(action.getEntityType());
 		PersistentPropertyAccessor<S> propertyAccessor = converter.getPropertyAccessor(persistentEntity, originalEntity);
 
-		if (generatedId != null) {
+		if (generatedId != null && persistentEntity.hasIdProperty()) {
 			propertyAccessor.setProperty(persistentEntity.getRequiredIdProperty(), generatedId);
 		}
 

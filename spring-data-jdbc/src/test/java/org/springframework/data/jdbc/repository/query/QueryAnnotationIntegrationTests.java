@@ -26,9 +26,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,8 +42,7 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.Nullable;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.annotation.ProfileValueUtils;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,11 +52,21 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
+ * @author Mark Paluch
  */
-@ContextConfiguration
-@ActiveProfiles("hsql")
 @Transactional
-public class QueryAnnotationHsqlIntegrationTests {
+public class QueryAnnotationIntegrationTests {
+
+	@Configuration
+	@Import(TestConfiguration.class)
+	@EnableJdbcRepositories(considerNestedRepositories = true)
+	static class Config {
+
+		@Bean
+		Class<?> testClass() {
+			return QueryAnnotationIntegrationTests.class;
+		}
+	}
 
 	@Autowired DummyEntityRepository repository;
 
@@ -64,6 +75,8 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 	@Test // DATAJDBC-164
 	public void executeCustomQueryWithoutParameter() {
+
+		assumeNot("mysql");
 
 		repository.save(dummyEntity("Example"));
 		repository.save(dummyEntity("example"));
@@ -74,7 +87,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 		assertThat(entities) //
 				.extracting(e -> e.name) //
 				.containsExactlyInAnyOrder("Example", "EXAMPLE");
-
 	}
 
 	@Test // DATAJDBC-164
@@ -89,7 +101,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 		assertThat(entities) //
 				.extracting(e -> e.name) //
 				.containsExactlyInAnyOrder("b");
-
 	}
 
 	@Test // DATAJDBC-172
@@ -100,7 +111,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 		Optional<DummyEntity> entity = repository.findByNameAsOptional("a");
 
 		assertThat(entity).map(e -> e.name).contains("a");
-
 	}
 
 	@Test // DATAJDBC-172
@@ -111,7 +121,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 		Optional<DummyEntity> entity = repository.findByNameAsOptional("x");
 
 		assertThat(entity).isNotPresent();
-
 	}
 
 	@Test // DATAJDBC-172
@@ -123,7 +132,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 		assertThat(entity).isNotNull();
 		assertThat(entity.name).isEqualTo("a");
-
 	}
 
 	@Test // DATAJDBC-172
@@ -134,7 +142,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 		DummyEntity entity = repository.findByNameAsEntity("x");
 
 		assertThat(entity).isNull();
-
 	}
 
 	@Test // DATAJDBC-172
@@ -168,11 +175,12 @@ public class QueryAnnotationHsqlIntegrationTests {
 		assertThat(entities) //
 				.extracting(e -> e.name) //
 				.containsExactlyInAnyOrder("a", "b");
-
 	}
 
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsNumber() {
+
+		assumeNot("mysql");
 
 		repository.save(dummyEntity("aaa"));
 		repository.save(dummyEntity("bbb"));
@@ -181,11 +189,12 @@ public class QueryAnnotationHsqlIntegrationTests {
 		int count = repository.countByNameContaining("a");
 
 		assertThat(count).isEqualTo(2);
-
 	}
 
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsBoolean() {
+
+		assumeNot("mysql");
 
 		repository.save(dummyEntity("aaa"));
 		repository.save(dummyEntity("bbb"));
@@ -193,11 +202,12 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 		assertThat(repository.existsByNameContaining("a")).isTrue();
 		assertThat(repository.existsByNameContaining("d")).isFalse();
-
 	}
 
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsDate() {
+
+		assumeNot("mysql");
 
 		// Since Timestamp extends Date the repository returns the Timestamp as it comes from the database.
 		// Trying to compare that to an actual Date results in non deterministic results, so we have to use an actual
@@ -210,12 +220,14 @@ public class QueryAnnotationHsqlIntegrationTests {
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsLocalDateTimeList() {
 
+		// mysql does not support plain VALUES(…)
+		assumeNot("mysql");
+
 		LocalDateTime preciseNow = LocalDateTime.now();
 		LocalDateTime truncatedNow = truncateSubmillis(preciseNow);
 
 		repository.nowWithLocalDateTimeList() //
 				.forEach(d -> assertThat(d).isAfterOrEqualTo(truncatedNow));
-
 	}
 
 	@Test // DATAJDBC-182
@@ -258,6 +270,10 @@ public class QueryAnnotationHsqlIntegrationTests {
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithImmutableResultType() {
 
+		// mysql does not support plain VALUES(…)
+
+		assumeNot("mysql");
+
 		assertThat(repository.immutableTuple()).isEqualTo(new DummyEntityRepository.ImmutableTuple("one", "two", 3));
 	}
 
@@ -274,15 +290,11 @@ public class QueryAnnotationHsqlIntegrationTests {
 		return entity;
 	}
 
-	@Configuration
-	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true)
-	static class Config {
+	private static void assumeNot(String dbProfileName) {
 
-		@Bean
-		Class<?> testClass() {
-			return QueryAnnotationHsqlIntegrationTests.class;
-		}
+		Assume.assumeTrue(
+				"true".equalsIgnoreCase(ProfileValueUtils.retrieveProfileValueSource(QueryAnnotationIntegrationTests.class)
+						.get("current.database.is.not." + dbProfileName)));
 	}
 
 	private static class DummyEntity {
