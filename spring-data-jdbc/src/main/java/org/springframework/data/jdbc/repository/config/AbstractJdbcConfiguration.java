@@ -130,8 +130,17 @@ public class AbstractJdbcConfiguration {
 				jdbcConverter, operations);
 	}
 
+	/**
+	 * Resolves a {@link Dialect JDBC dialect} by inspecting {@link NamedParameterJdbcOperations}.
+	 *
+	 * @param operations the {@link NamedParameterJdbcOperations} allowing access to a {@link java.sql.Connection}.
+	 * @return
+	 * @since 2.0
+	 * @throws org.springframework.data.jdbc.repository.config.DialectResolver.NoDialectException if the {@link Dialect}
+	 *           cannot be determined.
+	 */
 	@Bean
-	public Dialect dialect(NamedParameterJdbcOperations template) {
-		return JdbcDialectResolver.getDialect(template);
+	public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
+		return DialectResolver.getDialect(operations.getJdbcOperations());
 	}
 }

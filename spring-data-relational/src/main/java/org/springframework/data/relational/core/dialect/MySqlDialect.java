@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.dialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
+import org.springframework.util.Assert;
 
 /**
  * A SQL dialect for MySQL.
@@ -29,16 +30,32 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting
 public class MySqlDialect extends AbstractDialect {
 
 	/**
+	 * MySQL defaults for {@link IdentifierProcessing}.
+	 */
+	public static final IdentifierProcessing MYSQL_IDENTIFIER_PROCESSING = IdentifierProcessing.create(new Quoting("`"),
+			LetterCasing.LOWER_CASE);
+
+	/**
 	 * Singleton instance.
 	 */
 	public static final MySqlDialect INSTANCE = new MySqlDialect();
-	private IdentifierProcessing identifierProcessing;
+
+	private final IdentifierProcessing identifierProcessing;
 
 	protected MySqlDialect() {
-		this(IdentifierProcessing.create(new Quoting("`"), LetterCasing.LOWER_CASE));
+		this(MYSQL_IDENTIFIER_PROCESSING);
 	}
 
+	/**
+	 * Creates a new {@link MySqlDialect} given {@link IdentifierProcessing}.
+	 *
+	 * @param identifierProcessing must not be null.
+	 * @since 2.0
+	 */
 	public MySqlDialect(IdentifierProcessing identifierProcessing) {
+
+		Assert.notNull(identifierProcessing, "IdentifierProcessing must not be null");
+
 		this.identifierProcessing = identifierProcessing;
 	}
 
@@ -94,6 +111,10 @@ public class MySqlDialect extends AbstractDialect {
 		return LIMIT_CLAUSE;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#getIdentifierProcessing()
+	 */
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return identifierProcessing;

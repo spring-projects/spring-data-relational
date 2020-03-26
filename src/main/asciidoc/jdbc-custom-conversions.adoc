@@ -1,0 +1,66 @@
+[[jdbc.custom-converters]]
+== Custom Conversions
+
+Spring Data JDBC allows registration of custom converters to influence how values are mapped in the database.
+Currently, converters are only applied on property-level.
+
+[[jdbc.custom-converters.writer]]
+=== Writing a Property by Using a Registered Spring Converter
+
+The following example shows an implementation of a `Converter` that converts from a `Boolean` object to a `String` value:
+
+[source,java]
+----
+import org.springframework.core.convert.converter.Converter;
+
+@WritingConverter
+public class BooleanToStringConverter implements Converter<Boolean, String> {
+
+    @Override
+    public String convert(Boolean source) {
+        return source != null && source ? "T" : "F";
+    }
+}
+----
+
+There are a couple of things to notice here: `Boolean` and `String` are both simple types hence Spring Data requires a hint in which direction this converter should apply (reading or writing).
+By annotating this converter with `@WritingConverter` you instruct Spring Data to write every `Boolean` property as `String` in the database.
+
+[[jdbc.custom-converters.reader]]
+=== Reading by Using a Spring Converter
+
+The following example shows an implementation of a `Converter` that converts from a `String` to a `Boolean` value:
+
+[source,java]
+----
+@ReadingConverter
+public class StringToBooleanConverter implements Converter<String, Boolean> {
+
+    @Override
+    public Boolean convert(String source) {
+        return source != null && source.equalsIgnoreCase("T") ? Boolean.TRUE : Boolean.FALSE;
+    }
+}
+----
+
+There are a couple of things to notice here: `String` and `Boolean` are both simple types hence Spring Data requires a hint in which direction this converter should apply (reading or writing).
+By annotating this converter with `@ReadingConverter` you instruct Spring Data to convert every `String` value from the database that should be assigned to a `Boolean` property.
+
+[[jdbc.custom-converters.configuration]]
+=== Registering Spring Converters with the `JdbcConverter`
+
+[source,java]
+----
+class MyJdbcConfiguration extends AbstractJdbcConfiguration {
+
+    // …
+
+    @Overwrite
+    @Bean
+    public JdbcCustomConversions jdbcCustomConversions() {
+        return new JdbcCustomConversions(Arrays.asList(new BooleanToStringConverter(), new StringToBooleanConverter()));
+    }
+}
+----
+
+include::{spring-data-commons-docs}/custom-conversions.adoc[leveloffset=+3]

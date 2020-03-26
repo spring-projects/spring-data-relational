@@ -76,7 +76,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 	}
 
 	@Configuration
-	static class        Infrastructure {
+	static class Infrastructure {
 
 		@Bean
 		public NamedParameterJdbcOperations jdbcOperations() {
@@ -90,7 +90,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 
 		@Override
 		@Bean
-		public Dialect dialect(NamedParameterJdbcOperations template) {
+		public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
 			return HsqlDbDialect.INSTANCE;
 		}
 	}

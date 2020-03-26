@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -34,42 +35,43 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 
 /**
- * Resolves a {@link Dialect} from a {@link DataSource} using {@link JdbcDialectProvider}. Dialect resolution uses
- * Spring's {@link SpringFactoriesLoader spring.factories} to determine available extensions.
+ * Resolves a {@link Dialect}. Resolution typically uses {@link JdbcOperations} to obtain and inspect a
+ * {@link Connection}. Dialect resolution uses Spring's {@link SpringFactoriesLoader spring.factories} to determine
+ * available {@link JdbcDialectProvider extensions}.
  *
  * @author Jens Schauder
  * @since 2.0
  * @see Dialect
  * @see SpringFactoriesLoader
  */
-public class JdbcDialectResolver {
+public class DialectResolver {
 
 	private static final List<JdbcDialectProvider> DETECTORS = SpringFactoriesLoader
-			.loadFactories(JdbcDialectProvider.class, JdbcDialectResolver.class.getClassLoader());
+			.loadFactories(JdbcDialectProvider.class, DialectResolver.class.getClassLoader());
 
 	// utility constructor.
-	private JdbcDialectResolver() {}
+	private DialectResolver() {}
 
 	/**
-	 * Retrieve a {@link Dialect} by inspecting a {@link DataSource}.
+	 * Retrieve a {@link Dialect} by inspecting a {@link Connection}.
 	 *
-	 * @param template must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
 	 * @return the resolved {@link Dialect} {@link NoDialectException} if the database type cannot be determined from
 	 *         {@link DataSource}.
 	 * @throws NoDialectException if no {@link Dialect} can be found.
 	 */
-	public static Dialect getDialect(NamedParameterJdbcOperations template) {
+	public static Dialect getDialect(JdbcOperations operations) {
 
 		return DETECTORS.stream() //
-				.map(it -> it.getDialect(template)) //
+				.map(it -> it.getDialect(operations)) //
 				.flatMap(Optionals::toStream) //
 				.findFirst() //
 				.orElseThrow(() -> new NoDialectException(
-						String.format("Cannot determine a dialect for %s. Please provide a Dialect.", template)));
+						String.format("Cannot determine a dialect for %s. Please provide a Dialect.", operations)));
 	}
 
 	/**
@@ -84,22 +86,18 @@ public class JdbcDialectResolver {
 		/**
 		 * Returns a {@link Dialect} for a {@link DataSource}.
 		 *
-		 * @param template the {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate} to be used with
-		 *          the {@link Dialect}.
+		 * @param operations the {@link JdbcOperations} to be used with the {@link Dialect}.
 		 * @return {@link Optional} containing the {@link Dialect} if the {@link JdbcDialectProvider} can provide a dialect
 		 *         object, otherwise {@link Optional#empty()}.
 		 */
-		Optional<Dialect> getDialect(NamedParameterJdbcOperations template);
+		Optional<Dialect> getDialect(JdbcOperations operations);
 	}
 
 	static public class DefaultDialectProvider implements JdbcDialectProvider {
 
 		@Override
-		public Optional<Dialect> getDialect(NamedParameterJdbcOperations template) {
-
-			JdbcOperations operations = template.getJdbcOperations();
+		public Optional<Dialect> getDialect(JdbcOperations operations) {
 			return Optional.ofNullable(operations.execute((ConnectionCallback<Dialect>) DefaultDialectProvider::getDialect));
-
 		}
 
 		@Nullable
@@ -107,7 +105,7 @@ public class JdbcDialectResolver {
 
 			DatabaseMetaData metaData = connection.getMetaData();
 
-			String name = metaData.getDatabaseProductName().toLowerCase();
+			String name = metaData.getDatabaseProductName().toLowerCase(Locale.ENGLISH);
 
 			if (name.contains("hsql")) {
 				return HsqlDbDialect.INSTANCE;
@@ -129,10 +127,12 @@ public class JdbcDialectResolver {
 
 			// getIdentifierQuoteString() returns a space " " if identifier quoting is not
 			// supported.
-			final String quoteString = metaData.getIdentifierQuoteString();
-			final IdentifierProcessing.Quoting quoting = " ".equals(quoteString) ? IdentifierProcessing.Quoting.NONE : new IdentifierProcessing.Quoting(quoteString);
+			String quoteString = metaData.getIdentifierQuoteString();
+			IdentifierProcessing.Quoting quoting = StringUtils.hasText(quoteString)
+					? new IdentifierProcessing.Quoting(quoteString)
+					: IdentifierProcessing.Quoting.NONE;
 
-			final IdentifierProcessing.LetterCasing letterCasing;
+			IdentifierProcessing.LetterCasing letterCasing;
 			// IdentifierProcessing tries to mimic the behavior of unquoted identifiers for their quoted variants.
 			if (metaData.supportsMixedCaseIdentifiers()) {
 				letterCasing = IdentifierProcessing.LetterCasing.AS_IS;
@@ -144,12 +144,13 @@ public class JdbcDialectResolver {
 				// But if it does happen, we go with the ANSI default.
 				letterCasing = IdentifierProcessing.LetterCasing.UPPER_CASE;
 			}
+
 			return IdentifierProcessing.create(quoting, letterCasing);
 		}
 	}
 
 	/**
-	 * Exception thrown when {@link JdbcDialectResolver} cannot resolve a {@link Dialect}.
+	 * Exception thrown when {@link DialectResolver} cannot resolve a {@link Dialect}.
 	 */
 	public static class NoDialectException extends NonTransientDataAccessException {
 

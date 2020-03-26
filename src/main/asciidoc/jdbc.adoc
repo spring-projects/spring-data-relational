@@ -67,29 +67,28 @@ The Spring Data JDBC repositories support can be activated by an annotation thro
 
 .Spring Data JDBC repositories using Java configuration
 ====
-[source, java]
+[source,java]
 ----
 @Configuration
-@EnableJdbcRepositories // <1>
-class ApplicationConfig extends AbstractJdbcConfiguration { // <2>
+@EnableJdbcRepositories                                                                // <1>
+class ApplicationConfig extends AbstractJdbcConfiguration {                            // <2>
 
-  @Bean
-  public DataSource dataSource() {  // <3>
+    @Bean
+    public DataSource dataSource() {                                                   // <3>
 
-    EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
-    return builder.setType(EmbeddedDatabaseType.HSQL).build();
-  }
+        EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
+        return builder.setType(EmbeddedDatabaseType.HSQL).build();
+    }
 
-	@Bean
-	NamedParameterJdbcOperations namedParameterJdbcOperations(DataSource dataSource) {  // <4>
+    @Bean
+    NamedParameterJdbcOperations namedParameterJdbcOperations(DataSource dataSource) { // <4>
+        return new NamedParameterJdbcTemplate(dataSource);
+    }
 
-		return new NamedParameterJdbcTemplate(dataSource);
-	}
-
-	@Bean
-	TransactionManager transactionManager(DataSource dataSource) {  // <5>
-		return new DataSourceTransactionManager(dataSource);
-	}
+    @Bean
+    TransactionManager transactionManager(DataSource dataSource) {                     // <5>
+        return new DataSourceTransactionManager(dataSource);
+    }
 }
 ----
 <1> `@EnableJdbcRepositories` creates implementations for interfaces derived from `Repository`
@@ -101,7 +100,7 @@ class ApplicationConfig extends AbstractJdbcConfiguration { // <2>
 
 The configuration class in the preceding example sets up an embedded HSQL database by using the `EmbeddedDatabaseBuilder` API of `spring-jdbc`.
 The `DataSource` is then used to set up `NamedParameterJdbcOperations` and a `TransactionManager.
-We finally activate Spring Data JDBC repositories by using the `@EnableJdbcRepositories`.
+                                                                              We finally activate Spring Data JDBC repositories by using the `@EnableJdbcRepositories`.
 If no base package is configured, it uses the package in which the configuration class resides.
 Extending `AbstractJdbcConfiguration` ensures various beans get registered.
 Overwriting its methods can be used to customize the setup (see below).
@@ -110,49 +109,15 @@ This configuration can be further simplified by using Spring Boot.
 With Spring Boot a `DataSource` is sufficient once the starter `spring-boot-starter-data-jdbc` is included in the dependencies.
 Everything else is done by Spring Boot.
 
-There are a couple of things one might want to customize in this setup
-
-You can register custom conversions which will be used when writing to or reading from the database by overwriting `jdbcCustomConversions` as demonstrated in the following example:
-====
-[source, java]
-----
-    @Overwrite
-	@Bean
-	public JdbcCustomConversions jdbcCustomConversions() {
-		return new JdbcCustomConversions(new JdbcCustomConversions(Arrays.asList(BooleanToStringConverter.INSTANCE, StringToBooleanConverter.INSTANCE)));
-	}
-
-
-	@WritingConverter
-	enum BooleanToStringConverter implements Converter<Boolean, String> {
-
-		INSTANCE;
-
-		@Override
-		public String convert(Boolean source) {
-			return source != null && source ? "T" : "F";
-		}
-	}
-
-	@ReadingConverter
-	enum StringToBooleanConverter implements Converter<String, Boolean> {
-
-		INSTANCE;
-
-		@Override
-		public Boolean convert(String source) {
-			return source != null && source.equalsIgnoreCase("T") ? Boolean.TRUE : Boolean.FALSE;
-		}
-	}
-----
-====
+There are a couple of things one might want to customize in this setup.
 
 Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
 By default the `AbstractJdbcConfiguration` tries to determine the database in use an register the correct `Dialect`.
-This behavior can be changed by overwriting `dialect(NamedParameterJdbcOperations)`.
+This behavior can be changed by overwriting `jdbcDialect(NamedParameterJdbcOperations)`.
 
-Database vendors may provide an implementation of `JdbcDialectProvider` along with a matching entry in the `META-INF/spring-factories` file registering it for the key `org.springframework.data.jdbc.repository.config.JdbcDialectResolver$JdbcDialectProvider`.
-The `JdbcDialectProvider` should detect the database and provide an appropriate `Dialect` implementation for it.
+TIP: Dialects are resolved by [`JdbcDialectResolver`] from `JdbcOperations`, typically by inspecting `Connection`.
++ You can let Spring auto-discover your `Dialect` by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
+`DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 
 [[jdbc.entity-persistence]]
 == Persisting Entities
@@ -758,6 +723,8 @@ Spring Data JDBC uses the `EntityCallback` API for its auditing support and reac
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadCallback.html[`AfterLoadCallback`]
 | After an aggregate root gets created from a database `ResultSet` and all its property get set.
 |===
+
+include::jdbc-custom-conversions.adoc[]
 
 [[jdbc.logging]]
 == Logging

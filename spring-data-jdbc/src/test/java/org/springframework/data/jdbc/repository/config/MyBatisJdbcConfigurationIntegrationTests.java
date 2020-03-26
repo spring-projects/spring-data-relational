@@ -69,7 +69,7 @@ public class MyBatisJdbcConfigurationIntegrationTests extends AbstractJdbcConfig
 
 		@Override
 		@Bean
-		public Dialect dialect(NamedParameterJdbcOperations template) {
+		public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
 			return HsqlDbDialect.INSTANCE;
 		}
 	}

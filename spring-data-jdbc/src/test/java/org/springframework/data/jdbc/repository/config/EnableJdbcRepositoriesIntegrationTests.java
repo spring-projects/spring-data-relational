@@ -158,8 +158,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		}
 
 		@Bean
-		Dialect dialect(@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations template) {
-			return JdbcDialectResolver.getDialect(template);
+		Dialect jdbcDialect(@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations operations) {
+			return DialectResolver.getDialect(operations.getJdbcOperations());
 		}
 	}
 }
