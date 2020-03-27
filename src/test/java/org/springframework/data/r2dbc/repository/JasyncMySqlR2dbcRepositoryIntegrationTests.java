@@ -83,10 +83,6 @@ public class JasyncMySqlR2dbcRepositoryIntegrationTests extends AbstractR2dbcRep
 	interface MySqlLegoSetRepository extends LegoSetRepository {
 
 		@Override
-		@Query("SELECT * FROM legoset WHERE name like ?")
-		Flux<LegoSet> findByNameContains(String name);
-
-		@Override
 		@Query("SELECT name FROM legoset")
 		Flux<Named> findAsProjection();
 

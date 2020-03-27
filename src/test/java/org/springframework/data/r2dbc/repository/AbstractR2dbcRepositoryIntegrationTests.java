@@ -130,7 +130,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		shouldInsertNewItems();
 
-		repository.findByNameContains("%F%") //
+		repository.findByNameContains("F") //
 				.map(LegoSet::getName) //
 				.collectList() //
 				.as(StepVerifier::create) //

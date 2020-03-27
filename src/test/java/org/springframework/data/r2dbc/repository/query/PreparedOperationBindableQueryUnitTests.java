@@ -32,16 +32,13 @@ import org.springframework.data.r2dbc.core.PreparedOperation;
 @RunWith(MockitoJUnitRunner.class)
 @Ignore
 public class PreparedOperationBindableQueryUnitTests {
-	@Mock private PreparedOperation<?> preparedOperation;
 
-	@Test(expected = IllegalArgumentException.class)
-	public void throwsExceptionWhenPreparedOperationIsNull() {
-		new PreparedOperationBindableQuery(null);
-	}
+	@Mock PreparedOperation<?> preparedOperation;
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@Test
+	@Test // gh-282
 	public void bindsQueryParameterValues() {
+
 		DatabaseClient.BindSpec bindSpecMock = mock(DatabaseClient.BindSpec.class);
 
 		PreparedOperationBindableQuery query = new PreparedOperationBindableQuery(preparedOperation);
@@ -49,12 +46,12 @@ public class PreparedOperationBindableQueryUnitTests {
 		verify(preparedOperation, times(1)).bindTo(any());
 	}
 
-	@Test
+	@Test // gh-282
 	public void returnsSqlQuery() {
-		String sql = "SELECT * FROM test";
-		when(preparedOperation.get()).thenReturn(sql);
+
+		when(preparedOperation.get()).thenReturn("SELECT * FROM test");
 
 		PreparedOperationBindableQuery query = new PreparedOperationBindableQuery(preparedOperation);
-		assertThat(query.get()).isEqualTo(sql);
+		assertThat(query.get()).isEqualTo("SELECT * FROM test");
 	}
 }

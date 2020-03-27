@@ -34,19 +34,23 @@ import org.springframework.data.r2dbc.dialect.Bindings;
 import org.springframework.data.r2dbc.dialect.MutableBindings;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.CriteriaDefinition.Comparator;
+import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
- * Maps {@link Criteria} and {@link Sort} objects considering mapping metadata and dialect-specific conversion.
+ * Maps {@link CriteriaDefinition} and {@link Sort} objects considering mapping metadata and dialect-specific
+ * conversion.
  *
  * @author Mark Paluch
  * @author Roman Chigvintsev
@@ -344,7 +348,13 @@ public class QueryMapper {
 
 			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
 			typeHint = getTypeHint(mappedValue, actualType.getType(), settableValue);
+		} else if (criteria.getValue() instanceof ValueFunction) {
 
+			ValueFunction<Object> valueFunction = (ValueFunction<Object>) criteria.getValue();
+			Object value = valueFunction.apply(getEscaper(criteria.getComparator()));
+
+			mappedValue = convertValue(value, propertyField.getTypeHint());
+			typeHint = actualType.getType();
 		} else {
 
 			mappedValue = convertValue(criteria.getValue(), propertyField.getTypeHint());
@@ -352,6 +362,15 @@ public class QueryMapper {
 		}
 
 		return createCondition(column, mappedValue, typeHint, bindings, criteria.getComparator(), criteria.isIgnoreCase());
+	}
+
+	private Escaper getEscaper(Comparator comparator) {
+
+		if (comparator == Comparator.LIKE || comparator == Comparator.NOT_LIKE) {
+			return dialect.getLikeEscaper();
+		}
+
+		return Escaper.DEFAULT;
 	}
 
 	/**
@@ -374,6 +393,21 @@ public class QueryMapper {
 
 		if (value == null) {
 			return null;
+		}
+
+		if (value instanceof Pair) {
+
+			Pair<Object, Object> pair = (Pair<Object, Object>) value;
+
+			Object first = convertValue(pair.getFirst(),
+					typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
+							: ClassTypeInformation.OBJECT);
+
+			Object second = convertValue(pair.getSecond(),
+					typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
+							: ClassTypeInformation.OBJECT);
+
+			return Pair.of(first, second);
 		}
 
 		if (value instanceof Iterable) {
@@ -456,6 +490,19 @@ public class QueryMapper {
 			return condition;
 		}
 
+		if (comparator == Comparator.BETWEEN || comparator == Comparator.NOT_BETWEEN) {
+
+			Pair<Object, Object> pair = (Pair<Object, Object>) mappedValue;
+
+			Expression begin = bind(pair.getFirst(), valueType, bindings,
+					bindings.nextMarker(column.getName().getReference()), ignoreCase);
+			Expression end = bind(mappedValue, valueType, bindings, bindings.nextMarker(column.getName().getReference()),
+					ignoreCase);
+
+			return comparator == Comparator.BETWEEN ? Conditions.between(columnExpression, begin, end)
+					: Conditions.notBetween(columnExpression, begin, end);
+		}
+
 		BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
 
 		switch (comparator) {
@@ -503,6 +550,10 @@ public class QueryMapper {
 	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, SqlIdentifier key,
 			MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext) {
 		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext);
+	}
+
+	Class<?> getTypeHint(@Nullable Object mappedValue, Class<?> propertyType) {
+		return propertyType;
 	}
 
 	Class<?> getTypeHint(@Nullable Object mappedValue, Class<?> propertyType, SettableValue settableValue) {

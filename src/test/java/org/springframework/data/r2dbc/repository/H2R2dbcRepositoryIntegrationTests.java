@@ -115,10 +115,6 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	interface H2LegoSetRepository extends LegoSetRepository {
 
 		@Override
-		@Query("SELECT * FROM legoset WHERE name like $1")
-		Flux<LegoSet> findByNameContains(String name);
-
-		@Override
 		@Query("SELECT name FROM legoset")
 		Flux<Named> findAsProjection();
 

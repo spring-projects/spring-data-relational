@@ -82,10 +82,6 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 	interface PostgresLegoSetRepository extends LegoSetRepository {
 
 		@Override
-		@Query("SELECT * FROM legoset WHERE name like $1")
-		Flux<LegoSet> findByNameContains(String name);
-
-		@Override
 		@Query("SELECT name FROM legoset")
 		Flux<Named> findAsProjection();
 

@@ -26,7 +26,9 @@ import org.springframework.data.r2dbc.dialect.Bindings;
 import org.springframework.data.r2dbc.dialect.MutableBindings;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Assignment;
 import org.springframework.data.relational.core.sql.Assignments;
@@ -134,6 +136,17 @@ public class UpdateMapper extends QueryMapper {
 			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
 			typeHint = getTypeHint(mappedValue, actualType.getType(), settableValue);
 
+		} else if (value instanceof ValueFunction) {
+
+			ValueFunction<Object> valueFunction = (ValueFunction<Object>) value;
+
+			mappedValue = convertValue(valueFunction.apply(Escaper.DEFAULT), propertyField.getTypeHint());
+
+			if (mappedValue == null) {
+				return Assignments.value(column, SQL.nullLiteral());
+			}
+
+			typeHint = actualType.getType();
 		} else {
 
 			mappedValue = convertValue(value, propertyField.getTypeHint());
