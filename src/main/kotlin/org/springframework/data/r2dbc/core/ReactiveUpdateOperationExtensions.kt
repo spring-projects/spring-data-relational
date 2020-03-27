@@ -16,7 +16,7 @@
 package org.springframework.data.r2dbc.core
 
 import kotlinx.coroutines.reactive.awaitSingle
-import org.springframework.data.r2dbc.query.Update
+import org.springframework.data.relational.core.query.Update
 
 /**
  * Extensions for [ReactiveUpdateOperation].

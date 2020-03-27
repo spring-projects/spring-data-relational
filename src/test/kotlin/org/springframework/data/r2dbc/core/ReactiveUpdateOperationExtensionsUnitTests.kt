@@ -21,7 +21,7 @@ import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.springframework.data.r2dbc.query.Update
+import org.springframework.data.relational.core.query.Update
 import reactor.core.publisher.Mono
 
 /**

@@ -25,8 +25,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.StatementMapper.UpdateSpec;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
-import org.springframework.data.r2dbc.query.Criteria;
-import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Update;
 
 /**
  * Unit tests for {@link DefaultStatementMapper}.

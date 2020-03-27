@@ -63,8 +63,29 @@ public class UpdateMapper extends QueryMapper {
 	 * @param table must not be {@literal null}.
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link BoundAssignments}.
+	 * @deprecated since 1.1, use
+	 *             {@link #getMappedObject(BindMarkers, org.springframework.data.relational.core.query.Update, Table, RelationalPersistentEntity)}
+	 *             instead.
 	 */
+	@Deprecated
 	public BoundAssignments getMappedObject(BindMarkers markers, Update update, Table table,
+			@Nullable RelationalPersistentEntity<?> entity) {
+		return getMappedObject(markers, update.getAssignments(), table, entity);
+	}
+
+	/**
+	 * Map a {@link org.springframework.data.relational.core.query.Update} object to {@link BoundAssignments} and consider
+	 * value/{@code NULL} {@link Bindings}.
+	 *
+	 * @param markers bind markers object, must not be {@literal null}.
+	 * @param update update definition to map, must not be {@literal null}.
+	 * @param table must not be {@literal null}.
+	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
+	 * @return the mapped {@link BoundAssignments}.
+	 * @since 1.1
+	 */
+	public BoundAssignments getMappedObject(BindMarkers markers,
+			org.springframework.data.relational.core.query.Update update, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 		return getMappedObject(markers, update.getAssignments(), table, entity);
 	}

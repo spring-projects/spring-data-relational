@@ -20,8 +20,8 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
-import org.springframework.data.r2dbc.query.Query;
-import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.query.Update;
 
 /**
  * Interface specifying a basic set of reactive R2DBC operations using entities. Implemented by

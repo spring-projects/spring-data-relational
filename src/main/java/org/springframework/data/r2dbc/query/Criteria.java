@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -45,8 +46,10 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Oliver Drotbohm
+ * @deprecated since 1.1, use {@link org.springframework.data.relational.core.query.Criteria} instead.
  */
-public class Criteria {
+@Deprecated
+public class Criteria implements CriteriaDefinition {
 
 	private static final Criteria EMPTY = new Criteria(SqlIdentifier.EMPTY, Comparator.INITIAL, null);
 
@@ -69,8 +72,7 @@ public class Criteria {
 	}
 
 	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group,
-			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value,
-			boolean ignoreCase) {
+			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, boolean ignoreCase) {
 
 		this.previous = previous;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
@@ -263,14 +265,14 @@ public class Criteria {
 	 * @see #hasPrevious()
 	 */
 	@Nullable
-	Criteria getPrevious() {
+	public Criteria getPrevious() {
 		return previous;
 	}
 
 	/**
 	 * @return {@literal true} if this {@link Criteria} has a previous one.
 	 */
-	boolean hasPrevious() {
+	public boolean hasPrevious() {
 		return previous != null;
 	}
 
@@ -321,18 +323,21 @@ public class Criteria {
 	/**
 	 * @return {@literal true} if this {@link Criteria} is empty.
 	 */
-	boolean isGroup() {
+	@Override
+	public boolean isGroup() {
 		return !this.group.isEmpty();
 	}
 
 	/**
 	 * @return {@link Combinator} to combine this criteria with a previous one.
 	 */
-	Combinator getCombinator() {
+	@Override
+	public Combinator getCombinator() {
 		return combinator;
 	}
 
-	List<Criteria> getGroup() {
+	@Override
+	public List<Criteria> getGroup() {
 		return group;
 	}
 
@@ -340,7 +345,8 @@ public class Criteria {
 	 * @return the column/property name.
 	 */
 	@Nullable
-	SqlIdentifier getColumn() {
+	@Override
+	public SqlIdentifier getColumn() {
 		return column;
 	}
 
@@ -348,7 +354,8 @@ public class Criteria {
 	 * @return {@link Comparator}.
 	 */
 	@Nullable
-	Comparator getComparator() {
+	@Override
+	public Comparator getComparator() {
 		return comparator;
 	}
 
@@ -356,7 +363,8 @@ public class Criteria {
 	 * @return the comparison value. Can be {@literal null}.
 	 */
 	@Nullable
-	Object getValue() {
+	@Override
+	public Object getValue() {
 		return value;
 	}
 
@@ -365,16 +373,9 @@ public class Criteria {
 	 *
 	 * @return {@literal true} if comparison should be done in case-insensitive way
 	 */
-	boolean isIgnoreCase() {
+	@Override
+	public boolean isIgnoreCase() {
 		return ignoreCase;
-	}
-
-	enum Comparator {
-		INITIAL, EQ, NEQ, LT, LTE, GT, GTE, IS_NULL, IS_NOT_NULL, LIKE, NOT_LIKE, NOT_IN, IN, IS_TRUE, IS_FALSE
-	}
-
-	enum Combinator {
-		INITIAL, AND, OR;
 	}
 
 	/**

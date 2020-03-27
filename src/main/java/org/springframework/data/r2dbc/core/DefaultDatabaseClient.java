@@ -60,6 +60,7 @@ import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -683,7 +684,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		final SqlIdentifier table;
 		final List<SqlIdentifier> projectedFields;
-		final @Nullable Criteria criteria;
+		final @Nullable CriteriaDefinition criteria;
 		final Sort sort;
 		final Pageable page;
 
@@ -698,7 +699,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.page = Pageable.unpaged();
 		}
 
-		DefaultSelectSpecSupport(SqlIdentifier table, List<SqlIdentifier> projectedFields, @Nullable Criteria criteria,
+		DefaultSelectSpecSupport(SqlIdentifier table, List<SqlIdentifier> projectedFields,
+				@Nullable CriteriaDefinition criteria,
 				Sort sort, Pageable page) {
 			this.table = table;
 			this.projectedFields = projectedFields;
@@ -717,7 +719,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			return createInstance(this.table, projectedFields, this.criteria, this.sort, this.page);
 		}
 
-		public DefaultSelectSpecSupport where(Criteria whereCriteria) {
+		public DefaultSelectSpecSupport where(CriteriaDefinition whereCriteria) {
 
 			Assert.notNull(whereCriteria, "Criteria must not be null!");
 
@@ -753,12 +755,13 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		protected abstract DefaultSelectSpecSupport createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				@Nullable Criteria criteria, Sort sort, Pageable page);
+				@Nullable CriteriaDefinition criteria, Sort sort, Pageable page);
 	}
 
 	private class DefaultGenericSelectSpec extends DefaultSelectSpecSupport implements GenericSelectSpec {
 
-		DefaultGenericSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, @Nullable Criteria criteria,
+		DefaultGenericSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields,
+				@Nullable CriteriaDefinition criteria,
 				Sort sort, Pageable page) {
 			super(table, projectedFields, criteria, sort, page);
 		}
@@ -806,7 +809,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultGenericSelectSpec matching(Criteria criteria) {
+		public DefaultGenericSelectSpec matching(CriteriaDefinition criteria) {
 			return (DefaultGenericSelectSpec) super.where(criteria);
 		}
 
@@ -842,7 +845,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		protected DefaultGenericSelectSpec createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				@Nullable Criteria criteria, Sort sort, Pageable page) {
+				@Nullable CriteriaDefinition criteria, Sort sort, Pageable page) {
 			return new DefaultGenericSelectSpec(table, projectedFields, criteria, sort, page);
 		}
 	}
@@ -864,7 +867,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			this.mappingFunction = dataAccessStrategy.getRowMapper(typeToRead);
 		}
 
-		DefaultTypedSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields, @Nullable Criteria criteria,
+		DefaultTypedSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields,
+				@Nullable CriteriaDefinition criteria,
 				Sort sort, Pageable page, Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			super(table, projectedFields, criteria, sort, page);
@@ -912,7 +916,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		@Override
-		public DefaultTypedSelectSpec<T> matching(Criteria criteria) {
+		public DefaultTypedSelectSpec<T> matching(CriteriaDefinition criteria) {
 			return (DefaultTypedSelectSpec<T>) super.where(criteria);
 		}
 
@@ -956,7 +960,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		@Override
 		protected DefaultTypedSelectSpec<T> createInstance(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				@Nullable Criteria criteria, Sort sort, Pageable page) {
+				@Nullable CriteriaDefinition criteria, Sort sort, Pageable page) {
 			return new DefaultTypedSelectSpec<>(table, projectedFields, criteria, sort, page, this.typeToRead,
 					this.mappingFunction);
 		}
@@ -1204,11 +1208,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private final @Nullable Class<?> typeToUpdate;
 		private final @Nullable SqlIdentifier table;
-		private final @Nullable Update assignments;
-		private final @Nullable Criteria where;
+		private final @Nullable org.springframework.data.relational.core.query.Update assignments;
+		private final @Nullable CriteriaDefinition where;
 
 		DefaultGenericUpdateSpec(@Nullable Class<?> typeToUpdate, @Nullable SqlIdentifier table,
-				@Nullable Update assignments, @Nullable Criteria where) {
+				@Nullable org.springframework.data.relational.core.query.Update assignments,
+				@Nullable CriteriaDefinition where) {
 			this.typeToUpdate = typeToUpdate;
 			this.table = table;
 			this.assignments = assignments;
@@ -1220,11 +1225,20 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 			Assert.notNull(update, "Update must not be null");
 
+			return new DefaultGenericUpdateSpec(this.typeToUpdate, this.table,
+					org.springframework.data.relational.core.query.Update.from(update.getAssignments()), this.where);
+		}
+
+		@Override
+		public UpdateMatchingSpec using(org.springframework.data.relational.core.query.Update update) {
+
+			Assert.notNull(update, "Update must not be null");
+
 			return new DefaultGenericUpdateSpec(this.typeToUpdate, this.table, update, this.where);
 		}
 
 		@Override
-		public UpdateSpec matching(Criteria criteria) {
+		public UpdateSpec matching(CriteriaDefinition criteria) {
 
 			Assert.notNull(criteria, "Criteria must not be null");
 
@@ -1333,11 +1347,12 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			}
 			Object id = columns.remove(ids.get(0)); // do not update the Id column.
 
-			Update update = null;
+			org.springframework.data.relational.core.query.Update update = null;
 
 			for (SqlIdentifier column : columns.keySet()) {
 				if (update == null) {
-					update = Update.update(dataAccessStrategy.toSql(column), columns.get(column));
+					update = org.springframework.data.relational.core.query.Update.update(dataAccessStrategy.toSql(column),
+							columns.get(column));
 				} else {
 					update = update.set(dataAccessStrategy.toSql(column), columns.get(column));
 				}
@@ -1376,16 +1391,17 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private final @Nullable Class<T> typeToDelete;
 		private final @Nullable SqlIdentifier table;
-		private final @Nullable Criteria where;
+		private final @Nullable CriteriaDefinition where;
 
-		DefaultDeleteSpec(@Nullable Class<T> typeToDelete, @Nullable SqlIdentifier table, @Nullable Criteria where) {
+		DefaultDeleteSpec(@Nullable Class<T> typeToDelete, @Nullable SqlIdentifier table,
+				@Nullable CriteriaDefinition where) {
 			this.typeToDelete = typeToDelete;
 			this.table = table;
 			this.where = where;
 		}
 
 		@Override
-		public DeleteSpec matching(Criteria criteria) {
+		public DeleteSpec matching(CriteriaDefinition criteria) {
 
 			Assert.notNull(criteria, "Criteria must not be null!");
 

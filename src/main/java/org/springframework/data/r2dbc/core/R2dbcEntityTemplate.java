@@ -37,11 +37,12 @@ import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionInformation;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
-import org.springframework.data.r2dbc.query.Criteria;
-import org.springframework.data.r2dbc.query.Query;
-import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -181,7 +182,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 					return spec.withProjection(Functions.count(table.column(entity.getRequiredIdProperty().getColumnName())));
 				});
 
-		Optional<Criteria> criteria = query.getCriteria();
+		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {
 			selectSpec = criteria.map(selectSpec::withCriteria).orElse(selectSpec);
 		}
@@ -220,7 +221,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 				.withProjection(columnName) //
 				.limit(1);
 
-		Optional<Criteria> criteria = query.getCriteria();
+		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {
 			selectSpec = criteria.map(selectSpec::withCriteria).orElse(selectSpec);
 		}
@@ -266,7 +267,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 			selectSpec = selectSpec.withSort(query.getSort());
 		}
 
-		Optional<Criteria> criteria = query.getCriteria();
+		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {
 			selectSpec = criteria.map(selectSpec::withCriteria).orElse(selectSpec);
 		}
@@ -314,7 +315,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		StatementMapper.UpdateSpec selectSpec = statementMapper //
 				.createUpdate(tableName, update);
 
-		Optional<Criteria> criteria = query.getCriteria();
+		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {
 			selectSpec = criteria.map(selectSpec::withCriteria).orElse(selectSpec);
 		}
@@ -343,7 +344,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		StatementMapper.DeleteSpec selectSpec = statementMapper //
 				.createDelete(tableName);
 
-		Optional<Criteria> criteria = query.getCriteria();
+		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {
 			selectSpec = criteria.map(selectSpec::withCriteria).orElse(selectSpec);
 		}

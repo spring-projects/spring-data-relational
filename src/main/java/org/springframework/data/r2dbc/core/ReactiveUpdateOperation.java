@@ -17,8 +17,8 @@ package org.springframework.data.r2dbc.core;
 
 import reactor.core.publisher.Mono;
 
-import org.springframework.data.r2dbc.query.Query;
-import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**

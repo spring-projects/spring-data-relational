@@ -29,8 +29,8 @@ import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.MySqlDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
-import org.springframework.data.r2dbc.query.Criteria;
-import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Update;
 
 /**
  * Unit tests for {@link ReactiveDataAccessStrategy}.

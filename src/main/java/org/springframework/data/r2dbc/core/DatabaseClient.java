@@ -34,9 +34,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.mapping.SettableValue;
-import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.util.Assert;
 
@@ -529,11 +529,11 @@ public interface DatabaseClient {
 		S project(SqlIdentifier... selectedFields);
 
 		/**
-		 * Configure a filter {@link Criteria}.
+		 * Configure a filter {@link CriteriaDefinition}.
 		 *
 		 * @param criteria must not be {@literal null}.
 		 */
-		S matching(Criteria criteria);
+		S matching(CriteriaDefinition criteria);
 
 		/**
 		 * Configure {@link Sort}.
@@ -705,8 +705,18 @@ public interface DatabaseClient {
 		 * Specify an {@link Update} object containing assignments.
 		 *
 		 * @param update must not be {@literal null}.
+		 * @deprecated since 1.1, use {@link #using(org.springframework.data.relational.core.query.Update)}.
 		 */
+		@Deprecated
 		UpdateMatchingSpec using(Update update);
+
+		/**
+		 * Specify an {@link Update} object containing assignments.
+		 *
+		 * @param update must not be {@literal null}.
+		 * @since 1.1
+		 */
+		UpdateMatchingSpec using(org.springframework.data.relational.core.query.Update update);
 	}
 
 	/**
@@ -750,11 +760,11 @@ public interface DatabaseClient {
 	interface UpdateMatchingSpec extends UpdateSpec {
 
 		/**
-		 * Configure a filter {@link Criteria}.
+		 * Configure a filter {@link CriteriaDefinition}.
 		 *
 		 * @param criteria must not be {@literal null}.
 		 */
-		UpdateSpec matching(Criteria criteria);
+		UpdateSpec matching(CriteriaDefinition criteria);
 	}
 
 	/**
@@ -801,11 +811,11 @@ public interface DatabaseClient {
 		TypedDeleteSpec<T> table(SqlIdentifier tableName);
 
 		/**
-		 * Configure a filter {@link Criteria}.
+		 * Configure a filter {@link CriteriaDefinition}.
 		 *
 		 * @param criteria must not be {@literal null}.
 		 */
-		DeleteSpec matching(Criteria criteria);
+		DeleteSpec matching(CriteriaDefinition criteria);
 	}
 
 	/**
@@ -814,11 +824,11 @@ public interface DatabaseClient {
 	interface DeleteMatchingSpec extends DeleteSpec {
 
 		/**
-		 * Configure a filter {@link Criteria}.
+		 * Configure a filter {@link CriteriaDefinition}.
 		 *
 		 * @param criteria must not be {@literal null}.
 		 */
-		DeleteSpec matching(Criteria criteria);
+		DeleteSpec matching(CriteriaDefinition criteria);
 	}
 
 	/**

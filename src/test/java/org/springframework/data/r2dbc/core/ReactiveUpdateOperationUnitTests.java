@@ -17,7 +17,7 @@ package org.springframework.data.r2dbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.r2dbc.query.Criteria.*;
-import static org.springframework.data.r2dbc.query.Query.*;
+import static org.springframework.data.relational.core.query.Query.*;
 
 import io.r2dbc.spi.test.MockResult;
 import reactor.test.StepVerifier;
@@ -28,9 +28,9 @@ import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
-import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.query.Update;
 
 /**
  * Unit test for {@link ReactiveUpdateOperation}.

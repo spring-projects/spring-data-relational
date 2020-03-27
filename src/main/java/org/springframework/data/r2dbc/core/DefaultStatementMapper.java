@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  * Default {@link StatementMapper} implementation.
  *
  * @author Mark Paluch
+ * @author Roman Chigvintsev
  */
 class DefaultStatementMapper implements StatementMapper {
 

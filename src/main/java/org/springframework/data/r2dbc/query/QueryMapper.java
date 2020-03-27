@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -35,10 +34,10 @@ import org.springframework.data.r2dbc.dialect.Bindings;
 import org.springframework.data.r2dbc.dialect.MutableBindings;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
-import org.springframework.data.r2dbc.query.Criteria.Combinator;
-import org.springframework.data.r2dbc.query.Criteria.Comparator;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.CriteriaDefinition.Comparator;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
@@ -50,6 +49,7 @@ import org.springframework.util.ClassUtils;
  * Maps {@link Criteria} and {@link Sort} objects considering mapping metadata and dialect-specific conversion.
  *
  * @author Mark Paluch
+ * @author Roman Chigvintsev
  */
 public class QueryMapper {
 
@@ -180,6 +180,34 @@ public class QueryMapper {
 	}
 
 	/**
+	 * Map a {@link CriteriaDefinition} object into {@link Condition} and consider value/{@code NULL} {@link Bindings}.
+	 *
+	 * @param markers bind markers object, must not be {@literal null}.
+	 * @param criteria criteria definition to map, must not be {@literal null}.
+	 * @param table must not be {@literal null}.
+	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
+	 * @return the mapped {@link BoundCondition}.
+	 * @since 1.1
+	 */
+	public BoundCondition getMappedObject(BindMarkers markers, CriteriaDefinition criteria, Table table,
+			@Nullable RelationalPersistentEntity<?> entity) {
+
+		Assert.notNull(markers, "BindMarkers must not be null!");
+		Assert.notNull(criteria, "CriteriaDefinition must not be null!");
+		Assert.notNull(table, "Table must not be null!");
+
+		MutableBindings bindings = new MutableBindings(markers);
+
+		if (criteria.isEmpty()) {
+			throw new IllegalArgumentException("Cannot map empty Criteria");
+		}
+
+		Condition mapped = unroll(criteria, table, entity, bindings);
+
+		return new BoundCondition(bindings, mapped);
+	}
+
+	/**
 	 * Map a {@link Criteria} object into {@link Condition} and consider value/{@code NULL} {@link Bindings}.
 	 *
 	 * @param markers bind markers object, must not be {@literal null}.
@@ -187,7 +215,9 @@ public class QueryMapper {
 	 * @param table must not be {@literal null}.
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link BoundCondition}.
+	 * @deprecated since 1.1.
 	 */
+	@Deprecated
 	public BoundCondition getMappedObject(BindMarkers markers, Criteria criteria, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
@@ -206,13 +236,13 @@ public class QueryMapper {
 		return new BoundCondition(bindings, mapped);
 	}
 
-	private Condition unroll(Criteria criteria, Table table, @Nullable RelationalPersistentEntity<?> entity,
+	private Condition unroll(CriteriaDefinition criteria, Table table, @Nullable RelationalPersistentEntity<?> entity,
 			MutableBindings bindings) {
 
-		Criteria current = criteria;
+		CriteriaDefinition current = criteria;
 
 		// reverse unroll criteria chain
-		Map<Criteria, Criteria> forwardChain = new HashMap<>();
+		Map<CriteriaDefinition, CriteriaDefinition> forwardChain = new HashMap<>();
 
 		while (current.hasPrevious()) {
 			forwardChain.put(current.getPrevious(), current);
@@ -223,7 +253,7 @@ public class QueryMapper {
 		Condition mapped = getCondition(current, bindings, table, entity);
 		while (forwardChain.containsKey(current)) {
 
-			Criteria criterion = forwardChain.get(current);
+			CriteriaDefinition criterion = forwardChain.get(current);
 			Condition result = null;
 
 			Condition condition = getCondition(criterion, bindings, table, entity);
@@ -245,11 +275,12 @@ public class QueryMapper {
 	}
 
 	@Nullable
-	private Condition unrollGroup(List<Criteria> criteria, Table table, Combinator combinator,
-			@Nullable RelationalPersistentEntity<?> entity, MutableBindings bindings) {
+	private Condition unrollGroup(List<? extends CriteriaDefinition> criteria, Table table,
+			CriteriaDefinition.Combinator combinator, @Nullable RelationalPersistentEntity<?> entity,
+			MutableBindings bindings) {
 
 		Condition mapped = null;
-		for (Criteria criterion : criteria) {
+		for (CriteriaDefinition criterion : criteria) {
 
 			if (criterion.isEmpty()) {
 				continue;
@@ -264,7 +295,7 @@ public class QueryMapper {
 	}
 
 	@Nullable
-	private Condition getCondition(Criteria criteria, MutableBindings bindings, Table table,
+	private Condition getCondition(CriteriaDefinition criteria, MutableBindings bindings, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		if (criteria.isEmpty()) {
@@ -281,14 +312,14 @@ public class QueryMapper {
 		return mapCondition(criteria, bindings, table, entity);
 	}
 
-	private Condition combine(Criteria criteria, @Nullable Condition currentCondition, Combinator combinator,
-			Condition nextCondition) {
+	private Condition combine(CriteriaDefinition criteria, @Nullable Condition currentCondition,
+			CriteriaDefinition.Combinator combinator, Condition nextCondition) {
 
 		if (currentCondition == null) {
 			currentCondition = nextCondition;
-		} else if (combinator == Combinator.AND) {
+		} else if (combinator == CriteriaDefinition.Combinator.AND) {
 			currentCondition = currentCondition.and(nextCondition);
-		} else if (combinator == Combinator.OR) {
+		} else if (combinator == CriteriaDefinition.Combinator.OR) {
 			currentCondition = currentCondition.or(nextCondition);
 		} else {
 			throw new IllegalStateException("Combinator " + criteria.getCombinator() + " not supported");
@@ -297,7 +328,7 @@ public class QueryMapper {
 		return currentCondition;
 	}
 
-	private Condition mapCondition(Criteria criteria, MutableBindings bindings, Table table,
+	private Condition mapCondition(CriteriaDefinition criteria, MutableBindings bindings, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Field propertyField = createPropertyField(entity, criteria.getColumn(), this.mappingContext);
@@ -320,8 +351,7 @@ public class QueryMapper {
 			typeHint = actualType.getType();
 		}
 
-		return createCondition(column, mappedValue, typeHint, bindings, criteria.getComparator(),
-				criteria.isIgnoreCase());
+		return createCondition(column, mappedValue, typeHint, bindings, criteria.getComparator(), criteria.isIgnoreCase());
 	}
 
 	/**
@@ -382,16 +412,16 @@ public class QueryMapper {
 		}
 
 		if (comparator == Comparator.IS_TRUE) {
-			return column.isEqualTo(SQL.literalOf((Object) ("TRUE")));
+			return column.isEqualTo(SQL.literalOf(true));
 		}
 
 		if (comparator == Comparator.IS_FALSE) {
-			return column.isEqualTo(SQL.literalOf((Object) ("FALSE")));
+			return column.isEqualTo(SQL.literalOf(false));
 		}
 
 		Expression columnExpression = column;
 		if (ignoreCase && String.class == valueType) {
-			columnExpression = new Upper(column);
+			columnExpression = Functions.upper(column);
 		}
 
 		if (comparator == Comparator.NOT_IN || comparator == Comparator.IN) {
@@ -459,7 +489,7 @@ public class QueryMapper {
 			}
 			case NOT_LIKE: {
 				Expression expression = bind(mappedValue, valueType, bindings, bindMarker, ignoreCase);
-				return NotLike.create(columnExpression, expression);
+				return Conditions.notLike(columnExpression, expression);
 			}
 			default:
 				throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
@@ -502,7 +532,7 @@ public class QueryMapper {
 			bindings.bindNull(bindMarker, valueType);
 		}
 
-		return ignoreCase ? new Upper(SQL.bindMarker(bindMarker.getPlaceholder()))
+		return ignoreCase ? Functions.upper(SQL.bindMarker(bindMarker.getPlaceholder()))
 				: SQL.bindMarker(bindMarker.getPlaceholder());
 	}
 
@@ -646,102 +676,6 @@ public class QueryMapper {
 		}
 	}
 
-	static class PassThruIdentifier implements SqlIdentifier {
-
-		final String name;
-
-		PassThruIdentifier(String name) {
-			this.name = name;
-		}
-
-		@Override
-		public String getReference(IdentifierProcessing processing) {
-			return name;
-		}
-
-		@Override
-		public String toSql(IdentifierProcessing processing) {
-			return name;
-		}
-
-		@Override
-		public SqlIdentifier transform(UnaryOperator<String> transformationFunction) {
-			return new PassThruIdentifier(transformationFunction.apply(name));
-		}
-
-		/*
-		* (non-Javadoc)
-		* @see java.lang.Object#equals(java.lang.Object)
-		*/
-		@Override
-		public boolean equals(Object o) {
-
-			if (this == o)
-				return true;
-			if (o instanceof SqlIdentifier) {
-				return toString().equals(o.toString());
-			}
-			return false;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.Object#hashCode()
-		 */
-		@Override
-		public int hashCode() {
-			return toString().hashCode();
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see java.lang.Object#toString()
-		 */
-		@Override
-		public String toString() {
-			return toSql(IdentifierProcessing.ANSI);
-		}
-	}
-
-	// TODO: include support of NOT LIKE operator into spring-data-relational
-	/**
-	 * Negated LIKE {@link Condition} comparing two {@link Expression}s.
-	 * <p/>
-	 * Results in a rendered condition: {@code <left> NOT LIKE <right>}.
-	 */
-	private static class NotLike implements Segment, Condition {
-		private final Comparison delegate;
-
-		private NotLike(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
-			this.delegate = Comparison.create(leftColumnOrExpression, "NOT LIKE", rightColumnOrExpression);
-		}
-
-		/**
-		 * Creates new instance of this class with the given {@link Expression}s.
-		 *
-		 * @param leftColumnOrExpression the left {@link Expression}
-		 * @param rightColumnOrExpression the right {@link Expression}
-		 * @return {@link NotLike} condition
-		 */
-		public static NotLike create(Expression leftColumnOrExpression, Expression rightColumnOrExpression) {
-			Assert.notNull(leftColumnOrExpression, "Left expression must not be null!");
-			Assert.notNull(rightColumnOrExpression, "Right expression must not be null!");
-			return new NotLike(leftColumnOrExpression, rightColumnOrExpression);
-		}
-
-		@Override
-		public void visit(Visitor visitor) {
-			Assert.notNull(visitor, "Visitor must not be null!");
-			delegate.visit(visitor);
-		}
-
-		@Override
-		public String toString() {
-			return delegate.toString();
-		}
-	}
-
-	// TODO: include support of functions in WHERE conditions into spring-data-relational
 	/**
 	 * Models the ANSI SQL {@code UPPER} function.
 	 * <p>

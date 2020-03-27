@@ -28,7 +28,9 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Oliver Drotbohm
+ * @deprecated since 1.1, use {@link org.springframework.data.relational.core.query.Update} instead.
  */
+@Deprecated
 public class Update {
 
 	private static final Update EMPTY = new Update(Collections.emptyMap());
