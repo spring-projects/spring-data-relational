@@ -35,14 +35,13 @@ The following example shows a repository interface for the preceding `Person` cl
 ====
 [source]
 ----
-public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
+public interface PersonRepository extends PagingAndSortingRepository<Person, String> {
 
   // additional custom query methods go here
 }
 ----
 ====
 
-Right now, this interface provides only type information, but we can add additional methods to it later.
 To configure R2DBC repositories, you can use the `@EnableR2dbcRepositories` annotation.
 If no base package is configured, the infrastructure scans the package of the annotated configuration class.
 The following example shows how to use Java configuration for a repository:
@@ -85,6 +84,15 @@ public class PersonRepositoryTests {
       .expectNextCount(1)
       .verifyComplete();
   }
+
+  @Test
+  public void readsEntitiesByNameCorrectly() {
+
+    repository.findByFirstname("Hello World")
+      .as(StepVerifier::create)
+      .expectNextCount(1)
+      .verifyComplete();
+  }
 }
 ----
 ====
@@ -103,25 +111,125 @@ Defining such a query is a matter of declaring a method on the repository interf
 ====
 [source,java]
 ----
-public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
+interface ReactivePersonRepository extends ReactiveSortingRepository<Person, String> {
+
+  Flux<Person> findByFirstname(String firstname);                                   <1>
+
+  Flux<Person> findByFirstname(Publisher<String> firstname);                        <2>
+
+  Flux<Person> findByFirstnameOrderByLastname(String firstname, Pageable pageable); <3>
+
+  Mono<Person> findByFirstnameAndLastname(String firstname, String lastname);       <4>
+
+  Mono<Person> findFirstByLastname(String lastname);                                <5>
 
   @Query("SELECT * FROM person WHERE lastname = :lastname")
-  Flux<Person> findByLastname(String lastname);                      <1>
+  Flux<Person> findByLastname(String lastname);                                     <6>
 
   @Query("SELECT firstname, lastname FROM person WHERE lastname = $1")
-  Mono<Person> findFirstByLastname(String lastname)                  <2>
-
+  Mono<Person> findFirstByLastname(String lastname);                                <7>
 }
 ----
-<1> The `findByLastname` method shows a query for all people with the given last name.
+<1> The method shows a query for all people with the given `lastname`. The query is derived by parsing the method name for constraints that can be concatenated with `And` and `Or`. Thus, the method name results in a query expression of `SELECT … FROM person WHERE firstname = :firstname`.
+<2> The method shows a query for all people with the given `firstname` once the `firstname` is emitted by the given `Publisher`.
+<3> Use `Pageable` to pass offset and sorting parameters to the database.
+<4> Find a single entity for the given criteria. It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
+<5> Unless <4>, the first entity is always emitted even if the query yields more result documents.
+<6> The `findByLastname` method shows a query for all people with the given last name.
 The query is provided, as R2DBC repositories do not support query derivation.
-<2> A query for a single `Person` entity projecting only `firstname` and `lastname` columns.
+<7> A query for a single `Person` entity projecting only `firstname` and `lastname` columns.
 The annotated query uses native bind markers, which are Postgres bind markers in this example.
 ====
 
-NOTE: R2DBC repositories do not support query derivation.
+The following table shows the keywords that are supported for query methods:
 
-NOTE: R2DBC repositories internally bind parameters to placeholders with `Statement.bind(…)` by index.
+[cols="1,2,3", options="header", subs="quotes"]
+.Supported keywords for query methods
+|===
+| Keyword
+| Sample
+| Logical result
+
+| `After`
+| `findByBirthdateAfter(Date date)`
+| `birthdate > date`
+
+| `GreaterThan`
+| `findByAgeGreaterThan(int age)`
+| `age > age`
+
+| `GreaterThanEqual`
+| `findByAgeGreaterThanEqual(int age)`
+| `age >= age`
+
+| `Before`
+| `findByBirthdateBefore(Date date)`
+| `birthdate < date`
+
+| `LessThan`
+| `findByAgeLessThan(int age)`
+| `age < age`
+
+| `LessThanEqual`
+| `findByAgeLessThanEqual(int age)`
+| `age <= age`
+
+| `Between`
+| `findByAgeBetween(int from, int to)`
+| `age BETWEEN from AND to`
+
+| `NotBetween`
+| `findByAgeBetween(int from, int to)`
+| `age NOT BETWEEN from AND to`
+
+| `In`
+| `findByAgeIn(Collection<Integer> ages)`
+| `age IN (age1, age2, ageN)`
+
+| `NotIn`
+| `findByAgeNotIn(Collection ages)`
+| `age NOT IN (age1, age2, ageN)`
+
+| `IsNotNull`, `NotNull`
+| `findByFirstnameNotNull()`
+| `firstname IS NOT NULL`
+
+| `IsNull`, `Null`
+| `findByFirstnameNull()`
+| `firstname IS NULL`
+
+| `Like`, `StartingWith`, `EndingWith`
+| `findByFirstnameLike(String name)`
+| `firstname LIKE name`
+
+| `NotLike`, `IsNotLike`
+| `findByFirstnameNotLike(String name)`
+| `firstname NOT LIKE name`
+
+| `Containing` on String
+| `findByFirstnameContaining(String name)`
+| `firstname LIKE '%' + name +'%'`
+
+| `NotContaining` on String
+| `findByFirstnameNotContaining(String name)`
+| `firstname NOT LIKE '%' + name +'%'`
+
+| `(No keyword)`
+| `findByFirstname(String name)`
+| `firstname = name`
+
+| `Not`
+| `findByFirstnameNot(String name)`
+| `firstname != name`
+
+| `IsTrue`, `True`
+| `findByActiveIsTrue()`
+| `active IS TRUE`
+
+| `IsFalse`,  `False`
+| `findByActiveIsFalse()`
+| `active IS FALSE`
+|===
 
 [[r2dbc.repositories.modifying]]
 === Modifying Queries

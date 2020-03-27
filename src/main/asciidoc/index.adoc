@@ -46,4 +46,5 @@ include::reference/kotlin.adoc[leveloffset=+1]
 = Appendix
 
 :numbered!:
+include::{spring-data-commons-docs}/repository-query-keywords-reference.adoc[leveloffset=+1]
 include::{spring-data-commons-docs}/repository-query-return-types-reference.adoc[leveloffset=+1]

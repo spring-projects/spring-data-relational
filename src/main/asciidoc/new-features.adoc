@@ -5,6 +5,7 @@
 == What's New in Spring Data R2DBC 1.1.0 RELEASE
 
 * Introduction of `R2dbcEntityTemplate` for entity-oriented operations.
+* <<r2dbc.repositories.queries,Query derivation>>.
 * Support interface projections with `DatabaseClient.as(…)`.
 * <<r2dbc.datbaseclient.filter,Support for `ExecuteFunction` and `StatementFilterFunction` via `DatabaseClient.filter(…)`>>.
 
