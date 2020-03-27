@@ -351,7 +351,7 @@ public class SqlGeneratorUnitTests {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class, AnsiDialect.INSTANCE);
 
-		assertThat(sqlGenerator.getUpdateWithVersion()).containsSequence( //
+		assertThat(sqlGenerator.getUpdateWithVersion()).containsSubsequence( //
 				"UPDATE", //
 				"\"VERSIONED_ENTITY\"", //
 				"SET", //
@@ -389,7 +389,7 @@ public class SqlGeneratorUnitTests {
 
 		String findAll = sqlGenerator.getFindAll();
 
-		assertThat(findAll).containsSequence("SELECT",
+		assertThat(findAll).containsSubsequence("SELECT",
 				"\"child\".\"PARENT_OF_NO_ID_CHILD\" AS \"CHILD_PARENT_OF_NO_ID_CHILD\"", "FROM");
 	}
 
@@ -398,7 +398,7 @@ public class SqlGeneratorUnitTests {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, AnsiDialect.INSTANCE);
 
-		assertThat(sqlGenerator.getUpdate()).containsSequence( //
+		assertThat(sqlGenerator.getUpdate()).containsSubsequence( //
 				"UPDATE", //
 				"\"DUMMY_ENTITY\"", //
 				"SET", //

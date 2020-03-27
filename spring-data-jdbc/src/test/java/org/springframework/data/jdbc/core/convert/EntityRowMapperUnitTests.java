@@ -277,7 +277,7 @@ public class EntityRowMapperUnitTests {
 
 		assertThat(extracted) //
 				.extracting(e -> e.one, e -> e.two, e -> e.three) //
-				.isEqualTo(new String[] { "111", "222", "333" });
+				.containsSequence("111", "222", "333");
 	}
 
 	@Test // DATAJDBC-273

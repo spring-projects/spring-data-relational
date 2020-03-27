@@ -21,7 +21,6 @@
 	<properties>
 		<dist.id>spring-data-jdbc</dist.id>
 		<springdata.commons>2.3.0.BUILD-SNAPSHOT</springdata.commons>
-		<assertj>3.6.2</assertj>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
 		<degraph-check.version>0.1.4</degraph-check.version>
