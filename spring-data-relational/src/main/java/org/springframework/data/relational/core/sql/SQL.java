@@ -79,6 +79,18 @@ public abstract class SQL {
 	}
 
 	/**
+	 * Creates a new {@link BooleanLiteral} rendering either {@code TRUE} or {@literal FALSE} depending on the given
+	 * {@code value}.
+	 *
+	 * @param value the literal content.
+	 * @return a new {@link BooleanLiteral}.
+	 * @since 2.0
+	 */
+	public static BooleanLiteral literalOf(boolean value) {
+		return new BooleanLiteral(value);
+	}
+
+	/**
 	 * Creates a new {@link StringLiteral} from the {@code content}.
 	 *
 	 * @param content the literal content.

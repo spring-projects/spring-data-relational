@@ -51,6 +51,7 @@ public class DependencyTests {
 						// include only Spring Data related classes (for example no JDK code)
 						.including("org.springframework.data.**") //
 						.excluding("org.springframework.data.relational.core.sql.**") //
+						.excluding("org.springframework.data.repository.query.parser.**") //
 						.filterClasspath(new AbstractFunction1<String, Object>() {
 							@Override
 							public Object apply(String s) { //

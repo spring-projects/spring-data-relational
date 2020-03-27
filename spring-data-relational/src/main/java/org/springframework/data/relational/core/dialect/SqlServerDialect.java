@@ -31,7 +31,7 @@ public class SqlServerDialect extends AbstractDialect {
 	 */
 	public static final SqlServerDialect INSTANCE = new SqlServerDialect();
 
-	protected SqlServerDialect() {	}
+	protected SqlServerDialect() {}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
@@ -82,6 +82,15 @@ public class SqlServerDialect extends AbstractDialect {
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#getLikeEscaper()
+	 */
+	@Override
+	public Escaper getLikeEscaper() {
+		return Escaper.DEFAULT.withRewriteFor("[", "]");
 	}
 
 	/*

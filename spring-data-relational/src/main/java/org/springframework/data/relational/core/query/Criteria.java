@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -92,7 +93,6 @@ public class Criteria implements CriteriaDefinition {
 		this.value = null;
 		this.ignoreCase = false;
 	}
-
 
 	/**
 	 * Static factory method to create an empty Criteria.
@@ -418,6 +418,24 @@ public class Criteria implements CriteriaDefinition {
 		Criteria notIn(Collection<?> values);
 
 		/**
+		 * Creates a {@link Criteria} using between ({@literal BETWEEN begin AND end}).
+		 *
+		 * @param begin must not be {@literal null}.
+		 * @param end must not be {@literal null}.
+		 * @since 2.2
+		 */
+		Criteria between(Object begin, Object end);
+
+		/**
+		 * Creates a {@link Criteria} using not between ({@literal NOT BETWEEN begin AND end}).
+		 *
+		 * @param begin must not be {@literal null}.
+		 * @param end must not be {@literal null}.
+		 * @since 2.2
+		 */
+		Criteria notBetween(Object begin, Object end);
+
+		/**
 		 * Creates a {@link Criteria} using less-than ({@literal <}).
 		 *
 		 * @param value must not be {@literal null}.
@@ -580,6 +598,32 @@ public class Criteria implements CriteriaDefinition {
 			Assert.noNullElements(values.toArray(), "Values must not contain a null value!");
 
 			return createCriteria(Comparator.NOT_IN, values);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#between(java.lang.Object, java.lang.Object)
+		 */
+		@Override
+		public Criteria between(Object begin, Object end) {
+
+			Assert.notNull(begin, "Begin value must not be null!");
+			Assert.notNull(end, "End value must not be null!");
+
+			return createCriteria(Comparator.BETWEEN, Pair.of(begin, end));
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#notBetween(java.lang.Object, java.lang.Object)
+		 */
+		@Override
+		public Criteria notBetween(Object begin, Object end) {
+
+			Assert.notNull(begin, "Begin value must not be null!");
+			Assert.notNull(end, "End value must not be null!");
+
+			return createCriteria(Comparator.NOT_BETWEEN, Pair.of(begin, end));
 		}
 
 		/*

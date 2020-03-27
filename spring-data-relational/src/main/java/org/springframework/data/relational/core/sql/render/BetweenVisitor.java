@@ -15,10 +15,9 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.Comparison;
+import org.springframework.data.relational.core.sql.Between;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
@@ -27,23 +26,25 @@ import org.springframework.lang.Nullable;
  * {@link RenderTarget} to call back for render results.
  *
  * @author Mark Paluch
- * @author Jens Schauder
- * @since 1.1
- * @see Comparison
+ * @see Between
+ * @since 2.0
  */
-class ComparisonVisitor extends FilteredSubtreeVisitor {
+class BetweenVisitor extends FilteredSubtreeVisitor {
 
+	private final Between between;
 	private final RenderContext context;
-	private final Comparison condition;
 	private final RenderTarget target;
 	private final StringBuilder part = new StringBuilder();
+	private boolean renderedTestExpression = false;
+	private boolean renderedPreamble = false;
+	private boolean done = false;
 	private @Nullable PartRenderer current;
 
-	ComparisonVisitor(RenderContext context, Comparison condition, RenderTarget target) {
+	BetweenVisitor(Between condition, RenderContext context, RenderTarget target) {
 		super(it -> it == condition);
-		this.condition = condition;
-		this.target = target;
+		this.between = condition;
 		this.context = context;
+		this.target = target;
 	}
 
 	/*
@@ -75,12 +76,33 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
-		if (current != null) {
-			if (part.length() != 0) {
-				part.append(' ').append(condition.getComparator()).append(' ');
+		if (current != null && !done) {
+
+			if (renderedPreamble) {
+
+				part.append(" AND ");
+				part.append(current.getRenderedPart());
+				done = true;
 			}
 
-			part.append(current.getRenderedPart());
+			if (renderedTestExpression && !renderedPreamble) {
+
+				part.append(' ');
+
+				if (between.isNegated()) {
+					part.append("NOT ");
+				}
+
+				part.append("BETWEEN ");
+				renderedPreamble = true;
+				part.append(current.getRenderedPart());
+			}
+
+			if (!renderedTestExpression) {
+				part.append(current.getRenderedPart());
+				renderedTestExpression = true;
+			}
+
 			current = null;
 		}
 

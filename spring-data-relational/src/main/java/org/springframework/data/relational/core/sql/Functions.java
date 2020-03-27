@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.springframework.util.Assert;
 
@@ -58,6 +59,34 @@ public class Functions {
 		Assert.notNull(columns, "Columns must not be null!");
 
 		return SimpleFunction.create("COUNT", new ArrayList<>(columns));
+	}
+
+	/**
+	 * Creates a new {@code UPPER} function.
+	 *
+	 * @param expression expression to apply count, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction upper function} for {@code expression}.
+	 * @since 2.0
+	 */
+	public static SimpleFunction upper(Expression expression) {
+
+		Assert.notNull(expression, "Expression must not be null!");
+
+		return SimpleFunction.create("UPPER", Collections.singletonList(expression));
+	}
+
+	/**
+	 * Creates a new {@code LOWER} function.
+	 *
+	 * @param expression expression to apply lower, must not be {@literal null}.
+	 * @return the new {@link SimpleFunction lower function} for {@code expression}.
+	 * @since 2.0
+	 */
+	public static SimpleFunction lower(Expression expression) {
+
+		Assert.notNull(expression, "Columns must not be null!");
+
+		return SimpleFunction.create("LOWER", Collections.singletonList(expression));
 	}
 
 	// Utility constructor.

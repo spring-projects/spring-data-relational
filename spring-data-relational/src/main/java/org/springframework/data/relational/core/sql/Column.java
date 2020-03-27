@@ -163,7 +163,31 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	/**
-	 * Creates a {@code <} (less) {@link Condition} {@link Condition}.
+	 * Creates a {@code BETWEEN} {@link Condition}.
+	 *
+	 * @param begin begin value for the comparison.
+	 * @param end end value for the comparison.
+	 * @return the {@link Between} condition.
+	 * @since 2.0
+	 */
+	public Between between(Expression begin, Expression end) {
+		return Conditions.between(this, begin, end);
+	}
+
+	/**
+	 * Creates a {@code NOT BETWEEN} {@link Condition}.
+	 *
+	 * @param begin begin value for the comparison.
+	 * @param end end value for the comparison.
+	 * @return the {@link Between} condition.
+	 * @since 2.0
+	 */
+	public Between notBetween(Expression begin, Expression end) {
+		return Conditions.notBetween(this, begin, end);
+	}
+
+	/**
+	 * Creates a {@code <} (less) {@link Condition}.
 	 *
 	 * @param expression right side of the comparison.
 	 * @return the {@link Comparison} condition.
@@ -173,7 +197,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	/**
-	 * CCreates a {@code <=} (greater ) {@link Condition} {@link Condition}.
+	 * CCreates a {@code <=} (greater) {@link Condition}.
 	 *
 	 * @param expression right side of the comparison.
 	 * @return the {@link Comparison} condition.
@@ -193,7 +217,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	}
 
 	/**
-	 * Creates a {@code <=} (greater or equal to) {@link Condition} {@link Condition}.
+	 * Creates a {@code <=} (greater or equal to) {@link Condition}.
 	 *
 	 * @param expression right side of the comparison.
 	 * @return the {@link Comparison} condition.
@@ -210,6 +234,17 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 */
 	public Like like(Expression expression) {
 		return Conditions.like(this, expression);
+	}
+
+	/**
+	 * Creates a {@code NOT LIKE} {@link Condition}.
+	 *
+	 * @param expression right side of the comparison.
+	 * @return the {@link Like} condition.
+	 * @since 2.0
+	 */
+	public Like notLike(Expression expression) {
+		return Conditions.notLike(this, expression);
 	}
 
 	/**

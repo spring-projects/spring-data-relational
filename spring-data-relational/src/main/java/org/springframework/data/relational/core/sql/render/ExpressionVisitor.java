@@ -21,6 +21,7 @@ import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Literal;
 import org.springframework.data.relational.core.sql.Named;
+import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SubselectExpression;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
@@ -55,6 +56,13 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		if (segment instanceof SubselectExpression) {
 
 			SelectStatementVisitor visitor = new SelectStatementVisitor(context);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
+		}
+
+		if (segment instanceof SimpleFunction) {
+
+			SimpleFunctionVisitor visitor = new SimpleFunctionVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		}

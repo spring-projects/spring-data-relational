@@ -28,7 +28,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 1.1
  */
-abstract class TypedSingleConditionRenderSupport<T extends Visitable & Condition> extends TypedSubtreeVisitor<T> {
+abstract class TypedSingleConditionRenderSupport<T extends Visitable> extends TypedSubtreeVisitor<T> {
 
 	private final RenderContext context;
 	private @Nullable PartRenderer current;

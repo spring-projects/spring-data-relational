@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.springframework.data.relational.core.dialect.Escaper;
+import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.parser.Part;
@@ -28,40 +29,26 @@ import org.springframework.util.Assert;
 
 /**
  * Helper class to allow easy creation of {@link ParameterMetadata}s.
- * <p>
- * This class is an adapted version of {@code org.springframework.data.jpa.repository.query.ParameterMetadataProvider}
- * from Spring Data JPA project.
  *
  * @author Roman Chigvintsev
+ * @author Mark Paluch
  * @since 2.0
  */
-public class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
+class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 
 	private static final Object VALUE_PLACEHOLDER = new Object();
 
 	private final Iterator<? extends Parameter> bindableParameterIterator;
 	private final Iterator<Object> bindableParameterValueIterator;
 	private final List<ParameterMetadata> parameterMetadata = new ArrayList<>();
-	private final Escaper escaper;
 
 	/**
 	 * Creates new instance of this class with the given {@link RelationalParameterAccessor} and {@link Escaper}.
 	 *
 	 * @param accessor relational parameter accessor (must not be {@literal null}).
-	 * @param escaper escaper for LIKE operator parameters (must not be {@literal null})
 	 */
-	public ParameterMetadataProvider(RelationalParameterAccessor accessor, Escaper escaper) {
-		this(accessor.getBindableParameters(), accessor.iterator(), escaper);
-	}
-
-	/**
-	 * Creates new instance of this class with the given {@link Parameters} and {@link Escaper}.
-	 *
-	 * @param parameters method parameters (must not be {@literal null})
-	 * @param escaper escaper for LIKE operator parameters (must not be {@literal null})
-	 */
-	public ParameterMetadataProvider(Parameters<?, ?> parameters, Escaper escaper) {
-		this(parameters, null, escaper);
+	public ParameterMetadataProvider(RelationalParameterAccessor accessor) {
+		this(accessor.getBindableParameters(), accessor.iterator());
 	}
 
 	/**
@@ -70,16 +57,14 @@ public class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 	 *
 	 * @param bindableParameterValueIterator iterator over bindable parameter values
 	 * @param parameters method parameters (must not be {@literal null})
-	 * @param escaper escaper for LIKE operator parameters (must not be {@literal null})
 	 */
 	private ParameterMetadataProvider(Parameters<?, ?> parameters,
-			@Nullable Iterator<Object> bindableParameterValueIterator, Escaper escaper) {
+			@Nullable Iterator<Object> bindableParameterValueIterator) {
+
 		Assert.notNull(parameters, "Parameters must not be null!");
-		Assert.notNull(escaper, "Like escaper must not be null!");
 
 		this.bindableParameterIterator = parameters.getBindableParameters().iterator();
 		this.bindableParameterValueIterator = bindableParameterValueIterator;
-		this.escaper = escaper;
 	}
 
 	@Override
@@ -91,8 +76,10 @@ public class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 	 * Creates new instance of {@link ParameterMetadata} for the given {@link Part} and next {@link Parameter}.
 	 */
 	public ParameterMetadata next(Part part) {
+
 		Assert.isTrue(bindableParameterIterator.hasNext(),
 				() -> String.format("No parameter available for part %s.", part));
+
 		Parameter parameter = bindableParameterIterator.next();
 		String parameterName = getParameterName(parameter, part.getProperty().getSegment());
 		Object parameterValue = getParameterValue();
@@ -104,10 +91,12 @@ public class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 
 		ParameterMetadata metadata = new ParameterMetadata(parameterName, preparedParameterValue, parameterType);
 		parameterMetadata.add(metadata);
+
 		return metadata;
 	}
 
 	private String getParameterName(Parameter parameter, String defaultName) {
+
 		if (parameter.isExplicitlyNamed()) {
 			return parameter.getName().orElseThrow(() -> new IllegalArgumentException("Parameter needs to be named"));
 		}
@@ -144,18 +133,20 @@ public class ParameterMetadataProvider implements Iterable<ParameterMetadata> {
 	@Nullable
 	protected Object prepareParameterValue(@Nullable Object value, Class<?> valueType, Part.Type partType) {
 
-		if (value != null && String.class == valueType) {
-			switch (partType) {
-				case STARTING_WITH:
-					return escaper.escape(value.toString()) + "%";
-				case ENDING_WITH:
-					return "%" + escaper.escape(value.toString());
-				case CONTAINING:
-				case NOT_CONTAINING:
-					return "%" + escaper.escape(value.toString()) + "%";
-			}
+		if (value == null || !CharSequence.class.isAssignableFrom(valueType)) {
+			return value;
 		}
 
-		return value;
+		switch (partType) {
+			case STARTING_WITH:
+				return (ValueFunction<String>) escaper -> escaper.escape(value.toString()) + "%";
+			case ENDING_WITH:
+				return (ValueFunction<String>) escaper -> "%" + escaper.escape(value.toString());
+			case CONTAINING:
+			case NOT_CONTAINING:
+				return (ValueFunction<String>) escaper -> "%" + escaper.escape(value.toString()) + "%";
+			default:
+				return value;
+		}
 	}
 }

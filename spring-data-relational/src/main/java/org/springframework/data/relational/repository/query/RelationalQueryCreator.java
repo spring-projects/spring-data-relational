@@ -26,9 +26,10 @@ import org.springframework.data.util.Streamable;
 import org.springframework.util.Assert;
 
 /**
- * Implementation of {@link AbstractQueryCreator} that creates {@link PreparedOperation} from a {@link PartTree}.
+ * Implementation of {@link AbstractQueryCreator} that creates a query from a {@link PartTree}.
  *
  * @author Roman Chigvintsev
+ * @author Mark Paluch
  * @since 2.0
  */
 public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, Criteria> {
@@ -39,20 +40,21 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 	 * Creates new instance of this class with the given {@link PartTree}, {@link RelationalEntityMetadata} and
 	 * {@link ParameterMetadataProvider}.
 	 *
-	 * @param tree part tree (must not be {@literal null})
-	 * @param parameterMetadataProvider parameter metadata provider (must not be {@literal null})
+	 * @param tree part tree, must not be {@literal null}.
+	 * @param accessor parameter metadata provider, must not be {@literal null}.
 	 */
-	public RelationalQueryCreator(PartTree tree, ParameterMetadataProvider parameterMetadataProvider) {
+	public RelationalQueryCreator(PartTree tree, RelationalParameterAccessor accessor) {
+
 		super(tree);
 
-		Assert.notNull(parameterMetadataProvider, "Parameter metadata provider must not be null");
-		this.criteriaFactory = new CriteriaFactory(parameterMetadataProvider);
+		Assert.notNull(accessor, "RelationalParameterAccessor must not be null");
+		this.criteriaFactory = new CriteriaFactory(new ParameterMetadataProvider(accessor));
 	}
 
 	/**
 	 * Creates {@link Criteria} for the given method name part.
 	 *
-	 * @param part method name part (must not be {@literal null})
+	 * @param part method name part, must not be {@literal null}.
 	 * @param iterator iterator over query parameter values
 	 * @return new instance of {@link Criteria}
 	 */
@@ -64,8 +66,8 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 	/**
 	 * Combines the given {@link Criteria} with the new one created for the given method name part using {@code AND}.
 	 *
-	 * @param part method name part (must not be {@literal null})
-	 * @param base {@link Criteria} to be combined (must not be {@literal null})
+	 * @param part method name part, must not be {@literal null}.
+	 * @param base {@link Criteria} to be combined, must not be {@literal null}.
 	 * @param iterator iterator over query parameter values
 	 * @return {@link Criteria} combination
 	 */
@@ -77,8 +79,8 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 	/**
 	 * Combines two {@link Criteria}s using {@code OR}.
 	 *
-	 * @param base {@link Criteria} to be combined (must not be {@literal null})
-	 * @param criteria another {@link Criteria} to be combined (must not be {@literal null})
+	 * @param base {@link Criteria} to be combined, must not be {@literal null}.
+	 * @param criteria another {@link Criteria} to be combined, must not be {@literal null}.
 	 * @return {@link Criteria} combination
 	 */
 	@Override
@@ -96,6 +98,7 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 	public static void validate(PartTree tree, RelationalParameters parameters) {
 
 		int argCount = 0;
+
 		Iterable<Part> parts = () -> tree.stream().flatMap(Streamable::stream).iterator();
 		for (Part part : parts) {
 			int numberOfArguments = part.getNumberOfArguments();

@@ -66,8 +66,7 @@ class CriteriaFactory {
 			case BETWEEN: {
 				ParameterMetadata geParamMetadata = parameterMetadataProvider.next(part);
 				ParameterMetadata leParamMetadata = parameterMetadataProvider.next(part);
-				return criteriaStep.greaterThanOrEquals(geParamMetadata.getValue()).and(propertyName)
-						.lessThanOrEquals(leParamMetadata.getValue());
+				return criteriaStep.between(geParamMetadata.getValue(), leParamMetadata.getValue());
 			}
 			case AFTER:
 			case GREATER_THAN: {
