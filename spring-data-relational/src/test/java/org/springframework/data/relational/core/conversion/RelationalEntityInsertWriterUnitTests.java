@@ -45,7 +45,7 @@ public class RelationalEntityInsertWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				new MutableAggregateChange(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				MutableAggregateChange.forSave(entity);
 
 		converter.write(entity, aggregateChange);
 
@@ -63,7 +63,7 @@ public class RelationalEntityInsertWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				new MutableAggregateChange(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				MutableAggregateChange.forSave(entity);
 
 		converter.write(entity, aggregateChange);
 

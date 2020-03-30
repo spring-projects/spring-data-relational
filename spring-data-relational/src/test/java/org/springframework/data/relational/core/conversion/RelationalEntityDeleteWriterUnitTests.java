@@ -47,8 +47,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 
 		SomeEntity entity = new SomeEntity(23L);
 
-		MutableAggregateChange<SomeEntity> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.DELETE,
-				SomeEntity.class, entity);
+		MutableAggregateChange<SomeEntity> aggregateChange = MutableAggregateChange.forDelete(SomeEntity.class, entity);
 
 		converter.write(entity.id, aggregateChange);
 
@@ -64,8 +63,7 @@ public class RelationalEntityDeleteWriterUnitTests {
 	@Test // DATAJDBC-188
 	public void deleteAllDeletesAllEntitiesAndReferencedEntities() {
 
-		MutableAggregateChange<SomeEntity> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.DELETE,
-				SomeEntity.class, null);
+		MutableAggregateChange<SomeEntity> aggregateChange = MutableAggregateChange.forDelete(SomeEntity.class, null);
 
 		converter.write(null, aggregateChange);
 

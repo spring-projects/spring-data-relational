@@ -19,6 +19,7 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
 
 /**
  * {@link RelationalEvent} that represents a change to an aggregate and therefore has an {@link AggregateChange}
+ *
  * @author Jens Schauder
  */
 public interface WithAggregateChange<E> extends RelationalEvent<E> {

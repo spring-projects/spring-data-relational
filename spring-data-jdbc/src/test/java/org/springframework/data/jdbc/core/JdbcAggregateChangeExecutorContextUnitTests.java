@@ -38,6 +38,11 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
 
+/**
+ * Unit tests for {@link JdbcAggregateChangeExecutionContext}.
+ *
+ * @author Jens Schauder
+ */
 public class JdbcAggregateChangeExecutorContextUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();

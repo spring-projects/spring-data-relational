@@ -45,8 +45,7 @@ public class RelationalEntityUpdateWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
-		MutableAggregateChange<RelationalEntityWriterUnitTests.SingleReferenceEntity> aggregateChange = //
-				new MutableAggregateChange(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+		MutableAggregateChange<SingleReferenceEntity> aggregateChange = MutableAggregateChange.forSave(entity);
 
 		converter.write(entity, aggregateChange);
 

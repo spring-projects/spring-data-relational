@@ -16,12 +16,10 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.relational.core.conversion.AggregateChange;
-import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.lang.Nullable;
 
 /**
- * Gets published when an entity is about to get deleted. The contained {@link MutableAggregateChange} is mutable and
- * may be changed in order to change the actions that get performed on the database as part of the delete operation.
+ * Gets published when an entity is about to get deleted.
  *
  * @author Jens Schauder
  */
@@ -32,7 +30,7 @@ public class BeforeDeleteEvent<E> extends RelationalDeleteEvent<E> {
 	/**
 	 * @param id the id of the entity. Must not be {@literal null}.
 	 * @param entity the entity about to get deleted. May be {@literal null}.
-	 * @param change the {@link MutableAggregateChange} encoding the planned actions to be performed on the database.
+	 * @param change the {@link AggregateChange} containing the planned actions to be performed on the database.
 	 */
 	public BeforeDeleteEvent(Identifier id, @Nullable E entity, AggregateChange<E> change) {
 		super(id, entity, change);

@@ -34,7 +34,6 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.relational.core.conversion.AggregateChangeExecutionContext;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
 import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
@@ -49,7 +48,7 @@ import org.springframework.util.Assert;
 /**
  * @author Jens Schauder
  */
-class JdbcAggregateChangeExecutionContext implements AggregateChangeExecutionContext {
+class JdbcAggregateChangeExecutionContext {
 
 	private static final String UPDATE_FAILED = "Failed to update entity [%s]. Id [%s] not found in database.";
 	private static final String UPDATE_FAILED_OPTIMISTIC_LOCKING = "Failed to update entity [%s]. The entity was updated since it was rea or it isn't in the database at all.";

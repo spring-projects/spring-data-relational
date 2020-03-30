@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.mapping.callback.EntityCallback;
-import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 
 /**
@@ -25,6 +24,7 @@ import org.springframework.data.relational.core.conversion.MutableAggregateChang
  * or without any parameter don't invoke this callback.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 1.1
  */
 @FunctionalInterface
@@ -37,8 +37,8 @@ public interface BeforeDeleteCallback<T> extends EntityCallback<T> {
 	 * account for deleting. Only transient fields of the entity should be changed in this callback.
 	 *
 	 * @param aggregate the aggregate.
-	 * @param aggregateChange the associated {@link MutableAggregateChange}.
+	 * @param aggregateChange the associated {@link DefaultAggregateChange}.
 	 * @return the aggregate to be deleted.
 	 */
-	T onBeforeDelete(T aggregate, AggregateChange<T> aggregateChange);
+	T onBeforeDelete(T aggregate, MutableAggregateChange<T> aggregateChange);
 }

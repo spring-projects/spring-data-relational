@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -28,24 +24,9 @@ import org.springframework.util.ClassUtils;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @since 2.0
  */
-public class MutableAggregateChange<T> implements AggregateChange<T> {
-
-	private final Kind kind;
-
-	/** Type of the aggregate root to be changed */
-	private final Class<T> entityType;
-
-	private final List<DbAction<?>> actions = new ArrayList<>();
-	/** Aggregate root, to which the change applies, if available */
-	@Nullable private T entity;
-
-	public MutableAggregateChange(Kind kind, Class<T> entityType, @Nullable T entity) {
-
-		this.kind = kind;
-		this.entityType = entityType;
-		this.entity = entity;
-	}
+public interface MutableAggregateChange<T> extends AggregateChange<T> {
 
 	/**
 	 * Factory method to create an {@link MutableAggregateChange} for saving entities.
@@ -56,10 +37,11 @@ public class MutableAggregateChange<T> implements AggregateChange<T> {
 	 * @since 1.2
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> MutableAggregateChange<T> forSave(T entity) {
+	static <T> MutableAggregateChange<T> forSave(T entity) {
 
 		Assert.notNull(entity, "Entity must not be null");
-		return new MutableAggregateChange<>(Kind.SAVE, (Class<T>) ClassUtils.getUserClass(entity), entity);
+
+		return new DefaultAggregateChange<>(Kind.SAVE, (Class<T>) ClassUtils.getUserClass(entity), entity);
 	}
 
 	/**
@@ -71,9 +53,10 @@ public class MutableAggregateChange<T> implements AggregateChange<T> {
 	 * @since 1.2
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> MutableAggregateChange<T> forDelete(T entity) {
+	static <T> MutableAggregateChange<T> forDelete(T entity) {
 
 		Assert.notNull(entity, "Entity must not be null");
+
 		return forDelete((Class<T>) ClassUtils.getUserClass(entity), entity);
 	}
 
@@ -86,81 +69,24 @@ public class MutableAggregateChange<T> implements AggregateChange<T> {
 	 * @return the {@link MutableAggregateChange} for deleting the root {@code entity}.
 	 * @since 1.2
 	 */
-	public static <T> MutableAggregateChange<T> forDelete(Class<T> entityClass, @Nullable T entity) {
+	static <T> MutableAggregateChange<T> forDelete(Class<T> entityClass, @Nullable T entity) {
 
 		Assert.notNull(entityClass, "Entity class must not be null");
-		return new MutableAggregateChange<>(Kind.DELETE, entityClass, entity);
+
+		return new DefaultAggregateChange<>(Kind.DELETE, entityClass, entity);
 	}
 
 	/**
 	 * Adds an action to this {@code AggregateChange}.
-	 * 
+	 *
 	 * @param action must not be {@literal null}.
 	 */
-	public void addAction(DbAction<?> action) {
-
-		Assert.notNull(action, "Action must not be null.");
-
-		actions.add(action);
-	}
-
-	/**
-	 * Applies the given consumer to each {@link DbAction} in this {@code AggregateChange}.
-	 * 
-	 * @param consumer must not be {@literal null}.
-	 */
-	@Override
-	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
-
-		Assert.notNull(consumer, "Consumer must not be null.");
-
-		actions.forEach(consumer);
-	}
-
-	/**
-	 * Returns the {@link Kind} of {@code AggregateChange} this is.
-	 * 
-	 * @return guaranteed to be not {@literal null}.
-	 */
-	@Override
-	public Kind getKind() {
-		return this.kind;
-	}
-
-	/**
-	 * The type of the root of this {@code AggregateChange}.
-	 * 
-	 * @return Guaranteed to be not {@literal null}.
-	 */
-	@Override
-	public Class<T> getEntityType() {
-		return this.entityType;
-	}
+	void addAction(DbAction<?> action);
 
 	/**
 	 * Set the root object of the {@code AggregateChange}.
 	 *
 	 * @param aggregateRoot may be {@literal null} if the change refers to a list of aggregates or references it by id.
 	 */
-	public void setEntity(@Nullable T aggregateRoot) {
-
-		if (aggregateRoot != null) {
-			Assert.isInstanceOf(entityType, aggregateRoot,
-					String.format("AggregateRoot must be of type %s", entityType.getName()));
-		}
-
-		entity = aggregateRoot;
-	}
-
-	/**
-	 * The entity to which this {@link MutableAggregateChange} relates.
-	 * 
-	 * @return may be {@literal null}.
-	 */
-	@Override
-	@Nullable
-	public T getEntity() {
-		return this.entity;
-	}
-
+	void setEntity(@Nullable T aggregateRoot);
 }

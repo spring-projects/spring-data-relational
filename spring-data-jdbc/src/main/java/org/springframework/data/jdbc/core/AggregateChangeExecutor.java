@@ -56,7 +56,6 @@ class AggregateChangeExecutor {
 		}
 
 		return root;
-
 	}
 
 	private void execute(DbAction<?> action, JdbcAggregateChangeExecutionContext executionContext) {
@@ -85,5 +84,4 @@ class AggregateChangeExecutor {
 			throw new DbActionExecutionException(action, e);
 		}
 	}
-
 }

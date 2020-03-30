@@ -46,8 +46,8 @@ class WritingContext {
 	private final Object entity;
 	private final Class<?> entityType;
 	private final PersistentPropertyPaths<?, RelationalPersistentProperty> paths;
-	private final Map<PathNode, DbAction> previousActions = new HashMap<>();
-	private Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
+	private final Map<PathNode, DbAction<?>> previousActions = new HashMap<>();
+	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
 
 	WritingContext(RelationalMappingContext context, Object root, MutableAggregateChange<?> aggregateChange) {
 
@@ -180,7 +180,7 @@ class WritingContext {
 	@Nullable
 	private DbAction.WithEntity<?> getAction(@Nullable PathNode parent) {
 
-		DbAction action = previousActions.get(parent);
+		DbAction<?> action = previousActions.get(parent);
 
 		if (action != null) {
 
@@ -274,7 +274,7 @@ class WritingContext {
 				((Map<?, ?>) value).forEach((k, v) -> nodes.add(new PathNode(path, parentNode, Pair.of(k, v))));
 			} else {
 
-				List listValue = (List) value;
+				List<Object> listValue = (List<Object>) value;
 				for (int k = 0; k < listValue.size(); k++) {
 					nodes.add(new PathNode(path, parentNode, Pair.of(k, listValue.get(k))));
 				}

@@ -81,7 +81,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 		return actions;
 	}
 
-	private <T> List<DbAction<?>> deleteRoot(Object id, MutableAggregateChange<T> aggregateChange) {
+	private <T> List<DbAction<?>> deleteRoot(Object id, AggregateChange<T> aggregateChange) {
 
 		List<DbAction<?>> actions = new ArrayList<>(deleteReferencedEntities(id, aggregateChange));
 		actions.add(new DbAction.DeleteRoot<>(id, aggregateChange.getEntityType(), getVersion(aggregateChange)));
@@ -90,12 +90,12 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 	}
 
 	/**
-	 * Add {@link DbAction.Delete} actions to the {@link MutableAggregateChange} for deleting all referenced entities.
+	 * Add {@link DbAction.Delete} actions to the {@link AggregateChange} for deleting all referenced entities.
 	 *
 	 * @param id id of the aggregate root, of which the referenced entities get deleted.
 	 * @param aggregateChange the change object to which the actions should get added. Must not be {@code null}
 	 */
-	private List<DbAction<?>> deleteReferencedEntities(Object id, MutableAggregateChange<?> aggregateChange) {
+	private List<DbAction<?>> deleteReferencedEntities(Object id, AggregateChange<?> aggregateChange) {
 
 		List<DbAction<?>> actions = new ArrayList<>();
 
@@ -108,7 +108,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 	}
 
 	@Nullable
-	private Number getVersion(MutableAggregateChange<?> aggregateChange) {
+	private Number getVersion(AggregateChange<?> aggregateChange) {
 
 		RelationalPersistentEntity<?> persistentEntity = context
 				.getRequiredPersistentEntity(aggregateChange.getEntityType());

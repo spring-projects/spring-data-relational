@@ -80,7 +80,7 @@ public class RelationalEntityWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
@@ -102,7 +102,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.other = new Element(2L);
 
 		MutableAggregateChange<EmbeddedReferenceEntity> aggregateChange = //
-				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
@@ -124,7 +124,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.other = new Element(null);
 
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
@@ -146,7 +146,7 @@ public class RelationalEntityWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
@@ -168,7 +168,7 @@ public class RelationalEntityWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 		entity.other = new Element(null);
 
-		MutableAggregateChange<SingleReferenceEntity> aggregateChange = new MutableAggregateChange<>(
+		MutableAggregateChange<SingleReferenceEntity> aggregateChange = new DefaultAggregateChange<>(
 				AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -190,7 +190,7 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptySetResultsInSingleInsert() {
 
 		SetContainer entity = new SetContainer(null);
-		MutableAggregateChange<SetContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<SetContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				SetContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -212,7 +212,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.add(new Element(null));
 		entity.elements.add(new Element(null));
 
-		MutableAggregateChange<SetContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<SetContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				SetContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
@@ -243,7 +243,7 @@ public class RelationalEntityWriterUnitTests {
 				new Element(null)) //
 		);
 
-		MutableAggregateChange<CascadingReferenceEntity> aggregateChange = new MutableAggregateChange<>(
+		MutableAggregateChange<CascadingReferenceEntity> aggregateChange = new DefaultAggregateChange<>(
 				AggregateChange.Kind.SAVE, CascadingReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -281,7 +281,7 @@ public class RelationalEntityWriterUnitTests {
 				new Element(null)) //
 		);
 
-		MutableAggregateChange<CascadingReferenceEntity> aggregateChange = new MutableAggregateChange<>(
+		MutableAggregateChange<CascadingReferenceEntity> aggregateChange = new DefaultAggregateChange<>(
 				AggregateChange.Kind.SAVE, CascadingReferenceEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -310,7 +310,7 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptyMapResultsInSingleInsert() {
 
 		MapContainer entity = new MapContainer(null);
-		MutableAggregateChange<MapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<MapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				MapContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -329,7 +329,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("one", new Element(null));
 		entity.elements.put("two", new Element(null));
 
-		MutableAggregateChange<MapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<MapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				MapContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
@@ -368,7 +368,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("a", new Element(null));
 		entity.elements.put("b", new Element(null));
 
-		MutableAggregateChange<MapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<MapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				MapContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
@@ -397,7 +397,7 @@ public class RelationalEntityWriterUnitTests {
 	public void newEntityWithEmptyListResultsInSingleInsert() {
 
 		ListContainer entity = new ListContainer(null);
-		MutableAggregateChange<ListContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<ListContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				ListContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -416,7 +416,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.add(new Element(null));
 		entity.elements.add(new Element(null));
 
-		MutableAggregateChange<ListContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<ListContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				ListContainer.class, entity);
 		converter.write(entity, aggregateChange);
 
@@ -443,7 +443,7 @@ public class RelationalEntityWriterUnitTests {
 		MapContainer entity = new MapContainer(SOME_ENTITY_ID);
 		entity.elements.put("one", new Element(null));
 
-		MutableAggregateChange<MapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<MapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				MapContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -466,7 +466,7 @@ public class RelationalEntityWriterUnitTests {
 		ListContainer entity = new ListContainer(SOME_ENTITY_ID);
 		entity.elements.add(new Element(null));
 
-		MutableAggregateChange<ListContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<ListContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				ListContainer.class, entity);
 
 		converter.write(entity, aggregateChange);
@@ -490,7 +490,7 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.add(new MapContainer(SOME_ENTITY_ID));
 		listMapContainer.maps.get(0).elements.put("one", new Element(null));
 
-		MutableAggregateChange<ListMapContainer> aggregateChange = new MutableAggregateChange<>(AggregateChange.Kind.SAVE,
+		MutableAggregateChange<ListMapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
 				ListMapContainer.class, listMapContainer);
 
 		converter.write(listMapContainer, aggregateChange);
@@ -517,7 +517,7 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.add(new NoIdMapContainer());
 		listMapContainer.maps.get(0).elements.put("one", new NoIdElement());
 
-		MutableAggregateChange<NoIdListMapContainer> aggregateChange = new MutableAggregateChange<>(
+		MutableAggregateChange<NoIdListMapContainer> aggregateChange = new DefaultAggregateChange<>(
 				AggregateChange.Kind.SAVE, NoIdListMapContainer.class, listMapContainer);
 
 		converter.write(listMapContainer, aggregateChange);
@@ -544,7 +544,7 @@ public class RelationalEntityWriterUnitTests {
 		// the embedded is null !!!
 
 		MutableAggregateChange<EmbeddedReferenceChainEntity> aggregateChange = //
-				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceChainEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceChainEntity.class, entity);
 
 		converter.write(entity, aggregateChange);
 
@@ -567,7 +567,7 @@ public class RelationalEntityWriterUnitTests {
 		// the embedded is null !!!
 
 		MutableAggregateChange<RootWithEmbeddedReferenceChainEntity> aggregateChange = //
-				new MutableAggregateChange<>(AggregateChange.Kind.SAVE, RootWithEmbeddedReferenceChainEntity.class, root);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, RootWithEmbeddedReferenceChainEntity.class, root);
 
 		converter.write(root, aggregateChange);
 

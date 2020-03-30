@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.mapping.event;
 
 import org.springframework.data.mapping.callback.EntityCallback;
-import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 
 /**
@@ -34,12 +33,11 @@ public interface BeforeSaveCallback<T> extends EntityCallback<T> {
 	 * Entity callback method invoked before an aggregate root is saved. Can return either the same or a modified instance
 	 * of the aggregate and can modify {@link MutableAggregateChange} contents. This method is called after converting the
 	 * {@code aggregate} to {@link MutableAggregateChange}. Changes to the aggregate are not taken into account for
-	 * saving. Only transient fields of the entity should be changed in this callback. To change persistent the entity
-	 * before being converted, use the {@link BeforeConvertCallback}.
+	 * saving. Use the {@link BeforeConvertCallback} to change the persistent the entity before being converted.
 	 *
 	 * @param aggregate the aggregate.
 	 * @param aggregateChange the associated {@link MutableAggregateChange}.
 	 * @return the aggregate object to be persisted.
 	 */
-	T onBeforeSave(T aggregate, AggregateChange<T> aggregateChange);
+	T onBeforeSave(T aggregate, MutableAggregateChange<T> aggregateChange);
 }
