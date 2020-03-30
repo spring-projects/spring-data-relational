@@ -35,6 +35,7 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mapping.model.PropertyValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -344,6 +345,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private final Identifier identifier;
 		private final Object key;
 
+		private final PropertyValueProvider<RelationalPersistentProperty> propertyValueProvider;
+		private final PropertyValueProvider<RelationalPersistentProperty> backReferencePropertyValueProvider;
+
 		@SuppressWarnings("unchecked")
 		private ReadingContext(PersistentPropertyPathExtension rootPath, ResultSetWrapper resultSet, Identifier identifier,
 				Object key) {
@@ -360,6 +364,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 					this.entity);
 			this.identifier = identifier;
 			this.key = key;
+			propertyValueProvider = new JdbcPropertyValueProvider(identifierProcessing, path, resultSet);
+			backReferencePropertyValueProvider = new JdbcBackReferencePropertyValueProvider(identifierProcessing, path,
+					resultSet);
 		}
 
 		private ReadingContext(RelationalPersistentEntity<T> entity, ResultSetWrapper resultSet,
@@ -372,6 +379,10 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			this.path = path;
 			this.identifier = identifier;
 			this.key = key;
+
+			propertyValueProvider = new JdbcPropertyValueProvider(identifierProcessing, path, resultSet);
+			backReferencePropertyValueProvider = new JdbcBackReferencePropertyValueProvider(identifierProcessing, path,
+					resultSet);
 		}
 
 		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
@@ -452,11 +463,10 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private Object readFrom(RelationalPersistentProperty property) {
 
 			if (property.isEntity()) {
-				return readEntityFrom(property, path);
+				return readEntityFrom(property);
 			}
 
-			Object value = getObjectFromResultSet(
-					path.extendBy(property).getColumnAlias().getReference(identifierProcessing));
+			Object value = propertyValueProvider.getPropertyValue(property);
 			return value == SpecialColumnValue.NO_SUCH_COLUMN ? SpecialColumnValue.NO_SUCH_COLUMN
 					: readValue(value, property.getTypeInformation());
 		}
@@ -501,7 +511,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		@Nullable
 		@SuppressWarnings("unchecked")
-		private Object readEntityFrom(RelationalPersistentProperty property, PersistentPropertyPathExtension path) {
+		private Object readEntityFrom(RelationalPersistentProperty property) {
 
 			ReadingContext<?> newContext = extendBy(property);
 			RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(property.getActualType());
@@ -512,8 +522,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			if (idProperty != null) {
 				idValue = newContext.readFrom(idProperty);
 			} else {
-				idValue = newContext.getObjectFromResultSet(
-						path.extendBy(property).getReverseColumnNameAlias().getReference(identifierProcessing));
+				idValue = backReferencePropertyValueProvider.getPropertyValue(property);
 			}
 
 			if (idValue == null) {
@@ -521,11 +530,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			}
 
 			return newContext.createInstanceInternal(idValue);
-		}
-
-		@Nullable
-		private Object getObjectFromResultSet(String columnName) {
-			return resultSet.getObject(columnName);
 		}
 
 		private T createInstanceInternal(@Nullable Object idValue) {
@@ -541,6 +545,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				Object value = readOrLoadProperty(idValue, property);
 
 				if (value == SpecialColumnValue.NO_SUCH_COLUMN) {
+
 					throw new MappingException(
 							String.format("Couldn't create instance of type %s with id. No column found for argument named '%s'.",
 									entity.getType(), parameterName));
