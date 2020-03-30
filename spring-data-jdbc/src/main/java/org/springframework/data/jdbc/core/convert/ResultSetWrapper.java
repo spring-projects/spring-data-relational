@@ -15,17 +15,16 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.val;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.lang.Nullable;
-
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.util.LinkedCaseInsensitiveMap;
 
 /**
  * Wraps a {@link java.sql.ResultSet} in order to provide fast lookup of columns by name, including for missing columns.
@@ -53,16 +52,17 @@ class ResultSetWrapper {
 			ResultSetMetaData metaData = resultSet.getMetaData();
 			int columnCount = metaData.getColumnCount();
 
-			Map<String, Integer> index = new HashMap<>(columnCount);
+			Map<String, Integer> index = new LinkedCaseInsensitiveMap<>(columnCount);
 
 			for (int i = 1; i <= columnCount; i++) {
 
-				String label = metaData.getColumnLabel(i).toLowerCase();
-				Integer previous = index.put(label, i);
-
-				if (previous != null) {
-					LOG.warn("We encountered a ResutSet with multiple columns ({}, {}) associated with the same label {}.", previous, i, label);
+				String label = metaData.getColumnLabel(i);
+				if (index.containsKey(label)) {
+					LOG.warn("We encountered a ResutSet with multiple columns associated with the same label {}.", label);
+					continue;
 				}
+				index.put(label, i);
+
 			}
 
 			return index;
@@ -85,9 +85,8 @@ class ResultSetWrapper {
 		}
 	}
 
-
 	private int findColumnIndex(String columnName) {
-		return indexLookUp.getOrDefault(columnName.toLowerCase(), -1);
+		return indexLookUp.getOrDefault(columnName, -1);
 	}
 
 	enum SpecialColumnValue {
