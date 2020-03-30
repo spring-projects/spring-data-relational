@@ -18,7 +18,9 @@ package org.springframework.data.relational.core.query;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -104,5 +106,22 @@ public class Update {
 		updates.put(key, value);
 
 		return new Update(updates);
+	}
+
+	@Override
+	public String toString() {
+
+		if (getAssignments().isEmpty()) {
+			return "";
+		}
+
+		StringJoiner joiner = new StringJoiner(", ");
+
+		getAssignments().forEach((column, o) -> {
+			joiner.add(
+					String.format("%s = %s", column.toSql(IdentifierProcessing.NONE), o instanceof Number ? o : "'" + o + "'"));
+		});
+
+		return "SET " + joiner.toString();
 	}
 }

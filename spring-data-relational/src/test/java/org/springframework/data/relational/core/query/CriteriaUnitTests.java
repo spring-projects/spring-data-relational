@@ -44,6 +44,7 @@ public class CriteriaUnitTests {
 		assertThat(criteria.isGroup()).isTrue();
 		assertThat(criteria.getGroup()).containsExactly(nested1, nested2);
 		assertThat(criteria.getPrevious()).isEqualTo(Criteria.empty());
+		assertThat(criteria).hasToString("(foo IS NOT NULL AND foo IS NULL)");
 	}
 
 	@Test // DATAJDBC-513
@@ -52,7 +53,7 @@ public class CriteriaUnitTests {
 		Criteria nested = where("foo").is("bar").and("baz").isNotNull();
 		Criteria criteria = Criteria.from(nested);
 
-		assertThat(criteria).isSameAs(nested);
+		assertThat(criteria).isSameAs(nested).hasToString("foo = 'bar' AND baz IS NOT NULL");
 	}
 
 	@Test // DATAJDBC-513
@@ -98,11 +99,12 @@ public class CriteriaUnitTests {
 	@Test // DATAJDBC-513
 	public void andGroupedCriteria() {
 
-		Criteria criteria = where("foo").is("bar").and(where("foo").is("baz"));
+		Criteria grouped = where("foo").is("bar").and(where("foo").is("baz").or("bar").isNotNull());
+		Criteria criteria = grouped;
 
 		assertThat(criteria.isGroup()).isTrue();
 		assertThat(criteria.getGroup()).hasSize(1);
-		assertThat(criteria.getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
+		assertThat(criteria.getGroup().get(0).getColumn()).isEqualTo(SqlIdentifier.unquoted("bar"));
 		assertThat(criteria.getCombinator()).isEqualTo(Criteria.Combinator.AND);
 
 		criteria = criteria.getPrevious();
@@ -111,6 +113,8 @@ public class CriteriaUnitTests {
 		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.EQ);
 		assertThat(criteria.getValue()).isEqualTo("bar");
+
+		assertThat(grouped).hasToString("foo = 'bar' AND (foo = 'baz' OR bar IS NOT NULL)");
 	}
 
 	@Test // DATAJDBC-513
@@ -184,6 +188,7 @@ public class CriteriaUnitTests {
 		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.IN);
 		assertThat(criteria.getValue()).isEqualTo(Arrays.asList("bar", "baz"));
+		assertThat(criteria).hasToString("foo IN ('bar', 'baz')");
 	}
 
 	@Test // DATAJDBC-513

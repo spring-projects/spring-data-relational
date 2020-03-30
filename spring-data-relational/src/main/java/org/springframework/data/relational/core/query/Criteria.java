@@ -18,9 +18,13 @@ package org.springframework.data.relational.core.query;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
@@ -368,6 +372,128 @@ public class Criteria implements CriteriaDefinition {
 	@Override
 	public boolean isIgnoreCase() {
 		return ignoreCase;
+	}
+
+	@Override
+	public String toString() {
+
+		if (isEmpty()) {
+			return "";
+		}
+
+		StringBuilder builder = new StringBuilder();
+		unroll(this, builder);
+
+		return builder.toString();
+	}
+
+	private void unroll(CriteriaDefinition criteria, StringBuilder stringBuilder) {
+
+		CriteriaDefinition current = criteria;
+
+		// reverse unroll criteria chain
+		Map<CriteriaDefinition, CriteriaDefinition> forwardChain = new HashMap<>();
+
+		while (current.hasPrevious()) {
+			forwardChain.put(current.getPrevious(), current);
+			current = current.getPrevious();
+		}
+
+		// perform the actual mapping
+		render(current, stringBuilder);
+		while (forwardChain.containsKey(current)) {
+
+			CriteriaDefinition criterion = forwardChain.get(current);
+
+			if (criterion.getCombinator() != Combinator.INITIAL) {
+				stringBuilder.append(' ').append(criterion.getCombinator().name()).append(' ');
+			}
+
+			render(criterion, stringBuilder);
+
+			current = criterion;
+		}
+	}
+
+	private void unrollGroup(List<? extends CriteriaDefinition> criteria, StringBuilder stringBuilder) {
+
+		stringBuilder.append("(");
+
+		boolean first = true;
+		for (CriteriaDefinition criterion : criteria) {
+
+			if (criterion.isEmpty()) {
+				continue;
+			}
+
+			if (!first) {
+				Combinator combinator = criterion.getCombinator() == Combinator.INITIAL ? Combinator.AND
+						: criterion.getCombinator();
+				stringBuilder.append(' ').append(combinator.name()).append(' ');
+			}
+
+			unroll(criterion, stringBuilder);
+			first = false;
+		}
+
+		stringBuilder.append(")");
+	}
+
+	private void render(CriteriaDefinition criteria, StringBuilder stringBuilder) {
+
+		if (criteria.isEmpty()) {
+			return;
+		}
+
+		if (criteria.isGroup()) {
+			unrollGroup(criteria.getGroup(), stringBuilder);
+			return;
+		}
+
+		stringBuilder.append(criteria.getColumn().toSql(IdentifierProcessing.NONE)).append(' ')
+				.append(criteria.getComparator().getComparator());
+
+		switch (criteria.getComparator()) {
+			case BETWEEN:
+			case NOT_BETWEEN:
+				Pair<Object, Object> pair = (Pair<Object, Object>) criteria.getValue();
+				stringBuilder.append(' ').append(pair.getFirst()).append(" AND ").append(pair.getSecond());
+				break;
+
+			case IS_NULL:
+			case IS_NOT_NULL:
+			case IS_TRUE:
+			case IS_FALSE:
+				break;
+
+			case IN:
+			case NOT_IN:
+				stringBuilder.append(" (").append(renderValue(criteria.getValue())).append(')');
+				break;
+
+			default:
+				stringBuilder.append(' ').append(renderValue(criteria.getValue()));
+		}
+	}
+
+	private static String renderValue(@Nullable Object value) {
+
+		if (value instanceof Number) {
+			return value.toString();
+		}
+
+		if (value instanceof Collection) {
+
+			StringJoiner joiner = new StringJoiner(", ");
+			((Collection<?>) value).forEach(o -> joiner.add(renderValue(o)));
+			return joiner.toString();
+		}
+
+		if (value != null) {
+			return String.format("'%s'", value);
+		}
+
+		return "null";
 	}
 
 	/**

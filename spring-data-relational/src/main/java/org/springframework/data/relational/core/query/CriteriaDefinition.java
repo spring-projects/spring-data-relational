@@ -135,6 +135,18 @@ public interface CriteriaDefinition {
 	}
 
 	enum Comparator {
-		INITIAL, EQ, NEQ, BETWEEN, NOT_BETWEEN, LT, LTE, GT, GTE, IS_NULL, IS_NOT_NULL, LIKE, NOT_LIKE, NOT_IN, IN, IS_TRUE, IS_FALSE
+		INITIAL(""), EQ("="), NEQ("!="), BETWEEN("BETWEEN"), NOT_BETWEEN("NOT BETWEEN"), LT("<"), LTE("<="), GT(">"), GTE(
+				">="), IS_NULL("IS NULL"), IS_NOT_NULL("IS NOT NULL"), LIKE(
+						"LIKE"), NOT_LIKE("NOT LIKE"), NOT_IN("NOT IN"), IN("IN"), IS_TRUE("IS TRUE"), IS_FALSE("IS FALSE");
+
+		private final String comparator;
+
+		Comparator(String comparator) {
+			this.comparator = comparator;
+		}
+
+		public String getComparator() {
+			return comparator;
+		}
 	}
 }
