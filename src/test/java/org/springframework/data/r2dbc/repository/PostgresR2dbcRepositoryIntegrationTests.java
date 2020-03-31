@@ -15,24 +15,34 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
+import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.spi.ConnectionFactory;
+import lombok.AllArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -47,9 +57,12 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 
 	@ClassRule public static final ExternalDatabase database = PostgresTestSupport.database();
 
+	@Autowired JsonPersonRepository jsonPersonRepository;
+
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(classes = PostgresLegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE))
+			includeFilters = @Filter(classes = { PostgresLegoSetRepository.class, JsonPersonRepository.class },
+					type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
 		@Bean
@@ -92,5 +105,38 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 		@Override
 		@Query("SELECT id FROM legoset")
 		Flux<Integer> findAllIds();
+	}
+
+	@Test
+	public void shouldSaveAndLoadJson() {
+
+		JdbcTemplate template = new JdbcTemplate(createDataSource());
+
+		template.execute("DROP TABLE IF EXISTS json_person");
+		template.execute("CREATE TABLE json_person (\n" //
+				+ "    id          SERIAL PRIMARY KEY,\n" //
+				+ "    json_value  JSONB NOT NULL" //
+				+ ");");
+
+		JsonPerson person = new JsonPerson(null, Json.of("{\"hello\": \"world\"}"));
+		jsonPersonRepository.save(person).as(StepVerifier::create).expectNextCount(1).verifyComplete();
+
+		jsonPersonRepository.findAll().as(StepVerifier::create).consumeNextWith(actual -> {
+
+			assertThat(actual.jsonValue).isNotNull();
+			assertThat(actual.jsonValue.asString()).isEqualTo("{\"hello\": \"world\"}");
+		}).verifyComplete();
+	}
+
+	@AllArgsConstructor
+	static class JsonPerson {
+
+		@Id Long id;
+
+		Json jsonValue;
+	}
+
+	interface JsonPersonRepository extends ReactiveCrudRepository<JsonPerson, Long> {
+
 	}
 }

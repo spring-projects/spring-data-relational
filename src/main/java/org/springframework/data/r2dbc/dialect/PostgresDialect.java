@@ -22,8 +22,20 @@ import org.springframework.util.ClassUtils;
 public class PostgresDialect extends org.springframework.data.relational.core.dialect.PostgresDialect
 		implements R2dbcDialect {
 
-	private static final Set<Class<?>> SIMPLE_TYPES = new HashSet<>(
-			Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class));
+	private static final Set<Class<?>> SIMPLE_TYPES;
+
+	static {
+
+		Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class));
+
+		if (ClassUtils.isPresent("io.r2dbc.postgresql.codec.Json", PostgresDialect.class.getClassLoader())) {
+
+			simpleTypes
+					.add(ClassUtils.resolveClassName("io.r2dbc.postgresql.codec.Json", PostgresDialect.class.getClassLoader()));
+		}
+
+		SIMPLE_TYPES = simpleTypes;
+	}
 
 	/**
 	 * Singleton instance.
