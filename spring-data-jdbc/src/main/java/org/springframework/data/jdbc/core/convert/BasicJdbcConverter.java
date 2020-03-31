@@ -24,18 +24,16 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.jdbc.core.convert.ResultSetWrapper.SpecialColumnValue;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.support.JdbcUtil;
-import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mapping.model.PropertyValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -77,7 +75,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and a
 	 * {@link JdbcTypeFactory#unsupported() no-op type factory} throwing {@link UnsupportedOperationException} on type
-	 * creation. Use {@link #BasicJdbcConverter(MappingContext, RelationResolver, CustomConversions, JdbcTypeFactory, IdentifierProcessing)}
+	 * creation. Use
+	 * {@link #BasicJdbcConverter(MappingContext, RelationResolver, CustomConversions, JdbcTypeFactory, IdentifierProcessing)}
 	 * (MappingContext, RelationResolver, JdbcTypeFactory)} to convert arrays and large objects into JDBC-specific types.
 	 *
 	 * @param context must not be {@literal null}.
@@ -106,9 +105,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 * @since 2.0
 	 */
 	public BasicJdbcConverter(
-		MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
-		RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory,
-		IdentifierProcessing identifierProcessing) {
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
+			RelationResolver relationResolver, CustomConversions conversions, JdbcTypeFactory typeFactory,
+			IdentifierProcessing identifierProcessing) {
 
 		super(context, conversions);
 
@@ -199,7 +198,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	@Nullable
 	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
 
-		if (value == null || value == SpecialColumnValue.NO_SUCH_COLUMN) {
+		if (value == null) {
 			return value;
 		}
 
@@ -320,36 +319,31 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T mapRow(RelationalPersistentEntity<T> entity, ResultSetWrapper resultSet, Object key) {
-		return new ReadingContext<T>(
-				new PersistentPropertyPathExtension(
-						getMappingContext(), entity),
-				resultSet, Identifier.empty(), key).mapRow();
+	public <T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key) {
+		return new ReadingContext<T>(new PersistentPropertyPathExtension(getMappingContext(), entity),
+				new ResultSetAccessor(resultSet), Identifier.empty(), key).mapRow();
 	}
 
 	@Override
-	public <T> T mapRow(PersistentPropertyPathExtension path, ResultSetWrapper resultSet, Identifier identifier,
-			Object key) {
-		return new ReadingContext<T>(path, resultSet, identifier, key).mapRow();
+	public <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
+		return new ReadingContext<T>(path, new ResultSetAccessor(resultSet), identifier, key).mapRow();
 	}
 
 	private class ReadingContext<T> {
 
 		private final RelationalPersistentEntity<T> entity;
 
-		private final ResultSetWrapper resultSet;
 		private final PersistentPropertyPathExtension rootPath;
 		private final PersistentPropertyPathExtension path;
 		private final Identifier identifier;
 		private final Object key;
 
-		private final PropertyValueProvider<RelationalPersistentProperty> propertyValueProvider;
-		private final PropertyValueProvider<RelationalPersistentProperty> backReferencePropertyValueProvider;
+		private final JdbcPropertyValueProvider propertyValueProvider;
+		private final JdbcBackReferencePropertyValueProvider backReferencePropertyValueProvider;
 
 		@SuppressWarnings("unchecked")
-		private ReadingContext(PersistentPropertyPathExtension rootPath, ResultSetWrapper resultSet, Identifier identifier,
+		private ReadingContext(PersistentPropertyPathExtension rootPath, ResultSetAccessor accessor, Identifier identifier,
 				Object key) {
 
 			RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) rootPath.getLeafEntity();
@@ -357,38 +351,33 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			Assert.notNull(entity, "The rootPath must point to an entity.");
 
 			this.entity = entity;
-			this.resultSet = resultSet;
 			this.rootPath = rootPath;
-			this.path = new PersistentPropertyPathExtension(
-					getMappingContext(),
-					this.entity);
+			this.path = new PersistentPropertyPathExtension(getMappingContext(), this.entity);
 			this.identifier = identifier;
 			this.key = key;
-			propertyValueProvider = new JdbcPropertyValueProvider(identifierProcessing, path, resultSet);
-			backReferencePropertyValueProvider = new JdbcBackReferencePropertyValueProvider(identifierProcessing, path,
-					resultSet);
+			this.propertyValueProvider = new JdbcPropertyValueProvider(identifierProcessing, path, accessor);
+			this.backReferencePropertyValueProvider = new JdbcBackReferencePropertyValueProvider(identifierProcessing, path,
+					accessor);
 		}
 
-		private ReadingContext(RelationalPersistentEntity<T> entity, ResultSetWrapper resultSet,
-				PersistentPropertyPathExtension rootPath, PersistentPropertyPathExtension path, Identifier identifier,
-				Object key) {
-
+		private ReadingContext(RelationalPersistentEntity<T> entity, PersistentPropertyPathExtension rootPath,
+				PersistentPropertyPathExtension path, Identifier identifier, Object key,
+				JdbcPropertyValueProvider propertyValueProvider,
+				JdbcBackReferencePropertyValueProvider backReferencePropertyValueProvider) {
 			this.entity = entity;
-			this.resultSet = resultSet;
 			this.rootPath = rootPath;
 			this.path = path;
 			this.identifier = identifier;
 			this.key = key;
-
-			propertyValueProvider = new JdbcPropertyValueProvider(identifierProcessing, path, resultSet);
-			backReferencePropertyValueProvider = new JdbcBackReferencePropertyValueProvider(identifierProcessing, path,
-					resultSet);
+			this.propertyValueProvider = propertyValueProvider;
+			this.backReferencePropertyValueProvider = backReferencePropertyValueProvider;
 		}
 
 		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
 			return new ReadingContext<>(
 					(RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()),
-					resultSet, rootPath.extendBy(property), path.extendBy(property), identifier, key);
+					rootPath.extendBy(property), path.extendBy(property), identifier, key,
+					propertyValueProvider.extendBy(property), backReferencePropertyValueProvider.extendBy(property));
 		}
 
 		T mapRow() {
@@ -412,11 +401,16 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 					continue;
 				}
 
-				Object value = readOrLoadProperty(idValue, property);
-				if (value != SpecialColumnValue.NO_SUCH_COLUMN) {
-					propertyAccessor.setProperty(property, value);
+				// skip absent simple properties
+				if (isSimpleProperty(property)) {
+
+					if (!propertyValueProvider.hasProperty(property)) {
+						continue;
+					}
 				}
 
+				Object value = readOrLoadProperty(idValue, property);
+				propertyAccessor.setProperty(property, value);
 			}
 
 			return propertyAccessor.getBean();
@@ -467,8 +461,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			}
 
 			Object value = propertyValueProvider.getPropertyValue(property);
-			return value == SpecialColumnValue.NO_SUCH_COLUMN ? SpecialColumnValue.NO_SUCH_COLUMN
-					: readValue(value, property.getTypeInformation());
+			return value != null ? readValue(value, property.getTypeInformation()) : null;
 		}
 
 		@Nullable
@@ -501,7 +494,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				}
 
 				Object value = readOrLoadProperty(idValue, embeddedProperty);
-				if (value != null && value != SpecialColumnValue.NO_SUCH_COLUMN) {
+				if (value != null) {
 					return true;
 				}
 			}
@@ -541,21 +534,15 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
 
 				RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
-
-				Object value = readOrLoadProperty(idValue, property);
-
-				if (value == SpecialColumnValue.NO_SUCH_COLUMN) {
-
-					throw new MappingException(
-							String.format("Couldn't create instance of type %s with id. No column found for argument named '%s'.",
-									entity.getType(), parameterName));
-				}
-
-				return value;
+				return readOrLoadProperty(idValue, property);
 			});
 			return populateProperties(instance, idValue);
 		}
 
+	}
+
+	private boolean isSimpleProperty(RelationalPersistentProperty property) {
+		return !property.isCollectionLike() && !property.isEntity() && !property.isMap() && !property.isEmbedded();
 	}
 
 }

@@ -444,14 +444,14 @@ For converting the query result into entities the same `RowMapper` is used by de
 The query you provide must match the format the `RowMapper` expects.
 Columns for all properties that are used in the constructor of an entity must be provided.
 Columns for properties that get set via setter, wither or field access are optional.
-Properties that don't have a matching column will not get set.
-The query is used for populating the aggregate root, embedded entities and one to one relationships including arrays of primitive types which get stored and loaded as SQL-array-types.
-For maps, lists, sets and arrays of entities separate queries get generated.
+Properties that don't have a matching column in the result will not be set.
+The query is used for populating the aggregate root, embedded entities and one-to-one relationships including arrays of primitive types which get stored and loaded as SQL-array-types.
+Separate queries are generated for maps, lists, sets and arrays of entities.
 
-NOTE: Spring fully supports Java 8’s parameter name discovery based on the `-parameters` compiler flag. By using this flag in your build as an alternative to debug information, you can omit the `@Param` annotation for named parameters.
+NOTE: Spring fully supports Java 8’s parameter name discovery based on the `-parameters` compiler flag.
+By using this flag in your build as an alternative to debug information, you can omit the `@Param` annotation for named parameters.
 
 NOTE: Spring Data JDBC supports only named parameters.
-
 
 [[jdbc.query-methods.named-query]]
 === Named Queries

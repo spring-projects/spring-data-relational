@@ -54,7 +54,7 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @param <T>
 	 * @return
 	 */
-	<T> T mapRow(RelationalPersistentEntity<T> entity, ResultSetWrapper resultSet, Object key);
+	<T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key);
 
 	/**
 	 * Read the current row from {@link ResultSet} to an {@link PersistentPropertyPathExtension#getActualType() entity}.
@@ -66,7 +66,7 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @param <T>
 	 * @return
 	 */
-	<T> T mapRow(PersistentPropertyPathExtension path, ResultSetWrapper resultSet, Identifier identifier, Object key);
+	<T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key);
 
 	/**
 	 * The type to be used to store this property in the database. Multidimensional arrays are unwrapped to reflect a

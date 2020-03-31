@@ -43,17 +43,16 @@ import java.util.stream.Stream;
 
 import javax.naming.OperationNotSupportedException;
 
-import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
@@ -476,10 +475,10 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP);
 		rs.next();
 
-		assertThatThrownBy(() -> createRowMapper(TrivialImmutable.class).mapRow(rs, 1)) //
-				.hasMessageContaining("TrivialImmutable") //
-				.hasMessageContaining("name");
+		TrivialImmutable trivialImmutable = createRowMapper(TrivialImmutable.class).mapRow(rs, 1);
 
+		assertThat(trivialImmutable.id).isEqualTo(23L);
+		assertThat(trivialImmutable.name).isNull();
 	}
 
 	@Test // DATAJDBC-341
@@ -530,16 +529,15 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void immutableEmbeddedWithSomeColumnsMissingShouldThrowAnException() throws SQLException {
+	public void immutableEmbeddedWithSomeColumnsMissingShouldNotBeEmpty() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "VALUE"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "some value");
 		rs.next();
 
-		Assertions.assertThatThrownBy( //
-				() -> createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs, 1) //
-		).isInstanceOf(MappingException.class) //
-				.hasMessageContaining("'name'");
+		WithNullableEmbeddedImmutableValue result = createRowMapper(WithNullableEmbeddedImmutableValue.class).mapRow(rs, 1);
+
+		assertThat(result.embeddedImmutableValue).isNotNull();
 	}
 
 	@Test // DATAJDBC-341
@@ -620,19 +618,6 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void immutableOneToOneWithMissingColumnResultsInException() throws SQLException {
-
-		ResultSet rs = mockResultSet(asList("ID", "NAME", "CHILD_ID"), //
-				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L);
-		rs.next();
-
-		Assertions.assertThatThrownBy( //
-				() -> createRowMapper(OneToOneImmutable.class).mapRow(rs, 1) //
-		).isInstanceOf(MappingException.class) //
-				.hasMessageContaining("'name'");
-	}
-
-	@Test // DATAJDBC-341
 	public void oneToOneWithMissingIdColumnResultsInNullProperty() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "CHILD_NAME"), //
@@ -641,10 +626,7 @@ public class EntityRowMapperUnitTests {
 
 		OneToOne extracted = createRowMapper(OneToOne.class).mapRow(rs, 1);
 
-		assertThat(extracted) //
-				.isNotNull() //
-				.extracting(e -> e.id, e -> e.name, e -> e.child.id, e -> e.child.name) //
-				.containsExactly(ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", null, "Alfred");
+		assertThat(extracted.child).isNull();
 	}
 
 	@Test // DATAJDBC-341
@@ -654,10 +636,11 @@ public class EntityRowMapperUnitTests {
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", "Alfred");
 		rs.next();
 
-		Assertions.assertThatThrownBy( //
-				() -> createRowMapper(OneToOneImmutable.class).mapRow(rs, 1) //
-		).isInstanceOf(MappingException.class) //
-				.hasMessageContaining("'id'");
+		OneToOneImmutable result = createRowMapper(OneToOneImmutable.class).mapRow(rs, 1);
+
+		assertThat(result.id).isEqualTo(23);
+		assertThat(result.name).isEqualTo("alpha");
+		assertThat(result.child).isNull();
 	}
 
 	// Model classes to be used in tests

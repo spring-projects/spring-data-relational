@@ -21,7 +21,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
- * {@link PropertyValueProvider} obtaining values from a {@link ResultSetWrapper}.
+ * {@link PropertyValueProvider} obtaining values from a {@link ResultSetAccessor}.
  *
  * @author Jens Schauder
  * @since 2.0
@@ -30,15 +30,16 @@ class JdbcPropertyValueProvider implements PropertyValueProvider<RelationalPersi
 
 	private final IdentifierProcessing identifierProcessing;
 	private final PersistentPropertyPathExtension basePath;
-	private final ResultSetWrapper resultSet;
+	private final ResultSetAccessor resultSet;
 
 	/**
-	 * @param identifierProcessing used for converting the {@link org.springframework.data.relational.core.sql.SqlIdentifier} from a property to a column label
+	 * @param identifierProcessing used for converting the
+	 *          {@link org.springframework.data.relational.core.sql.SqlIdentifier} from a property to a column label
 	 * @param basePath path from the aggregate root relative to which all properties get resolved.
-	 * @param resultSet the {@link ResultSetWrapper} from which to obtain the actual values.
+	 * @param resultSet the {@link ResultSetAccessor} from which to obtain the actual values.
 	 */
 	JdbcPropertyValueProvider(IdentifierProcessing identifierProcessing, PersistentPropertyPathExtension basePath,
-			ResultSetWrapper resultSet) {
+			ResultSetAccessor resultSet) {
 
 		this.resultSet = resultSet;
 		this.basePath = basePath;
@@ -47,8 +48,24 @@ class JdbcPropertyValueProvider implements PropertyValueProvider<RelationalPersi
 
 	@Override
 	public <T> T getPropertyValue(RelationalPersistentProperty property) {
+		return (T) resultSet.getObject(getColumnName(property));
+	}
 
-		String columnName = basePath.extendBy(property).getColumnAlias().getReference(identifierProcessing);
-		return (T) resultSet.getObject(columnName);
+	/**
+	 * Returns whether the underlying source contains a data source for the given {@link RelationalPersistentProperty}.
+	 *
+	 * @param property
+	 * @return
+	 */
+	public boolean hasProperty(RelationalPersistentProperty property) {
+		return resultSet.hasValue(getColumnName(property));
+	}
+
+	private String getColumnName(RelationalPersistentProperty property) {
+		return basePath.extendBy(property).getColumnAlias().getReference(identifierProcessing);
+	}
+
+	public JdbcPropertyValueProvider extendBy(RelationalPersistentProperty property) {
+		return new JdbcPropertyValueProvider(identifierProcessing, basePath.extendBy(property), resultSet);
 	}
 }
