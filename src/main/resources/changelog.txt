@@ -1,6 +1,23 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.0.RC1 (2020-03-31)
+-----------------------------------------
+* DATAJDBC-516 - BasicRelationalConverter too aggressively trying to convert entities.
+* DATAJDBC-514 - Add infrastructure for query derivation in Spring Data Relational.
+* DATAJDBC-513 - Introduce Query, Criteria and Update Objects for Spring Data Relational.
+* DATAJDBC-512 - Add default dialect for H2 Database.
+* DATAJDBC-510 - Add BasicJdbcConverter constructor with IdentifierProcessing.
+* DATAJDBC-509 - Fix findByFirstnameLike @Query example in README.
+* DATAJDBC-506 - Fix some typos in code and documentation.
+* DATAJDBC-504 - Release 2.0 RC1 (Neumann).
+* DATAJDBC-487 - Default IdentifierProcessing should respect JDBC driver's setting.
+* DATAJDBC-455 - Database Dialect discovery.
+* DATAJDBC-454 - Remove ids from events where full entities are present.
+* DATAJDBC-453 - Bring DbAction and AggregateChange into a form that is somewhat future proof.
+* DATAJDBC-341 - Map NULL values in EntityRowMapper for columns not being fetched in the query.
+
+
 Changes in version 1.1.6.RELEASE (2020-03-25)
 ---------------------------------------------
 * DATAJDBC-509 - Fix findByFirstnameLike @Query example in README.
@@ -395,6 +412,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
