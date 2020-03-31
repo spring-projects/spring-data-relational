@@ -37,6 +37,7 @@ import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -177,7 +178,18 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return null;
 		}
 
-		Class<?> rawType = type.getType();
+		if (getConversions().isSimpleType(value.getClass())) {
+
+			if (ClassTypeInformation.OBJECT != type) {
+
+				if (conversionService.canConvert(value.getClass(), type.getType())) {
+					value = conversionService.convert(value, type.getType());
+				}
+			}
+
+			return getPotentiallyConvertedSimpleWrite(value);
+		}
+
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(value.getClass());
 
 		if (persistentEntity != null) {
@@ -186,11 +198,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return writeValue(id, type);
 		}
 
-		if (rawType.isInstance(value)) {
-			return getPotentiallyConvertedSimpleWrite(value);
-		}
-
-		return conversionService.convert(value, rawType);
+		return conversionService.convert(value, type.getType());
 	}
 
 	/**
