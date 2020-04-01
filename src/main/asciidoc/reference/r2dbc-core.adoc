@@ -252,7 +252,7 @@ As of this writing, the following drivers are available:
 * https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
 * https://github.com/r2dbc/r2dbc-h2[H2] (`io.r2dbc:r2dbc-h2`)
 * https://github.com/r2dbc/r2dbc-mssql[Microsoft SQL Server] (`io.r2dbc:r2dbc-mssql`)
-* https://github.com/mirromutth/r2dbc-mysql[MySQL] (`com.github.mirromutth:r2dbc-mysql`)
+* https://github.com/mirromutth/r2dbc-mysql[MySQL] (`dev.miku:r2dbc-mysql`)
 * https://github.com/jasync-sql/jasync-sql[jasync-sql MySQL] (`com.github.jasync-sql:jasync-r2dbc-mysql`)
 
 Spring Data R2DBC reacts to database specifics by inspecting the `ConnectionFactory` and selects the appropriate database dialect accordingly.
