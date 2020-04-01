@@ -16,8 +16,6 @@
 package org.springframework.data.relational.repository.query;
 
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.EntityInstantiator;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -25,6 +23,8 @@ import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.SimplePropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mapping.model.EntityInstantiator;
+import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -46,7 +46,7 @@ public class DtoInstantiatingConverter implements Converter<Object, Object> {
 	 *
 	 * @param dtoType must not be {@literal null}.
 	 * @param context must not be {@literal null}.
-	 * @param instantiators must not be {@literal null}.
+	 * @param instantiator must not be {@literal null}.
 	 */
 	public DtoInstantiatingConverter(Class<?> dtoType,
 									 MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
