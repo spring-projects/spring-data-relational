@@ -21,8 +21,8 @@ import reactor.core.publisher.Mono;
 import org.reactivestreams.Publisher;
 
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.EntityInstantiators;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.r2dbc.core.FetchSpec;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
