@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.mapping;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
+import junit.framework.AssertionFailedError;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -27,9 +28,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 
@@ -60,7 +63,9 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 		RelationalPersistentProperty listProperty = entity.getRequiredPersistentProperty("someList");
 
-		assertThat(listProperty.getReverseColumnName()).isEqualTo(quoted("dummy_column_name"));
+		PersistentPropertyPath<RelationalPersistentProperty> path = context.findPersistentPropertyPaths(DummyEntity.class, p -> p.getName().equals("someList")).getFirst().orElseThrow(() -> new AssertionFailedError("Couldn't find path for 'someList'"));
+
+		assertThat(listProperty.getReverseColumnName(new PersistentPropertyPathExtension(context, path))).isEqualTo(quoted("dummy_column_name"));
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
 	}
 

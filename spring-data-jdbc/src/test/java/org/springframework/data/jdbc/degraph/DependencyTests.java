@@ -37,9 +37,6 @@ public class DependencyTests {
 				classpath() //
 						.noJars() //
 						.including("org.springframework.data.jdbc.**") //
-						// the following exclusion exclude deprecated classes necessary for backward compatibility.
-						.excluding("org.springframework.data.jdbc.core.EntityRowMapper") //
-						.excluding("org.springframework.data.jdbc.core.DefaultDataAccessStrategy") //
 						.filterClasspath("*target/classes") // exclude test code
 						.printOnFailure("degraph-jdbc.graphml"),
 				JCheck.violationFree());
@@ -52,9 +49,6 @@ public class DependencyTests {
 				classpath() //
 						// include only Spring Data related classes (for example no JDK code)
 						.including("org.springframework.data.**") //
-						// the following exclusion exclude deprecated classes necessary for backward compatibility.
-						.excluding("org.springframework.data.jdbc.core.EntityRowMapper") //
-						.excluding("org.springframework.data.jdbc.core.DefaultDataAccessStrategy") //
 						.filterClasspath(new AbstractFunction1<String, Object>() {
 							@Override
 							public Object apply(String s) { //
