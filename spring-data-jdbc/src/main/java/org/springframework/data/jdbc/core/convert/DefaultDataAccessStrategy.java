@@ -100,16 +100,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
 	 */
 	@Override
-	@Nullable
-	public <T> Object insert(T instance, Class<T> domainType, Map<SqlIdentifier, Object> additionalParameters) {
-		return insert(instance, domainType, Identifier.from(additionalParameters));
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
-	 */
-	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 
 		SqlGenerator sqlGenerator = sql(domainType);
@@ -344,21 +334,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		identifier.toMap().forEach(parameterSource::addValue);
 
 		return parameterSource;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllByProperty(java.lang.Object, org.springframework.data.jdbc.mapping.model.JdbcPersistentProperty)
-	 */
-	@Override
-	@SuppressWarnings("unchecked")
-	public Iterable<Object> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
-
-		Assert.notNull(rootId, "rootId must not be null.");
-
-		Class<?> rootType = property.getOwner().getType();
-		return findAllByPath(Identifier.of(property.getReverseColumnName(), rootId, rootType),
-				context.getPersistentPropertyPath(property.getName(), rootType));
 	}
 
 	/*

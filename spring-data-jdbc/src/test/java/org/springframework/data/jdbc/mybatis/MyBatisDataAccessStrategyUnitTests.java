@@ -22,14 +22,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
-import java.util.Collections;
-
-import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
@@ -39,8 +35,8 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.domain.Identifier;
 
 /**
  * Unit tests for the {@link MyBatisDataAccessStrategy}, mainly ensuring that the correct statements get's looked up.
@@ -71,7 +67,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	@Test // DATAJDBC-123
 	public void insert() {
 
-		accessStrategy.insert("x", String.class, Collections.singletonMap(unquoted("key"), "value"));
+		accessStrategy.insert("x", String.class, Identifier.from(singletonMap(unquoted("key"), "value")));
 
 		verify(session).insert(eq("java.lang.StringMapper.insert"), captor.capture());
 
@@ -269,35 +265,6 @@ public class MyBatisDataAccessStrategyUnitTests {
 	}
 
 	@SuppressWarnings("unchecked")
-	@Test // DATAJDBC-123
-	public void findAllByProperty() {
-
-		RelationalPersistentProperty property = mock(RelationalPersistentProperty.class, Mockito.RETURNS_DEEP_STUBS);
-
-		when(property.getOwner().getType()).thenReturn((Class) String.class);
-		doReturn(Number.class).when(property).getType();
-		doReturn("propertyName").when(property).getName();
-
-		accessStrategy.findAllByProperty("id", property);
-
-		verify(session).selectList(eq("java.lang.StringMapper.findAllByProperty-propertyName"), captor.capture());
-
-		assertThat(captor.getValue()) //
-				.isNotNull() //
-				.extracting( //
-						MyBatisContext::getInstance, //
-						MyBatisContext::getId, //
-						MyBatisContext::getDomainType, //
-						c -> c.get("key") //
-				).containsExactly( //
-						null, //
-						"id", //
-						Number.class, //
-						null //
-				);
-	}
-
-	@SuppressWarnings("unchecked")
 	@Test // DATAJDBC-384
 	public void findAllByPath() {
 
@@ -331,29 +298,6 @@ public class MyBatisDataAccessStrategyUnitTests {
 						Number.class, //
 						null //
 				);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Test // DATAJDBC-384
-	public void findAllByPathFallsBackToFindAllByProperty() {
-
-		RelationalPersistentProperty property = mock(RelationalPersistentProperty.class, RETURNS_DEEP_STUBS);
-		PersistentPropertyPath path = mock(PersistentPropertyPath.class, RETURNS_DEEP_STUBS);
-
-		when(path.getBaseProperty()).thenReturn(property);
-		when(property.getOwner().getType()).thenReturn((Class) String.class);
-
-		when(path.getRequiredLeafProperty()).thenReturn(property);
-		when(property.getType()).thenReturn((Class) Number.class);
-
-		when(path.toDotPath()).thenReturn("dot.path");
-
-		when(session.selectList(any(), any())).thenThrow(PersistenceException.class).thenReturn(emptyList());
-
-		accessStrategy.findAllByPath(Identifier.empty(), path);
-
-		verify(session, times(2)).selectList(any(), any());
-
 	}
 
 	@Test // DATAJDBC-123

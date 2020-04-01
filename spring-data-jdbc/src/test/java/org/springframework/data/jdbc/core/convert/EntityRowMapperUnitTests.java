@@ -874,14 +874,14 @@ public class EntityRowMapperUnitTests {
 		Set<Map.Entry<String, Trivial>> simpleEntriesWithStringKeys = trivials.stream()
 				.collect(Collectors.toMap(Trivial::getName, Function.identity())).entrySet();
 
-		doReturn(trivials).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
-				any(RelationalPersistentProperty.class));
+		doReturn(trivials).when(accessStrategy).findAllByPath(identifierOfValue(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
+				any(PersistentPropertyPath.class));
 
-		doReturn(simpleEntriesWithStringKeys).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_MAP),
-				any(RelationalPersistentProperty.class));
+		doReturn(simpleEntriesWithStringKeys).when(accessStrategy)
+				.findAllByPath(identifierOfValue(ID_FOR_ENTITY_REFERENCING_MAP), any(PersistentPropertyPath.class));
 
-		doReturn(simpleEntriesWithInts).when(accessStrategy).findAllByProperty(eq(ID_FOR_ENTITY_REFERENCING_LIST),
-				any(RelationalPersistentProperty.class));
+		doReturn(simpleEntriesWithInts).when(accessStrategy)
+				.findAllByPath(identifierOfValue(ID_FOR_ENTITY_REFERENCING_LIST), any(PersistentPropertyPath.class));
 
 		doReturn(trivials).when(accessStrategy).findAllByPath(identifierOfValue(ID_FOR_ENTITY_NOT_REFERENCING_MAP),
 				any(PersistentPropertyPath.class));
