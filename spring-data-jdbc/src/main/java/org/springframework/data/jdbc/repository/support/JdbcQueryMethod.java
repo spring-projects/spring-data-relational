@@ -37,10 +37,8 @@ import org.springframework.util.StringUtils;
  * @author Jens Schauder
  * @author Kazuki Shimizu
  * @author Moises Cisneros
- * @deprecated Visibility of this class will be reduced to package private.
  */
-@Deprecated
-public class JdbcQueryMethod extends QueryMethod {
+class JdbcQueryMethod extends QueryMethod {
 
 	private final Method method;
 	private final NamedQueries namedQueries;

@@ -26,7 +26,6 @@ import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -120,17 +119,6 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	@Autowired(required = false)
 	public void setQueryMappingConfiguration(QueryMappingConfiguration queryMappingConfiguration) {
 		this.queryMappingConfiguration = queryMappingConfiguration;
-	}
-
-	/**
-	 * @param rowMapperMap can be {@literal null}. {@link #afterPropertiesSet()} defaults to {@link RowMapperMap#EMPTY} if
-	 *          {@literal null}.
-	 * @deprecated use {@link #setQueryMappingConfiguration(QueryMappingConfiguration)} instead.
-	 */
-	@Deprecated
-	@Autowired(required = false)
-	public void setRowMapperMap(RowMapperMap rowMapperMap) {
-		setQueryMappingConfiguration(rowMapperMap);
 	}
 
 	public void setJdbcOperations(NamedParameterJdbcOperations operations) {

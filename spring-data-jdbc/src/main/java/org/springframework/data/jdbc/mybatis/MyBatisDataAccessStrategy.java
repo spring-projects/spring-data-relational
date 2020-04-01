@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.ibatis.exceptions.PersistenceException;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
@@ -142,20 +141,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(namespaceStrategy, "The NamespaceStrategy must not be null");
 
 		this.namespaceStrategy = namespaceStrategy;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
-	 */
-	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Map<SqlIdentifier, Object> additionalParameters) {
-
-		MyBatisContext myBatisContext = new MyBatisContext(null, instance, domainType,
-				convertToParameterMap(additionalParameters));
-		sqlSession().insert(namespace(domainType) + ".insert", myBatisContext);
-
-		return myBatisContext.getId();
 	}
 
 	/*
@@ -304,28 +289,9 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		String statementName = namespace(path.getBaseProperty().getOwner().getType()) + ".findAllByPath-"
 				+ path.toDotPath();
 
-		try {
-			return sqlSession().selectList(statementName,
-					new MyBatisContext(identifier, null, path.getRequiredLeafProperty().getType()));
-		} catch (PersistenceException pex) {
+		return sqlSession().selectList(statementName,
+				new MyBatisContext(identifier, null, path.getRequiredLeafProperty().getType()));
 
-			LOG.debug(String.format("Didn't find %s in the MyBatis session. Falling back to findAllByPath.", statementName),
-					pex);
-
-			return DataAccessStrategy.super.findAllByPath(identifier, path);
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllByProperty(java.lang.Object, org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
-	 */
-	@Override
-	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
-
-		String statement = namespace(property.getOwner().getType()) + ".findAllByProperty-" + property.getName();
-		MyBatisContext parameter = new MyBatisContext(rootId, null, property.getType(), Collections.emptyMap());
-		return sqlSession().selectList(statement, parameter);
 	}
 
 	/*

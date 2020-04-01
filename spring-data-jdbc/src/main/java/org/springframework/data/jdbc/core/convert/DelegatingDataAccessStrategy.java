@@ -15,13 +15,10 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.Map;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.domain.Identifier;
 import org.springframework.util.Assert;
 
@@ -37,15 +34,6 @@ import org.springframework.util.Assert;
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	private DataAccessStrategy delegate;
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
-	 */
-	@Override
-	public <T> Object insert(T instance, Class<T> domainType, Map<SqlIdentifier, Object> additionalParameters) {
-		return delegate.insert(instance, domainType, additionalParameters);
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -167,18 +155,6 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	public Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 		return delegate.findAllByPath(identifier, path);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllByProperty(java.lang.Object, org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
-	 */
-	@Override
-	public <T> Iterable<T> findAllByProperty(Object rootId, RelationalPersistentProperty property) {
-
-		Assert.notNull(delegate, "Delegate is null");
-
-		return delegate.findAllByProperty(rootId, property);
 	}
 
 	/*

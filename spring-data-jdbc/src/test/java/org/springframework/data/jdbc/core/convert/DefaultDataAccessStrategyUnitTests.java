@@ -39,6 +39,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -88,7 +89,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		additionalParameters.put(SqlIdentifier.quoted("ID"), ID_FROM_ADDITIONAL_VALUES);
 
-		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
+		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, Identifier.from( additionalParameters));
 
 		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\" (\"ID\") VALUES (:ID)"),
 				paramSourceCaptor.capture(), any(KeyHolder.class));
@@ -101,7 +102,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		additionalParameters.put(unquoted("reference"), ID_FROM_ADDITIONAL_VALUES);
 
-		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, additionalParameters);
+		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, Identifier.from(additionalParameters));
 
 		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 
@@ -134,7 +135,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		EntityWithBoolean entity = new EntityWithBoolean(ORIGINAL_ID, true);
 
-		accessStrategy.insert(entity, EntityWithBoolean.class, new HashMap<>());
+		accessStrategy.insert(entity, EntityWithBoolean.class, Identifier.empty());
 
 		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
 

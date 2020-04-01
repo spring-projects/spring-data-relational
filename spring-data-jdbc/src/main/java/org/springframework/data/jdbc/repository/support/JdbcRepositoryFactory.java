@@ -22,7 +22,6 @@ import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
-import org.springframework.data.jdbc.repository.RowMapperMap;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -90,15 +89,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null!");
 
 		this.queryMappingConfiguration = queryMappingConfiguration;
-	}
-
-	/**
-	 * @param rowMapperMap must not be {@literal null} consider {@link RowMapperMap#EMPTY} instead.
-	 * @deprecated use {@link #setQueryMappingConfiguration(QueryMappingConfiguration)} instead
-	 */
-	@Deprecated
-	public void setRowMapperMap(RowMapperMap rowMapperMap) {
-		setQueryMappingConfiguration(rowMapperMap);
 	}
 
 	@SuppressWarnings("unchecked")

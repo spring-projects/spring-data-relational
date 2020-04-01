@@ -104,8 +104,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.map(this::createSqlIdentifier)); //
 
 		this.collectionKeyColumnName = Lazy.of(() -> Optionals //
-				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn), //
-						Optional.ofNullable(findAnnotation(Column.class)).map(Column::keyColumn)) //
+				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn)) //
 				.filter(StringUtils::hasText).findFirst() //
 				.map(this::createSqlIdentifier) //
 				.orElseGet(() -> createDerivedSqlIdentifier(namingStrategy.getKeyColumn(this))));
@@ -162,16 +161,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	public RelationalPersistentEntity<?> getOwner() {
 		return (RelationalPersistentEntity<?>) super.getOwner();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getReverseColumnName()
-	 */
-	@Override
-	public SqlIdentifier getReverseColumnName() {
-		return collectionIdColumnName.get()
-				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(this)));
 	}
 
 	/*
