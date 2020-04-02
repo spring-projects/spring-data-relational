@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.repository.query;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.PreparedOperation;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -43,6 +44,7 @@ import org.springframework.util.Assert;
 public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 
 	private final PartTree tree;
+	private final RelationalParameterAccessor accessor;
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 	private final RelationalEntityMetadata<?> entityMetadata;
 
@@ -58,10 +60,12 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 	public R2dbcQueryCreator(PartTree tree, ReactiveDataAccessStrategy dataAccessStrategy,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor) {
 		super(tree, accessor);
-		this.tree = tree;
 
 		Assert.notNull(dataAccessStrategy, "Data access strategy must not be null");
 		Assert.notNull(entityMetadata, "Relational entity metadata must not be null");
+
+		this.tree = tree;
+		this.accessor = accessor;
 
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.entityMetadata = entityMetadata;
@@ -85,6 +89,11 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 			selectSpec = selectSpec.limit(1);
 		} else if (tree.isLimiting()) {
 			selectSpec = selectSpec.limit(tree.getMaxResults());
+		}
+
+		Pageable pageable = accessor.getPageable();
+		if (pageable.isPaged()) {
+			selectSpec = selectSpec.limit(pageable.getPageSize()).offset(pageable.getOffset());
 		}
 
 		if (criteria != null) {

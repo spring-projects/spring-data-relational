@@ -29,6 +29,7 @@ import reactor.test.StepVerifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import javax.sql.DataSource;
 
@@ -40,6 +41,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
@@ -179,6 +182,53 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		assertThat(count).hasEntrySatisfying("count", numberOf(1));
 	}
 
+	@Test // gh-335
+	public void shouldFindByPageable() {
+
+		Flux<LegoSet> sets = Flux.fromStream(IntStream.range(0, 100).mapToObj(value -> {
+			return new LegoSet(null, "Set " + value, value);
+		}));
+
+		repository.saveAll(sets) //
+				.as(StepVerifier::create) //
+				.expectNextCount(100) //
+				.verifyComplete();
+
+		repository.findAllByOrderByManual(PageRequest.of(0, 10)) //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+
+					assertThat(actual).hasSize(10).extracting(LegoSet::getManual).containsSequence(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+				}).verifyComplete();
+
+		repository.findAllByOrderByManual(PageRequest.of(19, 5)) //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+
+					assertThat(actual).hasSize(5).extracting(LegoSet::getManual).containsSequence(95, 96, 97, 98, 99);
+				}).verifyComplete();
+	}
+
+	@Test // gh-335
+	public void shouldFindTop10() {
+
+		Flux<LegoSet> sets = Flux.fromStream(IntStream.range(0, 100).mapToObj(value -> {
+			return new LegoSet(null, "Set " + value, value);
+		}));
+
+		repository.saveAll(sets) //
+				.as(StepVerifier::create) //
+				.expectNextCount(100) //
+				.verifyComplete();
+
+		repository.findFirst10By() //
+				.as(StepVerifier::create) //
+				.expectNextCount(10) //
+				.verifyComplete();
+	}
+
 	@Test
 	public void shouldInsertItemsTransactional() {
 
@@ -211,6 +261,10 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
 
 		Flux<LegoSet> findByNameContains(String name);
+
+		Flux<LegoSet> findFirst10By();
+
+		Flux<LegoSet> findAllByOrderByManual(Pageable pageable);
 
 		Flux<Named> findAsProjection();
 
