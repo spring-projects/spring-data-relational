@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  * represent a group of nested criteria objects.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 2.0
  */
 public interface CriteriaDefinition {
@@ -45,7 +46,7 @@ public interface CriteriaDefinition {
 	 *
 	 * @return new {@link Criteria}.
 	 */
-	static CriteriaDefinition from(Criteria... criteria) {
+	static CriteriaDefinition from(CriteriaDefinition... criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
 		Assert.noNullElements(criteria, "Criteria must not contain null elements");
@@ -59,7 +60,7 @@ public interface CriteriaDefinition {
 	 * @return new {@link Criteria}.
 	 * @since 1.1
 	 */
-	static CriteriaDefinition from(List<Criteria> criteria) {
+	static CriteriaDefinition from(List<CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
 		Assert.noNullElements(criteria, "Criteria must not contain null elements");
@@ -80,7 +81,7 @@ public interface CriteriaDefinition {
 	 */
 	boolean isGroup();
 
-	List<? extends CriteriaDefinition> getGroup();
+	List<CriteriaDefinition> getGroup();
 
 	/**
 	 * @return the column/property name.

@@ -51,6 +51,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Oliver Drotbohm
  * @author Roman Chigvintsev
+ * @author Jens Schauder
  * @since 2.0
  */
 public class Criteria implements CriteriaDefinition {
@@ -59,7 +60,7 @@ public class Criteria implements CriteriaDefinition {
 
 	private final @Nullable Criteria previous;
 	private final Combinator combinator;
-	private final List<Criteria> group;
+	private final List<CriteriaDefinition> group;
 
 	private final @Nullable SqlIdentifier column;
 	private final @Nullable Comparator comparator;
@@ -70,12 +71,12 @@ public class Criteria implements CriteriaDefinition {
 		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, value, false);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group,
+	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
 			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
 		this(previous, combinator, group, column, comparator, value, false);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group,
+	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
 			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, boolean ignoreCase) {
 
 		this.previous = previous;
@@ -87,7 +88,7 @@ public class Criteria implements CriteriaDefinition {
 		this.ignoreCase = ignoreCase;
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group) {
+	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group) {
 
 		this.previous = previous;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
@@ -112,7 +113,7 @@ public class Criteria implements CriteriaDefinition {
 	 *
 	 * @return new {@link Criteria}.
 	 */
-	public static Criteria from(Criteria... criteria) {
+	public static CriteriaDefinition from(CriteriaDefinition... criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
 		Assert.noNullElements(criteria, "Criteria must not contain null elements");
@@ -125,7 +126,7 @@ public class Criteria implements CriteriaDefinition {
 	 *
 	 * @return new {@link Criteria}.
 	 */
-	public static Criteria from(List<Criteria> criteria) {
+	public static CriteriaDefinition from(List<CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
 		Assert.noNullElements(criteria, "Criteria must not contain null elements");
@@ -180,7 +181,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 * @since 1.1
 	 */
-	public Criteria and(Criteria criteria) {
+	public Criteria and(CriteriaDefinition criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
@@ -192,9 +193,8 @@ public class Criteria implements CriteriaDefinition {
 	 *
 	 * @param criteria criteria objects.
 	 * @return a new {@link Criteria} object.
-	 * @since 1.1
 	 */
-	public Criteria and(List<Criteria> criteria) {
+	public Criteria and(List<CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
@@ -227,7 +227,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 * @since 1.1
 	 */
-	public Criteria or(Criteria criteria) {
+	public Criteria or(CriteriaDefinition criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
@@ -241,7 +241,7 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 * @since 1.1
 	 */
-	public Criteria or(List<Criteria> criteria) {
+	public Criteria or(List<CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
@@ -312,7 +312,7 @@ public class Criteria implements CriteriaDefinition {
 			return false;
 		}
 
-		for (Criteria criteria : group) {
+		for (CriteriaDefinition criteria : group) {
 
 			if (!criteria.isEmpty()) {
 				return false;
@@ -336,7 +336,7 @@ public class Criteria implements CriteriaDefinition {
 		return combinator;
 	}
 
-	public List<Criteria> getGroup() {
+	public List<CriteriaDefinition> getGroup() {
 		return group;
 	}
 
