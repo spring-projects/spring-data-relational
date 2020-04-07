@@ -39,7 +39,7 @@ public class CriteriaUnitTests {
 
 		Criteria nested1 = where("foo").isNotNull();
 		Criteria nested2 = where("foo").isNull();
-		Criteria criteria = Criteria.from(nested1, nested2);
+		CriteriaDefinition criteria = Criteria.from(nested1, nested2);
 
 		assertThat(criteria.isGroup()).isTrue();
 		assertThat(criteria.getGroup()).containsExactly(nested1, nested2);
@@ -51,7 +51,7 @@ public class CriteriaUnitTests {
 	public void fromCriteriaOptimized() {
 
 		Criteria nested = where("foo").is("bar").and("baz").isNotNull();
-		Criteria criteria = Criteria.from(nested);
+		CriteriaDefinition criteria = Criteria.from(nested);
 
 		assertThat(criteria).isSameAs(nested).hasToString("foo = 'bar' AND baz IS NOT NULL");
 	}
