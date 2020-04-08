@@ -55,7 +55,7 @@ public class Criteria implements CriteriaDefinition {
 
 	private final @Nullable Criteria previous;
 	private final Combinator combinator;
-	private final List<Criteria> group;
+	private final List<CriteriaDefinition> group;
 
 	private final @Nullable SqlIdentifier column;
 	private final @Nullable Comparator comparator;
@@ -66,12 +66,12 @@ public class Criteria implements CriteriaDefinition {
 		this(null, Combinator.INITIAL, Collections.emptyList(), column, comparator, value, false);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group,
+	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
 			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value) {
 		this(previous, combinator, group, column, comparator, value, false);
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group,
+	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group,
 			@Nullable SqlIdentifier column, @Nullable Comparator comparator, @Nullable Object value, boolean ignoreCase) {
 
 		this.previous = previous;
@@ -83,7 +83,7 @@ public class Criteria implements CriteriaDefinition {
 		this.ignoreCase = ignoreCase;
 	}
 
-	private Criteria(@Nullable Criteria previous, Combinator combinator, List<Criteria> group) {
+	private Criteria(@Nullable Criteria previous, Combinator combinator, List<CriteriaDefinition> group) {
 
 		this.previous = previous;
 		this.combinator = previous != null && previous.isEmpty() ? Combinator.INITIAL : combinator;
@@ -193,11 +193,12 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 * @since 1.1
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Criteria and(List<Criteria> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
-		return new Criteria(Criteria.this, Combinator.AND, criteria);
+		return new Criteria(Criteria.this, Combinator.AND, (List) criteria);
 	}
 
 	/**
@@ -240,11 +241,12 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 * @since 1.1
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Criteria or(List<Criteria> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
-		return new Criteria(Criteria.this, Combinator.OR, criteria);
+		return new Criteria(Criteria.this, Combinator.OR, (List) criteria);
 	}
 
 	/**
@@ -310,7 +312,7 @@ public class Criteria implements CriteriaDefinition {
 			return false;
 		}
 
-		for (Criteria criteria : group) {
+		for (CriteriaDefinition criteria : group) {
 
 			if (!criteria.isEmpty()) {
 				return false;
@@ -337,7 +339,7 @@ public class Criteria implements CriteriaDefinition {
 	}
 
 	@Override
-	public List<Criteria> getGroup() {
+	public List<CriteriaDefinition> getGroup() {
 		return group;
 	}
 
