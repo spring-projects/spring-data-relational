@@ -113,7 +113,7 @@ public class Criteria implements CriteriaDefinition {
 	 *
 	 * @return new {@link Criteria}.
 	 */
-	public static CriteriaDefinition from(CriteriaDefinition... criteria) {
+	public static Criteria from(Criteria... criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
 		Assert.noNullElements(criteria, "Criteria must not contain null elements");
@@ -126,7 +126,7 @@ public class Criteria implements CriteriaDefinition {
 	 *
 	 * @return new {@link Criteria}.
 	 */
-	public static CriteriaDefinition from(List<CriteriaDefinition> criteria) {
+	public static Criteria from(List<Criteria> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
 		Assert.noNullElements(criteria, "Criteria must not contain null elements");
@@ -168,7 +168,7 @@ public class Criteria implements CriteriaDefinition {
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
 		return new DefaultCriteriaStep(identifier) {
 			@Override
-			protected Criteria createCriteria(Comparator comparator, Object value) {
+			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
 				return new Criteria(Criteria.this, Combinator.AND, Collections.emptyList(), identifier, comparator, value);
 			}
 		};
@@ -194,11 +194,12 @@ public class Criteria implements CriteriaDefinition {
 	 * @param criteria criteria objects.
 	 * @return a new {@link Criteria} object.
 	 */
-	public Criteria and(List<CriteriaDefinition> criteria) {
+	@SuppressWarnings("unchecked")
+	public Criteria and(List<? extends CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
-		return new Criteria(Criteria.this, Combinator.AND, criteria);
+		return new Criteria(Criteria.this, Combinator.AND, (List<CriteriaDefinition>) criteria);
 	}
 
 	/**
@@ -214,7 +215,7 @@ public class Criteria implements CriteriaDefinition {
 		SqlIdentifier identifier = SqlIdentifier.unquoted(column);
 		return new DefaultCriteriaStep(identifier) {
 			@Override
-			protected Criteria createCriteria(Comparator comparator, Object value) {
+			protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
 				return new Criteria(Criteria.this, Combinator.OR, Collections.emptyList(), identifier, comparator, value);
 			}
 		};
@@ -241,11 +242,12 @@ public class Criteria implements CriteriaDefinition {
 	 * @return a new {@link Criteria} object.
 	 * @since 1.1
 	 */
-	public Criteria or(List<CriteriaDefinition> criteria) {
+	@SuppressWarnings("unchecked")
+	public Criteria or(List<? extends CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
-		return new Criteria(Criteria.this, Combinator.OR, criteria);
+		return new Criteria(Criteria.this, Combinator.OR, (List<CriteriaDefinition>) criteria);
 	}
 
 	/**
@@ -336,6 +338,7 @@ public class Criteria implements CriteriaDefinition {
 		return combinator;
 	}
 
+	@Override
 	public List<CriteriaDefinition> getGroup() {
 		return group;
 	}
@@ -858,7 +861,7 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.IS_FALSE, null);
 		}
 
-		protected Criteria createCriteria(Comparator comparator, Object value) {
+		protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
 			return new Criteria(this.property, comparator, value);
 		}
 	}

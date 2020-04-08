@@ -33,18 +33,19 @@ import org.springframework.util.Assert;
 public interface CriteriaDefinition {
 
 	/**
-	 * Static factory method to create an empty Criteria.
+	 * Static factory method to create an empty {@link CriteriaDefinition}.
 	 *
-	 * @return an empty {@link Criteria}.
+	 * @return an empty {@link CriteriaDefinition}.
 	 */
 	static CriteriaDefinition empty() {
 		return Criteria.EMPTY;
 	}
 
 	/**
-	 * Create a new {@link Criteria} and combine it as group with {@code AND} using the provided {@link List Criterias}.
+	 * Create a new {@link CriteriaDefinition} and combine it as group with {@code AND} using the provided {@link List
+	 * Criterias}.
 	 *
-	 * @return new {@link Criteria}.
+	 * @return new {@link CriteriaDefinition}.
 	 */
 	static CriteriaDefinition from(CriteriaDefinition... criteria) {
 
@@ -55,12 +56,13 @@ public interface CriteriaDefinition {
 	}
 
 	/**
-	 * Create a new {@link Criteria} and combine it as group with {@code AND} using the provided {@link List Criterias}.
+	 * Create a new {@link CriteriaDefinition} and combine it as group with {@code AND} using the provided {@link List
+	 * Criterias}.
 	 *
-	 * @return new {@link Criteria}.
+	 * @return new {@link CriteriaDefinition}.
 	 * @since 1.1
 	 */
-	static CriteriaDefinition from(List<CriteriaDefinition> criteria) {
+	static CriteriaDefinition from(List<? extends CriteriaDefinition> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null");
 		Assert.noNullElements(criteria, "Criteria must not contain null elements");
