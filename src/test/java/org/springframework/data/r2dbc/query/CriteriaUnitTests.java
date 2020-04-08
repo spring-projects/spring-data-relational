@@ -16,7 +16,8 @@
 package org.springframework.data.r2dbc.query;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.r2dbc.query.Criteria.*;
+import static org.springframework.data.relational.core.query.Criteria.*;
+import org.springframework.data.relational.core.query.Criteria;
 
 import java.util.Arrays;
 
@@ -29,6 +30,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * Unit tests for {@link Criteria}.
  *
  * @author Mark Paluch
+ * @author Mingyuan Wu
  */
 public class CriteriaUnitTests {
 

@@ -29,7 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.mapping.SettableValue;
-import org.springframework.data.r2dbc.query.Criteria;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -44,6 +44,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @author Roman Chigvintsev
+ * @author Mingyuan Wu
  */
 public interface StatementMapper {
 

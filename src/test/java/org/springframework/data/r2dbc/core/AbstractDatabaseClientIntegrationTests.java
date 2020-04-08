@@ -34,8 +34,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.query.Criteria;
-import org.springframework.data.r2dbc.query.Update;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -44,6 +44,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * Integration tests for {@link DatabaseClient}.
  *
  * @author Mark Paluch
+ * @author Mingyuan Wu
  */
 public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegrationTestSupport {
 

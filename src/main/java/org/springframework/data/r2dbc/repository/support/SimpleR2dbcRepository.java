@@ -25,7 +25,7 @@ import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
-import org.springframework.data.r2dbc.query.Criteria;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mingyuan Wu
  */
 @Transactional(readOnly = true)
 public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, ID> {

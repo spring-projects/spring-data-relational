@@ -34,11 +34,13 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.query.Criteria;
 
 /**
  * Unit tests for {@link QueryMapper}.
  *
  * @author Mark Paluch
+ * @author Mingyuan Wu
  */
 public class QueryMapperUnitTests {
 

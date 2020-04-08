@@ -36,7 +36,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.dialect.MySqlDialect;
-import org.springframework.data.r2dbc.query.Criteria;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MariaDbTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
@@ -46,6 +46,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * Integration tests for {@link DatabaseClient} against MariaDB.
  *
  * @author Mark Paluch
+ * @author Mingyuan Wu
  */
 public class MariaDbDatabaseClientIntegrationTests extends AbstractDatabaseClientIntegrationTests {
 

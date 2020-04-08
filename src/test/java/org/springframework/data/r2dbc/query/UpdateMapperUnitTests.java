@@ -31,6 +31,7 @@ import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SQL;
@@ -41,6 +42,7 @@ import org.springframework.data.relational.core.sql.Table;
  * Unit tests for {@link UpdateMapper}.
  *
  * @author Mark Paluch
+ * @author Mingyuan Wu
  */
 public class UpdateMapperUnitTests {
 

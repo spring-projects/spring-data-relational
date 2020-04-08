@@ -43,3 +43,30 @@ fun Criteria.CriteriaStep.isIn(vararg value: Any): Criteria =
  */
 fun Criteria.CriteriaStep.isIn(values: Collection<Any>): Criteria =
 		`in`(values)
+
+/**
+ * Extension for [org.springframework.data.relational.core.query.Criteria.CriteriaStep.is] providing a
+ * `eq(value)` variant.
+ *
+ * @author Mingyuan Wu
+ */
+infix fun org.springframework.data.relational.core.query.Criteria.CriteriaStep.isEquals(value: Any): org.springframework.data.relational.core.query.Criteria =
+		`is`(value)
+
+/**
+ * Extension for [org.springframework.data.relational.core.query.Criteria.CriteriaStep.in] providing a
+ * `isIn(value)` variant.
+ *
+ * @author Mingyuan Wu
+ */
+fun org.springframework.data.relational.core.query.Criteria.CriteriaStep.isIn(vararg value: Any): org.springframework.data.relational.core.query.Criteria =
+		`in`(value)
+
+/**
+ * Extension for [org.springframework.data.relational.core.query.Criteria.CriteriaStep.in] providing a
+ * `isIn(value)` variant.
+ *
+ * @author Mingyuan Wu
+ */
+fun org.springframework.data.relational.core.query.Criteria.CriteriaStep.isIn(values: Collection<Any>): org.springframework.data.relational.core.query.Criteria =
+		`in`(values)

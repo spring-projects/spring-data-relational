@@ -1359,7 +1359,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			}
 
 			PreparedOperation<?> operation = mapper.getMappedObject(
-					mapper.createUpdate(table, update).withCriteria(Criteria.where(dataAccessStrategy.toSql(ids.get(0))).is(id)));
+					mapper.createUpdate(table, update).withCriteria(org.springframework.data.relational.core.query.Criteria.where(dataAccessStrategy.toSql(ids.get(0))).is(id)));
 
 			return exchangeUpdate(operation);
 		}
