@@ -15,13 +15,16 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.lang.reflect.Field;
 import java.util.Optional;
 
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -113,5 +116,54 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	@Override
 	public void setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory factory) {
 
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.mapping.model.BasicPersistentEntity#returnPropertyIfBetterIdPropertyCandidateOrNull)
+	 */
+	@Override
+	protected RelationalPersistentProperty returnPropertyIfBetterIdPropertyCandidateOrNull(
+			RelationalPersistentProperty property) {
+		Assert.notNull(property, "RelationalPersistentProperty must not be null!");
+
+		if (!property.isIdProperty()) {
+			return null;
+		}
+
+		RelationalPersistentProperty currentIdProperty = getIdProperty();
+
+		boolean currentIdPropertyIsSet = currentIdProperty != null;
+		@SuppressWarnings("null")
+		boolean currentIdPropertyIsExplicit = currentIdPropertyIsSet ? currentIdProperty.isExplicitIdProperty() : false;
+		boolean newIdPropertyIsExplicit = property.isExplicitIdProperty();
+
+		if (!currentIdPropertyIsSet) {
+			return property;
+
+		}
+
+		@SuppressWarnings("null")
+		Field currentIdPropertyField = currentIdProperty.getField();
+
+		if (newIdPropertyIsExplicit && currentIdPropertyIsExplicit) {
+			throw new MappingException(
+					String.format("Attempt to add explicit id property %s but already have an property %s registered "
+							+ "as explicit id. Check your mapping configuration!", property.getField(), currentIdPropertyField));
+
+		} else if (newIdPropertyIsExplicit && !currentIdPropertyIsExplicit) {
+			// explicit id property takes precedence over implicit id property
+			return property;
+
+		} else if (!newIdPropertyIsExplicit && currentIdPropertyIsExplicit) {
+			// no id property override - current property is explicitly defined
+
+		} else {
+			throw new MappingException(
+					String.format("Attempt to add id property %s but already have an property %s registered "
+							+ "as id. Check your mapping configuration!", property.getField(), currentIdPropertyField));
+		}
+
+		return null;
 	}
 }

@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
@@ -79,4 +81,12 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * @return
 	 */
 	boolean shouldCreateEmptyEmbedded();
+
+	/**
+	 * Returns whether the property is explicitly marked as an identifier property of the owning {@link PersistentEntity}.
+	 * A property is an explicit id property if it is annotated with @see {@link Id}.
+	 *
+	 * @return
+	 */
+	boolean isExplicitIdProperty();
 }

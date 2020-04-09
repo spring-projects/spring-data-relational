@@ -20,6 +20,7 @@ import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import org.junit.Test;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -52,6 +53,39 @@ public class RelationalPersistentEntityImplUnitTests {
 		assertThat(entity.getIdColumn()).isEqualTo(quoted("renamedId"));
 	}
 
+	@Test // DATAJDBC-470 - does the naming convention match the mapping to ID?
+	public void considerIdColumnNameWithoutAnnotation() {
+
+		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummyEntityWithEmptyIdAnnotation.class);
+		SqlIdentifier idColumn = entity.getIdColumn();
+
+		assertThat(idColumn).isNotNull();
+		assertThat(idColumn).isEqualTo(quoted("ID"));
+	}
+
+	@Test // DATAJDBC-470 - annotated column name should not get considered ...
+	public void considerIdLessEntityWithIdNamingConformingMapping() {
+
+		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummyEntityWithEmptyIdAnnotationButOtherMapping.class);
+
+		assertThat(entity.hasIdProperty()).isFalse();
+		assertThatThrownBy(() -> entity.getIdColumn()).isInstanceOf(IllegalStateException.class);
+
+	}
+
+	@Test // DATAJDBC-470 - annotated column name should not get considered ...
+	public void considerIdColumnNameWithStandardIdConvention() {
+		RelationalPersistentEntity<?> entity = mappingContext.getPersistentEntity(DummySubEntity.class);
+
+		SqlIdentifier idColumn = entity.getIdColumn();
+
+		assertThat(idColumn).isNotNull();
+		assertThat(idColumn).isEqualTo(quoted("renamedId"));
+
+	}
+
+
+
 	@Test // DATAJDBC-296
 	public void emptyTableAnnotationFallsBackToNamingStrategy() {
 
@@ -80,6 +114,16 @@ public class RelationalPersistentEntityImplUnitTests {
 	@Table()
 	static class DummyEntityWithEmptyAnnotation {
 		@Id @Column() Long id;
+	}
+
+	@Table()
+	static class DummyEntityWithEmptyIdAnnotation{
+		Long id;
+	}
+
+	@Table()
+	static class DummyEntityWithEmptyIdAnnotationButOtherMapping{
+		@Column("renamedId") Long id;
 	}
 
 	enum NamingStrategyWithSchema implements NamingStrategy {
