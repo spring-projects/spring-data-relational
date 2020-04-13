@@ -240,10 +240,9 @@ public class MyEntity {
 ----
 ====
 
-The {javadoc-base}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation can be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship)
-On all these types the `value` element of the annotation is used to provide a custom name for the foreign key column referencing the id column in the other table.
-In the following example the corresponding table for the `MySubEntity` class has a name column, and the id column of the `MyEntity` id for relationship reasons.
-The name of this `MySubEntity` class's id column can also be customized with the `idColumn` element of the {javadoc-base}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation:
+The {javadoc-base}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation can be used on Sets, Lists, and Maps.
+`idColumn` element of the annotation provides a custom name for the foreign key column referencing the id column in the other table.
+In the following example the corresponding table for the `MySubEntity` class has a `NAME` column, and the `CUSTOM_MY_ENTITY_ID_COLUMN_NAME` column of the `MyEntity` id for relationship reasons:
 
 ====
 [source, java]
@@ -252,8 +251,8 @@ public class MyEntity {
     @Id
     Integer id;
 
-    @MappedCollection(idColumn = "CUSTOM_COLUMN_NAME")
-    Set<MySubEntity> name;
+    @MappedCollection(idColumn = "CUSTOM_MY_ENTITY_ID_COLUMN_NAME")
+    Set<MySubEntity> subEntities;
 }
 
 public class MySubEntity {
