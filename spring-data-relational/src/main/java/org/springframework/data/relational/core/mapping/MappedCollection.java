@@ -22,9 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * The annotation to configure the mapping for a {@link List} or {@link Map} property in the database.
+ * The annotation to configure the mapping for a {@link List}, {@link Set} or {@link Map} property in the database.
  *
  * @since 1.1
  * @author Bastian Wilhelm
