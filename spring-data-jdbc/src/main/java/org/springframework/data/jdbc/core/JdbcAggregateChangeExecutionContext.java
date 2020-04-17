@@ -47,6 +47,7 @@ import org.springframework.util.Assert;
 
 /**
  * @author Jens Schauder
+ * @author Umut Erturk
  */
 class JdbcAggregateChangeExecutionContext {
 
@@ -71,12 +72,14 @@ class JdbcAggregateChangeExecutionContext {
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(insert.getEntityType());
 
 		Object id;
-		if (persistentEntity.hasVersionProperty()) {
+		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
+		if (versionProperty != null) {
+			long initialVersion = versionProperty.getActualType().isPrimitive() ? 1L : 0;
 
-			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(insert.getEntity(), 1, persistentEntity,
-					converter);
+			T rootEntity = RelationalEntityVersionUtils
+					.setVersionNumberOnEntity(insert.getEntity(), initialVersion, persistentEntity, converter);
 			id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty());
-			setNewVersion(1);
+			setNewVersion(initialVersion);
 		} else {
 			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());
 		}

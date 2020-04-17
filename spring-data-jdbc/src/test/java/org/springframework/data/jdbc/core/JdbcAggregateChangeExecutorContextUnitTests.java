@@ -42,6 +42,7 @@ import org.springframework.lang.Nullable;
  * Unit tests for {@link JdbcAggregateChangeExecutionContext}.
  *
  * @author Jens Schauder
+ * @author Umut Erturk
  */
 public class JdbcAggregateChangeExecutorContextUnitTests {
 
@@ -80,6 +81,25 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		executionContext.populateRootVersionIfNecessary(root);
 
 		assertThat(root.version).isEqualTo(1);
+	}
+
+	@Test // DATAJDBC-507
+	public void afterInsertPrimitiveVersionShouldBe1() {
+		DummyEntityNonPrimitiveVersion dummyEntityNonPrimitiveVersion = new DummyEntityNonPrimitiveVersion();
+		when(
+				accessStrategy.insert(dummyEntityNonPrimitiveVersion, DummyEntityNonPrimitiveVersion.class, Identifier.empty()))
+				.thenReturn(23L);
+
+		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(dummyEntityNonPrimitiveVersion));
+
+		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+
+		assertThat(newRoot).isNull();
+		assertThat(dummyEntityNonPrimitiveVersion.id).isEqualTo(23L);
+
+		executionContext.populateRootVersionIfNecessary(dummyEntityNonPrimitiveVersion);
+
+		assertThat(dummyEntityNonPrimitiveVersion.version).isEqualTo(0);
 	}
 
 	@Test // DATAJDBC-453
@@ -162,6 +182,12 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		Content content;
 
 		List<Content> list = new ArrayList<>();
+	}
+
+	private static class DummyEntityNonPrimitiveVersion {
+
+		@Id Long id;
+		@Version Long version;
 	}
 
 	private static class Content {
