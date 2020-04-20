@@ -107,7 +107,7 @@ public class MySqlTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				MySQLContainer container = new MySQLContainer();
+				MySQLContainer container = new MySQLContainer(MySQLContainer.IMAGE + ":" + MySQLContainer.DEFAULT_TAG);
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //

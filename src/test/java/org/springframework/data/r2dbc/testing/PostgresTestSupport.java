@@ -88,7 +88,8 @@ public class PostgresTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				PostgreSQLContainer container = new PostgreSQLContainer();
+				PostgreSQLContainer container = new PostgreSQLContainer(
+						PostgreSQLContainer.IMAGE + ":" + PostgreSQLContainer.DEFAULT_TAG);
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.from(container);
