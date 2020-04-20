@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository.support;
+package org.springframework.data.jdbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -26,7 +26,8 @@ import java.util.Properties;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.data.jdbc.repository.query.Query;
+
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -47,6 +48,7 @@ public class JdbcQueryMethodUnitTests {
 	public static final String METHOD_WITHOUT_QUERY_ANNOTATION = "methodWithImplicitlyNamedQuery";
 	public static final String QUERY2 = "SELECT something NAME AND VALUE";
 
+	JdbcMappingContext mappingContext = new JdbcMappingContext();
 	NamedQueries namedQueries;
 	RepositoryMetadata metadata;
 
@@ -100,7 +102,7 @@ public class JdbcQueryMethodUnitTests {
 	private JdbcQueryMethod createJdbcQueryMethod(String methodName) throws NoSuchMethodException {
 
 		Method method = JdbcQueryMethodUnitTests.class.getDeclaredMethod(methodName);
-		return new JdbcQueryMethod(method, metadata, mock(ProjectionFactory.class), namedQueries);
+		return new JdbcQueryMethod(method, metadata, mock(ProjectionFactory.class), namedQueries, mappingContext);
 	}
 
 	@Test // DATAJDBC-234

@@ -19,6 +19,8 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.parser.AbstractQueryCreator;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
@@ -95,7 +97,7 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 	 * @param tree
 	 * @param parameters
 	 */
-	public static void validate(PartTree tree, RelationalParameters parameters) {
+	public static void validate(PartTree tree, Parameters<?, ?> parameters) {
 
 		int argCount = 0;
 
@@ -109,7 +111,7 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 		}
 	}
 
-	private static void throwExceptionOnArgumentMismatch(Part part, RelationalParameters parameters, int index) {
+	private static void throwExceptionOnArgumentMismatch(Part part, Parameters<?, ?> parameters, int index) {
 
 		Part.Type type = part.getType();
 		String property = part.getProperty().toDotPath();
@@ -121,7 +123,7 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 			throw new IllegalStateException(formattedMsg);
 		}
 
-		RelationalParameters.RelationalParameter parameter = parameters.getBindableParameter(index);
+		Parameter parameter = parameters.getBindableParameter(index);
 		if (expectsCollection(type) && !parameterIsCollectionLike(parameter)) {
 			String message = wrongParameterTypeMessage(property, type, "Collection", parameter);
 			throw new IllegalStateException(message);
@@ -135,16 +137,16 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 		return type == Part.Type.IN || type == Part.Type.NOT_IN;
 	}
 
-	private static boolean parameterIsCollectionLike(RelationalParameters.RelationalParameter parameter) {
+	private static boolean parameterIsCollectionLike(Parameter parameter) {
 		return parameter.getType().isArray() || Collection.class.isAssignableFrom(parameter.getType());
 	}
 
-	private static boolean parameterIsScalarLike(RelationalParameters.RelationalParameter parameter) {
+	private static boolean parameterIsScalarLike(Parameter parameter) {
 		return !Collection.class.isAssignableFrom(parameter.getType());
 	}
 
 	private static String wrongParameterTypeMessage(String property, Part.Type operatorType, String expectedArgumentType,
-			RelationalParameters.RelationalParameter parameter) {
+			Parameter parameter) {
 		return String.format("Operator %s on %s requires a %s argument, found %s", operatorType.name(), property,
 				expectedArgumentType, parameter.getType());
 	}

@@ -23,6 +23,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.mapping.callback.EntityCallbacks;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.repository.core.EntityInformation;
@@ -51,6 +52,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final ApplicationEventPublisher publisher;
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
+	private final Dialect dialect;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private EntityCallbacks entityCallbacks;
@@ -62,20 +64,24 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @param context must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
+	 * @param dialect must not be {@literal null}.
 	 * @param publisher must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 */
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			JdbcConverter converter, ApplicationEventPublisher publisher, NamedParameterJdbcOperations operations) {
+			JdbcConverter converter, Dialect dialect, ApplicationEventPublisher publisher,
+			NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
 		Assert.notNull(converter, "RelationalConverter must not be null!");
+		Assert.notNull(dialect, "Dialect must not be null!");
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
 
 		this.publisher = publisher;
 		this.context = context;
 		this.converter = converter;
+		this.dialect = dialect;
 		this.accessStrategy = dataAccessStrategy;
 		this.operations = operations;
 	}
@@ -136,15 +142,8 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable QueryLookupStrategy.Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
-		if (key == null || key == QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND
-				|| key == QueryLookupStrategy.Key.USE_DECLARED_QUERY) {
-
-			JdbcQueryLookupStrategy strategy = new JdbcQueryLookupStrategy(publisher, entityCallbacks, context, converter,
-					queryMappingConfiguration, operations);
-			return Optional.of(strategy);
-		}
-
-		throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
+		return Optional.of(new JdbcQueryLookupStrategy(publisher, entityCallbacks, context, converter, dialect,
+				queryMappingConfiguration, operations));
 	}
 
 	/**

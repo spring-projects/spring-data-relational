@@ -48,6 +48,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
@@ -97,8 +98,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
 		doReturn(true).when(dataAccessStrategy).update(any(), any());
 
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher,
-				operations);
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter,
+				H2Dialect.INSTANCE, publisher, operations);
 
 		this.repository = factory.getRepository(DummyEntityRepository.class);
 	}

@@ -25,13 +25,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -49,6 +49,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Mark Paluch
  * @author Maciej Walkowiak
  * @author Evgeni Dimitrov
+ * @author Mark Paluch
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
@@ -56,7 +57,6 @@ public class JdbcQueryLookupStrategyUnitTests {
 	EntityCallbacks callbacks = mock(EntityCallbacks.class);
 	RelationalMappingContext mappingContext = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 	JdbcConverter converter = mock(JdbcConverter.class);
-	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
 	RepositoryMetadata metadata;
 	NamedQueries namedQueries = mock(NamedQueries.class);
@@ -82,13 +82,13 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 		repositoryQuery.execute(new Object[] {});
 
-		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), eq(numberFormatMapper));
+		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
 	}
 
 	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 
-		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, callbacks, mappingContext, converter,
-				mappingConfiguration, operations);
+		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, callbacks, mappingContext,
+				converter, H2Dialect.INSTANCE, mappingConfiguration, operations);
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
 		return queryLookupStrategy.resolveQuery(method, metadata, projectionFactory, namedQueries);

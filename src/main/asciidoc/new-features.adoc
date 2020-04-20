@@ -8,6 +8,7 @@ This section covers the significant changes for each version.
 
 * Optimistic Locking support.
 * Support for `PagingAndSortingRepository`.
+* <<jdbc.query-methods,Query Derivation>>.
 * Full Support for H2.
 * All SQL identifiers know get quoted by default.
 * Missing columns no longer cause exceptions.
