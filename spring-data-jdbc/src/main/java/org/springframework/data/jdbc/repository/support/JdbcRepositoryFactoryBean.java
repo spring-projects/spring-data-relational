@@ -86,7 +86,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
 
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
-				converter, publisher, operations);
+				converter, dialect, publisher, operations);
 		jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
 		jdbcRepositoryFactory.setEntityCallbacks(entityCallbacks);
 

@@ -645,7 +645,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#is(java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#is(java.lang.Object)
 		 */
 		@Override
 		public Criteria is(Object value) {
@@ -657,7 +657,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#not(java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#not(java.lang.Object)
 		 */
 		@Override
 		public Criteria not(Object value) {
@@ -669,7 +669,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#in(java.lang.Object[])
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#in(java.lang.Object[])
 		 */
 		@Override
 		public Criteria in(Object... values) {
@@ -687,7 +687,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#in(java.util.Collection)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#in(java.util.Collection)
 		 */
 		@Override
 		public Criteria in(Collection<?> values) {
@@ -700,7 +700,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#notIn(java.lang.Object[])
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#notIn(java.lang.Object[])
 		 */
 		@Override
 		public Criteria notIn(Object... values) {
@@ -718,7 +718,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#notIn(java.util.Collection)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#notIn(java.util.Collection)
 		 */
 		@Override
 		public Criteria notIn(Collection<?> values) {
@@ -731,7 +731,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#between(java.lang.Object, java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#between(java.lang.Object, java.lang.Object)
 		 */
 		@Override
 		public Criteria between(Object begin, Object end) {
@@ -744,7 +744,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#notBetween(java.lang.Object, java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#notBetween(java.lang.Object, java.lang.Object)
 		 */
 		@Override
 		public Criteria notBetween(Object begin, Object end) {
@@ -757,7 +757,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#lessThan(java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#lessThan(java.lang.Object)
 		 */
 		@Override
 		public Criteria lessThan(Object value) {
@@ -769,7 +769,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#lessThanOrEquals(java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#lessThanOrEquals(java.lang.Object)
 		 */
 		@Override
 		public Criteria lessThanOrEquals(Object value) {
@@ -781,7 +781,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#greaterThan(java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#greaterThan(java.lang.Object)
 		 */
 		@Override
 		public Criteria greaterThan(Object value) {
@@ -793,7 +793,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#greaterThanOrEquals(java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#greaterThanOrEquals(java.lang.Object)
 		 */
 		@Override
 		public Criteria greaterThanOrEquals(Object value) {
@@ -805,7 +805,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#like(java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#like(java.lang.Object)
 		 */
 		@Override
 		public Criteria like(Object value) {
@@ -817,7 +817,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#notLike(java.lang.Object)
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#notLike(java.lang.Object)
 		 */
 		@Override
 		public Criteria notLike(Object value) {
@@ -827,7 +827,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#isNull()
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#isNull()
 		 */
 		@Override
 		public Criteria isNull() {
@@ -836,7 +836,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#isNotNull()
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#isNotNull()
 		 */
 		@Override
 		public Criteria isNotNull() {
@@ -845,7 +845,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#isTrue()
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#isTrue()
 		 */
 		@Override
 		public Criteria isTrue() {
@@ -854,7 +854,7 @@ public class Criteria implements CriteriaDefinition {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.function.query.Criteria.CriteriaStep#isFalse()
+		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#isFalse()
 		 */
 		@Override
 		public Criteria isFalse() {

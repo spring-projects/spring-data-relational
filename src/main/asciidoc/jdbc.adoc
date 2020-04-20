@@ -63,6 +63,7 @@ You can overwrite the repository methods with implementations that match your st
 
 [[jdbc.java-config]]
 == Annotation-based Configuration
+
 The Spring Data JDBC repositories support can be activated by an annotation through Java configuration, as the following example shows:
 
 .Spring Data JDBC repositories using Java configuration
@@ -93,7 +94,8 @@ class ApplicationConfig extends AbstractJdbcConfiguration {                     
 ----
 <1> `@EnableJdbcRepositories` creates implementations for interfaces derived from `Repository`
 <2> `AbstractJdbcConfiguration` provides various default beans required by Spring Data JDBC
-<3> Creates a `DataSource` connecting to a database. This is required by the following two bean methods.
+<3> Creates a `DataSource` connecting to a database.
+This is required by the following two bean methods.
 <4> Creates the `NamedParameterJdbcOperations` used by Spring Data JDBC to access the database.
 <5> Spring Data JDBC utilizes the transaction management provided by Spring JDBC.
 ====
@@ -116,7 +118,7 @@ By default the `AbstractJdbcConfiguration` tries to determine the database in us
 This behavior can be changed by overwriting `jdbcDialect(NamedParameterJdbcOperations)`.
 
 TIP: Dialects are resolved by [`JdbcDialectResolver`] from `JdbcOperations`, typically by inspecting `Connection`.
-+ You can let Spring auto-discover your `Dialect` by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
+You can let Spring auto-discover your `Dialect` by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 
 [[jdbc.entity-persistence]]
@@ -153,7 +155,8 @@ The properties of the following types are currently supported:
 
 * Anything your database driver accepts.
 
-* References to other entities. They are considered a one-to-one relationship, or an embedded type.
+* References to other entities.
+They are considered a one-to-one relationship, or an embedded type.
 It is optional for one-to-one relationship entities to have an `id` attribute.
 The table of the referenced entity is expected to have an additional column named the same as the table of the referencing entity.
 You can change this name by implementing `NamingStrategy.getReverseColumnName(PersistentPropertyPathExtension path)`.
@@ -180,14 +183,13 @@ This also means references are 1-1 or 1-n, but not n-1 or n-m.
 If you have n-1 or n-m references, you are, by definition, dealing with two separate aggregates.
 References between those should be encoded as simple `id` values, which should map properly with Spring Data JDBC.
 
-
 [[jdbc.entity-persistence.custom-converters]]
 === Custom converters
 
 Custom converters can be registered, for types that are not supported by default, by inheriting your configuration from `AbstractJdbcConfiguration` and overwriting the method `jdbcCustomConversions()`.
 
 ====
-[source, java]
+[source,java]
 ----
 @Configuration
 public class DataJdbcConfiguration extends AbstractJdbcConfiguration {
@@ -236,10 +238,11 @@ You can tweak that by providing a {javadoc-base}org/springframework/data/relatio
 === `Custom table names`
 
 When the NamingStrategy does not matching on your database table names, you can customize the names with the {javadoc-base}org/springframework/data/relational/core/mapping/Table.html[`@Table`] annotation.
-The element `value` of this annotation provides the custom table name. The following example maps the `MyEntity` class to the `CUSTOM_TABLE_NAME` table in the database:
+The element `value` of this annotation provides the custom table name.
+The following example maps the `MyEntity` class to the `CUSTOM_TABLE_NAME` table in the database:
 
 ====
-[source, java]
+[source,java]
 ----
 @Table("CUSTOM_TABLE_NAME")
 public class MyEntity {
@@ -259,7 +262,7 @@ The element `value` of this annotation provides the custom column name.
 The following example maps the `name` property of the `MyEntity` class to the `CUSTOM_COLUMN_NAME` column in the database:
 
 ====
-[source, java]
+[source,java]
 ----
 public class MyEntity {
     @Id
@@ -272,12 +275,12 @@ public class MyEntity {
 ====
 
 The {javadoc-base}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`]
- annotation can be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps  (one-to-many relationship).
+annotation can be used on a reference type (one-to-one relationship) or on Sets, Lists, and Maps (one-to-many relationship).
 `idColumn` element of the annotation provides a custom name for the foreign key column referencing the id column in the other table.
 In the following example the corresponding table for the `MySubEntity` class has a `NAME` column, and the `CUSTOM_MY_ENTITY_ID_COLUMN_NAME` column of the `MyEntity` id for relationship reasons:
 
 ====
-[source, java]
+[source,java]
 ----
 public class MyEntity {
     @Id
@@ -297,7 +300,7 @@ When using `List` and `Map` you must have an additional column for the position 
 This additional column name may be customized with the `keyColumn` Element of the {javadoc-base}org/springframework/data/relational/core/mapping/MappedCollection.html[`@MappedCollection`] annotation:
 
 ====
-[source, java]
+[source,java]
 ----
 public class MyEntity {
     @Id
@@ -325,7 +328,7 @@ Opposite to this behavior `USE_EMPTY` tries to create a new instance using eithe
 
 .Sample Code of embedding objects
 ====
-[source, java]
+[source,java]
 ----
 public class MyEntity {
 
@@ -340,7 +343,8 @@ public class EmbeddedEntity {
     String name;
 }
 ----
-<1> ``Null``s `embeddedEntity` if `name` in `null`. Use `USE_EMPTY` to instantiate `embeddedEntity` with a potential `null` value for the `name` property.
+<1> ``Null``s `embeddedEntity` if `name` in `null`.
+Use `USE_EMPTY` to instantiate `embeddedEntity` with a potential `null` value for the `name` property.
 ====
 
 If you need a value object multiple times in an entity, this can be achieved with the optional `prefix` element of the `@Embedded` annotation.
@@ -350,7 +354,7 @@ This element represents a prefix and is prepend for each column name in the embe
 ====
 Make use of the shortcuts `@Embedded.Nullable` & `@Embedded.Empty` for `@Embedded(onEmpty = USE_NULL)` and `@Embedded(onEmpty = USE_EMPTY)` to reduce verbosity and simultaneously set JSR-305 `@javax.annotation.Nonnull` accordingly.
 
-[source, java]
+[source,java]
 ----
 public class MyEntity {
 
@@ -397,12 +401,11 @@ Note that whether an entity is new is part of the entity's state.
 With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
 If you are not using auto-increment columns, you can use a `BeforeSave` listener, which sets the ID of the entity (covered later in this document).
 
-
 [[jdbc.entity-persistence.optimistic-locking]]
 === Optimistic Locking
 
 Spring Data JDBC supports optimistic locking by means of a numeric attribute that is annotated with
- https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Version.html[`@Version`] on the aggregate root.
+https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/annotation/Version.html[`@Version`] on the aggregate root.
 Whenever Spring Data JDBC saves an aggregate with such a version attribute two things happen:
 The update statement for the aggregate root will contain a where clause checking that the version stored in the database is actually unchanged.
 If this isn't the case an `OptimisticLockingFailureException` will be thrown.
@@ -417,6 +420,129 @@ During deletes the version check also applies but no version is increased.
 
 This section offers some specific information about the implementation and use of Spring Data JDBC.
 
+Most of the data access operations you usually trigger on a repository result in a query being run against the databases.
+Defining such a query is a matter of declaring a method on the repository interface, as the following example shows:
+
+.PersonRepository with query methods
+====
+[source,java]
+----
+interface PersonRepository extends PagingAndSortingRepository<Person, String> {
+
+  List<Person> findByFirstname(String firstname);                                   <1>
+
+  List<Person> findByFirstnameOrderByLastname(String firstname, Pageable pageable); <2>
+
+  Person findByFirstnameAndLastname(String firstname, String lastname);             <3>
+
+  Person findFirstByLastname(String lastname);                                      <4>
+
+  @Query("SELECT * FROM person WHERE lastname = :lastname")
+  List<Person> findByLastname(String lastname);                                     <5>
+}
+----
+<1> The method shows a query for all people with the given `lastname`.
+The query is derived by parsing the method name for constraints that can be concatenated with `And` and `Or`.
+Thus, the method name results in a query expression of `SELECT … FROM person WHERE firstname = :firstname`.
+<2> Use `Pageable` to pass offset and sorting parameters to the database.
+<3> Find a single entity for the given criteria.
+It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
+<4> Unless <3>, the first entity is always emitted even if the query yields more result documents.
+<5> The `findByLastname` method shows a query for all people with the given last name.
+====
+
+The following table shows the keywords that are supported for query methods:
+
+[cols="1,2,3",options="header",subs="quotes"]
+.Supported keywords for query methods
+|===
+| Keyword
+| Sample
+| Logical result
+
+| `After`
+| `findByBirthdateAfter(Date date)`
+| `birthdate > date`
+
+| `GreaterThan`
+| `findByAgeGreaterThan(int age)`
+| `age > age`
+
+| `GreaterThanEqual`
+| `findByAgeGreaterThanEqual(int age)`
+| `age >= age`
+
+| `Before`
+| `findByBirthdateBefore(Date date)`
+| `birthdate < date`
+
+| `LessThan`
+| `findByAgeLessThan(int age)`
+| `age < age`
+
+| `LessThanEqual`
+| `findByAgeLessThanEqual(int age)`
+| `age <= age`
+
+| `Between`
+| `findByAgeBetween(int from, int to)`
+| `age BETWEEN from AND to`
+
+| `NotBetween`
+| `findByAgeBetween(int from, int to)`
+| `age NOT BETWEEN from AND to`
+
+| `In`
+| `findByAgeIn(Collection<Integer> ages)`
+| `age IN (age1, age2, ageN)`
+
+| `NotIn`
+| `findByAgeNotIn(Collection ages)`
+| `age NOT IN (age1, age2, ageN)`
+
+| `IsNotNull`, `NotNull`
+| `findByFirstnameNotNull()`
+| `firstname IS NOT NULL`
+
+| `IsNull`, `Null`
+| `findByFirstnameNull()`
+| `firstname IS NULL`
+
+| `Like`, `StartingWith`, `EndingWith`
+| `findByFirstnameLike(String name)`
+| `firstname LIKE name`
+
+| `NotLike`, `IsNotLike`
+| `findByFirstnameNotLike(String name)`
+| `firstname NOT LIKE name`
+
+| `Containing` on String
+| `findByFirstnameContaining(String name)`
+| `firstname LIKE '%'   name +'%'`
+
+| `NotContaining` on String
+| `findByFirstnameNotContaining(String name)`
+| `firstname NOT LIKE '%'   name +'%'`
+
+| `(No keyword)`
+| `findByFirstname(String name)`
+| `firstname = name`
+
+| `Not`
+| `findByFirstnameNot(String name)`
+| `firstname != name`
+
+| `IsTrue`, `True`
+| `findByActiveIsTrue()`
+| `active IS TRUE`
+
+| `IsFalse`,  `False`
+| `findByActiveIsFalse()`
+| `active IS FALSE`
+|===
+
+NOTE: Query derivation is limited to properties that can be used in a `WHERE` clause without involving joins. 
+
 [[jdbc.query-methods.strategies]]
 === Query Lookup Strategies
 
@@ -430,7 +556,7 @@ The following example shows how to use `@Query` to declare a query method:
 
 .Declare a query method by using @Query
 ====
-[source, java]
+[source,java]
 ----
 public interface UserRepository extends CrudRepository<User, Long> {
 
@@ -465,20 +591,20 @@ Named queries are expected to be provided in the property file `META-INF/jdbc-na
 
 The location of that file may be changed by setting a value to `@EnableJdbcRepositories.namedQueriesLocation`.
 
-
 [[jdbc.query-methods.at-query.custom-rowmapper]]
 ==== Custom `RowMapper`
 
-You can configure which `RowMapper` to use, either by using the `@Query(rowMapperClass = ....)` or by registering a `RowMapperMap` bean and registering a `RowMapper` per method return type. The following example shows how to register `RowMappers`:
+You can configure which `RowMapper` to use, either by using the `@Query(rowMapperClass = ....)` or by registering a `RowMapperMap` bean and registering a `RowMapper` per method return type.
+The following example shows how to register `DefaultQueryMappingConfiguration`:
 
 ====
 [source,java]
 ----
 @Bean
-RowMapperMap rowMappers() {
-	return new ConfigurableRowMapperMap() //
-		.register(Person.class, new PersonRowMapper()) //
-		.register(Address.class, new AddressRowMapper());
+QueryMappingConfiguration rowMappers() {
+  return new DefaultQueryMappingConfiguration()
+    .register(Person.class, new PersonRowMapper())
+    .register(Address.class, new AddressRowMapper());
 }
 ----
 ====
@@ -488,7 +614,7 @@ When determining which `RowMapper` to use for a method, the following steps are 
 . If the type is a simple type, no `RowMapper` is used.
 +
 Instead, the query is expected to return a single row with a single column, and a conversion to the return type is applied to that value.
-. The entity classes in the `RowMapperMap` are iterated until one is found that is a superclass or interface of the return type in question.
+. The entity classes in the `QueryMappingConfiguration` are iterated until one is found that is a superclass or interface of the return type in question.
 The `RowMapper` registered for that class is used.
 +
 Iterating happens in the order of registration, so make sure to register more general types after specific ones.
@@ -496,6 +622,7 @@ Iterating happens in the order of registration, so make sure to register more ge
 If applicable, wrapper types such as collections or `Optional` are unwrapped.
 Thus, a return type of `Optional<Person>` uses the `Person` type in the preceding process.
 
+NOTE: Using a custom `RowMapper` through `QueryMappingConfiguration`, `@Query(rowMapperClass=…)`, or a custom `ResultSetExtractor` disables Entity Callbacks and Lifecycle Events as these components are under full control of the result mapping and can issue their own events/callbacks if needed.
 
 [[jdbc.query-methods.at-query.modifying]]
 ==== Modifying Query
@@ -517,7 +644,6 @@ You can specify the following return types:
 * `int` (updated record count)
 * `boolean`(whether a record was updated)
 
-
 [[jdbc.mybatis]]
 == MyBatis Integration
 
@@ -529,7 +655,7 @@ This section describes how to configure Spring Data JDBC to integrate with MyBat
 
 The easiest way to properly plug MyBatis into Spring Data JDBC is by importing `MyBatisJdbcConfiguration` into you application configuration:
 
-[source, java]
+[source,java]
 ----
 @Configuration
 @EnableJdbcRepositories
@@ -659,8 +785,8 @@ public ApplicationListener<BeforeSaveEvent<Object>> loggingSaves() {
 ----
 ====
 
-If you want to handle events only for a specific domain type you may derive your listener from `AbstractRelationalEventListener` and overwrite one or more of the `onXXX` methods,
-where `XXX` stands for an event type. Callback methods will only get invoked for events related to the domain type and their subtypes so you don't require further casting.
+If you want to handle events only for a specific domain type you may derive your listener from `AbstractRelationalEventListener` and overwrite one or more of the `onXXX` methods, where `XXX` stands for an event type.
+Callback methods will only get invoked for events related to the domain type and their subtypes so you don't require further casting.
 
 ====
 [source,java]
@@ -743,13 +869,16 @@ Thus, if you want to inspect what SQL statements are executed, activate logging 
 
 [[jdbc.transactions]]
 == Transactionality
+
 CRUD methods on repository instances are transactional by default.
-For reading operations, the transaction configuration `readOnly` flag is set to `true`. All others are configured with a plain `@Transactional` annotation so that default transaction configuration applies.
-For details, see the Javadoc of link:{javadoc-base}org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html[`SimpleJdbcRepository`]. If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
+For reading operations, the transaction configuration `readOnly` flag is set to `true`.
+All others are configured with a plain `@Transactional` annotation so that default transaction configuration applies.
+For details, see the Javadoc of link:{javadoc-base}org/springframework/data/jdbc/repository/support/SimpleJdbcRepository.html[`SimpleJdbcRepository`].
+If you need to tweak transaction configuration for one of the methods declared in a repository, redeclare the method in your repository interface, as follows:
 
 .Custom transaction configuration for CRUD
 ====
-[source, java]
+[source,java]
 ----
 public interface UserRepository extends CrudRepository<User, Long> {
 
@@ -764,11 +893,13 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
 The preceding causes the `findAll()` method to be executed with a timeout of 10 seconds and without the `readOnly` flag.
 
-Another way to alter transactional behavior is by using a facade or service implementation that typically covers more than one repository. Its purpose is to define transactional boundaries for non-CRUD operations. The following example shows how to create such a facade:
+Another way to alter transactional behavior is by using a facade or service implementation that typically covers more than one repository.
+Its purpose is to define transactional boundaries for non-CRUD operations.
+The following example shows how to create such a facade:
 
 .Using a facade to define transactions for multiple repository calls
 ====
-[source, java]
+[source,java]
 ----
 @Service
 class UserManagementImpl implements UserManagement {
@@ -796,15 +927,19 @@ class UserManagementImpl implements UserManagement {
 ----
 ====
 
-The preceding example causes calls to `addRoleToAllUsers(…)` to run inside a transaction (participating in an existing one or creating a new one if none are already running). The transaction configuration for the repositories is neglected, as the outer transaction configuration determines the actual repository to be used. Note that you have to explicitly activate `<tx:annotation-driven />` or use `@EnableTransactionManagement` to get annotation-based configuration for facades working. Note that the preceding example assumes you use component scanning.
+The preceding example causes calls to `addRoleToAllUsers(…)` to run inside a transaction (participating in an existing one or creating a new one if none are already running).
+The transaction configuration for the repositories is neglected, as the outer transaction configuration determines the actual repository to be used.
+Note that you have to explicitly activate `<tx:annotation-driven />` or use `@EnableTransactionManagement` to get annotation-based configuration for facades working.
+Note that the preceding example assumes you use component scanning.
 
 [[jdbc.transaction.query-methods]]
 === Transactional Query Methods
+
 To let your query methods be transactional, use `@Transactional` at the repository interface you define, as the following example shows:
 
 .Using @Transactional at query methods
 ====
-[source, java]
+[source,java]
 ----
 @Transactional(readOnly = true)
 public interface UserRepository extends CrudRepository<User, Long> {
@@ -819,9 +954,13 @@ public interface UserRepository extends CrudRepository<User, Long> {
 ----
 ====
 
-Typically, you want the `readOnly` flag to be set to true, because most of the query methods only read data. In contrast to that, `deleteInactiveUsers()` uses the `@Modifying` annotation and overrides the transaction configuration. Thus, the method is with the `readOnly` flag set to `false`.
+Typically, you want the `readOnly` flag to be set to true, because most of the query methods only read data.
+In contrast to that, `deleteInactiveUsers()` uses the `@Modifying` annotation and overrides the transaction configuration.
+Thus, the method is with the `readOnly` flag set to `false`.
 
-NOTE: It is definitely reasonable to use transactions for read-only queries, and we can mark them as such by setting the `readOnly` flag. This does not, however, act as a check that you do not trigger a manipulating query (although some databases reject `INSERT` and `UPDATE` statements inside a read-only transaction). Instead, the `readOnly` flag is propagated as a hint to the underlying JDBC driver for performance optimizations.
+NOTE: It is definitely reasonable to use transactions for read-only queries, and we can mark them as such by setting the `readOnly` flag.
+This does not, however, act as a check that you do not trigger a manipulating query (although some databases reject `INSERT` and `UPDATE` statements inside a read-only transaction).
+Instead, the `readOnly` flag is propagated as a hint to the underlying JDBC driver for performance optimizations.
 
 include::{spring-data-commons-docs}/auditing.adoc[leveloffset=+1]
 
@@ -832,7 +971,7 @@ In order to activate auditing, add `@EnableJdbcAuditing` to your configuration, 
 
 .Activating auditing with Java configuration
 ====
-[source, java]
+[source,java]
 ----
 @Configuration
 @EnableJdbcAuditing
@@ -846,4 +985,5 @@ class Config {
 ----
 ====
 
-If you expose a bean of type `AuditorAware` to the `ApplicationContext`, the auditing infrastructure automatically picks it up and uses it to determine the current user to be set on domain types. If you have multiple implementations registered in the `ApplicationContext`, you can select the one to be used by explicitly setting the `auditorAwareRef` attribute of `@EnableJdbcAuditing`.
+If you expose a bean of type `AuditorAware` to the `ApplicationContext`, the auditing infrastructure automatically picks it up and uses it to determine the current user to be set on domain types.
+If you have multiple implementations registered in the `ApplicationContext`, you can select the one to be used by explicitly setting the `auditorAwareRef` attribute of `@EnableJdbcAuditing`.

@@ -68,10 +68,10 @@ public class TestConfiguration {
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
 			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			JdbcConverter converter, Optional<NamedQueries> namedQueries) {
+			Dialect dialect, JdbcConverter converter, Optional<NamedQueries> namedQueries) {
 
-		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, publisher,
-				namedParameterJdbcTemplate());
+		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
+				publisher, namedParameterJdbcTemplate());
 		namedQueries.ifPresent(factory::setNamedQueries);
 		return factory;
 	}
@@ -120,8 +120,7 @@ public class TestConfiguration {
 				relationResolver, //
 				conversions, //
 				new DefaultJdbcTypeFactory(template.getJdbcOperations()), //
-				dialect.getIdentifierProcessing()
-		);
+				dialect.getIdentifierProcessing());
 	}
 
 	@Bean

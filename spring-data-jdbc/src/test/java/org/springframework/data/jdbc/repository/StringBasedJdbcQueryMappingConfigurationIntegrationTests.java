@@ -53,7 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
-public class JdbcRepositoryQueryMappingConfigurationIntegrationTests {
+public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 	private static String CAR_MODEL = "ResultSetExtractor Car";
 
@@ -64,7 +64,7 @@ public class JdbcRepositoryQueryMappingConfigurationIntegrationTests {
 
 		@Bean
 		Class<?> testClass() {
-			return JdbcRepositoryQueryMappingConfigurationIntegrationTests.class;
+			return StringBasedJdbcQueryMappingConfigurationIntegrationTests.class;
 		}
 
 		@Bean

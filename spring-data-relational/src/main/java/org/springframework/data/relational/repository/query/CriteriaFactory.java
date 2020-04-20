@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
  * Simple factory to contain logic to create {@link Criteria}s from {@link Part}s.
  *
  * @author Roman Chigvintsev
+ * @author Mark Paluch
  */
 class CriteriaFactory {
 
@@ -49,7 +50,7 @@ class CriteriaFactory {
 	public Criteria createCriteria(Part part) {
 		Part.Type type = part.getType();
 
-		String propertyName = part.getProperty().getSegment();
+		String propertyName = part.getProperty().toDotPath();
 		Class<?> propertyType = part.getProperty().getType();
 
 		Criteria.CriteriaStep criteriaStep = Criteria.where(propertyName);
