@@ -72,13 +72,19 @@ class JdbcAggregateChangeExecutionContext {
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(insert.getEntityType());
 
 		Object id;
-		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
-		if (versionProperty != null) {
+		if (persistentEntity.hasVersionProperty()) {
+
+			RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
+
+			Assert.state(versionProperty != null, "Version property must not be null at this stage.");
+
 			long initialVersion = versionProperty.getActualType().isPrimitive() ? 1L : 0;
 
-			T rootEntity = RelationalEntityVersionUtils
-					.setVersionNumberOnEntity(insert.getEntity(), initialVersion, persistentEntity, converter);
+			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
+					insert.getEntity(), initialVersion, persistentEntity, converter);
+
 			id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty());
+
 			setNewVersion(initialVersion);
 		} else {
 			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());

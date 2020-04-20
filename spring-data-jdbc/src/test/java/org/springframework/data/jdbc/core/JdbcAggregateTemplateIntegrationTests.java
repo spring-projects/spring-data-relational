@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -847,53 +847,40 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
-																	  Function<Number, T> toConcreteNumber) {
-
-		template.save(aggregate);
-
-		VersionedAggregate reloadedAggregate = template.findById(aggregate.getId(), aggregate.getClass());
-		assertThat(reloadedAggregate.getVersion()).isEqualTo(toConcreteNumber.apply(0))
-				.withFailMessage("version field should initially have the value 0");
-		template.save(reloadedAggregate);
-
-		VersionedAggregate updatedAggregate = template.findById(aggregate.getId(), aggregate.getClass());
-		assertThat(updatedAggregate.getVersion()).isEqualTo(toConcreteNumber.apply(1))
-				.withFailMessage("version field should increment by one with each save");
-
-		reloadedAggregate.setVersion(toConcreteNumber.apply(0));
-		assertThatThrownBy(() -> template.save(reloadedAggregate))
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
-				.withFailMessage("saving an aggregate with an outdated version should raise an exception");
-
-		reloadedAggregate.setVersion(toConcreteNumber.apply(2));
-		assertThatThrownBy(() -> template.save(reloadedAggregate))
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
-				.withFailMessage("saving an aggregate with a future version should raise an exception");
+			Function<Number, T> toConcreteNumber) {
+		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
 	}
 
 	private <T extends Number> void saveAndUpdateAggregateWithPrimitiveVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
+		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 1);
+	}
+
+	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
+			Function<Number, T> toConcreteNumber, int initialId) {
 
 		template.save(aggregate);
 
 		VersionedAggregate reloadedAggregate = template.findById(aggregate.getId(), aggregate.getClass());
-		assertThat(reloadedAggregate.getVersion()).isEqualTo(toConcreteNumber.apply(1))
-				.withFailMessage("version field should initially have the value 1");
+		assertThat(reloadedAggregate.getVersion()) //
+				.withFailMessage("version field should initially have the value 0")
+				.isEqualTo(toConcreteNumber.apply(initialId));
 		template.save(reloadedAggregate);
 
 		VersionedAggregate updatedAggregate = template.findById(aggregate.getId(), aggregate.getClass());
-		assertThat(updatedAggregate.getVersion()).isEqualTo(toConcreteNumber.apply(2))
-				.withFailMessage("version field should increment by one with each save");
+		assertThat(updatedAggregate.getVersion()) //
+				.withFailMessage("version field should increment by one with each save")
+				.isEqualTo(toConcreteNumber.apply(initialId + 1));
 
-		reloadedAggregate.setVersion(toConcreteNumber.apply(1));
+		reloadedAggregate.setVersion(toConcreteNumber.apply(initialId));
 		assertThatThrownBy(() -> template.save(reloadedAggregate))
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
-				.withFailMessage("saving an aggregate with an outdated version should raise an exception");
+				.withFailMessage("saving an aggregate with an outdated version should raise an exception")
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 
-		reloadedAggregate.setVersion(toConcreteNumber.apply(3));
+		reloadedAggregate.setVersion(toConcreteNumber.apply(initialId + 2));
 		assertThatThrownBy(() -> template.save(reloadedAggregate))
-				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class)
-				.withFailMessage("saving an aggregate with a future version should raise an exception");
+				.withFailMessage("saving an aggregate with a future version should raise an exception")
+				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 	}
 
 	private Long count(String tableName) {
@@ -1113,12 +1100,12 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Value
-	@Wither
+	@With
 	@Table("VERSIONED_AGGREGATE")
 	static class AggregateWithImmutableVersion {
 
-		@Id private Long id;
-		@Version private final Long version;
+		@Id Long id;
+		@Version Long version;
 	}
 
 	@Data
