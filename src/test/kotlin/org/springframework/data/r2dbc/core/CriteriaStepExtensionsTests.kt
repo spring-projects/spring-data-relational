@@ -26,7 +26,6 @@ import org.springframework.data.r2dbc.query.Criteria
  * Unit tests for [Criteria.CriteriaStep] extensions.
  *
  * @author Jonas Bark
- * @author Mingyuan Wu
  */
 class CriteriaStepExtensionsTests {
 
@@ -65,51 +64,6 @@ class CriteriaStepExtensionsTests {
 
 		val spec = mockk<Criteria.CriteriaStep>()
 		val criteria = mockk<Criteria>()
-
-		every { spec.`in`(listOf("test")) } returns criteria
-
-		assertThat(spec.isIn(listOf("test"))).isEqualTo(criteria)
-
-		verify {
-			spec.`in`(listOf("test"))
-		}
-	}
-
-	@Test // gh-122
-	fun eqIsCriteriaStepForSpringData2() {
-
-		val spec = mockk<org.springframework.data.relational.core.query.Criteria.CriteriaStep>()
-		val criteria = mockk<org.springframework.data.relational.core.query.Criteria>()
-
-		every { spec.`is`("test") } returns criteria
-
-		assertThat(spec isEquals "test").isEqualTo(criteria)
-
-		verify {
-			spec.`is`("test")
-		}
-	}
-
-	@Test // gh-122
-	fun inVarargCriteriaStepForSpringData2() {
-
-		val spec = mockk<org.springframework.data.relational.core.query.Criteria.CriteriaStep>()
-		val criteria = mockk<org.springframework.data.relational.core.query.Criteria>()
-
-		every { spec.`in`(any() as Array<Any>) } returns criteria
-
-		assertThat(spec.isIn("test")).isEqualTo(criteria)
-
-		verify {
-			spec.`in`(arrayOf("test"))
-		}
-	}
-
-	@Test // gh-122
-	fun inListCriteriaStepForSpringData2() {
-
-		val spec = mockk<org.springframework.data.relational.core.query.Criteria.CriteriaStep>()
-		val criteria = mockk<org.springframework.data.relational.core.query.Criteria>()
 
 		every { spec.`in`(listOf("test")) } returns criteria
 

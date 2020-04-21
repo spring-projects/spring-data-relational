@@ -57,7 +57,6 @@ import org.springframework.data.r2dbc.convert.ColumnMapRowMapper;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
-import org.springframework.data.r2dbc.query.Criteria;
 import org.springframework.data.r2dbc.query.Update;
 import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -70,6 +69,7 @@ import org.springframework.util.StringUtils;
  * Default implementation of {@link DatabaseClient}.
  *
  * @author Mark Paluch
+ * @author Mingyuan Wu
  */
 class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
@@ -700,8 +700,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		DefaultSelectSpecSupport(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				@Nullable CriteriaDefinition criteria,
-				Sort sort, Pageable page) {
+				@Nullable CriteriaDefinition criteria, Sort sort, Pageable page) {
 			this.table = table;
 			this.projectedFields = projectedFields;
 			this.criteria = criteria;
@@ -761,8 +760,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 	private class DefaultGenericSelectSpec extends DefaultSelectSpecSupport implements GenericSelectSpec {
 
 		DefaultGenericSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				@Nullable CriteriaDefinition criteria,
-				Sort sort, Pageable page) {
+				@Nullable CriteriaDefinition criteria, Sort sort, Pageable page) {
 			super(table, projectedFields, criteria, sort, page);
 		}
 
@@ -868,8 +866,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		}
 
 		DefaultTypedSelectSpec(SqlIdentifier table, List<SqlIdentifier> projectedFields,
-				@Nullable CriteriaDefinition criteria,
-				Sort sort, Pageable page, Class<T> typeToRead, BiFunction<Row, RowMetadata, T> mappingFunction) {
+				@Nullable CriteriaDefinition criteria, Sort sort, Pageable page, Class<T> typeToRead,
+				BiFunction<Row, RowMetadata, T> mappingFunction) {
 
 			super(table, projectedFields, criteria, sort, page);
 
@@ -1358,8 +1356,8 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 				}
 			}
 
-			PreparedOperation<?> operation = mapper.getMappedObject(
-					mapper.createUpdate(table, update).withCriteria(org.springframework.data.relational.core.query.Criteria.where(dataAccessStrategy.toSql(ids.get(0))).is(id)));
+			PreparedOperation<?> operation = mapper.getMappedObject(mapper.createUpdate(table, update).withCriteria(
+					org.springframework.data.relational.core.query.Criteria.where(dataAccessStrategy.toSql(ids.get(0))).is(id)));
 
 			return exchangeUpdate(operation);
 		}
