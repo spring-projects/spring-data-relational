@@ -149,17 +149,26 @@ public class PartTreeR2dbcQueryUnitTests {
 				+ ".last_name = $1 OR (" + TABLE + ".first_name = $2)");
 	}
 
-	@Test // gh-282
+	@Test // gh-282, gh-349
 	public void createsQueryToFindAllEntitiesByDateAttributeBetween() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBetween", Date.class, Date.class);
 		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
 				dataAccessStrategy);
-		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { new Date(), new Date() });
+		Date from = new Date();
+		Date to = new Date();
+		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { from, to });
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
 
 		assertThat(bindableQuery.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".date_of_birth BETWEEN $1 AND $2");
+
+		DatabaseClient.BindSpec bindSpecMock = mock(DatabaseClient.BindSpec.class);
+		when(bindSpecMock.bind(anyInt(), any())).thenReturn(bindSpecMock);
+		bindableQuery.bind(bindSpecMock);
+
+		verify(bindSpecMock, times(1)).bind(0, from);
+		verify(bindSpecMock, times(1)).bind(1, to);
 	}
 
 	@Test // gh-282
@@ -559,24 +568,28 @@ public class PartTreeR2dbcQueryUnitTests {
 
 	@Test // gh-282
 	public void createsQueryWithLimitToFindEntitiesByStringAttribute() throws Exception {
+
 		R2dbcQueryMethod queryMethod = getQueryMethod("findTop3ByFirstName", String.class);
 		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
-		String expectedSql = "SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1 LIMIT 3";
-		assertThat(bindableQuery.get()).isEqualTo(expectedSql);
+
+		assertThat(bindableQuery.get())
+				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1 LIMIT 3");
 	}
 
 	@Test // gh-282
 	public void createsQueryToFindFirstEntityByStringAttribute() throws Exception {
+
 		R2dbcQueryMethod queryMethod = getQueryMethod("findFirstByFirstName", String.class);
 		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
-		String expectedSql = "SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1 LIMIT 1";
-		assertThat(bindableQuery.get()).isEqualTo(expectedSql);
+
+		assertThat(bindableQuery.get())
+				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1 LIMIT 1");
 	}
 
 	private R2dbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {

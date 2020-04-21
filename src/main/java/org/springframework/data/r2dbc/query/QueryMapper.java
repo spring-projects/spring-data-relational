@@ -496,7 +496,7 @@ public class QueryMapper {
 
 			Expression begin = bind(pair.getFirst(), valueType, bindings,
 					bindings.nextMarker(column.getName().getReference()), ignoreCase);
-			Expression end = bind(mappedValue, valueType, bindings, bindings.nextMarker(column.getName().getReference()),
+			Expression end = bind(pair.getSecond(), valueType, bindings, bindings.nextMarker(column.getName().getReference()),
 					ignoreCase);
 
 			return comparator == Comparator.BETWEEN ? Conditions.between(columnExpression, begin, end)
