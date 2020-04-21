@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -31,7 +30,6 @@ import java.util.Properties;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -62,6 +60,26 @@ public class PartTreeJdbcQueryUnitTests {
 
 	JdbcMappingContext mappingContext = new JdbcMappingContext();
 	JdbcConverter converter = new BasicJdbcConverter(mappingContext, mock(RelationResolver.class));
+
+	@Test // DATAJDBC-318
+	public void selectContainsColumnsForOneToOneReference() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }));
+
+		assertThat(query.getQuery()).contains("hated.\"name\" AS \"hated_name\"");
+	}
+
+	@Test // DATAJDBC-318
+	public void doesNotContainsColumnsForOneToManyReference() throws Exception{
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }));
+
+		assertThat(query.getQuery().toLowerCase()).doesNotContain("hobbies");
+	}
 
 	@Test // DATAJDBC-318
 	public void createsQueryToFindAllEntitiesByStringAttribute() throws Exception {
@@ -622,7 +640,6 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	@Table("users")
-	@Data
 	static class User {
 
 		@Id Long id;
@@ -633,12 +650,18 @@ public class PartTreeJdbcQueryUnitTests {
 		Boolean active;
 
 		@Embedded(prefix = "user_", onEmpty = Embedded.OnEmpty.USE_NULL) Address address;
+
+		List<Hobby> hobbies;
+		Hobby hated;
 	}
 
-	@Data
 	@AllArgsConstructor
 	static class Address {
 		String street;
 		String city;
+	}
+
+	static class Hobby {
+		String name;
 	}
 }

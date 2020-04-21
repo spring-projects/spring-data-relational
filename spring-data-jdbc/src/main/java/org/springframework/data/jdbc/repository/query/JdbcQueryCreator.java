@@ -65,7 +65,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
 	 * @param accessor parameter metadata provider, must not be {@literal null}.
 	 */
-	public JdbcQueryCreator(PartTree tree, JdbcConverter converter, Dialect dialect,
+	JdbcQueryCreator(PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor) {
 		super(tree, accessor);
 

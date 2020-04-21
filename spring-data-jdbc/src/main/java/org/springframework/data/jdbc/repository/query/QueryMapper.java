@@ -69,7 +69,7 @@ class QueryMapper {
 	 * @param converter must not be {@literal null}.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public QueryMapper(Dialect dialect, JdbcConverter converter) {
+	QueryMapper(Dialect dialect, JdbcConverter converter) {
 
 		Assert.notNull(dialect, "Dialect must not be null!");
 		Assert.notNull(converter, "JdbcConverter must not be null!");
@@ -80,13 +80,13 @@ class QueryMapper {
 	}
 
 	/**
-	 * Map the {@link Sort} object to apply field name mapping using {@link Class the type to read}.
+	 * Map the {@link Sort} object to apply field name mapping using {@link RelationalPersistentEntity the type to read}.
 	 *
 	 * @param sort must not be {@literal null}.
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return
 	 */
-	public List<OrderByField> getMappedSort(Table table, Sort sort, @Nullable RelationalPersistentEntity<?> entity) {
+	List<OrderByField> getMappedSort(Table table, Sort sort, @Nullable RelationalPersistentEntity<?> entity) {
 
 		List<OrderByField> mappedOrder = new ArrayList<>();
 
@@ -102,13 +102,14 @@ class QueryMapper {
 	}
 
 	/**
-	 * Map the {@link Expression} object to apply field name mapping using {@link Class the type to read}.
+	 * Map the {@link Expression} object to apply field name mapping using {@link RelationalPersistentEntity the type to
+	 * read}.
 	 *
 	 * @param expression must not be {@literal null}.
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
-	 * @return the mapped {@link Expression}.
+	 * @return the mapped {@link Expression}. Guaranteed to be not {@literal null}.
 	 */
-	public Expression getMappedObject(Expression expression, @Nullable RelationalPersistentEntity<?> entity) {
+	Expression getMappedObject(Expression expression, @Nullable RelationalPersistentEntity<?> entity) {
 
 		if (entity == null || expression instanceof AsteriskFromTable) {
 			return expression;
@@ -119,6 +120,8 @@ class QueryMapper {
 			Column column = (Column) expression;
 			Field field = createPropertyField(entity, column.getName());
 			Table table = column.getTable();
+
+			Assert.state(table != null, String.format("The column %s must have a table set.", column));
 
 			Column columnFromTable = table.column(field.getMappedColumnName());
 			return column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable;
@@ -144,7 +147,7 @@ class QueryMapper {
 	}
 
 	/**
-	 * Map a {@link CriteriaDefinition} object into {@link Condition} and consider value/{@code NULL} {@link Bindings}.
+	 * Map a {@link CriteriaDefinition} object into {@link Condition} and consider value/{@code NULL} bindings.
 	 *
 	 * @param parameterSource bind parameterSource object, must not be {@literal null}.
 	 * @param criteria criteria definition to map, must not be {@literal null}.
@@ -152,7 +155,7 @@ class QueryMapper {
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link Condition}.
 	 */
-	public Condition getMappedObject(MapSqlParameterSource parameterSource, CriteriaDefinition criteria, Table table,
+	Condition getMappedObject(MapSqlParameterSource parameterSource, CriteriaDefinition criteria, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(parameterSource, "MapSqlParameterSource must not be null!");
@@ -349,13 +352,13 @@ class QueryMapper {
 
 			Pair<Object, Object> pair = (Pair<Object, Object>) value;
 
-			Object first = convertValue(pair.getFirst(),
-					typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
-							: ClassTypeInformation.OBJECT);
+			Object first = convertValue(pair.getFirst(), typeInformation.getActualType() != null //
+					? typeInformation.getRequiredActualType()
+					: ClassTypeInformation.OBJECT);
 
-			Object second = convertValue(pair.getSecond(),
-					typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
-							: ClassTypeInformation.OBJECT);
+			Object second = convertValue(pair.getSecond(), typeInformation.getActualType() != null //
+					? typeInformation.getRequiredActualType()
+					: ClassTypeInformation.OBJECT);
 
 			return Pair.of(first, second);
 		}
@@ -365,6 +368,7 @@ class QueryMapper {
 			List<Object> mapped = new ArrayList<>();
 
 			for (Object o : (Iterable<?>) value) {
+
 				mapped.add(convertValue(o, typeInformation.getActualType() != null ? typeInformation.getRequiredActualType()
 						: ClassTypeInformation.OBJECT));
 			}
@@ -498,10 +502,6 @@ class QueryMapper {
 		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext, converter);
 	}
 
-	Class<?> getTypeHint(@Nullable Object mappedValue, Class<?> propertyType) {
-		return propertyType;
-	}
-
 	int getTypeHint(@Nullable Object mappedValue, Class<?> propertyType, JdbcValue settableValue) {
 
 		if (mappedValue == null || propertyType.equals(Object.class)) {
@@ -560,7 +560,7 @@ class QueryMapper {
 		 *
 		 * @param name must not be {@literal null} or empty.
 		 */
-		public Field(SqlIdentifier name) {
+		Field(SqlIdentifier name) {
 
 			Assert.notNull(name, "Name must not be null!");
 			this.name = name;
