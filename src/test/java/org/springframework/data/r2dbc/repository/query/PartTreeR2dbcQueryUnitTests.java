@@ -63,6 +63,7 @@ public class PartTreeR2dbcQueryUnitTests {
 	private static final String TABLE = "users";
 	private static final String ALL_FIELDS = TABLE + ".id, " + TABLE + ".first_name, " + TABLE + ".last_name, " + TABLE
 			+ ".date_of_birth, " + TABLE + ".age, " + TABLE + ".active";
+	private static final String DISTINCT = "DISTINCT";
 
 	@Mock ConnectionFactory connectionFactory;
 	@Mock R2dbcConverter r2dbcConverter;
@@ -605,6 +606,19 @@ public class PartTreeR2dbcQueryUnitTests {
 		assertThat(bindableQuery.get()).isEqualTo("DELETE FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
+	@Test // gh-344
+	public void createsQueryToFindAllEntitiesByStringAttributeWithDistinct() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod("findDistinctByFirstName", String.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+				dataAccessStrategy);
+		BindableQuery bindableQuery = r2dbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }));
+
+		assertThat(bindableQuery.get())
+				.isEqualTo("SELECT " + DISTINCT + " " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
+	}
+
+
 	private R2dbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {
 		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
 		return new R2dbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
@@ -682,6 +696,8 @@ public class PartTreeR2dbcQueryUnitTests {
 		Flux<User> findTop3ByFirstName(String firstName);
 
 		Mono<User> findFirstByFirstName(String firstName);
+		
+		Mono<User> findDistinctByFirstName(String firstName);
 
 		Mono<Integer> deleteByFirstName(String firstName);
 	}

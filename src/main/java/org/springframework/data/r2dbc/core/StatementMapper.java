@@ -202,9 +202,10 @@ public interface StatementMapper {
 		private final Sort sort;
 		private final long offset;
 		private final int limit;
+		private boolean distinct = false;
 
 		protected SelectSpec(Table table, List<String> projectedFields, List<Expression> selectList,
-				@Nullable CriteriaDefinition criteria, Sort sort, int limit, long offset) {
+				@Nullable CriteriaDefinition criteria, Sort sort, int limit, long offset, boolean distinct) {
 			this.table = table;
 			this.projectedFields = projectedFields;
 			this.selectList = selectList;
@@ -212,6 +213,7 @@ public interface StatementMapper {
 			this.sort = sort;
 			this.offset = offset;
 			this.limit = limit;
+			this.distinct = distinct;
 		}
 
 		/**
@@ -236,7 +238,7 @@ public interface StatementMapper {
 			List<String> projectedFields = Collections.emptyList();
 			List<Expression> selectList = Collections.emptyList();
 			return new SelectSpec(Table.create(table), projectedFields, selectList, Criteria.empty(), Sort.unsorted(), -1,
-					-1);
+					-1, false);
 		}
 
 		public SelectSpec doWithTable(BiFunction<Table, SelectSpec, SelectSpec> function) {
@@ -277,7 +279,7 @@ public interface StatementMapper {
 			List<Expression> selectList = new ArrayList<>(this.selectList);
 			selectList.addAll(Arrays.asList(expressions));
 
-			return new SelectSpec(this.table, projectedFields, selectList, this.criteria, this.sort, this.limit, this.offset);
+			return new SelectSpec(this.table, projectedFields, selectList, this.criteria, this.sort, this.limit, this.offset, this.distinct);
 		}
 
 		/**
@@ -293,7 +295,7 @@ public interface StatementMapper {
 			selectList.addAll(projectedFields);
 
 			return new SelectSpec(this.table, this.projectedFields, selectList, this.criteria, this.sort, this.limit,
-					this.offset);
+					this.offset, this.distinct);
 		}
 
 		/**
@@ -304,7 +306,7 @@ public interface StatementMapper {
 		 */
 		public SelectSpec withCriteria(CriteriaDefinition criteria) {
 			return new SelectSpec(this.table, this.projectedFields, this.selectList, criteria, this.sort, this.limit,
-					this.offset);
+					this.offset, this.distinct);
 		}
 
 		/**
@@ -317,11 +319,11 @@ public interface StatementMapper {
 
 			if (sort.isSorted()) {
 				return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, sort, this.limit,
-						this.offset);
+						this.offset, this.distinct);
 			}
 
 			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, this.limit,
-					this.offset);
+					this.offset, this.distinct);
 		}
 
 		/**
@@ -337,33 +339,44 @@ public interface StatementMapper {
 				Sort sort = page.getSort();
 
 				return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria,
-						sort.isSorted() ? sort : this.sort, page.getPageSize(), page.getOffset());
+						sort.isSorted() ? sort : this.sort, page.getPageSize(), page.getOffset(), this.distinct);
 			}
 
 			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, this.limit,
-					this.offset);
+					this.offset, this.distinct);
 		}
 
 		/**
 		 * Associate a result offset with the select and create a new {@link SelectSpec}.
 		 *
-		 * @param page
+		 * @param offset
 		 * @return the {@link SelectSpec}.
 		 */
 		public SelectSpec offset(long offset) {
 			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, this.limit,
-					offset);
+					offset, this.distinct);
 		}
 
 		/**
 		 * Associate a result limit with the select and create a new {@link SelectSpec}.
 		 *
-		 * @param page
+		 * @param limit
 		 * @return the {@link SelectSpec}.
 		 */
 		public SelectSpec limit(int limit) {
 			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, limit,
-					this.offset);
+					this.offset, this.distinct);
+		}
+
+		/**
+		 * Associate a result statement distinct with the select and create a new {@link SelectSpec}.
+		 *
+		 * @param distinct
+		 * @return the {@link SelectSpec}.
+		 */
+		public SelectSpec distinct(boolean distinct) {
+			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, limit,
+					this.offset, distinct);
 		}
 
 		public Table getTable() {
@@ -398,6 +411,10 @@ public interface StatementMapper {
 
 		public int getLimit() {
 			return this.limit;
+		}
+
+		public boolean isDistinct() {
+			return this.distinct;
 		}
 	}
 

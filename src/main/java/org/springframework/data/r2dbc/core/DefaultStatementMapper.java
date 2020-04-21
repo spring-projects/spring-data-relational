@@ -41,6 +41,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Roman Chigvintsev
+ * @author Mingyuan Wu
  */
 class DefaultStatementMapper implements StatementMapper {
 
@@ -84,8 +85,11 @@ class DefaultStatementMapper implements StatementMapper {
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Table table = selectSpec.getTable();
-		SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder.select(getSelectList(selectSpec, entity))
-				.from(table);
+		SelectBuilder.SelectAndFrom selectAndFrom = StatementBuilder.select(getSelectList(selectSpec, entity));
+		if(selectSpec.isDistinct()){
+			selectAndFrom = selectAndFrom.distinct();
+		}
+		SelectBuilder.SelectFromAndJoin selectBuilder = selectAndFrom.from(table);
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
 		Bindings bindings = Bindings.empty();

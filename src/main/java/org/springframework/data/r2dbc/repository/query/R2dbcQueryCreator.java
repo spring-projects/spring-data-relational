@@ -123,6 +123,10 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 			selectSpec = selectSpec.withSort(getSort(sort));
 		}
 
+		if(tree.isDistinct()){
+			selectSpec = selectSpec.distinct(true);
+		}
+
 		return statementMapper.getMappedObject(selectSpec);
 	}
 
