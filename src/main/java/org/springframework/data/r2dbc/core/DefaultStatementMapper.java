@@ -28,6 +28,7 @@ import org.springframework.data.r2dbc.query.BoundCondition;
 import org.springframework.data.r2dbc.query.UpdateMapper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.InsertBuilder.InsertValuesWithBuild;
 import org.springframework.data.relational.core.sql.render.RenderContext;
@@ -204,10 +205,10 @@ class DefaultStatementMapper implements StatementMapper {
 
 		Update update;
 
-		if (!updateSpec.getCriteria().isEmpty()) {
+		CriteriaDefinition criteria = updateSpec.getCriteria();
+		if (criteria != null && !criteria.isEmpty()) {
 
-			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, updateSpec.getCriteria(), table,
-					entity);
+			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, criteria, table, entity);
 
 			bindings = bindings.and(boundCondition.getBindings());
 			update = updateBuilder.where(boundCondition.getCondition()).build();
@@ -247,7 +248,9 @@ class DefaultStatementMapper implements StatementMapper {
 		Bindings bindings = Bindings.empty();
 
 		Delete delete;
-		if (!deleteSpec.getCriteria().isEmpty()) {
+		CriteriaDefinition criteria = deleteSpec.getCriteria();
+
+		if (criteria != null && !criteria.isEmpty()) {
 
 			BoundCondition boundCondition = this.updateMapper.getMappedObject(bindMarkers, deleteSpec.getCriteria(), table,
 					entity);

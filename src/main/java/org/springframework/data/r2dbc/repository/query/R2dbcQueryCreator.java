@@ -83,10 +83,24 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 	protected PreparedOperation<?> complete(Criteria criteria, Sort sort) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityMetadata.getJavaType());
-		if(tree.isDelete()){
-			StatementMapper.DeleteSpec deleteSpec = statementMapper.createDelete(entityMetadata.getTableName()).withCriteria(criteria);
-			return statementMapper.getMappedObject(deleteSpec);
+
+		if (tree.isDelete()) {
+			return delete(criteria, statementMapper);
 		}
+
+		return select(criteria, sort, statementMapper);
+	}
+
+	private PreparedOperation<?> delete(Criteria criteria, StatementMapper statementMapper) {
+
+		StatementMapper.DeleteSpec deleteSpec = statementMapper.createDelete(entityMetadata.getTableName())
+				.withCriteria(criteria);
+
+		return statementMapper.getMappedObject(deleteSpec);
+	}
+
+	private PreparedOperation<?> select(Criteria criteria, Sort sort, StatementMapper statementMapper) {
+
 		StatementMapper.SelectSpec selectSpec = statementMapper.createSelect(entityMetadata.getTableName())
 				.withProjection(getSelectProjection());
 

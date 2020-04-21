@@ -198,7 +198,7 @@ public interface StatementMapper {
 		private final Table table;
 		private final List<String> projectedFields;
 		private final List<Expression> selectList;
-		private final CriteriaDefinition criteria;
+		private final @Nullable CriteriaDefinition criteria;
 		private final Sort sort;
 		private final long offset;
 		private final int limit;
@@ -383,6 +383,7 @@ public interface StatementMapper {
 			return Collections.unmodifiableList(selectList);
 		}
 
+		@Nullable
 		public CriteriaDefinition getCriteria() {
 			return this.criteria;
 		}
@@ -475,12 +476,11 @@ public interface StatementMapper {
 	class UpdateSpec {
 
 		private final SqlIdentifier table;
-		@Nullable private final org.springframework.data.relational.core.query.Update update;
-
-		private final CriteriaDefinition criteria;
+		private final @Nullable org.springframework.data.relational.core.query.Update update;
+		private final @Nullable CriteriaDefinition criteria;
 
 		protected UpdateSpec(SqlIdentifier table, @Nullable org.springframework.data.relational.core.query.Update update,
-				CriteriaDefinition criteria) {
+				@Nullable CriteriaDefinition criteria) {
 
 			this.table = table;
 			this.update = update;
@@ -527,6 +527,7 @@ public interface StatementMapper {
 			return this.update;
 		}
 
+		@Nullable
 		public CriteriaDefinition getCriteria() {
 			return this.criteria;
 		}
@@ -538,8 +539,7 @@ public interface StatementMapper {
 	class DeleteSpec {
 
 		private final SqlIdentifier table;
-
-		private final CriteriaDefinition criteria;
+		private final @Nullable CriteriaDefinition criteria;
 
 		protected DeleteSpec(SqlIdentifier table, CriteriaDefinition criteria) {
 			this.table = table;
@@ -581,6 +581,7 @@ public interface StatementMapper {
 			return this.table;
 		}
 
+		@Nullable
 		public CriteriaDefinition getCriteria() {
 			return this.criteria;
 		}

@@ -76,7 +76,17 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		this.binder = new ExpressionEvaluatingParameterBinder(expressionParser, evaluationContextProvider, expressionQuery);
 	}
 
-	/* (non-Javadoc)
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isModifyingQuery()
+	 */
+	@Override
+	protected boolean isModifyingQuery() {
+		return getQueryMethod().isModifyingQuery();
+	}
+
+	/* 
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
 	 */
 	@Override
@@ -95,5 +105,4 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 			}
 		};
 	}
-
 }

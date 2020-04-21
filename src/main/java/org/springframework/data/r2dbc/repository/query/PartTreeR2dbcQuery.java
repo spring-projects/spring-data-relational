@@ -29,6 +29,7 @@ import org.springframework.data.repository.query.parser.PartTree;
  * An {@link AbstractR2dbcQuery} implementation based on a {@link PartTree}.
  *
  * @author Roman Chigvintsev
+ * @author Mark Paluch
  * @since 1.1
  */
 public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
@@ -61,6 +62,19 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 		}
 	}
 
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isModifyingQuery()
+	 */
+	@Override
+	protected boolean isModifyingQuery() {
+		return this.tree.isDelete();
+	}
+
+	/* 
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
+	 */
 	@Override
 	protected BindableQuery createQuery(RelationalParameterAccessor accessor) {
 

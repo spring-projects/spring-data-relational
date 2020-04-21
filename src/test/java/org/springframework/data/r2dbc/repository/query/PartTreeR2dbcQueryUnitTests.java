@@ -55,6 +55,7 @@ import org.springframework.data.repository.core.support.DefaultRepositoryMetadat
  *
  * @author Roman Chigvintsev
  * @author Mark Paluch
+ * @author Mingyuan Wu
  */
 @RunWith(MockitoJUnitRunner.class)
 public class PartTreeR2dbcQueryUnitTests {
@@ -594,13 +595,14 @@ public class PartTreeR2dbcQueryUnitTests {
 
 	@Test // gh-341
 	public void createsQueryToDeleteByFirstName() throws Exception {
+
 		R2dbcQueryMethod queryMethod = getQueryMethod("deleteByFirstName", String.class);
 		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
-		String expectedSql = "DELETE FROM "+ TABLE + " WHERE " + TABLE + ".first_name = $1" ;
-		assertThat(bindableQuery.get()).isEqualTo(expectedSql);
+
+		assertThat(bindableQuery.get()).isEqualTo("DELETE FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
 	private R2dbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {

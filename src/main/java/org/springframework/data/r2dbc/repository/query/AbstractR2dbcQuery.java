@@ -20,7 +20,6 @@ import reactor.core.publisher.Mono;
 
 import org.reactivestreams.Publisher;
 
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
@@ -109,7 +108,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
 		SqlIdentifier tableName = method.getEntityInformation().getTableName();
 
-		R2dbcQueryExecution execution = getExecution(processor.getReturnedType(),
+		R2dbcQueryExecution execution = new ResultProcessingExecution(getExecutionToWrap(processor.getReturnedType()),
 				new ResultProcessingConverter(processor, converter.getMappingContext(), instantiators));
 
 		return execution.execute(fetchSpec, processor.getReturnedType().getDomainType(), tableName);
@@ -122,20 +121,9 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		return returnedType.isProjecting() ? returnedType.getDomainType() : returnedType.getReturnedType();
 	}
 
-	/**
-	 * Returns the execution instance to use.
-	 *
-	 * @param returnedType must not be {@literal null}.
-	 * @param resultProcessing must not be {@literal null}.
-	 * @return
-	 */
-	private R2dbcQueryExecution getExecution(ReturnedType returnedType, Converter<Object, Object> resultProcessing) {
-		return new ResultProcessingExecution(getExecutionToWrap(returnedType), resultProcessing);
-	}
-
 	private R2dbcQueryExecution getExecutionToWrap(ReturnedType returnedType) {
 
-		if (method.isModifyingQuery()) {
+		if (isModifyingQuery()) {
 
 			if (Boolean.class.isAssignableFrom(returnedType.getReturnedType())) {
 				return (q, t, c) -> q.rowsUpdated().map(integer -> integer > 0);
@@ -161,6 +149,14 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
 		return (q, t, c) -> q.one();
 	}
+
+	/**
+	 * Returns whether this query is a modifying one.
+	 * 
+	 * @return
+	 * @since 1.1
+	 */
+	protected abstract boolean isModifyingQuery();
 
 	/**
 	 * Creates a {@link BindableQuery} instance using the given {@link ParameterAccessor}

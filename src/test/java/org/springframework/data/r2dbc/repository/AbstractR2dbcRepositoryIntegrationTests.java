@@ -229,6 +229,20 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
+	@Test // gh-341
+	public void shouldDeleteAll() {
+
+		shouldInsertNewItems();
+
+		repository.deleteAllBy() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		repository.findAll() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+	}
+
 	@Test
 	public void shouldInsertItemsTransactional() {
 
@@ -271,6 +285,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Mono<LegoSet> findByManual(int manual);
 
 		Flux<Integer> findAllIds();
+
+		Mono<Void> deleteAllBy();
 
 		@Query("DELETE from legoset where manual = :manual")
 		Mono<Void> deleteAllByManual(int manual);
