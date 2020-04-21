@@ -86,18 +86,20 @@ class DefaultStatementMapper implements StatementMapper {
 
 		Table table = selectSpec.getTable();
 		SelectBuilder.SelectAndFrom selectAndFrom = StatementBuilder.select(getSelectList(selectSpec, entity));
-		if(selectSpec.isDistinct()){
+
+		if (selectSpec.isDistinct()) {
 			selectAndFrom = selectAndFrom.distinct();
 		}
+
 		SelectBuilder.SelectFromAndJoin selectBuilder = selectAndFrom.from(table);
 
 		BindMarkers bindMarkers = this.dialect.getBindMarkersFactory().create();
 		Bindings bindings = Bindings.empty();
+		CriteriaDefinition criteria = selectSpec.getCriteria();
 
-		if (!selectSpec.getCriteria().isEmpty()) {
+		if (criteria != null && !criteria.isEmpty()) {
 
-			BoundCondition mappedObject = this.updateMapper.getMappedObject(bindMarkers, selectSpec.getCriteria(), table,
-					entity);
+			BoundCondition mappedObject = this.updateMapper.getMappedObject(bindMarkers, criteria, table, entity);
 
 			bindings = mappedObject.getBindings();
 			selectBuilder.where(mappedObject.getCondition());

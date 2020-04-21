@@ -614,10 +614,9 @@ public class PartTreeR2dbcQueryUnitTests {
 				dataAccessStrategy);
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }));
 
-		assertThat(bindableQuery.get())
-				.isEqualTo("SELECT " + DISTINCT + " " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
+		assertThat(bindableQuery.get()).isEqualTo("SELECT " + DISTINCT + " " + TABLE + ".first_name, " + TABLE
+				+ ".foo FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
-
 
 	private R2dbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {
 		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
@@ -696,8 +695,8 @@ public class PartTreeR2dbcQueryUnitTests {
 		Flux<User> findTop3ByFirstName(String firstName);
 
 		Mono<User> findFirstByFirstName(String firstName);
-		
-		Mono<User> findDistinctByFirstName(String firstName);
+
+		Mono<UserProjection> findDistinctByFirstName(String firstName);
 
 		Mono<Integer> deleteByFirstName(String firstName);
 	}
@@ -712,5 +711,12 @@ public class PartTreeR2dbcQueryUnitTests {
 		private Date dateOfBirth;
 		private Integer age;
 		private Boolean active;
+	}
+
+	interface UserProjection {
+
+		String getFirstName();
+
+		String getFoo();
 	}
 }

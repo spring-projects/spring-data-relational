@@ -15,6 +15,10 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
@@ -23,6 +27,8 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParameters;
+import org.springframework.data.repository.query.ResultProcessor;
+import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.PartTree;
 
 /**
@@ -34,6 +40,7 @@ import org.springframework.data.repository.query.parser.PartTree;
  */
 public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 
+	private final ResultProcessor processor;
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 	private final RelationalParameters parameters;
 	private final PartTree tree;
@@ -50,6 +57,8 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 	public PartTreeR2dbcQuery(R2dbcQueryMethod method, DatabaseClient databaseClient, R2dbcConverter converter,
 			ReactiveDataAccessStrategy dataAccessStrategy) {
 		super(method, databaseClient, converter);
+
+		this.processor = method.getResultProcessor();
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.parameters = method.getParameters();
 
@@ -78,8 +87,16 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 	@Override
 	protected BindableQuery createQuery(RelationalParameterAccessor accessor) {
 
+		ReturnedType returnedType = processor.withDynamicProjection(accessor).getReturnedType();
+		List<String> projectedProperties = Collections.emptyList();
+
+		if (returnedType.needsCustomConstruction()) {
+			projectedProperties = new ArrayList<>(returnedType.getInputProperties());
+		}
+
 		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
-		R2dbcQueryCreator queryCreator = new R2dbcQueryCreator(tree, dataAccessStrategy, entityMetadata, accessor);
+		R2dbcQueryCreator queryCreator = new R2dbcQueryCreator(tree, dataAccessStrategy, entityMetadata, accessor,
+				projectedProperties);
 		PreparedOperation<?> preparedQuery = queryCreator.createQuery(getDynamicSort(accessor));
 
 		return new PreparedOperationBindableQuery(preparedQuery);

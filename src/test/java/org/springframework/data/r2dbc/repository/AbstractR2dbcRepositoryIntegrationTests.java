@@ -156,6 +156,26 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
+	@Test // gh-344
+	public void shouldFindApplyingDistinctProjection() {
+
+		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
+		LegoSet legoSet2 = new LegoSet(null, "SCHAUFELRADBAGGER", 13);
+
+		repository.saveAll(Arrays.asList(legoSet1, legoSet2)) //
+				.as(StepVerifier::create) //
+				.expectNextCount(2) //
+				.verifyComplete();
+
+		repository.findDistinctBy() //
+				.map(Named::getName) //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual).hasSize(1).contains("SCHAUFELRADBAGGER");
+				}).verifyComplete();
+	}
+
 	@Test // gh-41
 	public void shouldFindApplyingSimpleTypeProjection() {
 
@@ -281,6 +301,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Flux<LegoSet> findAllByOrderByManual(Pageable pageable);
 
 		Flux<Named> findAsProjection();
+
+		Flux<Named> findDistinctBy();
 
 		Mono<LegoSet> findByManual(int manual);
 

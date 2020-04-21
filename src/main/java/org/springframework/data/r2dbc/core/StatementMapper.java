@@ -202,7 +202,7 @@ public interface StatementMapper {
 		private final Sort sort;
 		private final long offset;
 		private final int limit;
-		private boolean distinct = false;
+		private final boolean distinct;
 
 		protected SelectSpec(Table table, List<String> projectedFields, List<Expression> selectList,
 				@Nullable CriteriaDefinition criteria, Sort sort, int limit, long offset, boolean distinct) {
@@ -237,8 +237,8 @@ public interface StatementMapper {
 
 			List<String> projectedFields = Collections.emptyList();
 			List<Expression> selectList = Collections.emptyList();
-			return new SelectSpec(Table.create(table), projectedFields, selectList, Criteria.empty(), Sort.unsorted(), -1,
-					-1, false);
+			return new SelectSpec(Table.create(table), projectedFields, selectList, Criteria.empty(), Sort.unsorted(), -1, -1,
+					false);
 		}
 
 		public SelectSpec doWithTable(BiFunction<Table, SelectSpec, SelectSpec> function) {
@@ -279,7 +279,8 @@ public interface StatementMapper {
 			List<Expression> selectList = new ArrayList<>(this.selectList);
 			selectList.addAll(Arrays.asList(expressions));
 
-			return new SelectSpec(this.table, projectedFields, selectList, this.criteria, this.sort, this.limit, this.offset, this.distinct);
+			return new SelectSpec(this.table, projectedFields, selectList, this.criteria, this.sort, this.limit, this.offset,
+					this.distinct);
 		}
 
 		/**
@@ -371,12 +372,11 @@ public interface StatementMapper {
 		/**
 		 * Associate a result statement distinct with the select and create a new {@link SelectSpec}.
 		 *
-		 * @param distinct
 		 * @return the {@link SelectSpec}.
 		 */
-		public SelectSpec distinct(boolean distinct) {
+		public SelectSpec distinct() {
 			return new SelectSpec(this.table, this.projectedFields, this.selectList, this.criteria, this.sort, limit,
-					this.offset, distinct);
+					this.offset, true);
 		}
 
 		public Table getTable() {

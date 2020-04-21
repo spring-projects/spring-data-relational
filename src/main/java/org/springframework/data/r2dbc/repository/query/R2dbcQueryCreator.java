@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ import org.springframework.data.relational.repository.query.RelationalParameterA
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
 import org.springframework.data.repository.query.parser.AbstractQueryCreator;
 import org.springframework.data.repository.query.parser.PartTree;
-import org.springframework.util.Assert;
+import org.springframework.lang.Nullable;
 
 /**
  * Implementation of {@link AbstractQueryCreator} that creates {@link PreparedOperation} from a {@link PartTree}.
@@ -42,34 +43,35 @@ import org.springframework.util.Assert;
  * @author Mingyuan Wu
  * @since 1.1
  */
-public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
+class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 
 	private final PartTree tree;
 	private final RelationalParameterAccessor accessor;
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 	private final RelationalEntityMetadata<?> entityMetadata;
+	private final List<String> projectedProperties;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link ReactiveDataAccessStrategy},
 	 * {@link RelationalEntityMetadata} and {@link RelationalParameterAccessor}.
-	 *
+	 * 
 	 * @param tree part tree, must not be {@literal null}.
 	 * @param dataAccessStrategy data access strategy, must not be {@literal null}.
 	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
 	 * @param accessor parameter metadata provider, must not be {@literal null}.
+	 * @param projectedProperties properties to project, must not be {@literal null}.
 	 */
 	public R2dbcQueryCreator(PartTree tree, ReactiveDataAccessStrategy dataAccessStrategy,
-			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor) {
+			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor,
+			List<String> projectedProperties) {
 		super(tree, accessor);
-
-		Assert.notNull(dataAccessStrategy, "Data access strategy must not be null");
-		Assert.notNull(entityMetadata, "Relational entity metadata must not be null");
 
 		this.tree = tree;
 		this.accessor = accessor;
 
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.entityMetadata = entityMetadata;
+		this.projectedProperties = projectedProperties;
 	}
 
 	/**
@@ -80,7 +82,7 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 	 * @return instance of {@link PreparedOperation}
 	 */
 	@Override
-	protected PreparedOperation<?> complete(Criteria criteria, Sort sort) {
+	protected PreparedOperation<?> complete(@Nullable Criteria criteria, Sort sort) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityMetadata.getJavaType());
 
@@ -91,7 +93,7 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 		return select(criteria, sort, statementMapper);
 	}
 
-	private PreparedOperation<?> delete(Criteria criteria, StatementMapper statementMapper) {
+	private PreparedOperation<?> delete(@Nullable Criteria criteria, StatementMapper statementMapper) {
 
 		StatementMapper.DeleteSpec deleteSpec = statementMapper.createDelete(entityMetadata.getTableName())
 				.withCriteria(criteria);
@@ -99,7 +101,7 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 		return statementMapper.getMappedObject(deleteSpec);
 	}
 
-	private PreparedOperation<?> select(Criteria criteria, Sort sort, StatementMapper statementMapper) {
+	private PreparedOperation<?> select(@Nullable Criteria criteria, Sort sort, StatementMapper statementMapper) {
 
 		StatementMapper.SelectSpec selectSpec = statementMapper.createSelect(entityMetadata.getTableName())
 				.withProjection(getSelectProjection());
@@ -123,8 +125,8 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 			selectSpec = selectSpec.withSort(getSort(sort));
 		}
 
-		if(tree.isDistinct()){
-			selectSpec = selectSpec.distinct(true);
+		if (tree.isDistinct()) {
+			selectSpec = selectSpec.distinct();
 		}
 
 		return statementMapper.getMappedObject(selectSpec);
@@ -134,7 +136,18 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 
 		List<SqlIdentifier> columnNames;
 
-		if (tree.isExistsProjection()) {
+		if (!projectedProperties.isEmpty()) {
+
+			RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
+			columnNames = new ArrayList<>(projectedProperties.size());
+
+			for (String projectedProperty : projectedProperties) {
+
+				RelationalPersistentProperty property = entity.getPersistentProperty(projectedProperty);
+				columnNames.add(property != null ? property.getColumnName() : SqlIdentifier.unquoted(projectedProperty));
+			}
+
+		} else if (tree.isExistsProjection()) {
 			columnNames = dataAccessStrategy.getIdentifierColumns(entityMetadata.getJavaType());
 		} else {
 			columnNames = dataAccessStrategy.getAllColumns(entityMetadata.getJavaType());
