@@ -57,8 +57,8 @@ public class DependencyTests {
 							}
 						}) // exclude test code
 						.withSlicing("sub-modules", // sub-modules are defined by any of the following pattern.
-								"org.springframework.data.jdbc.(**).*", //
-								"org.springframework.data.(**).*") //
+								"org.springframework.data.jdbc.(*).**", //
+								"org.springframework.data.(*).**") //
 						.printTo("degraph-across-modules.graphml"), // writes a graphml to this location
 				JCheck.violationFree());
 	}
