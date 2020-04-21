@@ -19,7 +19,8 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.lang.Nullable;
 
 /**
- * Interface specifying a result execution strategy.
+ * Interface specifying a query execution strategy. Implementations encapsulate information how to actually execute the
+ * query and how to process the result in order to get the desired return type.
  * 
  * @author Mark Paluch
  * @since 2.0
@@ -28,11 +29,11 @@ import org.springframework.lang.Nullable;
 interface JdbcQueryExecution<T> {
 
 	/**
-	 * Execute the given {@code query}.
+	 * Execute the given {@code query} and {@code parameter} and transforms the result into a {@code T}.
 	 * 
-	 * @param query
-	 * @param parameter
-	 * @return
+	 * @param query the query to be executed. Must not be {@literal null}.
+	 * @param parameter the parameters to be bound to the query. Must not be {@literal null}.
+	 * @return the result of the query. Might be {@literal null}.
 	 */
 	@Nullable
 	T execute(String query, SqlParameterSource parameter);

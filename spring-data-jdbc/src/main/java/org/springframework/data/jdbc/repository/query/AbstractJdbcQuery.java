@@ -27,8 +27,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
- * method.
+ * Base class for queries based on a repository method. It holds the infrastructure for executing a query and knows how
+ * to execute a query based on the return type of the method. How to construct the query is left to subclasses.
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu

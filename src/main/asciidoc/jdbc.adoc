@@ -447,7 +447,7 @@ Thus, the method name results in a query expression of `SELECT … FROM person W
 <2> Use `Pageable` to pass offset and sorting parameters to the database.
 <3> Find a single entity for the given criteria.
 It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
-<4> Unless <3>, the first entity is always emitted even if the query yields more result documents.
+<4> In contrast to <3>, the first entity is always emitted even if the query yields more result documents.
 <5> The `findByLastname` method shows a query for all people with the given last name.
 ====
 
@@ -541,7 +541,7 @@ The following table shows the keywords that are supported for query methods:
 | `active IS FALSE`
 |===
 
-NOTE: Query derivation is limited to properties that can be used in a `WHERE` clause without involving joins. 
+NOTE: Query derivation is limited to properties that can be used in a `WHERE` clause without using joins.
 
 [[jdbc.query-methods.strategies]]
 === Query Lookup Strategies
@@ -622,7 +622,7 @@ Iterating happens in the order of registration, so make sure to register more ge
 If applicable, wrapper types such as collections or `Optional` are unwrapped.
 Thus, a return type of `Optional<Person>` uses the `Person` type in the preceding process.
 
-NOTE: Using a custom `RowMapper` through `QueryMappingConfiguration`, `@Query(rowMapperClass=…)`, or a custom `ResultSetExtractor` disables Entity Callbacks and Lifecycle Events as these components are under full control of the result mapping and can issue their own events/callbacks if needed.
+NOTE: Using a custom `RowMapper` through `QueryMappingConfiguration`, `@Query(rowMapperClass=…)`, or a custom `ResultSetExtractor` disables Entity Callbacks and Lifecycle Events as the result mapping can issue its own events/callbacks if needed.
 
 [[jdbc.query-methods.at-query.modifying]]
 ==== Modifying Query

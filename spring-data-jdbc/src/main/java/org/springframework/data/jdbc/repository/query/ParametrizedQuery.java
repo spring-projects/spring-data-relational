@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 
 /**
- * Value object encapsulating a parametrized query containing named parameters and {@link SqlParameterSource}.
+ * Value object encapsulating a query containing named parameters and a{@link SqlParameterSource} to bind the parameters.
  * 
  * @author Mark Paluch
  * @since 2.0
@@ -28,16 +28,17 @@ class ParametrizedQuery {
 	private final String query;
 	private final SqlParameterSource parameterSource;
 
-	public ParametrizedQuery(String query, SqlParameterSource parameterSource) {
+	ParametrizedQuery(String query, SqlParameterSource parameterSource) {
+
 		this.query = query;
 		this.parameterSource = parameterSource;
 	}
 
-	public String getQuery() {
+	String getQuery() {
 		return query;
 	}
 
-	public SqlParameterSource getParameterSource() {
+	SqlParameterSource getParameterSource() {
 		return parameterSource;
 	}
 

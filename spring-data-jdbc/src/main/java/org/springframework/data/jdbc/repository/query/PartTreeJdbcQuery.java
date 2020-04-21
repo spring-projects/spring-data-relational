@@ -64,9 +64,11 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		this.converter = converter;
 
 		try {
+
 			this.tree = new PartTree(queryMethod.getName(), queryMethod.getEntityInformation().getJavaType());
 			JdbcQueryCreator.validate(this.tree, this.parameters);
 		} catch (RuntimeException e) {
+
 			throw new IllegalArgumentException(
 					String.format("Failed to create query for method %s! %s", queryMethod, e.getMessage()), e);
 		}

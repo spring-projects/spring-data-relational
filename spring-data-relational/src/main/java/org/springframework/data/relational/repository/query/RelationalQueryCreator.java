@@ -103,8 +103,10 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 
 		Iterable<Part> parts = () -> tree.stream().flatMap(Streamable::stream).iterator();
 		for (Part part : parts) {
+
 			int numberOfArguments = part.getNumberOfArguments();
 			for (int i = 0; i < numberOfArguments; i++) {
+
 				throwExceptionOnArgumentMismatch(part, parameters, argCount);
 				argCount++;
 			}
@@ -117,6 +119,7 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 		String property = part.getProperty().toDotPath();
 
 		if (!parameters.getBindableParameters().hasParameterAt(index)) {
+
 			String msgTemplate = "Query method expects at least %d arguments but only found %d. "
 					+ "This leaves an operator of type %s for property %s unbound.";
 			String formattedMsg = String.format(msgTemplate, index + 1, index, type.name(), property);
@@ -125,9 +128,11 @@ public abstract class RelationalQueryCreator<T> extends AbstractQueryCreator<T, 
 
 		Parameter parameter = parameters.getBindableParameter(index);
 		if (expectsCollection(type) && !parameterIsCollectionLike(parameter)) {
+
 			String message = wrongParameterTypeMessage(property, type, "Collection", parameter);
 			throw new IllegalStateException(message);
 		} else if (!expectsCollection(type) && !parameterIsScalarLike(parameter)) {
+
 			String message = wrongParameterTypeMessage(property, type, "scalar", parameter);
 			throw new IllegalStateException(message);
 		}
