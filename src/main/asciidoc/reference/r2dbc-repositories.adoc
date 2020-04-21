@@ -136,7 +136,6 @@ interface ReactivePersonRepository extends ReactiveSortingRepository<Person, Str
 <4> Find a single entity for the given criteria. It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
 <5> Unless <4>, the first entity is always emitted even if the query yields more result documents.
 <6> The `findByLastname` method shows a query for all people with the given last name.
-The query is provided, as R2DBC repositories do not support query derivation.
 <7> A query for a single `Person` entity projecting only `firstname` and `lastname` columns.
 The annotated query uses native bind markers, which are Postgres bind markers in this example.
 ====
