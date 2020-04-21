@@ -592,6 +592,17 @@ public class PartTreeR2dbcQueryUnitTests {
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1 LIMIT 1");
 	}
 
+	@Test // gh-341
+	public void createsQueryToDeleteByFirstName() throws Exception {
+		R2dbcQueryMethod queryMethod = getQueryMethod("deleteByFirstName", String.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+				dataAccessStrategy);
+		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
+		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
+		String expectedSql = "DELETE FROM "+ TABLE + " WHERE " + TABLE + ".first_name = $1" ;
+		assertThat(bindableQuery.get()).isEqualTo(expectedSql);
+	}
+
 	private R2dbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {
 		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
 		return new R2dbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
@@ -669,6 +680,8 @@ public class PartTreeR2dbcQueryUnitTests {
 		Flux<User> findTop3ByFirstName(String firstName);
 
 		Mono<User> findFirstByFirstName(String firstName);
+
+		Mono<Integer> deleteByFirstName(String firstName);
 	}
 
 	@Table("users")

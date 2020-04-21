@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
  *
  * @author Roman Chigvintsev
  * @author Mark Paluch
+ * @author Mingyuan Wu
  * @since 1.1
  */
 public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
@@ -82,6 +83,10 @@ public class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<
 	protected PreparedOperation<?> complete(Criteria criteria, Sort sort) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityMetadata.getJavaType());
+		if(tree.isDelete()){
+			StatementMapper.DeleteSpec deleteSpec = statementMapper.createDelete(entityMetadata.getTableName()).withCriteria(criteria);
+			return statementMapper.getMappedObject(deleteSpec);
+		}
 		StatementMapper.SelectSpec selectSpec = statementMapper.createSelect(entityMetadata.getTableName())
 				.withProjection(getSelectProjection());
 
