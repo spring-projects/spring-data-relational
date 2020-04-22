@@ -206,7 +206,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		for (RelationalPersistentProperty property : entity) {
 
 			SettableValue value = row.get(property.getColumnName());
-			if (shouldConvertArrayValue(property, value)) {
+			if (value != null && shouldConvertArrayValue(property, value)) {
 
 				SettableValue writeValue = getArrayValue(value, property);
 				row.put(property.getColumnName(), writeValue);

@@ -36,6 +36,7 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -177,6 +178,16 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		testType(PrimitiveTypes::setBinary, PrimitiveTypes::getBinary, "hello".getBytes(), "binary");
 	}
 
+	@Test // gh-354
+	public void shouldNotWriteReadOnlyFields() {
+		TypeWithReadOnlyFields toSave = new TypeWithReadOnlyFields();
+		toSave.setWritableField("writable");
+		toSave.setReadOnlyField("readonly");
+		toSave.setReadOnlyArrayField("readonly_array".getBytes());
+		assertThat(getStrategy().getOutboundRow(toSave))
+				.containsOnlyKeys(SqlIdentifier.unquoted("writable_field"));
+	}
+
 	private <T> void testType(BiConsumer<PrimitiveTypes, T> setter, Function<PrimitiveTypes, T> getter, T testValue,
 			String fieldname) {
 
@@ -234,5 +245,14 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		byte[] binary;
 
 		UUID uuid;
+	}
+
+	@Data
+	static class TypeWithReadOnlyFields {
+		String writableField;
+		@ReadOnlyProperty
+		String readOnlyField;
+		@ReadOnlyProperty
+		byte[] readOnlyArrayField;
 	}
 }
