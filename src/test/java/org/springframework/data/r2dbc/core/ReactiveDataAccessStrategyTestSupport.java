@@ -45,6 +45,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * Abstract base class for {@link R2dbcDialect}-aware {@link DefaultReactiveDataAccessStrategy} tests.
  *
  * @author Mark Paluch
+ * @author Louis Morgan
  */
 public abstract class ReactiveDataAccessStrategyTestSupport {
 
@@ -180,12 +181,14 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 
 	@Test // gh-354
 	public void shouldNotWriteReadOnlyFields() {
+
 		TypeWithReadOnlyFields toSave = new TypeWithReadOnlyFields();
+
 		toSave.setWritableField("writable");
 		toSave.setReadOnlyField("readonly");
 		toSave.setReadOnlyArrayField("readonly_array".getBytes());
-		assertThat(getStrategy().getOutboundRow(toSave))
-				.containsOnlyKeys(SqlIdentifier.unquoted("writable_field"));
+
+		assertThat(getStrategy().getOutboundRow(toSave)).containsOnlyKeys(SqlIdentifier.unquoted("writable_field"));
 	}
 
 	private <T> void testType(BiConsumer<PrimitiveTypes, T> setter, Function<PrimitiveTypes, T> getter, T testValue,
@@ -250,9 +253,7 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 	@Data
 	static class TypeWithReadOnlyFields {
 		String writableField;
-		@ReadOnlyProperty
-		String readOnlyField;
-		@ReadOnlyProperty
-		byte[] readOnlyArrayField;
+		@ReadOnlyProperty String readOnlyField;
+		@ReadOnlyProperty byte[] readOnlyArrayField;
 	}
 }

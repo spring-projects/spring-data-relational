@@ -54,6 +54,7 @@ import org.springframework.util.CollectionUtils;
  * Default {@link ReactiveDataAccessStrategy} implementation.
  *
  * @author Mark Paluch
+ * @author Louis Morgan
  */
 public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStrategy {
 
