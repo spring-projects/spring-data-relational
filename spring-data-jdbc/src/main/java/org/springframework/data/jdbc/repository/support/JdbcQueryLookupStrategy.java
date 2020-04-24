@@ -35,6 +35,7 @@ import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.query.QueryCreationException;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
@@ -94,12 +95,16 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		JdbcQueryMethod queryMethod = new JdbcQueryMethod(method, repositoryMetadata, projectionFactory, namedQueries,
 				context);
 
-		if (namedQueries.hasQuery(queryMethod.getNamedQueryName()) || queryMethod.hasAnnotatedQuery()) {
+		try {
+			if (namedQueries.hasQuery(queryMethod.getNamedQueryName()) || queryMethod.hasAnnotatedQuery()) {
 
-			RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
-			return new StringBasedJdbcQuery(queryMethod, operations, mapper, converter);
-		} else {
-			return new PartTreeJdbcQuery(queryMethod, dialect, converter, operations, createMapper(queryMethod));
+				RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
+				return new StringBasedJdbcQuery(queryMethod, operations, mapper, converter);
+			} else {
+				return new PartTreeJdbcQuery(queryMethod, dialect, converter, operations, createMapper(queryMethod));
+			}
+		} catch (Exception e) {
+			throw QueryCreationException.create(queryMethod, e.getMessage());
 		}
 	}
 

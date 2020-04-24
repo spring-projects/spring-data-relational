@@ -15,18 +15,21 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
+import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -35,6 +38,8 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
+import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.util.Assert;
@@ -50,8 +55,6 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	private final PartTree tree;
 	private final RelationalParameterAccessor accessor;
 	private final QueryMapper queryMapper;
-
-	private final MappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
 	private final RelationalEntityMetadata<?> entityMetadata;
 	private final RenderContextFactory renderContextFactory;
 
@@ -65,8 +68,8 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
 	 * @param accessor parameter metadata provider, must not be {@literal null}.
 	 */
-	JdbcQueryCreator(PartTree tree, JdbcConverter converter, Dialect dialect,
-			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor) {
+	JdbcQueryCreator(PartTree tree, JdbcConverter converter, Dialect dialect, RelationalEntityMetadata<?> entityMetadata,
+			RelationalParameterAccessor accessor) {
 		super(tree, accessor);
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -76,10 +79,58 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		this.tree = tree;
 		this.accessor = accessor;
 
-		this.mappingContext = (MappingContext) converter.getMappingContext();
 		this.entityMetadata = entityMetadata;
 		this.queryMapper = new QueryMapper(dialect, converter);
 		this.renderContextFactory = new RenderContextFactory(dialect);
+	}
+
+	/**
+	 * Validate parameters for the derived query. Specifically checking that the query method defines scalar parameters
+	 * and collection parameters where required and that invalid parameter declarations are rejected.
+	 *
+	 * @param tree
+	 * @param parameters
+	 */
+	public static void validate(PartTree tree, Parameters<?, ?> parameters,
+			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
+
+		RelationalQueryCreator.validate(tree, parameters);
+
+		for (PartTree.OrPart parts : tree) {
+			for (Part part : parts) {
+
+				PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath = context
+						.getPersistentPropertyPath(part.getProperty());
+				PersistentPropertyPathExtension path = new PersistentPropertyPathExtension(context, propertyPath);
+
+				for (PersistentPropertyPathExtension pathToValidate = path; path.getLength() > 0; path = path.getParentPath()) {
+					validateProperty(pathToValidate);
+				}
+			}
+		}
+	}
+
+	private static void validateProperty(PersistentPropertyPathExtension path) {
+
+		if (!path.getParentPath().isEmbedded() && path.getLength() > 1) {
+			throw new IllegalArgumentException(
+					String.format("Cannot query by nested property: %s", path.getRequiredPersistentPropertyPath().toDotPath()));
+		}
+
+		if (path.isMultiValued() || path.isMap()) {
+			throw new IllegalArgumentException(String.format("Cannot query by multi-valued property: %s",
+					path.getRequiredPersistentPropertyPath().getLeafProperty().getName()));
+		}
+
+		if (!path.isEmbedded() && path.isEntity()) {
+			throw new IllegalArgumentException(
+					String.format("Cannot query by nested entity: %s", path.getRequiredPersistentPropertyPath().toDotPath()));
+		}
+
+		if (path.getRequiredPersistentPropertyPath().getLeafProperty().isReference()) {
+			throw new IllegalArgumentException(
+					String.format("Cannot query by reference: %s", path.getRequiredPersistentPropertyPath().toDotPath()));
+		}
 	}
 
 	/**
@@ -96,7 +147,12 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		Table table = Table.create(entityMetadata.getTableName());
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
 
-		SelectBuilder.SelectFromAndJoin builder = Select.builder().select(table.columns(getSelectProjection())).from(table);
+		List<? extends Expression> columns = table.columns(getSelectProjection());
+		if (columns.isEmpty()) {
+			columns = Collections.singletonList(table.asterisk());
+		}
+
+		SelectBuilder.SelectFromAndJoin builder = Select.builder().select(columns).from(table);
 
 		if (tree.isExistsProjection()) {
 			builder = builder.limit(1);
@@ -132,27 +188,6 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 			return new SqlIdentifier[] { tableEntity.getIdColumn() };
 		}
 
-		Collection<SqlIdentifier> columnNames = unwrapColumnNames("", tableEntity);
-
-		return columnNames.toArray(new SqlIdentifier[0]);
-	}
-
-	private Collection<SqlIdentifier> unwrapColumnNames(String prefix, RelationalPersistentEntity<?> persistentEntity) {
-
-		Collection<SqlIdentifier> columnNames = new ArrayList<>();
-
-		for (RelationalPersistentProperty property : persistentEntity) {
-
-			if (property.isEmbedded()) {
-				columnNames.addAll(
-						unwrapColumnNames(prefix + property.getEmbeddedPrefix(), mappingContext.getPersistentEntity(property)));
-			}
-
-			else {
-				columnNames.add(property.getColumnName().transform(prefix::concat));
-			}
-		}
-
-		return columnNames;
+		return new SqlIdentifier[0];
 	}
 }

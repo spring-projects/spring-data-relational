@@ -30,16 +30,20 @@ import java.util.Properties;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.Embedded;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
+import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -51,34 +55,50 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  *
  * @author Roman Chigvintsev
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @RunWith(MockitoJUnitRunner.class)
 public class PartTreeJdbcQueryUnitTests {
 
 	private static final String TABLE = "\"users\"";
-	private static final String ALL_FIELDS = "\"users\".\"ID\", \"users\".\"FIRST_NAME\", \"users\".\"LAST_NAME\", \"users\".\"DATE_OF_BIRTH\", \"users\".\"AGE\", \"users\".\"ACTIVE\", \"users\".\"USER_STREET\", \"users\".\"USER_CITY\"";
+	private static final String ALL_FIELDS = "\"users\".*";
 
 	JdbcMappingContext mappingContext = new JdbcMappingContext();
 	JdbcConverter converter = new BasicJdbcConverter(mappingContext, mock(RelationResolver.class));
 
 	@Test // DATAJDBC-318
-	public void selectContainsColumnsForOneToOneReference() throws Exception {
+	public void shouldFailForQueryByReference() throws Exception {
 
-		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
-		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
-		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }));
-
-		assertThat(query.getQuery()).contains("hated.\"name\" AS \"hated_name\"");
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHated", Hobby.class);
+		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
 	@Test // DATAJDBC-318
-	public void doesNotContainsColumnsForOneToManyReference() throws Exception{
+	public void shouldFailForQueryByAggregateReference() throws Exception {
 
-		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
-		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
-		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }));
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbyReference", Hobby.class);
+		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
+	}
 
-		assertThat(query.getQuery().toLowerCase()).doesNotContain("hobbies");
+	@Test // DATAJDBC-318
+	public void shouldFailForQueryByList() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbies", Object.class);
+		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
+	}
+
+	@Test // DATAJDBC-318
+	public void shouldFailForQueryByEmbeddedList() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findByAnotherEmbeddedList", Object.class);
+		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
+	}
+
+	@Test // DATAJDBC-318
+	public void shouldFailForAggregateReference() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findByAnotherEmbeddedList", Object.class);
+		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
 	@Test // DATAJDBC-318
@@ -570,9 +590,16 @@ public class PartTreeJdbcQueryUnitTests {
 		return new RelationalParametersParameterAccessor(queryMethod, values);
 	}
 
+	@NoRepositoryBean
 	interface UserRepository extends Repository<User, Long> {
 
 		List<User> findAllByFirstName(String firstName);
+
+		List<User> findAllByHated(Hobby hobby);
+
+		List<User> findAllByHobbies(Object hobbies);
+
+		List<User> findAllByHobbyReference(Hobby hobby);
 
 		List<User> findAllByLastNameAndFirstName(String lastName, String firstName);
 
@@ -637,6 +664,8 @@ public class PartTreeJdbcQueryUnitTests {
 		User findByAddress(Address address);
 
 		User findByAddressStreet(String street);
+
+		User findByAnotherEmbeddedList(Object list);
 	}
 
 	@Table("users")
@@ -650,15 +679,23 @@ public class PartTreeJdbcQueryUnitTests {
 		Boolean active;
 
 		@Embedded(prefix = "user_", onEmpty = Embedded.OnEmpty.USE_NULL) Address address;
+		@Embedded.Nullable AnotherEmbedded anotherEmbedded;
 
 		List<Hobby> hobbies;
 		Hobby hated;
+
+		AggregateReference<Hobby, String> hobbyReference;
 	}
 
 	@AllArgsConstructor
 	static class Address {
 		String street;
 		String city;
+	}
+
+	@AllArgsConstructor
+	static class AnotherEmbedded {
+		@MappedCollection(idColumn = "ID", keyColumn = "ORDER_KEY") List<Hobby> list;
 	}
 
 	static class Hobby {
