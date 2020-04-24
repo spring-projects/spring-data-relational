@@ -1297,6 +1297,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		DefaultTypedUpdateSpec(Class<T> typeToUpdate, @Nullable SqlIdentifier table, @Nullable T objectToUpdate,
 				@Nullable CriteriaDefinition where) {
+
 			this.typeToUpdate = typeToUpdate;
 			this.table = table;
 			this.objectToUpdate = objectToUpdate;

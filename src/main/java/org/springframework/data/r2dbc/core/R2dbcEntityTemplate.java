@@ -17,7 +17,6 @@ package org.springframework.data.r2dbc.core;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
-import org.springframework.dao.OptimisticLockingFailureException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -33,6 +32,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.MappingException;
@@ -377,7 +377,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		setVersionIfNecessary(persistentEntity,	entity);
+		setVersionIfNecessary(persistentEntity, entity);
 
 		return this.databaseClient.insert() //
 				.into(persistentEntity.getType()) //
@@ -388,6 +388,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	private <T> void setVersionIfNecessary(RelationalPersistentEntity<T> persistentEntity, T entity) {
+
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
 		if (versionProperty == null) {
 			return;
@@ -418,45 +419,37 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		DatabaseClient.UpdateSpec updateSpec = updateMatchingSpec;
 		if (persistentEntity.hasVersionProperty()) {
+
 			updateSpec = updateMatchingSpec.matching(createMatchingVersionCriteria(entity, persistentEntity));
 			incrementVersion(entity, persistentEntity);
 		}
 
 		return updateSpec.fetch() //
 				.rowsUpdated() //
-				.flatMap(rowsUpdated -> rowsUpdated == 0
-						? handleMissingUpdate(entity, persistentEntity) : Mono.just(entity));
+				.flatMap(rowsUpdated -> rowsUpdated == 0 ? handleMissingUpdate(entity, persistentEntity) : Mono.just(entity));
 	}
 
 	private <T> Mono<? extends T> handleMissingUpdate(T entity, RelationalPersistentEntity<T> persistentEntity) {
-		if (!persistentEntity.hasVersionProperty()) {
-			return Mono.error(new TransientDataAccessResourceException(
-					formatTransientEntityExceptionMessage(entity, persistentEntity)));
-		}
 
-		return doCount(getByIdQuery(entity, persistentEntity), entity.getClass(), persistentEntity.getTableName())
-				.map(count -> {
-					if (count == 0) {
-						throw new TransientDataAccessResourceException(
-								formatTransientEntityExceptionMessage(entity, persistentEntity));
-					} else {
-						throw new OptimisticLockingFailureException(
-								formatOptimisticLockingExceptionMessage(entity, persistentEntity));
-					}
-				});
+		return Mono.error(persistentEntity.hasVersionProperty()
+				? new OptimisticLockingFailureException(formatOptimisticLockingExceptionMessage(entity, persistentEntity))
+				: new TransientDataAccessResourceException(formatTransientEntityExceptionMessage(entity, persistentEntity)));
 	}
 
 	private <T> String formatOptimisticLockingExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
+
 		return String.format("Failed to update table [%s]. Version does not match for row with Id [%s].",
 				persistentEntity.getTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
 	}
 
 	private <T> String formatTransientEntityExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
+
 		return String.format("Failed to update table [%s]. Row with Id [%s] does not exist.",
 				persistentEntity.getTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
 	}
 
 	private <T> void incrementVersion(T entity, RelationalPersistentEntity<T> persistentEntity) {
+
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
 
@@ -471,6 +464,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	private <T> Criteria createMatchingVersionCriteria(T entity, RelationalPersistentEntity<T> persistentEntity) {
+
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
 

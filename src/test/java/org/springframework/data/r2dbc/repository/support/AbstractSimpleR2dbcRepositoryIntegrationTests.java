@@ -119,7 +119,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 		assertThat(map).containsEntry("name", "SCHAUFELRADBAGGER").containsEntry("manual", 12).containsKey("id");
 	}
 
-	@Test
+	@Test // gh-93
 	public void shouldSaveNewObjectAndSetVersionIfWrapperVersionPropertyExists() {
 
 		LegoSetVersionable legoSet = new LegoSetVersionable(null, "SCHAUFELRADBAGGER", 12, null);
@@ -137,10 +137,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.containsKey("id");
 	}
 
-	@Test
+	@Test // gh-93
 	public void shouldSaveNewObjectAndSetVersionIfPrimitiveVersionPropertyExists() {
 
-		LegoSetPrimitiveVersionable legoSet = new LegoSetPrimitiveVersionable(null, "SCHAUFELRADBAGGER", 12, -1);
+		LegoSetPrimitiveVersionable legoSet = new LegoSetPrimitiveVersionable(null, "SCHAUFELRADBAGGER", 12, 0);
 
 		repository.save(legoSet) //
 				.as(StepVerifier::create) //
@@ -173,7 +173,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 		assertThat(map).containsEntry("name", "SCHAUFELRADBAGGER").containsEntry("manual", 14).containsKey("id");
 	}
 
-	@Test
+	@Test // gh-93
 	public void shouldUpdateVersionableObjectAndIncreaseVersion() {
 
 		jdbc.execute("INSERT INTO legoset (name, manual, version) VALUES('SCHAUFELRADBAGGER', 12, 42)");
@@ -197,7 +197,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.containsKey("id");
 	}
 
-	@Test
+	@Test // gh-93
 	public void shouldFailWithOptimistickLockingWhenVersionDoesNotMatchOnUpdate() {
 
 		jdbc.execute("INSERT INTO legoset (name, manual, version) VALUES('SCHAUFELRADBAGGER', 12, 42)");
