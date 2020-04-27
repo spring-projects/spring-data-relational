@@ -25,6 +25,7 @@
 
 		<degraph-check.version>0.1.4</degraph-check.version>
 
+		<db2.version>11.5.0.0</db2.version>
 		<h2.version>1.4.200</h2.version>
 		<hsqldb.version>2.2.8</hsqldb.version>
 		<mssql.version>7.0.0.jre8</mssql.version>
@@ -167,6 +168,24 @@
 									</excludes>
 									<systemPropertyVariables>
 										<spring.profiles.active>mariadb</spring.profiles.active>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+							<execution>
+								<id>db2-test</id>
+								<phase>test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<includes>
+										<include>**/*IntegrationTests.java</include>
+									</includes>
+									<excludes>
+										<exclude>**/*HsqlIntegrationTests.java</exclude>
+									</excludes>
+									<systemPropertyVariables>
+										<spring.profiles.active>db2</spring.profiles.active>
 									</systemPropertyVariables>
 								</configuration>
 							</execution>
