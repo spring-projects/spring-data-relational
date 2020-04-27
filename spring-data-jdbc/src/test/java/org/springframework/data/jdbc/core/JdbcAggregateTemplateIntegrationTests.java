@@ -514,6 +514,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assumeNot("mysql");
 		assumeNot("mariadb");
 		assumeNot("mssql");
+		assumeNot("db2");
 
 		ArrayOwner arrayOwner = new ArrayOwner();
 		arrayOwner.digits = new String[] { "one", "two", "three" };
@@ -539,6 +540,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assumeNot("mariadb");
 		assumeNot("mssql");
 		assumeNot("hsqldb");
+		assumeNot("db2");
 
 		ArrayOwner arrayOwner = new ArrayOwner();
 		arrayOwner.multidimensional = new String[][] { { "one-a", "two-a", "three-a" }, { "one-b", "two-b", "three-b" } };
@@ -563,6 +565,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assumeNot("mysql");
 		assumeNot("mariadb");
 		assumeNot("mssql");
+		assumeNot("db2");
 
 		ListOwner arrayOwner = new ListOwner();
 		arrayOwner.digits.addAll(Arrays.asList("one", "two", "three"));
@@ -586,6 +589,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assumeNot("mysql");
 		assumeNot("mariadb");
 		assumeNot("mssql");
+		assumeNot("db2");
 
 		SetOwner setOwner = new SetOwner();
 		setOwner.digits.addAll(Arrays.asList("one", "two", "three"));

@@ -26,6 +26,7 @@ import javax.sql.DataSource;
 
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
@@ -123,7 +124,9 @@ public class DialectResolver {
 			if (name.contains("microsoft")) {
 				return SqlServerDialect.INSTANCE;
 			}
-
+			if (name.contains("db2")) {
+				return Db2Dialect.INSTANCE;
+			}
 			return null;
 		}
 
