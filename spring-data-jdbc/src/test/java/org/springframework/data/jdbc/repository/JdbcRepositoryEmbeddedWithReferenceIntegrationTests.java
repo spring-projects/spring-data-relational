@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
-import java.sql.SQLException;
+import java.util.List;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Very simple use cases for creation and usage of JdbcRepositories with test {@link Embedded} annotation in Entities.
  *
  * @author Bastian Wilhelm
+ * @author Jens Schauder
  */
 @ContextConfiguration
 @Transactional
@@ -225,7 +226,28 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 		assertThat(repository.findAll()).isEmpty();
 	}
 
+	@Test // DATAJDBC-318
+	public void queryDerivationLoadsReferencedEntitiesCorrectly() {
+
+		repository.save(createDummyEntity());
+		repository.save(createDummyEntity());
+		DummyEntity saved = repository.save(createDummyEntity());
+
+		assertThat(repository.findByTest(saved.test)) //
+				.extracting( //
+						e -> e.test, //
+						e -> e.embeddable.test, //
+						e -> e.embeddable.dummyEntity2.test //
+				).containsExactly( //
+						tuple(saved.test, saved.embeddable.test, saved.embeddable.dummyEntity2.test), //
+						tuple(saved.test, saved.embeddable.test, saved.embeddable.dummyEntity2.test), //
+						tuple(saved.test, saved.embeddable.test, saved.embeddable.dummyEntity2.test) //
+				);
+
+	}
+
 	private static DummyEntity createDummyEntity() {
+
 		DummyEntity entity = new DummyEntity();
 		entity.setTest("root");
 
@@ -242,7 +264,9 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 		return entity;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+		List<DummyEntity> findByTest(String test);
+	}
 
 	@Data
 	private static class DummyEntity {

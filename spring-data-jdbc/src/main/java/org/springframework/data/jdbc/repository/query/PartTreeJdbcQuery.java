@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
@@ -31,10 +32,12 @@ import org.springframework.util.Assert;
  * An {@link AbstractJdbcQuery} implementation based on a {@link PartTree}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 2.0
  */
 public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
+	private final RelationalMappingContext context;
 	private final Parameters<?, ?> parameters;
 	private final Dialect dialect;
 	private final JdbcConverter converter;
@@ -43,22 +46,25 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 	/**
 	 * Creates a new {@link PartTreeJdbcQuery}.
-	 * 
+	 *
+	 * @param context must not be {@literal null}.
 	 * @param queryMethod must not be {@literal null}.
 	 * @param dialect must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param operations must not be {@literal null}.
 	 * @param rowMapper must not be {@literal null}.
 	 */
-	public PartTreeJdbcQuery(JdbcQueryMethod queryMethod, Dialect dialect, JdbcConverter converter,
-			NamedParameterJdbcOperations operations, RowMapper<Object> rowMapper) {
+	public PartTreeJdbcQuery(RelationalMappingContext context, JdbcQueryMethod queryMethod, Dialect dialect, JdbcConverter converter,
+							 NamedParameterJdbcOperations operations, RowMapper<Object> rowMapper) {
 
 		super(queryMethod, operations, rowMapper);
 
+		Assert.notNull(context, "RelationalMappingContext must not be null");
 		Assert.notNull(queryMethod, "JdbcQueryMethod must not be null");
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converter, "JdbcConverter must not be null");
 
+		this.context = context;
 		this.parameters = queryMethod.getParameters();
 		this.dialect = dialect;
 		this.converter = converter;
@@ -90,7 +96,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	protected ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor) {
 
 		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
-		JdbcQueryCreator queryCreator = new JdbcQueryCreator(tree, converter, dialect, entityMetadata, accessor);
+		JdbcQueryCreator queryCreator = new JdbcQueryCreator(context, tree, converter, dialect, entityMetadata, accessor);
 		return queryCreator.createQuery(getDynamicSort(accessor));
 	}
 }

@@ -101,7 +101,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 				RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
 				return new StringBasedJdbcQuery(queryMethod, operations, mapper, converter);
 			} else {
-				return new PartTreeJdbcQuery(queryMethod, dialect, converter, operations, createMapper(queryMethod));
+				return new PartTreeJdbcQuery(context, queryMethod, dialect, converter, operations, createMapper(queryMethod));
 			}
 		} catch (Exception e) {
 			throw QueryCreationException.create(queryMethod, e.getMessage());
