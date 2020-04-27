@@ -288,7 +288,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		private @Nullable Expression to;
 		private @Nullable Condition condition;
 
-
 		JoinBuilder(Table table, DefaultSelectBuilder selectBuilder, JoinType joinType) {
 
 			this.table = table;
@@ -341,10 +340,10 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 			} else {
 				condition = condition.and(comparison);
 			}
+
 		}
 
 		private Join finishJoin() {
-
 			finishCondition();
 			return new Join(joinType, table, condition);
 		}
