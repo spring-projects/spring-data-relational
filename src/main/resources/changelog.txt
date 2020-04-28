@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.17.RELEASE (2020-04-28)
+----------------------------------------------
+* DATAJDBC-509 - Fix findByFirstnameLike @Query example in README.
+* DATAJDBC-506 - Fix some typos in code and documentation.
+* DATAJDBC-495 - Release 1.0.17 (Lovelace SR17).
+
+
 Changes in version 2.0.0.RC1 (2020-03-31)
 -----------------------------------------
 * DATAJDBC-516 - BasicRelationalConverter too aggressively trying to convert entities.
@@ -412,6 +419,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
