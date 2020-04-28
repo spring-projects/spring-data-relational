@@ -1,6 +1,23 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.1.0.RC2 (2020-04-28)
+-----------------------------------------
+* #354 - NullPointerException when inserting entity with read only fields.
+* #350 - Use Testcontainers constructor with image name.
+* #349 - Between queries bind Pair as second between argument.
+* #347 - Use JDK 14 for Java.NEXT CI testing.
+* #346 - #344 Add support for support distinct derived query methods.
+* #344 - Add support for  support distinct derived query methods.
+* #342 - Move off deprecated Criteria and Update.
+* #341 - Add support for derived delete query methods.
+* #335 - Consider Pageable in derived queries.
+* #333 - Move off deprecated EntityInstantiators.
+* #332 - fix typos.
+* #331 - Release 1.1 RC2 (Neumann).
+* #93 - Add support for Optimistic Locking using @Version.
+
+
 Changes in version 1.1.0.RC1 (2020-03-31)
 -----------------------------------------
 * #330 - Adapt to Criteria objects in Spring Data Relational.
@@ -202,6 +219,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
