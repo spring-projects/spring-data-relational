@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core.convert;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 
 /**
  * Resolves relations within an aggregate.

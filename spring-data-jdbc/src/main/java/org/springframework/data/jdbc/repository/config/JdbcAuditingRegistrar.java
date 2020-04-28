@@ -24,7 +24,7 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport;
 import org.springframework.data.auditing.config.AuditingConfiguration;
-import org.springframework.data.relational.domain.support.RelationalAuditingCallback;
+import org.springframework.data.relational.core.mapping.event.RelationalAuditingCallback;
 import org.springframework.util.Assert;
 
 /**

@@ -23,7 +23,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.lang.Nullable;
 
 /**
@@ -171,7 +170,7 @@ public interface DataAccessStrategy extends RelationResolver {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.relational.domain.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
+	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.jdbc.support.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
 	 */
 	@Override
 	Iterable<Object> findAllByPath(Identifier identifier,

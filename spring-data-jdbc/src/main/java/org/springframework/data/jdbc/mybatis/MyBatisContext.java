@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.mybatis;
 import java.util.Collections;
 import java.util.Map;
 
-import org.springframework.data.relational.domain.Identifier;
+import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.lang.Nullable;
 
 /**

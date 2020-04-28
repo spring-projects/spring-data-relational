@@ -37,7 +37,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;

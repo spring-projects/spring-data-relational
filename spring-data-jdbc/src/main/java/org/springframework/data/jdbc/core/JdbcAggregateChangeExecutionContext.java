@@ -29,7 +29,9 @@ import java.util.function.BiConsumer;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -40,7 +42,6 @@ import org.springframework.data.relational.core.conversion.RelationalEntityVersi
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;

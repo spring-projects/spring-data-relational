@@ -25,7 +25,6 @@ import java.util.Map;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.NonNull;
 

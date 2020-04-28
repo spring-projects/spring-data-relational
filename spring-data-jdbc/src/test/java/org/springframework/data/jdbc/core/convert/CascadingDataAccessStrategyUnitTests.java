@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.springframework.data.jdbc.core.convert.FunctionCollector.CombinedDataAccessException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.domain.Identifier;
 
 /**
  * Unit tests for {@link CascadingDataAccessStrategy}.

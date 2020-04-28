@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.domain;
+package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
@@ -23,8 +23,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
-
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
@@ -55,7 +55,7 @@ public class IdentifierUnitTests {
 		assertThat(identifier.getParts()) //
 				.extracting("name", "value", "targetType") //
 				.containsExactly( //
-						tuple(unquoted("one"), null, Object.class) //
+						Assertions.tuple(unquoted("one"), null, Object.class) //
 				);
 	}
 

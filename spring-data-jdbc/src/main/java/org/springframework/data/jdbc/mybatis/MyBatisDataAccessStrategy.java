@@ -32,6 +32,7 @@ import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -41,7 +42,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
 

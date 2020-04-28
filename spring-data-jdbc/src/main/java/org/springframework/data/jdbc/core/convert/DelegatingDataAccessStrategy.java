@@ -19,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.util.Assert;
 
 /**
@@ -149,7 +148,7 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.relational.domain.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
+	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.jdbc.support.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
 	 */
 	@Override
 	public Iterable<Object> findAllByPath(Identifier identifier,

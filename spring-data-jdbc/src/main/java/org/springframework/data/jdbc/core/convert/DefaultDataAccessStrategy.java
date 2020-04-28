@@ -42,7 +42,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.domain.Identifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -304,7 +303,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.relational.domain.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
+	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.jdbc.support.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
