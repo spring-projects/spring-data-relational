@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.7.RELEASE (2020-04-28)
+---------------------------------------------
+* DATAJDBC-520 - Improve documentation for MappedCollection.
+* DATAJDBC-511 - Release 1.1.7 (Moore SR7).
+
+
 Changes in version 1.0.17.RELEASE (2020-04-28)
 ----------------------------------------------
 * DATAJDBC-509 - Fix findByFirstnameLike @Query example in README.
@@ -419,6 +425,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
