@@ -39,7 +39,9 @@ import org.springframework.data.relational.core.conversion.RelationalEntityUpdat
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.lang.Nullable;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
 /**
@@ -50,6 +52,7 @@ import org.springframework.util.Assert;
  * @author Thomas Lang
  * @author Christoph Strobl
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
@@ -352,6 +355,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		entity = triggerBeforeDelete(entity, id, change);
 		change.setEntity(entity);
 
+		// [DATAJDBC-493] Acquire Lock to avoid DeadLock
+		this.acquireLockIfActualTransactionActive(id, domainType);
+
 		executor.execute(change);
 
 		triggerAfterDelete(entity, id, change);
@@ -440,5 +446,11 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		}
 
 		return null;
+	}
+
+	private <T> void acquireLockIfActualTransactionActive(Object id, Class<T> domainType) {
+		if (TransactionSynchronizationManager.isActualTransactionActive()) {
+			this.accessStrategy.findByIdWithLock(id, LockMode.PESSIMISTIC_WRITE, domainType);
+		}
 	}
 }
