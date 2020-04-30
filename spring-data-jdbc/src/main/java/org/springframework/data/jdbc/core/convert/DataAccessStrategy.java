@@ -23,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.lang.Nullable;
 
 /**
@@ -33,6 +34,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  */
 public interface DataAccessStrategy extends RelationResolver {
 
@@ -147,6 +149,18 @@ public interface DataAccessStrategy extends RelationResolver {
 	 */
 	@Nullable
 	<T> T findById(Object id, Class<T> domainType);
+
+	/**
+	 * Loads a single entity identified by type and id with lock.
+	 *
+	 * @param id the id of the entity to load. Must not be {@code null}.
+	 * @param lockMode the lock mode for select. Must not be {@code null}.
+	 * @param domainType the domain type of the entity. Must not be {@code null}.
+	 * @param <T> the type of the entity.
+	 * @return Might return {@code null}.
+	 */
+	@Nullable
+	<T> T findByIdWithLock(Object id, LockMode lockMode, Class<T> domainType);
 
 	/**
 	 * Loads all entities of the given type.

@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.util.Assert;
 
 /**
@@ -28,6 +29,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
@@ -126,6 +128,18 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(delegate, "Delegate is null");
 
 		return delegate.findById(id, domainType);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> T findByIdWithLock(Object id, LockMode lockMode, Class<T> domainType) {
+
+		Assert.notNull(delegate, "Delegate is null");
+
+		return delegate.findByIdWithLock(id, lockMode, domainType);
 	}
 
 	/*

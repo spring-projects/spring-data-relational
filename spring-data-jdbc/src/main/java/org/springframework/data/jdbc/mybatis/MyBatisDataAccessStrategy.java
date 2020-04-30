@@ -41,6 +41,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
@@ -60,6 +61,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -256,6 +258,17 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public <T> T findById(Object id, Class<T> domainType) {
 
 		String statement = namespace(domainType) + ".findById";
+		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
+		return sqlSession().selectOne(statement, parameter);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> T findByIdWithLock(Object id, LockMode lockMode, Class<T> domainType) {
+		String statement = namespace(domainType) + ".findByIdWithLock";
 		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
 		return sqlSession().selectOne(statement, parameter);
 	}

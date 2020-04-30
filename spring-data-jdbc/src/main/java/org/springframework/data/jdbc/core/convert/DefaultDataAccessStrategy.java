@@ -41,6 +41,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -62,6 +63,7 @@ import org.springframework.util.Assert;
  * @author Tom Hombergs
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -264,6 +266,24 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		try {
 			return operations.queryForObject(findOneSql, parameter, (RowMapper<T>) getEntityRowMapper(domainType));
+		} catch (EmptyResultDataAccessException e) {
+			return null;
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T findByIdWithLock(Object id, LockMode lockMode, Class<T> domainType) {
+
+		String findOneWithLockSql = sql(domainType).getFindOneWithLock(lockMode);
+		SqlIdentifierParameterSource parameter = createIdParameterSource(id, domainType);
+
+		try {
+			return operations.queryForObject(findOneWithLockSql, parameter, (RowMapper<T>) getEntityRowMapper(domainType));
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}

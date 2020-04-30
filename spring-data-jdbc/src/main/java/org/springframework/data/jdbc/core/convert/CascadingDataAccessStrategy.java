@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.LockMode;
 
 /**
  * Delegates each methods to the {@link DataAccessStrategy}s passed to the constructor in turn until the first that does
@@ -33,6 +34,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
  * @author Mark Paluch
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -131,6 +133,15 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 		return collect(das -> das.findById(id, domainType));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> T findByIdWithLock(Object id, LockMode lockMode, Class<T> domainType) {
+		return collect(das -> das.findByIdWithLock(id, lockMode, domainType));
 	}
 
 	/*
