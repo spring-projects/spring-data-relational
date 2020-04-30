@@ -17,10 +17,15 @@ package org.springframework.data.relational.core.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.Table;
+
+import java.util.Collections;
 
 /**
  * Unit tests for {@link PostgresDialect}.
@@ -79,9 +84,11 @@ public class PostgresDialectUnitTests {
 	public void shouldRenderLock() {
 
 		LockClause lock = PostgresDialect.INSTANCE.lock();
+		From from = mock(From.class);
+		when(from.getTables()).thenReturn(Collections.singletonList(Table.create("dummy_table")));
 
-		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE))).isEqualTo("FOR UPDATE");
-		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ))).isEqualTo("FOR SHARE");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE, from))).isEqualTo("FOR UPDATE OF dummy_table");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ, from))).isEqualTo("FOR SHARE OF dummy_table");
 		assertThat(lock.getClausePosition()).isEqualTo(LockClause.Position.AFTER_ORDER_BY);
 	}
 }

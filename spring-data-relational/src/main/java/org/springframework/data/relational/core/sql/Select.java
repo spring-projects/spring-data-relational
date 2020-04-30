@@ -49,6 +49,8 @@ public interface Select extends Segment, Visitable {
 		return new DefaultSelectBuilder();
 	}
 
+	From getFrom();
+
 	/**
 	 * @return the {@link List} of {@link OrderByField ORDER BY} fields.
 	 */

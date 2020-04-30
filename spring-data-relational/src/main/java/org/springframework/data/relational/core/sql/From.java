@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.util.StringUtils;
@@ -38,7 +39,11 @@ public class From extends AbstractSegment {
 
 		super(tables.toArray(new Table[] {}));
 
-		this.tables = tables;
+		this.tables = Collections.unmodifiableList(tables);
+	}
+
+	public List<Table> getTables() {
+		return this.tables;
 	}
 
 	/*

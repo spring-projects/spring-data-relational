@@ -211,7 +211,7 @@ public abstract class AbstractDialect implements Dialect {
 				return "";
 			}
 
-			return clause.getLock(new LockOptions(lockMode));
+			return clause.getLock(new LockOptions(lockMode, select.getFrom()));
 		}
 	}
 

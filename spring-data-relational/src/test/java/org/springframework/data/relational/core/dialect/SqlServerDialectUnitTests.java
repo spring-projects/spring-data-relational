@@ -15,11 +15,14 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static org.assertj.core.api.Assertions.*;
-
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for {@link SqlServerDialect}.
@@ -67,9 +70,10 @@ public class SqlServerDialectUnitTests {
 	public void shouldRenderLock() {
 
 		LockClause lock = SqlServerDialect.INSTANCE.lock();
+		From from = mock(From.class);
 
-		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE))).isEqualTo("WITH (UPDLOCK, ROWLOCK)");
-		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ))).isEqualTo("WITH (HOLDLOCK, ROWLOCK)");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_WRITE, from))).isEqualTo("WITH (UPDLOCK, ROWLOCK)");
+		assertThat(lock.getLock(new LockOptions(LockMode.PESSIMISTIC_READ, from))).isEqualTo("WITH (HOLDLOCK, ROWLOCK)");
 		assertThat(lock.getClausePosition()).isEqualTo(LockClause.Position.AFTER_FROM_TABLE);
 	}
 }

@@ -58,6 +58,15 @@ class DefaultSelect implements Select {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.Select#getFrom()
+	 */
+	@Override
+	public From getFrom() {
+		return this.from;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.Select#getOrderBy()
 	 */
 	@Override

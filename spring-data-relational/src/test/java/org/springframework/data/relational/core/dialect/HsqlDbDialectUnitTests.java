@@ -15,15 +15,17 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import static org.assertj.core.api.Assertions.*;
-
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
 /**
  * Unit tests for the {@link HsqlDbDialect}.
- * 
+ *
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  */
@@ -74,7 +76,8 @@ public class HsqlDbDialectUnitTests {
 	public void shouldRenderLock() {
 
 		LockClause limit = HsqlDbDialect.INSTANCE.lock();
-		LockOptions lockOptions = new LockOptions(LockMode.PESSIMISTIC_WRITE);
+		From from = mock(From.class);
+		LockOptions lockOptions = new LockOptions(LockMode.PESSIMISTIC_WRITE, from);
 
 		assertThat(limit.getLock(lockOptions)).isEqualTo("FOR UPDATE");
 		assertThat(limit.getClausePosition()).isEqualTo(LockClause.Position.AFTER_ORDER_BY);

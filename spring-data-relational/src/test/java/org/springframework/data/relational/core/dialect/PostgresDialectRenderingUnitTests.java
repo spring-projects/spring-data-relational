@@ -109,7 +109,7 @@ public class PostgresDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo FOR UPDATE");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo FOR UPDATE OF foo");
 	}
 
 	@Test // DATAJDBC-498
@@ -121,7 +121,7 @@ public class PostgresDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo FOR SHARE");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo FOR SHARE OF foo");
 	}
 
 	@Test // DATAJDBC-498
@@ -133,7 +133,7 @@ public class PostgresDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10 FOR UPDATE");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10 FOR UPDATE OF foo");
 	}
 
 	@Test // DATAJDBC-498
@@ -145,6 +145,6 @@ public class PostgresDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10 FOR SHARE");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10 FOR SHARE OF foo");
 	}
 }

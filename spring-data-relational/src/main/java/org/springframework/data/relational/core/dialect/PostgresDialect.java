@@ -17,12 +17,16 @@ package org.springframework.data.relational.core.dialect;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.Table;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import java.util.List;
 
 /**
  * An SQL dialect for Postgres.
@@ -79,37 +83,6 @@ public class PostgresDialect extends AbstractDialect {
 		}
 	};
 
-	private static final LockClause LOCK_CLAUSE = new LockClause() {
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LockClause#getLock(LockOptions)
-		 */
-		@Override
-		public String getLock(LockOptions lockOptions) {
-			switch (lockOptions.getLockMode()) {
-
-				case PESSIMISTIC_WRITE:
-					return "FOR UPDATE";
-
-				case PESSIMISTIC_READ:
-					return "FOR SHARE";
-
-				default:
-					return "";
-			}
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LockClause#getClausePosition()
-		 */
-		@Override
-		public Position getClausePosition() {
-			return Position.AFTER_ORDER_BY;
-		}
-	};
-
 	private final PostgresArrayColumns ARRAY_COLUMNS = new PostgresArrayColumns();
 
 	/*
@@ -120,6 +93,8 @@ public class PostgresDialect extends AbstractDialect {
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
 	}
+
+	private final PostgresLockClause LOCK_CLAUSE = new PostgresLockClause(this.getIdentifierProcessing());
 
 	/*
 	 * (non-Javadoc)
@@ -138,6 +113,50 @@ public class PostgresDialect extends AbstractDialect {
 	public ArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
 	}
+
+	static class PostgresLockClause implements LockClause {
+		private final IdentifierProcessing identifierProcessing;
+
+		PostgresLockClause(IdentifierProcessing identifierProcessing) {
+			this.identifierProcessing = identifierProcessing;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.LockClause#getLock(LockOptions)
+		 */
+		@Override
+		public String getLock(LockOptions lockOptions) {
+
+			List<Table> tables = lockOptions.getFrom().getTables();
+			if (tables.isEmpty()) {
+				return "";
+			}
+
+			String tableName = tables.get(0).getName().toSql(this.identifierProcessing);
+
+			switch (lockOptions.getLockMode()) {
+
+				case PESSIMISTIC_WRITE:
+					return "FOR UPDATE OF " + tableName;
+
+				case PESSIMISTIC_READ:
+					return "FOR SHARE OF " + tableName;
+
+				default:
+					return "";
+			}
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.LockClause#getClausePosition()
+		 */
+		@Override
+		public Position getClausePosition() {
+			return Position.AFTER_ORDER_BY;
+		}
+	};
 
 	@RequiredArgsConstructor
 	static class PostgresArrayColumns implements ArrayColumns {
