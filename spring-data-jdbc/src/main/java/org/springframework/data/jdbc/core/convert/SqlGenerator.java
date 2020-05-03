@@ -52,6 +52,7 @@ import org.springframework.util.Assert;
  * @author Tom Hombergs
  * @author Tyler Van Gorder
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  */
 class SqlGenerator {
 
@@ -659,7 +660,13 @@ class SqlGenerator {
 
 	private List<OrderByField> extractOrderByFields(Sort sort) {
 		return sort.stream()
-				.map(order -> OrderByField.from(Column.create(order.getProperty(), this.getTable()), order.getDirection()))
+				.map(order -> {
+					Column column = Column.create(
+						this.entity.getRequiredPersistentProperty(order.getProperty()).getColumnName(),
+						this.getTable()
+					);
+					return OrderByField.from(column, order.getDirection());
+				})
 				.collect(Collectors.toList());
 	}
 
