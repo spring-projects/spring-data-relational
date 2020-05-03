@@ -24,7 +24,6 @@ import java.util.stream.StreamSupport;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -39,6 +38,7 @@ import org.springframework.data.relational.core.conversion.RelationalEntityUpdat
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.repository.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -50,6 +50,7 @@ import org.springframework.util.Assert;
  * @author Thomas Lang
  * @author Christoph Strobl
  * @author Milan Milanov
+ * @author Myeonghyeon Lee
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
@@ -248,10 +249,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		Iterable<T> items = triggerAfterLoad(accessStrategy.findAll(domainType, pageable));
-		long totalCount = accessStrategy.count(domainType);
+		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
 
-		return new PageImpl<>(StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList()), pageable,
-				totalCount);
+		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(domainType));
 	}
 
 	/*
