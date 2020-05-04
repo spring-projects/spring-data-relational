@@ -26,11 +26,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -355,6 +355,22 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(loaded.pointInTime).isNull();
 	}
 
+	@Test // DATAJDBC-529
+	public void existsWorksAsExpected() {
+
+		DummyEntity dummy = repository.save(createDummyEntity());
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(repository.existsByName(dummy.getName())) //
+					.describedAs("Positive") //
+					.isTrue();
+			softly.assertThat(repository.existsByName("not an existing name")) //
+					.describedAs("Positive") //
+					.isFalse();
+		});
+	}
+
 	private static DummyEntity createDummyEntity() {
 
 		DummyEntity entity = new DummyEntity();
@@ -380,6 +396,8 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT id_Prop from dummy_entity where id_Prop = :id")
 		DummyEntity withMissingColumn(@Param("id") Long id);
+
+		boolean existsByName(String name);
 	}
 
 	@Data

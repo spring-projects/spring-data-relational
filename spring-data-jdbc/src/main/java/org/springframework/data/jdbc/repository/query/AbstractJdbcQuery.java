@@ -80,10 +80,10 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	 * @param queryMethod must not be {@literal null}.
 	 * @param extractor must not be {@literal null}.
 	 * @param rowMapper must not be {@literal null}.
-	 * @return
+	 * @return a JdbcQueryExecution appropriate for {@literal queryMethod}. Guaranteed to be not {@literal null}.
 	 */
 	protected JdbcQueryExecution<?> getQueryExecution(JdbcQueryMethod queryMethod,
-			@Nullable ResultSetExtractor<Object> extractor, RowMapper<Object> rowMapper) {
+			@Nullable ResultSetExtractor<?> extractor, RowMapper<?> rowMapper) {
 
 		if (queryMethod.isModifyingQuery()) {
 			return createModifyingQueryExecutor();
