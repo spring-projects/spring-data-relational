@@ -14,7 +14,7 @@
 	<parent>
 		<groupId>org.springframework.data</groupId>
 		<artifactId>spring-data-relational-parent</artifactId>
-		<version>2.0.0.BUILD-SNAPSHOT</version>
+		<version>2.0.0.DATAJDBC-529-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
