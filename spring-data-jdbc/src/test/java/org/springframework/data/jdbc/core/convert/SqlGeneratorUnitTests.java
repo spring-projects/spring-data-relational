@@ -111,20 +111,29 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-493
-	public void findOneWithLock() {
+	public void getAcquireLockById() {
 
-		String sql = sqlGenerator.getFindOneWithLock(LockMode.PESSIMISTIC_WRITE);
+		String sql = sqlGenerator.getAcquireLockById(LockMode.PESSIMISTIC_WRITE);
 
 		SoftAssertions softAssertions = new SoftAssertions();
 		softAssertions.assertThat(sql) //
 			.startsWith("SELECT") //
-			.contains("dummy_entity.id1 AS id1,") //
-			.contains("dummy_entity.x_name AS x_name,") //
-			.contains("dummy_entity.x_other AS x_other,") //
-			.contains("ref.x_l1id AS ref_x_l1id") //
-			.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
-			.contains("ON ref.dummy_entity = dummy_entity.id1") //
+			.contains("dummy_entity.id1") //
 			.contains("WHERE dummy_entity.id1 = :id") //
+			.contains("FOR UPDATE") //
+			.doesNotContain("Element AS elements");
+		softAssertions.assertAll();
+	}
+
+	@Test // DATAJDBC-493
+	public void getAcquireLockAll() {
+
+		String sql = sqlGenerator.getAcquireLockAll(LockMode.PESSIMISTIC_WRITE);
+
+		SoftAssertions softAssertions = new SoftAssertions();
+		softAssertions.assertThat(sql) //
+			.startsWith("SELECT") //
+			.contains("dummy_entity.id1") //
 			.contains("FOR UPDATE") //
 			.doesNotContain("Element AS elements");
 		softAssertions.assertAll();

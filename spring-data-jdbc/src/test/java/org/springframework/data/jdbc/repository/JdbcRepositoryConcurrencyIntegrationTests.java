@@ -187,6 +187,67 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 		assertThat(repository.findById(entity.id)).isEmpty();
 	}
 
+	@Test // DATAJDBC-493
+	public void updateConcurrencyWithDeleteAll() throws Exception {
+
+		DummyEntity entity = createDummyEntity();
+		entity = repository.save(entity);
+
+		List<DummyEntity> concurrencyEntities = createEntityStates(entity);
+
+		TransactionTemplate transactionTemplate = new TransactionTemplate(this.transactionManager);
+
+		List<Exception> exceptions = new CopyOnWriteArrayList<>();
+		CountDownLatch startLatch = new CountDownLatch(concurrencyEntities.size() + 1); // latch for all threads to wait on.
+		CountDownLatch doneLatch = new CountDownLatch(concurrencyEntities.size() + 1); // latch for main thread to wait on until all threads are done.
+
+		// update
+		concurrencyEntities.stream() //
+			.map(e -> new Thread(() -> {
+
+				try {
+
+					startLatch.countDown();
+					startLatch.await();
+
+					transactionTemplate.execute(status -> repository.save(e));
+				} catch (Exception ex) {
+					// When the delete execution is complete, the Update execution throws an IncorrectUpdateSemanticsDataAccessException.
+					if (ex.getCause() instanceof IncorrectUpdateSemanticsDataAccessException) {
+						return;
+					}
+
+					exceptions.add(ex);
+				} finally {
+					doneLatch.countDown();
+				}
+			})) //
+			.forEach(Thread::start);
+
+		// delete
+		new Thread(() -> {
+			try {
+
+				startLatch.countDown();
+				startLatch.await();
+
+				transactionTemplate.execute(status -> {
+					repository.deleteAll();
+					return null;
+				});
+			} catch (Exception ex) {
+				exceptions.add(ex);
+			} finally {
+				doneLatch.countDown();
+			}
+		}).start();
+
+		doneLatch.await();
+
+		assertThat(exceptions).isEmpty();
+		assertThat(repository.count()).isEqualTo(0);
+	}
+
 	private List<DummyEntity> createEntityStates(DummyEntity entity) {
 
 		List<DummyEntity> concurrencyEntities = new ArrayList<>();

@@ -36,6 +36,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Bastian Wilhelm
  * @author Tyler Van Gorder
+ * @author Myeonghyeon Lee
  */
 public class RelationalEntityDeleteWriter implements EntityWriter<Object, MutableAggregateChange<?>> {
 
@@ -68,12 +69,18 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 
 	private List<DbAction<?>> deleteAll(Class<?> entityType) {
 
-		List<DbAction<?>> actions = new ArrayList<>();
+		List<DbAction<?>> deleteReferencedActions = new ArrayList<>();
 
 		context.findPersistentPropertyPaths(entityType, PersistentProperty::isEntity)
-				.filter(p -> !p.getRequiredLeafProperty().isEmbedded()).forEach(p -> actions.add(new DbAction.DeleteAll<>(p)));
+				.filter(p -> !p.getRequiredLeafProperty().isEmbedded()).forEach(p -> deleteReferencedActions.add(new DbAction.DeleteAll<>(p)));
 
-		Collections.reverse(actions);
+		Collections.reverse(deleteReferencedActions);
+
+		List<DbAction<?>> actions = new ArrayList<>();
+		if (!deleteReferencedActions.isEmpty()) {
+			actions.add(new DbAction.AcquireLockAllRoot<>(entityType));
+		}
+		actions.addAll(deleteReferencedActions);
 
 		DbAction.DeleteAllRoot<?> result = new DbAction.DeleteAllRoot<>(entityType);
 		actions.add(result);
@@ -83,7 +90,14 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 
 	private <T> List<DbAction<?>> deleteRoot(Object id, AggregateChange<T> aggregateChange) {
 
-		List<DbAction<?>> actions = new ArrayList<>(deleteReferencedEntities(id, aggregateChange));
+		List<DbAction<?>> deleteReferencedActions = deleteReferencedEntities(id, aggregateChange);
+
+		List<DbAction<?>> actions = new ArrayList<>();
+		if (!deleteReferencedActions.isEmpty()) {
+			actions.add(new DbAction.AcquireLockRoot<>(id, aggregateChange.getEntityType()));
+		}
+		actions.addAll(deleteReferencedActions);
+
 		actions.add(new DbAction.DeleteRoot<>(id, aggregateChange.getEntityType(), getVersion(aggregateChange)));
 
 		return actions;

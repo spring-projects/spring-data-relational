@@ -111,6 +111,24 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
+		delegate.acquireLockById(id, lockMode, domainType);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockAll(org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
+		delegate.acquireLockAll(lockMode, domainType);
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
 	 */
 	@Override
@@ -128,18 +146,6 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		Assert.notNull(delegate, "Delegate is null");
 
 		return delegate.findById(id, domainType);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
-	 */
-	@Override
-	public <T> T findByIdWithLock(Object id, LockMode lockMode, Class<T> domainType) {
-
-		Assert.notNull(delegate, "Delegate is null");
-
-		return delegate.findByIdWithLock(id, lockMode, domainType);
 	}
 
 	/*

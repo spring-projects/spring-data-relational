@@ -132,6 +132,23 @@ public interface DataAccessStrategy extends RelationResolver {
 	void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
 
 	/**
+	 * Acquire Lock
+	 *
+	 * @param id the id of the entity to load. Must not be {@code null}.
+	 * @param lockMode the lock mode for select. Must not be {@code null}.
+	 * @param domainType the domain type of the entity. Must not be {@code null}.
+	 */
+	<T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType);
+
+	/**
+	 * Acquire Lock entities of the given domain type.
+	 *
+	 * @param lockMode the lock mode for select. Must not be {@code null}.
+	 * @param domainType the domain type of the entity. Must not be {@code null}.
+	 */
+	<T> void acquireLockAll(LockMode lockMode, Class<T> domainType);
+
+	/**
 	 * Counts the rows in the table representing the given domain type.
 	 *
 	 * @param domainType the domain type for which to count the elements. Must not be {@code null}.
@@ -149,18 +166,6 @@ public interface DataAccessStrategy extends RelationResolver {
 	 */
 	@Nullable
 	<T> T findById(Object id, Class<T> domainType);
-
-	/**
-	 * Loads a single entity identified by type and id with lock.
-	 *
-	 * @param id the id of the entity to load. Must not be {@code null}.
-	 * @param lockMode the lock mode for select. Must not be {@code null}.
-	 * @param domainType the domain type of the entity. Must not be {@code null}.
-	 * @param <T> the type of the entity.
-	 * @return Might return {@code null}.
-	 */
-	@Nullable
-	<T> T findByIdWithLock(Object id, LockMode lockMode, Class<T> domainType);
 
 	/**
 	 * Loads all entities of the given type.

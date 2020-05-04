@@ -119,6 +119,24 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
+		collectVoid(das -> das.acquireLockById(id, lockMode, domainType));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockAll(org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
+	 */
+	@Override
+	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
+		collectVoid(das -> das.acquireLockAll(lockMode, domainType));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
 	 */
 	@Override
@@ -133,15 +151,6 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 		return collect(das -> das.findById(id, domainType));
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
-	 */
-	@Override
-	public <T> T findByIdWithLock(Object id, LockMode lockMode, Class<T> domainType) {
-		return collect(das -> das.findByIdWithLock(id, lockMode, domainType));
 	}
 
 	/*
