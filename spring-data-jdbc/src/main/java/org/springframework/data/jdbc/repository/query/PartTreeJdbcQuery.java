@@ -24,9 +24,12 @@ import org.springframework.data.relational.repository.query.RelationalParameterA
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.parser.PartTree;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
+
+import java.sql.ResultSet;
 
 /**
  * An {@link AbstractJdbcQuery} implementation based on a {@link PartTree}.
@@ -72,7 +75,9 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		this.tree = new PartTree(queryMethod.getName(), queryMethod.getEntityInformation().getJavaType());
 		JdbcQueryCreator.validate(this.tree, this.parameters, this.converter.getMappingContext());
 
-		this.execution = getQueryExecution(queryMethod, null, rowMapper);
+		ResultSetExtractor<Boolean> extractor = tree.isExistsProjection() ? (ResultSet::next) : null;
+
+		this.execution = getQueryExecution(queryMethod, extractor, rowMapper);
 	}
 
 	private Sort getDynamicSort(RelationalParameterAccessor accessor) {
