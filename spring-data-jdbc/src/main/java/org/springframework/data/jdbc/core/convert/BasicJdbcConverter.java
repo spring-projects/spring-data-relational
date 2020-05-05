@@ -311,7 +311,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	private JdbcValue tryToConvertToJdbcValue(@Nullable Object value) {
 
 		if (canWriteAsJdbcValue(value)) {
-			return (JdbcValue) writeValue(value, ClassTypeInformation.from(JdbcValue.class));
+			Object converted = writeValue(value, ClassTypeInformation.from(JdbcValue.class));
+			if(converted instanceof JdbcValue) {
+				return (JdbcValue) converted;
+			}
+
 		}
 
 		return null;
