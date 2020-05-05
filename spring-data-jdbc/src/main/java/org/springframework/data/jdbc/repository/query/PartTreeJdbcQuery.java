@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import java.sql.ResultSet;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -28,8 +30,6 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.util.Assert;
-
-import java.sql.ResultSet;
 
 /**
  * An {@link AbstractJdbcQuery} implementation based on a {@link PartTree}.
@@ -57,8 +57,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	 * @param operations must not be {@literal null}.
 	 * @param rowMapper must not be {@literal null}.
 	 */
-	public PartTreeJdbcQuery(RelationalMappingContext context, JdbcQueryMethod queryMethod, Dialect dialect, JdbcConverter converter,
-							 NamedParameterJdbcOperations operations, RowMapper<Object> rowMapper) {
+	public PartTreeJdbcQuery(RelationalMappingContext context, JdbcQueryMethod queryMethod, Dialect dialect,
+			JdbcConverter converter, NamedParameterJdbcOperations operations, RowMapper<Object> rowMapper) {
 
 		super(queryMethod, operations, rowMapper);
 

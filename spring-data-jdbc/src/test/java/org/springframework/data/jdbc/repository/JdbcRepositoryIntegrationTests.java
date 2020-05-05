@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 
 import lombok.Data;
 
@@ -26,11 +27,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -360,7 +361,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		DummyEntity dummy = repository.save(createDummyEntity());
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(repository.existsByName(dummy.getName())) //
 					.describedAs("Positive") //
