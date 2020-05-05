@@ -56,6 +56,7 @@ import org.springframework.data.repository.core.support.DefaultRepositoryMetadat
  * @author Roman Chigvintsev
  * @author Mark Paluch
  * @author Mingyuan Wu
+ * @author Myeonghyeon Lee
  */
 @RunWith(MockitoJUnitRunner.class)
 public class PartTreeR2dbcQueryUnitTests {
@@ -618,6 +619,18 @@ public class PartTreeR2dbcQueryUnitTests {
 				+ ".foo FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
+	@Test // DATAJDBC-534
+	public void createsQueryForCountProjection() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod("countByFirstName", String.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+			dataAccessStrategy);
+		BindableQuery query = r2dbcQuery.createQuery((getAccessor(queryMethod, new Object[] { "John" })));
+
+		assertThat(query.get())
+			.isEqualTo("SELECT COUNT(users.id) FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
+	}
+
 	private R2dbcQueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) throws Exception {
 		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
 		return new R2dbcQueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
@@ -699,6 +712,8 @@ public class PartTreeR2dbcQueryUnitTests {
 		Mono<UserProjection> findDistinctByFirstName(String firstName);
 
 		Mono<Integer> deleteByFirstName(String firstName);
+
+		Mono<Long> countByFirstName(String firstName);
 	}
 
 	@Table("users")

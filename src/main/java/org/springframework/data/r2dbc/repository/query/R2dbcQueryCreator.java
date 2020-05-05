@@ -16,6 +16,7 @@
 package org.springframework.data.r2dbc.repository.query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ import org.springframework.data.r2dbc.core.StatementMapper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
@@ -41,6 +42,7 @@ import org.springframework.lang.Nullable;
  * @author Roman Chigvintsev
  * @author Mark Paluch
  * @author Mingyuan Wu
+ * @author Myeonghyeon Lee
  * @since 1.1
  */
 class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
@@ -132,28 +134,39 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 		return statementMapper.getMappedObject(selectSpec);
 	}
 
-	private SqlIdentifier[] getSelectProjection() {
+	private Expression[] getSelectProjection() {
 
-		List<SqlIdentifier> columnNames;
+		List<Expression> expressions;
 
+		Table table = Table.create(entityMetadata.getTableName());
 		if (!projectedProperties.isEmpty()) {
 
 			RelationalPersistentEntity<?> entity = entityMetadata.getTableEntity();
-			columnNames = new ArrayList<>(projectedProperties.size());
+			expressions = new ArrayList<>(projectedProperties.size());
 
 			for (String projectedProperty : projectedProperties) {
 
 				RelationalPersistentProperty property = entity.getPersistentProperty(projectedProperty);
-				columnNames.add(property != null ? property.getColumnName() : SqlIdentifier.unquoted(projectedProperty));
+				Column column = table.column(property != null ? property.getColumnName() : SqlIdentifier.unquoted(projectedProperty));
+				expressions.add(column);
 			}
 
 		} else if (tree.isExistsProjection()) {
-			columnNames = dataAccessStrategy.getIdentifierColumns(entityMetadata.getJavaType());
+
+			expressions = dataAccessStrategy.getIdentifierColumns(entityMetadata.getJavaType()).stream()
+				.map(table::column)
+				.collect(Collectors.toList());
+		} else if (tree.isCountProjection()) {
+
+			SqlIdentifier idColumn = entityMetadata.getTableEntity().getRequiredIdProperty().getColumnName();
+			expressions = Collections.singletonList(Functions.count(table.column(idColumn)));
 		} else {
-			columnNames = dataAccessStrategy.getAllColumns(entityMetadata.getJavaType());
+			expressions = dataAccessStrategy.getAllColumns(entityMetadata.getJavaType()).stream()
+				.map(table::column)
+				.collect(Collectors.toList());
 		}
 
-		return columnNames.toArray(new SqlIdentifier[0]);
+		return expressions.toArray(new Expression[0]);
 	}
 
 	private Sort getSort(Sort sort) {
