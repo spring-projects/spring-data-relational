@@ -55,6 +55,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Roman Chigvintsev
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  */
 @RunWith(MockitoJUnitRunner.class)
 public class PartTreeJdbcQueryUnitTests {
@@ -548,6 +549,17 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThat(query.getParameterSource().getValue("user_street")).isEqualTo("Hello");
 	}
 
+	@Test // DATAJDBC-534
+	public void createsQueryForCountProjection() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("countByFirstName", String.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		ParametrizedQuery query = jdbcQuery.createQuery((getAccessor(queryMethod, new Object[] { "John" })));
+
+		assertThat(query.getQuery()).isEqualTo(
+			"SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
+	}
+
 	private PartTreeJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
 		return new PartTreeJdbcQuery(mappingContext, queryMethod, H2Dialect.INSTANCE, converter,
 				mock(NamedParameterJdbcOperations.class), mock(RowMapper.class));
@@ -639,6 +651,8 @@ public class PartTreeJdbcQueryUnitTests {
 		User findByAddressStreet(String street);
 
 		User findByAnotherEmbeddedList(Object list);
+
+		long countByFirstName(String name);
 	}
 
 	@Table("users")
