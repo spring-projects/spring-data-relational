@@ -21,11 +21,13 @@ import static org.mockito.Mockito.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
 import java.util.HashMap;
 
+import lombok.Value;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -142,6 +144,43 @@ public class DefaultDataAccessStrategyUnitTests {
 		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");
 	}
 
+	@Test // DATAJDBC-412
+	public void considersConfiguredWriteConverterForIdValueObjects() {
+
+		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
+
+		Dialect dialect = HsqlDbDialect.INSTANCE;
+
+		JdbcConverter converter = new BasicJdbcConverter(context, relationResolver,
+				new JdbcCustomConversions(Arrays.asList(IdValueToStringConverter.INSTANCE)),
+				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
+
+		DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
+				new SqlGeneratorSource(context, converter, dialect), //
+				context, //
+				converter, //
+				namedJdbcOperations);
+
+		relationResolver.setDelegate(accessStrategy);
+
+		String rawId = "batman";
+
+		WithValueObjectId entity = new WithValueObjectId(new IdValue(rawId));
+		entity.value = "vs. superman";
+
+		accessStrategy.insert(entity, WithValueObjectId.class, Identifier.empty());
+
+		verify(namedJdbcOperations).update(anyString(), paramSourceCaptor.capture(), any(KeyHolder.class));
+
+		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(rawId);
+		assertThat(paramSourceCaptor.getValue().getValue("value")).isEqualTo("vs. superman");
+
+		accessStrategy.findById(new IdValue(rawId), WithValueObjectId.class);
+
+		verify(namedJdbcOperations).queryForObject(anyString(), paramSourceCaptor.capture(), any(EntityRowMapper.class));
+		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(rawId);
+	}
+
 	@RequiredArgsConstructor
 	private static class DummyEntity {
 
@@ -153,6 +192,18 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		@Id Long id;
 		boolean flag;
+	}
+
+	@Data
+	private static class WithValueObjectId {
+
+		@Id private final IdValue id;
+		String value;
+	}
+
+	@Value
+	private static class IdValue {
+		String id;
 	}
 
 	@WritingConverter
@@ -177,4 +228,14 @@ public class DefaultDataAccessStrategyUnitTests {
 		}
 	}
 
+	@WritingConverter
+	enum IdValueToStringConverter implements Converter<IdValue, String> {
+
+		INSTANCE;
+
+		@Override
+		public String convert(IdValue source) {
+			return source.id;
+		}
+	}
 }
