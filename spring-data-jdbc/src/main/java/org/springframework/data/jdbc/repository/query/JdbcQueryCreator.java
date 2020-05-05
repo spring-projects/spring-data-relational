@@ -34,6 +34,8 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
+import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.SelectBuilder;
 import org.springframework.data.relational.core.sql.StatementBuilder;
@@ -54,6 +56,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Myeonghyeon Lee
  * @since 2.0
  */
 class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
@@ -208,6 +211,8 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 			Column idColumn = table.column(entity.getIdColumn());
 			builder = Select.builder().select(idColumn).from(table);
+		} else if (tree.isCountProjection()) {
+			builder = Select.builder().select(Functions.count(Expressions.asterisk())).from(table);
 		} else {
 			builder = selectBuilder(table);
 		}
