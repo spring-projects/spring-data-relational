@@ -21,7 +21,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * An SQL dialect for DB2.
  *
  * @author Jens Schauder
- * @since 2.1
+ * @since 2.0
  */
 public class Db2Dialect extends AbstractDialect {
 
@@ -80,6 +80,10 @@ public class Db2Dialect extends AbstractDialect {
 		return LIMIT_CLAUSE;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#getIdentifierProcessing()
+	 */
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.ANSI;

@@ -15,19 +15,18 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.annotation.PostConstruct;
-import javax.script.ScriptException;
 import javax.sql.DataSource;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.MySqlDialect;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.jdbc.ext.ScriptUtils;
 
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
@@ -38,16 +37,13 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Sedat Gokcen
+ * @author Mark Paluch
  */
 @Configuration
 @Profile("mysql")
 class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 
-	private static final MySQLContainer MYSQL_CONTAINER = new MySQLContainer().withConfigurationOverride("");
-
-	static {
-		MYSQL_CONTAINER.start();
-	}
+	private static MySQLContainer<?> MYSQL_CONTAINER;
 
 	/*
 	 * (non-Javadoc)
@@ -55,6 +51,14 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 	 */
 	@Override
 	protected DataSource createDataSource() {
+
+		if (MYSQL_CONTAINER == null) {
+
+			MySQLContainer<?> container = new MySQLContainer<>().withConfigurationOverride("");
+			container.start();
+
+			MYSQL_CONTAINER = container;
+		}
 
 		MysqlDataSource dataSource = new MysqlDataSource();
 		dataSource.setUrl(MYSQL_CONTAINER.getJdbcUrl());
@@ -66,7 +70,11 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 	}
 
 	@PostConstruct
-	public void initDatabase() throws SQLException, ScriptException {
-		ScriptUtils.executeSqlScript(createDataSource().getConnection(), null, "DROP DATABASE test;CREATE DATABASE test;");
+	public void initDatabase() throws SQLException {
+
+		try (Connection connection = createDataSource().getConnection()) {
+			ScriptUtils.executeSqlScript(connection,
+					new ByteArrayResource("DROP DATABASE test;CREATE DATABASE test;".getBytes()));
+		}
 	}
 }

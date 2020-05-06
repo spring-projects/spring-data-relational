@@ -15,12 +15,14 @@
  */
 package org.springframework.data.jdbc.testing;
 
-import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
+import javax.sql.DataSource;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+
 import org.testcontainers.containers.MSSQLServerContainer;
 
-import javax.sql.DataSource;
+import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 
 
 /**
@@ -29,17 +31,14 @@ import javax.sql.DataSource;
  * Configuration for a MSSQL Datasource.
  *
  * @author Thomas Lang
+ * @author Mark Paluch
  * @see <a href="https://github.com/testcontainers/testcontainers-java/tree/master/modules/mssqlserver"></a>
  */
 @Configuration
 @Profile({"mssql"})
 public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
-    private static final MSSQLServerContainer mssqlserver = new MSSQLServerContainer();
-
-    static {
-        mssqlserver.start();
-    }
+	private static MSSQLServerContainer<?> MSSQL_CONTAINER;
 
     /*
      * (non-Javadoc)
@@ -48,10 +47,18 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
     @Override
     protected DataSource createDataSource() {
 
+		if (MSSQL_CONTAINER == null) {
+
+			MSSQLServerContainer<?> container = new MSSQLServerContainer<>();
+			container.start();
+
+			MSSQL_CONTAINER = container;
+		}
+
         SQLServerDataSource sqlServerDataSource = new SQLServerDataSource();
-        sqlServerDataSource.setURL(mssqlserver.getJdbcUrl());
-        sqlServerDataSource.setUser(mssqlserver.getUsername());
-        sqlServerDataSource.setPassword(mssqlserver.getPassword());
+		sqlServerDataSource.setURL(MSSQL_CONTAINER.getJdbcUrl());
+		sqlServerDataSource.setUser(MSSQL_CONTAINER.getUsername());
+		sqlServerDataSource.setPassword(MSSQL_CONTAINER.getPassword());
         return sqlServerDataSource;
     }
 }

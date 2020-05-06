@@ -15,32 +15,32 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.annotation.PostConstruct;
-import javax.script.ScriptException;
 import javax.sql.DataSource;
 
 import org.mariadb.jdbc.MariaDbDataSource;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+
 import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.jdbc.ext.ScriptUtils;
 
 /**
  * {@link DataSource} setup for MariaDB. Starts a Docker-container with a MariaDB database, and sets up database "test".
  * 
  * @author Christoph Preißner
+ * @author Mark Paluch
  */
 @Configuration
 @Profile("mariadb")
 class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 
-	private static final MariaDBContainer MARIADB_CONTAINER = new MariaDBContainer().withConfigurationOverride("");
-
-	static {
-		MARIADB_CONTAINER.start();
-	}
+	private static MariaDBContainer<?> MARIADB_CONTAINER;
 
 	/*
 	 * (non-Javadoc)
@@ -48,6 +48,14 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 	 */
 	@Override
 	protected DataSource createDataSource() {
+
+		if (MARIADB_CONTAINER == null) {
+
+			MariaDBContainer<?> container = new MariaDBContainer<>().withConfigurationOverride("");
+			container.start();
+
+			MARIADB_CONTAINER = container;
+		}
 
 		try {
 
@@ -62,7 +70,12 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 	}
 
 	@PostConstruct
-	public void initDatabase() throws SQLException, ScriptException {
-		ScriptUtils.executeSqlScript(createDataSource().getConnection(), null, "DROP DATABASE test;CREATE DATABASE test;");
+	public void initDatabase() throws SQLException {
+
+		try (Connection connection = createDataSource().getConnection()) {
+			ScriptUtils.executeSqlScript(connection,
+					new ByteArrayResource("DROP DATABASE test;CREATE DATABASE test;".getBytes()));
+		}
 	}
+
 }

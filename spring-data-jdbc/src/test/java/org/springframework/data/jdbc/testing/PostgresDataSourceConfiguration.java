@@ -18,12 +18,11 @@ package org.springframework.data.jdbc.testing;
 import javax.sql.DataSource;
 
 import org.postgresql.ds.PGSimpleDataSource;
-import org.springframework.context.annotation.Bean;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
@@ -32,16 +31,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Sedat Gokcen
+ * @author Mark Paluch
  */
 @Configuration
 @Profile("postgres")
 public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 
-	private static final PostgreSQLContainer POSTGRESQL_CONTAINER = new PostgreSQLContainer();
-
-	static {
-		POSTGRESQL_CONTAINER.start();
-	}
+	private static PostgreSQLContainer<?> POSTGRESQL_CONTAINER;
 
 	/*
 	 * (non-Javadoc)
@@ -49,6 +45,14 @@ public class PostgresDataSourceConfiguration extends DataSourceConfiguration {
 	 */
 	@Override
 	protected DataSource createDataSource() {
+
+		if (POSTGRESQL_CONTAINER == null) {
+
+			PostgreSQLContainer<?> container = new PostgreSQLContainer<>();
+			container.start();
+
+			POSTGRESQL_CONTAINER = container;
+		}
 
 		PGSimpleDataSource dataSource = new PGSimpleDataSource();
 		dataSource.setUrl(POSTGRESQL_CONTAINER.getJdbcUrl());

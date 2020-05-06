@@ -25,6 +25,7 @@
 
 		<degraph-check.version>0.1.4</degraph-check.version>
 
+		<awaitility.version>4.0.2</awaitility.version>
 		<db2.version>11.5.0.0</db2.version>
 		<h2.version>1.4.200</h2.version>
 		<hsqldb.version>2.2.8</hsqldb.version>
