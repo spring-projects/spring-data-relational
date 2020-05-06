@@ -64,7 +64,6 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-@ContextConfiguration
 @Transactional
 public class JdbcRepositoryIntegrationTests {
 

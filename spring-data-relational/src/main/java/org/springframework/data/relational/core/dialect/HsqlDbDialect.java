@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import org.springframework.data.relational.core.sql.LockOptions;
-
 /**
  * A {@link Dialect} for HsqlDb.
  *
@@ -36,7 +34,7 @@ public class HsqlDbDialect extends AbstractDialect {
 
 	@Override
 	public LockClause lock() {
-		return LOCK_CLAUSE;
+		return AnsiDialect.LOCK_CLAUSE;
 	}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
@@ -54,19 +52,6 @@ public class HsqlDbDialect extends AbstractDialect {
 		@Override
 		public String getLimitOffset(long limit, long offset) {
 			return getOffset(offset) + " " + getLimit(limit);
-		}
-
-		@Override
-		public Position getClausePosition() {
-			return Position.AFTER_ORDER_BY;
-		}
-	};
-
-	private static final LockClause LOCK_CLAUSE = new LockClause() {
-
-		@Override
-		public String getLock(LockOptions lockOptions) {
-			return "FOR UPDATE";
 		}
 
 		@Override

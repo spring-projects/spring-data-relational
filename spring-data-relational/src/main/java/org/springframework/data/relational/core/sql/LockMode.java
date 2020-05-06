@@ -22,6 +22,7 @@ package org.springframework.data.relational.core.sql;
  * @since 2.0
  */
 public enum LockMode {
+
 	PESSIMISTIC_READ,
 	PESSIMISTIC_WRITE
 }

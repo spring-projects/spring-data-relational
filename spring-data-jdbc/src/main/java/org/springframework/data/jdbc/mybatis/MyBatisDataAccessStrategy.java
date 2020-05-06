@@ -257,13 +257,15 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
+
 		String statement = namespace(domainType) + ".acquireLockById";
 		MyBatisContext parameter = new MyBatisContext(id, null, domainType, Collections.emptyMap());
 
 		long result = sqlSession().selectOne(statement, parameter);
 		if (result < 1) {
-			throw new EmptyResultDataAccessException(
-				String.format("The lock target does not exist. id: %s, statement: %s", id, statement), 1);
+
+			String message = String.format("The lock target does not exist. id: %s, statement: %s", id, statement);
+			throw new EmptyResultDataAccessException(message, 1);
 		}
 	}
 
@@ -273,6 +275,7 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
+
 		String statement = namespace(domainType) + ".acquireLockAll";
 		MyBatisContext parameter = new MyBatisContext(null, null, domainType, Collections.emptyMap());
 

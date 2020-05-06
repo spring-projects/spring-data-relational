@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.JDBCType;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -27,7 +28,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import org.springframework.dao.*;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.support.JdbcUtil;
@@ -42,6 +47,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -245,9 +251,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
+
 		String acquireLockByIdSql = sql(domainType).getAcquireLockById(lockMode);
 		SqlIdentifierParameterSource parameter = createIdParameterSource(id, domainType);
-		operations.queryForObject(acquireLockByIdSql, parameter, Object.class);
+		operations.execute(acquireLockByIdSql, parameter, ps -> {ps.execute(); return null;});
 	}
 
 	/*
@@ -256,8 +263,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
+
 		String acquireLockAllSql = sql(domainType).getAcquireLockAll(lockMode);
-		operations.query(acquireLockAllSql, Collections.emptyMap(), new NoMappingResultSetExtractor());
+		operations.getJdbcOperations().execute(acquireLockAllSql);
 	}
 
 	/*
@@ -602,16 +610,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		@Override
 		public T getBean() {
-			return null;
-		}
-	}
-
-	/**
-	 * The type No mapping result set extractor.
-	 */
-	static class NoMappingResultSetExtractor implements ResultSetExtractor<Object> {
-		@Override
-		public Object extractData(ResultSet resultSet) throws SQLException, DataAccessException {
 			return null;
 		}
 	}

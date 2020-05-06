@@ -115,6 +115,7 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	static class PostgresLockClause implements LockClause {
+
 		private final IdentifierProcessing identifierProcessing;
 
 		PostgresLockClause(IdentifierProcessing identifierProcessing) {

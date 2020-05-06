@@ -132,7 +132,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath);
 
 	/**
-	 * Acquire Lock
+	 * Acquire a lock on the aggregate specified by id.
 	 *
 	 * @param id the id of the entity to load. Must not be {@code null}.
 	 * @param lockMode the lock mode for select. Must not be {@code null}.
@@ -141,7 +141,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	<T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType);
 
 	/**
-	 * Acquire Lock entities of the given domain type.
+	 * Acquire a lock on all aggregates of the given domain type.
 	 *
 	 * @param lockMode the lock mode for select. Must not be {@code null}.
 	 * @param domainType the domain type of the entity. Must not be {@code null}.

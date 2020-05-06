@@ -273,6 +273,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	 */
 	@Override
 	public SelectLock lock(LockMode lockMode) {
+
 		this.lockMode = lockMode;
 		return this;
 	}
@@ -283,6 +284,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	 */
 	@Override
 	public Select build() {
+
 		DefaultSelect select = new DefaultSelect(distinct, selectList, from, limit, offset, joins, where, orderBy, lockMode);
 		SelectValidator.validate(select);
 		return select;

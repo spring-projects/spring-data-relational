@@ -50,7 +50,6 @@ import org.springframework.util.Assert;
  * @author Thomas Lang
  * @author Christoph Strobl
  * @author Milan Milanov
- * @author Myeonghyeon Lee
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 

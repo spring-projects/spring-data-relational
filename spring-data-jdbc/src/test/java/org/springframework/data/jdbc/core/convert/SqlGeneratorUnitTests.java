@@ -25,7 +25,6 @@ import java.util.Set;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -36,7 +35,7 @@ import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
-import org.springframework.data.jdbc.testing.AnsiDialect;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
@@ -95,19 +94,18 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.getFindOne();
 
-		SoftAssertions softAssertions = new SoftAssertions();
-		softAssertions.assertThat(sql) //
-			.startsWith("SELECT") //
-			.contains("dummy_entity.id1 AS id1,") //
-			.contains("dummy_entity.x_name AS x_name,") //
-			.contains("dummy_entity.x_other AS x_other,") //
-			.contains("ref.x_l1id AS ref_x_l1id") //
-			.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
-			.contains("ON ref.dummy_entity = dummy_entity.id1") //
-			.contains("WHERE dummy_entity.id1 = :id") //
-			// 1-N relationships do not get loaded via join
-			.doesNotContain("Element AS elements");
-		softAssertions.assertAll();
+		SoftAssertions.assertSoftly(softly -> softly //
+				.assertThat(sql) //
+				.startsWith("SELECT") //
+				.contains("dummy_entity.id1 AS id1,") //
+				.contains("dummy_entity.x_name AS x_name,") //
+				.contains("dummy_entity.x_other AS x_other,") //
+				.contains("ref.x_l1id AS ref_x_l1id") //
+				.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
+				.contains("ON ref.dummy_entity = dummy_entity.id1") //
+				.contains("WHERE dummy_entity.id1 = :id") //
+				// 1-N relationships do not get loaded via join
+				.doesNotContain("Element AS elements"));
 	}
 
 	@Test // DATAJDBC-493
@@ -115,14 +113,13 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.getAcquireLockById(LockMode.PESSIMISTIC_WRITE);
 
-		SoftAssertions softAssertions = new SoftAssertions();
-		softAssertions.assertThat(sql) //
-			.startsWith("SELECT") //
-			.contains("dummy_entity.id1") //
-			.contains("WHERE dummy_entity.id1 = :id") //
-			.contains("FOR UPDATE") //
-			.doesNotContain("Element AS elements");
-		softAssertions.assertAll();
+		SoftAssertions.assertSoftly(softly -> softly //
+				.assertThat(sql) //
+				.startsWith("SELECT") //
+				.contains("dummy_entity.id1") //
+				.contains("WHERE dummy_entity.id1 = :id") //
+				.contains("FOR UPDATE") //
+				.doesNotContain("Element AS elements"));
 	}
 
 	@Test // DATAJDBC-493
@@ -130,13 +127,12 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.getAcquireLockAll(LockMode.PESSIMISTIC_WRITE);
 
-		SoftAssertions softAssertions = new SoftAssertions();
-		softAssertions.assertThat(sql) //
-			.startsWith("SELECT") //
-			.contains("dummy_entity.id1") //
-			.contains("FOR UPDATE") //
-			.doesNotContain("Element AS elements");
-		softAssertions.assertAll();
+		SoftAssertions.assertSoftly(softly -> softly //
+				.assertThat(sql) //
+				.startsWith("SELECT") //
+				.contains("dummy_entity.id1") //
+				.contains("FOR UPDATE") //
+				.doesNotContain("Element AS elements"));
 	}
 
 	@Test // DATAJDBC-112

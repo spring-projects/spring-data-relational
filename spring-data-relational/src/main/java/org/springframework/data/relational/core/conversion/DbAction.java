@@ -327,10 +327,11 @@ public interface DbAction<T> {
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	final class AcquireLockRoot<T> implements DbAction<T> {
+
 		private final Object id;
 		private final Class<T> entityType;
 
-		public AcquireLockRoot(Object id, Class<T> entityType) {
+		AcquireLockRoot(Object id, Class<T> entityType) {
 			this.id = id;
 			this.entityType = entityType;
 		}
@@ -349,15 +350,15 @@ public interface DbAction<T> {
 	}
 
 	/**
-	 * Represents an acquire lock statement for all entities that that a reachable via a give path from any aggregate root of a
-	 * given type.
+	 * Represents an acquire lock statement for all aggregate roots of a given type.
 	 *
 	 * @param <T> type of the entity for which this represents a database interaction.
 	 */
 	final class AcquireLockAllRoot<T> implements DbAction<T> {
+
 		private final Class<T> entityType;
 
-		public AcquireLockAllRoot(Class<T> entityType) {
+		AcquireLockAllRoot(Class<T> entityType) {
 			this.entityType = entityType;
 		}
 

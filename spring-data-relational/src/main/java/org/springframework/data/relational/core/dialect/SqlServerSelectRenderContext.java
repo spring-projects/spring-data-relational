@@ -46,8 +46,7 @@ public class SqlServerSelectRenderContext implements SelectRenderContext {
 	 * @param afterFromTable the delegate {@code afterFromTable} function.
 	 * @param afterOrderBy the delegate {@code afterOrderBy} function.
 	 */
-	protected SqlServerSelectRenderContext(
-			Function<Select, CharSequence> afterFromTable,
+	protected SqlServerSelectRenderContext(Function<Select, CharSequence> afterFromTable,
 			Function<Select, CharSequence> afterOrderBy) {
 
 		this.afterFromTable = afterFromTable;

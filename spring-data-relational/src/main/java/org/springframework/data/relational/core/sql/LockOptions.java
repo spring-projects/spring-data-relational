@@ -22,10 +22,12 @@ package org.springframework.data.relational.core.sql;
  * @since 2.0
  */
 public class LockOptions {
+
 	private final LockMode lockMode;
 	private final From from;
 
 	public LockOptions(LockMode lockMode, From  from) {
+
 		this.lockMode = lockMode;
 		this.from = from;
 	}

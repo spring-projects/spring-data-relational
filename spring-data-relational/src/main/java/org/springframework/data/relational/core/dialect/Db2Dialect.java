@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.LockOptions;
 
 /**
  * An SQL dialect for DB2.
@@ -78,6 +79,11 @@ public class Db2Dialect extends AbstractDialect {
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
+	}
+
+	@Override
+	public LockClause lock() {
+		return AnsiDialect.LOCK_CLAUSE;
 	}
 
 	/*

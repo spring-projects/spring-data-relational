@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
-import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -79,27 +78,6 @@ public class H2Dialect extends AbstractDialect {
 		}
 	};
 
-	private static final LockClause LOCK_CLAUSE = new LockClause() {
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LockClause#getLock(LockOptions)
-		 */
-		@Override
-		public String getLock(LockOptions lockOptions) {
-			return "FOR UPDATE";
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LockClause#getClausePosition()
-		 */
-		@Override
-		public Position getClausePosition() {
-			return Position.AFTER_ORDER_BY;
-		}
-	};
-
 	private final H2ArrayColumns ARRAY_COLUMNS = new H2ArrayColumns();
 
 	/*
@@ -117,7 +95,7 @@ public class H2Dialect extends AbstractDialect {
 	 */
 	@Override
 	public LockClause lock() {
-		return LOCK_CLAUSE;
+		return AnsiDialect.LOCK_CLAUSE;
 	}
 
 	/*

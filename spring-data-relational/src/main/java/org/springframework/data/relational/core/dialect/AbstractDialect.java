@@ -57,12 +57,8 @@ public abstract class AbstractDialect implements Dialect {
 		Function<Select, ? extends CharSequence> afterFromTable = select -> "";
 
 		LockClause lockClause = lock();
-		switch (lockClause.getClausePosition()) {
-
-			case AFTER_FROM_TABLE:
-				afterFromTable = new LockRenderFunction(lockClause);
-
-			default:
+		if (lockClause.getClausePosition() == LockClause.Position.AFTER_FROM_TABLE) {
+			afterFromTable = new LockRenderFunction(lockClause);
 		}
 
 		return afterFromTable.andThen(PrependWithLeadingWhitespace.INSTANCE);
@@ -78,31 +74,19 @@ public abstract class AbstractDialect implements Dialect {
 		Function<Select, ? extends CharSequence> afterOrderByLimit = getAfterOrderByLimit();
 		Function<Select, ? extends CharSequence> afterOrderByLock = getAfterOrderByLock();
 
-		return select -> {
-
-			StringBuilder afterOrderByBuilder = new StringBuilder();
-			afterOrderByBuilder.append(afterOrderByLimit.apply(select));
-			afterOrderByBuilder.append(afterOrderByLock.apply(select));
-			return afterOrderByBuilder.toString();
-		};
+		return select -> String.valueOf(afterOrderByLimit.apply(select)) +
+				afterOrderByLock.apply(select);
 	}
 
 	private Function<Select, ? extends CharSequence> getAfterOrderByLimit() {
 		LimitClause limit = limit();
 
-		Function<Select, ? extends CharSequence> afterOrderByLimit = select -> "";
-
-		switch (limit.getClausePosition()) {
-
-			case AFTER_ORDER_BY:
-				afterOrderByLimit = new AfterOrderByLimitRenderFunction(limit);
-				break;
-
-			default:
-				throw new UnsupportedOperationException(String.format("Clause position %s not supported!", limit));
+		if (limit.getClausePosition() == LimitClause.Position.AFTER_ORDER_BY) {
+			return new AfterOrderByLimitRenderFunction(limit) //
+					.andThen(PrependWithLeadingWhitespace.INSTANCE);
+		} else {
+			throw new UnsupportedOperationException(String.format("Clause position %s not supported!", limit));
 		}
-
-		return afterOrderByLimit.andThen(PrependWithLeadingWhitespace.INSTANCE);
 	}
 
 	private Function<Select, ? extends CharSequence> getAfterOrderByLock() {
@@ -110,12 +94,8 @@ public abstract class AbstractDialect implements Dialect {
 
 		Function<Select, ? extends CharSequence> afterOrderByLock = select -> "";
 
-		switch (lock.getClausePosition()) {
-
-			case AFTER_ORDER_BY:
-				afterOrderByLock = new LockRenderFunction(lock);
-
-			default:
+		if (lock.getClausePosition() == LockClause.Position.AFTER_ORDER_BY) {
+			afterOrderByLock = new LockRenderFunction(lock);
 		}
 
 		return afterOrderByLock.andThen(PrependWithLeadingWhitespace.INSTANCE);
@@ -124,7 +104,7 @@ public abstract class AbstractDialect implements Dialect {
 	/**
 	 * {@link SelectRenderContext} derived from {@link Dialect} specifics.
 	 */
-	class DialectSelectRenderContext implements SelectRenderContext {
+	static class DialectSelectRenderContext implements SelectRenderContext {
 
 		private final Function<Select, ? extends CharSequence> afterFromTable;
 		private final Function<Select, ? extends CharSequence> afterOrderBy;

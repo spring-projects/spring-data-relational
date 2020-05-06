@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.testing;
+package org.springframework.data.relational.core.dialect;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.relational.core.dialect.AbstractDialect;
-import org.springframework.data.relational.core.dialect.ArrayColumns;
-import org.springframework.data.relational.core.dialect.LimitClause;
-import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.util.Assert;
@@ -81,7 +77,7 @@ public class AnsiDialect extends AbstractDialect {
 		}
 	};
 
-	private static final LockClause LOCK_CLAUSE = new LockClause() {
+	static final LockClause LOCK_CLAUSE = new LockClause() {
 
 		/*
 		 * (non-Javadoc)
