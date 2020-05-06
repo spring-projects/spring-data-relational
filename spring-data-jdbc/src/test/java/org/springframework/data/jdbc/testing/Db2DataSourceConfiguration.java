@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.Db2Container;
 
 /**
- * {@link DataSource} setup for HSQL.
+ * {@link DataSource} setup for DB2.
  *
  * @author Jens Schauder
  * @author Oliver Gierke
