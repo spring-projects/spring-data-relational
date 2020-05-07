@@ -31,7 +31,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -52,7 +51,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -371,6 +369,19 @@ public class JdbcRepositoryIntegrationTests {
 		});
 	}
 
+	@Test // DATAJDBC-534
+	public void countByQueryDerivation() {
+
+		DummyEntity one = createDummyEntity();
+		DummyEntity two = createDummyEntity();
+		two.name = "other";
+		DummyEntity three = createDummyEntity();
+
+		repository.saveAll(asList(one, two, three));
+
+		assertThat(repository.countByName(one.getName())).isEqualTo(2);
+	}
+
 	private static DummyEntity createDummyEntity() {
 
 		DummyEntity entity = new DummyEntity();
@@ -398,6 +409,8 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntity withMissingColumn(@Param("id") Long id);
 
 		boolean existsByName(String name);
+
+		int countByName(String name);
 	}
 
 	@Data
