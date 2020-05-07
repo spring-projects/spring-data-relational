@@ -22,6 +22,8 @@ import org.junit.Test;
 import org.reactivestreams.Publisher;
 
 import org.springframework.data.relational.core.dialect.LimitClause;
+import org.springframework.data.relational.core.dialect.LockClause;
+import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
 import com.github.jasync.r2dbc.mysql.JasyncConnectionFactory;
@@ -105,6 +107,21 @@ public class DialectResolverUnitTests {
 		@Override
 		public LimitClause limit() {
 			return null;
+		}
+
+		@Override
+		public LockClause lock() {
+			return new LockClause() {
+				@Override
+				public String getLock(LockOptions lockOptions) {
+					return "FOR UPDATE";
+				}
+
+				@Override
+				public Position getClausePosition() {
+					return Position.AFTER_ORDER_BY;
+				}
+			};
 		}
 
 		@Override
