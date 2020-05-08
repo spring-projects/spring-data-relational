@@ -41,7 +41,7 @@ public class Db2Dialect extends AbstractDialect {
 		 */
 		@Override
 		public String getLimit(long limit) {
-			return "FIRST " + limit + " ROWS ONLY";
+			return "FETCH FIRST " + limit + " ROWS ONLY";
 		}
 
 		/*
@@ -83,7 +83,18 @@ public class Db2Dialect extends AbstractDialect {
 
 	@Override
 	public LockClause lock() {
-		return AnsiDialect.LOCK_CLAUSE;
+
+		return new LockClause() {
+			@Override
+			public String getLock(LockOptions lockOptions) {
+				return "FOR UPDATE WITH RS USE AND KEEP EXCLUSIVE LOCKS";
+			}
+
+			@Override
+			public Position getClausePosition() {
+				return Position.AFTER_ORDER_BY;
+			}
+		};
 	}
 
 	/*
