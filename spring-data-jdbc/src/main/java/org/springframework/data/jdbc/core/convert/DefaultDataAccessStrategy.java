@@ -18,9 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.JDBCType;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -40,6 +37,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -47,8 +45,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.jdbc.core.PreparedStatementCallback;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -254,7 +250,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		String acquireLockByIdSql = sql(domainType).getAcquireLockById(lockMode);
 		SqlIdentifierParameterSource parameter = createIdParameterSource(id, domainType);
-		operations.execute(acquireLockByIdSql, parameter, ps -> {ps.execute(); return null;});
+
+		operations.query(acquireLockByIdSql, parameter, ResultSet::next);
 	}
 
 	/*
@@ -265,7 +262,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 
 		String acquireLockAllSql = sql(domainType).getAcquireLockAll(lockMode);
-		operations.getJdbcOperations().execute(acquireLockAllSql);
+		operations.getJdbcOperations().query(acquireLockAllSql, ResultSet::next);
 	}
 
 	/*

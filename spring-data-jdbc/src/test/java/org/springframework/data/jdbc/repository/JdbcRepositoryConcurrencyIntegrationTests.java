@@ -25,14 +25,18 @@ import lombok.With;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.UnaryOperator;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.platform.commons.util.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -85,6 +89,35 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 
 	TransactionTemplate transactionTemplate;
 	List<Exception> exceptions;
+
+	@BeforeClass
+	public static void beforeClass() {
+
+		Assertions.registerFormatterForType(CopyOnWriteArrayList.class, l -> {
+
+			StringJoiner joiner = new StringJoiner(", ", "List(", ")");
+			l.forEach(e -> {
+
+				if (e instanceof Throwable) {
+					printThrowable(joiner,(Throwable) e);
+				} else {
+					joiner.add(e.toString());
+				}
+			});
+
+			return joiner.toString();
+		});
+	}
+
+	private static void printThrowable(StringJoiner joiner, Throwable t) {
+
+		joiner.add(t.toString() + ExceptionUtils.readStackTrace(t));
+		if (t.getCause() != null) {
+
+			joiner.add("\ncaused by:\n");
+			printThrowable(joiner, t.getCause());
+		}
+	}
 
 	@Before
 	public void before() {

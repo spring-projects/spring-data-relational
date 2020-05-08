@@ -55,7 +55,7 @@ class Db2DataSourceConfiguration extends DataSourceConfiguration {
 		if (DB_2_CONTAINER == null) {
 
 			LOG.info("DB2 starting...");
-			Db2Container container = new Db2Container();
+			Db2Container container = new Db2Container().withReuse(true);
 			container.start();
 			LOG.info("DB2 started");
 
