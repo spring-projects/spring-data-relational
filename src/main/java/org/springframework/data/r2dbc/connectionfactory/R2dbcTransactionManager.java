@@ -18,13 +18,17 @@ package org.springframework.data.r2dbc.connectionfactory;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.Result;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
+import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
 import org.springframework.lang.Nullable;
 import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.TransactionDefinition;
@@ -76,6 +80,8 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 
 	private boolean enforceReadOnly = false;
 
+	private R2dbcExceptionTranslator exceptionTranslator = new R2dbcExceptionSubclassTranslator();
+
 	/**
 	 * Create a new @link ConnectionFactoryTransactionManager} instance. A ConnectionFactory has to be set to be able to
 	 * use it.
@@ -122,6 +128,19 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	@Nullable
 	public ConnectionFactory getConnectionFactory() {
 		return this.connectionFactory;
+	}
+
+	/**
+	 * Set the exception translator for this instance.
+	 * <p>
+	 * If no custom translator is provided, a default {@link R2dbcExceptionSubclassTranslator} is used which translates
+	 * {@link R2dbcException}'s subclasses into Springs {@link DataAccessException} hierarchy.
+	 * 
+	 * @see R2dbcExceptionSubclassTranslator
+	 * @since 1.1
+	 */
+	public void setExceptionTranslator(R2dbcExceptionTranslator exceptionTranslator) {
+		this.exceptionTranslator = exceptionTranslator;
 	}
 
 	/**
@@ -242,17 +261,22 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 							}
 						}).thenReturn(con).onErrorResume(e -> {
 
-							CannotCreateTransactionException ex = new CannotCreateTransactionException(
-									"Could not open R2DBC Connection for transaction", e);
-
 							if (txObject.isNewConnectionHolder()) {
 								return ConnectionFactoryUtils.releaseConnection(con, obtainConnectionFactory()).doOnTerminate(() -> {
 
 									txObject.setConnectionHolder(null, false);
-								}).then(Mono.error(ex));
+								}).then(Mono.error(e));
 							}
-							return Mono.error(ex);
+							return Mono.error(e);
 						});
+			}).onErrorResume(e -> {
+
+				CannotCreateTransactionException ex = new CannotCreateTransactionException(
+						"Could not open R2DBC Connection for transaction",
+						e instanceof R2dbcException ? potentiallyTranslateException("Open R2DBC Connection", (R2dbcException) e)
+								: e);
+
+				return Mono.error(ex);
 			});
 		}).then();
 	}
@@ -321,7 +345,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 		}
 
 		return Mono.from(connection.commitTransaction())
-				.onErrorMap(ex -> new TransactionSystemException("Could not commit R2DBC transaction", ex));
+				.onErrorMap(R2dbcException.class, ex -> translateException("R2DBC commit", ex));
 	}
 
 	/*
@@ -339,7 +363,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 		}
 
 		return Mono.from(connection.rollbackTransaction())
-				.onErrorMap(ex -> new TransactionSystemException("Could not roll back R2DBC transaction", ex));
+				.onErrorMap(R2dbcException.class, ex -> translateException("R2DBC rollback", ex));
 	}
 
 	/*
@@ -494,6 +518,31 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 		}
 
 		return null;
+	}
+
+	/**
+	 * Translate the given R2DBC commit/rollback exception to a common Spring exception to propagate from the
+	 * {@link #commit}/{@link #rollback} call.
+	 * <p>
+	 * The default implementation throws a {@link TransactionSystemException}. Subclasses may specifically identify
+	 * concurrency failures etc.
+	 * 
+	 * @param task the task description (commit or rollback).
+	 * @param ex the SQLException thrown from commit/rollback.
+	 * @return the translated exception to throw, either a {@link org.springframework.dao.DataAccessException} or a
+	 *         {@link org.springframework.transaction.TransactionException}
+	 * @since 1.1
+	 */
+	protected RuntimeException translateException(String task, R2dbcException ex) {
+
+		Exception translated = potentiallyTranslateException(task, ex);
+		return new TransactionSystemException(task + " failed", translated);
+	}
+
+	private Exception potentiallyTranslateException(String task, R2dbcException ex) {
+
+		DataAccessException translated = exceptionTranslator.translate(task, null, ex);
+		return translated != null ? translated : ex;
 	}
 
 	/**

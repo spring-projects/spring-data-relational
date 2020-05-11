@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.R2dbcBadGrammarException;
 import io.r2dbc.spi.Statement;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -32,6 +33,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.springframework.data.r2dbc.BadSqlGrammarException;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.reactive.TransactionSynchronization;
@@ -92,6 +95,29 @@ public class R2dbcTransactionManagerUnitTests {
 		assertThat(sync.afterCommitCalled).isTrue();
 		assertThat(sync.beforeCompletionCalled).isTrue();
 		assertThat(sync.afterCompletionCalled).isTrue();
+	}
+
+	@Test // gh-329
+	public void testBeginFails() {
+
+		reset(connectionFactoryMock);
+		when(connectionFactoryMock.create()).thenReturn(Mono.error(new R2dbcBadGrammarException("fail")));
+
+		when(connectionMock.rollbackTransaction()).thenReturn(Mono.empty());
+
+		DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+		definition.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
+
+		TransactionalOperator operator = TransactionalOperator.create(tm, definition);
+
+		ConnectionFactoryUtils.getConnection(connectionFactoryMock).as(operator::transactional) //
+				.as(StepVerifier::create) //
+				.expectErrorSatisfies(actual -> {
+
+					assertThat(actual).isInstanceOf(CannotCreateTransactionException.class)
+							.hasCauseInstanceOf(BadSqlGrammarException.class);
+
+				}).verify();
 	}
 
 	@Test // gh-107
@@ -214,8 +240,10 @@ public class R2dbcTransactionManagerUnitTests {
 	public void testCommitFails() {
 
 		when(connectionMock.commitTransaction()).thenReturn(Mono.defer(() -> {
-			return Mono.error(new IllegalStateException("Commit should fail"));
+			return Mono.error(new R2dbcBadGrammarException("Commit should fail"));
 		}));
+
+		when(connectionMock.rollbackTransaction()).thenReturn(Mono.empty());
 
 		TransactionalOperator operator = TransactionalOperator.create(tm);
 
@@ -225,7 +253,7 @@ public class R2dbcTransactionManagerUnitTests {
 				}).then() //
 				.as(operator::transactional) //
 				.as(StepVerifier::create) //
-				.verifyError();
+				.verifyError(IllegalTransactionStateException.class);
 
 		verify(connectionMock).isAutoCommit();
 		verify(connectionMock).beginTransaction();
@@ -258,6 +286,35 @@ public class R2dbcTransactionManagerUnitTests {
 		assertThat(rollbacks).hasValue(1);
 		verify(connectionMock).isAutoCommit();
 		verify(connectionMock).beginTransaction();
+		verify(connectionMock).rollbackTransaction();
+		verify(connectionMock).close();
+		verifyNoMoreInteractions(connectionMock);
+	}
+
+	@Test // gh-329
+	public void testRollbackFails() {
+
+		when(connectionMock.rollbackTransaction()).thenReturn(Mono.defer(() -> {
+			return Mono.error(new R2dbcBadGrammarException("Commit should fail"));
+		}), Mono.empty());
+
+		TransactionalOperator operator = TransactionalOperator.create(tm);
+
+		operator.execute(reactiveTransaction -> {
+
+			reactiveTransaction.setRollbackOnly();
+
+			return ConnectionFactoryUtils.getConnection(connectionFactoryMock) //
+					.doOnNext(it -> {
+						it.createStatement("foo");
+					}).then();
+		}).as(StepVerifier::create) //
+				.verifyError(IllegalTransactionStateException.class);
+
+		verify(connectionMock).isAutoCommit();
+		verify(connectionMock).beginTransaction();
+		verify(connectionMock).createStatement("foo");
+		verify(connectionMock, never()).commitTransaction();
 		verify(connectionMock).rollbackTransaction();
 		verify(connectionMock).close();
 		verifyNoMoreInteractions(connectionMock);
