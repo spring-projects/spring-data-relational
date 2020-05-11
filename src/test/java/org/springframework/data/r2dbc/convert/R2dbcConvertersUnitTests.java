@@ -30,7 +30,6 @@ import java.util.UUID;
 import org.junit.Test;
 
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.r2dbc.convert.R2dbcConverters;
 import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToBooleanConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToLocalDateConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverters.RowToLocalDateTimeConverter;
@@ -137,7 +136,7 @@ public class R2dbcConvertersUnitTests {
 	public void isConvertingNumber() {
 
 		Row row = mock(Row.class);
-		when(row.get(0, Integer.class)).thenReturn(33);
+		when(row.get(0)).thenReturn(33);
 
 		final Converter<Row, Integer> converter = RowToNumberConverterFactory.INSTANCE.getConverter(Integer.class);
 

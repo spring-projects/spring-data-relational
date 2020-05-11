@@ -88,7 +88,7 @@ public class MappingR2dbcConverterUnitTests {
 	public void shouldConvertRowToNumber() {
 
 		Row rowMock = mock(Row.class);
-		when(rowMock.get(0, Integer.class)).thenReturn(42);
+		when(rowMock.get(0)).thenReturn(42);
 
 		Integer result = converter.read(Integer.class, rowMock);
 
