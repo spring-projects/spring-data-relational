@@ -15,8 +15,10 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.util.Assert;
+
 /**
- * LockOptions has a LOCK option to apply to the Select statement.
+ * Value object providing lock options to apply to a {@link Select} statement.
  *
  * @author Myeonghyeon Lee
  * @since 2.0
@@ -26,7 +28,10 @@ public class LockOptions {
 	private final LockMode lockMode;
 	private final From from;
 
-	public LockOptions(LockMode lockMode, From  from) {
+	public LockOptions(LockMode lockMode, From from) {
+
+		Assert.notNull(lockMode, "LockMode must not be null");
+		Assert.notNull(from, "From must not be null");
 
 		this.lockMode = lockMode;
 		this.from = from;
