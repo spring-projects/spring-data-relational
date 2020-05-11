@@ -292,9 +292,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		repository.countByNameContains("SCH") //
 				.as(StepVerifier::create) //
-				.assertNext(i -> assertThat(i).isEqualTo(2))
+				.assertNext(i -> assertThat(i).isEqualTo(2)) //
 				.verifyComplete();
-
 	}
 
 	private Condition<? super Object> numberOf(int expected) {

@@ -21,6 +21,8 @@ import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
+import lombok.Value;
+import lombok.With;
 import reactor.test.StepVerifier;
 
 import java.util.Collections;
@@ -29,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
@@ -191,6 +194,49 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Walter"));
 	}
 
+	@Test // gh-365
+	public void shouldInsertVersioned() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+
+		entityTemplate.insert(new VersionedPerson("id", 0, "bar")).as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(1);
+				}) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO versioned_person (id, version, name) VALUES ($1, $2, $3)");
+		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, SettableValue.from("id")).containsEntry(1,
+				SettableValue.from(1L));
+	}
+
+	@Test // gh-365
+	public void shouldUpdateVersioned() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+
+		entityTemplate.update(new VersionedPerson("id", 1, "bar")).as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(2);
+				}) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+
+		assertThat(statement.getSql()).isEqualTo(
+				"UPDATE versioned_person SET version = $1, name = $2 WHERE versioned_person.id = $3 AND (versioned_person.version = $4)");
+		assertThat(statement.getBindings()).hasSize(4).containsEntry(0, SettableValue.from(2L)).containsEntry(3,
+				SettableValue.from(1L));
+	}
+
 	static class Person {
 
 		@Id String id;
@@ -204,5 +250,16 @@ public class R2dbcEntityTemplateUnitTests {
 		public void setName(String name) {
 			this.name = name;
 		}
+	}
+
+	@Value
+	@With
+	static class VersionedPerson {
+
+		@Id String id;
+
+		@Version long version;
+
+		String name;
 	}
 }

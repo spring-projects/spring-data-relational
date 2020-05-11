@@ -377,21 +377,22 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		setVersionIfNecessary(persistentEntity, entity);
+		T entityToInsert = setVersionIfNecessary(persistentEntity, entity);
 
 		return this.databaseClient.insert() //
 				.into(persistentEntity.getType()) //
-				.table(tableName).using(entity) //
-				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entity)) //
+				.table(tableName).using(entityToInsert) //
+				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entityToInsert)) //
 				.first() //
-				.defaultIfEmpty(entity);
+				.defaultIfEmpty(entityToInsert);
 	}
 
-	private <T> void setVersionIfNecessary(RelationalPersistentEntity<T> persistentEntity, T entity) {
+	@SuppressWarnings("unchecked")
+	private <T> T setVersionIfNecessary(RelationalPersistentEntity<T> persistentEntity, T entity) {
 
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
 		if (versionProperty == null) {
-			return;
+			return entity;
 		}
 
 		Class<?> versionPropertyType = versionProperty.getType();
@@ -399,6 +400,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		ConversionService conversionService = this.dataAccessStrategy.getConverter().getConversionService();
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
 		propertyAccessor.setProperty(versionProperty, conversionService.convert(version, versionPropertyType));
+
+		return (T) propertyAccessor.getBean();
 	}
 
 	/*
@@ -412,21 +415,26 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		DatabaseClient.UpdateMatchingSpec updateMatchingSpec = this.databaseClient.update() //
+		DatabaseClient.TypedUpdateSpec<T> updateMatchingSpec = this.databaseClient.update() //
 				.table(persistentEntity.getType()) //
-				.table(persistentEntity.getTableName()) //
-				.using(entity);
+				.table(persistentEntity.getTableName());
 
-		DatabaseClient.UpdateSpec updateSpec = updateMatchingSpec;
+		DatabaseClient.UpdateSpec matching;
+		T entityToUpdate;
 		if (persistentEntity.hasVersionProperty()) {
 
-			updateSpec = updateMatchingSpec.matching(createMatchingVersionCriteria(entity, persistentEntity));
-			incrementVersion(entity, persistentEntity);
+			Criteria criteria = createMatchingVersionCriteria(entity, persistentEntity);
+			entityToUpdate = incrementVersion(persistentEntity, entity);
+			matching = updateMatchingSpec.using(entityToUpdate).matching(criteria);
+		} else {
+			entityToUpdate = entity;
+			matching = updateMatchingSpec.using(entity);
 		}
 
-		return updateSpec.fetch() //
+		return matching.fetch() //
 				.rowsUpdated() //
-				.flatMap(rowsUpdated -> rowsUpdated == 0 ? handleMissingUpdate(entity, persistentEntity) : Mono.just(entity));
+				.flatMap(rowsUpdated -> rowsUpdated == 0 ? handleMissingUpdate(entityToUpdate, persistentEntity)
+						: Mono.just(entityToUpdate));
 	}
 
 	private <T> Mono<? extends T> handleMissingUpdate(T entity, RelationalPersistentEntity<T> persistentEntity) {
@@ -448,7 +456,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 				persistentEntity.getTableName(), persistentEntity.getIdentifierAccessor(entity).getIdentifier());
 	}
 
-	private <T> void incrementVersion(T entity, RelationalPersistentEntity<T> persistentEntity) {
+	@SuppressWarnings("unchecked")
+	private <T> T incrementVersion(RelationalPersistentEntity<T> persistentEntity, T entity) {
 
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
@@ -461,6 +470,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 		Class<?> versionPropertyType = versionProperty.getType();
 		propertyAccessor.setProperty(versionProperty, conversionService.convert(newVersionValue, versionPropertyType));
+
+		return (T) propertyAccessor.getBean();
 	}
 
 	private <T> Criteria createMatchingVersionCriteria(T entity, RelationalPersistentEntity<T> persistentEntity) {
