@@ -81,10 +81,15 @@ public class Db2Dialect extends AbstractDialect {
 		return LIMIT_CLAUSE;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
+	 */
 	@Override
 	public LockClause lock() {
 
 		return new LockClause() {
+
 			@Override
 			public String getLock(LockOptions lockOptions) {
 				return "FOR UPDATE WITH RS USE AND KEEP EXCLUSIVE LOCKS";

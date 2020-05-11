@@ -42,6 +42,7 @@ public interface LockClause {
 	 * Enumeration of where to render the clause within the SQL statement.
 	 */
 	enum Position {
+
 		/**
 		 * Append the clause after from table.
 		 */
