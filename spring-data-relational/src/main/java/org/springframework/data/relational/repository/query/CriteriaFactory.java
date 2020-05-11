@@ -15,10 +15,14 @@
  */
 package org.springframework.data.relational.repository.query;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Simple factory to contain logic to create {@link Criteria}s from {@link Part}s.
@@ -90,8 +94,8 @@ class CriteriaFactory {
 			case IN:
 			case NOT_IN: {
 				ParameterMetadata paramMetadata = parameterMetadataProvider.next(part);
-				Criteria criteria = part.getType() == Part.Type.IN ? criteriaStep.in(paramMetadata.getValue())
-						: criteriaStep.notIn(paramMetadata.getValue());
+				Criteria criteria = part.getType() == Part.Type.IN ? criteriaStep.in(asCollection(paramMetadata.getValue()))
+						: criteriaStep.notIn(asCollection(paramMetadata.getValue()));
 				return criteria.ignoreCase(shouldIgnoreCase(part) && checkCanUpperCase(part, part.getProperty().getType()));
 			}
 			case STARTING_WITH:
@@ -162,5 +166,19 @@ class CriteriaFactory {
 
 	private boolean canUpperCase(Class<?> expressionType) {
 		return expressionType == String.class;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Collection<Object> asCollection(Object value) {
+
+		if (value instanceof Collection) {
+			return (Collection<Object>) value;
+		}
+
+		if (value.getClass().isArray()) {
+			return CollectionUtils.arrayToList(value);
+		}
+
+		return Collections.singletonList(value);
 	}
 }
