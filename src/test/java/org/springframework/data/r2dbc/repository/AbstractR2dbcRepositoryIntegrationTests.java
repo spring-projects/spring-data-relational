@@ -285,6 +285,18 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		assertThat(count).hasEntrySatisfying("count", numberOf(2));
 	}
 
+	@Test // gh-363
+	public void derivedQueryWithCountProjection() {
+
+		shouldInsertNewItems();
+
+		repository.countByNameContains("SCH") //
+				.as(StepVerifier::create) //
+				.assertNext(i -> assertThat(i).isEqualTo(2))
+				.verifyComplete();
+
+	}
+
 	private Condition<? super Object> numberOf(int expected) {
 		return new Condition<>(it -> {
 			return it instanceof Number && ((Number) it).intValue() == expected;
@@ -312,6 +324,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		@Query("DELETE from legoset where manual = :manual")
 		Mono<Void> deleteAllByManual(int manual);
+
+		Mono<Integer> countByNameContains(String namePart);
 	}
 
 	@Getter

@@ -186,7 +186,7 @@ abstract class R2dbcConverters {
 			@Override
 			public T convert(Row source) {
 
-				Object object = source.get(0, targetType);
+				Object object = source.get(0);
 
 				return (object != null ? NumberUtils.convertNumberToTargetClass((Number) object, this.targetType) : null);
 			}

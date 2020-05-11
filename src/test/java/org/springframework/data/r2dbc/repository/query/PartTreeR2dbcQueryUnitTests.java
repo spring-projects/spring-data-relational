@@ -619,7 +619,7 @@ public class PartTreeR2dbcQueryUnitTests {
 				+ ".foo FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
-	@Test // DATAJDBC-534
+	@Test // gh-363
 	public void createsQueryForCountProjection() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("countByFirstName", String.class);
