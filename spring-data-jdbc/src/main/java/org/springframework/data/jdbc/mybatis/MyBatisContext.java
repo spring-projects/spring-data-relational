@@ -104,7 +104,12 @@ public class MyBatisContext {
 	 */
 	@Nullable
 	public Object get(String key) {
-		return additionalValues.get(key);
-	}
 
+		Object value = null;
+		if (identifier != null) {
+			value = identifier.toMap().get(key);
+		}
+
+		return value == null ? additionalValues.get(key) : value;
+	}
 }
