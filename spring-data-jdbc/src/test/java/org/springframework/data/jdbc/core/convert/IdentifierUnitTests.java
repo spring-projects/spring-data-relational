@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -110,5 +112,24 @@ public class IdentifierUnitTests {
 
 		assertThat(one).isEqualTo(two);
 		assertThat(one).isNotEqualTo(three);
+	}
+
+	@Test // DATAJDBC-542
+	public void identifierPartsCanBeAccessedByString() {
+
+		Map<SqlIdentifier, Object> idParts = new HashMap<>();
+		idParts.put(unquoted("aName"), "one");
+		idParts.put(quoted("Other"), "two");
+
+		Identifier id = Identifier.from(idParts);
+
+		Map<SqlIdentifier, Object> map = id.toMap();
+
+		SoftAssertions.assertSoftly(softly -> {
+			softly.assertThat(map.get("aName")).describedAs("aName").isEqualTo("one");
+			softly.assertThat(map.get("Other")).describedAs("Other").isEqualTo("two");
+			softly.assertThat(map.get("other")).describedAs("other").isNull();
+			softly.assertThat(map.get("OTHER")).describedAs("OTHER").isNull();
+		});
 	}
 }
