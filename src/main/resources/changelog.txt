@@ -1,6 +1,18 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.0.RELEASE (2020-05-12)
+---------------------------------------------
+* DATAJDBC-538 - Locks do not work for DB2.
+* DATAJDBC-534 - Derived Query support count projection.
+* DATAJDBC-532 - Remove Travis CI.
+* DATAJDBC-530 - The sorting property might be set as the property name.
+* DATAJDBC-529 - Derived query existsByToken throws exception when entity doesn't exists.
+* DATAJDBC-528 - Release 2.0 GA (Neumann).
+* DATAJDBC-493 - Deadlock occurs when competing with Jdbc Repository Update and Delete.
+* DATAJDBC-257 - Run integration tests with IBM DB2.
+
+
 Changes in version 2.0.0.RC2 (2020-04-28)
 -----------------------------------------
 * DATAJDBC-520 - Improve documentation for MappedCollection.
@@ -435,6 +447,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
