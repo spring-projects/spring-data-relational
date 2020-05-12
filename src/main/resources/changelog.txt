@@ -1,6 +1,15 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.1.0.RELEASE (2020-05-12)
+---------------------------------------------
+* #365 - Support optimistic locking in immutable way.
+* #364 - Add lockClause to Dialect implementation.
+* #363 - Query derivation does not support count projection.
+* #357 - Release 1.1 GA (Neumann).
+* #329 - Translate driver exceptions in R2dbcTransactionManager.
+
+
 Changes in version 1.1.0.RC2 (2020-04-28)
 -----------------------------------------
 * #354 - NullPointerException when inserting entity with read only fields.
@@ -219,6 +228,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
