@@ -37,7 +37,7 @@ public class MyBatisContext {
 	private final @Nullable Class domainType;
 	private final Map<String, Object> additionalValues;
 
-	public MyBatisContext(@Nullable Object id, @Nullable Object instance, @Nullable Class domainType,
+	public MyBatisContext(@Nullable Object id, @Nullable Object instance, @Nullable Class<?> domainType,
 			Map<String, Object> additionalValues) {
 
 		this.id = id;
@@ -78,7 +78,7 @@ public class MyBatisContext {
 
 	/**
 	 * The entity to act upon. This is {@code null} for queries, since the object doesn't exist before the query.
-	 * 
+	 *
 	 * @return Might return {@code null}.
 	 */
 	@Nullable
