@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.util.Assert;
@@ -145,7 +144,7 @@ public final class Identifier {
 	 */
 	public Map<SqlIdentifier, Object> toMap() {
 
-		Map<SqlIdentifier, Object> result = new StringKeyedLinkedHashMap<>();
+		Map<SqlIdentifier, Object> result = new StringKeyedLinkedHashMap<>(getParts().size());
 		forEach((name, value, type) -> result.put(name, value));
 		return result;
 	}
@@ -216,6 +215,10 @@ public final class Identifier {
 
 	private static class StringKeyedLinkedHashMap<V> extends LinkedHashMap<SqlIdentifier,V> {
 
+		public StringKeyedLinkedHashMap(int initialCapacity) {
+			super(initialCapacity);
+		}
+
 		@Override
 		public V get(Object key) {
 
@@ -227,6 +230,7 @@ public final class Identifier {
 					}
 				}
 			}
+
 			return super.get(key);
 		}
 	}
