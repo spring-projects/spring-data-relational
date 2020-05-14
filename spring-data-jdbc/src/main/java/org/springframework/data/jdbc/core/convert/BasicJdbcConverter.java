@@ -55,6 +55,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
+ * @author Yunyoung LEE
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -436,7 +437,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 			Identifier identifier = id == null //
 					? this.identifier.withPart(rootPath.getQualifierColumn(), key, Object.class) //
-					: Identifier.of(rootPath.extendBy(property).getReverseColumnName(), id, Object.class);
+					: JdbcIdentifierBuilder.forBackReferences(BasicJdbcConverter.this, rootPath.extendBy(property), id).build();
 
 			PersistentPropertyPath<? extends RelationalPersistentProperty> propertyPath = path.extendBy(property)
 					.getRequiredPersistentPropertyPath();
@@ -512,6 +513,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 			if (idProperty != null) {
 				idValue = newContext.readFrom(idProperty);
+			} else if (property.isEmbedded()) {
+				return createInstance(entity, parameter -> {
+					RelationalPersistentProperty parameterProperty = entity.getRequiredPersistentProperty(parameter.getName());
+					return newContext.propertyValueProvider.getPropertyValue(parameterProperty);
+				});
 			} else {
 				idValue = backReferencePropertyValueProvider.getPropertyValue(property);
 			}

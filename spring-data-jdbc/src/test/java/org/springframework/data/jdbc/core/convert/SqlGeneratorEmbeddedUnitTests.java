@@ -24,6 +24,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
+import org.springframework.data.jdbc.core.convert.SqlGenerator.JoinCondition;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -268,12 +269,14 @@ public class SqlGeneratorEmbeddedUnitTests {
 		SqlGenerator.Join join = generateJoin("embedded.other", DummyEntity2.class);
 
 		SoftAssertions.assertSoftly(softly -> {
+			JoinCondition condition = join.getJoinConditions().get(0);
 
 			softly.assertThat(join.getJoinTable().getName()).isEqualTo(SqlIdentifier.unquoted("other_entity"));
-			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
-			softly.assertThat(join.getJoinColumn().getName()).isEqualTo(SqlIdentifier.unquoted("dummy_entity2"));
-			softly.assertThat(join.getParentId().getName()).isEqualTo(SqlIdentifier.unquoted("id"));
-			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo(SqlIdentifier.unquoted("dummy_entity2"));
+			softly.assertThat(condition.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
+			softly.assertThat(condition.getJoinColumn().getName()).isEqualTo(SqlIdentifier.unquoted("dummy_entity2"));
+			softly.assertThat(condition.getParentId().getName()).isEqualTo(SqlIdentifier.unquoted("id"));
+			softly.assertThat(condition.getParentId().getTable().getName())
+					.isEqualTo(SqlIdentifier.unquoted("dummy_entity2"));
 		});
 	}
 

@@ -15,8 +15,12 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
@@ -37,12 +41,14 @@ import org.springframework.util.StringUtils;
  * @author Greg Turnquist
  * @author Florian Lüdiger
  * @author Bastian Wilhelm
+ * @author Yunyoung LEE
  */
 public class BasicRelationalPersistentProperty extends AnnotationBasedPersistentProperty<RelationalPersistentProperty>
 		implements RelationalPersistentProperty {
 
 	private final Lazy<SqlIdentifier> columnName;
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
+	private final Lazy<Optional<List<SqlIdentifier>>> collectionIdColumnNames;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
 	private final Lazy<String> embeddedPrefix;
@@ -102,6 +108,12 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.filter(StringUtils::hasText) //
 				.findFirst() //
 				.map(this::createSqlIdentifier)); //
+
+		this.collectionIdColumnNames = Lazy.of(() -> Optional //
+				.ofNullable(findAnnotation(MappedCollection.class)) //
+				.map(MappedCollection::idColumns) //
+				.filter(columns -> columns.length > 0) //
+				.map(columns -> Arrays.stream(columns).map(this::createSqlIdentifier).collect(Collectors.toList())));
 
 		this.collectionKeyColumnName = Lazy.of(() -> Optionals //
 				.toStream(Optional.ofNullable(findAnnotation(MappedCollection.class)).map(MappedCollection::keyColumn)) //
@@ -172,6 +184,12 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 		return collectionIdColumnName.get()
 				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(path)));
+	}
+
+	@Override
+	public List<SqlIdentifier> getReverseColumnNames(PersistentPropertyPathExtension path) {
+
+		return collectionIdColumnNames.get().orElseGet(() -> Collections.singletonList(getReverseColumnName(path)));
 	}
 
 	/*

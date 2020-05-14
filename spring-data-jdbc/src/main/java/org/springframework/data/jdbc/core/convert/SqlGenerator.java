@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import lombok.Value;
 
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -53,6 +53,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Yunyoung LEE
  */
 class SqlGenerator {
 
@@ -110,18 +111,19 @@ class SqlGenerator {
 	 * @param path specifies the table and id to select
 	 * @param rootCondition the condition on the root of the path determining what to select
 	 * @param filterColumn the column to apply the IN-condition to.
+	 * @param rootIndentifier the sql identifier to apply root condition.
 	 * @return the IN condition
 	 */
 	private Condition getSubselectCondition(PersistentPropertyPathExtension path,
-			Function<Column, Condition> rootCondition, Column filterColumn) {
+			BiFunction<Column, SqlIdentifier, Condition> rootCondition, Column filterColumn, SqlIdentifier rootIdentifier) {
 
 		PersistentPropertyPathExtension parentPath = path.getParentPath();
 
 		if (!parentPath.hasIdProperty()) {
 			if (parentPath.getLength() > 1) {
-				return getSubselectCondition(parentPath, rootCondition, filterColumn);
+				return getSubselectCondition(parentPath, rootCondition, filterColumn, rootIdentifier);
 			}
-			return rootCondition.apply(filterColumn);
+			return rootCondition.apply(filterColumn, rootIdentifier);
 		}
 
 		Table subSelectTable = Table.create(parentPath.getTableName());
@@ -133,11 +135,11 @@ class SqlGenerator {
 		if (parentPath.getLength() == 1) { // if the parent is the root of the path
 
 			// apply the rootCondition
-			innerCondition = rootCondition.apply(selectFilterColumn);
+			innerCondition = rootCondition.apply(selectFilterColumn, rootIdentifier);
 		} else {
 
 			// otherwise we need another layer of subselect
-			innerCondition = getSubselectCondition(parentPath, rootCondition, selectFilterColumn);
+			innerCondition = getSubselectCondition(parentPath, rootCondition, selectFilterColumn, rootIdentifier);
 		}
 
 		Select select = Select.builder() //
@@ -357,7 +359,8 @@ class SqlGenerator {
 			return render(deleteAll.build());
 		}
 
-		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path), Column::isNotNull);
+		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
+				(column, sqlIdentifier) -> column.isNotNull());
 	}
 
 	/**
@@ -368,12 +371,47 @@ class SqlGenerator {
 	 */
 	String createDeleteByPath(PersistentPropertyPath<RelationalPersistentProperty> path) {
 		return createDeleteByPathAndCriteria(new PersistentPropertyPathExtension(mappingContext, path),
-				filterColumn -> filterColumn.isEqualTo(getBindMarker(ROOT_ID_PARAMETER)));
+				(filterColumn, sqlIdentifier) -> filterColumn.isEqualTo(getBindMarker(sqlIdentifier)));
+	}
+
+	private Condition buildIdCondition(BindMarker idMarker) {
+		final RelationalPersistentProperty idProperty = entity.getIdProperty();
+
+		if (idProperty.isEmbedded()) {
+			final Table table = getTable();
+			Condition condition = null;
+			for (final SqlIdentifier sqlIdentifier : columns.idColumnNames) {
+				final Condition mappedCondition = table.column(sqlIdentifier).isEqualTo(getBindMarker(sqlIdentifier));
+
+				if (condition != null) {
+					condition = condition.and(mappedCondition);
+				} else {
+					condition = mappedCondition;
+				}
+			}
+			return condition;
+		}
+
+		return getIdColumn().isEqualTo(idMarker);
+	}
+
+	private Condition buildIdInListContion() {
+		final RelationalPersistentProperty idProperty = entity.getIdProperty();
+
+		if (idProperty.isEmbedded()) {
+			final Table table = getTable();
+			String conditionExpression = "(" + columns.idColumnNames.stream()
+					.map(identifier -> table.column(identifier).toString()).collect(Collectors.joining(", ")) + ")";
+
+			return Conditions.in(Expressions.just(conditionExpression), getBindMarker(IDS_SQL_PARAMETER));
+		}
+
+		return getIdColumn().in(getBindMarker(IDS_SQL_PARAMETER));
 	}
 
 	private String createFindOneSql() {
 
-		Select select = selectBuilder().where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
+		Select select = selectBuilder().where(buildIdCondition(getBindMarker(ID_SQL_PARAMETER))) //
 				.build();
 
 		return render(select);
@@ -384,11 +422,11 @@ class SqlGenerator {
 		Table table = this.getTable();
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
-			.from(table) //
-			.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
-			.lock(lockMode) //
-			.build();
+				.select(getIdColumn()) //
+				.from(table) //
+				.where(buildIdCondition(getBindMarker(ID_SQL_PARAMETER))) //
+				.lock(lockMode) //
+				.build();
 
 		return render(select);
 	}
@@ -398,10 +436,10 @@ class SqlGenerator {
 		Table table = this.getTable();
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
-			.from(table) //
-			.lock(lockMode) //
-			.build();
+				.select(getIdColumn()) //
+				.from(table) //
+				.lock(lockMode) //
+				.build();
 
 		return render(select);
 	}
@@ -446,7 +484,18 @@ class SqlGenerator {
 		SelectBuilder.SelectJoin baseSelect = selectBuilder.from(table);
 
 		for (Join join : joinTables) {
-			baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
+			SelectBuilder.SelectOn selectOn = baseSelect.leftOuterJoin(join.joinTable);
+
+			SelectBuilder.SelectOnCondition selectOnCondition = null;
+			for (JoinCondition condition : join.joinConditions) {
+				if (selectOnCondition == null) {
+					selectOnCondition = selectOn.on(condition.joinColumn).equals(condition.parentId);
+				} else {
+					selectOnCondition = selectOnCondition.and(condition.joinColumn).equals(condition.parentId);
+				}
+			}
+
+			baseSelect = selectOnCondition;
 		}
 
 		return (SelectBuilder.SelectWhere) baseSelect;
@@ -527,16 +576,22 @@ class SqlGenerator {
 		PersistentPropertyPathExtension idDefiningParentPath = path.getIdDefiningParentPath();
 		Table parentTable = sqlContext.getTable(idDefiningParentPath);
 
-		return new Join( //
-				currentTable, //
-				currentTable.column(path.getReverseColumnName()), //
-				parentTable.column(idDefiningParentPath.getIdColumnName()) //
-		);
+		Join join = new Join(currentTable);
+
+		Iterator<SqlIdentifier> parentColumnNames = idDefiningParentPath.getIdColumnNames().iterator();
+		path.getReverseColumnNames().forEach(reverserColumnName -> {
+			Assert.state(parentColumnNames.hasNext(),
+					"Relation parent column name not found for reverse column name " + reverserColumnName.getReference());
+			join.joinConditions.add(
+					new JoinCondition(currentTable.column(reverserColumnName), parentTable.column(parentColumnNames.next())));
+		});
+
+		return join;
 	}
 
 	private String createFindAllInListSql() {
 
-		Select select = selectBuilder().where(getIdColumn().in(getBindMarker(IDS_SQL_PARAMETER))).build();
+		Select select = selectBuilder().where(buildIdInListContion()).build();
 
 		return render(select);
 	}
@@ -548,7 +603,7 @@ class SqlGenerator {
 		Select select = StatementBuilder //
 				.select(Functions.count(getIdColumn())) //
 				.from(table) //
-				.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
+				.where(buildIdCondition(getBindMarker(ID_SQL_PARAMETER))) //
 				.build();
 
 		return render(select);
@@ -615,7 +670,7 @@ class SqlGenerator {
 		return Update.builder() //
 				.table(table) //
 				.set(assignments) //
-				.where(getIdColumn().isEqualTo(getBindMarker(entity.getIdColumn())));
+				.where(buildIdCondition(getBindMarker(entity.getIdColumn())));
 	}
 
 	private String createDeleteSql() {
@@ -632,31 +687,31 @@ class SqlGenerator {
 	}
 
 	private DeleteBuilder.DeleteWhereAndOr createBaseDeleteById(Table table) {
-		return Delete.builder().from(table)
-				.where(getIdColumn().isEqualTo(SQL.bindMarker(":" + renderReference(ID_SQL_PARAMETER))));
+		return Delete.builder().from(table) //
+				.where(buildIdCondition(getBindMarker(ID_SQL_PARAMETER)));
 	}
 
 	private String createDeleteByPathAndCriteria(PersistentPropertyPathExtension path,
-			Function<Column, Condition> rootCondition) {
+			BiFunction<Column, SqlIdentifier, Condition> rootCondition) {
 
 		Table table = Table.create(path.getTableName());
 
 		DeleteBuilder.DeleteWhere builder = Delete.builder() //
 				.from(table);
-		Delete delete;
 
-		Column filterColumn = table.column(path.getReverseColumnName());
-
+		Condition condition;
 		if (path.getLength() == 1) {
 
-			delete = builder //
-					.where(rootCondition.apply(filterColumn)) //
-					.build();
+			condition = path.getReverseColumnNames().stream()
+					.map(filterIdentifier -> rootCondition.apply(table.column(filterIdentifier), filterIdentifier))
+					.reduce((a, b) -> a.and(b)).orElseThrow(IllegalStateException::new);
 		} else {
 
-			Condition condition = getSubselectCondition(path, rootCondition, filterColumn);
-			delete = builder.where(condition).build();
+			SqlIdentifier rootIdentifier = path.getEffectiveIdColumnName();
+			condition = getSubselectCondition(path, rootCondition, table.column(rootIdentifier), rootIdentifier);
 		}
+
+		Delete delete = builder.where(condition).build();
 
 		return render(delete);
 	}
@@ -667,7 +722,7 @@ class SqlGenerator {
 
 		Delete delete = Delete.builder() //
 				.from(table) //
-				.where(getIdColumn().in(getBindMarker(IDS_SQL_PARAMETER))) //
+				.where(buildIdInListContion()) //
 				.build();
 
 		return render(delete);
@@ -694,6 +749,10 @@ class SqlGenerator {
 	}
 
 	private Column getIdColumn() {
+		RelationalPersistentProperty property = entity.getIdProperty();
+		if (property.isEmbedded()) {
+			return getTable().column(columns.idColumnNames.iterator().next());
+		}
 		return sqlContext.getIdColumn();
 	}
 
@@ -725,6 +784,11 @@ class SqlGenerator {
 	@Value
 	static class Join {
 		Table joinTable;
+		List<JoinCondition> joinConditions = new ArrayList<>();
+	}
+
+	@Value
+	static class JoinCondition {
 		Column joinColumn;
 		Column parentId;
 	}
@@ -754,7 +818,7 @@ class SqlGenerator {
 			this.mappingContext = mappingContext;
 			this.converter = converter;
 
-			populateColumnNameCache(entity, "");
+			populateColumnNameCache(entity);
 
 			Set<SqlIdentifier> insertable = new LinkedHashSet<>(nonIdColumnNames);
 			insertable.removeAll(readOnlyColumnNames);
@@ -769,26 +833,38 @@ class SqlGenerator {
 			this.updateableColumns = Collections.unmodifiableSet(updateable);
 		}
 
-		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix) {
+		private void populateColumnNameCache(RelationalPersistentEntity<?> entity) {
+			entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+
+				// should check isEmbedded before isEntity for work with embedded id.
+				if (property.isEmbedded()) {
+					initEmbeddedColumnNames(property, "", property.isIdProperty());
+				} else if (!property.isEntity()) {
+					initSimpleColumnName(property, "", property.isIdProperty());
+				}
+			});
+		}
+
+		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix, boolean isId) {
 
 			entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
 
 				// the referencing column of referenced entity is expected to be on the other side of the relation
 				if (!property.isEntity()) {
-					initSimpleColumnName(property, prefix);
+					initSimpleColumnName(property, prefix, isId);
 				} else if (property.isEmbedded()) {
-					initEmbeddedColumnNames(property, prefix);
+					initEmbeddedColumnNames(property, prefix, isId);
 				}
 			});
 		}
 
-		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix) {
+		private void initSimpleColumnName(RelationalPersistentProperty property, String prefix, boolean isId) {
 
 			SqlIdentifier columnName = property.getColumnName().transform(prefix::concat);
 
 			columnNames.add(columnName);
 
-			if (!property.getOwner().isIdProperty(property)) {
+			if (!isId) {
 				nonIdColumnNames.add(columnName);
 			} else {
 				idColumnNames.add(columnName);
@@ -799,14 +875,14 @@ class SqlGenerator {
 			}
 		}
 
-		private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix) {
+		private void initEmbeddedColumnNames(RelationalPersistentProperty property, String prefix, boolean isId) {
 
 			String embeddedPrefix = property.getEmbeddedPrefix();
 
 			RelationalPersistentEntity<?> embeddedEntity = mappingContext
 					.getRequiredPersistentEntity(converter.getColumnType(property));
 
-			populateColumnNameCache(embeddedEntity, prefix + embeddedPrefix);
+			populateColumnNameCache(embeddedEntity, prefix + embeddedPrefix, isId);
 		}
 
 		/**

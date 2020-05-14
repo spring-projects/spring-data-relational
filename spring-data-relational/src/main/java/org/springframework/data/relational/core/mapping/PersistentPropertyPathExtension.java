@@ -17,6 +17,11 @@ package org.springframework.data.relational.core.mapping;
 
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
@@ -31,6 +36,7 @@ import org.springframework.util.Assert;
  * available used in SQL generation and conversion
  *
  * @author Jens Schauder
+ * @autorh Yunyoung LEE
  * @since 1.1
  */
 @EqualsAndHashCode(exclude = { "columnAlias", "context" })
@@ -165,6 +171,17 @@ public class PersistentPropertyPathExtension {
 	}
 
 	/**
+	 * Names of columns used to reference ids in the parent table.
+	 *
+	 * @throws IllegalStateException when called on an empty path.
+	 */
+	public List<SqlIdentifier> getReverseColumnNames() {
+
+		Assert.state(path != null, "Empty paths don't have a reverse column name");
+		return path.getRequiredLeafProperty().getReverseColumnNames(this);
+	}
+
+	/**
 	 * The alias used in select for the column used to reference the id in the parent table.
 	 *
 	 * @throws IllegalStateException when called on an empty path.
@@ -252,6 +269,34 @@ public class PersistentPropertyPathExtension {
 	 */
 	public SqlIdentifier getIdColumnName() {
 		return getTableOwningAncestor().getRequiredLeafEntity().getIdColumn();
+	}
+
+	public List<SqlIdentifier> getIdColumnNames() {
+		RelationalPersistentProperty idProperty = getTableOwningAncestor().getRequiredIdProperty();
+		if (idProperty.isEmbedded()) {
+			List<SqlIdentifier> list = new ArrayList<>();
+			extractColumnNames(list, idProperty, null);
+			return list;
+		} else {
+			return Collections.singletonList(idProperty.getColumnName());
+		}
+	}
+
+	private void extractColumnNames(List<SqlIdentifier> list, RelationalPersistentProperty property, String prefix) {
+		if (property.isEmbedded()) {
+			final PersistentEntity<?, ?> persistentEntity = context.getRequiredPersistentEntity(property.getActualType());
+
+			final String embeddedPrefix = property.getEmbeddedPrefix();
+			for (Object embeddedProperty : persistentEntity) {
+				extractColumnNames(list, (RelationalPersistentProperty) embeddedProperty, embeddedPrefix);
+			}
+		} else {
+			SqlIdentifier sqlIdentifier = property.getColumnName();
+			if (prefix != null) {
+				sqlIdentifier = sqlIdentifier.transform(prefix::concat);
+			}
+			list.add(sqlIdentifier);
+		}
 	}
 
 	/**

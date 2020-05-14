@@ -37,7 +37,6 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -66,6 +65,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Yunyoung LEE
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -117,7 +117,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		if (idValue != null) {
 
 			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
-			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
+			addConvertedIdPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
 		}
 
 		KeyHolder holder = new GeneratedKeyHolder();
@@ -218,7 +218,18 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String delete = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(getIdentifierProcessing());
-		parameters.addValue(ROOT_ID_PARAMETER, rootId);
+		if (referencingProperty.isEmbedded()) {
+
+			PersistentPropertyAccessor<Object> accessor = rootEntity.getPropertyAccessor(rootId);
+			for (RelationalPersistentProperty property : rootEntity) {
+				parameters.addValue(property.getColumnName(), accessor.getProperty(property));
+			}
+		} else {
+
+			parameters.addValue(new PersistentPropertyPathExtension(context, propertyPath).getEffectiveIdColumnName(),
+					rootId);
+		}
+
 		operations.update(delete, parameters);
 	}
 
@@ -322,11 +333,40 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		RelationalPersistentProperty idProperty = getRequiredPersistentEntity(domainType).getRequiredIdProperty();
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(getIdentifierProcessing());
 
-		addConvertedPropertyValuesAsList(parameterSource, idProperty, ids, IDS_SQL_PARAMETER);
+		if (idProperty.isEmbedded()) {
+
+			// NamedParamterUtils#substituteNamedParameters handles Object[] parameterSource as multiple parameter value
+			List<Object[]> idParameters = new ArrayList<>();
+			for (Object id : ids) {
+				List<Object> parameters = new ArrayList<>();
+				extractEmbeddedParameters(parameters, idProperty, id);
+				idParameters.add(parameters.toArray());
+			}
+
+			parameterSource.addValue(IDS_SQL_PARAMETER, idParameters);
+		} else {
+
+			addConvertedPropertyValuesAsList(parameterSource, idProperty, ids, IDS_SQL_PARAMETER);
+		}
 
 		String findAllInListSql = sql(domainType).getFindAllInList();
 
 		return operations.query(findAllInListSql, parameterSource, (RowMapper<T>) getEntityRowMapper(domainType));
+	}
+
+	private void extractEmbeddedParameters(List<Object> parameters, RelationalPersistentProperty property, Object value) {
+
+		if (property.isEmbedded()) {
+
+			final RelationalPersistentEntity<?> embeddedEntity = context.getPersistentEntity(property);
+			final PersistentPropertyAccessor<Object> embeddedAccessor = embeddedEntity.getPropertyAccessor(value);
+
+			embeddedEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) embeddedProperty -> //
+			extractEmbeddedParameters(parameters, embeddedProperty, embeddedAccessor.getProperty(embeddedProperty)));
+		} else {
+
+			parameters.add(value);
+		}
 	}
 
 	/*
@@ -496,13 +536,30 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(getIdentifierProcessing());
 
-		addConvertedPropertyValue( //
+		addConvertedIdPropertyValue( //
 				parameterSource, //
 				getRequiredPersistentEntity(domainType).getRequiredIdProperty(), //
 				id, //
 				ID_SQL_PARAMETER //
 		);
 		return parameterSource;
+	}
+
+	private void addConvertedIdPropertyValue(SqlIdentifierParameterSource parameterSource,
+			RelationalPersistentProperty property, Object value, SqlIdentifier defaultName) {
+
+		if (property.isEmbedded()) {
+			final RelationalPersistentEntity<?> embeddedEntity = context.getRequiredPersistentEntity(property);
+			final String prefix = property.getEmbeddedPrefix();
+
+			final PersistentPropertyAccessor<Object> propertyAccessor = embeddedEntity.getPropertyAccessor(value);
+			for (final RelationalPersistentProperty embeddedProperty : embeddedEntity) {
+				addConvertedIdPropertyValue(parameterSource, embeddedProperty, propertyAccessor.getProperty(embeddedProperty),
+						embeddedProperty.getColumnName().transform(prefix::concat));
+			}
+		} else {
+			addConvertedPropertyValue(parameterSource, property, value, defaultName);
+		}
 	}
 
 	private IdentifierProcessing getIdentifierProcessing() {

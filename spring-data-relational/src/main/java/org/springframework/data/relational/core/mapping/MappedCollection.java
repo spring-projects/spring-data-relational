@@ -30,6 +30,7 @@ import java.util.Set;
  * @since 1.1
  * @author Bastian Wilhelm
  * @author Mark Paluch
+ * @autorh Yunyoung LEE
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
@@ -43,6 +44,14 @@ public @interface MappedCollection {
 	 * @see NamingStrategy#getReverseColumnName(RelationalPersistentProperty)
 	 */
 	String idColumn() default "";
+
+	/**
+	 * Column names for id columns in the corresponding relationship table. Defaults to {@link #idColumn()} if the value
+	 * is empty.
+	 * 
+	 * @since 2.1
+	 */
+	String[] idColumns() default {};
 
 	/**
 	 * The column name for key columns of {@link List} or {@link Map} collections in the corresponding relationship table.

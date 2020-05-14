@@ -90,7 +90,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 			assertThat(sql).isEqualTo( //
 					"DELETE FROM " //
 							+ user + ".referenced_entity WHERE " //
-							+ user + ".referenced_entity.dummy_entity = :rootId" //
+							+ user + ".referenced_entity.dummy_entity = :dummy_entity" //
 			);
 		});
 	}
@@ -108,7 +108,7 @@ public class SqlGeneratorContextBasedNamingStrategyUnitTests {
 					"DELETE FROM " + user + ".second_level_referenced_entity " //
 							+ "WHERE " + user + ".second_level_referenced_entity.referenced_entity IN " //
 							+ "(SELECT " + user + ".referenced_entity.l1id FROM " + user + ".referenced_entity " //
-							+ "WHERE " + user + ".referenced_entity.dummy_entity = :rootId)");
+							+ "WHERE " + user + ".referenced_entity.dummy_entity = :referenced_entity)");
 		});
 	}
 

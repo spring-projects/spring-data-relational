@@ -31,6 +31,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Yunyoung LEE
  * @since 1.1
  * @see Column
  * @see SubselectExpression
@@ -80,6 +81,8 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 				value = segment.toString();
 			}
 		} else if (segment instanceof Literal) {
+			value = segment.toString();
+		} else if (segment instanceof Expression) {
 			value = segment.toString();
 		}
 

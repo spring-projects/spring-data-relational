@@ -15,7 +15,14 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.Iterator;
+import java.util.stream.StreamSupport;
+
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -23,6 +30,7 @@ import org.springframework.util.Assert;
  * Builder for {@link Identifier}. Mainly for internal use within the framework
  *
  * @author Jens Schauder
+ * @author Yunyoung LEE
  * @since 1.1
  */
 public class JdbcIdentifierBuilder {
@@ -43,11 +51,29 @@ public class JdbcIdentifierBuilder {
 	public static JdbcIdentifierBuilder forBackReferences(JdbcConverter converter, PersistentPropertyPathExtension path,
 			@Nullable Object value) {
 
-		Identifier identifier = Identifier.of( //
-				path.getReverseColumnName(), //
-				value, //
-				converter.getColumnType(path.getIdDefiningParentPath().getRequiredIdProperty()) //
-		);
+		Identifier identifier = null;
+
+		RelationalPersistentEntity<?> entity = converter.getMappingContext().getPersistentEntity(value.getClass());
+		if (entity != null) {
+
+			PersistentPropertyAccessor<Object> accessor = entity.getPropertyAccessor(value);
+
+			Iterator<SqlIdentifier> reverseColumnNames = path.getReverseColumnNames().iterator();
+
+			identifier = Identifier.empty();
+			for (RelationalPersistentProperty property : entity) {
+				Assert.state(reverseColumnNames.hasNext(), "no reverse column name for " + property.getName());
+				identifier = identifier.withPart(reverseColumnNames.next(), accessor.getProperty(property),
+						converter.getColumnType(property));
+			}
+		} else {
+
+			identifier = Identifier.of( //
+					path.getReverseColumnName(), //
+					value, //
+					converter.getColumnType(path.getIdDefiningParentPath().getRequiredIdProperty()) //
+			);
+		}
 
 		return new JdbcIdentifierBuilder(identifier);
 	}
