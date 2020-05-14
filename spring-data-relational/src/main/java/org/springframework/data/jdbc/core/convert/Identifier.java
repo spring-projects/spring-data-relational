@@ -221,11 +221,11 @@ public final class Identifier {
 
 			if (key instanceof String) {
 
-				Optional<SqlIdentifier> realKey = keySet().stream() //
-						.filter(si -> si.getReference().equals(key)) //
-						.findFirst();
-
-				return realKey.map(super::get).orElse(null);
+				for (SqlIdentifier sqlIdentifier : keySet()) {
+					if (sqlIdentifier.getReference().equals(key)) {
+						return super.get(sqlIdentifier);
+					}
+				}
 			}
 			return super.get(key);
 		}
