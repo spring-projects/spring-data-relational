@@ -20,12 +20,12 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.sql.JDBCType;
-import java.util.Optional;
+import java.util.Date;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -72,7 +72,8 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 
 		@Bean
 		JdbcCustomConversions jdbcCustomConversions() {
-			return new JdbcCustomConversions(asList(BigDecimalToString.INSTANCE, StringToBigDecimalConverter.INSTANCE));
+			return new JdbcCustomConversions(asList(StringToBigDecimalConverter.INSTANCE, BigDecimalToString.INSTANCE,
+					CustomIdReadingConverter.INSTANCE, CustomIdWritingConverter.INSTANCE));
 		}
 	}
 
@@ -108,20 +109,62 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 
 		repository.save(entity);
 
-		Optional<EntityWithStringyBigDecimal> reloaded = repository.findById(entity.id);
+		EntityWithStringyBigDecimal reloaded = repository.findById(entity.id).get();
 
 		// loading the number from the database might result in additional zeros at the end.
-		String stringyNumber = reloaded.get().stringyNumber;
+		String stringyNumber = reloaded.stringyNumber;
 		assertThat(stringyNumber).startsWith(entity.stringyNumber);
 		assertThat(stringyNumber.substring(entity.stringyNumber.length())).matches("0*");
 	}
 
-	interface EntityWithBooleanRepository extends CrudRepository<EntityWithStringyBigDecimal, Long> {}
+	@Test // DATAJDBC-412
+	public void saveAndLoadAnEntityWithReference() {
+
+		EntityWithStringyBigDecimal entity = new EntityWithStringyBigDecimal();
+		entity.stringyNumber = "123456.78910";
+		entity.reference = new OtherEntity();
+		entity.reference.created = new Date();
+
+		repository.save(entity);
+
+		EntityWithStringyBigDecimal reloaded = repository.findById(entity.id).get();
+
+		// loading the number from the database might result in additional zeros at the end.
+		SoftAssertions.assertSoftly(softly -> {
+			String stringyNumber = reloaded.stringyNumber;
+			softly.assertThat(stringyNumber).startsWith(entity.stringyNumber);
+			softly.assertThat(stringyNumber.substring(entity.stringyNumber.length())).matches("0*");
+
+			softly.assertThat(entity.id.value).isNotNull();
+			softly.assertThat(reloaded.id.value).isEqualTo(entity.id.value);
+
+			softly.assertThat(entity.reference.id.value).isNotNull();
+			softly.assertThat(reloaded.reference.id.value).isEqualTo(entity.reference.id.value);
+		});
+	}
+
+	interface EntityWithBooleanRepository extends CrudRepository<EntityWithStringyBigDecimal, CustomId> {}
 
 	private static class EntityWithStringyBigDecimal {
 
-		@Id Long id;
+		@Id CustomId id;
 		String stringyNumber;
+		OtherEntity reference;
+	}
+
+	private static class CustomId {
+
+		private final Long value;
+
+		CustomId(Long value) {
+			this.value = value;
+		}
+	}
+
+	private static class OtherEntity {
+
+		@Id CustomId id;
+		Date created;
 	}
 
 	@WritingConverter
@@ -135,7 +178,6 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 			Object value = new BigDecimal(source);
 			return JdbcValue.of(value, JDBCType.DECIMAL);
 		}
-
 	}
 
 	@ReadingConverter
@@ -149,4 +191,27 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 			return source.toString();
 		}
 	}
+
+	@WritingConverter
+	enum CustomIdWritingConverter implements Converter<CustomId, Number> {
+
+		INSTANCE;
+
+		@Override
+		public Number convert(CustomId source) {
+			return source.value.intValue();
+		}
+	}
+
+	@ReadingConverter
+	enum CustomIdReadingConverter implements Converter<Number, CustomId> {
+
+		INSTANCE;
+
+		@Override
+		public CustomId convert(Number source) {
+			return new CustomId(source.longValue());
+		}
+	}
+
 }
