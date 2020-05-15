@@ -16,23 +16,34 @@
 package org.springframework.data.r2dbc.repository;
 
 import io.r2dbc.spi.ConnectionFactory;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
+import java.time.LocalDateTime;
 
 import javax.sql.DataSource;
 
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -47,9 +58,12 @@ public class MySqlR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositor
 
 	@ClassRule public static final ExternalDatabase database = MySqlTestSupport.database();
 
+	@Autowired DateTestsRepository dateTestsRepository;
+
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(classes = MySqlLegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE))
+			includeFilters = { @Filter(classes = MySqlLegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE),
+					@Filter(classes = DateTestsRepository.class, type = FilterType.ASSIGNABLE_TYPE) })
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
 		@Bean
@@ -79,6 +93,29 @@ public class MySqlR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositor
 		return MySqlLegoSetRepository.class;
 	}
 
+	@Test
+	public void shouldUserJsr310Types() {
+
+		JdbcTemplate jdbcTemplate = createJdbcTemplate(createDataSource());
+
+		try {
+			jdbcTemplate.execute("DROP TABLE date_tests");
+		} catch (DataAccessException e) {}
+
+		jdbcTemplate.execute("CREATE TABLE date_tests (id int, created_timestamp TIMESTAMP, created_date datetime);");
+
+		dateTestsRepository.save(new DateTests(null, LocalDateTime.now(), LocalDateTime.now())).as(StepVerifier::create)
+				.expectNextCount(1).verifyComplete();
+	}
+
+	@Data
+	@AllArgsConstructor
+	static class DateTests {
+		@Id Integer id;
+		LocalDateTime createdTimestamp;
+		LocalDateTime createdDate;
+	}
+
 	interface MySqlLegoSetRepository extends LegoSetRepository {
 
 		@Override
@@ -92,5 +129,9 @@ public class MySqlR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositor
 		@Override
 		@Query("SELECT id FROM legoset")
 		Flux<Integer> findAllIds();
+	}
+
+	interface DateTestsRepository extends ReactiveCrudRepository<DateTests, Integer> {
+
 	}
 }

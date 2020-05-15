@@ -21,6 +21,8 @@ import static org.mockito.Mockito.*;
 import io.r2dbc.spi.Row;
 import lombok.AllArgsConstructor;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -61,17 +63,21 @@ public class MappingR2dbcConverterUnitTests {
 		converter = new MappingR2dbcConverter(mappingContext, conversions);
 	}
 
-	@Test // gh-61
+	@Test // gh-61, gh-207
 	public void shouldIncludeAllPropertiesInOutboundRow() {
 
 		OutboundRow row = new OutboundRow();
 
-		converter.write(new Person("id", "Walter", "White"), row);
+		Instant instant = Instant.now();
+		LocalDateTime localDateTime = LocalDateTime.now();
+		converter.write(new Person("id", "Walter", "White", instant, localDateTime), row);
 
 		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), SettableValue.fromOrEmpty("id", String.class));
 		assertThat(row).containsEntry(SqlIdentifier.unquoted("firstname"),
 				SettableValue.fromOrEmpty("Walter", String.class));
 		assertThat(row).containsEntry(SqlIdentifier.unquoted("lastname"), SettableValue.fromOrEmpty("White", String.class));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("instant"), SettableValue.from(instant));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("local_date_time"), SettableValue.from(localDateTime));
 	}
 
 	@Test // gh-41
@@ -187,6 +193,8 @@ public class MappingR2dbcConverterUnitTests {
 	static class Person {
 		@Id String id;
 		String firstname, lastname;
+		Instant instant;
+		LocalDateTime localDateTime;
 	}
 
 	@AllArgsConstructor

@@ -3,6 +3,7 @@ package org.springframework.data.r2dbc.convert;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.convert.CustomConversions;
@@ -40,7 +41,7 @@ public class R2dbcCustomConversions extends CustomConversions {
 	 * @param converters must not be {@literal null}.
 	 */
 	public R2dbcCustomConversions(Collection<?> converters) {
-		super(STORE_CONVERSIONS, appendOverrides(converters));
+		super(new R2dbcCustomConversionsConfiguration(STORE_CONVERSIONS, appendOverrides(converters)));
 	}
 
 	/**
@@ -50,14 +51,29 @@ public class R2dbcCustomConversions extends CustomConversions {
 	 * @param converters must not be {@literal null}.
 	 */
 	public R2dbcCustomConversions(StoreConversions storeConversions, Collection<?> converters) {
-		super(storeConversions, appendOverrides(converters));
+		super(new R2dbcCustomConversionsConfiguration(storeConversions, appendOverrides(converters)));
 	}
 
-	private static Collection<?> appendOverrides(Collection<?> converters) {
+	private static List<?> appendOverrides(Collection<?> converters) {
 
 		List<Object> objects = new ArrayList<>(converters);
 		objects.addAll(R2dbcConverters.getOverrideConvertersToRegister());
 
 		return objects;
+	}
+
+	static class R2dbcCustomConversionsConfiguration extends ConverterConfiguration {
+
+		public R2dbcCustomConversionsConfiguration(StoreConversions storeConversions, List<?> userConverters) {
+			super(storeConversions, userConverters, convertiblePair -> {
+
+				if (convertiblePair.getSourceType().getName().startsWith("java.time.")
+						&& convertiblePair.getTargetType().equals(Date.class)) {
+					return false;
+				}
+
+				return true;
+			});
+		}
 	}
 }
