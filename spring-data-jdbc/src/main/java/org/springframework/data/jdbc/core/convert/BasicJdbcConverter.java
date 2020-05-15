@@ -19,8 +19,8 @@ import java.sql.Array;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,6 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
@@ -387,24 +386,14 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return createInstanceInternal(idValue);
 		}
 
-		private T populateProperties(T instance, @Nullable Object idValue) {
+		private T populateProperties(T instance, @Nullable Object idValue, Predicate<RelationalPersistentProperty> skipProperty) {
 
 			PersistentPropertyAccessor<T> propertyAccessor = getPropertyAccessor(entity, instance);
 
-			PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
-
 			for (RelationalPersistentProperty property : entity) {
 
-				if (persistenceConstructor != null && persistenceConstructor.isConstructorParameter(property)) {
+				if (skipProperty.test(property)) {
 					continue;
-				}
-
-				// skip absent simple properties
-				if (isSimpleProperty(property)) {
-
-					if (!propertyValueProvider.hasProperty(property)) {
-						continue;
-					}
 				}
 
 				Object value = readOrLoadProperty(idValue, property);
@@ -525,6 +514,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		private T createInstanceInternal(@Nullable Object idValue) {
 
+			Set<RelationalPersistentProperty> constructorProperties = new HashSet<>();
+
 			T instance = createInstance(entity, parameter -> {
 
 				String parameterName = parameter.getName();
@@ -532,9 +523,20 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
 
 				RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
+				constructorProperties.add(property);
+
 				return readOrLoadProperty(idValue, property);
 			});
-			return populateProperties(instance, idValue);
+
+			return populateProperties(instance, idValue, property -> {
+
+				if (constructorProperties.contains(property)) {
+					return true;
+				}
+
+				// skip absent simple properties
+				return isSimpleProperty(property) && !propertyValueProvider.hasProperty(property);
+			});
 		}
 
 	}
