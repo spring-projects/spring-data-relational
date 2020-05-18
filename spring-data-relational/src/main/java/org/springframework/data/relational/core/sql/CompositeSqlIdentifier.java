@@ -74,6 +74,11 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 		throw new UnsupportedOperationException("A Composite SQL Identifiers can't be used as a reference name");
 	}
 
+	@Override
+	public SqlIdentifier getSimpleIdentifier() {
+		return parts[parts.length - 1];
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
