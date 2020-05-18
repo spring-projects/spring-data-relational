@@ -33,6 +33,7 @@ import java.util.List;
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Jens Schauder
  * @since 1.1
  */
 public class PostgresDialect extends AbstractDialect {
@@ -134,7 +135,9 @@ public class PostgresDialect extends AbstractDialect {
 				return "";
 			}
 
-			String tableName = tables.get(0).getName().toSql(this.identifierProcessing);
+			String tableName = tables.get(0) // get the first table
+					.getName().getSimpleIdentifier() // without schema
+					.toSql(this.identifierProcessing);
 
 			switch (lockOptions.getLockMode()) {
 

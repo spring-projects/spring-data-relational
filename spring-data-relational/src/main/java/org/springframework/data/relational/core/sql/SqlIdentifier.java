@@ -100,6 +100,16 @@ public interface SqlIdentifier {
 	SqlIdentifier transform(UnaryOperator<String> transformationFunction);
 
 	/**
+	 * Returns the last part of an identifier. For a fully qualified column name {@literal schema.table.column} it will
+	 * just return the column part. If the identifier consists of only a single part, that part is returned.
+	 *
+	 * @return Guaranteed to be not {@literal null}.
+	 */
+	default SqlIdentifier getSimpleIdentifier() {
+		return this;
+	}
+
+	/**
 	 * Create a new quoted identifier given {@code name}.
 	 *
 	 * @param name the identifier.
