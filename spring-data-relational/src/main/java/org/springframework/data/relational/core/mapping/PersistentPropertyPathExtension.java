@@ -85,8 +85,9 @@ public class PersistentPropertyPathExtension {
 		this.path = path;
 	}
 
-	MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getContext() {
-		return context;
+	PersistentPropertyPathExtension newPathOf(RelationalPersistentProperty property) {
+		return new PersistentPropertyPathExtension(context,
+				context.getPersistentPropertyPath(property.getName(), property.getOwner().getType()));
 	}
 
 	/**
@@ -276,7 +277,7 @@ public class PersistentPropertyPathExtension {
 	}
 
 	public List<SqlIdentifier> getIdColumnNames() {
-		PersistentPropertyPathExtension idPath = this;
+		PersistentPropertyPathExtension idPath = newPathOf(getTableOwningAncestor().getRequiredIdProperty());
 		if (idPath.isEmbedded()) {
 			List<SqlIdentifier> list = new ArrayList<>();
 			extractColumnNames(list, idPath);
