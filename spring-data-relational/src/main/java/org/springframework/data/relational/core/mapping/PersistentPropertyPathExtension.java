@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -83,6 +83,10 @@ public class PersistentPropertyPathExtension {
 		this.context = context;
 		this.entity = path.getBaseProperty().getOwner();
 		this.path = path;
+	}
+
+	MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getContext() {
+		return context;
 	}
 
 	/**
@@ -272,30 +276,23 @@ public class PersistentPropertyPathExtension {
 	}
 
 	public List<SqlIdentifier> getIdColumnNames() {
-		RelationalPersistentProperty idProperty = getTableOwningAncestor().getRequiredIdProperty();
-		if (idProperty.isEmbedded()) {
+		PersistentPropertyPathExtension idPath = this;
+		if (idPath.isEmbedded()) {
 			List<SqlIdentifier> list = new ArrayList<>();
-			extractColumnNames(list, idProperty, null);
+			extractColumnNames(list, idPath);
 			return list;
 		} else {
-			return Collections.singletonList(idProperty.getColumnName());
+			return Collections.singletonList(getIdColumnName());
 		}
 	}
 
-	private void extractColumnNames(List<SqlIdentifier> list, RelationalPersistentProperty property, String prefix) {
-		if (property.isEmbedded()) {
-			final PersistentEntity<?, ?> persistentEntity = context.getRequiredPersistentEntity(property.getActualType());
-
-			final String embeddedPrefix = property.getEmbeddedPrefix();
-			for (Object embeddedProperty : persistentEntity) {
-				extractColumnNames(list, (RelationalPersistentProperty) embeddedProperty, embeddedPrefix);
-			}
+	private void extractColumnNames(List<SqlIdentifier> list, PersistentPropertyPathExtension path) {
+		if (path.isEmbedded()) {
+			final RelationalPersistentEntity<?> entity = path.getLeafEntity();
+			entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> extractColumnNames(list,
+					path.extendBy(property)));
 		} else {
-			SqlIdentifier sqlIdentifier = property.getColumnName();
-			if (prefix != null) {
-				sqlIdentifier = sqlIdentifier.transform(prefix::concat);
-			}
-			list.add(sqlIdentifier);
+			list.add(path.getColumnName());
 		}
 	}
 

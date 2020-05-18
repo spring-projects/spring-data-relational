@@ -189,7 +189,16 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	public List<SqlIdentifier> getReverseColumnNames(PersistentPropertyPathExtension path) {
 
-		return collectionIdColumnNames.get().orElseGet(() -> Collections.singletonList(getReverseColumnName(path)));
+		return collectionIdColumnNames.get().orElseGet(() -> {
+			RelationalPersistentProperty reverseIdProperty = path.getLeafEntity().getIdProperty();
+			if (reverseIdProperty != null && reverseIdProperty.isEmbedded()) {
+				return new PersistentPropertyPathExtension(path.getContext(),
+						path.getContext().getPersistentPropertyPath(reverseIdProperty.getName(), path.getLeafEntity().getType()))
+								.getIdColumnNames();
+			} else {
+				return Collections.singletonList(getReverseColumnName(path));
+			}
+		});
 	}
 
 	/*
