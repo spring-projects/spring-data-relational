@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.dialect;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
@@ -134,7 +133,7 @@ public class PostgresDialect extends AbstractDialect {
 				return "";
 			}
 
-			String tableName = tables.get(0).getName().toSql(this.identifierProcessing);
+			String tableName = tables.get(0).getReferenceName().toSql(this.identifierProcessing);
 
 			switch (lockOptions.getLockMode()) {
 

@@ -381,12 +381,13 @@ class SqlGenerator {
 
 	private String createAcquireLockById(LockMode lockMode) {
 
-		Table table = this.getTable();
+		Table table = this.getAcquireLockTable();
+		Column idColumn = table.column(entity.getIdColumn());
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
+			.select(idColumn) //
 			.from(table) //
-			.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
+			.where(idColumn.isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
 			.lock(lockMode) //
 			.build();
 
@@ -395,15 +396,20 @@ class SqlGenerator {
 
 	private String createAcquireLockAll(LockMode lockMode) {
 
-		Table table = this.getTable();
+		Table table = this.getAcquireLockTable();
+		Column idColumn = table.column(entity.getIdColumn());
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
+			.select(idColumn) //
 			.from(table) //
 			.lock(lockMode) //
 			.build();
 
 		return render(select);
+	}
+
+	private Table getAcquireLockTable() {
+		return this.getTable().as(this.renderContext.getIdentifierProcessing().quote("ROOT"));
 	}
 
 	private String createFindAllSql() {

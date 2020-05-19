@@ -1,0 +1,5 @@
+CREATE SCHEMA IF NOT EXISTS test;
+DROP TABLE IF EXISTS test.dummy_entity;
+DROP TABLE IF EXISTS test.element;
+CREATE TABLE test.dummy_entity ( id BIGINT IDENTITY PRIMARY KEY, NAME VARCHAR(100));
+CREATE TABLE test.element (id BIGINT IDENTITY PRIMARY KEY, content VARCHAR(100), Dummy_Entity_key BIGINT,dummy_entity BIGINT);
