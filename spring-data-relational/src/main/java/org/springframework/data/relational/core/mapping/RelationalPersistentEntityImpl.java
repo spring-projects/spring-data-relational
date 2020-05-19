@@ -105,13 +105,4 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	public String toString() {
 		return String.format("JdbcPersistentEntityImpl<%s>", getType());
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.mapping.model.BasicPersistentEntity#setPersistentPropertyAccessorFactory(org.springframework.data.mapping.model.PersistentPropertyAccessorFactory)
-	 */
-	@Override
-	public void setPersistentPropertyAccessorFactory(PersistentPropertyAccessorFactory factory) {
-
-	}
 }

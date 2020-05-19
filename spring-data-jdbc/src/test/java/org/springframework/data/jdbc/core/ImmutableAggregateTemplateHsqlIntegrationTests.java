@@ -255,6 +255,17 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 		assertThat(manual.content).isEqualTo("new content");
 	}
 
+	@Test // DATAJDBC-545
+	public void setIdViaConstructor() {
+
+		WithCopyConstructor entity = new WithCopyConstructor(null, "Alfred");
+
+		WithCopyConstructor saved = template.save(entity);
+
+		assertThat(saved).isNotEqualTo(entity);
+		assertThat(saved.id).isNotNull();
+	}
+
 	private static LegoSet createLegoSet(Manual manual) {
 
 		return new LegoSet(null, "Star Destroyer", manual, null);
@@ -294,6 +305,17 @@ public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
 		@Id Long id;
 		String name;
+	}
+
+	static class WithCopyConstructor {
+		@Id
+		private final Long id;
+		private final String name;
+
+		WithCopyConstructor(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
 	}
 
 	@Configuration
