@@ -15,13 +15,6 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.Value;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
@@ -40,6 +33,11 @@ import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
@@ -722,11 +720,60 @@ class SqlGenerator {
 	/**
 	 * Value object representing a {@code JOIN} association.
 	 */
-	@Value
-	static class Join {
-		Table joinTable;
-		Column joinColumn;
-		Column parentId;
+	static final class Join {
+
+		private final Table joinTable;
+		private final Column joinColumn;
+		private final Column parentId;
+
+		Join(Table joinTable, Column joinColumn, Column parentId) {
+
+			Assert.notNull( joinTable,"JoinTable must not be null.");
+			Assert.notNull( joinColumn,"JoinColumn must not be null.");
+			Assert.notNull( parentId,"ParentId must not be null.");
+
+			this.joinTable = joinTable;
+			this.joinColumn = joinColumn;
+			this.parentId = parentId;
+		}
+
+		Table getJoinTable() {
+			return this.joinTable;
+		}
+
+		Column getJoinColumn() {
+			return this.joinColumn;
+		}
+
+		Column getParentId() {
+			return this.parentId;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Join join = (Join) o;
+			return joinTable.equals(join.joinTable) &&
+					joinColumn.equals(join.joinColumn) &&
+					parentId.equals(join.parentId);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(joinTable, joinColumn, parentId);
+		}
+
+		@Override
+		public String toString() {
+
+			return "Join{" +
+					"joinTable=" + joinTable +
+					", joinColumn=" + joinColumn +
+					", parentId=" + parentId +
+					'}';
+		}
 	}
 
 	/**

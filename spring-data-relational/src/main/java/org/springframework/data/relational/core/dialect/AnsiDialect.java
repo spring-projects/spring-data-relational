@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.util.Assert;
@@ -127,7 +125,6 @@ public class AnsiDialect extends AbstractDialect {
 		return ARRAY_COLUMNS;
 	}
 
-	@RequiredArgsConstructor
 	static class AnsiArrayColumns implements ArrayColumns {
 
 		/*

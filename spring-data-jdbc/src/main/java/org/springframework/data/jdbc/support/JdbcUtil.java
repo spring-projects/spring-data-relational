@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.support;
 
-import lombok.experimental.UtilityClass;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
@@ -37,8 +35,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Thomas Lang
  */
-@UtilityClass
-public class JdbcUtil {
+public final class JdbcUtil {
 
 	private static final Map<Class<?>, Integer> sqlTypeMappings = new HashMap<>();
 
@@ -65,6 +62,10 @@ public class JdbcUtil {
 		sqlTypeMappings.put(Date.class, Types.DATE);
 		sqlTypeMappings.put(Time.class, Types.TIME);
 		sqlTypeMappings.put(Timestamp.class, Types.TIMESTAMP);
+	}
+
+	private JdbcUtil() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
 	}
 
 	/**

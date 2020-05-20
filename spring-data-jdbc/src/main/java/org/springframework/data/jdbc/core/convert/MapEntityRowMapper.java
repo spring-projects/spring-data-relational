@@ -15,8 +15,6 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.RequiredArgsConstructor;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -26,7 +24,6 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.lang.NonNull;
 
 /**
  * A {@link RowMapper} that maps a row to a {@link Map.Entry} so an {@link Iterable} of those can be converted to a
@@ -35,7 +32,6 @@ import org.springframework.lang.NonNull;
  *
  * @author Jens Schauder
  */
-@RequiredArgsConstructor
 class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 
 	private final PersistentPropertyPathExtension path;
@@ -44,7 +40,16 @@ class MapEntityRowMapper<T> implements RowMapper<Map.Entry<Object, T>> {
 	private final SqlIdentifier keyColumn;
 	private final IdentifierProcessing identifierProcessing;
 
-	@NonNull
+	MapEntityRowMapper(PersistentPropertyPathExtension path, JdbcConverter converter, Identifier identifier,
+			SqlIdentifier keyColumn, IdentifierProcessing identifierProcessing) {
+
+		this.path = path;
+		this.converter = converter;
+		this.identifier = identifier;
+		this.keyColumn = keyColumn;
+		this.identifierProcessing = identifierProcessing;
+	}
+
 	@Override
 	public Map.Entry<Object, T> mapRow(ResultSet rs, int rowNum) throws SQLException {
 

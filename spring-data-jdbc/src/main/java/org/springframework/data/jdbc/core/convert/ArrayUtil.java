@@ -15,16 +15,17 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.experimental.UtilityClass;
-
 /**
  * A collection of utility methods for dealing with arrays.
  *
  * @author Jens Schauder
  * @since 1.1
  */
-@UtilityClass
-class ArrayUtil {
+final class ArrayUtil {
+
+	private ArrayUtil() {
+		throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+	}
 
 	/**
 	 * Converts an {@code Byte[]} into a {@code byte[]}.

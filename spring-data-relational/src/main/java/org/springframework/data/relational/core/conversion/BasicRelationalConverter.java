@@ -15,12 +15,6 @@
  */
 package org.springframework.data.relational.core.conversion;
 
-import lombok.RequiredArgsConstructor;
-
-import java.util.Collections;
-import java.util.Optional;
-import java.util.function.Function;
-
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -42,6 +36,10 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import java.util.Collections;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * {@link RelationalConverter} that uses a {@link MappingContext} to apply basic conversion of relational values to
@@ -249,10 +247,16 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * @param <P>
 	 * @author Mark Paluch
 	 */
-	@RequiredArgsConstructor
 	class ConvertingParameterValueProvider<P extends PersistentProperty<P>> implements ParameterValueProvider<P> {
 
 		private final Function<Parameter<?, P>, Object> delegate;
+
+		ConvertingParameterValueProvider(Function<Parameter<?, P>, Object> delegate) {
+
+			Assert.notNull(delegate, "Delegate must not be null.");
+
+			this.delegate = delegate;
+		}
 
 		/*
 		 * (non-Javadoc)

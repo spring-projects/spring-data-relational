@@ -15,12 +15,10 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
-import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
+import org.springframework.util.Assert;
 
 /**
  * {@link BeforeConvertCallback} to capture auditing information on persisting and updating entities.
@@ -31,7 +29,6 @@ import org.springframework.data.relational.core.mapping.event.BeforeConvertCallb
  * @author Mark Paluch
  * @since 1.1
  */
-@RequiredArgsConstructor
 public class RelationalAuditingCallback implements BeforeConvertCallback<Object>, Ordered {
 
 	/**
@@ -44,6 +41,13 @@ public class RelationalAuditingCallback implements BeforeConvertCallback<Object>
 	public static final int AUDITING_ORDER = 100;
 
 	private final IsNewAwareAuditingHandler handler;
+
+	public RelationalAuditingCallback(IsNewAwareAuditingHandler handler) {
+
+		Assert.notNull(handler, "Handler must not be null;");
+
+		this.handler = handler;
+	}
 
 	/*
 	 * (non-Javadoc)

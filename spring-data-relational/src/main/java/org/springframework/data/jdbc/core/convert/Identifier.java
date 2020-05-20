@@ -15,20 +15,16 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.Value;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -41,8 +37,6 @@ import org.springframework.util.ClassUtils;
  * @author Mark Paluch
  * @since 1.1
  */
-@EqualsAndHashCode
-@ToString
 public final class Identifier {
 
 	private static final Identifier EMPTY = new Identifier(Collections.emptyList());
@@ -185,13 +179,55 @@ public final class Identifier {
 	 *
 	 * @author Jens Schauder
 	 */
-	@Value
-	@AllArgsConstructor(access = AccessLevel.PRIVATE)
-	static class SingleIdentifierValue {
+	static final class SingleIdentifierValue {
 
-		SqlIdentifier name;
-		Object value;
-		Class<?> targetType;
+		private final SqlIdentifier name;
+		private final Object value;
+		private final Class<?> targetType;
+
+		private SingleIdentifierValue(SqlIdentifier name, @Nullable Object value, Class<?> targetType) {
+
+			Assert.notNull(name, "Name must not be null.");
+			Assert.notNull(targetType, "TargetType must not be null.");
+
+			this.name = name;
+			this.value = value;
+			this.targetType = targetType;
+		}
+
+		public SqlIdentifier getName() {
+			return this.name;
+		}
+
+		public Object getValue() {
+			return this.value;
+		}
+
+		public Class<?> getTargetType() {
+			return this.targetType;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
+			SingleIdentifierValue that = (SingleIdentifierValue) o;
+			return name.equals(that.name) && value.equals(that.value) && targetType.equals(that.targetType);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(name, value, targetType);
+		}
+
+		@Override
+		public String toString() {
+
+			return "SingleIdentifierValue{" + "name=" + name + ", value=" + value + ", targetType=" + targetType + '}';
+		}
 	}
 
 	/**
@@ -213,7 +249,7 @@ public final class Identifier {
 		void accept(SqlIdentifier name, Object value, Class<?> targetType);
 	}
 
-	private static class StringKeyedLinkedHashMap<V> extends LinkedHashMap<SqlIdentifier,V> {
+	private static class StringKeyedLinkedHashMap<V> extends LinkedHashMap<SqlIdentifier, V> {
 
 		public StringKeyedLinkedHashMap(int initialCapacity) {
 			super(initialCapacity);
@@ -233,5 +269,25 @@ public final class Identifier {
 
 			return super.get(key);
 		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Identifier that = (Identifier) o;
+		return Objects.equals(parts, that.parts);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(parts);
+	}
+
+	@Override
+	public String toString() {
+
+		return "Identifier{" + "parts=" + parts + '}';
 	}
 }

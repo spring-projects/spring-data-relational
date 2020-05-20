@@ -15,12 +15,11 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.Map;
 
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
@@ -31,13 +30,23 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  * @author Mark Paluch
  * @author Milan Milanov
  */
-@RequiredArgsConstructor
 public class SqlGeneratorSource {
 
 	private final Map<Class<?>, SqlGenerator> CACHE = new ConcurrentReferenceHashMap<>();
 	private final RelationalMappingContext context;
 	private final JdbcConverter converter;
 	private final Dialect dialect;
+
+	public SqlGeneratorSource(RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
+
+		Assert.notNull(context, "Context must not be null.");
+		Assert.notNull(converter, "Converter must not be null.");
+		Assert.notNull(dialect, "Dialect must not be null.");
+
+		this.context = context;
+		this.converter = converter;
+		this.dialect = dialect;
+	}
 
 	/**
 	 * @return the {@link Dialect} used by the created {@link SqlGenerator} instances. Guaranteed to be not

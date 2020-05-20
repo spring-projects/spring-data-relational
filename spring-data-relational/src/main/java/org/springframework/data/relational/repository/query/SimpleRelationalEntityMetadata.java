@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.repository.query;
 
-import lombok.Getter;
-
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.util.Assert;
@@ -29,7 +27,7 @@ import org.springframework.util.Assert;
 public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetadata<T> {
 
 	private final Class<T> type;
-	private final @Getter RelationalPersistentEntity<?> tableEntity;
+	private final RelationalPersistentEntity<?> tableEntity;
 
 	/**
 	 * Creates a new {@link SimpleRelationalEntityMetadata} using the given type and {@link RelationalPersistentEntity} to
@@ -59,5 +57,9 @@ public class SimpleRelationalEntityMetadata<T> implements RelationalEntityMetada
 	 */
 	public SqlIdentifier getTableName() {
 		return tableEntity.getTableName();
+	}
+
+	public RelationalPersistentEntity<?> getTableEntity() {
+		return this.tableEntity;
 	}
 }

@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
@@ -75,14 +73,22 @@ public class RenderContextFactory {
 	/**
 	 * {@link RenderContext} derived from {@link Dialect} specifics.
 	 */
-	@RequiredArgsConstructor
 	static class DialectRenderContext implements RenderContext {
 
 		private final RenderNamingStrategy renderNamingStrategy;
-
 		private final IdentifierProcessing identifierProcessing;
-
 		private final SelectRenderContext selectRenderContext;
+
+		DialectRenderContext(RenderNamingStrategy renderNamingStrategy, IdentifierProcessing identifierProcessing, SelectRenderContext selectRenderContext) {
+
+			Assert.notNull(renderNamingStrategy, "RenderNamingStrategy must not be null");
+			Assert.notNull(identifierProcessing, "IdentifierProcessing must not be null");
+			Assert.notNull(selectRenderContext, "SelectRenderContext must not be null");
+
+			this.renderNamingStrategy = renderNamingStrategy;
+			this.identifierProcessing = identifierProcessing;
+			this.selectRenderContext = selectRenderContext;
+		}
 
 		/*
 		 * (non-Javadoc)

@@ -15,21 +15,57 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import lombok.Value;
-
 import java.sql.JDBCType;
+import java.util.Objects;
+
+import org.springframework.lang.Nullable;
 
 /**
  * Wraps a value with the JDBCType that should be used to pass it as a bind parameter to a
- * {@link java.sql.PreparedStatement}. Register a converter from any type to {@link JdbcValue} in order to control
- * the value and the {@link JDBCType} as which a value should get passed to the JDBC driver.
+ * {@link java.sql.PreparedStatement}. Register a converter from any type to {@link JdbcValue} in order to control the
+ * value and the {@link JDBCType} as which a value should get passed to the JDBC driver.
  *
  * @author Jens Schauder
  * @since 1.1
  */
-@Value(staticConstructor = "of")
-public class JdbcValue {
+public final class JdbcValue {
 
-	Object value;
-	JDBCType jdbcType;
+	private final Object value;
+	private final JDBCType jdbcType;
+
+	private JdbcValue(@Nullable Object value, @Nullable JDBCType jdbcType) {
+
+		this.value = value;
+		this.jdbcType = jdbcType;
+	}
+
+	public static JdbcValue of(@Nullable Object value, @Nullable JDBCType jdbcType) {
+		return new JdbcValue(value, jdbcType);
+	}
+
+	@Nullable
+	public Object getValue() {
+		return this.value;
+	}
+
+	@Nullable
+	public JDBCType getJdbcType() {
+		return this.jdbcType;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		JdbcValue jdbcValue = (JdbcValue) o;
+		return Objects.equals(value, jdbcValue.value) && jdbcType == jdbcValue.jdbcType;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(value, jdbcType);
+	}
 }

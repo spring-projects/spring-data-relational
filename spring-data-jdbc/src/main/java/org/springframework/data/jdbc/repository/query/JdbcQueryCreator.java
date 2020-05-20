@@ -15,10 +15,9 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import lombok.Value;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -312,10 +311,55 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	/**
 	 * Value object representing a {@code JOIN} association.
 	 */
-	@Value
-	static private class Join {
-		Table joinTable;
-		Column joinColumn;
-		Column parentId;
+	static private final class Join {
+
+		private final Table joinTable;
+		private final Column joinColumn;
+		private final Column parentId;
+
+		Join(Table joinTable, Column joinColumn, Column parentId) {
+
+			Assert.notNull(joinTable, "JoinTable must not be null.");
+			Assert.notNull(joinColumn, "JoinColumn must not be null.");
+			Assert.notNull(parentId, "ParentId must not be null.");
+
+			this.joinTable = joinTable;
+			this.joinColumn = joinColumn;
+			this.parentId = parentId;
+		}
+
+		Table getJoinTable() {
+			return this.joinTable;
+		}
+
+		Column getJoinColumn() {
+			return this.joinColumn;
+		}
+
+		Column getParentId() {
+			return this.parentId;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
+			Join join = (Join) o;
+			return joinTable.equals(join.joinTable) && joinColumn.equals(join.joinColumn) && parentId.equals(join.parentId);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(joinTable, joinColumn, parentId);
+		}
+
+		@Override
+		public String toString() {
+
+			return "Join{" + "joinTable=" + joinTable + ", joinColumn=" + joinColumn + ", parentId=" + parentId + '}';
+		}
 	}
 }

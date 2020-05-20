@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
@@ -107,7 +105,6 @@ public class H2Dialect extends AbstractDialect {
 		return ARRAY_COLUMNS;
 	}
 
-	@RequiredArgsConstructor
 	static class H2ArrayColumns implements ArrayColumns {
 
 		/*

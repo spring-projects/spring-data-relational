@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.OptionalLong;
 import java.util.function.Function;
 
@@ -74,8 +72,7 @@ public abstract class AbstractDialect implements Dialect {
 		Function<Select, ? extends CharSequence> afterOrderByLimit = getAfterOrderByLimit();
 		Function<Select, ? extends CharSequence> afterOrderByLock = getAfterOrderByLock();
 
-		return select -> String.valueOf(afterOrderByLimit.apply(select)) +
-				afterOrderByLock.apply(select);
+		return select -> String.valueOf(afterOrderByLimit.apply(select)) + afterOrderByLock.apply(select);
 	}
 
 	private Function<Select, ? extends CharSequence> getAfterOrderByLimit() {
@@ -109,8 +106,7 @@ public abstract class AbstractDialect implements Dialect {
 		private final Function<Select, ? extends CharSequence> afterFromTable;
 		private final Function<Select, ? extends CharSequence> afterOrderBy;
 
-		DialectSelectRenderContext(
-				Function<Select, ? extends CharSequence> afterFromTable,
+		DialectSelectRenderContext(Function<Select, ? extends CharSequence> afterFromTable,
 				Function<Select, ? extends CharSequence> afterOrderBy) {
 
 			this.afterFromTable = afterFromTable;
@@ -139,10 +135,13 @@ public abstract class AbstractDialect implements Dialect {
 	/**
 	 * After {@code ORDER BY} function rendering the {@link LimitClause}.
 	 */
-	@RequiredArgsConstructor
 	static class AfterOrderByLimitRenderFunction implements Function<Select, CharSequence> {
 
 		private final LimitClause clause;
+
+		public AfterOrderByLimitRenderFunction(LimitClause clause) {
+			this.clause = clause;
+		}
 
 		/*
 		 * (non-Javadoc)
@@ -173,10 +172,13 @@ public abstract class AbstractDialect implements Dialect {
 	/**
 	 * {@code LOCK} function rendering the {@link LockClause}.
 	 */
-	@RequiredArgsConstructor
 	static class LockRenderFunction implements Function<Select, CharSequence> {
 
 		private final LockClause clause;
+
+		public LockRenderFunction(LockClause clause) {
+			this.clause = clause;
+		}
 
 		/*
 		 * (non-Javadoc)
@@ -198,7 +200,6 @@ public abstract class AbstractDialect implements Dialect {
 	/**
 	 * Prepends a non-empty rendering result with a leading whitespace,
 	 */
-	@RequiredArgsConstructor
 	enum PrependWithLeadingWhitespace implements Function<CharSequence, CharSequence> {
 
 		INSTANCE;

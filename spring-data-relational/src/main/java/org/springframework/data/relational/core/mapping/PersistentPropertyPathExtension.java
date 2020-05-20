@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import lombok.EqualsAndHashCode;
-
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
@@ -26,6 +24,8 @@ import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+import java.util.Objects;
+
 /**
  * A wrapper around a {@link org.springframework.data.mapping.PersistentPropertyPath} for making common operations
  * available used in SQL generation and conversion
@@ -33,7 +33,6 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @since 1.1
  */
-@EqualsAndHashCode(exclude = { "columnAlias", "context" })
 public class PersistentPropertyPathExtension {
 
 	private final RelationalPersistentEntity<?> entity;
@@ -436,4 +435,18 @@ public class PersistentPropertyPathExtension {
 				: columnName.transform(name -> tableAlias.getReference(IdentifierProcessing.NONE) + "_" + name);
 	}
 
+	@Override
+	public boolean equals(Object o) {
+
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		PersistentPropertyPathExtension that = (PersistentPropertyPathExtension) o;
+		return entity.equals(that.entity) &&
+				path.equals(that.path);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(entity, path);
+	}
 }

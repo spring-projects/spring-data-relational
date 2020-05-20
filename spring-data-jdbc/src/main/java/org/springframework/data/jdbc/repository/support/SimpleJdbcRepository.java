@@ -15,21 +15,18 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentEntity;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of the {@link org.springframework.data.repository.CrudRepository} interface.
@@ -38,12 +35,20 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Oliver Gierke
  * @author Milan Milanov
  */
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T, ID> {
 
-	private final @NonNull JdbcAggregateOperations entityOperations;
-	private final @NonNull PersistentEntity<T, ?> entity;
+	private final JdbcAggregateOperations entityOperations;
+	private final PersistentEntity<T, ?> entity;
+
+	public SimpleJdbcRepository(JdbcAggregateOperations entityOperations,PersistentEntity<T, ?> entity) {
+
+		Assert.notNull(entityOperations, "EntityOperations must not be null.");
+		Assert.notNull(entity, "Entity must not be null.");
+
+		this.entityOperations = entityOperations;
+		this.entity = entity;
+	}
 
 	/*
 	 * (non-Javadoc)

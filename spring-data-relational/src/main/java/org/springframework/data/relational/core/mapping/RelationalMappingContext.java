@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.mapping;
 
-import lombok.Getter;
-
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
@@ -36,7 +34,7 @@ import org.springframework.util.Assert;
 public class RelationalMappingContext
 		extends AbstractMappingContext<RelationalPersistentEntity<?>, RelationalPersistentProperty> {
 
-	@Getter private final NamingStrategy namingStrategy;
+	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
 
 	/**
@@ -106,5 +104,9 @@ public class RelationalMappingContext
 		persistentProperty.setForceQuote(isForceQuote());
 
 		return persistentProperty;
+	}
+
+	public NamingStrategy getNamingStrategy() {
+		return this.namingStrategy;
 	}
 }

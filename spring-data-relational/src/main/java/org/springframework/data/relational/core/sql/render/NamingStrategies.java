@@ -15,15 +15,13 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import lombok.RequiredArgsConstructor;
-
-import java.util.Locale;
-import java.util.function.Function;
-
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.util.Assert;
+
+import java.util.Locale;
+import java.util.function.Function;
 
 /**
  * Factory for {@link RenderNamingStrategy} objects.
@@ -115,11 +113,16 @@ public abstract class NamingStrategies {
 		INSTANCE;
 	}
 
-	@RequiredArgsConstructor
 	static class DelegatingRenderNamingStrategy implements RenderNamingStrategy {
 
 		private final RenderNamingStrategy delegate;
 		private final Function<String, String> mappingFunction;
+
+		DelegatingRenderNamingStrategy(RenderNamingStrategy delegate, Function<String, String> mappingFunction) {
+
+			this.delegate = delegate;
+			this.mappingFunction = mappingFunction;
+		}
 
 		@Override
 		public SqlIdentifier getName(Column column) {

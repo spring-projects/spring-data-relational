@@ -15,18 +15,15 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
-import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-
-import java.util.List;
 
 /**
  * An SQL dialect for Postgres.
@@ -159,7 +156,6 @@ public class PostgresDialect extends AbstractDialect {
 		}
 	};
 
-	@RequiredArgsConstructor
 	static class PostgresArrayColumns implements ArrayColumns {
 
 		/*
