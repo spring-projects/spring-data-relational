@@ -20,12 +20,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.PropertyReferenceException;
-import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.BindMarker;
@@ -626,7 +627,7 @@ public class QueryMapper {
 
 		private final RelationalPersistentEntity<?> entity;
 		private final MappingContext<? extends RelationalPersistentEntity<?>, RelationalPersistentProperty> mappingContext;
-		private final RelationalPersistentProperty property;
+		private final @Nullable RelationalPersistentProperty property;
 		private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
 
 		/**
@@ -675,7 +676,7 @@ public class QueryMapper {
 		/**
 		 * Returns the {@link PersistentPropertyPath} for the given {@code pathExpression}.
 		 *
-		 * @param pathExpression
+		 * @param pathExpression the path expression to use.
 		 * @return
 		 */
 		@Nullable
@@ -683,16 +684,25 @@ public class QueryMapper {
 
 			try {
 
-				PropertyPath path = PropertyPath.from(pathExpression, this.entity.getTypeInformation());
+				PropertyPath path = forName(pathExpression);
 
 				if (isPathToJavaLangClassProperty(path)) {
 					return null;
 				}
 
 				return this.mappingContext.getPersistentPropertyPath(path);
-			} catch (PropertyReferenceException | InvalidPersistentPropertyPath e) {
+			} catch (MappingException | PropertyReferenceException e) {
 				return null;
 			}
+		}
+
+		private PropertyPath forName(String path) {
+
+			if (entity.getPersistentProperty(path) != null) {
+				return PropertyPath.from(Pattern.quote(path), entity.getTypeInformation());
+			}
+
+			return PropertyPath.from(path, entity.getTypeInformation());
 		}
 
 		private boolean isPathToJavaLangClassProperty(PropertyPath path) {

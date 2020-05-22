@@ -369,6 +369,25 @@ public class QueryMapperUnitTests {
 		assertThat(mapped.getOrderFor("alternative")).isNull();
 	}
 
+	@Test // gh-369
+	public void mapSortForPropertyPathInPrimitiveShouldFallBackToColumnName() {
+
+		Sort sort = Sort.by(desc("alternative_name"));
+
+		Sort mapped = mapper.getMappedObject(sort, context.getRequiredPersistentEntity(Person.class));
+		assertThat(mapped.getOrderFor("alternative_name")).isEqualTo(desc("alternative_name"));
+	}
+
+	@Test // gh-369
+	public void mapQueryForPropertyPathInPrimitiveShouldFallBackToColumnName() {
+
+		Criteria criteria = Criteria.where("alternative_name").is("a");
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition().toString()).isEqualTo("person.alternative_name = ?[$1]");
+	}
+
 	private BoundCondition map(Criteria criteria) {
 
 		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);
