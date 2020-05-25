@@ -74,6 +74,7 @@ public class CriteriaFactoryUnitTests {
 
 	@SneakyThrows
 	private QueryMethod getQueryMethod(String methodName, Class<?>... parameterTypes) {
+
 		Method method = UserRepository.class.getMethod(methodName, parameterTypes);
 		return new QueryMethod(method, new DefaultRepositoryMetadata(UserRepository.class),
 				new SpelAwareProxyProjectionFactory());
