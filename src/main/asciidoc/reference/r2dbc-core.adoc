@@ -215,7 +215,7 @@ There is a https://github.com/spring-projects/spring-data-examples[GitHub reposi
 [[r2dbc.connecting]]
 == Connecting to a Relational Database with Spring
 
-One of the first tasks when using relational databases and Spring is to create a `io.r2dbc.spi.ConnectionFactory` object by using the IoC container.
+One of the first tasks when using relational databases and Spring is to create a `io.r2dbc.spi.ConnectionFactory` object by using the IoC container. Make sure to use a <<r2dbc.drivers,supported database and driver>>.
 
 [[r2dbc.connectionfactory]]
 === Registering a `ConnectionFactory` Instance using Java-based Metadata
@@ -245,18 +245,20 @@ This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instanc
 [[r2dbc.drivers]]
 === R2DBC Drivers
 
-Spring Data R2DBC supports drivers through R2DBC's pluggable SPI mechanism. You can use any driver that implements the R2DBC spec with Spring Data R2DBC.
-R2DBC is a relatively young initiative that gains significance by maturing through adoption.
-As of this writing, the following drivers are available:
+Spring Data R2DBC supports drivers through R2DBC's pluggable SPI mechanism.
+You can use any driver that implements the R2DBC spec with Spring Data R2DBC.
+Since Spring Data R2DBC reacts to specific features of each database, it requires a `Dialect` implementation otherwise your application won't start up.
+Spring Data R2DBC ships with dialect impelemtations for the following drivers:
 
-* https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
 * https://github.com/r2dbc/r2dbc-h2[H2] (`io.r2dbc:r2dbc-h2`)
+* https://github.com/mariadb-corporation/mariadb-connector-r2dbc[MariaDB] (`org.mariadb:r2dbc-mariadb`)
 * https://github.com/r2dbc/r2dbc-mssql[Microsoft SQL Server] (`io.r2dbc:r2dbc-mssql`)
 * https://github.com/mirromutth/r2dbc-mysql[MySQL] (`dev.miku:r2dbc-mysql`)
 * https://github.com/jasync-sql/jasync-sql[jasync-sql MySQL] (`com.github.jasync-sql:jasync-r2dbc-mysql`)
+* https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
 
 Spring Data R2DBC reacts to database specifics by inspecting the `ConnectionFactory` and selects the appropriate database dialect accordingly.
-You can configure your own {spring-data-r2dbc-javadoc}/api/org/springframework/data/r2dbc/dialect/R2dbcDialect.html[`R2dbcDialect`] if the driver you use is not yet known to Spring Data R2DBC.
+You need to configure your own {spring-data-r2dbc-javadoc}/api/org/springframework/data/r2dbc/dialect/R2dbcDialect.html[`R2dbcDialect`] if the driver you use is not yet known to Spring Data R2DBC.
 
 TIP: Dialects are resolved by {spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/dialect/DialectResolver.html[`DialectResolver`] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
  +
