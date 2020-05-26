@@ -25,7 +25,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
-
 import org.testcontainers.containers.MySQLContainer;
 
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
@@ -42,7 +41,6 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 @Configuration
 @Profile("mysql")
 class MySqlDataSourceConfiguration extends DataSourceConfiguration {
-
 	private static MySQLContainer<?> MYSQL_CONTAINER;
 
 	/*

@@ -22,12 +22,10 @@ import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.mariadb.jdbc.MariaDbDataSource;
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
-
 import org.testcontainers.containers.MariaDBContainer;
 
 /**
