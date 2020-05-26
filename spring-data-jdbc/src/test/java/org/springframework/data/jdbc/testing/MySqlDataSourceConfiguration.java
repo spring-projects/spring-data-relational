@@ -15,20 +15,12 @@
  */
 package org.springframework.data.jdbc.testing;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import javax.annotation.PostConstruct;
-import javax.sql.DataSource;
-
+import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
-
 import org.testcontainers.containers.MySQLContainer;
 
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+import javax.sql.DataSource;
 
 /**
  * {@link DataSource} setup for MySQL. Starts a docker container with a MySql database and sets up a database name
@@ -42,7 +34,6 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 @Configuration
 @Profile("mysql")
 class MySqlDataSourceConfiguration extends DataSourceConfiguration {
-
 	private static MySQLContainer<?> MYSQL_CONTAINER;
 
 	/*
@@ -69,12 +60,12 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 		return dataSource;
 	}
 
-	@PostConstruct
-	public void initDatabase() throws SQLException {
-
-		try (Connection connection = createDataSource().getConnection()) {
-			ScriptUtils.executeSqlScript(connection,
-					new ByteArrayResource("DROP DATABASE test;CREATE DATABASE test;".getBytes()));
-		}
-	}
+//	@PostConstruct
+//	public void initDatabase() throws SQLException {
+//
+//		try (Connection connection = createDataSource().getConnection()) {
+//			ScriptUtils.executeSqlScript(connection,
+//					new ByteArrayResource("DROP DATABASE test;CREATE DATABASE test;".getBytes()));
+//		}
+//	}
 }
