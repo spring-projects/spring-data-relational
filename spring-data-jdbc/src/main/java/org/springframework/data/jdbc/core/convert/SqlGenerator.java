@@ -610,6 +610,10 @@ class SqlGenerator {
 						getBindMarker(columnName))) //
 				.collect(Collectors.toList());
 
+		if (assignments.isEmpty()) {
+			assignments.add(Assignments.value(getIdColumn(), getBindMarker(entity.getIdColumn())));
+		}
+
 		return Update.builder() //
 				.table(table) //
 				.set(assignments) //

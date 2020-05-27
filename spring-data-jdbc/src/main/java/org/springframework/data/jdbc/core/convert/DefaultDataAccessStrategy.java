@@ -115,7 +115,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
 
 		Object idValue = getIdValueOrNull(instance, persistentEntity);
-		if (idValue != null) {
+		if (idValue != null || parameterSource.getIdentifiers().isEmpty()) {
 
 			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
