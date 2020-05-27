@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.UnaryOperator;
 
 import org.springframework.util.Assert;
@@ -37,6 +39,15 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 
 		this.name = name;
 		this.quoted = quoted;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.domain.SqlIdentifier#iterator()
+	 */
+	@Override
+	public Iterator<SqlIdentifier> iterator() {
+		return Collections.<SqlIdentifier> singleton(this).iterator();
 	}
 
 	/*
@@ -102,11 +113,6 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 	 */
 	@Override
 	public String toString() {
-
-		if (quoted) {
-			return toSql(IdentifierProcessing.ANSI);
-		}
-
-		return this.name;
+		return quoted ? toSql(IdentifierProcessing.ANSI) : this.name;
 	}
 }

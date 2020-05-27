@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.UnaryOperator;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -38,6 +40,15 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 		Assert.hasText(name, "A database object must have at least on name part.");
 		this.name = name;
 		this.quoted = quoted;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.domain.SqlIdentifier#iterator()
+	 */
+	@Override
+	public Iterator<SqlIdentifier> iterator() {
+		return Collections.<SqlIdentifier> singleton(this).iterator();
 	}
 
 	/*
@@ -106,11 +117,6 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	 */
 	@Override
 	public String toString() {
-
-		if (quoted) {
-			return toSql(IdentifierProcessing.ANSI);
-		}
-
-		return this.name;
+		return quoted ? toSql(IdentifierProcessing.ANSI) : this.name;
 	}
 }

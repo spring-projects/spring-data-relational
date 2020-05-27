@@ -17,16 +17,16 @@ package org.springframework.data.relational.core.dialect;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.relational.core.sql.From;
+import java.util.List;
+
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-
-import java.util.List;
 
 /**
  * An SQL dialect for Postgres.
@@ -135,9 +135,16 @@ public class PostgresDialect extends AbstractDialect {
 				return "";
 			}
 
-			String tableName = tables.get(0) // get the first table
-					.getName().getSimpleIdentifier() // without schema
-					.toSql(this.identifierProcessing);
+			// get the first table and obtain last part if the identifier is a composed one.
+			SqlIdentifier identifier = tables.get(0).getName();
+			SqlIdentifier last = identifier;
+
+			for (SqlIdentifier sqlIdentifier : identifier) {
+				last = sqlIdentifier;
+			}
+
+			// without schema
+			String tableName = last.toSql(this.identifierProcessing);
 
 			switch (lockOptions.getLockMode()) {
 
