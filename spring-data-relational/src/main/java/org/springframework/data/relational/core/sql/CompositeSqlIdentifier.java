@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.StringJoiner;
 import java.util.function.UnaryOperator;
 
@@ -38,6 +40,15 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 		Assert.isTrue(parts.length > 0, "SqlIdentifier parts must not be empty");
 
 		this.parts = parts;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.domain.SqlIdentifier#iterator()
+	 */
+	@Override
+	public Iterator<SqlIdentifier> iterator() {
+		return Arrays.asList(parts).iterator();
 	}
 
 	/*
@@ -71,12 +82,7 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 	 */
 	@Override
 	public String getReference(IdentifierProcessing processing) {
-		throw new UnsupportedOperationException("A Composite SQL Identifiers can't be used as a reference name");
-	}
-
-	@Override
-	public SqlIdentifier getSimpleIdentifier() {
-		return parts[parts.length - 1];
+		throw new UnsupportedOperationException("Composite SQL Identifiers can't be used for reference name retrieval");
 	}
 
 	/*
@@ -86,11 +92,14 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 	@Override
 	public boolean equals(Object o) {
 
-		if (this == o)
+		if (this == o) {
 			return true;
+		}
+
 		if (o instanceof SqlIdentifier) {
 			return toString().equals(o.toString());
 		}
+
 		return false;
 	}
 

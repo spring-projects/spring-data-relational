@@ -103,6 +103,6 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 	 */
 	@Override
 	public String toString() {
-		return String.format("JdbcPersistentEntityImpl<%s>", getType());
+		return String.format("RelationalPersistentEntityImpl<%s>", getType());
 	}
 }

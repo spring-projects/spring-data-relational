@@ -15,7 +15,11 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.UnaryOperator;
+
+import org.springframework.data.util.Streamable;
 
 /**
  * Represents a named object that exists in the database like a table name or a column name. SQL identifiers are created
@@ -28,17 +32,26 @@ import java.util.function.UnaryOperator;
  * <p>
  * {@link SqlIdentifier} objects are immutable. Calling transformational methods such as
  * {@link #transform(UnaryOperator)} creates a new instance.
+ * <p>
+ * {@link SqlIdentifier} are composable so an identifier may consist of a single identifier part or can be composed from
+ * multiple parts. Composed identifier can be traversed with {@link #stream()} or {@link #iterator()}. The iteration
+ * order depends on the actual composition ordering.
  *
  * @author Jens Schauder
  * @author Mark Paluch
  * @since 2.0
  */
-public interface SqlIdentifier {
+public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 
 	/**
 	 * Null-object.
 	 */
 	SqlIdentifier EMPTY = new SqlIdentifier() {
+
+		@Override
+		public Iterator<SqlIdentifier> iterator() {
+			return Collections.emptyIterator();
+		}
 
 		@Override
 		public SqlIdentifier transform(UnaryOperator<String> transformationFunction) {
@@ -98,16 +111,6 @@ public interface SqlIdentifier {
 	 * @return a new {@link SqlIdentifier} with the transformation applied.
 	 */
 	SqlIdentifier transform(UnaryOperator<String> transformationFunction);
-
-	/**
-	 * Returns the last part of an identifier. For a fully qualified column name {@literal schema.table.column} it will
-	 * just return the column part. If the identifier consists of only a single part, that part is returned.
-	 *
-	 * @return Guaranteed to be not {@literal null}.
-	 */
-	default SqlIdentifier getSimpleIdentifier() {
-		return this;
-	}
 
 	/**
 	 * Create a new quoted identifier given {@code name}.
