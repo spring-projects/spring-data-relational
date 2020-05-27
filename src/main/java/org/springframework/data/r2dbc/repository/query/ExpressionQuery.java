@@ -17,10 +17,8 @@ package org.springframework.data.r2dbc.repository.query;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.springframework.lang.Nullable;
+import org.springframework.data.repository.query.SpelQueryContext;
 
 /**
  * Query using Spring Expression Language to indicate parameter bindings. Queries using SpEL use {@code :#{…}} to
@@ -32,18 +30,14 @@ import org.springframework.lang.Nullable;
  */
 class ExpressionQuery {
 
-	private static final char CURLY_BRACE_OPEN = '{';
-	private static final char CURLY_BRACE_CLOSE = '}';
-
 	private static final String SYNTHETIC_PARAMETER_TEMPLATE = "__synthetic_%d__";
-
-	private static final Pattern EXPRESSION_BINDING_PATTERN = Pattern.compile("[:]#\\{(.*)}");
 
 	private final String query;
 
 	private final List<ParameterBinding> parameterBindings;
 
 	private ExpressionQuery(String query, List<ParameterBinding> parameterBindings) {
+
 		this.query = query;
 		this.parameterBindings = parameterBindings;
 	}
@@ -57,9 +51,17 @@ class ExpressionQuery {
 	public static ExpressionQuery create(String query) {
 
 		List<ParameterBinding> parameterBindings = new ArrayList<>();
-		String rewritten = transformQueryAndCollectExpressionParametersIntoBindings(query, parameterBindings);
 
-		return new ExpressionQuery(rewritten, parameterBindings);
+		SpelQueryContext queryContext = SpelQueryContext.of((counter, expression) -> {
+
+			String parameterName = String.format(SYNTHETIC_PARAMETER_TEMPLATE, counter);
+			parameterBindings.add(new ParameterBinding(parameterName, expression));
+			return parameterName;
+		}, String::concat);
+
+		SpelQueryContext.SpelExtractor parsed = queryContext.parse(query);
+
+		return new ExpressionQuery(parsed.getQueryString(), parameterBindings);
 	}
 
 	public String getQuery() {
@@ -70,67 +72,6 @@ class ExpressionQuery {
 		return parameterBindings;
 	}
 
-	private static String transformQueryAndCollectExpressionParametersIntoBindings(String input,
-			List<ParameterBinding> bindings) {
-
-		StringBuilder result = new StringBuilder();
-
-		int startIndex = 0;
-		int currentPosition = 0;
-		int parameterIndex = 0;
-
-		while (currentPosition < input.length()) {
-
-			Matcher matcher = findNextBindingOrExpression(input, currentPosition);
-
-			// no expression parameter found
-			if (matcher == null) {
-				break;
-			}
-
-			int exprStart = matcher.start();
-			currentPosition = exprStart;
-
-			// eat parameter expression
-			int curlyBraceOpenCount = 1;
-			currentPosition += 3;
-
-			while (curlyBraceOpenCount > 0 && currentPosition < input.length()) {
-				switch (input.charAt(currentPosition++)) {
-					case CURLY_BRACE_OPEN:
-						curlyBraceOpenCount++;
-						break;
-					case CURLY_BRACE_CLOSE:
-						curlyBraceOpenCount--;
-						break;
-					default:
-				}
-			}
-
-			result.append(input.subSequence(startIndex, exprStart));
-
-			String parameterName = String.format(SYNTHETIC_PARAMETER_TEMPLATE, parameterIndex++);
-			result.append(':').append(parameterName);
-
-			bindings.add(ParameterBinding.named(parameterName, matcher.group(1)));
-
-			currentPosition = matcher.end();
-			startIndex = currentPosition;
-		}
-
-		return result.append(input.subSequence(currentPosition, input.length())).toString();
-	}
-
-	@Nullable
-	private static Matcher findNextBindingOrExpression(String input, int position) {
-
-		Matcher matcher = EXPRESSION_BINDING_PATTERN.matcher(input);
-		if (matcher.find(position)) {
-			return matcher;
-		}
-
-		return null;
-	}
 
 	@Override
 	public String toString() {
@@ -151,10 +92,6 @@ class ExpressionQuery {
 
 			this.expression = expression;
 			this.parameterName = parameterName;
-		}
-
-		static ParameterBinding named(String name, String expression) {
-			return new ParameterBinding(name, expression);
 		}
 
 		String getExpression() {

@@ -28,6 +28,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.data.geo.Point;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -237,6 +238,23 @@ public class StringBasedR2dbcQueryUnitTests {
 		verifyNoMoreInteractions(bindSpec);
 	}
 
+	@Test // gh-373
+	public void bindsMultipleSpelParametersCorrectly() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("queryWithTwoSpelExpressions", Point.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), new Point(1, 2));
+
+		BindableQuery stringQuery = query.createQuery(accessor);
+
+		assertThat(stringQuery.get())
+				.isEqualTo("INSERT IGNORE INTO table (x, y) VALUES (:__synthetic_0__, :__synthetic_1__)");
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind("__synthetic_0__", 1d);
+		verify(bindSpec).bind("__synthetic_1__", 2d);
+		verifyNoMoreInteractions(bindSpec);
+	}
+
 	private StringBasedR2dbcQuery getQueryMethod(String name, Class<?>... args) {
 
 		Method method = ReflectionUtils.findMethod(SampleRepository.class, name, args);
@@ -282,6 +300,9 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		@Query("SELECT * FROM person WHERE lastname = :name")
 		Person queryWithUnusedParameter(String name, Sort unused);
+
+		@Query("INSERT IGNORE INTO table (x, y) VALUES (:#{#point.x}, :#{#point.y})")
+		Person queryWithTwoSpelExpressions(@Param("point") Point point);
 	}
 
 	static class Person {
