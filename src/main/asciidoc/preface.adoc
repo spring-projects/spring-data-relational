@@ -1,14 +1,68 @@
 [[preface]]
 = Preface
 
-Spring Data JDBC offers a repository abstraction based on JDBC.
+The Spring Data JDBC project applies core Spring concepts to the development of solutions that use JDBC databases aligned with <<jdbc.domain-driven-design,Domain-driven design principles>>.
+We provide a "`template`" as a high-level abstraction for storing and querying aggregates.
+
+This document is the reference guide for Spring Data JDBC Support.
+It explains the concepts and semantics and syntax..
+
+This section provides some basic introduction.
+The rest of the document refers only to Spring Data JDBC features and assumes the user is familiar with SQL and Spring concepts.
+
+[[get-started:first-steps:spring]]
+== Learning Spring
+
+Spring Data uses Spring framework's https://docs.spring.io/spring/docs/{springVersion}/spring-framework-reference/core.html[core] functionality, including:
+
+* https://docs.spring.io/spring/docs/{springVersion}/spring-framework-reference/core.html#beans[IoC] container
+* https://docs.spring.io/spring/docs/{springVersion}/spring-framework-reference/core.html#validation[type conversion system]
+* https://docs.spring.io/spring/docs/{springVersion}/spring-framework-reference/core.html#expressions[expression language]
+* https://docs.spring.io/spring/docs/{springVersion}/spring-framework-reference/integration.html#jmx[JMX integration]
+* https://docs.spring.io/spring/docs/{springVersion}/spring-framework-reference/data-access.html#dao-exceptions[DAO exception hierarchy].
+
+While you need not know the Spring APIs, understanding the concepts behind them is important.
+At a minimum, the idea behind Inversion of Control (IoC) should be familiar, and you should be familiar with whatever IoC container you choose to use.
+
+The core functionality of the JDBC Aggregate support can be used directly, with no need to invoke the IoC services of the Spring Container.
+This is much like `JdbcTemplate`, which can be used "'standalone'" without any other services of the Spring container.
+To leverage all the features of Spring Data JDBC, such as the repository support, you need to configure some parts of the library to use Spring.
+
+To learn more about Spring, you can refer to the comprehensive documentation that explains the Spring Framework in detail.
+There are a lot of articles, blog entries, and books on the subject.
+See the Spring framework https://spring.io/docs[home page] for more information.
+
+[[requirements]]
+== Requirements
+
+The Spring Data JDBC binaries require JDK level 8.0 and above and https://spring.io/docs[Spring Framework] {springVersion} and above.
+
+[[get-started:help]]
+== Additional Help Resources
+
+Learning a new framework is not always straightforward.
+In this section, we try to provide what we think is an easy-to-follow guide for starting with the Spring Data JDBC module.
+However, if you encounter issues or you need advice, feel free to use one of the following links:
+
+[[get-started:help:community]]
+Community Forum :: Spring Data on https://stackoverflow.com/questions/tagged/spring-data[Stack Overflow] is a tag for all Spring Data (not just Document) users to share information and help each other.
+Note that registration is needed only for posting.
+
+[[get-started:help:professional]]
+Professional Support :: Professional, from-the-source support, with guaranteed response time, is available from https://pivotal.io/[Pivotal Sofware, Inc.], the company behind Spring Data and Spring.
+
+[[get-started:up-to-date]]
+== Following Development
+
+For information on the Spring Data JDBC source code repository, nightly builds, and snapshot artifacts, see the Spring Data JDBC https://spring.io/projects/spring-data-jdbc/[homepage].
+You can help make Spring Data best serve the needs of the Spring community by interacting with developers through the Community on https://stackoverflow.com/questions/tagged/spring-data[Stack Overflow].
+If you encounter a bug or want to suggest an improvement, please create a ticket on the Spring Data issue https://jira.spring.io/browse/DATAJDBC[tracker].
+To stay up to date with the latest news and announcements in the Spring eco system, subscribe to the Spring Community https://spring.io[Portal].
+You can also follow the Spring https://spring.io/blog[blog] or the project team on Twitter (https://twitter.com/SpringData[SpringData]).
 
 [[project]]
-[preface]
 == Project Metadata
 
-* Version control: https://github.com/spring-projects/spring-data-jdbc
-* Bugtracker: https://jira.spring.io/browse/DATAJDBC
 * Release repository: https://repo.spring.io/libs-release
 * Milestone repository: https://repo.spring.io/libs-milestone
 * Snapshot repository: https://repo.spring.io/libs-snapshot

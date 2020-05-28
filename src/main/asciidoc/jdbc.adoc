@@ -61,6 +61,58 @@ WARNING: In the current implementation, entities referenced from an aggregate ro
 
 You can overwrite the repository methods with implementations that match your style of working and designing your database.
 
+[[jdbc.getting-started]]
+== Getting Started
+
+An easy way to bootstrap setting up a working environment is to create a Spring-based project in https://spring.io/tools/sts[STS] or from https://start.spring.io[Spring Initializr].
+
+First, you need to set up a running database server. Refer to your vendor documentation on how to configure your database for JDBC access.
+
+To create a Spring project in STS:
+
+. Go to File -> New -> Spring Template Project -> Simple Spring Utility Project, and press Yes when prompted. Then enter a project and a package name, such as `org.spring.jdbc.example`.
+.Add the following to the pom.xml files `dependencies` element:
++
+[source,xml,subs="+attributes"]
+----
+<dependencies>
+
+  <!-- other dependency elements omitted -->
+
+  <dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-jdbc</artifactId>
+    <version>{version}</version>
+  </dependency>
+
+</dependencies>
+----
+. Change the version of Spring in the pom.xml to be
++
+[source,xml,subs="+attributes"]
+----
+<spring.framework.version>{springVersion}</spring.framework.version>
+----
+. Add the following location of the Spring Milestone repository for Maven to your `pom.xml` such that it is at the same level of your `<dependencies/>` element:
++
+[source,xml]
+----
+<repositories>
+  <repository>
+    <id>spring-milestone</id>
+    <name>Spring Maven MILESTONE Repository</name>
+    <url>https://repo.spring.io/libs-milestone</url>
+  </repository>
+</repositories>
+----
+
+The repository is also https://repo.spring.io/milestone/org/springframework/data/[browseable here].
+
+[[jdbc.examples-repo]]
+== Examples Repository
+
+There is a https://github.com/spring-projects/spring-data-examples[GitHub repository with several examples] that you can download and play around with to get a feel for how the library works.
+
 [[jdbc.java-config]]
 == Annotation-based Configuration
 
@@ -112,6 +164,9 @@ With Spring Boot a `DataSource` is sufficient once the starter `spring-boot-star
 Everything else is done by Spring Boot.
 
 There are a couple of things one might want to customize in this setup.
+
+[[jdbc.dialects]]
+=== Dialects
 
 Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
 By default the `AbstractJdbcConfiguration` tries to determine the database in use an register the correct `Dialect`.
