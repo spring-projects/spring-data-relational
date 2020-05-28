@@ -169,12 +169,19 @@ There are a couple of things one might want to customize in this setup.
 === Dialects
 
 Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
-By default the `AbstractJdbcConfiguration` tries to determine the database in use an register the correct `Dialect`.
+By default, the `AbstractJdbcConfiguration` tries to determine the database in use an register the correct `Dialect`.
 This behavior can be changed by overwriting `jdbcDialect(NamedParameterJdbcOperations)`.
 
-TIP: Dialects are resolved by [`JdbcDialectResolver`] from `JdbcOperations`, typically by inspecting `Connection`.
+TIP: Dialects are resolved by `JdbcDialectResolver` from `JdbcOperations`, typically by inspecting `Connection`.
 You can let Spring auto-discover your `Dialect` by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
+
+If you use a database for which no dialect is available, then your application won’t startup. In that case, you’ll have to ask your vendor to provide a `Dialect` implementation. Alternatively, you can:
+
+1. Implement your own `Dialect`.
+2. Implement a `JdbcDialectProvider` returning the `Dialect`.
+3. Register the provider by creating a `spring.factories`  resource under `META-INF` and perform the registration by adding a line +
+`org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider=<fully qualified name of your JdbcDialectProvider>`
 
 [[jdbc.entity-persistence]]
 == Persisting Entities
