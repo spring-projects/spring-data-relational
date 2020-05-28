@@ -390,7 +390,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		private T populateProperties(T instance, @Nullable Object idValue) {
 
 			PersistentPropertyAccessor<T> propertyAccessor = getPropertyAccessor(entity, instance);
-
 			PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
 
 			for (RelationalPersistentProperty property : entity) {
@@ -534,7 +533,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 				RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
 				return readOrLoadProperty(idValue, property);
 			});
-			return populateProperties(instance, idValue);
+
+			return entity.requiresPropertyPopulation() ? populateProperties(instance, idValue) : instance;
 		}
 
 	}
