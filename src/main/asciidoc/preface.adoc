@@ -37,6 +37,19 @@ See the Spring framework https://spring.io/docs[home page] for more information.
 
 The Spring Data JDBC binaries require JDK level 8.0 and above and https://spring.io/docs[Spring Framework] {springVersion} and above.
 
+In terms of databases, Spring Data JDBC requires a <<jdbc.dialects,dialect>> to abstract common SQL functionality over vendor-specific flavours.
+Support for the following databases is bundled with Spring Data JDBC binaries:
+
+* DB2
+* H2
+* HSQLDB
+* MariaDB
+* Microsoft SQL Server
+* MySQL
+* Postgres
+
+If you use a different database then your application won’t startup. The <<jdbc.dialects,dialect>> section contains further detail on how to proceed in such case.
+
 [[get-started:help]]
 == Additional Help Resources
 
