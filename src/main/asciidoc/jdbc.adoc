@@ -101,8 +101,8 @@ This is required by the following two bean methods.
 ====
 
 The configuration class in the preceding example sets up an embedded HSQL database by using the `EmbeddedDatabaseBuilder` API of `spring-jdbc`.
-The `DataSource` is then used to set up `NamedParameterJdbcOperations` and a `TransactionManager.
-                                                                              We finally activate Spring Data JDBC repositories by using the `@EnableJdbcRepositories`.
+The `DataSource` is then used to set up `NamedParameterJdbcOperations` and a `TransactionManager`.
+We finally activate Spring Data JDBC repositories by using the `@EnableJdbcRepositories`.
 If no base package is configured, it uses the package in which the configuration class resides.
 Extending `AbstractJdbcConfiguration` ensures various beans get registered.
 Overwriting its methods can be used to customize the setup (see below).
