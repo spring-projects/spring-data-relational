@@ -175,7 +175,8 @@ public class Query {
 
 		assertNoCaseSort(pageable.getSort());
 
-		return new Query(this.criteria, this.columns, this.sort.and(sort), pageable.getPageSize(), pageable.getOffset());
+		return new Query(this.criteria, this.columns, this.sort.and(pageable.getSort()), pageable.getPageSize(),
+				pageable.getOffset());
 	}
 
 	/**
