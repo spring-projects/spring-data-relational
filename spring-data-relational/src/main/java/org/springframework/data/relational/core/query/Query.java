@@ -34,227 +34,228 @@ import org.springframework.util.Assert;
  * created with a fluent API creating immutable objects.
  *
  * @author Mark Paluch
- * @since 2.0
  * @see Criteria
  * @see Sort
  * @see Pageable
+ * @since 2.0
  */
 public class Query {
 
-	private final @Nullable CriteriaDefinition criteria;
+    private final @Nullable
+    CriteriaDefinition criteria;
 
-	private final List<SqlIdentifier> columns;
-	private final Sort sort;
-	private final int limit;
-	private final long offset;
+    private final List<SqlIdentifier> columns;
+    private final Sort sort;
+    private final int limit;
+    private final long offset;
 
-	/**
-	 * Static factory method to create a {@link Query} using the provided {@link CriteriaDefinition}.
-	 *
-	 * @param criteria must not be {@literal null}.
-	 * @return a new {@link Query} for the given {@link Criteria}.
-	 */
-	public static Query query(CriteriaDefinition criteria) {
-		return new Query(criteria);
-	}
+    /**
+     * Static factory method to create a {@link Query} using the provided {@link CriteriaDefinition}.
+     *
+     * @param criteria must not be {@literal null}.
+     * @return a new {@link Query} for the given {@link Criteria}.
+     */
+    public static Query query(CriteriaDefinition criteria) {
+        return new Query(criteria);
+    }
 
-	/**
-	 * Creates a new {@link Query} using the given {@link Criteria}.
-	 *
-	 * @param criteria must not be {@literal null}.
-	 */
-	private Query(@Nullable CriteriaDefinition criteria) {
-		this(criteria, Collections.emptyList(), Sort.unsorted(), -1, -1);
-	}
+    /**
+     * Creates a new {@link Query} using the given {@link Criteria}.
+     *
+     * @param criteria must not be {@literal null}.
+     */
+    private Query(@Nullable CriteriaDefinition criteria) {
+        this(criteria, Collections.emptyList(), Sort.unsorted(), -1, -1);
+    }
 
-	private Query(@Nullable CriteriaDefinition criteria, List<SqlIdentifier> columns, Sort sort, int limit, long offset) {
+    private Query(@Nullable CriteriaDefinition criteria, List<SqlIdentifier> columns, Sort sort, int limit, long offset) {
 
-		this.criteria = criteria;
-		this.columns = columns;
-		this.sort = sort;
-		this.limit = limit;
-		this.offset = offset;
-	}
+        this.criteria = criteria;
+        this.columns = columns;
+        this.sort = sort;
+        this.limit = limit;
+        this.offset = offset;
+    }
 
-	/**
-	 * Create a new empty {@link Query}.
-	 *
-	 * @return
-	 */
-	public static Query empty() {
-		return new Query(null);
-	}
+    /**
+     * Create a new empty {@link Query}.
+     *
+     * @return
+     */
+    public static Query empty() {
+        return new Query(null);
+    }
 
-	/**
-	 * Add columns to the query.
-	 *
-	 * @param columns
-	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
-	 */
-	public Query columns(String... columns) {
+    /**
+     * Add columns to the query.
+     *
+     * @param columns
+     * @return a new {@link Query} object containing the former settings with {@code columns} applied.
+     */
+    public Query columns(String... columns) {
 
-		Assert.notNull(columns, "Columns must not be null");
+        Assert.notNull(columns, "Columns must not be null");
 
-		return withColumns(Arrays.stream(columns).map(SqlIdentifier::unquoted).collect(Collectors.toList()));
-	}
+        return withColumns(Arrays.stream(columns).map(SqlIdentifier::unquoted).collect(Collectors.toList()));
+    }
 
-	/**
-	 * Add columns to the query.
-	 *
-	 * @param columns
-	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
-	 */
-	public Query columns(Collection<String> columns) {
+    /**
+     * Add columns to the query.
+     *
+     * @param columns
+     * @return a new {@link Query} object containing the former settings with {@code columns} applied.
+     */
+    public Query columns(Collection<String> columns) {
 
-		Assert.notNull(columns, "Columns must not be null");
+        Assert.notNull(columns, "Columns must not be null");
 
-		return withColumns(columns.stream().map(SqlIdentifier::unquoted).collect(Collectors.toList()));
-	}
+        return withColumns(columns.stream().map(SqlIdentifier::unquoted).collect(Collectors.toList()));
+    }
 
-	/**
-	 * Add columns to the query.
-	 *
-	 * @param columns
-	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
-	 * @since 1.1
-	 */
-	public Query columns(SqlIdentifier... columns) {
+    /**
+     * Add columns to the query.
+     *
+     * @param columns
+     * @return a new {@link Query} object containing the former settings with {@code columns} applied.
+     * @since 1.1
+     */
+    public Query columns(SqlIdentifier... columns) {
 
-		Assert.notNull(columns, "Columns must not be null");
+        Assert.notNull(columns, "Columns must not be null");
 
-		return withColumns(Arrays.asList(columns));
-	}
+        return withColumns(Arrays.asList(columns));
+    }
 
-	/**
-	 * Add columns to the query.
-	 *
-	 * @param columns
-	 * @return a new {@link Query} object containing the former settings with {@code columns} applied.
-	 */
-	private Query withColumns(Collection<SqlIdentifier> columns) {
+    /**
+     * Add columns to the query.
+     *
+     * @param columns
+     * @return a new {@link Query} object containing the former settings with {@code columns} applied.
+     */
+    private Query withColumns(Collection<SqlIdentifier> columns) {
 
-		Assert.notNull(columns, "Columns must not be null");
+        Assert.notNull(columns, "Columns must not be null");
 
-		List<SqlIdentifier> newColumns = new ArrayList<>(this.columns);
-		newColumns.addAll(columns);
-		return new Query(this.criteria, newColumns, this.sort, this.limit, offset);
-	}
+        List<SqlIdentifier> newColumns = new ArrayList<>(this.columns);
+        newColumns.addAll(columns);
+        return new Query(this.criteria, newColumns, this.sort, this.limit, offset);
+    }
 
-	/**
-	 * Set number of rows to skip before returning results.
-	 *
-	 * @param offset
-	 * @return a new {@link Query} object containing the former settings with {@code offset} applied.
-	 */
-	public Query offset(long offset) {
-		return new Query(this.criteria, this.columns, this.sort, this.limit, offset);
-	}
+    /**
+     * Set number of rows to skip before returning results.
+     *
+     * @param offset
+     * @return a new {@link Query} object containing the former settings with {@code offset} applied.
+     */
+    public Query offset(long offset) {
+        return new Query(this.criteria, this.columns, this.sort, this.limit, offset);
+    }
 
-	/**
-	 * Limit the number of returned documents to {@code limit}.
-	 *
-	 * @param limit
-	 * @return a new {@link Query} object containing the former settings with {@code limit} applied.
-	 */
-	public Query limit(int limit) {
-		return new Query(this.criteria, this.columns, this.sort, limit, this.offset);
-	}
+    /**
+     * Limit the number of returned documents to {@code limit}.
+     *
+     * @param limit
+     * @return a new {@link Query} object containing the former settings with {@code limit} applied.
+     */
+    public Query limit(int limit) {
+        return new Query(this.criteria, this.columns, this.sort, limit, this.offset);
+    }
 
-	/**
-	 * Set the given pagination information on the {@link Query} instance. Will transparently set {@code offset} and
-	 * {@code limit} as well as applying the {@link Sort} instance defined with the {@link Pageable}.
-	 *
-	 * @param pageable
-	 * @return a new {@link Query} object containing the former settings with {@link Pageable} applied.
-	 */
-	public Query with(Pageable pageable) {
+    /**
+     * Set the given pagination information on the {@link Query} instance. Will transparently set {@code offset} and
+     * {@code limit} as well as applying the {@link Sort} instance defined with the {@link Pageable}.
+     *
+     * @param pageable
+     * @return a new {@link Query} object containing the former settings with {@link Pageable} applied.
+     */
+    public Query with(Pageable pageable) {
 
-		if (pageable.isUnpaged()) {
-			return this;
-		}
+        if (pageable.isUnpaged()) {
+            return this;
+        }
 
-		assertNoCaseSort(pageable.getSort());
+        assertNoCaseSort(pageable.getSort());
 
-		return new Query(this.criteria, this.columns, this.sort.and(sort), pageable.getPageSize(), pageable.getOffset());
-	}
+        return new Query(this.criteria, this.columns, this.sort.and(pageable.getSort()), pageable.getPageSize(), pageable.getOffset());
+    }
 
-	/**
-	 * Add a {@link Sort} to the {@link Query} instance.
-	 *
-	 * @param sort
-	 * @return a new {@link Query} object containing the former settings with {@link Sort} applied.
-	 */
-	public Query sort(Sort sort) {
+    /**
+     * Add a {@link Sort} to the {@link Query} instance.
+     *
+     * @param sort
+     * @return a new {@link Query} object containing the former settings with {@link Sort} applied.
+     */
+    public Query sort(Sort sort) {
 
-		Assert.notNull(sort, "Sort must not be null!");
+        Assert.notNull(sort, "Sort must not be null!");
 
-		if (sort.isUnsorted()) {
-			return this;
-		}
+        if (sort.isUnsorted()) {
+            return this;
+        }
 
-		assertNoCaseSort(sort);
+        assertNoCaseSort(sort);
 
-		return new Query(this.criteria, this.columns, this.sort.and(sort), this.limit, this.offset);
-	}
+        return new Query(this.criteria, this.columns, this.sort.and(sort), this.limit, this.offset);
+    }
 
-	/**
-	 * Return the {@link Criteria} to be applied.
-	 *
-	 * @return
-	 */
-	public Optional<CriteriaDefinition> getCriteria() {
-		return Optional.ofNullable(this.criteria);
-	}
+    /**
+     * Return the {@link Criteria} to be applied.
+     *
+     * @return
+     */
+    public Optional<CriteriaDefinition> getCriteria() {
+        return Optional.ofNullable(this.criteria);
+    }
 
-	/**
-	 * Return the columns that this query should project.
-	 *
-	 * @return
-	 */
-	public List<SqlIdentifier> getColumns() {
-		return columns;
-	}
+    /**
+     * Return the columns that this query should project.
+     *
+     * @return
+     */
+    public List<SqlIdentifier> getColumns() {
+        return columns;
+    }
 
-	/**
-	 * Return {@literal true} if the {@link Query} has a sort parameter.
-	 *
-	 * @return {@literal true} if sorted.
-	 * @see Sort#isSorted()
-	 */
-	public boolean isSorted() {
-		return sort.isSorted();
-	}
+    /**
+     * Return {@literal true} if the {@link Query} has a sort parameter.
+     *
+     * @return {@literal true} if sorted.
+     * @see Sort#isSorted()
+     */
+    public boolean isSorted() {
+        return sort.isSorted();
+    }
 
-	public Sort getSort() {
-		return sort;
-	}
+    public Sort getSort() {
+        return sort;
+    }
 
-	/**
-	 * Return the number of rows to skip.
-	 *
-	 * @return
-	 */
-	public long getOffset() {
-		return this.offset;
-	}
+    /**
+     * Return the number of rows to skip.
+     *
+     * @return
+     */
+    public long getOffset() {
+        return this.offset;
+    }
 
-	/**
-	 * Return the maximum number of rows to be return.
-	 *
-	 * @return
-	 */
-	public int getLimit() {
-		return this.limit;
-	}
+    /**
+     * Return the maximum number of rows to be return.
+     *
+     * @return
+     */
+    public int getLimit() {
+        return this.limit;
+    }
 
-	private static void assertNoCaseSort(Sort sort) {
+    private static void assertNoCaseSort(Sort sort) {
 
-		for (Sort.Order order : sort) {
-			if (order.isIgnoreCase()) {
-				throw new IllegalArgumentException(String.format(
-						"Given sort contained an Order for %s with ignore case;" + "Ignore case sorting is not supported",
-						order.getProperty()));
-			}
-		}
-	}
+        for (Sort.Order order : sort) {
+            if (order.isIgnoreCase()) {
+                throw new IllegalArgumentException(String.format(
+                        "Given sort contained an Order for %s with ignore case;" + "Ignore case sorting is not supported",
+                        order.getProperty()));
+            }
+        }
+    }
 }
