@@ -881,7 +881,7 @@ The following table describes the available events:
 | After an aggregate root gets saved (that is, inserted or updated).
 
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadEvent.html[`AfterLoadEvent`]
-| After an aggregate root gets created from a database `ResultSet` and all its property get set.
+| After an aggregate root gets created from a database `ResultSet` and all its properties get set.
 |===
 
 WARNING: Lifecycle events depend on an `ApplicationEventMulticaster`, which in case of the `SimpleApplicationEventMulticaster` can be configured with a `TaskExecutor`, and therefore gives no guarantees when an Event is processed.
