@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
 
@@ -31,7 +32,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.AssumeFeatureRule;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -41,6 +44,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -54,32 +58,32 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
+@TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
 public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
-
-	@Configuration
-	@Import(TestConfiguration.class)
-	static class Config {
-
-		@Autowired JdbcRepositoryFactory factory;
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryEmbeddedWithReferenceIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
-			return factory.getRepository(DummyEntityRepository.class);
-		}
-
-	}
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
-
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 	@Autowired Dialect dialect;
+
+	private static DummyEntity createDummyEntity() {
+
+		DummyEntity entity = new DummyEntity();
+		entity.setTest("root");
+
+		final Embeddable embeddable = new Embeddable();
+		embeddable.setTest("embedded");
+
+		final DummyEntity2 dummyEntity2 = new DummyEntity2();
+		dummyEntity2.setTest("entity");
+
+		embeddable.setDummyEntity2(dummyEntity2);
+
+		entity.setEmbeddable(embeddable);
+
+		return entity;
+	}
 
 	@Test // DATAJDBC-111
 	public void savesAnEntity() {
@@ -187,6 +191,7 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 	@Test // DATAJDBC-111
 	public void deleteByEntity() {
+
 		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = repository.save(createDummyEntity());
 		DummyEntity three = repository.save(createDummyEntity());
@@ -246,26 +251,26 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 
 	}
 
-	private static DummyEntity createDummyEntity() {
-
-		DummyEntity entity = new DummyEntity();
-		entity.setTest("root");
-
-		final Embeddable embeddable = new Embeddable();
-		embeddable.setTest("embedded");
-
-		final DummyEntity2 dummyEntity2 = new DummyEntity2();
-		dummyEntity2.setTest("entity");
-
-		embeddable.setDummyEntity2(dummyEntity2);
-
-		entity.setEmbeddable(embeddable);
-
-		return entity;
-	}
-
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 		List<DummyEntity> findByTest(String test);
+	}
+
+	@Configuration
+	@Import(TestConfiguration.class)
+	static class Config {
+
+		@Autowired JdbcRepositoryFactory factory;
+
+		@Bean
+		Class<?> testClass() {
+			return JdbcRepositoryEmbeddedWithReferenceIntegrationTests.class;
+		}
+
+		@Bean
+		DummyEntityRepository dummyEntityRepository() {
+			return factory.getRepository(DummyEntityRepository.class);
+		}
+
 	}
 
 	@Data

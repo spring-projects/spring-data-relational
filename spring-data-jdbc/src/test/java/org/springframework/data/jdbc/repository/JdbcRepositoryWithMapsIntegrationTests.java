@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 
 import junit.framework.AssertionFailedError;
 import lombok.Data;
@@ -33,12 +34,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
+import org.springframework.data.jdbc.testing.RequiredFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.annotation.IfProfileValue;
-import org.springframework.test.annotation.ProfileValueSourceConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -51,7 +51,6 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Thomas Lang
  */
 @ContextConfiguration
-@ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)
 @Transactional
 public class JdbcRepositoryWithMapsIntegrationTests {
 
@@ -140,7 +139,7 @@ public class JdbcRepositoryWithMapsIntegrationTests {
 	}
 
 	@Test // DATAJDBC-131
-	@IfProfileValue(name = "current.database.is.not.mssql", value = "true") // DATAJDBC-278
+	@RequiredFeature(SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
 	public void updateMap() {
 
 		Element element1 = createElement("one");

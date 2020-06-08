@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import java.math.BigDecimal;
 import java.sql.JDBCType;
@@ -37,9 +38,12 @@ import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.AssumeFeatureRule;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
+@TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
 public class JdbcRepositoryCustomConversionIntegrationTests {
 
 	@Configuration
@@ -105,7 +110,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	public void saveAndLoadAnEntity() {
 
 		EntityWithStringyBigDecimal entity = new EntityWithStringyBigDecimal();
-		entity.stringyNumber = "123456.78910";
+		entity.stringyNumber = "123456.78912";
 
 		repository.save(entity);
 
@@ -121,7 +126,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 	public void saveAndLoadAnEntityWithReference() {
 
 		EntityWithStringyBigDecimal entity = new EntityWithStringyBigDecimal();
-		entity.stringyNumber = "123456.78910";
+		entity.stringyNumber = "123456.78912";
 		entity.reference = new OtherEntity();
 		entity.reference.created = new Date();
 

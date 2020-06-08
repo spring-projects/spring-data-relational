@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
 
@@ -41,7 +43,10 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.AssumeFeatureRule;
+import org.springframework.data.jdbc.testing.RequiredFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.CrudRepository;
@@ -51,6 +56,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -63,55 +69,22 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Mark Paluch
  */
 @Transactional
+@TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
 public class JdbcRepositoryIntegrationTests {
-
-	@Configuration
-	@Import(TestConfiguration.class)
-	static class Config {
-
-		@Autowired JdbcRepositoryFactory factory;
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
-			return factory.getRepository(DummyEntityRepository.class);
-		}
-
-		@Bean
-		NamedQueries namedQueries() throws IOException {
-
-			PropertiesFactoryBean properties = new PropertiesFactoryBean();
-			properties.setLocation(new ClassPathResource("META-INF/jdbc-named-queries.properties"));
-			properties.afterPropertiesSet();
-			return new PropertiesBasedNamedQueries(properties.getObject());
-		}
-
-		@Bean
-		MyEventListener eventListener() {
-			return new MyEventListener();
-		}
-	}
-
-	static class MyEventListener implements ApplicationListener<AbstractRelationalEvent<?>> {
-
-		private List<AbstractRelationalEvent<?>> events = new ArrayList<>();
-
-		@Override
-		public void onApplicationEvent(AbstractRelationalEvent<?> event) {
-			events.add(event);
-		}
-	}
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
-
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 	@Autowired MyEventListener eventListener;
+
+	private static DummyEntity createDummyEntity() {
+
+		DummyEntity entity = new DummyEntity();
+		entity.setName("Entity Name");
+
+		return entity;
+	}
 
 	@Before
 	public void before() {
@@ -289,6 +262,7 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test // DATAJDBC-464, DATAJDBC-318
+	@RequiredFeature(SUPPORTS_DATE_DATATYPES)
 	public void executeQueryWithParameterRequiringConversion() {
 
 		Instant now = Instant.now();
@@ -382,14 +356,6 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.countByName(one.getName())).isEqualTo(2);
 	}
 
-	private static DummyEntity createDummyEntity() {
-
-		DummyEntity entity = new DummyEntity();
-		entity.setName("Entity Name");
-
-		return entity;
-	}
-
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 		List<DummyEntity> findAllByNamedQuery();
@@ -413,11 +379,52 @@ public class JdbcRepositoryIntegrationTests {
 		int countByName(String name);
 	}
 
+	@Configuration
+	@Import(TestConfiguration.class)
+	static class Config {
+
+		@Autowired JdbcRepositoryFactory factory;
+
+		@Bean
+		Class<?> testClass() {
+			return JdbcRepositoryIntegrationTests.class;
+		}
+
+		@Bean
+		DummyEntityRepository dummyEntityRepository() {
+			return factory.getRepository(DummyEntityRepository.class);
+		}
+
+		@Bean
+		NamedQueries namedQueries() throws IOException {
+
+			PropertiesFactoryBean properties = new PropertiesFactoryBean();
+			properties.setLocation(new ClassPathResource("META-INF/jdbc-named-queries.properties"));
+			properties.afterPropertiesSet();
+			return new PropertiesBasedNamedQueries(properties.getObject());
+		}
+
+		@Bean
+		MyEventListener eventListener() {
+			return new MyEventListener();
+		}
+	}
+
+	static class MyEventListener implements ApplicationListener<AbstractRelationalEvent<?>> {
+
+		private List<AbstractRelationalEvent<?>> events = new ArrayList<>();
+
+		@Override
+		public void onApplicationEvent(AbstractRelationalEvent<?> event) {
+			events.add(event);
+		}
+	}
+
 	@Data
 	static class DummyEntity {
 		String name;
-		@Id private Long idProp;
 		Instant pointInTime;
+		@Id private Long idProp;
 	}
 
 	static class CustomRowMapper implements RowMapper<DummyEntity> {

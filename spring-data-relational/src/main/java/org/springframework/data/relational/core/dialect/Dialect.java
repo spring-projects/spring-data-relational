@@ -81,4 +81,8 @@ public interface Dialect {
 	default Escaper getLikeEscaper() {
 		return Escaper.DEFAULT;
 	}
+
+	default IdGeneration getIdGeneration(){
+		return IdGeneration.DEFAULT;
+	};
 }

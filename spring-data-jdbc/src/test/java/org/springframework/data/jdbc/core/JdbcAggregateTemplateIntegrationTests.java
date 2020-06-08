@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.core;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,7 +37,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -53,18 +54,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
-import org.springframework.data.jdbc.testing.HsqlDbOnly;
+import org.springframework.data.jdbc.testing.AssumeFeatureRule;
+import org.springframework.data.jdbc.testing.RequiredFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.test.annotation.IfProfileValue;
-import org.springframework.test.annotation.ProfileValueSourceConfiguration;
-import org.springframework.test.annotation.ProfileValueUtils;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,7 +83,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
-@ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)
+@TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
 public class JdbcAggregateTemplateIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
@@ -91,6 +91,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
+
 	LegoSet legoSet = createLegoSet("Star Destroyer");
 
 	/**
@@ -177,13 +178,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 		return "_" + i;
 	}
 
-	private static void assumeNot(String dbProfileName) {
-
-		Assume.assumeTrue("true"
-				.equalsIgnoreCase(ProfileValueUtils.retrieveProfileValueSource(JdbcAggregateTemplateIntegrationTests.class)
-						.get("current.database.is.not." + dbProfileName)));
-	}
-
 	private static LegoSet createLegoSet(String name) {
 
 		LegoSet entity = new LegoSet();
@@ -197,6 +191,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithReferencedEntityById() {
 
 		template.save(legoSet);
@@ -218,6 +213,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadManyEntitiesWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -230,6 +226,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-101
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadManyEntitiesWithReferencedEntitySorted() {
 
 		template.save(createLegoSet("Lava"));
@@ -244,20 +241,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void saveAndLoadManyEntitiesWithReferencedEntityPaged() {
-
-		template.save(createLegoSet("Lava"));
-		template.save(createLegoSet("Star"));
-		template.save(createLegoSet("Frozen"));
-
-		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, PageRequest.of(1, 1));
-
-		assertThat(reloadedLegoSets) //
-				.extracting("name") //
-				.containsExactly("Star");
-	}
-
-	@Test // DATAJDBC-101
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadManyEntitiesWithReferencedEntitySortedAndPaged() {
 
 		template.save(createLegoSet("Lava"));
@@ -272,6 +256,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadManyEntitiesByIdWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -283,6 +268,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithReferencedNullEntity() {
 
 		legoSet.setManual(null);
@@ -295,6 +281,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndDeleteAnEntityWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -310,6 +297,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndDeleteAllWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -325,7 +313,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@IfProfileValue(name = "current.database.is.not.mssql", value = "true") // DATAJDBC-278
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);
@@ -344,6 +332,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void updateReferencedEntityToNull() {
 
 		template.save(legoSet);
@@ -374,6 +363,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void replaceReferencedEntity() {
 
 		template.save(legoSet);
@@ -395,7 +385,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@IfProfileValue(name = "current.database.is.not.mssql", value = "true") // DATAJDBC-278
+	@RequiredFeature({SUPPORTS_QUOTED_IDS, TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES})
 	public void changeReferencedEntity() {
 
 		template.save(legoSet);
@@ -410,6 +400,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void oneToOneChildWithoutId() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -426,6 +417,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void oneToOneNullChildWithoutId() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -441,6 +433,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void oneToOneNullAttributes() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -456,6 +449,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-125
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithSecondaryReferenceNull() {
 
 		template.save(legoSet);
@@ -468,6 +462,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-125
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithSecondaryReferenceNotNull() {
 
 		legoSet.alternativeInstructions = new Manual();
@@ -489,6 +484,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-276
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithListOfElementsWithoutId() {
 
 		ListParent entity = new ListParent();
@@ -507,14 +503,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259
+	@RequiredFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithArray() {
-
-		// MySQL and other do not support array datatypes. See
-		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
-		assumeNot("mysql");
-		assumeNot("mariadb");
-		assumeNot("mssql");
-		assumeNot("db2");
 
 		ArrayOwner arrayOwner = new ArrayOwner();
 		arrayOwner.digits = new String[] { "one", "two", "three" };
@@ -531,16 +521,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259, DATAJDBC-512
+	@RequiredFeature(SUPPORTS_MULTIDIMENSIONAL_ARRAYS)
 	public void saveAndLoadAnEntityWithMultidimensionalArray() {
-
-		// MySQL and other do not support array datatypes. See
-		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
-		assumeNot("h2");
-		assumeNot("mysql");
-		assumeNot("mariadb");
-		assumeNot("mssql");
-		assumeNot("hsqldb");
-		assumeNot("db2");
 
 		ArrayOwner arrayOwner = new ArrayOwner();
 		arrayOwner.multidimensional = new String[][] { { "one-a", "two-a", "three-a" }, { "one-b", "two-b", "three-b" } };
@@ -558,14 +540,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259
+	@RequiredFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithList() {
-
-		// MySQL and others do not support array datatypes. See
-		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
-		assumeNot("mysql");
-		assumeNot("mariadb");
-		assumeNot("mssql");
-		assumeNot("db2");
 
 		ListOwner arrayOwner = new ListOwner();
 		arrayOwner.digits.addAll(Arrays.asList("one", "two", "three"));
@@ -582,14 +558,8 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259
+	@RequiredFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithSet() {
-
-		// MySQL and others do not support array datatypes. See
-		// https://dev.mysql.com/doc/refman/8.0/en/data-type-overview.html
-		assumeNot("mysql");
-		assumeNot("mariadb");
-		assumeNot("mssql");
-		assumeNot("db2");
 
 		SetOwner setOwner = new SetOwner();
 		setOwner.digits.addAll(Arrays.asList("one", "two", "three"));
@@ -621,6 +591,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-340
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadLongChain() {
 
 		Chain4 chain4 = new Chain4();
@@ -649,6 +620,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-359
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadLongChainWithoutIds() {
 
 		NoIdChain4 chain4 = new NoIdChain4();
@@ -733,7 +705,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-431
-	@HsqlDbOnly
+	@RequiredFeature(IS_HSQL)
 	public void readOnlyGetsLoadedButNotWritten() {
 
 		WithReadOnly entity = new WithReadOnly();
@@ -841,6 +813,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-462
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void resavingAnUnversionedEntity() {
 
 		LegoSet legoSet = new LegoSet();

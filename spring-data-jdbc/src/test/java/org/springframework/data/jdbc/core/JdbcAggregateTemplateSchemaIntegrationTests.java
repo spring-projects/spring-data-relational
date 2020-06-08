@@ -15,6 +15,10 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
+
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,16 +30,17 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.testing.AssumeFeatureRule;
+import org.springframework.data.jdbc.testing.RequiredFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate} using an entity mapped with an explicite schema.
@@ -44,6 +49,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 @ContextConfiguration
 @Transactional
+@TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
 public class JdbcAggregateTemplateSchemaIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
@@ -52,8 +58,8 @@ public class JdbcAggregateTemplateSchemaIntegrationTests {
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
 
-
 	@Test
+	@RequiredFeature(SUPPORTS_QUOTED_IDS)
 	public void insertFindUpdateDelete() {
 
 		DummyEntity entity = new DummyEntity();

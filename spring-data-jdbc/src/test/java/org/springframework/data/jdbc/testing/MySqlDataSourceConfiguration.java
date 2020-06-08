@@ -41,6 +41,7 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 @Configuration
 @Profile("mysql")
 class MySqlDataSourceConfiguration extends DataSourceConfiguration {
+
 	private static MySQLContainer<?> MYSQL_CONTAINER;
 
 	/*

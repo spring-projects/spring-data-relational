@@ -37,7 +37,7 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.relational.core.dialect.LockClause;
+import org.springframework.data.relational.core.dialect.IdGeneration;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -122,11 +122,20 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 
-		operations.update( //
-				sqlGenerator.getInsert(new HashSet<>(parameterSource.getIdentifiers())), //
-				parameterSource, //
-				holder //
-		);
+		IdGeneration idGeneration = sqlGeneratorSource.getDialect().getIdGeneration();
+		String insertSql = sqlGenerator.getInsert(new HashSet<>(parameterSource.getIdentifiers()));
+
+		if (idGeneration.driverRequiresKeyColumnNames()) {
+
+			String[] keyColumnNames = getKeyColumnNames(domainType);
+			if (keyColumnNames.length == 0) {
+				operations.update(insertSql, parameterSource, holder);
+			} else {
+				operations.update(insertSql, parameterSource, holder, keyColumnNames);
+			}
+		} else {
+			operations.update(insertSql, parameterSource, holder);
+		}
 
 		return getIdFromHolder(holder, persistentEntity);
 	}
@@ -565,6 +574,19 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 	private SqlGenerator sql(Class<?> domainType) {
 		return sqlGeneratorSource.getSqlGenerator(domainType);
+	}
+
+	private <T> String[] getKeyColumnNames(Class<T> domainType) {
+
+		RelationalPersistentEntity<?> requiredPersistentEntity = context.getRequiredPersistentEntity(domainType);
+
+		if (!requiredPersistentEntity.hasIdProperty()) {
+			return new String[0];
+		}
+
+		SqlIdentifier idColumn = requiredPersistentEntity.getIdColumn();
+
+		return new String[] { idColumn.getReference(getIdentifierProcessing()) };
 	}
 
 	/**
