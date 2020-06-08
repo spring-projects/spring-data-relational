@@ -127,4 +127,10 @@ public class TestConfiguration {
 	Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
 		return DialectResolver.getDialect(operations.getJdbcOperations());
 	}
+
+	@Lazy
+	@Bean
+	TestDatabaseFeatures features(NamedParameterJdbcOperations operations) {
+		return new TestDatabaseFeatures(operations.getJdbcOperations());
+	}
 }

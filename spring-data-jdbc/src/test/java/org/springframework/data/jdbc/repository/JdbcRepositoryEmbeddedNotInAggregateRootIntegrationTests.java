@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -55,30 +56,29 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
-	@Configuration
-	@Import(TestConfiguration.class)
-	static class Config {
-
-		@Autowired JdbcRepositoryFactory factory;
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
-			return factory.getRepository(DummyEntityRepository.class);
-		}
-
-	}
-
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
-
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 	@Autowired Dialect dialect;
+	@Autowired TestDatabaseFeatures features;
+
+	private static DummyEntity createDummyEntity() {
+		DummyEntity entity = new DummyEntity();
+
+		entity.setTest("rootTest");
+
+		final DummyEntity2 dummyEntity2 = new DummyEntity2();
+		dummyEntity2.setTest("c1");
+
+		final Embeddable embeddable = new Embeddable();
+		embeddable.setAttr(1L);
+		dummyEntity2.setEmbeddable(embeddable);
+
+		entity.setDummyEntity2(dummyEntity2);
+
+		return entity;
+	}
 
 	@Test // DATAJDBC-111
 	public void savesAnEntity() throws SQLException {
@@ -94,12 +94,13 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 		SqlIdentifier id = SqlIdentifier.quoted("ID");
 		String whereClause = id.toSql(dialect.getIdentifierProcessing()) + " = " + idValue;
 
-		return   JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(),
-				name, whereClause);
+		return JdbcTestUtils.countRowsInTableWhere((JdbcTemplate) template.getJdbcOperations(), name, whereClause);
 	}
 
 	@Test // DATAJDBC-111
 	public void saveAndLoadAnEntity() {
+
+		features.supportsAsForJoinAlias();
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
@@ -114,6 +115,8 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 	@Test // DATAJDBC-111
 	public void findAllFindsAllEntities() {
 
+		features.supportsAsForJoinAlias();
+
 		DummyEntity entity = repository.save(createDummyEntity());
 		DummyEntity other = repository.save(createDummyEntity());
 
@@ -127,12 +130,16 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 	@Test // DATAJDBC-111
 	public void findByIdReturnsEmptyWhenNoneFound() {
 
+		features.supportsAsForJoinAlias();
+
 		// NOT saving anything, so DB is empty
 		assertThat(repository.findById(-1L)).isEmpty();
 	}
 
 	@Test // DATAJDBC-111
 	public void update() {
+
+		features.supportsAsForJoinAlias();
 
 		DummyEntity entity = repository.save(createDummyEntity());
 
@@ -149,6 +156,8 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 	@Test // DATAJDBC-111
 	public void updateMany() {
+
+		features.supportsAsForJoinAlias();
 
 		DummyEntity entity = repository.save(createDummyEntity());
 		DummyEntity other = repository.save(createDummyEntity());
@@ -174,6 +183,8 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 	@Test // DATAJDBC-111
 	public void deleteById() {
 
+		features.supportsAsForJoinAlias();
+
 		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = repository.save(createDummyEntity());
 		DummyEntity three = repository.save(createDummyEntity());
@@ -187,6 +198,9 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 	@Test // DATAJDBC-111
 	public void deleteByEntity() {
+
+		features.supportsAsForJoinAlias();
+
 		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = repository.save(createDummyEntity());
 		DummyEntity three = repository.save(createDummyEntity());
@@ -200,6 +214,8 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 
 	@Test // DATAJDBC-111
 	public void deleteByList() {
+
+		features.supportsAsForJoinAlias();
 
 		DummyEntity one = repository.save(createDummyEntity());
 		DummyEntity two = repository.save(createDummyEntity());
@@ -215,6 +231,8 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 	@Test // DATAJDBC-111
 	public void deleteAll() {
 
+		features.supportsAsForJoinAlias();
+
 		repository.save(createDummyEntity());
 		repository.save(createDummyEntity());
 		repository.save(createDummyEntity());
@@ -226,24 +244,25 @@ public class JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests {
 		assertThat(repository.findAll()).isEmpty();
 	}
 
-	private static DummyEntity createDummyEntity() {
-		DummyEntity entity = new DummyEntity();
-
-		entity.setTest("rootTest");
-
-		final DummyEntity2 dummyEntity2 = new DummyEntity2();
-		dummyEntity2.setTest("c1");
-
-		final Embeddable embeddable = new Embeddable();
-		embeddable.setAttr(1L);
-		dummyEntity2.setEmbeddable(embeddable);
-
-		entity.setDummyEntity2(dummyEntity2);
-
-		return entity;
-	}
-
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+
+	@Configuration
+	@Import(TestConfiguration.class)
+	static class Config {
+
+		@Autowired JdbcRepositoryFactory factory;
+
+		@Bean
+		Class<?> testClass() {
+			return JdbcRepositoryEmbeddedNotInAggregateRootIntegrationTests.class;
+		}
+
+		@Bean
+		DummyEntityRepository dummyEntityRepository() {
+			return factory.getRepository(DummyEntityRepository.class);
+		}
+
+	}
 
 	@Data
 	static class DummyEntity {

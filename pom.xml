@@ -204,7 +204,7 @@
 										<exclude>**/*HsqlIntegrationTests.java</exclude>
 									</excludes>
 									<systemPropertyVariables>
-										<spring.profiles.active>orcacle</spring.profiles.active>
+										<spring.profiles.active>oracle</spring.profiles.active>
 									</systemPropertyVariables>
 								</configuration>
 							</execution>

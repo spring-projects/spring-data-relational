@@ -33,6 +33,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
+import org.springframework.data.relational.core.dialect.OracleDialect;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
@@ -130,6 +131,9 @@ public class DialectResolver {
 			}
 			if (name.contains("db2")) {
 				return Db2Dialect.INSTANCE;
+			}
+			if (name.contains("oracle")) {
+				return OracleDialect.INSTANCE;
 			}
 
 			LOG.info(String.format("Couldn't determine Dialect for \"%s\"", name) );

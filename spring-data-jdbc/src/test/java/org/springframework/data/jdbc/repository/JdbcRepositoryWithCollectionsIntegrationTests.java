@@ -34,12 +34,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.DatabaseProfileValueSource;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.annotation.IfProfileValue;
-import org.springframework.test.annotation.ProfileValueSourceConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
@@ -52,32 +50,23 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Thomas Lang
  */
 @ContextConfiguration
-@ProfileValueSourceConfiguration(DatabaseProfileValueSource.class)
 @Transactional
 public class JdbcRepositoryWithCollectionsIntegrationTests {
-
-	@Configuration
-	@Import(TestConfiguration.class)
-	static class Config {
-
-		@Autowired JdbcRepositoryFactory factory;
-
-		@Bean
-		Class<?> testClass() {
-			return JdbcRepositoryWithCollectionsIntegrationTests.class;
-		}
-
-		@Bean
-		DummyEntityRepository dummyEntityRepository() {
-			return factory.getRepository(DummyEntityRepository.class);
-		}
-	}
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
+
+	@Autowired TestDatabaseFeatures features;
+
+	private static DummyEntity createDummyEntity() {
+
+		DummyEntity entity = new DummyEntity();
+		entity.setName("Entity Name");
+		return entity;
+	}
 
 	@Test // DATAJDBC-113
 	public void saveAndLoadEmptySet() {
@@ -139,8 +128,9 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 	}
 
 	@Test // DATAJDBC-113
-	@IfProfileValue(name = "current.database.is.not.mssql", value = "true") // DATAJDBC-278
 	public void updateSet() {
+
+		features.supportsGeneratedIdsInReferencedEntities();
 
 		Element element1 = createElement("one");
 		Element element2 = createElement("two");
@@ -203,29 +193,39 @@ public class JdbcRepositoryWithCollectionsIntegrationTests {
 		return element;
 	}
 
-	private static DummyEntity createDummyEntity() {
-
-		DummyEntity entity = new DummyEntity();
-		entity.setName("Entity Name");
-		return entity;
-	}
-
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
+
+	@Configuration
+	@Import(TestConfiguration.class)
+	static class Config {
+
+		@Autowired JdbcRepositoryFactory factory;
+
+		@Bean
+		Class<?> testClass() {
+			return JdbcRepositoryWithCollectionsIntegrationTests.class;
+		}
+
+		@Bean
+		DummyEntityRepository dummyEntityRepository() {
+			return factory.getRepository(DummyEntityRepository.class);
+		}
+	}
 
 	@Data
 	static class DummyEntity {
 
-		@Id private Long id;
 		String name;
 		Set<Element> content = new HashSet<>();
+		@Id private Long id;
 
 	}
 
 	@RequiredArgsConstructor
 	static class Element {
 
-		@Id private Long id;
 		String content;
+		@Id private Long id;
 	}
 
 }

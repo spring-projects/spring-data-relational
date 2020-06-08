@@ -72,6 +72,7 @@ class JdbcAggregateChangeExecutionContext {
 	}
 
 	<T> void executeInsertRoot(DbAction.InsertRoot<T> insert) {
+
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(insert.getEntityType());
 
 		Object id;

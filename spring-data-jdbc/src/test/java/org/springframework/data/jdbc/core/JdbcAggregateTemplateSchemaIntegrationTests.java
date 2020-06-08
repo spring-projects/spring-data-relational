@@ -27,6 +27,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -36,6 +37,7 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assumptions.*;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate} using an entity mapped with an explicite schema.
@@ -52,9 +54,13 @@ public class JdbcAggregateTemplateSchemaIntegrationTests {
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
 
+@Autowired
+	TestDatabaseFeatures features;
 
 	@Test
 	public void insertFindUpdateDelete() {
+
+		features.supportsQuotedIds();
 
 		DummyEntity entity = new DummyEntity();
 		entity.name = "Alfred";

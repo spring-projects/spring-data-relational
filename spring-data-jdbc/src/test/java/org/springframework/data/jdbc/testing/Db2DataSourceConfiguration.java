@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.testing;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
