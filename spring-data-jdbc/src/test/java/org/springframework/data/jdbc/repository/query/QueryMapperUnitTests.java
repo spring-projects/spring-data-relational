@@ -126,6 +126,20 @@ public class QueryMapperUnitTests {
 				.hasToString("person.\"NAME\" = ?[:name] AND (person.\"NAME\" = ?[:name1] OR person.age < ?[:age])");
 	}
 
+	@Test // DATAJDBC-560
+	public void shouldMapFromConcat() {
+
+		Criteria criteria = Criteria.from(Criteria.where("name").is("Foo"), Criteria.where("name").is("Bar") //
+				.or("age").lessThan(49));
+
+		assertThat(criteria.isEmpty()).isFalse();
+
+		Condition condition = map(criteria);
+
+		assertThat(condition)
+				.hasToString("(person.\"NAME\" = ?[:name] AND (person.\"NAME\" = ?[:name1] OR person.age < ?[:age]))");
+	}
+
 	@Test // DATAJDBC-318
 	public void shouldMapSimpleCriteria() {
 
