@@ -191,7 +191,7 @@ class QueryMapper {
 
 			Condition condition = getCondition(criterion, parameterSource, table, entity);
 			if (condition != null) {
-				result = combine(criterion, mapped, criterion.getCombinator(), condition);
+				result = combine(mapped, criterion.getCombinator(), condition);
 			}
 
 			if (result != null) {
@@ -221,7 +221,7 @@ class QueryMapper {
 
 			Condition condition = unroll(criterion, table, entity, parameterSource);
 
-			mapped = combine(criterion, mapped, combinator, condition);
+			mapped = combine(mapped, combinator, condition);
 		}
 
 		return mapped;
@@ -245,17 +245,19 @@ class QueryMapper {
 		return mapCondition(criteria, parameterSource, table, entity);
 	}
 
-	private Condition combine(CriteriaDefinition criteria, @Nullable Condition currentCondition,
+	private Condition combine(@Nullable Condition currentCondition,
 			CriteriaDefinition.Combinator combinator, Condition nextCondition) {
 
 		if (currentCondition == null) {
 			currentCondition = nextCondition;
+		} else if (combinator == CriteriaDefinition.Combinator.INITIAL) {
+			currentCondition = currentCondition.and(Conditions.nest(nextCondition));
 		} else if (combinator == CriteriaDefinition.Combinator.AND) {
 			currentCondition = currentCondition.and(nextCondition);
 		} else if (combinator == CriteriaDefinition.Combinator.OR) {
 			currentCondition = currentCondition.or(nextCondition);
 		} else {
-			throw new IllegalStateException("Combinator " + criteria.getCombinator() + " not supported");
+			throw new IllegalStateException("Combinator " + combinator + " not supported");
 		}
 
 		return currentCondition;
