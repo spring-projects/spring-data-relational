@@ -107,7 +107,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 
 			if (hasParameterOfType(method, Sort.class)) {
 				throw new IllegalStateException(String.format("Method must not have Pageable *and* Sort parameter. "
-						+ "Use sorting capabilities on Pageble instead! Offending method: %s", method.toString()));
+						+ "Use sorting capabilities on Pageable instead! Offending method: %s", method.toString()));
 			}
 		}
 
