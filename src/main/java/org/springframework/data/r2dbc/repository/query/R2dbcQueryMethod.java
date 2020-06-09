@@ -41,6 +41,7 @@ import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.repository.util.ReactiveWrapperConverters;
 import org.springframework.data.repository.util.ReactiveWrappers;
 import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -59,10 +60,10 @@ public class R2dbcQueryMethod extends QueryMethod {
 	@SuppressWarnings("rawtypes") //
 	private static final ClassTypeInformation<Slice> SLICE_TYPE = ClassTypeInformation.from(Slice.class);
 
-	private final Method method;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final Optional<Query> query;
 	private final boolean modifying;
+	private final Lazy<Boolean> isCollectionQuery;
 
 	private @Nullable RelationalEntityMetadata<?> metadata;
 
@@ -110,10 +111,11 @@ public class R2dbcQueryMethod extends QueryMethod {
 			}
 		}
 
-		this.method = method;
 		this.query = Optional.ofNullable(
 				AnnotatedElementUtils.findMergedAnnotation(method, Query.class));
 		this.modifying = AnnotatedElementUtils.hasAnnotation(method, Modifying.class);
+		this.isCollectionQuery = Lazy.of(() -> !(isPageQuery() || isSliceQuery())
+				&& ReactiveWrappers.isMultiValueType(metadata.getReturnType(method).getType()));
 	}
 
 	/* (non-Javadoc)
@@ -129,7 +131,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 	 */
 	@Override
 	public boolean isCollectionQuery() {
-		return !(isPageQuery() || isSliceQuery()) && ReactiveWrappers.isMultiValueType(method.getReturnType());
+		return isCollectionQuery.get();
 	}
 
 	/* (non-Javadoc)
