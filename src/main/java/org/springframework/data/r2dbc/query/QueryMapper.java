@@ -322,12 +322,14 @@ public class QueryMapper {
 
 		if (currentCondition == null) {
 			currentCondition = nextCondition;
+		} else if (combinator == CriteriaDefinition.Combinator.INITIAL) {
+			currentCondition = currentCondition.and(Conditions.nest(nextCondition));
 		} else if (combinator == CriteriaDefinition.Combinator.AND) {
 			currentCondition = currentCondition.and(nextCondition);
 		} else if (combinator == CriteriaDefinition.Combinator.OR) {
 			currentCondition = currentCondition.or(nextCondition);
 		} else {
-			throw new IllegalStateException("Combinator " + criteria.getCombinator() + " not supported");
+			throw new IllegalStateException("Combinator " + combinator + " not supported");
 		}
 
 		return currentCondition;

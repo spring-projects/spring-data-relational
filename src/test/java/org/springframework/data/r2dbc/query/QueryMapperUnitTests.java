@@ -126,6 +126,22 @@ public class QueryMapperUnitTests {
 				.isEqualTo("person.name = ?[$1] AND (person.name = ?[$2] OR person.age < ?[$3])");
 	}
 
+	@Test // gh-383
+	public void shouldMapFromConcat() {
+
+		Criteria criteria = Criteria.from(Criteria.where("name").is("Foo"), Criteria.where("name").is("Bar") //
+				.or("age").lessThan(49));
+
+		assertThat(map(criteria).getCondition().toString())
+				.isEqualTo("(person.name = ?[$1] AND (person.name = ?[$2] OR person.age < ?[$3]))");
+
+		criteria = Criteria.from(Criteria.where("name").is("Foo"), Criteria.where("name").is("Bar") //
+				.or("age").lessThan(49), Criteria.where("foo").is("bar"));
+
+		assertThat(map(criteria).getCondition().toString())
+				.isEqualTo("(person.name = ?[$1] AND (person.name = ?[$2] OR person.age < ?[$3]) AND (person.foo = ?[$4]))");
+	}
+
 	@Test // gh-64
 	public void shouldMapSimpleCriteria() {
 
