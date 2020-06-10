@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.18.RELEASE (2020-06-10)
+----------------------------------------------
+* DATAJDBC-545 - withId seems to be mandatory even the documentation states it should be optional.
+* DATAJDBC-532 - Remove Travis CI.
+* DATAJDBC-525 - Release 1.0.18 (Lovelace SR18).
+
+
 Changes in version 2.0.0.RC2 (2020-04-28)
 -----------------------------------------
 * DATAJDBC-520 - Improve documentation for MappedCollection.
@@ -435,6 +442,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
