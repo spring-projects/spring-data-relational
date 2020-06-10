@@ -1,6 +1,14 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.8.RELEASE (2020-06-10)
+---------------------------------------------
+* DATAJDBC-546 - Skip property population if entity can be constructed entirely using a full constructor.
+* DATAJDBC-545 - withId seems to be mandatory even the documentation states it should be optional.
+* DATAJDBC-532 - Remove Travis CI.
+* DATAJDBC-527 - Release 1.1.8 (Moore SR8).
+
+
 Changes in version 1.0.18.RELEASE (2020-06-10)
 ----------------------------------------------
 * DATAJDBC-545 - withId seems to be mandatory even the documentation states it should be optional.
@@ -442,6 +450,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
