@@ -1,6 +1,19 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.1.RELEASE (2020-06-10)
+---------------------------------------------
+* DATAJDBC-560 - QueryMapper fails when using Criteria.from(…) with two or more criteria.
+* DATAJDBC-555 - Document supported databases.
+* DATAJDBC-547 - "PSQLException: ERROR: FOR UPDATE must specify unqualified relation names" when calling deleteById for an aggregate with references to other tables.
+* DATAJDBC-546 - Skip property population if entity can be constructed entirely using a full constructor.
+* DATAJDBC-545 - withId seems to be mandatory even the documentation states it should be optional.
+* DATAJDBC-542 - Version 2.0 broke MyBatis support.
+* DATAJDBC-540 - Release 2.0.1 (Neumann SR1).
+* DATAJDBC-539 - CriteriaFactory double-wraps collection values for IN queries.
+* DATAJDBC-412 - Custom value type can't be used as Id.
+
+
 Changes in version 1.1.8.RELEASE (2020-06-10)
 ---------------------------------------------
 * DATAJDBC-546 - Skip property population if entity can be constructed entirely using a full constructor.
@@ -462,6 +475,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
