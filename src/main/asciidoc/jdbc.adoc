@@ -71,7 +71,7 @@ First, you need to set up a running database server. Refer to your vendor docume
 To create a Spring project in STS:
 
 . Go to File -> New -> Spring Template Project -> Simple Spring Utility Project, and press Yes when prompted. Then enter a project and a package name, such as `org.spring.jdbc.example`.
-.Add the following to the pom.xml files `dependencies` element:
+. Add the following to the `pom.xml` files `dependencies` element:
 +
 [source,xml,subs="+attributes"]
 ----
@@ -171,10 +171,6 @@ There are a couple of things one might want to customize in this setup.
 Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
 By default, the `AbstractJdbcConfiguration` tries to determine the database in use an register the correct `Dialect`.
 This behavior can be changed by overwriting `jdbcDialect(NamedParameterJdbcOperations)`.
-
-TIP: Dialects are resolved by `JdbcDialectResolver` from `JdbcOperations`, typically by inspecting `Connection`.
-You can let Spring auto-discover your `Dialect` by registering a class that implements `org.springframework.data.jdbc.repository.config.DialectResolver$JdbcDialectProvider` through `META-INF/spring.factories`.
-`DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
 
 If you use a database for which no dialect is available, then your application won’t startup. In that case, you’ll have to ask your vendor to provide a `Dialect` implementation. Alternatively, you can:
 
