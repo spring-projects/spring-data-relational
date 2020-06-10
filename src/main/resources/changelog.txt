@@ -1,6 +1,18 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.1.1.RELEASE (2020-06-10)
+---------------------------------------------
+* #384 - Consider return type of suspended methods returning Flow.
+* #383 - QueryMapper fails when using Criteria.from(…) with two or more criteria.
+* #377 - Upgrade to R2DBC Arabba SR4.
+* #375 - Document supported databases.
+* #373 - SpEL parsing does not consider multiple usages and nested object references.
+* #369 - PropertyReferenceException if path expression maps into simple type properties.
+* #366 - Release 1.1.1 (Neumann SR1).
+* #207 - R2dbcCustomConversions converts LocalDate/LocalDateTime/Instant values to java.util.Date.
+
+
 Changes in version 1.1.0.RELEASE (2020-05-12)
 ---------------------------------------------
 * #365 - Support optimistic locking in immutable way.
@@ -228,6 +240,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
