@@ -497,6 +497,9 @@ interface PersonRepository extends PagingAndSortingRepository<Person, String> {
 
   @Query("SELECT * FROM person WHERE lastname = :lastname")
   List<Person> findByLastname(String lastname);                                     <5>
+  
+  @Query("SELECT * FROM person WHERE username = :#{ principal?.username }")
+  Person findActiveUser();															<6>
 }
 ----
 <1> The method shows a query for all people with the given `lastname`.
@@ -507,6 +510,8 @@ Thus, the method name results in a query expression of `SELECT … FROM person W
 It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
 <4> In contrast to <3>, the first entity is always emitted even if the query yields more result documents.
 <5> The `findByLastname` method shows a query for all people with the given last name.
+<6> You can use the Spring Expression Language to dynamically resolve parameters. In the sample, Spring Security is used to resolve the username of the current user.
+
 ====
 
 The following table shows the keywords that are supported for query methods:

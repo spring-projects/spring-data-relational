@@ -63,6 +63,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Christopher Klein
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -319,12 +320,17 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 	public Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 
-		String statementName = namespace(path.getBaseProperty().getOwner().getType()) + ".findAllByPath-"
+
+		
+		// Using "path.getBaseProperty().getOwner().getType()" will throw "The method getOwner() is ambiguous for the type capture#12-of ? extends RelationalPersistentProperty" in Eclipse
+		RelationalPersistentProperty prop = path.getBaseProperty();
+		Class<?> clazz = prop.getOwner().getType();
+		
+		String statementName = namespace(clazz) + ".findAllByPath-"
 				+ path.toDotPath();
 
 		return sqlSession().selectList(statementName,
 				new MyBatisContext(identifier, null, path.getRequiredLeafProperty().getType()));
-
 	}
 
 	/*

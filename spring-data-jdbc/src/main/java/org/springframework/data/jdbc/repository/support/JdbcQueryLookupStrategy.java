@@ -37,6 +37,7 @@ import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryCreationException;
 import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
@@ -53,6 +54,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Maciej Walkowiak
  * @author Moises Cisneros
+ * @author Christopher Klein
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
@@ -63,10 +65,13 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final Dialect dialect;
 	private final QueryMappingConfiguration queryMappingConfiguration;
 	private final NamedParameterJdbcOperations operations;
+	private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
 	public JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 			RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
-			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations) {
+			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
+			QueryMethodEvaluationContextProvider evaluationContextProvider
+			) {
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
 		Assert.notNull(context, "RelationalMappingContextPublisher must not be null");
@@ -74,6 +79,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(queryMappingConfiguration, "QueryMappingConfiguration must not be null");
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
+		Assert.notNull(evaluationContextProvider, "QueryMethodEvaluationContextProvier must not be null");
 
 		this.publisher = publisher;
 		this.callbacks = callbacks;
@@ -82,6 +88,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		this.dialect = dialect;
 		this.queryMappingConfiguration = queryMappingConfiguration;
 		this.operations = operations;
+		this.evaluationContextProvider = evaluationContextProvider;
 	}
 
 	/*
@@ -99,7 +106,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			if (namedQueries.hasQuery(queryMethod.getNamedQueryName()) || queryMethod.hasAnnotatedQuery()) {
 
 				RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
-				return new StringBasedJdbcQuery(queryMethod, operations, mapper, converter);
+				return new StringBasedJdbcQuery(queryMethod, operations, mapper, converter, evaluationContextProvider);
 			} else {
 				return new PartTreeJdbcQuery(context, queryMethod, dialect, converter, operations, createMapper(queryMethod));
 			}

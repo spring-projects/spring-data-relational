@@ -15,11 +15,9 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-
-import lombok.Data;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -47,7 +45,9 @@ import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -56,11 +56,14 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.Data;
+
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Christopher Klein
  */
 @Transactional
 public class JdbcRepositoryIntegrationTests {
@@ -93,6 +96,20 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		MyEventListener eventListener() {
 			return new MyEventListener();
+		}
+		
+		@Bean
+		public ExtensionAwareQueryMethodEvaluationContextProvider extensionAware(List<EvaluationContextExtension> exts) {
+			ExtensionAwareQueryMethodEvaluationContextProvider extensionAwareQueryMethodEvaluationContextProvider = new ExtensionAwareQueryMethodEvaluationContextProvider(exts);
+			
+			factory.setEvaluationContextProvider(extensionAwareQueryMethodEvaluationContextProvider);
+			
+			return extensionAwareQueryMethodEvaluationContextProvider;
+		}
+		
+		@Bean
+		public EvaluationContextExtension evaluationContextExtension() {
+			return new MyIdContextProvider();
 		}
 	}
 
@@ -381,6 +398,17 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(repository.countByName(one.getName())).isEqualTo(2);
 	}
+	
+	@Test // DATAJDBC-397
+	public void findBySpElWorksAsExpected() {
+		DummyEntity r = repository.save(createDummyEntity());
+		
+		// assign the new id to the global ID provider holder; this is similar to Spring Security's SecurityContextHolder
+		MyIdContextProvider.ExtensionRoot.ID = r.getIdProp();
+		
+		// expect, that we can find our newly created entity based upon the ID provider
+		assertThat(repository.findWithSpEL().getIdProp()).isEqualTo(r.getIdProp());
+	}
 
 	private static DummyEntity createDummyEntity() {
 
@@ -408,9 +436,33 @@ public class JdbcRepositoryIntegrationTests {
 		@Query("SELECT id_Prop from dummy_entity where id_Prop = :id")
 		DummyEntity withMissingColumn(@Param("id") Long id);
 
+		@Query("SELECT * FROM dummy_entity WHERE id_prop = :#{myext.id}")
+		DummyEntity findWithSpEL();
+		
 		boolean existsByName(String name);
 
 		int countByName(String name);
+	}
+	
+	// DATAJDBC-397
+	public static class MyIdContextProvider implements EvaluationContextExtension {
+		@Override
+		public String getExtensionId() {
+			return "myext";
+		}
+
+		public static class ExtensionRoot {
+			// just public for testing purposes
+			public static Long ID = 1L;
+			
+			public Long getId() {
+				return ID;
+			}
+		}
+
+		public Object getRootObject() {
+			return new ExtensionRoot();
+		}
 	}
 
 	@Data

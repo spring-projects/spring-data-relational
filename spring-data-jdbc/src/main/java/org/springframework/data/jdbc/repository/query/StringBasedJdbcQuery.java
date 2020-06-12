@@ -17,14 +17,24 @@ package org.springframework.data.jdbc.repository.query;
 
 import java.lang.reflect.Constructor;
 import java.sql.JDBCType;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.repository.query.parameter.ParameterBindingParser;
+import org.springframework.data.jdbc.repository.query.parameter.ParameterBindings.Metadata;
+import org.springframework.data.jdbc.repository.query.parameter.ParameterBindings.ParameterBinding;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -34,14 +44,15 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
- * method.
+ * A query to be executed based on a repository method, it's annotated SQL query
+ * and the arguments provided to the method.
  *
  * @author Jens Schauder
  * @author Kazuki Shimizu
  * @author Oliver Gierke
  * @author Maciej Walkowiak
  * @author Mark Paluch
+ * @author Christopher Klein
  * @since 2.0
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
@@ -51,22 +62,27 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private final JdbcQueryMethod queryMethod;
 	private final JdbcQueryExecution<?> executor;
 	private final JdbcConverter converter;
+	private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
 	/**
-	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
-	 * and {@link RowMapper}.
+	 * Creates a new {@link StringBasedJdbcQuery} for the given
+	 * {@link JdbcQueryMethod}, {@link RelationalMappingContext} and
+	 * {@link RowMapper}.
 	 *
-	 * @param queryMethod must not be {@literal null}.
-	 * @param operations must not be {@literal null}.
-	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
+	 * @param queryMethod      must not be {@literal null}.
+	 * @param operations       must not be {@literal null}.
+	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying
+	 *                         query).
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter) {
+			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter,
+			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		super(queryMethod, operations, defaultRowMapper);
 
 		this.queryMethod = queryMethod;
 		this.converter = converter;
+		this.evaluationContextProvider = evaluationContextProvider;
 
 		RowMapper<Object> rowMapper = determineRowMapper(defaultRowMapper);
 		executor = getQueryExecution( //
@@ -78,24 +94,76 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.RepositoryQuery#execute(java.lang.Object[])
+	 * 
+	 * @see
+	 * org.springframework.data.repository.query.RepositoryQuery#execute(java.lang.
+	 * Object[])
 	 */
 	@Override
 	public Object execute(Object[] objects) {
-		return executor.execute(determineQuery(), this.bindParameters(objects));
+		
+		Metadata queryMeta = new Metadata();
+
+		String query = queryMethod.getDeclaredQuery();
+
+		if (StringUtils.isEmpty(query)) {
+			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
+		}
+
+		List<ParameterBinding> bindings = new ArrayList<>();
+
+		query = ParameterBindingParser.INSTANCE.parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(query,
+				bindings, queryMeta);
+
+		MapSqlParameterSource parameterMap = this.bindMethodParameters(objects);
+
+		extendParametersFromSpELEvaluation(parameterMap, bindings, objects);
+		return executor.execute(query, parameterMap);
+	}
+
+	/**
+	 * Extend the {@link MapSqlParameterSource} by evaluating each detected SpEL
+	 * parameter in the original query.
+	 * 
+	 * This is basically a simple variant of Spring Data JPA's SPeL implementation.
+	 * 
+	 * @param parameterMap
+	 * @param bindings
+	 * @param values
+	 */
+	void extendParametersFromSpELEvaluation(MapSqlParameterSource parameterMap, List<ParameterBinding> bindings, Object[] values) {
+		
+		if (bindings.size() == 0) {
+			return;
+		}
+
+		ExpressionParser parser = new SpelExpressionParser();
+
+		bindings.forEach(binding -> {
+			if (!binding.isExpression()) {
+				return;
+			}
+
+			Expression expression = parser.parseExpression(binding.getExpression());
+			EvaluationContext context = evaluationContextProvider.getEvaluationContext(this.queryMethod.getParameters(),
+					values);
+
+			parameterMap.addValue(binding.getName(), expression.getValue(context, Object.class));
+		});
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.RepositoryQuery#getQueryMethod()
+	 * 
+	 * @see
+	 * org.springframework.data.repository.query.RepositoryQuery#getQueryMethod()
 	 */
 	@Override
 	public JdbcQueryMethod getQueryMethod() {
 		return queryMethod;
 	}
 
-	MapSqlParameterSource bindParameters(Object[] objects) {
-
+	MapSqlParameterSource bindMethodParameters(Object[] objects) {
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
 		queryMethod.getParameters().getBindableParameters()
@@ -121,17 +189,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		} else {
 			parameters.addValue(parameterName, jdbcValue.getValue(), jdbcType.getVendorTypeNumber());
 		}
-	}
-
-	private String determineQuery() {
-
-		String query = queryMethod.getDeclaredQuery();
-
-		if (StringUtils.isEmpty(query)) {
-			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
-		}
-
-		return query;
 	}
 
 	@Nullable

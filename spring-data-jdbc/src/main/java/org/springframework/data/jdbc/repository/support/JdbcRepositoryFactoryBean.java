@@ -44,6 +44,7 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @author Oliver Gierke
  * @author Mark Paluch
+ * @author Christopher Klein
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {

@@ -35,6 +35,7 @@ import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -50,6 +51,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Maciej Walkowiak
  * @author Evgeni Dimitrov
  * @author Mark Paluch
+ * @author Christopher Klein
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
@@ -61,6 +63,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	RepositoryMetadata metadata;
 	NamedQueries namedQueries = mock(NamedQueries.class);
 	NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
+	QueryMethodEvaluationContextProvider evaluationContextProvider = mock(QueryMethodEvaluationContextProvider.class);
 
 	@Before
 	public void setup() {
@@ -88,7 +91,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 
 		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, callbacks, mappingContext,
-				converter, H2Dialect.INSTANCE, mappingConfiguration, operations);
+				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, evaluationContextProvider);
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
 		return queryLookupStrategy.resolveQuery(method, metadata, projectionFactory, namedQueries);
