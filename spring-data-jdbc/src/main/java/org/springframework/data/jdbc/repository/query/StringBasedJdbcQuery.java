@@ -29,6 +29,9 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.repository.query.parameter.ParameterBindingParser;
+import org.springframework.data.jdbc.repository.query.parameter.ParameterBindings.Metadata;
+import org.springframework.data.jdbc.repository.query.parameter.ParameterBindings.ParameterBinding;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -36,11 +39,18 @@ import org.springframework.data.relational.repository.query.RelationalParameters
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.ResultProcessor;
+import org.springframework.data.repository.query.SpelQueryContext;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -57,6 +67,7 @@ import org.springframework.util.ObjectUtils;
  * @author Mark Paluch
  * @author Hebert Coelho
  * @author Chirag Tailor
+ * @author Christopher Klein
  * @since 2.0
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
@@ -67,6 +78,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private final JdbcConverter converter;
 	private final RowMapperFactory rowMapperFactory;
 	private BeanFactory beanFactory;
+	private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -77,8 +89,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter) {
-		this(queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper, converter);
+			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter,
+			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+		this(queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper, converter, evaluationContextProvider);
 	}
 
 	/**
@@ -91,7 +104,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @since 2.3
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			RowMapperFactory rowMapperFactory, JdbcConverter converter) {
+			RowMapperFactory rowMapperFactory, JdbcConverter converter,
+			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		super(queryMethod, operations);
 
@@ -100,6 +114,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		this.queryMethod = queryMethod;
 		this.converter = converter;
 		this.rowMapperFactory = rowMapperFactory;
+		this.evaluationContextProvider = evaluationContextProvider;
 
 		if (queryMethod.isSliceQuery()) {
 			throw new UnsupportedOperationException(
@@ -115,6 +130,16 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	@Override
 	public Object execute(Object[] objects) {
 
+//		List<ParameterBinding> parameterBindings = new ArrayList<>();
+//		SpelQueryContext queryContext = SpelQueryContext.of((counter, expression) -> {
+//
+//			String parameterName = String.format("__synthetic_%d__", counter);
+//			parameterBindings.add(new ParameterBinding(parameterName, expression));
+//			return parameterName;
+//		}, String::concat);
+//
+//		SpelQueryContext.SpelExtractor parsed = queryContext.parse(query);
+
 		RelationalParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(), objects);
 		ResultProcessor processor = getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
 		ResultProcessingConverter converter = new ResultProcessingConverter(processor, this.converter.getMappingContext(),
@@ -128,7 +153,51 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 				determineResultSetExtractor(rowMapper), //
 				rowMapper);
 
-		return queryExecution.execute(determineQuery(), this.bindParameters(accessor));
+		Metadata queryMeta = new Metadata();
+
+		String query = determineQuery();
+
+		if (ObjectUtils.isEmpty(query)) {
+			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
+		}
+		List<ParameterBinding> bindings = new ArrayList<>();
+
+		query = ParameterBindingParser.INSTANCE.parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(query,
+				bindings, queryMeta);
+
+		SqlParameterSource parameterMap = this.bindParameters(accessor);
+		extendParametersFromSpELEvaluation((MapSqlParameterSource) parameterMap, bindings, objects);
+		return queryExecution.execute(query, parameterMap);
+	}
+
+	/**
+	 * Extend the {@link MapSqlParameterSource} by evaluating each detected SpEL parameter in the original query. This is
+	 * basically a simple variant of Spring Data JPA's SPeL implementation.
+	 *
+	 * @param parameterMap
+	 * @param bindings
+	 * @param values
+	 */
+	void extendParametersFromSpELEvaluation(MapSqlParameterSource parameterMap, List<ParameterBinding> bindings,
+			Object[] values) {
+
+		if (bindings.size() == 0) {
+			return;
+		}
+
+		ExpressionParser parser = new SpelExpressionParser();
+
+		bindings.forEach(binding -> {
+			if (!binding.isExpression()) {
+				return;
+			}
+
+			Expression expression = parser.parseExpression(binding.getExpression());
+			EvaluationContext context = evaluationContextProvider.getEvaluationContext(this.queryMethod.getParameters(),
+					values);
+
+			parameterMap.addValue(binding.getName(), expression.getValue(context, Object.class));
+		});
 	}
 
 	@Override

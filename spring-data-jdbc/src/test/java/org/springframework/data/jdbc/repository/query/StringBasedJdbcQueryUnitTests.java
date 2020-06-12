@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Method;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -49,6 +50,9 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -65,6 +69,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Mark Paluch
  * @author Dennis Effing
  * @author Chirag Tailor
+ * @author Christopher Klein
  */
 class StringBasedJdbcQueryUnitTests {
 
@@ -72,6 +77,7 @@ class StringBasedJdbcQueryUnitTests {
 	NamedParameterJdbcOperations operations;
 	RelationalMappingContext context;
 	JdbcConverter converter;
+	QueryMethodEvaluationContextProvider evaluationContextProvider;
 
 	@BeforeEach
 	void setup() {
@@ -80,6 +86,7 @@ class StringBasedJdbcQueryUnitTests {
 		this.operations = mock(NamedParameterJdbcOperations.class);
 		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 		this.converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
+		this.evaluationContextProvider = mock(QueryMethodEvaluationContextProvider.class);
 	}
 
 	@Test // DATAJDBC-165
@@ -167,9 +174,10 @@ class StringBasedJdbcQueryUnitTests {
 
 		JdbcQueryMethod queryMethod = createMethod("sliceAll", Pageable.class);
 
-		assertThatThrownBy(() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter))
-				.isInstanceOf(UnsupportedOperationException.class)
-				.hasMessageContaining("Slice queries are not supported using string-based queries");
+		assertThatThrownBy(
+				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
+						.isInstanceOf(UnsupportedOperationException.class)
+						.hasMessageContaining("Slice queries are not supported using string-based queries");
 	}
 
 	@Test // GH-774
@@ -177,17 +185,20 @@ class StringBasedJdbcQueryUnitTests {
 
 		JdbcQueryMethod queryMethod = createMethod("pageAll", Pageable.class);
 
-		assertThatThrownBy(() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter))
-				.isInstanceOf(UnsupportedOperationException.class)
-				.hasMessageContaining("Page queries are not supported using string-based queries");
+		assertThatThrownBy(
+				() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider))
+						.isInstanceOf(UnsupportedOperationException.class)
+						.hasMessageContaining("Page queries are not supported using string-based queries");
 	}
 
 	@Test // GH-1212
 	void convertsEnumCollectionParameterIntoStringCollectionParameter() {
 
 		JdbcQueryMethod queryMethod = createMethod("findByEnumTypeIn", Set.class);
-		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class));
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class), converter);
+		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class),
+				mock(RelationResolver.class));
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class),
+				converter, evaluationContextProvider);
 
 		query.execute(new Object[] { Set.of(Direction.LEFT, Direction.RIGHT) });
 
@@ -202,8 +213,12 @@ class StringBasedJdbcQueryUnitTests {
 	void convertsEnumCollectionParameterUsingCustomConverterWhenRegisteredForType() {
 
 		JdbcQueryMethod queryMethod = createMethod("findByEnumTypeIn", Set.class);
-		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class), new JdbcCustomConversions(List.of(DirectionToIntegerConverter.INSTANCE, IntegerToDirectionConverter.INSTANCE)), JdbcTypeFactory.unsupported(), IdentifierProcessing.ANSI);
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class), converter);
+		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class),
+				mock(RelationResolver.class),
+				new JdbcCustomConversions(List.of(DirectionToIntegerConverter.INSTANCE, IntegerToDirectionConverter.INSTANCE)),
+				JdbcTypeFactory.unsupported(), IdentifierProcessing.ANSI);
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class),
+				converter, evaluationContextProvider);
 
 		query.execute(new Object[] { Set.of(Direction.LEFT, Direction.RIGHT) });
 
@@ -218,8 +233,10 @@ class StringBasedJdbcQueryUnitTests {
 	void doesNotConvertNonCollectionParameter() {
 
 		JdbcQueryMethod queryMethod = createMethod("findBySimpleValue", Integer.class);
-		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class), mock(RelationResolver.class));
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class), converter);
+		BasicJdbcConverter converter = new BasicJdbcConverter(mock(RelationalMappingContext.class),
+				mock(RelationResolver.class));
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, result -> mock(RowMapper.class),
+				converter, evaluationContextProvider);
 
 		query.execute(new Object[] { 1 });
 
@@ -238,7 +255,7 @@ class StringBasedJdbcQueryUnitTests {
 	}
 
 	private StringBasedJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
-		return new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
+		return new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, evaluationContextProvider);
 	}
 
 	interface MyRepository extends Repository<Object, Long> {
@@ -275,6 +292,35 @@ class StringBasedJdbcQueryUnitTests {
 
 		@Query(value = "some sql statement")
 		List<Object> findBySimpleValue(Integer value);
+
+		@Query("SELECT * FROM table WHERE c = :#{myext.testValue} AND c2 = :#{myext.doSomething()}")
+		Object findBySpelExpression(Object object);
+	}
+
+	@Test // GH-619
+	public void spelCanBeUsedInsideQueries() {
+
+		JdbcQueryMethod queryMethod = createMethod("findBySpelExpression", Object.class);
+
+		List<EvaluationContextExtension> list = new ArrayList<>();
+		list.add(new MyEvaluationContextProvider());
+		QueryMethodEvaluationContextProvider evaluationContextProviderImpl = new ExtensionAwareQueryMethodEvaluationContextProvider(
+				list);
+
+		StringBasedJdbcQuery sut = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter,
+				evaluationContextProviderImpl);
+
+		ArgumentCaptor<SqlParameterSource> paramSource = ArgumentCaptor.forClass(SqlParameterSource.class);
+		ArgumentCaptor<String> query = ArgumentCaptor.forClass(String.class);
+
+		sut.execute(new Object[] { "myValue" });
+
+		verify(this.operations).queryForObject(query.capture(), paramSource.capture(), any(RowMapper.class));
+
+		assertThat(query.getValue())
+				.isEqualTo("SELECT * FROM table WHERE c = :__$synthetic$__1 AND c2 = :__$synthetic$__2");
+		assertThat(paramSource.getValue().getValue("__$synthetic$__1")).isEqualTo("test-value1");
+		assertThat(paramSource.getValue().getValue("__$synthetic$__2")).isEqualTo("test-value2");
 	}
 
 	private static class CustomRowMapper implements RowMapper<Object> {
@@ -307,7 +353,7 @@ class StringBasedJdbcQueryUnitTests {
 	private enum Direction {
 		LEFT, CENTER, RIGHT
 	}
-	
+
 	@WritingConverter
 	enum DirectionToIntegerConverter implements Converter<Direction, JdbcValue> {
 
@@ -354,4 +400,27 @@ class StringBasedJdbcQueryUnitTests {
 			return id;
 		}
 	}
+
+	// DATAJDBC-397
+	static class MyEvaluationContextProvider implements EvaluationContextExtension {
+		@Override
+		public String getExtensionId() {
+			return "myext";
+		}
+
+		public static class ExtensionRoot {
+			public String getTestValue() {
+				return "test-value1";
+			}
+
+			public String doSomething() {
+				return "test-value2";
+			}
+		}
+
+		public Object getRootObject() {
+			return new ExtensionRoot();
+		}
+	}
+
 }

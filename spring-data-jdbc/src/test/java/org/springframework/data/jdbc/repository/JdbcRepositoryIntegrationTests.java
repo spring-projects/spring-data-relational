@@ -78,8 +78,10 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -90,6 +92,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.Data;
+
 /**
  * Very simple use cases for creation and usage of JdbcRepositories.
  *
@@ -97,6 +101,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Mark Paluch
  * @author Chirag Tailor
  * @author Diego Krupitza
+ * @author Christopher Klein
  */
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
@@ -451,6 +456,17 @@ public class JdbcRepositoryIntegrationTests {
 		repository.saveAll(asList(one, two, three));
 
 		assertThat(repository.countByName(one.getName())).isEqualTo(2);
+	}
+
+	@Test // GH-619
+	public void findBySpElWorksAsExpected() {
+		DummyEntity r = repository.save(createDummyEntity());
+
+		// assign the new id to the global ID provider holder; this is similar to Spring Security's SecurityContextHolder
+		MyIdContextProvider.ExtensionRoot.ID = r.getIdProp();
+
+		// expect, that we can find our newly created entity based upon the ID provider
+		assertThat(repository.findWithSpEL().getIdProp()).isEqualTo(r.getIdProp());
 	}
 
 	@Test // GH-945
@@ -1305,6 +1321,9 @@ public class JdbcRepositoryIntegrationTests {
 
 		boolean existsByNameNotIn(String... names);
 
+		@Query("SELECT * FROM dummy_entity WHERE id_prop = :#{myext.id}")
+		DummyEntity findWithSpEL();
+
 		boolean existsByName(String name);
 
 		int countByName(String name);
@@ -1376,6 +1395,20 @@ public class JdbcRepositoryIntegrationTests {
 		MyEventListener eventListener() {
 			return new MyEventListener();
 		}
+
+		@Bean
+		public ExtensionAwareQueryMethodEvaluationContextProvider extensionAware(List<EvaluationContextExtension> exts) {
+			ExtensionAwareQueryMethodEvaluationContextProvider extensionAwareQueryMethodEvaluationContextProvider = new ExtensionAwareQueryMethodEvaluationContextProvider(exts);
+
+			factory.setEvaluationContextProvider(extensionAwareQueryMethodEvaluationContextProvider);
+
+			return extensionAwareQueryMethodEvaluationContextProvider;
+		}
+
+		@Bean
+		public EvaluationContextExtension evaluationContextExtension() {
+			return new MyIdContextProvider();
+		}
 	}
 
 	interface RootRepository extends ListCrudRepository<Root, Long> {
@@ -1414,6 +1447,27 @@ public class JdbcRepositoryIntegrationTests {
 		@Override
 		public void onApplicationEvent(AbstractRelationalEvent<?> event) {
 			events.add(event);
+		}
+	}
+
+	// DATAJDBC-397
+	public static class MyIdContextProvider implements EvaluationContextExtension {
+		@Override
+		public String getExtensionId() {
+			return "myext";
+		}
+
+		public static class ExtensionRoot {
+			// just public for testing purposes
+			public static Long ID = 1L;
+
+			public Long getId() {
+				return ID;
+			}
+		}
+
+		public Object getRootObject() {
+			return new ExtensionRoot();
 		}
 	}
 

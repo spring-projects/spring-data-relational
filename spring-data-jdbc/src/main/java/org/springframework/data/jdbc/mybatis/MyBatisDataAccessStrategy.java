@@ -59,6 +59,7 @@ import org.springframework.util.Assert;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Christopher Klein
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
@@ -286,7 +287,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 		return sqlSession().selectList(statementName,
 				new MyBatisContext(identifier, null, path.getRequiredLeafProperty().getType()));
-
 	}
 
 	@Override

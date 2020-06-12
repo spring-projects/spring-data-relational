@@ -47,6 +47,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Hebert Coelho
  * @author Diego Krupitza
+ * @author Christopher Klein
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
@@ -136,7 +137,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		return Optional.of(JdbcQueryLookupStrategy.create(key, publisher, entityCallbacks, context, converter, dialect,
-				queryMappingConfiguration, operations, beanFactory));
+				queryMappingConfiguration, operations, beanFactory, evaluationContextProvider));
 	}
 
 	/**

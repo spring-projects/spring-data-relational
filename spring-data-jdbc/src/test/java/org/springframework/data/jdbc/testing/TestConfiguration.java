@@ -44,6 +44,8 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
+import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
+import org.springframework.data.spel.spi.EvaluationContextExtension;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -59,26 +61,35 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Myeonghyeon Lee
  * @author Christoph Strobl
  * @author Chirag Tailor
+ * @author Christopher Klein
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
 public class TestConfiguration {
 
-	@Autowired DataSource dataSource;
-	@Autowired BeanFactory beanFactory;
+	@Autowired
+	DataSource dataSource;
+	@Autowired
+	BeanFactory beanFactory;
 	@Autowired ApplicationEventPublisher publisher;
-	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
+	@Autowired(required = false)
+	SqlSessionFactory sqlSessionFactory;
 
 	@Bean
 	JdbcRepositoryFactory jdbcRepositoryFactory(
-			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
-			Dialect dialect, JdbcConverter converter, Optional<List<NamedQueries>> namedQueries) {
+			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy,
+			RelationalMappingContext context, Dialect dialect, JdbcConverter converter,
+			Optional<List<NamedQueries>> namedQueries, List<EvaluationContextExtension> evaulationContextExtensions) {
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
 				publisher, namedParameterJdbcTemplate());
 		namedQueries.map(it -> it.iterator().next()).ifPresent(factory::setNamedQueries);
+
+		factory.setEvaluationContextProvider(
+				new ExtensionAwareQueryMethodEvaluationContextProvider(evaulationContextExtensions));
 		return factory;
 	}
+
 
 	@Bean
 	NamedParameterJdbcOperations namedParameterJdbcTemplate() {
@@ -92,8 +103,8 @@ public class TestConfiguration {
 
 	@Bean
 	DataAccessStrategy defaultDataAccessStrategy(
-			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, RelationalMappingContext context,
-			JdbcConverter converter, Dialect dialect) {
+			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
+			RelationalMappingContext context, JdbcConverter converter, Dialect dialect) {
 
 		return new DefaultDataAccessStrategy(new SqlGeneratorSource(context, converter, dialect), context, converter,
 				template, new SqlParametersFactory(context, converter, dialect),
@@ -128,8 +139,8 @@ public class TestConfiguration {
 
 	@Bean
 	JdbcConverter relationalConverter(RelationalMappingContext mappingContext, @Lazy RelationResolver relationResolver,
-			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
-			Dialect dialect) {
+			CustomConversions conversions,
+			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template, Dialect dialect) {
 
 		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
 				: JdbcArrayColumns.DefaultSupport.INSTANCE;

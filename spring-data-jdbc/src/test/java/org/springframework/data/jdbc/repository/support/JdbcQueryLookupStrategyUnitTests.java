@@ -40,6 +40,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.RowMapper;
@@ -58,6 +59,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Mark Paluch
  * @author Hebert Coelho
  * @author Diego Krupitza
+ * @author Christopher Klein
  */
 class JdbcQueryLookupStrategyUnitTests {
 
@@ -69,6 +71,7 @@ class JdbcQueryLookupStrategyUnitTests {
 	private RepositoryMetadata metadata;
 	private NamedQueries namedQueries = mock(NamedQueries.class);
 	private NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
+	QueryMethodEvaluationContextProvider evaluationContextProvider = mock(QueryMethodEvaluationContextProvider.class);
 
 	@BeforeEach
 	void setup() {
@@ -127,12 +130,13 @@ class JdbcQueryLookupStrategyUnitTests {
 	@ParameterizedTest
 	@MethodSource("correctLookUpStrategyForKeySource")
 	void correctLookUpStrategyForKey(QueryLookupStrategy.Key key, Class expectedClass) {
+
 		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
 		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
 				.registerRowMapper(NumberFormat.class, numberFormatMapper);
 
 		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks, mappingContext,
-				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null);
+				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null, evaluationContextProvider);
 
 		assertThat(queryLookupStrategy).isInstanceOf(expectedClass);
 	}
@@ -152,7 +156,7 @@ class JdbcQueryLookupStrategyUnitTests {
 			QueryMappingConfiguration mappingConfiguration) {
 
 		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks, mappingContext,
-				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null);
+				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null, evaluationContextProvider);
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
 		return queryLookupStrategy.resolveQuery(method, metadata, projectionFactory, namedQueries);
