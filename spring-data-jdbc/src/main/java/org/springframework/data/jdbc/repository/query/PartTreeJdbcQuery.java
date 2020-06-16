@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.LongSupplier;
+import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
@@ -123,6 +124,12 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		RelationalParametersParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(),
 				values);
 
+		if (tree.isDelete()) {
+			JdbcQueryExecution<?> execution = createModifyingQueryExecutor();
+			return createDeleteQueries(accessor).map(query -> execution.execute(query.getQuery(), query.getParameterSource()))
+					.reduce((a, b) -> b);
+		}
+
 		ResultProcessor processor = getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
 		ParametrizedQuery query = createQuery(accessor, processor.getReturnedType());
 		JdbcQueryExecution<?> execution = getQueryExecution(processor, accessor);
@@ -183,6 +190,15 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		JdbcQueryCreator queryCreator = new JdbcQueryCreator(context, tree, converter, dialect, entityMetadata, accessor,
 				getQueryMethod().isSliceQuery(), returnedType);
 		return queryCreator.createQuery(getDynamicSort(accessor));
+	}
+
+	private Stream<ParametrizedQuery> createDeleteQueries(RelationalParametersParameterAccessor accessor) {
+
+		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
+
+		JdbcDeleteQueryCreator queryCreator = new JdbcDeleteQueryCreator(context, tree, converter, dialect, entityMetadata,
+				accessor);
+		return queryCreator.createQuery();
 	}
 
 	/**

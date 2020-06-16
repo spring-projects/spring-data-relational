@@ -101,7 +101,7 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		return extractor != null ? getQueryExecution(extractor) : singleObjectQuery(rowMapper);
 	}
 
-	private JdbcQueryExecution<Object> createModifyingQueryExecutor() {
+	protected JdbcQueryExecution<Object> createModifyingQueryExecutor() {
 
 		return (query, parameters) -> {
 
