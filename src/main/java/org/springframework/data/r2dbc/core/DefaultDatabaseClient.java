@@ -1044,10 +1044,6 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		private <R> FetchSpec<R> exchange(BiFunction<Row, RowMetadata, R> mappingFunction) {
 
-			if (this.byName.isEmpty()) {
-				throw new IllegalStateException("Insert fields is empty!");
-			}
-
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
 			StatementMapper.InsertSpec insert = mapper.createInsert(this.table);
 

@@ -61,7 +61,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 	@Autowired private LegoSetRepository repository;
 	@Autowired private ConnectionFactory connectionFactory;
-	private JdbcTemplate jdbc;
+	protected JdbcTemplate jdbc;
 
 	@Before
 	public void before() {

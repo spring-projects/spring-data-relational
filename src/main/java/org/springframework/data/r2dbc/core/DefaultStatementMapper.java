@@ -159,10 +159,6 @@ class DefaultStatementMapper implements StatementMapper {
 
 		Bindings bindings;
 
-		if (boundAssignments.getAssignments().isEmpty()) {
-			throw new IllegalStateException("INSERT contains no values");
-		}
-
 		bindings = boundAssignments.getBindings();
 
 		InsertBuilder.InsertIntoColumnsAndValues insertBuilder = StatementBuilder.insert(table);

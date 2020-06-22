@@ -249,6 +249,22 @@ public class DefaultDatabaseClientUnitTests {
 		verify(statement).bindNull(1, Integer.class);
 	}
 
+	@Test
+	public void insertShouldWorkWithoutValues() {
+
+		Statement statement = mockStatementFor("INSERT INTO id_only VALUES ()");
+		DatabaseClient databaseClient = databaseClientBuilder.build();
+
+		databaseClient.insert().into("id_only") //
+				.then() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		verify(statement).returnGeneratedValues();
+		verify(statement).execute();
+		verifyNoMoreInteractions(statement);
+	}
+
 	@Test // gh-128
 	public void executeShouldBindNamedValuesByIndex() {
 

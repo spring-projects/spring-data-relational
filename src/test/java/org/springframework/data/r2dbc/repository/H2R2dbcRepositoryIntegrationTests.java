@@ -16,24 +16,33 @@
 package org.springframework.data.r2dbc.repository;
 
 import io.r2dbc.spi.ConnectionFactory;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.util.Arrays;
 
 import javax.sql.DataSource;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.assertj.core.api.Assertions.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -47,10 +56,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIntegrationTests {
 
 	@Autowired private H2LegoSetRepository repository;
+	@Autowired private IdOnlyEntityRepository idOnlyEntityRepository;
 
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(classes = H2LegoSetRepository.class, type = FilterType.ASSIGNABLE_TYPE))
+			includeFilters = @Filter(classes = {H2LegoSetRepository.class, IdOnlyEntityRepository.class}, type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
 		@Bean
@@ -58,6 +68,17 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		public ConnectionFactory connectionFactory() {
 			return H2TestSupport.createConnectionFactory();
 		}
+	}
+
+	interface IdOnlyEntityRepository extends ReactiveCrudRepository<IdOnlyEntity, Integer> {
+	}
+
+	@Getter
+	@Setter
+	@Table("id_only")
+	@NoArgsConstructor
+	static class IdOnlyEntity {
+		@Id Integer id;
 	}
 
 	@Override
@@ -110,6 +131,18 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		shouldInsertNewItems();
 
 		repository.updateManualAndReturnNothing(42).as(StepVerifier::create).verifyComplete();
+	}
+
+	@Test
+	public void shouldInsertIdOnlyEntity() {
+		this.jdbc.execute("CREATE TABLE ID_ONLY(id serial CONSTRAINT id_only_pk PRIMARY KEY)");
+
+		IdOnlyEntity entity1 = new IdOnlyEntity();
+		idOnlyEntityRepository.saveAll(Arrays.asList(entity1))
+			.as(StepVerifier::create) //
+			.consumeNextWith( actual -> {
+				assertThat(actual.getId()).isNotNull();
+			}).verifyComplete();
 	}
 
 	interface H2LegoSetRepository extends LegoSetRepository {
