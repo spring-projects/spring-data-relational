@@ -22,7 +22,7 @@
 
 * Upgrade to R2DBC 0.8.0.RELEASE.
 * `@Modifying` annotation for query methods to consume affected row count.
-* Repository `save(…)` with an associated Id terminates with `TransientDataAccessException` if the row does not exist in the database.
+* Repository `save(…)` with an associated ID completes with `TransientDataAccessException` if the row does not exist in the database.
 * Added `SingleConnectionConnectionFactory` for testing using connection singletons.
 * Support for {spring-framework-ref}/core.html#expressions[SpEL expressions] in `@Query`.
 * `ConnectionFactory` routing through `AbstractRoutingConnectionFactory`.

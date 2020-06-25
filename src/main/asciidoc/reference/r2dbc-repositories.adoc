@@ -281,7 +281,7 @@ Alternatively, you can add custom modifying behavior by using the facilities des
 === Queries with SpEL Expressions
 
 Query string definitions can be used together with SpEL expressions to create dynamic queries at runtime.
-SpEL expressions can provide predicate values which are evaluated right before executing the query.
+SpEL expressions can provide predicate values which are evaluated right before running the query.
 
 Expressions expose method arguments through an array that contains all the arguments.
 The following query uses `[0]`

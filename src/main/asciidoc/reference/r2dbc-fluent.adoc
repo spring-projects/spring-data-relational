@@ -132,7 +132,7 @@ Mono<Void> insert = databaseClient.insert()
 <1> Using `Person` with the `into(…)` method sets the `INTO` table, based on mapping metadata.
 It also prepares the insert statement to accept `Person` objects for inserting.
 <2> Provide a scalar `Person` object.
-Alternatively, you can supply a `Publisher` to execute a stream of `INSERT` statements.
+Alternatively, you can supply a `Publisher` to run a stream of `INSERT` statements.
 This method extracts all non-`null` values and inserts them.
 <3> Use `then()` to insert an object without consuming further details.
 Modifying statements allow consumption of the number of affected rows or tabular results for consuming generated keys.
@@ -171,7 +171,7 @@ By default, it returns results as `Map<String, Object>`.
 * *value* `(String, Object)`: Provides a column value to insert.
 * *nullValue* `(String)`: Provides a null value to insert.
 * *map* `(BiFunction<Row, RowMetadata, T>)`: Supplies a mapping function to extract results.
-* *then* `()`: Executes `INSERT` without consuming any results.
+* *then* `()`: Runs `INSERT` without consuming any results.
 * *fetch* `()`: Transition call declaration to the fetch stage to declare result consumption multiplicity.
 
 [[r2dbc.datbaseclient.fluent-api.update]]
