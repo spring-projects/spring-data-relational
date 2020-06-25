@@ -22,7 +22,7 @@ Also, things that are really simple conceptually get rather difficult with JPA.
 
 Spring Data JDBC aims to be much simpler conceptually, by embracing the following design decisions:
 
-* If you load an entity, SQL statements get executed.
+* If you load an entity, SQL statements get run.
 Once this is done, you have a completely loaded entity.
 No lazy loading or caching is done.
 
@@ -705,8 +705,8 @@ You can specify the following return types:
 [[jdbc.mybatis]]
 == MyBatis Integration
 
-The execution of CRUD operations and query methods can be delegated to MyBatis.
-This section describes how to configure Spring Data JDBC to integrate with MyBatis and which conventions to follow to hand over the execution of the queries as well as the mapping to the library.
+The CRUD operations and query methods can be delegated to MyBatis.
+This section describes how to configure Spring Data JDBC to integrate with MyBatis and which conventions to follow to hand over the running of the queries as well as the mapping to the library.
 
 [[jdbc.mybatis.configuration]]
 === Configuration
@@ -837,7 +837,7 @@ public ApplicationListener<BeforeSaveEvent<Object>> loggingSaves() {
 	return event -> {
 
 		Object entity = event.getEntity();
-		LOG.info("{} is getting saved.";
+		LOG.info("{} is getting saved.");
 	};
 }
 ----
@@ -923,7 +923,7 @@ include::jdbc-custom-conversions.adoc[]
 
 Spring Data JDBC does little to no logging on its own.
 Instead, the mechanics of `JdbcTemplate` to issue SQL statements provide logging.
-Thus, if you want to inspect what SQL statements are executed, activate logging for Spring's {spring-framework-docs}/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or https://www.mybatis.org/mybatis-3/logging.html[MyBatis].
+Thus, if you want to inspect what SQL statements are run, activate logging for Spring's {spring-framework-docs}/data-access.html#jdbc-JdbcTemplate[`NamedParameterJdbcTemplate`] or https://www.mybatis.org/mybatis-3/logging.html[MyBatis].
 
 [[jdbc.transactions]]
 == Transactionality
@@ -949,7 +949,7 @@ public interface UserRepository extends CrudRepository<User, Long> {
 ----
 ====
 
-The preceding causes the `findAll()` method to be executed with a timeout of 10 seconds and without the `readOnly` flag.
+The preceding causes the `findAll()` method to be run with a timeout of 10 seconds and without the `readOnly` flag.
 
 Another way to alter transactional behavior is by using a facade or service implementation that typically covers more than one repository.
 Its purpose is to define transactional boundaries for non-CRUD operations.
