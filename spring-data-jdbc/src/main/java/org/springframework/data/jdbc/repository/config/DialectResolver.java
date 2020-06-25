@@ -24,6 +24,8 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.relational.core.dialect.Db2Dialect;
@@ -51,6 +53,8 @@ import org.springframework.util.StringUtils;
  * @see SpringFactoriesLoader
  */
 public class DialectResolver {
+
+	private static final Log LOG = LogFactory.getLog(DialectResolver.class);
 
 	private static final List<JdbcDialectProvider> DETECTORS = SpringFactoriesLoader
 			.loadFactories(JdbcDialectProvider.class, DialectResolver.class.getClassLoader());
@@ -127,6 +131,8 @@ public class DialectResolver {
 			if (name.contains("db2")) {
 				return Db2Dialect.INSTANCE;
 			}
+
+			LOG.info(String.format("Couldn't determine Dialect for \"%s\"", name) );
 			return null;
 		}
 
