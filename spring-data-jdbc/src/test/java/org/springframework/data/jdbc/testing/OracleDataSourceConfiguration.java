@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 		// its food. Therefore, we make sure that we can properly establish a connection instead of trusting the cat
 		// ...err... Oracle.
 		Awaitility.await()
-				.atMost(2L, TimeUnit.MINUTES )
+				.atMost(5L, TimeUnit.MINUTES )
 				.pollInterval(fibonacci(TimeUnit.SECONDS))
 				.ignoreException(SQLException.class).until(() -> {
 

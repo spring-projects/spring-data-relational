@@ -15,6 +15,14 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.sql.Connection;
+
+/**
+ * Describes the how obtaining generated ids after an insert works for a given JDBC driver.
+ *
+ * @author Jens Schauder
+ * @since 2.1
+ */
 public interface IdGeneration {
 	/**
 	 * A default instance working for many databases and equivalent to Spring Data JDBCs behavior before version 2.1.
@@ -28,8 +36,10 @@ public interface IdGeneration {
 	 * 
 	 * @return {@literal true} if the a list of column names should get passed to the JDBC driver for which ids shall be
 	 *         generated.
+	 *
+	 * @see Connection#prepareStatement(String, String[])?
 	 */
-	default boolean setKeyColumnNames() {
+	default boolean driverRequiresKeyColumnNames() {
 		return false;
 	}
 }

@@ -26,11 +26,10 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
- * An SQL dialect for Postgres.
+ * An SQL dialect for Oracle.
  *
- * @author Mark Paluch
- * @author Myeonghyeon Lee
- * @since 1.1
+ * @author Jens Schauder
+ * @since 2.1
  */
 public class OracleDialect extends AnsiDialect {
 
@@ -41,7 +40,7 @@ public class OracleDialect extends AnsiDialect {
 
 	private static final IdGeneration ID_GENERATION = new IdGeneration() {
 		@Override
-		public boolean setKeyColumnNames() {
+		public boolean driverRequiresKeyColumnNames() {
 			return true;
 		}
 	};

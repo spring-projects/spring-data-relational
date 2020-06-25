@@ -125,7 +125,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		IdGeneration idGeneration = sqlGeneratorSource.getDialect().getIdGeneration();
 		String insertSql = sqlGenerator.getInsert(new HashSet<>(parameterSource.getIdentifiers()));
 
-		if (idGeneration.setKeyColumnNames()) {
+		if (idGeneration.driverRequiresKeyColumnNames()) {
 
 			String[] keyColumnNames = getKeyColumnNames(domainType);
 			if (keyColumnNames.length == 0) {
