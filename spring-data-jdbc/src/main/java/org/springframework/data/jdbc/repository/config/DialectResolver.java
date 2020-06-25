@@ -115,7 +115,7 @@ public class DialectResolver {
 			if (name.contains("h2")) {
 				return H2Dialect.INSTANCE;
 			}
-			if (name.contains("mysql")) { // catches also mariadb
+			if (name.contains("mysql") || name.contains("mariadb")) {
 				return new MySqlDialect(getIdentifierProcessing(metaData));
 			}
 			if (name.contains("postgresql")) {
