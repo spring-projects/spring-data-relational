@@ -51,7 +51,7 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (MARIADB_CONTAINER == null) {
 
-			MariaDBContainer<?> container = new MariaDBContainer<>()
+			MariaDBContainer<?> container = new MariaDBContainer<>("mariadb:10.5")
 					.withUsername("root")
 					.withPassword("")
 					.withConfigurationOverride("");
