@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import java.io.Serializable;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,6 +27,7 @@ import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -115,14 +117,13 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
 		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, converter, accessStrategy);
 
-		SimpleJdbcRepository<?, Object> repository = new SimpleJdbcRepository<>(template,
-				context.getRequiredPersistentEntity(repositoryInformation.getDomainType()));
-
 		if (entityCallbacks != null) {
 			template.setEntityCallbacks(entityCallbacks);
 		}
 
-		return repository;
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(repositoryInformation.getDomainType());
+
+		return getTargetRepositoryViaReflection(repositoryInformation.getRepositoryBaseClass(), template, persistentEntity);
 	}
 
 	/*

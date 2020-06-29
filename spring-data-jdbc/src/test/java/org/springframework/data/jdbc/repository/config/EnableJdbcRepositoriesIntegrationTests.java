@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import lombok.Data;
 
 import java.lang.reflect.Field;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -40,6 +42,7 @@ import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
@@ -90,9 +93,10 @@ public class EnableJdbcRepositoriesIntegrationTests {
 
 		assertThat(repository).isNotNull();
 
-		Iterable<DummyEntity> all = repository.findAll();
+		long count = repository.count();
 
-		assertThat(all).isNotNull();
+		// the custom base class has a result of 23 hard wired.
+		assertThat(count).isEqualTo(23L);
 	}
 
 	@Test // DATAJDBC-166
@@ -128,7 +132,8 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@ComponentScan("org.springframework.data.jdbc.testing")
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class),
-			jdbcOperationsRef = "qualifierJdbcOperations", dataAccessStrategyRef = "qualifierDataAccessStrategy")
+			jdbcOperationsRef = "qualifierJdbcOperations", dataAccessStrategyRef = "qualifierDataAccessStrategy",
+	repositoryBaseClass = DummyRepositoryBaseClass.class)
 	static class TestConfiguration {
 
 		@Bean
@@ -160,6 +165,57 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		@Bean
 		Dialect jdbcDialect(@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations operations) {
 			return DialectResolver.getDialect(operations.getJdbcOperations());
+		}
+	}
+
+	private static class DummyRepositoryBaseClass{
+
+		DummyRepositoryBaseClass(JdbcAggregateTemplate template, PersistentEntity<?,?> persistentEntity) {
+
+		}
+
+		public Object save(Object o) {
+			return null;
+		}
+
+		public Iterable saveAll(Iterable iterable) {
+			return null;
+		}
+
+		public Optional findById(Object o) {
+			return Optional.empty();
+		}
+
+		public boolean existsById(Object o) {
+			return false;
+		}
+
+		public Iterable findAll() {
+			return null;
+		}
+
+		public Iterable findAllById(Iterable iterable) {
+			return null;
+		}
+
+		public long count() {
+			return 23L;
+		}
+
+		public void deleteById(Object o) {
+
+		}
+
+		public void delete(Object o) {
+
+		}
+
+		public void deleteAll(Iterable iterable) {
+
+		}
+
+		public void deleteAll() {
+
 		}
 	}
 }

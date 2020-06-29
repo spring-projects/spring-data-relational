@@ -26,6 +26,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
+import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
 
 /**
  * Annotation to enable JDBC repositories. Will scan the package of the annotated configuration class for Spring Data
@@ -112,4 +113,13 @@ public @interface EnableJdbcRepositories {
 	 * be used to create repositories discovered through this annotation. Defaults to {@code defaultDataAccessStrategy}.
 	 */
 	String dataAccessStrategyRef() default "";
+
+	/**
+	 * Configure the repository base class to be used to create repository proxies for this particular configuration.
+	 *
+	 * @return
+	 * @since 2.1
+	 */
+	Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
+
 }
