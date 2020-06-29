@@ -169,7 +169,7 @@ public class SelectRendererUnitTests {
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
 				+ "JOIN department ON employee.department_id = department.id " //
 				+ "AND employee.tenant = department.tenant " //
-				+ "JOIN tenant AS tenant_base ON tenant_base.tenant_id = department.tenant");
+				+ "JOIN tenant tenant_base ON tenant_base.tenant_id = department.tenant");
 	}
 
 	@Test // DATAJDBC-309

@@ -66,7 +66,7 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 		if (segment instanceof Table && !inCondition) {
 			joinClause.append(NameRenderer.render(context, (Table) segment));
 			if (segment instanceof Aliased) {
-				joinClause.append(" AS ").append(NameRenderer.render(context, (Aliased) segment));
+				joinClause.append(" ").append(NameRenderer.render(context, (Aliased) segment));
 			}
 		} else if (segment instanceof Condition) {
 
