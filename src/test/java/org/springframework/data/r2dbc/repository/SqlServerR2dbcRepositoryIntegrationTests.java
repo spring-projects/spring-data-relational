@@ -87,7 +87,6 @@ public class SqlServerR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepos
 	interface SqlServerLegoSetRepository extends LegoSetRepository {
 
 		@Override
-		@Query("SELECT * FROM legoset WHERE name like @name")
 		Flux<LegoSet> findByNameContains(String name);
 
 		@Override
