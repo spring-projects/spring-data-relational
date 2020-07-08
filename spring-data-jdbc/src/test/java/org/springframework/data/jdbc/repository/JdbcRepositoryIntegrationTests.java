@@ -18,6 +18,8 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
 
@@ -41,6 +43,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.AssumeFeatureRule;
+import org.springframework.data.jdbc.testing.RequiredFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
@@ -52,6 +56,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -64,6 +69,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Mark Paluch
  */
 @Transactional
+@TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
 public class JdbcRepositoryIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
@@ -71,7 +77,6 @@ public class JdbcRepositoryIntegrationTests {
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 	@Autowired MyEventListener eventListener;
-	@Autowired TestDatabaseFeatures features;
 
 	private static DummyEntity createDummyEntity() {
 
@@ -257,9 +262,8 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test // DATAJDBC-464, DATAJDBC-318
+	@RequiredFeature(SUPPORTS_DATE_DATATYPES)
 	public void executeQueryWithParameterRequiringConversion() {
-
-		features.supportsDateDataTypes();
 
 		Instant now = Instant.now();
 

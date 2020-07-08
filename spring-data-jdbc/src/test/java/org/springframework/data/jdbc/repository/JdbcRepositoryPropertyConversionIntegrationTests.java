@@ -17,6 +17,8 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
 
@@ -40,11 +42,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.AssumeFeatureRule;
+import org.springframework.data.jdbc.testing.RequiredFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,12 +63,12 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
+@TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
 public class JdbcRepositoryPropertyConversionIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
 	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 	@Autowired DummyEntityRepository repository;
-	@Autowired TestDatabaseFeatures features;
 
 	private static EntityWithColumnsRequiringConversions createDummyEntity() {
 
@@ -85,9 +90,8 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
 	public void saveAndLoadAnEntity() {
-
-		features.supportsHugeNumbers();
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
 
@@ -105,9 +109,8 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
 	public void existsById() {
-
-		features.supportsHugeNumbers();
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
 
@@ -115,9 +118,8 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
 	public void findAllById() {
-
-		features.supportsHugeNumbers();
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
 
@@ -125,9 +127,8 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
 	public void deleteAll() {
-
-		features.supportsHugeNumbers();
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
 
@@ -137,9 +138,8 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
+	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
 	public void deleteById() {
-
-		features.supportsHugeNumbers();
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
 
