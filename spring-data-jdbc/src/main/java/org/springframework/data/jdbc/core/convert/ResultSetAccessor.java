@@ -23,6 +23,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 
@@ -89,7 +90,7 @@ class ResultSetAccessor {
 		try {
 
 			int index = findColumnIndex(columnName);
-			return index > 0 ? resultSet.getObject(index) : null;
+			return index > 0 ? JdbcUtils.getResultSetValue(resultSet, index) : null;
 		} catch (SQLException o_O) {
 			throw new MappingException(String.format("Could not read value %s from result set!", columnName), o_O);
 		}
