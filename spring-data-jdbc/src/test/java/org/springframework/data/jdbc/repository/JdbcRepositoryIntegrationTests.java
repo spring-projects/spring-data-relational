@@ -259,7 +259,6 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Test // DATAJDBC-464, DATAJDBC-318
-	@EnabledOnFeature(SUPPORTS_DATE_DATATYPES)
 	public void executeQueryWithParameterRequiringConversion() {
 
 		Instant now = Instant.now();

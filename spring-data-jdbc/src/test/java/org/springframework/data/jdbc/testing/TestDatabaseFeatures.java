@@ -43,25 +43,10 @@ public class TestDatabaseFeatures {
 	}
 
 	/**
-	 * Oracle returns an oracle.sql.TIMESTAMP which currently cannot be converted to an Instant. See DATAJDBC-569 for
-	 * reference.
-	 */
-	private void supportsDateDataTypes() {
-		assumeThat(database).isNotEqualTo(Database.Oracle);
-	}
-
-	/**
 	 * Not all databases support really huge numbers as represented by {@link java.math.BigDecimal} and similar.
 	 */
 	private void supportsHugeNumbers() {
 		assumeThat(database).isNotIn(Database.Oracle, Database.SqlServer);
-	}
-
-	/**
-	 * Oracle does not allow to specify an alias for a joined table with {@code AS}. See DATAJDBC-570 for reference.
-	 */
-	private void supportsAsForJoinAlias() {
-		assumeThat(database).isNotEqualTo(Database.Oracle);
 	}
 
 	/**
@@ -119,7 +104,6 @@ public class TestDatabaseFeatures {
 
 	public enum Feature {
 
-		SUPPORTS_DATE_DATATYPES(TestDatabaseFeatures::supportsDateDataTypes), //
 		SUPPORTS_MULTIDIMENSIONAL_ARRAYS(TestDatabaseFeatures::supportsMultiDimensionalArrays), //
 		SUPPORTS_QUOTED_IDS(TestDatabaseFeatures::supportsQuotedIds), //
 		SUPPORTS_HUGE_NUMBERS(TestDatabaseFeatures::supportsHugeNumbers), //
