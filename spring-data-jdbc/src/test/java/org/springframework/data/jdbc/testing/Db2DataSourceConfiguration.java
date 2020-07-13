@@ -32,6 +32,8 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
 import org.testcontainers.containers.Db2Container;
 
+import static org.awaitility.pollinterval.FibonacciPollInterval.*;
+
 /**
  * {@link DataSource} setup for DB2.
  *
@@ -65,18 +67,6 @@ class Db2DataSourceConfiguration extends DataSourceConfiguration {
 
 		DriverManagerDataSource dataSource = new DriverManagerDataSource(DB_2_CONTAINER.getJdbcUrl(),
 				DB_2_CONTAINER.getUsername(), DB_2_CONTAINER.getPassword());
-
-		// DB2 container says its ready but it's like with a cat that denies service and still wants food although it had
-		// its food. Therefore, we make sure that we can properly establish a connection instead of trusting the cat
-		// ...err... DB2.
-		Awaitility.await().ignoreException(SQLException.class).until(() -> {
-
-			try (Connection connection = dataSource.getConnection()) {
-				return true;
-			}
-		});
-
-		LOG.info("DB2 connectivity verified");
 
 		return dataSource;
 	}
