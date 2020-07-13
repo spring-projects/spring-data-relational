@@ -15,23 +15,14 @@
  */
 package org.springframework.data.jdbc.testing;
 
-import static org.awaitility.pollinterval.FibonacciPollInterval.*;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
-
 import javax.sql.DataSource;
 
-import org.awaitility.Awaitility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-
 import org.testcontainers.containers.OracleContainer;
 
 /**
@@ -61,8 +52,10 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (ORACLE_CONTAINER == null) {
 
+			LOG.info("Oracle starting...");
 			OracleContainer container = new OracleContainer("springci/spring-data-oracle-xe-prebuild:18.4.0").withReuse(true);
 			container.start();
+			LOG.info("Oracle started");
 
 			ORACLE_CONTAINER = container;
 		}
@@ -71,17 +64,6 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 
 		DataSource dataSource = new DriverManagerDataSource(jdbcUrl, ORACLE_CONTAINER.getUsername(),
 				ORACLE_CONTAINER.getPassword());
-
-		// Oracle container says its ready but it's like with a cat that denies service and still wants food although it had
-		// its food. Therefore, we make sure that we can properly establish a connection instead of trusting the cat
-		// ...err... Oracle.
-		Awaitility.await().atMost(5L, TimeUnit.MINUTES).pollInterval(fibonacci(TimeUnit.SECONDS))
-				.ignoreException(SQLException.class).until(() -> {
-
-					try (Connection connection = dataSource.getConnection()) {
-						return true;
-					}
-				});
 
 		return dataSource;
 	}

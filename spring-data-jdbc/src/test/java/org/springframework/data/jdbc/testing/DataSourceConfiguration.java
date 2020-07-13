@@ -17,14 +17,23 @@ package org.springframework.data.jdbc.testing;
 
 import javax.sql.DataSource;
 
+import org.awaitility.Awaitility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+
+import java.sql.Connection;
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.pollinterval.FibonacciPollInterval.*;
 
 /**
  * Basic configuration expecting subclasses to provide a {@link DataSource} via {@link #createDataSource()} to be
@@ -36,12 +45,17 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 @Configuration
 abstract class DataSourceConfiguration {
 
+	private static final Logger LOG = LoggerFactory.getLogger(DataSourceConfiguration.class);
+
+
 	@Autowired Class<?> testClass;
 	@Autowired Environment environment;
 
 	@Bean
 	DataSource dataSource() {
-		return createDataSource();
+		DataSource dataSource = createDataSource();
+		verifyConnection(dataSource);
+		return dataSource;
 	}
 
 	@Bean
@@ -76,4 +90,21 @@ abstract class DataSourceConfiguration {
 	 * @param populator will never be {@literal null}.
 	 */
 	protected void customizePopulator(ResourceDatabasePopulator populator) {}
+
+	private void verifyConnection(DataSource dataSource) {
+
+		Awaitility.await() //
+				.atMost(5L, TimeUnit.MINUTES) //
+				.pollInterval(fibonacci(TimeUnit.SECONDS)) //
+				.ignoreExceptions() //
+				.until(() -> {
+
+					LOG.debug("connectivity verifying ...");
+					try (Connection connection = dataSource.getConnection()) {
+						return true;
+					}
+				});
+
+		LOG.info("connectivity verified");
+	}
 }
