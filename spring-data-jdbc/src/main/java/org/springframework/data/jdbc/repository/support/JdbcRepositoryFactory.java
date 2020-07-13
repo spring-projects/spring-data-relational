@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
-import java.io.Serializable;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,7 +26,6 @@ import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
-import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;

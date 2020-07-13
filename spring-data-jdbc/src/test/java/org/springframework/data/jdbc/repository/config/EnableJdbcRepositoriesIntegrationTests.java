@@ -133,7 +133,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class),
 			jdbcOperationsRef = "qualifierJdbcOperations", dataAccessStrategyRef = "qualifierDataAccessStrategy",
-	repositoryBaseClass = DummyRepositoryBaseClass.class)
+			repositoryBaseClass = DummyRepositoryBaseClass.class)
 	static class TestConfiguration {
 
 		@Bean
@@ -168,52 +168,63 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		}
 	}
 
-	private static class DummyRepositoryBaseClass{
+	private static class DummyRepositoryBaseClass<T, ID> implements CrudRepository<T, ID> {
 
-		DummyRepositoryBaseClass(JdbcAggregateTemplate template, PersistentEntity<?,?> persistentEntity) {
+		DummyRepositoryBaseClass(JdbcAggregateTemplate template, PersistentEntity<?, ?> persistentEntity) {
 
 		}
 
-		public Object save(Object o) {
+		@Override
+		public <S extends T> S save(S s) {
 			return null;
 		}
 
-		public Iterable saveAll(Iterable iterable) {
+		@Override
+		public <S extends T> Iterable<S> saveAll(Iterable<S> iterable) {
 			return null;
 		}
 
-		public Optional findById(Object o) {
+		@Override
+		public Optional<T> findById(ID id) {
 			return Optional.empty();
 		}
 
-		public boolean existsById(Object o) {
+		@Override
+		public boolean existsById(ID id) {
 			return false;
 		}
 
-		public Iterable findAll() {
+		@Override
+		public Iterable<T> findAll() {
 			return null;
 		}
 
-		public Iterable findAllById(Iterable iterable) {
+		@Override
+		public Iterable<T> findAllById(Iterable<ID> iterable) {
 			return null;
 		}
 
+		@Override
 		public long count() {
-			return 23L;
+			return 23;
 		}
 
-		public void deleteById(Object o) {
-
-		}
-
-		public void delete(Object o) {
+		@Override
+		public void deleteById(ID id) {
 
 		}
 
-		public void deleteAll(Iterable iterable) {
+		@Override
+		public void delete(T t) {
 
 		}
 
+		@Override
+		public void deleteAll(Iterable<? extends T> iterable) {
+
+		}
+
+		@Override
 		public void deleteAll() {
 
 		}

@@ -77,16 +77,11 @@ public @interface EnableJdbcRepositories {
 	Filter[] excludeFilters() default {};
 
 	/**
-	 * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be discovered by the
-	 * repositories infrastructure.
+	 * Returns the postfix to be used when looking up custom repository implementations. Defaults to {@literal Impl}. So
+	 * for a repository named {@code PersonRepository} the corresponding implementation class will be looked up scanning
+	 * for {@code PersonRepositoryImpl}.
 	 */
-	boolean considerNestedRepositories() default false;
-
-	/**
-	 * Returns the {@link FactoryBean} class to be used for each repository instance. Defaults to
-	 * {@link JdbcRepositoryFactoryBean}.
-	 */
-	Class<?> repositoryFactoryBeanClass() default JdbcRepositoryFactoryBean.class;
+	String repositoryImplementationPostfix() default "Impl";
 
 	/**
 	 * Configures the location of where to find the Spring Data named queries properties file. Will default to
@@ -95,11 +90,23 @@ public @interface EnableJdbcRepositories {
 	String namedQueriesLocation() default "";
 
 	/**
-	 * Returns the postfix to be used when looking up custom repository implementations. Defaults to {@literal Impl}. So
-	 * for a repository named {@code PersonRepository} the corresponding implementation class will be looked up scanning
-	 * for {@code PersonRepositoryImpl}.
+	 * Returns the {@link FactoryBean} class to be used for each repository instance. Defaults to
+	 * {@link JdbcRepositoryFactoryBean}.
 	 */
-	String repositoryImplementationPostfix() default "Impl";
+	Class<?> repositoryFactoryBeanClass() default JdbcRepositoryFactoryBean.class;
+
+	/**
+	 * Configure the repository base class to be used to create repository proxies for this particular configuration.
+	 *
+	 * @since 2.1
+	 */
+	Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
+
+	/**
+	 * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be discovered by the
+	 * repositories infrastructure.
+	 */
+	boolean considerNestedRepositories() default false;
 
 	/**
 	 * Configures the name of the {@link org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations} bean
@@ -113,13 +120,5 @@ public @interface EnableJdbcRepositories {
 	 * be used to create repositories discovered through this annotation. Defaults to {@code defaultDataAccessStrategy}.
 	 */
 	String dataAccessStrategyRef() default "";
-
-	/**
-	 * Configure the repository base class to be used to create repository proxies for this particular configuration.
-	 *
-	 * @return
-	 * @since 2.1
-	 */
-	Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
 
 }
