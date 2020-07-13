@@ -32,9 +32,9 @@ import java.util.Date;
 
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -43,15 +43,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureRule;
-import org.springframework.data.jdbc.testing.RequiredFeature;
+import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -64,10 +62,9 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
+@RunWith(SpringRunner.class)
 public class JdbcRepositoryPropertyConversionIntegrationTests {
 
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 	@Autowired DummyEntityRepository repository;
 
 	private static EntityWithColumnsRequiringConversions createDummyEntity() {
@@ -90,7 +87,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
-	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
+	@EnabledOnFeature(SUPPORTS_HUGE_NUMBERS)
 	public void saveAndLoadAnEntity() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
@@ -109,7 +106,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
-	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
+	@EnabledOnFeature(SUPPORTS_HUGE_NUMBERS)
 	public void existsById() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
@@ -118,7 +115,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
-	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
+	@EnabledOnFeature(SUPPORTS_HUGE_NUMBERS)
 	public void findAllById() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
@@ -127,7 +124,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
-	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
+	@EnabledOnFeature(SUPPORTS_HUGE_NUMBERS)
 	public void deleteAll() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());
@@ -138,7 +135,7 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 	}
 
 	@Test // DATAJDBC-95
-	@RequiredFeature(SUPPORTS_HUGE_NUMBERS)
+	@EnabledOnFeature(SUPPORTS_HUGE_NUMBERS)
 	public void deleteById() {
 
 		EntityWithColumnsRequiringConversions entity = repository.save(createDummyEntity());

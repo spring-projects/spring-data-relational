@@ -34,9 +34,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
-import org.springframework.data.jdbc.testing.RequiredFeature;
+import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -139,7 +138,7 @@ public class JdbcRepositoryWithMapsIntegrationTests {
 	}
 
 	@Test // DATAJDBC-131
-	@RequiredFeature(SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
+	@EnabledOnFeature(SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES)
 	public void updateMap() {
 
 		Element element1 = createElement("one");

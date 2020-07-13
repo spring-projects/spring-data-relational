@@ -24,6 +24,7 @@ import java.sql.Connection;
  * @since 2.1
  */
 public interface IdGeneration {
+
 	/**
 	 * A default instance working for many databases and equivalent to Spring Data JDBCs behavior before version 2.1.
 	 */
@@ -33,11 +34,10 @@ public interface IdGeneration {
 	 * Does the driver require the specification of those columns for which a generated id shall be returned.
 	 * <p>
 	 * This should be {@literal false} for most dialects. One notable exception is Oracle.
-	 * 
+	 *
 	 * @return {@literal true} if the a list of column names should get passed to the JDBC driver for which ids shall be
 	 *         generated.
-	 *
-	 * @see Connection#prepareStatement(String, String[])?
+	 * @see Connection#prepareStatement(String, String[])
 	 */
 	default boolean driverRequiresKeyColumnNames() {
 		return false;

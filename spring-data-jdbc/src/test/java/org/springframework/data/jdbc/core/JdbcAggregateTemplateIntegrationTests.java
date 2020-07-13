@@ -37,9 +37,9 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -55,7 +55,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.AssumeFeatureRule;
-import org.springframework.data.jdbc.testing.RequiredFeature;
+import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
@@ -65,8 +65,7 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -84,10 +83,8 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
+@RunWith(SpringRunner.class)
 public class JdbcAggregateTemplateIntegrationTests {
-
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
@@ -191,7 +188,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithReferencedEntityById() {
 
 		template.save(legoSet);
@@ -213,7 +210,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadManyEntitiesWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -226,7 +223,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-101
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadManyEntitiesWithReferencedEntitySorted() {
 
 		template.save(createLegoSet("Lava"));
@@ -241,7 +238,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-101
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadManyEntitiesWithReferencedEntitySortedAndPaged() {
 
 		template.save(createLegoSet("Lava"));
@@ -256,7 +253,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadManyEntitiesByIdWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -268,7 +265,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithReferencedNullEntity() {
 
 		legoSet.setManual(null);
@@ -281,7 +278,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndDeleteAnEntityWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -297,7 +294,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndDeleteAllWithReferencedEntity() {
 
 		template.save(legoSet);
@@ -313,7 +310,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);
@@ -332,7 +329,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void updateReferencedEntityToNull() {
 
 		template.save(legoSet);
@@ -363,7 +360,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void replaceReferencedEntity() {
 
 		template.save(legoSet);
@@ -385,7 +382,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@RequiredFeature({SUPPORTS_QUOTED_IDS, TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES})
+	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
 	public void changeReferencedEntity() {
 
 		template.save(legoSet);
@@ -400,7 +397,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void oneToOneChildWithoutId() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -417,7 +414,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void oneToOneNullChildWithoutId() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -433,7 +430,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-266
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void oneToOneNullAttributes() {
 
 		OneToOneParent parent = new OneToOneParent();
@@ -449,7 +446,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-125
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithSecondaryReferenceNull() {
 
 		template.save(legoSet);
@@ -462,7 +459,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-125
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithSecondaryReferenceNotNull() {
 
 		legoSet.alternativeInstructions = new Manual();
@@ -484,7 +481,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-276
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadAnEntityWithListOfElementsWithoutId() {
 
 		ListParent entity = new ListParent();
@@ -503,7 +500,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259
-	@RequiredFeature(SUPPORTS_ARRAYS)
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithArray() {
 
 		ArrayOwner arrayOwner = new ArrayOwner();
@@ -521,7 +518,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259, DATAJDBC-512
-	@RequiredFeature(SUPPORTS_MULTIDIMENSIONAL_ARRAYS)
+	@EnabledOnFeature(SUPPORTS_MULTIDIMENSIONAL_ARRAYS)
 	public void saveAndLoadAnEntityWithMultidimensionalArray() {
 
 		ArrayOwner arrayOwner = new ArrayOwner();
@@ -540,7 +537,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259
-	@RequiredFeature(SUPPORTS_ARRAYS)
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithList() {
 
 		ListOwner arrayOwner = new ListOwner();
@@ -558,7 +555,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-259
-	@RequiredFeature(SUPPORTS_ARRAYS)
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithSet() {
 
 		SetOwner setOwner = new SetOwner();
@@ -591,7 +588,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-340
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadLongChain() {
 
 		Chain4 chain4 = new Chain4();
@@ -620,7 +617,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-359
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void saveAndLoadLongChainWithoutIds() {
 
 		NoIdChain4 chain4 = new NoIdChain4();
@@ -705,7 +702,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-431
-	@RequiredFeature(IS_HSQL)
+	@EnabledOnFeature(IS_HSQL)
 	public void readOnlyGetsLoadedButNotWritten() {
 
 		WithReadOnly entity = new WithReadOnly();
@@ -813,7 +810,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-462
-	@RequiredFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	public void resavingAnUnversionedEntity() {
 
 		LegoSet legoSet = new LegoSet();

@@ -46,6 +46,7 @@ Spring Data JDBC includes direct support for the following databases:
 * MariaDB
 * Microsoft SQL Server
 * MySQL
+* Oracle
 * Postgres
 
 If you use a different database then your application won’t startup. The <<jdbc.dialects,dialect>> section contains further detail on how to proceed in such case.

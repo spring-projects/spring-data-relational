@@ -23,22 +23,28 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
 
+/**
+ * {@link TestExecutionListener} to evaluate {@link EnabledOnFeature} annotations.
+ *
+ * @author Jens Schauder
+ * @author Mark Paluch
+ */
 public class AssumeFeatureRule implements TestExecutionListener {
 
 	@Override
-	public void beforeTestMethod(TestContext testContext) throws Exception {
+	public void beforeTestMethod(TestContext testContext) {
 
 		ApplicationContext applicationContext = testContext.getApplicationContext();
 		TestDatabaseFeatures databaseFeatures = applicationContext.getBean(TestDatabaseFeatures.class);
 
 		List<TestDatabaseFeatures.Feature> requiredFeatures = new ArrayList<>();
 
-		RequiredFeature classAnnotation = testContext.getTestClass().getAnnotation(RequiredFeature.class);
+		EnabledOnFeature classAnnotation = testContext.getTestClass().getAnnotation(EnabledOnFeature.class);
 		if (classAnnotation != null) {
 			requiredFeatures.addAll(Arrays.asList(classAnnotation.value()));
 		}
 
-		RequiredFeature methodAnnotation = testContext.getTestMethod().getAnnotation(RequiredFeature.class);
+		EnabledOnFeature methodAnnotation = testContext.getTestMethod().getAnnotation(EnabledOnFeature.class);
 		if (methodAnnotation != null) {
 			requiredFeatures.addAll(Arrays.asList(methodAnnotation.value()));
 		}
@@ -46,6 +52,5 @@ public class AssumeFeatureRule implements TestExecutionListener {
 		for (TestDatabaseFeatures.Feature requiredFeature : requiredFeatures) {
 			requiredFeature.test(databaseFeatures);
 		}
-
 	}
 }
