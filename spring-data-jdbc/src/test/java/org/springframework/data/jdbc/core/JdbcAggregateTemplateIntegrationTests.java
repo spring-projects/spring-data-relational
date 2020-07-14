@@ -310,7 +310,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
+	@EnabledOnFeature({SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES})
 	public void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);

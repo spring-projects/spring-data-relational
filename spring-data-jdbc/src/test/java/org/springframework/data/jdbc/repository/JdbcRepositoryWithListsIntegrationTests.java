@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import junit.framework.AssertionFailedError;
 import lombok.Data;
@@ -35,11 +36,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.jdbc.testing.AssumeFeatureRule;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +55,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
+@TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
 public class JdbcRepositoryWithListsIntegrationTests {
 
 	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
