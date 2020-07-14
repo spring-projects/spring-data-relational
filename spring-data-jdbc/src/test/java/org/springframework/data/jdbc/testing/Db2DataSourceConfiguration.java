@@ -15,15 +15,10 @@
  */
 package org.springframework.data.jdbc.testing;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
-
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.awaitility.Awaitility;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -31,8 +26,6 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
 import org.testcontainers.containers.Db2Container;
-
-import static org.awaitility.pollinterval.FibonacciPollInterval.*;
 
 /**
  * {@link DataSource} setup for DB2.
@@ -65,10 +58,8 @@ class Db2DataSourceConfiguration extends DataSourceConfiguration {
 			DB_2_CONTAINER = container;
 		}
 
-		DriverManagerDataSource dataSource = new DriverManagerDataSource(DB_2_CONTAINER.getJdbcUrl(),
+		return new DriverManagerDataSource(DB_2_CONTAINER.getJdbcUrl(),
 				DB_2_CONTAINER.getUsername(), DB_2_CONTAINER.getPassword());
-
-		return dataSource;
 	}
 
 	/*

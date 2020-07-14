@@ -15,25 +15,25 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import static org.awaitility.pollinterval.FibonacciPollInterval.*;
+
+import java.sql.Connection;
+import java.util.concurrent.TimeUnit;
+
 import javax.sql.DataSource;
 
 import org.awaitility.Awaitility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-
-import java.sql.Connection;
-import java.util.concurrent.TimeUnit;
-
-import static org.awaitility.pollinterval.FibonacciPollInterval.*;
 
 /**
  * Basic configuration expecting subclasses to provide a {@link DataSource} via {@link #createDataSource()} to be
@@ -46,7 +46,6 @@ import static org.awaitility.pollinterval.FibonacciPollInterval.*;
 abstract class DataSourceConfiguration {
 
 	private static final Logger LOG = LoggerFactory.getLogger(DataSourceConfiguration.class);
-
 
 	@Autowired Class<?> testClass;
 	@Autowired Environment environment;
@@ -99,12 +98,15 @@ abstract class DataSourceConfiguration {
 				.ignoreExceptions() //
 				.until(() -> {
 
-					LOG.debug("connectivity verifying ...");
+					if (LOG.isDebugEnabled()) {
+						LOG.debug(String.format("Verifying connectivity to %s...", dataSource));
+					}
+
 					try (Connection connection = dataSource.getConnection()) {
 						return true;
 					}
 				});
 
-		LOG.info("connectivity verified");
+		LOG.info("Connectivity verified");
 	}
 }

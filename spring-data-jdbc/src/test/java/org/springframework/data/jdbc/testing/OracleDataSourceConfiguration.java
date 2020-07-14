@@ -62,10 +62,7 @@ public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 
 		String jdbcUrl = ORACLE_CONTAINER.getJdbcUrl().replace(":xe", "/XEPDB1");
 
-		DataSource dataSource = new DriverManagerDataSource(jdbcUrl, ORACLE_CONTAINER.getUsername(),
-				ORACLE_CONTAINER.getPassword());
-
-		return dataSource;
+		return new DriverManagerDataSource(jdbcUrl, ORACLE_CONTAINER.getUsername(), ORACLE_CONTAINER.getPassword());
 	}
 
 	@Override
