@@ -6,42 +6,29 @@
 
 * Support for <<entity-callbacks>>.
 
-[[new-features.1-1-0-RELEASE]]
-
-== What's New in Spring Data R2DBC 1.1.0 RELEASE
+[[new-features.1-1-0]]
+== What's New in Spring Data R2DBC 1.1.0
 
 * Introduction of `R2dbcEntityTemplate` for entity-oriented operations.
 * <<r2dbc.repositories.queries,Query derivation>>.
 * Support interface projections with `DatabaseClient.as(…)`.
 * <<r2dbc.datbaseclient.filter,Support for `ExecuteFunction` and `StatementFilterFunction` via `DatabaseClient.filter(…)`>>.
 
-[[new-features.1-0-0-RELEASE]]
-== What's New in Spring Data R2DBC 1.0.0 RELEASE
+[[new-features.1-0-0]]
+== What's New in Spring Data R2DBC 1.0.0
 
 * Upgrade to R2DBC 0.8.0.RELEASE.
 * `@Modifying` annotation for query methods to consume affected row count.
 * Repository `save(…)` with an associated Id terminates with `TransientDataAccessException` if the row does not exist in the database.
 * Added `SingleConnectionConnectionFactory` for testing using connection singletons.
 * Support for {spring-framework-ref}/core.html#expressions[SpEL expressions] in `@Query`.
-
-[[new-features.1-0-0-RC1]]
-== What's New in Spring Data R2DBC 1.0.0 RC1
-
 * `ConnectionFactory` routing through `AbstractRoutingConnectionFactory`.
 * Utilities for schema initialization through `ResourceDatabasePopulator` and `ScriptUtils`.
 * Propagation and reset of Auto-Commit and Isolation Level control through `TransactionDefinition`.
 * Support for Entity-level converters.
 * Kotlin extensions for reified generics and <<kotlin.coroutines,Coroutines>>.
 * Add pluggable mechanism to register dialects.
-
-[[new-features.1-0-0-M2]]
-== What's New in Spring Data R2DBC 1.0.0 M2
-
 * Support for named parameters.
-
-[[new-features.1-0-0-M1]]
-== What's New in Spring Data R2DBC 1.0.0 M1
-
 * Initial R2DBC support through `DatabaseClient`.
 * Initial Transaction support through `TransactionalDatabaseClient`.
 * Initial R2DBC Repository Support through `R2dbcRepository`.
