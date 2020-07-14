@@ -15,6 +15,8 @@
  */
 package org.springframework.data.r2dbc.repository;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,7 +31,6 @@ import javax.sql.DataSource;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.assertj.core.api.Assertions.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -50,6 +51,7 @@ import org.springframework.test.context.junit4.SpringRunner;
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against H2.
  *
  * @author Mark Paluch
+ * @author Zsombor Gegesy
  */
 @RunWith(SpringRunner.class)
 @ContextConfiguration
@@ -68,17 +70,6 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		public ConnectionFactory connectionFactory() {
 			return H2TestSupport.createConnectionFactory();
 		}
-	}
-
-	interface IdOnlyEntityRepository extends ReactiveCrudRepository<IdOnlyEntity, Integer> {
-	}
-
-	@Getter
-	@Setter
-	@Table("id_only")
-	@NoArgsConstructor
-	static class IdOnlyEntity {
-		@Id Integer id;
 	}
 
 	@Override
@@ -133,8 +124,9 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		repository.updateManualAndReturnNothing(42).as(StepVerifier::create).verifyComplete();
 	}
 
-	@Test
+	@Test // gh-390
 	public void shouldInsertIdOnlyEntity() {
+
 		this.jdbc.execute("CREATE TABLE ID_ONLY(id serial CONSTRAINT id_only_pk PRIMARY KEY)");
 
 		IdOnlyEntity entity1 = new IdOnlyEntity();
@@ -174,5 +166,15 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		@Query("UPDATE legoset set manual = :manual")
 		@Modifying
 		Mono<Double> updateManualAndReturnDouble(int manual);
+	}
+
+	interface IdOnlyEntityRepository extends ReactiveCrudRepository<IdOnlyEntity, Integer> {}
+
+	@Getter
+	@Setter
+	@Table("id_only")
+	@NoArgsConstructor
+	static class IdOnlyEntity {
+		@Id Integer id;
 	}
 }

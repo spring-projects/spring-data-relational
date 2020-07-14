@@ -57,6 +57,7 @@ import org.springframework.lang.Nullable;
  * @author Mark Paluch
  * @author Ferdinand Jacobs
  * @author Jens Schauder
+ * @author Zsombor Gegesy
  */
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultDatabaseClientUnitTests {
@@ -249,7 +250,7 @@ public class DefaultDatabaseClientUnitTests {
 		verify(statement).bindNull(1, Integer.class);
 	}
 
-	@Test
+	@Test // gh-390
 	public void insertShouldWorkWithoutValues() {
 
 		Statement statement = mockStatementFor("INSERT INTO id_only VALUES ()");
