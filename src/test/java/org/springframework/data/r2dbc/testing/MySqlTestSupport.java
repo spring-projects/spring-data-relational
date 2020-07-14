@@ -29,7 +29,7 @@ import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
 import org.testcontainers.containers.MySQLContainer;
 
 import com.github.jasync.r2dbc.mysql.MysqlConnectionFactoryProvider;
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+import com.mysql.cj.jdbc.MysqlDataSource;
 
 /**
  * Utility class for testing against MySQL.
