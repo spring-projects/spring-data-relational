@@ -20,6 +20,7 @@ import javax.sql.DataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.MSSQLServerContainer;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
@@ -49,7 +50,8 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (MSSQL_CONTAINER == null) {
 
-			MSSQLServerContainer<?> container = new MSSQLServerContainer<>();
+			MSSQLServerContainer<?> container = new MSSQLServerContainer<>() //
+					.withReuse(true);
 			container.start();
 
 			MSSQL_CONTAINER = container;
@@ -59,6 +61,13 @@ public class MsSqlDataSourceConfiguration extends DataSourceConfiguration {
 		sqlServerDataSource.setURL(MSSQL_CONTAINER.getJdbcUrl());
 		sqlServerDataSource.setUser(MSSQL_CONTAINER.getUsername());
 		sqlServerDataSource.setPassword(MSSQL_CONTAINER.getPassword());
+
         return sqlServerDataSource;
     }
+
+
+	@Override
+	protected void customizePopulator(ResourceDatabasePopulator populator) {
+		populator.setIgnoreFailedDrops(true);
+	}
 }

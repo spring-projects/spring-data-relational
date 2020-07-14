@@ -37,6 +37,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.platform.commons.util.ExceptionUtils;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,6 +48,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -58,6 +60,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * @author Myeonghyeon Lee
  * @author Jens Schauder
  */
+@RunWith(SpringRunner.class)
 public class JdbcRepositoryConcurrencyIntegrationTests {
 
 	@Configuration
@@ -76,9 +79,6 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 			return factory.getRepository(DummyEntityRepository.class);
 		}
 	}
-
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
