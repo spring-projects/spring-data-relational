@@ -127,7 +127,8 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Mono<T> first() {
-			return this.template.doSelect(this.query.limit(1), this.domainType, getTableName(), this.returnType).first();
+			return this.template.doSelect(this.query.limit(1), this.domainType, getTableName(), this.returnType,
+					RowsFetchSpec::first);
 		}
 
 		/*
@@ -136,7 +137,8 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Mono<T> one() {
-			return this.template.doSelect(this.query.limit(2), this.domainType, getTableName(), this.returnType).one();
+			return this.template.doSelect(this.query.limit(2), this.domainType, getTableName(), this.returnType,
+					RowsFetchSpec::one);
 		}
 
 		/*
@@ -145,7 +147,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Flux<T> all() {
-			return this.template.doSelect(this.query, this.domainType, getTableName(), this.returnType).all();
+			return this.template.doSelect(this.query, this.domainType, getTableName(), this.returnType, RowsFetchSpec::all);
 		}
 
 		private SqlIdentifier getTableName() {

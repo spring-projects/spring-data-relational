@@ -1,7 +1,13 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.1-2-0]]
+== What's New in Spring Data R2DBC 1.2.0
+
+* Support for <<entity-callbacks>>.
+
 [[new-features.1-1-0-RELEASE]]
+
 == What's New in Spring Data R2DBC 1.1.0 RELEASE
 
 * Introduction of `R2dbcEntityTemplate` for entity-oriented operations.

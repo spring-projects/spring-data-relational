@@ -336,3 +336,6 @@ With auto-increment columns, this happens automatically, because the ID gets set
 :projection-collection: Flux
 include::../{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+2]
 
+include::../{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
+include::./r2dbc-entity-callbacks.adoc[leveloffset=+2]
+

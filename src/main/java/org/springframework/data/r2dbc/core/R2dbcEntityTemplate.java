@@ -23,13 +23,17 @@ import reactor.core.publisher.Mono;
 import java.beans.FeatureDescriptor;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.reactivestreams.Publisher;
+
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -37,9 +41,16 @@ import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionInformation;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.r2dbc.mapping.OutboundRow;
+import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
+import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
+import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
+import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
@@ -51,6 +62,7 @@ import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.ProxyUtils;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -65,7 +77,7 @@ import org.springframework.util.Assert;
  * @author Bogdan Ilchyshyn
  * @since 1.1
  */
-public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware {
+public class R2dbcEntityTemplate implements R2dbcEntityOperations, ApplicationContextAware {
 
 	private final DatabaseClient databaseClient;
 
@@ -74,6 +86,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 
 	private final SpelAwareProxyProjectionFactory projectionFactory;
+
+	private @Nullable ReactiveEntityCallbacks entityCallbacks;
 
 	/**
 	 * Create a new {@link R2dbcEntityTemplate} given {@link DatabaseClient}.
@@ -111,11 +125,34 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.beans.factory.BeanFactoryAware#setBeanFactory(org.springframework.beans.factory.BeanFactory)
+	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
 	 */
 	@Override
-	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-		this.projectionFactory.setBeanFactory(beanFactory);
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+
+		if (entityCallbacks == null) {
+			setEntityCallbacks(ReactiveEntityCallbacks.create(applicationContext));
+		}
+
+		projectionFactory.setBeanFactory(applicationContext);
+		projectionFactory.setBeanClassLoader(applicationContext.getClassLoader());
+	}
+
+	/**
+	 * Set the {@link ReactiveEntityCallbacks} instance to use when invoking
+	 * {@link org.springframework.data.mapping.callback.ReactiveEntityCallbacks callbacks} like the
+	 * {@link BeforeSaveCallback}.
+	 * <p />
+	 * Overrides potentially existing {@link ReactiveEntityCallbacks}.
+	 *
+	 * @param entityCallbacks must not be {@literal null}.
+	 * @throws IllegalArgumentException if the given instance is {@literal null}.
+	 * @since 1.2
+	 */
+	public void setEntityCallbacks(ReactiveEntityCallbacks entityCallbacks) {
+
+		Assert.notNull(entityCallbacks, "EntityCallbacks must not be null!");
+		this.entityCallbacks = entityCallbacks;
 	}
 
 	// -------------------------------------------------------------------------
@@ -248,10 +285,27 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		Assert.notNull(query, "Query must not be null");
 		Assert.notNull(entityClass, "entity class must not be null");
 
-		return doSelect(query, entityClass, getTableName(entityClass), entityClass).all();
+		SqlIdentifier tableName = getTableName(entityClass);
+		return doSelect(query, entityClass, tableName, entityClass, RowsFetchSpec::all);
 	}
 
-	<T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityClass, SqlIdentifier tableName, Class<T> returnType) {
+	@SuppressWarnings("unchecked")
+	<T, P extends Publisher<T>> P doSelect(Query query, Class<?> entityClass, SqlIdentifier tableName,
+			Class<T> returnType, Function<RowsFetchSpec<T>, P> resultHandler) {
+
+		RowsFetchSpec<T> fetchSpec = doSelect(query, entityClass, tableName, returnType);
+
+		P result = resultHandler.apply(fetchSpec);
+
+		if (result instanceof Mono) {
+			return (P) ((Mono<?>) result).flatMap(it -> maybeCallAfterConvert(it, tableName));
+		}
+
+		return (P) ((Flux<?>) result).flatMap(it -> maybeCallAfterConvert(it, tableName));
+	}
+
+	private <T> RowsFetchSpec<T> doSelect(Query query, Class<?> entityClass, SqlIdentifier tableName,
+			Class<T> returnType) {
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
@@ -295,7 +349,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 */
 	@Override
 	public <T> Mono<T> selectOne(Query query, Class<T> entityClass) throws DataAccessException {
-		return doSelect(query.limit(2), entityClass, getTableName(entityClass), entityClass).one();
+		return doSelect(query.limit(2), entityClass, getTableName(entityClass), entityClass, RowsFetchSpec::one);
 	}
 
 	/*
@@ -377,14 +431,33 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		T entityToInsert = setVersionIfNecessary(persistentEntity, entity);
+		return Mono.defer(() -> maybeCallBeforeConvert(setVersionIfNecessary(persistentEntity, entity), tableName)
+				.flatMap(beforeConvert -> {
 
-		return this.databaseClient.insert() //
-				.into(persistentEntity.getType()) //
-				.table(tableName).using(entityToInsert) //
-				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entityToInsert)) //
-				.first() //
-				.defaultIfEmpty(entityToInsert);
+					OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(beforeConvert);
+
+					return maybeCallBeforeSave(beforeConvert, outboundRow, tableName).flatMap(entityToSave -> {
+
+						StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+						StatementMapper.InsertSpec insert = mapper.createInsert(tableName);
+
+						for (SqlIdentifier column : outboundRow.keySet()) {
+							SettableValue settableValue = outboundRow.get(column);
+							if (settableValue.hasValue()) {
+								insert = insert.withColumn(column, settableValue);
+							}
+						}
+
+						PreparedOperation<?> operation = mapper.getMappedObject(insert);
+
+						return this.databaseClient.execute(operation) //
+								.filter(statement -> statement.returnGeneratedValues())
+								.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entityToSave)) //
+								.first() //
+								.defaultIfEmpty(entityToSave) //
+								.flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
+					});
+				}));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -413,36 +486,61 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		Assert.notNull(entity, "Entity must not be null");
 
+		return doUpdate(entity, getRequiredEntity(entity).getTableName());
+	}
+
+	private <T> Mono<T> doUpdate(T entity, SqlIdentifier tableName) {
+
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		DatabaseClient.TypedUpdateSpec<T> updateMatchingSpec = this.databaseClient.update() //
-				.table(persistentEntity.getType()) //
-				.table(persistentEntity.getTableName());
+		return maybeCallBeforeConvert(entity, tableName).flatMap(beforeConvert -> {
 
-		DatabaseClient.UpdateSpec matching;
-		T entityToUpdate;
-		if (persistentEntity.hasVersionProperty()) {
+			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(entity);
 
-			Criteria criteria = createMatchingVersionCriteria(entity, persistentEntity);
-			entityToUpdate = incrementVersion(persistentEntity, entity);
-			matching = updateMatchingSpec.using(entityToUpdate).matching(criteria);
-		} else {
-			entityToUpdate = entity;
-			matching = updateMatchingSpec.using(entity);
-		}
+			return maybeCallBeforeSave(beforeConvert, outboundRow, tableName) //
+					.flatMap(entityToSave -> {
 
-		return matching.fetch() //
-				.rowsUpdated() //
-				.flatMap(rowsUpdated -> rowsUpdated == 0 ? handleMissingUpdate(entityToUpdate, persistentEntity)
-						: Mono.just(entityToUpdate));
+						SqlIdentifier idColumn = persistentEntity.getRequiredIdProperty().getColumnName();
+						SettableValue id = outboundRow.remove(idColumn);
+						Criteria criteria = Criteria.where(dataAccessStrategy.toSql(idColumn)).is(id);
+
+						T saved;
+
+						if (persistentEntity.hasVersionProperty()) {
+							criteria = criteria.and(createMatchingVersionCriteria(entity, persistentEntity));
+							saved = incrementVersion(persistentEntity, entity, outboundRow);
+						} else {
+							saved = entityToSave;
+						}
+
+						Update update = Update.from((Map) outboundRow);
+
+						StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+						StatementMapper.UpdateSpec updateSpec = mapper.createUpdate(tableName, update).withCriteria(criteria);
+
+						PreparedOperation<?> operation = mapper.getMappedObject(updateSpec);
+
+						return this.databaseClient.execute(operation) //
+								.fetch() //
+								.rowsUpdated() //
+								.handle((rowsUpdated, sink) -> {
+
+									if (rowsUpdated != 0) {
+										return;
+									}
+
+									if (persistentEntity.hasVersionProperty()) {
+										sink.error(new OptimisticLockingFailureException(
+												formatOptimisticLockingExceptionMessage(saved, persistentEntity)));
+									} else {
+										sink.error(new TransientDataAccessResourceException(
+												formatTransientEntityExceptionMessage(saved, persistentEntity)));
+									}
+								}).then(maybeCallAfterSave(saved, outboundRow, tableName));
+					});
+		});
 	}
 
-	private <T> Mono<? extends T> handleMissingUpdate(T entity, RelationalPersistentEntity<T> persistentEntity) {
-
-		return Mono.error(persistentEntity.hasVersionProperty()
-				? new OptimisticLockingFailureException(formatOptimisticLockingExceptionMessage(entity, persistentEntity))
-				: new TransientDataAccessResourceException(formatTransientEntityExceptionMessage(entity, persistentEntity)));
-	}
 
 	private <T> String formatOptimisticLockingExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
 
@@ -457,7 +555,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T incrementVersion(RelationalPersistentEntity<T> persistentEntity, T entity) {
+	private <T> T incrementVersion(RelationalPersistentEntity<T> persistentEntity, T entity, OutboundRow outboundRow) {
 
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
@@ -470,6 +568,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 		Class<?> versionPropertyType = versionProperty.getType();
 		propertyAccessor.setProperty(versionProperty, conversionService.convert(newVersionValue, versionPropertyType));
+
+		outboundRow.put(versionProperty.getColumnName(), SettableValue.from(newVersionValue));
 
 		return (T) propertyAccessor.getBean();
 	}
@@ -500,6 +600,42 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		RelationalPersistentEntity<?> persistentEntity = getRequiredEntity(entity);
 
 		return delete(getByIdQuery(entity, persistentEntity), persistentEntity.getType()).thenReturn(entity);
+	}
+
+	protected <T> Mono<T> maybeCallBeforeConvert(T object, SqlIdentifier table) {
+
+		if (entityCallbacks != null) {
+			return entityCallbacks.callback(BeforeConvertCallback.class, object, table);
+		}
+
+		return Mono.just(object);
+	}
+
+	protected <T> Mono<T> maybeCallBeforeSave(T object, OutboundRow row, SqlIdentifier table) {
+
+		if (entityCallbacks != null) {
+			return entityCallbacks.callback(BeforeSaveCallback.class, object, row, table);
+		}
+
+		return Mono.just(object);
+	}
+
+	protected <T> Mono<T> maybeCallAfterSave(T object, OutboundRow row, SqlIdentifier table) {
+
+		if (entityCallbacks != null) {
+			return entityCallbacks.callback(AfterSaveCallback.class, object, row, table);
+		}
+
+		return Mono.just(object);
+	}
+
+	protected <T> Mono<T> maybeCallAfterConvert(T object, SqlIdentifier table) {
+
+		if (entityCallbacks != null) {
+			return entityCallbacks.callback(AfterConvertCallback.class, object, table);
+		}
+
+		return Mono.just(object);
 	}
 
 	private <T> Query getByIdQuery(T entity, RelationalPersistentEntity<?> persistentEntity) {
