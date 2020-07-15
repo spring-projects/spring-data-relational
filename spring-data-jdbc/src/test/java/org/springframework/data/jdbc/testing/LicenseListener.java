@@ -16,13 +16,11 @@
 package org.springframework.data.jdbc.testing;
 
 import org.junit.AssumptionViolatedException;
-
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Profiles;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
-
 import org.testcontainers.containers.Db2Container;
 import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.utility.LicenseAcceptance;
@@ -32,14 +30,17 @@ import org.testcontainers.utility.LicenseAcceptance;
  * accepted.
  * 
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @Order(Integer.MIN_VALUE)
 public class LicenseListener implements TestExecutionListener {
 
+	private StandardEnvironment environment;
+
 	@Override
 	public void prepareTestInstance(TestContext testContext) {
 
-		StandardEnvironment environment = new StandardEnvironment();
+		environment = new StandardEnvironment();
 
 		if (environment.acceptsProfiles(Profiles.of("db2"))) {
 			assumeLicenseAccepted(Db2Container.DEFAULT_DB2_IMAGE_NAME + ":" + Db2Container.DEFAULT_TAG);
@@ -50,12 +51,20 @@ public class LicenseListener implements TestExecutionListener {
 		}
 	}
 
-	private static void assumeLicenseAccepted(String imageName) {
+	private void assumeLicenseAccepted(String imageName) {
 
 		try {
 			LicenseAcceptance.assertLicenseAccepted(imageName);
 		} catch (IllegalStateException e) {
-			throw new AssumptionViolatedException(e.getMessage());
+
+			if (environment.getProperty("on-missing-licence", "fail").equals("ignore-test")) {
+				throw new AssumptionViolatedException(e.getMessage());
+			} else {
+
+				throw new IllegalStateException(
+						"You need to accept the licence for the database with which you are testing or set \"ignore-missing-licence\" as active profile in order to skip tests for which a licence is missing.",
+						e);
+			}
 		}
 	}
 
