@@ -28,7 +28,7 @@ import org.testcontainers.utility.LicenseAcceptance;
 /**
  * {@link TestExecutionListener} to selectively skip tests if the license for a particular database container was not
  * accepted.
- * 
+ *
  * @author Mark Paluch
  * @author Jens Schauder
  */
@@ -57,14 +57,13 @@ public class LicenseListener implements TestExecutionListener {
 			LicenseAcceptance.assertLicenseAccepted(imageName);
 		} catch (IllegalStateException e) {
 
-			if (environment.getProperty("on-missing-licence", "fail").equals("ignore-test")) {
-				throw new AssumptionViolatedException(e.getMessage());
-			} else {
-
-				throw new IllegalStateException(
-						"You need to accept the licence for the database with which you are testing or set \"ignore-missing-licence\" as active profile in order to skip tests for which a licence is missing.",
-						e);
+			if (environment.getProperty("on-missing-license", "fail").equals("ignore-test")) {
+				throw new AssumptionViolatedException(e.getMessage(), e);
 			}
+
+			throw new IllegalStateException(
+					"You need to accept the license for the database with which you are testing or set \"ignore-missing-license\" as active profile in order to skip tests for which a license is missing.",
+					e);
 		}
 	}
 

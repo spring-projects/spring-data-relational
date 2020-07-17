@@ -159,19 +159,20 @@ Runs integration test against a single in memory database.
 
 To run integration tests against all supported databases specify the Maven Profile `all-dbs`.
 
-```
+[source,bash]
+----
 ./mvnw clean install -Pall-dbs
-```
+----
 
-This requires an appropriate `container-license-acceptance.txt` to be on the classpath, signaling that you accept the licence of the databases used.
+This requires an appropriate `container-license-acceptance.txt` to be on the classpath, signaling that you accept the license of the databases used.
 
-If you don't want to accept these licences you may add the Maven Profile `ignore-missing-licence`.
+If you don't want to accept these licences you may add the Maven Profile `ignore-missing-license`.
 This will ignore the tests that require an explicit license acceptance.
 
-```
-./mvnw clean install -Pall-dbs,ignore-missing-licence
-```
-
+[source,bash]
+----
+./mvnw clean install -Pall-dbs,ignore-missing-license
+----
 
 If you want to run an integration tests against a different database you can do so by activating an apropriate Spring Profile.
 Available are the following Spring Profiles:
