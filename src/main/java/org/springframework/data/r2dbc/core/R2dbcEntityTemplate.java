@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 import org.reactivestreams.Publisher;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConversionService;
@@ -77,7 +79,7 @@ import org.springframework.util.Assert;
  * @author Bogdan Ilchyshyn
  * @since 1.1
  */
-public class R2dbcEntityTemplate implements R2dbcEntityOperations, ApplicationContextAware {
+public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware, ApplicationContextAware {
 
 	private final DatabaseClient databaseClient;
 
@@ -122,6 +124,15 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, ApplicationCo
 	public DatabaseClient getDatabaseClient() {
 		return this.databaseClient;
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.beans.factory.BeanFactoryAware#setBeanFactory(org.springframework.beans.factory.BeanFactory)
+	 * @deprecated since 1.2 in favor of #setApplicationContext.
+	 */
+	@Override
+	@Deprecated
+	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {}
 
 	/*
 	 * (non-Javadoc)
@@ -431,33 +442,38 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, ApplicationCo
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		return Mono.defer(() -> maybeCallBeforeConvert(setVersionIfNecessary(persistentEntity, entity), tableName)
+		T entityWithVersion = setVersionIfNecessary(persistentEntity, entity);
+
+		return maybeCallBeforeConvert(entityWithVersion, tableName)
 				.flatMap(beforeConvert -> {
 
 					OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(beforeConvert);
 
-					return maybeCallBeforeSave(beforeConvert, outboundRow, tableName).flatMap(entityToSave -> {
+					return maybeCallBeforeSave(beforeConvert, outboundRow, tableName) //
+							.flatMap(entityToSave -> doInsert(entityToSave, tableName, outboundRow));
+				});
+	}
 
-						StatementMapper mapper = dataAccessStrategy.getStatementMapper();
-						StatementMapper.InsertSpec insert = mapper.createInsert(tableName);
+	private <T> Mono<T> doInsert(T entity, SqlIdentifier tableName, OutboundRow outboundRow) {
 
-						for (SqlIdentifier column : outboundRow.keySet()) {
-							SettableValue settableValue = outboundRow.get(column);
-							if (settableValue.hasValue()) {
-								insert = insert.withColumn(column, settableValue);
-							}
-						}
+		StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+		StatementMapper.InsertSpec insert = mapper.createInsert(tableName);
 
-						PreparedOperation<?> operation = mapper.getMappedObject(insert);
+		for (SqlIdentifier column : outboundRow.keySet()) {
+			SettableValue settableValue = outboundRow.get(column);
+			if (settableValue.hasValue()) {
+				insert = insert.withColumn(column, settableValue);
+			}
+		}
 
-						return this.databaseClient.execute(operation) //
-								.filter(statement -> statement.returnGeneratedValues())
-								.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entityToSave)) //
-								.first() //
-								.defaultIfEmpty(entityToSave) //
-								.flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
-					});
-				}));
+		PreparedOperation<?> operation = mapper.getMappedObject(insert);
+
+		return this.databaseClient.execute(operation) //
+				.filter(statement -> statement.returnGeneratedValues())
+				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entity)) //
+				.first() //
+				.defaultIfEmpty(entity) //
+				.flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -493,9 +509,22 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, ApplicationCo
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		return maybeCallBeforeConvert(entity, tableName).flatMap(beforeConvert -> {
+		T entityToUse;
+		Criteria matchingVersionCriteria;
 
-			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(entity);
+		if (persistentEntity.hasVersionProperty()) {
+
+			matchingVersionCriteria = createMatchingVersionCriteria(entity, persistentEntity);
+			entityToUse = incrementVersion(persistentEntity, entity);
+		} else {
+
+			entityToUse = entity;
+			matchingVersionCriteria = null;
+		}
+
+		return maybeCallBeforeConvert(entityToUse, tableName).flatMap(beforeConvert -> {
+
+			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(beforeConvert);
 
 			return maybeCallBeforeSave(beforeConvert, outboundRow, tableName) //
 					.flatMap(entityToSave -> {
@@ -504,43 +533,44 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, ApplicationCo
 						SettableValue id = outboundRow.remove(idColumn);
 						Criteria criteria = Criteria.where(dataAccessStrategy.toSql(idColumn)).is(id);
 
-						T saved;
-
-						if (persistentEntity.hasVersionProperty()) {
-							criteria = criteria.and(createMatchingVersionCriteria(entity, persistentEntity));
-							saved = incrementVersion(persistentEntity, entity, outboundRow);
-						} else {
-							saved = entityToSave;
+						if (matchingVersionCriteria != null) {
+							criteria = criteria.and(matchingVersionCriteria);
 						}
 
-						Update update = Update.from((Map) outboundRow);
-
-						StatementMapper mapper = dataAccessStrategy.getStatementMapper();
-						StatementMapper.UpdateSpec updateSpec = mapper.createUpdate(tableName, update).withCriteria(criteria);
-
-						PreparedOperation<?> operation = mapper.getMappedObject(updateSpec);
-
-						return this.databaseClient.execute(operation) //
-								.fetch() //
-								.rowsUpdated() //
-								.handle((rowsUpdated, sink) -> {
-
-									if (rowsUpdated != 0) {
-										return;
-									}
-
-									if (persistentEntity.hasVersionProperty()) {
-										sink.error(new OptimisticLockingFailureException(
-												formatOptimisticLockingExceptionMessage(saved, persistentEntity)));
-									} else {
-										sink.error(new TransientDataAccessResourceException(
-												formatTransientEntityExceptionMessage(saved, persistentEntity)));
-									}
-								}).then(maybeCallAfterSave(saved, outboundRow, tableName));
+						return doUpdate(entityToSave, tableName, persistentEntity, criteria, outboundRow);
 					});
 		});
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private <T> Mono<T> doUpdate(T entity, SqlIdentifier tableName, RelationalPersistentEntity<T> persistentEntity,
+			Criteria criteria, OutboundRow outboundRow) {
+
+		Update update = Update.from((Map) outboundRow);
+
+		StatementMapper mapper = dataAccessStrategy.getStatementMapper();
+		StatementMapper.UpdateSpec updateSpec = mapper.createUpdate(tableName, update).withCriteria(criteria);
+
+		PreparedOperation<?> operation = mapper.getMappedObject(updateSpec);
+
+		return this.databaseClient.execute(operation) //
+				.fetch() //
+				.rowsUpdated() //
+				.handle((rowsUpdated, sink) -> {
+
+					if (rowsUpdated != 0) {
+						return;
+					}
+
+					if (persistentEntity.hasVersionProperty()) {
+						sink.error(new OptimisticLockingFailureException(
+								formatOptimisticLockingExceptionMessage(entity, persistentEntity)));
+					} else {
+						sink.error(new TransientDataAccessResourceException(
+								formatTransientEntityExceptionMessage(entity, persistentEntity)));
+					}
+				}).then(maybeCallAfterSave(entity, outboundRow, tableName));
+	}
 
 	private <T> String formatOptimisticLockingExceptionMessage(T entity, RelationalPersistentEntity<T> persistentEntity) {
 
@@ -555,7 +585,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, ApplicationCo
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T incrementVersion(RelationalPersistentEntity<T> persistentEntity, T entity, OutboundRow outboundRow) {
+	private <T> T incrementVersion(RelationalPersistentEntity<T> persistentEntity, T entity) {
 
 		PersistentPropertyAccessor<?> propertyAccessor = persistentEntity.getPropertyAccessor(entity);
 		RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
@@ -568,8 +598,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, ApplicationCo
 		}
 		Class<?> versionPropertyType = versionProperty.getType();
 		propertyAccessor.setProperty(versionProperty, conversionService.convert(newVersionValue, versionPropertyType));
-
-		outboundRow.put(versionProperty.getColumnName(), SettableValue.from(newVersionValue));
 
 		return (T) propertyAccessor.getBean();
 	}
