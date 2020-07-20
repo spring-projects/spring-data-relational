@@ -23,8 +23,10 @@ import io.r2dbc.spi.Connection;
  * @author Mark Paluch
  * @see SimpleConnectionHandle
  * @see ConnectionHolder
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection} instead.
  */
 @FunctionalInterface
+@Deprecated
 public interface ConnectionHandle {
 
 	/**

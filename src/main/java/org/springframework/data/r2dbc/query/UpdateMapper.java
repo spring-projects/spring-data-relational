@@ -20,10 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.dialect.BindMarker;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
-import org.springframework.data.r2dbc.dialect.Bindings;
-import org.springframework.data.r2dbc.dialect.MutableBindings;
+import org.springframework.r2dbc.core.Parameter;
+import org.springframework.r2dbc.core.binding.BindMarkers;
+import org.springframework.r2dbc.core.binding.Bindings;
+import org.springframework.r2dbc.core.binding.MutableBindings;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.dialect.Escaper;
@@ -38,6 +38,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.binding.BindMarker;
 import org.springframework.util.Assert;
 
 /**
@@ -135,6 +136,13 @@ public class UpdateMapper extends QueryMapper {
 
 			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
 			typeHint = getTypeHint(mappedValue, actualType.getType(), settableValue);
+
+		} else if (value instanceof Parameter) {
+
+			Parameter parameter = (Parameter) value;
+
+			mappedValue = convertValue(parameter.getValue(), propertyField.getTypeHint());
+			typeHint = getTypeHint(mappedValue, actualType.getType(), parameter);
 
 		} else if (value instanceof ValueFunction) {
 

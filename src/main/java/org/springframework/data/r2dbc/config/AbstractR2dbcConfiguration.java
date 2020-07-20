@@ -40,8 +40,6 @@ import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
-import org.springframework.data.r2dbc.support.R2dbcExceptionTranslator;
-import org.springframework.data.r2dbc.support.SqlStateR2dbcExceptionTranslator;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.lang.Nullable;
@@ -100,11 +98,9 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * @throws IllegalArgumentException if any of the required args is {@literal null}.
 	 */
 	@Bean({ "r2dbcDatabaseClient", "databaseClient" })
-	public DatabaseClient databaseClient(ReactiveDataAccessStrategy dataAccessStrategy,
-			R2dbcExceptionTranslator exceptionTranslator) {
+	public DatabaseClient databaseClient(ReactiveDataAccessStrategy dataAccessStrategy) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
-		Assert.notNull(exceptionTranslator, "ExceptionTranslator must not be null!");
 
 		SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
 		if (context != null) {
@@ -115,7 +111,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 		return DatabaseClient.builder() //
 				.connectionFactory(lookupConnectionFactory()) //
 				.dataAccessStrategy(dataAccessStrategy) //
-				.exceptionTranslator(exceptionTranslator) //
+				.exceptionTranslator(new R2dbcExceptionSubclassTranslator()) //
 				.projectionFactory(projectionFactory) //
 				.build();
 	}
@@ -198,19 +194,6 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 		converters.addAll(R2dbcCustomConversions.STORE_CONVERTERS);
 
 		return StoreConversions.of(dialect.getSimpleTypeHolder(), converters);
-	}
-
-	/**
-	 * Creates a {@link R2dbcExceptionTranslator} using the configured {@link #connectionFactory() ConnectionFactory}.
-	 *
-	 * @return must not be {@literal null}.
-	 * @see #connectionFactory()
-	 * @see R2dbcExceptionSubclassTranslator
-	 * @see SqlStateR2dbcExceptionTranslator
-	 */
-	@Bean
-	public R2dbcExceptionTranslator exceptionTranslator() {
-		return new R2dbcExceptionSubclassTranslator();
 	}
 
 	ConnectionFactory lookupConnectionFactory() {

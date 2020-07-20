@@ -39,7 +39,9 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Christoph Strobl
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection} instead.
  */
+@Deprecated
 public abstract class ConnectionFactoryUtils {
 
 	/**

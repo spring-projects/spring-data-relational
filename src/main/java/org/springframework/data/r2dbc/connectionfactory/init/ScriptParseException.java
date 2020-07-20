@@ -22,7 +22,9 @@ import org.springframework.lang.Nullable;
  * Thrown by {@link ScriptUtils} if an SQL script cannot be properly parsed.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
  */
+@Deprecated
 public class ScriptParseException extends ScriptException {
 
 	private static final long serialVersionUID = 6130513243627087332L;

@@ -15,30 +15,24 @@
  */
 package org.springframework.data.r2dbc.mapping;
 
-import java.util.Objects;
-
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ObjectUtils;
 
 /**
  * A database value that can be set in a statement.
  *
  * @author Mark Paluch
  * @see OutboundRow
+ * @deprecated since 1.2, use Spring R2DBC's {@link Parameter} directly.
  */
+@Deprecated
 public class SettableValue {
 
-	private final @Nullable Object value;
-	private final Class<?> type;
+	private final Parameter parameter;
 
-	private SettableValue(@Nullable Object value, Class<?> type) {
-
-		Assert.notNull(type, "Type must not be null");
-
-		this.value = value;
-		this.type = type;
+	private SettableValue(Parameter parameter) {
+		this.parameter = parameter;
 	}
 
 	/**
@@ -51,7 +45,7 @@ public class SettableValue {
 
 		Assert.notNull(value, "Value must not be null");
 
-		return new SettableValue(value, ClassUtils.getUserClass(value));
+		return new SettableValue(Parameter.from(value));
 	}
 
 	/**
@@ -62,7 +56,7 @@ public class SettableValue {
 	 * @return the {@link SettableValue} value for {@code value}.
 	 */
 	public static SettableValue fromOrEmpty(@Nullable Object value, Class<?> type) {
-		return value == null ? empty(type) : new SettableValue(value, ClassUtils.getUserClass(value));
+		return new SettableValue(Parameter.fromOrEmpty(value, type));
 	}
 
 	/**
@@ -74,7 +68,7 @@ public class SettableValue {
 
 		Assert.notNull(type, "Type must not be null");
 
-		return new SettableValue(null, type);
+		return new SettableValue(Parameter.empty(type));
 	}
 
 	/**
@@ -85,7 +79,7 @@ public class SettableValue {
 	 */
 	@Nullable
 	public Object getValue() {
-		return this.value;
+		return this.parameter.getValue();
 	}
 
 	/**
@@ -94,7 +88,7 @@ public class SettableValue {
 	 * @return the column value type
 	 */
 	public Class<?> getType() {
-		return this.type;
+		return this.parameter.getType();
 	}
 
 	/**
@@ -103,7 +97,7 @@ public class SettableValue {
 	 * @return whether this {@link SettableValue} has a value. {@literal false} if {@link #getValue()} is {@literal null}.
 	 */
 	public boolean hasValue() {
-		return this.value != null;
+		return this.parameter.hasValue();
 	}
 
 	/**
@@ -112,7 +106,7 @@ public class SettableValue {
 	 * @return whether this {@link SettableValue} is empty. {@literal true} if {@link #getValue()} is {@literal null}.
 	 */
 	public boolean isEmpty() {
-		return this.value == null;
+		return this.parameter.isEmpty();
 	}
 
 	@Override
@@ -122,21 +116,16 @@ public class SettableValue {
 		if (!(o instanceof SettableValue))
 			return false;
 		SettableValue value1 = (SettableValue) o;
-		return ObjectUtils.nullSafeEquals(this.value, value1.value) && ObjectUtils.nullSafeEquals(this.type, value1.type);
+		return this.parameter.equals(value1.parameter);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.value, this.type);
+		return this.parameter.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		final StringBuffer sb = new StringBuffer();
-		sb.append("SettableValue");
-		sb.append("[value=").append(this.value);
-		sb.append(", type=").append(this.type);
-		sb.append(']');
-		return sb.toString();
+		return this.parameter.toString();
 	}
 }

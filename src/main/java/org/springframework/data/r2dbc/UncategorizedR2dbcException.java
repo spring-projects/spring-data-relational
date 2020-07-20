@@ -17,22 +17,18 @@ package org.springframework.data.r2dbc;
 
 import io.r2dbc.spi.R2dbcException;
 
-import org.springframework.dao.UncategorizedDataAccessException;
 import org.springframework.lang.Nullable;
 
 /**
  * Exception thrown when we can't classify a {@link R2dbcException} into one of our generic data access exceptions.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.UncategorizedR2dbcException} instead.
  */
-public class UncategorizedR2dbcException extends UncategorizedDataAccessException {
+@Deprecated
+public class UncategorizedR2dbcException extends org.springframework.r2dbc.UncategorizedR2dbcException {
 
 	private static final long serialVersionUID = 361587356435210266L;
-
-	/**
-	 * SQL that led to the problem
-	 */
-	private final @Nullable String sql;
 
 	/**
 	 * Creates a new {@link UncategorizedR2dbcException}.
@@ -42,10 +38,7 @@ public class UncategorizedR2dbcException extends UncategorizedDataAccessExceptio
 	 * @param ex the root cause
 	 */
 	public UncategorizedR2dbcException(String task, @Nullable String sql, R2dbcException ex) {
-
-		super(String.format("%s; uncategorized R2dbcException%s; %s", task, sql != null ? " for SQL [" + sql + "]" : "",
-				ex.getMessage()), ex);
-		this.sql = sql;
+		super(task, sql, ex);
 	}
 
 	/**
@@ -62,6 +55,6 @@ public class UncategorizedR2dbcException extends UncategorizedDataAccessExceptio
 	 */
 	@Nullable
 	public String getSql() {
-		return this.sql;
+		return super.getSql();
 	}
 }

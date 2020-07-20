@@ -25,8 +25,10 @@ import org.springframework.lang.Nullable;
  *
  * @author Juergen Hoeller
  * @author Mark Paluch
+ * @deprecated since 1.2, use Spring's {@link org.springframework.r2dbc.core} support instead.
  */
-public interface SqlProvider {
+@Deprecated
+public interface SqlProvider extends org.springframework.r2dbc.core.SqlProvider {
 
 	/**
 	 * Return the SQL string for this object, i.e. typically the SQL used for creating statements.

@@ -26,7 +26,9 @@ import org.springframework.util.Assert;
  * {@link BindMarkers}.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding} instead.
  */
+@Deprecated
 public class MutableBindings extends Bindings {
 
 	private final BindMarkers markers;

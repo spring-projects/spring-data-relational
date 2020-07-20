@@ -26,11 +26,11 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.dialect.SqlServerDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 

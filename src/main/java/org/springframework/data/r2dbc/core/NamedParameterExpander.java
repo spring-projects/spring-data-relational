@@ -36,7 +36,9 @@ import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
  * <b>NOTE: An instance of this class is thread-safe once configured.</b>
  *
  * @author Mark Paluch
+ * @deprecated since 1.2, without replacement.
  */
+@Deprecated
 public class NamedParameterExpander {
 
 	/**
@@ -124,6 +126,11 @@ public class NamedParameterExpander {
 	 */
 	public PreparedOperation<String> expand(String sql, BindMarkersFactory bindMarkersFactory,
 			BindParameterSource paramSource) {
+		return expand(sql, (org.springframework.r2dbc.core.binding.BindMarkersFactory) bindMarkersFactory, paramSource);
+	}
+
+	PreparedOperation<String> expand(String sql,
+			org.springframework.r2dbc.core.binding.BindMarkersFactory bindMarkersFactory, BindParameterSource paramSource) {
 
 		ParsedSql parsedSql = getParsedSql(sql);
 

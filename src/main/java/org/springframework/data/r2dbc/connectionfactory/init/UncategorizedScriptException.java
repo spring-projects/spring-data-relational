@@ -20,7 +20,9 @@ package org.springframework.data.r2dbc.connectionfactory.init;
  * for example, a {@link io.r2dbc.spi.R2dbcException} from R2DBC that we cannot pinpoint more precisely.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
  */
+@Deprecated
 public class UncategorizedScriptException extends ScriptException {
 
 	private static final long serialVersionUID = -3196706179230349902L;

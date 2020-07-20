@@ -29,10 +29,6 @@ import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.dialect.BindMarker;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
-import org.springframework.data.r2dbc.dialect.Bindings;
-import org.springframework.data.r2dbc.dialect.MutableBindings;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.dialect.Escaper;
@@ -46,6 +42,11 @@ import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.Parameter;
+import org.springframework.r2dbc.core.binding.BindMarker;
+import org.springframework.r2dbc.core.binding.BindMarkers;
+import org.springframework.r2dbc.core.binding.Bindings;
+import org.springframework.r2dbc.core.binding.MutableBindings;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -351,6 +352,12 @@ public class QueryMapper {
 
 			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
 			typeHint = getTypeHint(mappedValue, actualType.getType(), settableValue);
+		} else if (criteria.getValue() instanceof Parameter) {
+
+			Parameter parameter = (Parameter) criteria.getValue();
+
+			mappedValue = convertValue(parameter.getValue(), propertyField.getTypeHint());
+			typeHint = getTypeHint(mappedValue, actualType.getType(), parameter);
 		} else if (criteria.getValue() instanceof ValueFunction) {
 
 			ValueFunction<Object> valueFunction = (ValueFunction<Object>) criteria.getValue();
@@ -389,6 +396,22 @@ public class QueryMapper {
 		}
 
 		return SettableValue.from(convertValue(value.getValue(), ClassTypeInformation.OBJECT));
+	}
+
+	/**
+	 * Potentially convert the {@link SettableValue}.
+	 *
+	 * @param value
+	 * @return
+	 * @since 1.2
+	 */
+	public Parameter getBindValue(Parameter value) {
+
+		if (value.isEmpty()) {
+			return Parameter.empty(converter.getTargetType(value.getType()));
+		}
+
+		return Parameter.from(convertValue(value.getValue(), ClassTypeInformation.OBJECT));
 	}
 
 	@Nullable
@@ -567,6 +590,19 @@ public class QueryMapper {
 
 		if (mappedValue.getClass().equals(settableValue.getValue().getClass())) {
 			return settableValue.getType();
+		}
+
+		return propertyType;
+	}
+
+	Class<?> getTypeHint(@Nullable Object mappedValue, Class<?> propertyType, Parameter parameter) {
+
+		if (mappedValue == null || propertyType.equals(Object.class)) {
+			return parameter.getType();
+		}
+
+		if (mappedValue.getClass().equals(parameter.getValue().getClass())) {
+			return parameter.getType();
 		}
 
 		return propertyType;

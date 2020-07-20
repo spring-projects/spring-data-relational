@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
+
 /**
  * An SQL dialect for Microsoft SQL Server.
  *

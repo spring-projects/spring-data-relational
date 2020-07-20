@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 
 /**
  * An SQL dialect for MySQL.

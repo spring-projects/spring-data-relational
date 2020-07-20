@@ -24,8 +24,10 @@ import org.springframework.data.r2dbc.core.PreparedOperation;
  * @see PreparedOperation
  * @see io.r2dbc.spi.Statement#bind
  * @see io.r2dbc.spi.Statement#bindNull
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding} instead.
  */
-public interface BindTarget {
+@Deprecated
+public interface BindTarget extends org.springframework.r2dbc.core.binding.BindTarget {
 
 	/**
 	 * Bind a value.

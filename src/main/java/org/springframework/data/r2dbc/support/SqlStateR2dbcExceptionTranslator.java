@@ -40,7 +40,11 @@ import org.springframework.lang.Nullable;
  * @author Mark Paluch
  * @see io.r2dbc.spi.R2dbcException#getSqlState()
  * @see SqlErrorCodeR2dbcExceptionTranslator
+ * @deprecated since 1.2. Use Spring R2DBC's
+ *             {@link org.springframework.r2dbc.connection.ConnectionFactoryUtils#convertR2dbcException(String, String, R2dbcException)}
+ *             instead.
  */
+@Deprecated
 public class SqlStateR2dbcExceptionTranslator extends AbstractFallbackR2dbcExceptionTranslator {
 
 	private static final Set<String> BAD_SQL_GRAMMAR_CODES = new HashSet<>(8);

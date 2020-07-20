@@ -32,9 +32,11 @@ import org.reactivestreams.Publisher;
  * @author Mark Paluch
  * @since 1.1
  * @see Statement#execute()
+ * @deprecated since 1.2, use Spring's {@link org.springframework.r2dbc.core} support instead.
  */
+@Deprecated
 @FunctionalInterface
-public interface ExecuteFunction {
+public interface ExecuteFunction extends org.springframework.r2dbc.core.ExecuteFunction {
 
 	/**
 	 * Execute the given {@link Statement} for a stream of {@link Result}s.

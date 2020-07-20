@@ -48,7 +48,9 @@ import org.springframework.util.StringUtils;
  * Mainly for internal use within the framework.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
  */
+@Deprecated
 public abstract class ScriptUtils {
 
 	/**

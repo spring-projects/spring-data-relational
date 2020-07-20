@@ -31,7 +31,9 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.lookup} instead.
  */
+@Deprecated
 public class MapConnectionFactoryLookup implements ConnectionFactoryLookup {
 
 	private final Map<String, ConnectionFactory> connectionFactories = new HashMap<>();

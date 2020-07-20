@@ -1,0 +1,48 @@
+[appendix]
+= Migration Guide
+
+The following sections explain how to migrate to a newer version of Spring Data R2DBC.
+
+[[upgrading.1.1-1.2]]
+== Upgrading from 1.1.x to 1.2.x
+
+Spring Data R2DBC was developed with the intent to evaluate how well R2DBC can integrate with Spring applications.
+One of the main aspects was to move core support into Spring Framework once R2DBC support has proven useful.
+Spring Framework 5.3 ships with a new module: Spring R2DBC.
+
+`spring-r2dbc` ships core R2DBC functionality (a slim variant of `DatabaseClient`, Transaction Manager, Connection Factory initialization, Exception translation) that was initially provided by Spring Data R2DBC. The 1.2.0 release aligns with what's provided in Spring R2DBC by making several changes outlined in the following sections.
+
+[[upgrading.1.1-1.2.deprecation]]
+=== Deprecations
+
+* Deprecation of `o.s.d.r2dbc.core.DatabaseClient` and its support classes `ConnectionAccessor`, `FetchSpec`, `SqlProvider` and a few more.
+Named parameter support classes such as `NamedParameterExpander` are encapsulated by Spring R2DBC's `DatabaseClient` implementation hence we're not providing replacements as this was internal API in the first place.
+Use `o.s.r2dbc.core.DatabaseClient` and their Spring R2DBC replacements available from `org.springframework.r2dbc.core`.
+Entity-based methods (`select`/`insert`/`update`/`delete`) methods are available through `R2dbcEntityTemplate` which was introduced with version 1.1.
+* Deprecation of `o.s.d.r2dbc.connectionfactory`, `o.s.d.r2dbc.connectionfactory.init`, and `o.s.d.r2dbc.connectionfactory.lookup` packages.
+Use Spring R2DBC's variant which you can find at `o.s.r2dbc.connection`.
+* Deprecation of `o.s.d.r2dbc.convert.ColumnMapRowMapper`.
+Use `o.s.r2dbc.core.ColumnMapRowMapper` instead.
+* Deprecation of binding support classes `o.s.d.r2dbc.dialect.Bindings`, `BindMarker`, `BindMarkers`, `BindMarkersFactory` and related types.
+Use replacements from `org.springframework.r2dbc.core.binding`.
+* Deprecation of `BadSqlGrammarException`, `UncategorizedR2dbcException` and exception translation at `o.s.d.r2dbc.support`.
+Spring R2DBC provides a slim exception translation variant without an SPI for now available through `o.s.r2dbc.connection.ConnectionFactoryUtils#convertR2dbcException`.
+
+[[upgrading.1.1-1.2.replacements]]
+=== Usage of replacements provided by Spring R2DBC
+
+To ease migration, several deprecated types are now subtypes of their replacements provided by Spring R2DBC. Spring Data R2DBC has changes several methods or introduced new methods accepting Spring R2DBC types.
+Specifically the following classes are affected:
+
+* `R2dbcEntityTemplate`
+* `R2dbcDialect`
+* Types in `org.springframework.data.r2dbc.query`
+
+We recommend that you review your imports if you work with these types directly.
+
+[[upgrading.1.1-1.2.dependencies]]
+=== Dependency Changes
+
+To make use of Spring R2DBC, make sure to include the following dependency:
+
+* `org.springframework:spring-r2dbc`

@@ -22,5 +22,7 @@ package org.springframework.data.r2dbc.core;
  * @author Mark Paluch
  * @see RowsFetchSpec
  * @see UpdatedRowsFetchSpec
+ * @deprecated since 1.2, use Spring's {@link org.springframework.r2dbc.core} support instead.
  */
+@Deprecated
 public interface FetchSpec<T> extends RowsFetchSpec<T>, UpdatedRowsFetchSpec {}

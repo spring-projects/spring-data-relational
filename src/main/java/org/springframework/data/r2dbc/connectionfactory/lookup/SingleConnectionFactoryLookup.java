@@ -24,7 +24,9 @@ import org.springframework.util.Assert;
  * returned for any connection factory name.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.lookup} instead.
  */
+@Deprecated
 public class SingleConnectionFactoryLookup implements ConnectionFactoryLookup {
 
 	private final ConnectionFactory connectionFactory;
@@ -41,7 +43,7 @@ public class SingleConnectionFactoryLookup implements ConnectionFactoryLookup {
 		this.connectionFactory = connectionFactory;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.connectionfactory.lookup.ConnectionFactoryLookup#getConnectionFactory(java.lang.String)
 	 */

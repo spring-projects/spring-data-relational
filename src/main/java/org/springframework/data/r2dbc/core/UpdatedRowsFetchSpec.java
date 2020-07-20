@@ -21,7 +21,9 @@ import reactor.core.publisher.Mono;
  * Contract for fetching the number of affected rows.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2, use Spring's {@link org.springframework.r2dbc.core} support instead.
  */
+@Deprecated
 public interface UpdatedRowsFetchSpec {
 
 	/**

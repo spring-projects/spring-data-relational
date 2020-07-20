@@ -22,8 +22,10 @@ import org.springframework.dao.NonTransientDataAccessException;
  * {@link io.r2dbc.spi.ConnectionFactory} could not be obtained.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.lookup} instead.
  */
 @SuppressWarnings("serial")
+@Deprecated
 public class ConnectionFactoryLookupFailureException extends NonTransientDataAccessException {
 
 	/**

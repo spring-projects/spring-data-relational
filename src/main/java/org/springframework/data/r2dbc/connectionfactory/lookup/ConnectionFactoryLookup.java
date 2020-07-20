@@ -21,8 +21,10 @@ import io.r2dbc.spi.ConnectionFactory;
  * Strategy interface for looking up {@link ConnectionFactory} by name.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.lookup} instead.
  */
 @FunctionalInterface
+@Deprecated
 public interface ConnectionFactoryLookup {
 
 	/**

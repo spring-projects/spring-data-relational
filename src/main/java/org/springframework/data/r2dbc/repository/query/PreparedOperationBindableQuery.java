@@ -16,8 +16,8 @@
 package org.springframework.data.r2dbc.repository.query;
 
 import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.PreparedOperation;
 import org.springframework.data.r2dbc.dialect.BindTarget;
+import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.util.Assert;
 
 /**

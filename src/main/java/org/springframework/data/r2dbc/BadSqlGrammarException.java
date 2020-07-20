@@ -17,8 +17,6 @@ package org.springframework.data.r2dbc;
 
 import io.r2dbc.spi.R2dbcException;
 
-import org.springframework.dao.InvalidDataAccessResourceUsageException;
-
 /**
  * Exception thrown when SQL specified is invalid. Such exceptions always have a {@link io.r2dbc.spi.R2dbcException}
  * root cause.
@@ -28,12 +26,12 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  * without affecting code using this class.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2, use directly Spring R2DBC's {@link org.springframework.r2dbc.BadSqlGrammarException} instead.
  */
-public class BadSqlGrammarException extends InvalidDataAccessResourceUsageException {
+@Deprecated
+public class BadSqlGrammarException extends org.springframework.r2dbc.BadSqlGrammarException {
 
 	private static final long serialVersionUID = 3814579246913482054L;
-
-	private final String sql;
 
 	/**
 	 * Creates a new {@link BadSqlGrammarException}.
@@ -43,10 +41,7 @@ public class BadSqlGrammarException extends InvalidDataAccessResourceUsageExcept
 	 * @param ex the root cause.
 	 */
 	public BadSqlGrammarException(String task, String sql, R2dbcException ex) {
-
-		super(task + "; bad SQL grammar [" + sql + "]", ex);
-
-		this.sql = sql;
+		super(task, sql, ex);
 	}
 
 	/**
@@ -60,6 +55,6 @@ public class BadSqlGrammarException extends InvalidDataAccessResourceUsageExcept
 	 * Return the SQL that caused the problem.
 	 */
 	public String getSql() {
-		return this.sql;
+		return super.getSql();
 	}
 }

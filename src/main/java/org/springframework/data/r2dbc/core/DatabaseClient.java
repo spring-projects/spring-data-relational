@@ -49,7 +49,9 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Bogdan Ilchyshyn
+ * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.core.DatabaseClient} support instead.
  */
+@Deprecated
 public interface DatabaseClient {
 
 	/**

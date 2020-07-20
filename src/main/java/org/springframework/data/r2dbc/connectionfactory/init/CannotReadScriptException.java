@@ -21,7 +21,9 @@ import org.springframework.core.io.support.EncodedResource;
  * Thrown by {@link ScriptUtils} if an SQL script cannot be read.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
  */
+@Deprecated
 public class CannotReadScriptException extends ScriptException {
 
 	private static final long serialVersionUID = 7253084944991764250L;

@@ -26,6 +26,7 @@ import org.reactivestreams.Publisher;
  * @author Mark Paluch
  * @since 1.1
  */
+@Deprecated
 enum StatementFilterFunctions implements StatementFilterFunction {
 
 	EMPTY_FILTER;

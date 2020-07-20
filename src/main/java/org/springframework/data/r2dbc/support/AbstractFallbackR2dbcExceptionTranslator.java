@@ -31,7 +31,11 @@ import org.springframework.util.Assert;
  * {@link R2dbcExceptionTranslator}.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2. Use Spring R2DBC's
+ *             {@link org.springframework.r2dbc.connection.ConnectionFactoryUtils#convertR2dbcException(String, String, R2dbcException)}
+ *             instead.
  */
+@Deprecated
 public abstract class AbstractFallbackR2dbcExceptionTranslator implements R2dbcExceptionTranslator {
 
 	/** Logger available to subclasses */

@@ -32,8 +32,9 @@ import org.springframework.dao.DataAccessException;
  * long the allocated {@link Connection} is valid. Connections are released after the publisher terminates.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.core.DatabaseClient} support instead.
  */
-public interface ConnectionAccessor {
+public interface ConnectionAccessor extends org.springframework.r2dbc.core.ConnectionAccessor {
 
 	/**
 	 * Execute a callback {@link Function} within a {@link Connection} scope. The function is responsible for creating a

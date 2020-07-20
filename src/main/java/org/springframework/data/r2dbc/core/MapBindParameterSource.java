@@ -31,6 +31,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  */
+@Deprecated
 class MapBindParameterSource implements BindParameterSource {
 
 	private final Map<String, SettableValue> values;

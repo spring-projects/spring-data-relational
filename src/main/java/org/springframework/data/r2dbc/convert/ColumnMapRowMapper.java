@@ -19,7 +19,6 @@ import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -40,26 +39,15 @@ import org.springframework.util.LinkedCaseInsensitiveMap;
  * names in the same casing as exposed by the driver.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.core.ColumnMapRowMapper} directly.
  */
-public class ColumnMapRowMapper implements BiFunction<Row, RowMetadata, Map<String, Object>> {
+public class ColumnMapRowMapper extends org.springframework.r2dbc.core.ColumnMapRowMapper {
 
 	public final static ColumnMapRowMapper INSTANCE = new ColumnMapRowMapper();
 
 	@Override
 	public Map<String, Object> apply(Row row, RowMetadata rowMetadata) {
-
-		Collection<? extends ColumnMetadata> columns = IterableUtils.toCollection(rowMetadata.getColumnMetadatas());
-		int columnCount = columns.size();
-		Map<String, Object> mapOfColValues = createColumnMap(columnCount);
-
-		int index = 0;
-		for (ColumnMetadata column : columns) {
-
-			String key = getColumnKey(column.getName());
-			Object obj = getColumnValue(row, index++);
-			mapOfColValues.put(key, obj);
-		}
-		return mapOfColValues;
+		return super.apply(row, rowMetadata);
 	}
 
 	/**
@@ -72,7 +60,7 @@ public class ColumnMapRowMapper implements BiFunction<Row, RowMetadata, Map<Stri
 	 * @see LinkedCaseInsensitiveMap
 	 */
 	protected Map<String, Object> createColumnMap(int columnCount) {
-		return new LinkedCaseInsensitiveMap<>(columnCount);
+		return super.createColumnMap(columnCount);
 	}
 
 	/**
@@ -83,7 +71,7 @@ public class ColumnMapRowMapper implements BiFunction<Row, RowMetadata, Map<Stri
 	 * @see ColumnMetadata#getName()
 	 */
 	protected String getColumnKey(String columnName) {
-		return columnName;
+		return super.getColumnKey(columnName);
 	}
 
 	/**
@@ -97,6 +85,6 @@ public class ColumnMapRowMapper implements BiFunction<Row, RowMetadata, Map<Stri
 	 */
 	@Nullable
 	protected Object getColumnValue(Row row, int index) {
-		return row.get(index);
+		return super.getColumnValue(row, index);
 	}
 }

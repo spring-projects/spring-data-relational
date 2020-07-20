@@ -29,7 +29,9 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @see MapBindParameterSource
+ * @deprecated since 1.2, without replacement.
  */
+@Deprecated
 public interface BindParameterSource {
 
 	/**

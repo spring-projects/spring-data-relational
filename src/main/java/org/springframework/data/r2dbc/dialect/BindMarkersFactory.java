@@ -15,9 +15,11 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @see BindMarkers
  * @see io.r2dbc.spi.Statement
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding} instead.
  */
 @FunctionalInterface
-public interface BindMarkersFactory {
+@Deprecated
+public interface BindMarkersFactory extends org.springframework.r2dbc.core.binding.BindMarkersFactory {
 
 	/**
 	 * Create a new {@link BindMarkers} instance.
@@ -52,7 +54,21 @@ public interface BindMarkersFactory {
 
 		Assert.notNull(prefix, "Prefix must not be null!");
 
-		return () -> new IndexedBindMarkers(prefix, beginWith);
+		org.springframework.r2dbc.core.binding.BindMarkersFactory factory = org.springframework.r2dbc.core.binding.BindMarkersFactory
+				.indexed(prefix, beginWith);
+
+		return new BindMarkersFactory() {
+
+			@Override
+			public BindMarkers create() {
+				return new BindMarkersAdapter(factory.create());
+			}
+
+			@Override
+			public boolean identifiablePlaceholders() {
+				return factory.identifiablePlaceholders();
+			}
+		};
 	}
 
 	/**
@@ -68,17 +84,19 @@ public interface BindMarkersFactory {
 	static BindMarkersFactory anonymous(String placeholder) {
 
 		Assert.hasText(placeholder, "Placeholder must not be empty!");
+		org.springframework.r2dbc.core.binding.BindMarkersFactory factory = org.springframework.r2dbc.core.binding.BindMarkersFactory
+				.anonymous(placeholder);
 
 		return new BindMarkersFactory() {
 
 			@Override
 			public BindMarkers create() {
-				return new AnonymousBindMarkers(placeholder);
+				return new BindMarkersAdapter(factory.create());
 			}
 
 			@Override
 			public boolean identifiablePlaceholders() {
-				return false;
+				return factory.identifiablePlaceholders();
 			}
 		};
 	}
@@ -127,6 +145,20 @@ public interface BindMarkersFactory {
 		Assert.notNull(namePrefix, "Index prefix must not be null!");
 		Assert.notNull(hintFilterFunction, "Hint filter function must not be null!");
 
-		return () -> new NamedBindMarkers(prefix, namePrefix, maxLength, hintFilterFunction);
+		org.springframework.r2dbc.core.binding.BindMarkersFactory factory = org.springframework.r2dbc.core.binding.BindMarkersFactory
+				.named(prefix, namePrefix, maxLength, hintFilterFunction);
+
+		return new BindMarkersFactory() {
+
+			@Override
+			public BindMarkers create() {
+				return new BindMarkersAdapter(factory.create());
+			}
+
+			@Override
+			public boolean identifiablePlaceholders() {
+				return factory.identifiablePlaceholders();
+			}
+		};
 	}
 }

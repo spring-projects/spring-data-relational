@@ -22,7 +22,6 @@ import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.PreparedOperation;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -30,6 +29,7 @@ import org.springframework.data.relational.repository.query.RelationalParameters
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.PartTree;
+import org.springframework.r2dbc.core.PreparedOperation;
 
 /**
  * An {@link AbstractR2dbcQuery} implementation based on a {@link PartTree}.
@@ -71,7 +71,7 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 		}
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isModifyingQuery()
 	 */
@@ -80,7 +80,7 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 		return this.tree.isDelete();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
 	 */

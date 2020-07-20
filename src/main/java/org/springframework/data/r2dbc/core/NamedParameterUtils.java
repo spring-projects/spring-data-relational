@@ -26,10 +26,10 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.r2dbc.dialect.BindMarker;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
-import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
 import org.springframework.data.r2dbc.dialect.BindTarget;
+import org.springframework.r2dbc.core.binding.BindMarker;
+import org.springframework.r2dbc.core.binding.BindMarkers;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.util.Assert;
 
 /**
@@ -47,6 +47,7 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @author Mark Paluch
  */
+@Deprecated
 abstract class NamedParameterUtils {
 
 	/**
@@ -494,7 +495,7 @@ abstract class NamedParameterUtils {
 		}
 
 		@SuppressWarnings("unchecked")
-		public void bind(BindTarget target, String identifier, Object value) {
+		public void bind(org.springframework.r2dbc.core.binding.BindTarget target, String identifier, Object value) {
 
 			List<BindMarker> bindMarkers = getBindMarkers(identifier);
 
@@ -530,7 +531,8 @@ abstract class NamedParameterUtils {
 			}
 		}
 
-		private void bind(BindTarget target, Iterator<BindMarker> markers, Object valueToBind) {
+		private void bind(org.springframework.r2dbc.core.binding.BindTarget target, Iterator<BindMarker> markers,
+				Object valueToBind) {
 
 			Assert.isTrue(markers.hasNext(),
 					() -> String.format(
@@ -540,7 +542,8 @@ abstract class NamedParameterUtils {
 			markers.next().bind(target, valueToBind);
 		}
 
-		public void bindNull(BindTarget target, String identifier, Class<?> valueType) {
+		public void bindNull(org.springframework.r2dbc.core.binding.BindTarget target, String identifier,
+				Class<?> valueType) {
 
 			List<BindMarker> bindMarkers = getBindMarkers(identifier);
 
@@ -579,6 +582,11 @@ abstract class NamedParameterUtils {
 
 		@Override
 		public void bindTo(BindTarget target) {
+			bindTo((org.springframework.r2dbc.core.binding.BindTarget) target);
+		}
+
+		@Override
+		public void bindTo(org.springframework.r2dbc.core.binding.BindTarget target) {
 
 			for (String namedParameter : this.parameterSource.getParameterNames()) {
 

@@ -8,6 +8,7 @@ import java.util.Set;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.r2dbc.mapping.R2dbcSimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 
 /**
  * R2DBC-specific extension to {@link Dialect}. Represents a dialect that is implemented by a particular database.

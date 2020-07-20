@@ -46,6 +46,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -277,6 +278,15 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 */
 	@Override
 	public SettableValue getBindValue(SettableValue value) {
+		return this.updateMapper.getBindValue(value);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getBindValue(Parameter)
+	 */
+	@Override
+	public Parameter getBindValue(Parameter value) {
 		return this.updateMapper.getBindValue(value);
 	}
 

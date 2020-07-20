@@ -31,8 +31,12 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.dao.DataAccessException
  * @see SqlStateR2dbcExceptionTranslator
  * @see SqlErrorCodeR2dbcExceptionTranslator
+ * @deprecated since 1.2. Use Spring R2DBC's
+ *             {@link org.springframework.r2dbc.connection.ConnectionFactoryUtils#convertR2dbcException(String, String, R2dbcException)}
+ *             instead.
  */
 @FunctionalInterface
+@Deprecated
 public interface R2dbcExceptionTranslator {
 
 	/**

@@ -31,13 +31,9 @@ import java.util.function.Function;
  *
  * @author Mark Paluch
  */
-class DefaultSqlResult<T> implements SqlResult<T> {
+class DefaultSqlResult<T> implements FetchSpec<T> {
 
-	private final static SqlResult<?> EMPTY = new SqlResult<Object>() {
-		@Override
-		public <R> SqlResult<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
-			return DefaultSqlResult.empty();
-		}
+	private final static FetchSpec<?> EMPTY = new FetchSpec<Object>() {
 
 		@Override
 		public Mono<Object> one() {
@@ -104,15 +100,14 @@ class DefaultSqlResult<T> implements SqlResult<T> {
 	 * @return a {@code SqlResult}.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <R> SqlResult<R> empty() {
-		return (SqlResult<R>) EMPTY;
+	public static <R> FetchSpec<R> empty() {
+		return (FetchSpec<R>) EMPTY;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.SqlResult#map(java.util.function.BiFunction)
 	 */
-	@Override
-	public <R> SqlResult<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
+	public <R> FetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
 		return new DefaultSqlResult<>(connectionAccessor, sql, resultFunction, updatedRowsFunction, mappingFunction);
 	}
 

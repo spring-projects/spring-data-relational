@@ -22,8 +22,8 @@ import org.springframework.transaction.support.ResourceHolderSupport;
 import org.springframework.util.Assert;
 
 /**
- * Resource holder wrapping a R2DBC {@link Connection}. {@link R2dbcTransactionManager} binds instances of
- * this class to the thread, for a specific {@link ConnectionFactory}.
+ * Resource holder wrapping a R2DBC {@link Connection}. {@link R2dbcTransactionManager} binds instances of this class to
+ * the thread, for a specific {@link ConnectionFactory}.
  * <p>
  * Inherits rollback-only support for nested R2DBC transactions and reference count functionality from the base class.
  * <p>
@@ -33,7 +33,9 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @see R2dbcTransactionManager
  * @see ConnectionFactoryUtils
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection} instead.
  */
+@Deprecated
 public class ConnectionHolder extends ResourceHolderSupport {
 
 	@Nullable private ConnectionHandle connectionHandle;

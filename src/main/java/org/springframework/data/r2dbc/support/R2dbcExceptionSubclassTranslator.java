@@ -43,7 +43,11 @@ import org.springframework.lang.Nullable;
  * Falls back to a standard {@link SqlStateR2dbcExceptionTranslator}.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2. Use Spring R2DBC's
+ *             {@link org.springframework.r2dbc.connection.ConnectionFactoryUtils#convertR2dbcException(String, String, R2dbcException)}
+ *             instead.
  */
+@Deprecated
 public class R2dbcExceptionSubclassTranslator extends AbstractFallbackR2dbcExceptionTranslator {
 
 	public R2dbcExceptionSubclassTranslator() {

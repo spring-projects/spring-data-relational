@@ -30,7 +30,9 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @see BeanFactory
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.lookup} instead.
  */
+@Deprecated
 public class BeanFactoryConnectionFactoryLookup implements ConnectionFactoryLookup, BeanFactoryAware {
 
 	@Nullable private BeanFactory beanFactory;

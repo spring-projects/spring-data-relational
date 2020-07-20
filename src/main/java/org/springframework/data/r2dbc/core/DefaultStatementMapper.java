@@ -19,9 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
 import org.springframework.data.r2dbc.dialect.BindTarget;
-import org.springframework.data.r2dbc.dialect.Bindings;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.query.BoundAssignments;
 import org.springframework.data.r2dbc.query.BoundCondition;
@@ -34,6 +32,8 @@ import org.springframework.data.relational.core.sql.InsertBuilder.InsertValuesWi
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.binding.BindMarkers;
+import org.springframework.r2dbc.core.binding.Bindings;
 import org.springframework.util.Assert;
 
 /**
@@ -334,6 +334,11 @@ class DefaultStatementMapper implements StatementMapper {
 
 		@Override
 		public void bindTo(BindTarget to) {
+			this.bindings.apply(to);
+		}
+
+		@Override
+		public void bindTo(org.springframework.r2dbc.core.binding.BindTarget to) {
 			this.bindings.apply(to);
 		}
 	}

@@ -60,7 +60,11 @@ import org.springframework.lang.Nullable;
  * @author Mark Paluch
  * @see SQLErrorCodesFactory
  * @see SqlStateR2dbcExceptionTranslator
+ * @deprecated since 1.2. Use Spring R2DBC's
+ *             {@link org.springframework.r2dbc.connection.ConnectionFactoryUtils#convertR2dbcException(String, String, R2dbcException)}
+ *             instead.
  */
+@Deprecated
 public class SqlErrorCodeR2dbcExceptionTranslator extends AbstractFallbackR2dbcExceptionTranslator {
 
 	/** Error codes used by this translator */

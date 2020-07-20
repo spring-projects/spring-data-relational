@@ -17,8 +17,8 @@ package org.springframework.data.r2dbc.query;
 
 import java.util.List;
 
-import org.springframework.data.r2dbc.dialect.Bindings;
 import org.springframework.data.relational.core.sql.Assignment;
+import org.springframework.r2dbc.core.binding.Bindings;
 import org.springframework.util.Assert;
 
 /**

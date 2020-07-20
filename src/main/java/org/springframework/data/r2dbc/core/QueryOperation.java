@@ -23,9 +23,11 @@ import java.util.function.Supplier;
  *
  * @author Mark Paluch
  * @see PreparedOperation
+ * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.core} support instead.
  */
 @FunctionalInterface
-public interface QueryOperation extends Supplier<String> {
+@Deprecated
+public interface QueryOperation extends Supplier<String>, org.springframework.r2dbc.core.QueryOperation {
 
 	/**
 	 * Returns the string-representation of this operation to be used with {@link io.r2dbc.spi.Statement} creation.

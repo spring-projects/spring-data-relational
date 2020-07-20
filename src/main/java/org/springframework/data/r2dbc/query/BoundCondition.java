@@ -15,7 +15,7 @@
  */
 package org.springframework.data.r2dbc.query;
 
-import org.springframework.data.r2dbc.dialect.Bindings;
+import org.springframework.r2dbc.core.binding.Bindings;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.util.Assert;
 

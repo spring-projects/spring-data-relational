@@ -31,6 +31,7 @@ import org.springframework.data.r2dbc.dialect.MySqlDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Update;
+import org.springframework.r2dbc.core.PreparedOperation;
 
 /**
  * Unit tests for {@link ReactiveDataAccessStrategy}.

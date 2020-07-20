@@ -73,7 +73,9 @@ import org.springframework.util.Assert;
  * @see ConnectionFactoryUtils#releaseConnection
  * @see TransactionAwareConnectionFactoryProxy
  * @see DatabaseClient
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection} instead.
  */
+@Deprecated
 public class R2dbcTransactionManager extends AbstractReactiveTransactionManager implements InitializingBean {
 
 	private ConnectionFactory connectionFactory;
@@ -135,7 +137,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	 * <p>
 	 * If no custom translator is provided, a default {@link R2dbcExceptionSubclassTranslator} is used which translates
 	 * {@link R2dbcException}'s subclasses into Springs {@link DataAccessException} hierarchy.
-	 * 
+	 *
 	 * @see R2dbcExceptionSubclassTranslator
 	 * @since 1.1
 	 */
@@ -526,7 +528,7 @@ public class R2dbcTransactionManager extends AbstractReactiveTransactionManager 
 	 * <p>
 	 * The default implementation throws a {@link TransactionSystemException}. Subclasses may specifically identify
 	 * concurrency failures etc.
-	 * 
+	 *
 	 * @param task the task description (commit or rollback).
 	 * @param ex the SQLException thrown from commit/rollback.
 	 * @return the translated exception to throw, either a {@link org.springframework.dao.DataAccessException} or a

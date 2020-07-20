@@ -26,7 +26,9 @@ import io.r2dbc.spi.Wrapped;
  *
  * @author Mark Paluch
  * @author Christoph Strobl
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use R2DBC's {@link Wrapped} mechanism instead.
  */
+@Deprecated
 public interface ConnectionProxy extends Connection, Wrapped<Connection> {
 
 	/**

@@ -29,6 +29,9 @@ import java.util.function.Consumer;
 
 import org.springframework.data.util.Streamable;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.binding.BindMarker;
+import org.springframework.r2dbc.core.binding.BindMarkers;
+import org.springframework.r2dbc.core.binding.BindTarget;
 import org.springframework.util.Assert;
 
 /**
@@ -36,7 +39,9 @@ import org.springframework.util.Assert;
  * Bindings are typically immutable.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding} instead.
  */
+@Deprecated
 public class Bindings implements Streamable<Bindings.Binding> {
 
 	private static final Bindings EMPTY = new Bindings();

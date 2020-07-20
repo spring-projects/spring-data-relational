@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.util.Lazy;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 import org.springframework.util.ClassUtils;
 
 /**

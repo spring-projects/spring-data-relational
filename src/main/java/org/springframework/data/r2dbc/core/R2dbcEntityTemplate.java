@@ -64,6 +64,7 @@ import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.ProxyUtils;
+import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 

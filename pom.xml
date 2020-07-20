@@ -109,6 +109,11 @@
 
 		<dependency>
 			<groupId>org.springframework</groupId>
+			<artifactId>spring-r2dbc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
 			<artifactId>spring-tx</artifactId>
 		</dependency>
 

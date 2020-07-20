@@ -7,6 +7,8 @@ import java.util.UUID;
 import org.junit.Test;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
+import org.springframework.r2dbc.core.binding.BindMarker;
+import org.springframework.r2dbc.core.binding.BindMarkers;
 
 /**
  * Unit tests for {@link SqlServerDialect}.

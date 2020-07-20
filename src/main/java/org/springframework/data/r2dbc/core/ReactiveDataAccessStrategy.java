@@ -27,6 +27,8 @@ import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.Parameter;
+import org.springframework.r2dbc.core.PreparedOperation;
 
 /**
  * Data access strategy that generalizes convenience operations using mapped entities. Typically used internally by
@@ -34,7 +36,7 @@ import org.springframework.lang.Nullable;
  * primary keys.
  *
  * @author Mark Paluch
- * @see PreparedOperation
+ * @see org.springframework.r2dbc.core.PreparedOperation
  */
 public interface ReactiveDataAccessStrategy {
 
@@ -64,8 +66,18 @@ public interface ReactiveDataAccessStrategy {
 	 * @param value must not be {@literal null}.
 	 * @return
 	 * @since 1.1
+	 * @deprecated since 1.2, use {@link #getBindValue(Parameter)} instead.
 	 */
 	SettableValue getBindValue(SettableValue value);
+
+	/**
+	 * Return a potentially converted {@link SettableValue} for strategies that support type conversion.
+	 *
+	 * @param value must not be {@literal null}.
+	 * @return
+	 * @since 1.2
+	 */
+	Parameter getBindValue(Parameter value);
 
 	/**
 	 * Returns a {@link BiFunction row mapping function} to map {@link Row rows} to {@code T}.

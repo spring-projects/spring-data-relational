@@ -26,6 +26,7 @@ import java.util.List;
  * @author Thomas Risberg
  * @author Juergen Hoeller
  */
+@Deprecated
 class ParsedSql {
 
 	private String originalSql;

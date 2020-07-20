@@ -25,8 +25,10 @@ import reactor.core.publisher.Mono;
  * @see ResourceDatabasePopulator
  * @see DatabasePopulatorUtils
  * @see ConnectionFactoryInitializer
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
  */
 @FunctionalInterface
+@Deprecated
 public interface DatabasePopulator {
 
 	/**
