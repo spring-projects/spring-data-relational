@@ -4,6 +4,7 @@
 [[new-features.1-2-0]]
 == What's New in Spring Data R2DBC 1.2.0
 
+* Deprecate Spring Data R2DBC `DatabaseClient` and move off deprecated API in favor of Spring R2DBC. Consult the <<upgrading.1.1-1.2,Migration Guide>> for further details.
 * Support for <<entity-callbacks>>.
 * <<r2dbc.auditing,Auditing>> through `@EnableR2dbcAuditing`.
 

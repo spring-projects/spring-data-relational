@@ -16,12 +16,11 @@
 package org.springframework.data.r2dbc.repository.query;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.DatabaseClient.BindSpec;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
 
 /**
@@ -76,7 +75,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		this.binder = new ExpressionEvaluatingParameterBinder(expressionParser, evaluationContextProvider, expressionQuery);
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isModifyingQuery()
 	 */
@@ -85,7 +84,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		return getQueryMethod().isModifyingQuery();
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
 	 */
@@ -95,7 +94,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		return new BindableQuery() {
 
 			@Override
-			public <T extends BindSpec<T>> T bind(T bindSpec) {
+			public DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec bindSpec) {
 				return binder.bind(bindSpec, accessor);
 			}
 

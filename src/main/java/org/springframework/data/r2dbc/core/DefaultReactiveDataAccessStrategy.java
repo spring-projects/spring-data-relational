@@ -207,10 +207,10 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		for (RelationalPersistentProperty property : entity) {
 
-			SettableValue value = row.get(property.getColumnName());
+			Parameter value = row.get(property.getColumnName());
 			if (value != null && shouldConvertArrayValue(property, value)) {
 
-				SettableValue writeValue = getArrayValue(value, property);
+				Parameter writeValue = getArrayValue(value, property);
 				row.put(property.getColumnName(), writeValue);
 			}
 		}
@@ -218,7 +218,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		return row;
 	}
 
-	private boolean shouldConvertArrayValue(RelationalPersistentProperty property, SettableValue value) {
+	private boolean shouldConvertArrayValue(RelationalPersistentProperty property, Parameter value) {
 
 		if (!property.isCollectionLike()) {
 			return false;
@@ -235,7 +235,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		return false;
 	}
 
-	private SettableValue getArrayValue(SettableValue value, RelationalPersistentProperty property) {
+	private Parameter getArrayValue(Parameter value, RelationalPersistentProperty property) {
 
 		if (value.getType().equals(byte[].class)) {
 			return value;
@@ -250,8 +250,8 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		}
 
 		Class<?> actualType = null;
-		if (value instanceof Collection) {
-			actualType = CollectionUtils.findCommonElementType((Collection<?>) value);
+		if (value.getValue() instanceof Collection) {
+			actualType = CollectionUtils.findCommonElementType((Collection<?>) value.getValue());
 		} else if (value.getClass().isArray()) {
 			actualType = value.getClass().getComponentType();
 		}
@@ -265,10 +265,10 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 			Class<?> targetType = arrayColumns.getArrayType(actualType);
 			int depth = actualType.isArray() ? ArrayUtils.getDimensionDepth(actualType) : 1;
 			Class<?> targetArrayType = ArrayUtils.getArrayClass(targetType, depth);
-			return SettableValue.empty(targetArrayType);
+			return Parameter.empty(targetArrayType);
 		}
 
-		return SettableValue.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value.getValue()),
+		return Parameter.fromOrEmpty(this.converter.getArrayValue(arrayColumns, property, value.getValue()),
 				actualType);
 	}
 

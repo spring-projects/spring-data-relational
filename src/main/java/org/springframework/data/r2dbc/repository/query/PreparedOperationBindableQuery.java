@@ -15,15 +15,16 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.dialect.BindTarget;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.BindTarget;
 import org.springframework.util.Assert;
 
 /**
  * A {@link BindableQuery} implementation based on a {@link PreparedOperation}.
  *
  * @author Roman Chigvintsev
+ * @author Mark Paluch
  */
 class PreparedOperationBindableQuery implements BindableQuery {
 
@@ -41,12 +42,11 @@ class PreparedOperationBindableQuery implements BindableQuery {
 		this.preparedQuery = preparedQuery;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends DatabaseClient.BindSpec<T>> T bind(T bindSpec) {
-		BindSpecBindTargetAdapter<T> bindTargetAdapter = new BindSpecBindTargetAdapter<>(bindSpec);
+	public DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec bindSpec) {
+		BindSpecBindTargetAdapter bindTargetAdapter = new BindSpecBindTargetAdapter(bindSpec);
 		preparedQuery.bindTo(bindTargetAdapter);
-		return (T) bindTargetAdapter.bindSpec;
+		return bindTargetAdapter.bindSpec;
 	}
 
 	@Override
@@ -55,13 +55,14 @@ class PreparedOperationBindableQuery implements BindableQuery {
 	}
 
 	/**
-	 * This class adapts {@link org.springframework.data.r2dbc.core.DatabaseClient.BindSpec} to {@link BindTarget}
-	 * allowing easy binding of query parameters using {@link PreparedOperation}.
+	 * This class adapts {@link DatabaseClient.GenericExecuteSpec} to {@link BindTarget} allowing easy binding of query
+	 * parameters using {@link PreparedOperation}.
 	 */
-	private static class BindSpecBindTargetAdapter<T extends DatabaseClient.BindSpec<T>> implements BindTarget {
-		DatabaseClient.BindSpec<T> bindSpec;
+	private static class BindSpecBindTargetAdapter implements BindTarget {
 
-		private BindSpecBindTargetAdapter(DatabaseClient.BindSpec<T> bindSpec) {
+		DatabaseClient.GenericExecuteSpec bindSpec;
+
+		private BindSpecBindTargetAdapter(DatabaseClient.GenericExecuteSpec bindSpec) {
 			this.bindSpec = bindSpec;
 		}
 

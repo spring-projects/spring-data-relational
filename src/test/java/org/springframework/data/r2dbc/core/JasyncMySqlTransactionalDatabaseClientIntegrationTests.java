@@ -26,6 +26,7 @@ import org.junit.ClassRule;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
+import org.springframework.r2dbc.core.DatabaseClient;
 
 /**
  * Transactional integration tests for {@link DatabaseClient} against MySQL using Jasync MySQL.
@@ -62,7 +63,7 @@ public class JasyncMySqlTransactionalDatabaseClientIntegrationTests
 		 * batches every now and then.
 		 * @see: https://dev.mysql.com/doc/refman/5.7/en/innodb-information-schema-internal-data.html
 		 */
-		return client.execute(getInsertIntoLegosetStatement()) //
+		return client.sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //

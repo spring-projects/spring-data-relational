@@ -38,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
@@ -88,8 +88,7 @@ public class PartTreeR2dbcQueryUnitTests {
 		R2dbcDialect dialect = DialectResolver.getDialect(connectionFactory);
 		dataAccessStrategy = new DefaultReactiveDataAccessStrategy(dialect, r2dbcConverter);
 
-		databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory)
-				.dataAccessStrategy(dataAccessStrategy).build();
+		databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory).build();
 	}
 
 	@Test // gh-282
@@ -166,7 +165,7 @@ public class PartTreeR2dbcQueryUnitTests {
 		assertThat(bindableQuery.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".date_of_birth BETWEEN $1 AND $2");
 
-		DatabaseClient.BindSpec bindSpecMock = mock(DatabaseClient.BindSpec.class);
+		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
 		when(bindSpecMock.bind(anyInt(), any())).thenReturn(bindSpecMock);
 		bindableQuery.bind(bindSpecMock);
 
@@ -325,7 +324,7 @@ public class PartTreeR2dbcQueryUnitTests {
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "Jo" });
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
-		DatabaseClient.BindSpec bindSpecMock = mock(DatabaseClient.BindSpec.class);
+		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
 		bindableQuery.bind(bindSpecMock);
 
 		verify(bindSpecMock, times(1)).bind(0, "Jo%");
@@ -353,7 +352,7 @@ public class PartTreeR2dbcQueryUnitTests {
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "hn" });
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
-		DatabaseClient.BindSpec bindSpecMock = mock(DatabaseClient.BindSpec.class);
+		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
 		bindableQuery.bind(bindSpecMock);
 
 		verify(bindSpecMock, times(1)).bind(0, "%hn");
@@ -381,7 +380,7 @@ public class PartTreeR2dbcQueryUnitTests {
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
-		DatabaseClient.BindSpec bindSpecMock = mock(DatabaseClient.BindSpec.class);
+		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
 		bindableQuery.bind(bindSpecMock);
 
 		verify(bindSpecMock, times(1)).bind(0, "%oh%");
@@ -409,7 +408,7 @@ public class PartTreeR2dbcQueryUnitTests {
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
 		BindableQuery bindableQuery = r2dbcQuery.createQuery(accessor);
-		DatabaseClient.BindSpec bindSpecMock = mock(DatabaseClient.BindSpec.class);
+		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
 		bindableQuery.bind(bindSpecMock);
 
 		verify(bindSpecMock, times(1)).bind(0, "%oh%");

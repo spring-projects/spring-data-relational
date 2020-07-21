@@ -38,8 +38,8 @@ import org.junit.Test;
 
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.Parameter;
 
 /**
  * Abstract base class for {@link R2dbcDialect}-aware {@link DefaultReactiveDataAccessStrategy} tests.
@@ -205,7 +205,7 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		setter.accept(toSave, testValue);
 
 		assertThat(strategy.getOutboundRow(toSave)).containsEntry(SqlIdentifier.unquoted(fieldname),
-				SettableValue.from(testValue));
+				Parameter.from(testValue));
 
 		when(rowMock.get(fieldname)).thenReturn(testValue);
 

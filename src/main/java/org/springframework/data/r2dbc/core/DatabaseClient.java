@@ -55,6 +55,14 @@ import org.springframework.util.Assert;
 public interface DatabaseClient {
 
 	/**
+	 * Return the {@link ConnectionFactory} that this client uses.
+	 *
+	 * @return the connection factory.
+	 * @since 1.2
+	 */
+	ConnectionFactory getConnectionFactory();
+
+	/**
 	 * Specify a static {@code sql} string to execute. Contract for specifying a SQL call along with options leading to
 	 * the exchange. The SQL string can contain either native parameter bind markers or named parameters (e.g.
 	 * {@literal :foo, :bar}) when {@link NamedParameterExpander} is enabled.

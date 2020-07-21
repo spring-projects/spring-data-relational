@@ -1,4 +1,5 @@
 [appendix]
+[[migration-guide]]
 = Migration Guide
 
 The following sections explain how to migrate to a newer version of Spring Data R2DBC.
@@ -11,6 +12,10 @@ One of the main aspects was to move core support into Spring Framework once R2DB
 Spring Framework 5.3 ships with a new module: Spring R2DBC.
 
 `spring-r2dbc` ships core R2DBC functionality (a slim variant of `DatabaseClient`, Transaction Manager, Connection Factory initialization, Exception translation) that was initially provided by Spring Data R2DBC. The 1.2.0 release aligns with what's provided in Spring R2DBC by making several changes outlined in the following sections.
+
+Spring R2DBC's `DatabaseClient` is a more lightweight implementation that encapsulates a pure SQL-oriented interface.
+You will notice that the method to run SQL statements changed from `DatabaseClient.execute(…)` to `DatabaseClient.sql(…)`.
+The fluent API for CRUD operations has moved into `R2dbcEntityTemplate`.
 
 [[upgrading.1.1-1.2.deprecation]]
 === Deprecations
@@ -39,6 +44,11 @@ Specifically the following classes are affected:
 * Types in `org.springframework.data.r2dbc.query`
 
 We recommend that you review your imports if you work with these types directly.
+
+=== Breaking Changes
+
+* `OutboundRow` and statement mappers switched from using `SettableValue` to `Parameter`
+* Repository factory support requires  `o.s.r2dbc.core.DatabaseClient` instead of `o.s.data.r2dbc.core.DatabaseClient`.
 
 [[upgrading.1.1-1.2.dependencies]]
 === Dependency Changes

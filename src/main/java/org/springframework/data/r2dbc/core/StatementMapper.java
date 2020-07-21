@@ -36,6 +36,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 
 /**
@@ -425,9 +426,9 @@ public interface StatementMapper {
 	class InsertSpec {
 
 		private final SqlIdentifier table;
-		private final Map<SqlIdentifier, SettableValue> assignments;
+		private final Map<SqlIdentifier, Parameter> assignments;
 
-		protected InsertSpec(SqlIdentifier table, Map<SqlIdentifier, SettableValue> assignments) {
+		protected InsertSpec(SqlIdentifier table, Map<SqlIdentifier, Parameter> assignments) {
 			this.table = table;
 			this.assignments = assignments;
 		}
@@ -459,8 +460,22 @@ public interface StatementMapper {
 		 * @param column
 		 * @param value
 		 * @return the {@link InsertSpec}.
+		 * @deprecated since 1.2, use {@link #withColumn(String, Parameter)} instead.
 		 */
+		@Deprecated
 		public InsertSpec withColumn(String column, SettableValue value) {
+			return withColumn(SqlIdentifier.unquoted(column), value);
+		}
+
+		/**
+		 * Associate a column with a {@link Parameter} and create a new {@link InsertSpec}.
+		 *
+		 * @param column
+		 * @param value
+		 * @return the {@link InsertSpec}.
+		 * @since 1.2
+		 */
+		public InsertSpec withColumn(String column, Parameter value) {
 			return withColumn(SqlIdentifier.unquoted(column), value);
 		}
 
@@ -470,10 +485,24 @@ public interface StatementMapper {
 		 * @param column
 		 * @param value
 		 * @return the {@link InsertSpec}.
+		 * @deprecated since 1.2, use {@link #withColumn(SqlIdentifier, Parameter)} instead.
 		 */
+		@Deprecated
 		public InsertSpec withColumn(SqlIdentifier column, SettableValue value) {
+			return withColumn(column, value.toParameter());
+		}
 
-			Map<SqlIdentifier, SettableValue> values = new LinkedHashMap<>(this.assignments);
+		/**
+		 * Associate a column with a {@link Parameter} and create a new {@link InsertSpec}.
+		 *
+		 * @param column
+		 * @param value
+		 * @return the {@link InsertSpec}.
+		 * @since 1.2
+		 */
+		public InsertSpec withColumn(SqlIdentifier column, Parameter value) {
+
+			Map<SqlIdentifier, Parameter> values = new LinkedHashMap<>(this.assignments);
 			values.put(column, value);
 
 			return new InsertSpec(this.table, values);
@@ -483,7 +512,7 @@ public interface StatementMapper {
 			return this.table;
 		}
 
-		public Map<SqlIdentifier, SettableValue> getAssignments() {
+		public Map<SqlIdentifier, Parameter> getAssignments() {
 			return Collections.unmodifiableMap(this.assignments);
 		}
 	}

@@ -32,9 +32,9 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.Parameter;
 
 /**
  * Postgres-specific unit tests for {@link MappingR2dbcConverter}.
@@ -69,7 +69,7 @@ public class PostgresMappingR2dbcConverterUnitTests {
 		OutboundRow row = new OutboundRow();
 		converter.write(person, row);
 
-		assertThat(row).containsEntry(SqlIdentifier.unquoted("json_value"), SettableValue.from(person.jsonValue));
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("json_value"), Parameter.from(person.jsonValue));
 	}
 
 	@AllArgsConstructor

@@ -23,11 +23,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.PreparedOperation;
 
 /**
+ * Unit tests for {@link PreparedOperationBindableQuery}.
+ *
  * @author Roman Chigvintsev
+ * @author Marl Paluch
  */
 @RunWith(MockitoJUnitRunner.class)
 @Ignore
@@ -35,11 +38,10 @@ public class PreparedOperationBindableQueryUnitTests {
 
 	@Mock PreparedOperation<?> preparedOperation;
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test // gh-282
 	public void bindsQueryParameterValues() {
 
-		DatabaseClient.BindSpec bindSpecMock = mock(DatabaseClient.BindSpec.class);
+		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
 
 		PreparedOperationBindableQuery query = new PreparedOperationBindableQuery(preparedOperation);
 		query.bind(bindSpecMock);

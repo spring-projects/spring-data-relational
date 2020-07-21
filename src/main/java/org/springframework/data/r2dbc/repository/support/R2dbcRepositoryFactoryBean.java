@@ -25,6 +25,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
 
 /**

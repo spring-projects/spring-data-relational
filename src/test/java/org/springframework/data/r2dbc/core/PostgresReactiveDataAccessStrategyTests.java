@@ -33,6 +33,7 @@ import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.Parameter;
 
 /**
  * {@link PostgresDialect} specific tests for {@link ReactiveDataAccessStrategy}.
@@ -88,8 +89,8 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		OutboundRow outboundRow = strategy.getOutboundRow(withArray);
 
 		assertThat(outboundRow) //
-				.containsEntry(SqlIdentifier.unquoted("string_array"), SettableValue.from(new String[] { "hello", "world" }))
-				.containsEntry(SqlIdentifier.unquoted("string_list"), SettableValue.from(new String[] { "hello", "world" }));
+				.containsEntry(SqlIdentifier.unquoted("string_array"), Parameter.from(new String[] { "hello", "world" }))
+				.containsEntry(SqlIdentifier.unquoted("string_list"), Parameter.from(new String[] { "hello", "world" }));
 	}
 
 	@Test // gh-139
@@ -104,7 +105,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		OutboundRow outboundRow = strategy.getOutboundRow(withConversion);
 
 		assertThat(outboundRow) //
-				.containsEntry(SqlIdentifier.unquoted("my_objects"), SettableValue.from("[one, two]"));
+				.containsEntry(SqlIdentifier.unquoted("my_objects"), Parameter.from("[one, two]"));
 	}
 
 	@Test // gh-139
@@ -121,7 +122,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		assertThat(outboundRow) //
 				.containsKey(SqlIdentifier.unquoted("my_objects"));
 
-		SettableValue value = outboundRow.get("my_objects");
+		Parameter value = outboundRow.get("my_objects");
 		assertThat(value.isEmpty()).isTrue();
 		assertThat(value.getType()).isEqualTo(String.class);
 	}
@@ -139,7 +140,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
 
-		SettableValue value = outboundRow.get(SqlIdentifier.unquoted("enum_set"));
+		Parameter value = outboundRow.get(SqlIdentifier.unquoted("enum_set"));
 		assertThat(value.getValue()).isEqualTo(new String[] { "ONE", "TWO" });
 	}
 
@@ -156,7 +157,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
 
-		SettableValue value = outboundRow.get(SqlIdentifier.unquoted("enum_array"));
+		Parameter value = outboundRow.get(SqlIdentifier.unquoted("enum_array"));
 		assertThat(value.getValue()).isEqualTo(new String[] { "ONE", "TWO" });
 	}
 

@@ -22,16 +22,16 @@ import org.reactivestreams.Publisher;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
-import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 import org.springframework.data.util.Lazy;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -76,9 +76,32 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 	 * @param databaseClient
 	 * @param converter
 	 * @param accessStrategy
+	 * @since 1.2
 	 */
 	public SimpleR2dbcRepository(RelationalEntityInformation<T, ID> entity, DatabaseClient databaseClient,
 			R2dbcConverter converter, ReactiveDataAccessStrategy accessStrategy) {
+
+		this.entity = entity;
+		this.entityOperations = new R2dbcEntityTemplate(databaseClient, accessStrategy);
+		this.idProperty = Lazy.of(() -> converter //
+				.getMappingContext() //
+				.getRequiredPersistentEntity(this.entity.getJavaType()) //
+				.getRequiredIdProperty());
+	}
+
+	/**
+	 * Create a new {@link SimpleR2dbcRepository}.
+	 *
+	 * @param entity
+	 * @param databaseClient
+	 * @param converter
+	 * @param accessStrategy
+	 * @deprecated since 1.2.
+	 */
+	@Deprecated
+	public SimpleR2dbcRepository(RelationalEntityInformation<T, ID> entity,
+			org.springframework.data.r2dbc.core.DatabaseClient databaseClient, R2dbcConverter converter,
+			ReactiveDataAccessStrategy accessStrategy) {
 
 		this.entity = entity;
 		this.entityOperations = new R2dbcEntityTemplate(databaseClient, accessStrategy);

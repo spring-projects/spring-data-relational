@@ -32,13 +32,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -70,9 +70,8 @@ public class H2IntegrationTests {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
 
-		databaseClient.execute("SELECT COUNT(*) FROM legoset") //
-				.as(Long.class) //
-				.fetch() //
+		databaseClient.sql("SELECT COUNT(*) FROM legoset") //
+				.map(it -> it.get(0, Long.class)) //
 				.all() //
 				.as(StepVerifier::create) //
 				.expectNext(1L) //

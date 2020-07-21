@@ -36,9 +36,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
-import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.r2dbc.connection.R2dbcTransactionManager;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,7 +147,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	public void executeInsertInManagedTransaction() {
 
 		Flux<Integer> integerFlux = databaseClient //
-				.execute(getInsertIntoLegosetStatement()) //
+				.sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
@@ -162,7 +163,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2
 	public void executeInsertInAutoCommitTransaction() {
 
-		Flux<Integer> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
+		Flux<Integer> integerFlux = databaseClient.sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
@@ -178,7 +179,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2
 	public void shouldRollbackTransaction() {
 
-		Mono<Object> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
+		Mono<Object> integerFlux = databaseClient.sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
@@ -196,7 +197,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	@Test // gh-2, gh-75, gh-107
 	public void emitTransactionIds() {
 
-		Flux<Object> txId = databaseClient.execute(getCurrentTransactionIdStatement()) //
+		Flux<Object> txId = databaseClient.sql(getCurrentTransactionIdStatement()) //
 				.map((row, md) -> row.get(0)) //
 				.all();
 
@@ -220,7 +221,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		TransactionalOperator transactionalOperator = TransactionalOperator
 				.create(new R2dbcTransactionManager(connectionFactory), new DefaultTransactionDefinition());
 
-		Flux<Integer> integerFlux = databaseClient.execute(getInsertIntoLegosetStatement()) //
+		Flux<Integer> integerFlux = databaseClient.sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //
@@ -301,7 +302,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		@Transactional
 		public Flux<Object> emitTransactionIds(Mono<Void> prepareTransaction, String idStatement) {
 
-			Flux<Object> txId = databaseClient.execute(idStatement) //
+			Flux<Object> txId = databaseClient.sql(idStatement) //
 					.map((row, md) -> row.get(0)) //
 					.all();
 
@@ -311,7 +312,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 		@Transactional
 		public Flux<Integer> shouldRollbackTransactionUsingTransactionalOperator(String insertStatement) {
 
-			return databaseClient.execute(insertStatement) //
+			return databaseClient.sql(insertStatement) //
 					.bind(0, 42055) //
 					.bind(1, "SCHAUFELRADBAGGER") //
 					.bindNull(2, Integer.class) //

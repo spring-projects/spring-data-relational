@@ -30,19 +30,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
-import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
-import org.springframework.data.r2dbc.support.R2dbcExceptionSubclassTranslator;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
 
 /**
@@ -98,22 +97,32 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * @throws IllegalArgumentException if any of the required args is {@literal null}.
 	 */
 	@Bean({ "r2dbcDatabaseClient", "databaseClient" })
-	public DatabaseClient databaseClient(ReactiveDataAccessStrategy dataAccessStrategy) {
+	public DatabaseClient databaseClient() {
 
-		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
-
-		SpelAwareProxyProjectionFactory projectionFactory = new SpelAwareProxyProjectionFactory();
-		if (context != null) {
-			projectionFactory.setBeanFactory(context);
-			projectionFactory.setBeanClassLoader(context.getClassLoader());
-		}
+		ConnectionFactory connectionFactory = lookupConnectionFactory();
 
 		return DatabaseClient.builder() //
-				.connectionFactory(lookupConnectionFactory()) //
-				.dataAccessStrategy(dataAccessStrategy) //
-				.exceptionTranslator(new R2dbcExceptionSubclassTranslator()) //
-				.projectionFactory(projectionFactory) //
+				.connectionFactory(connectionFactory) //
+				.bindMarkers(getDialect(connectionFactory).getBindMarkersFactory()) //
 				.build();
+	}
+
+	/**
+	 * Register {@link R2dbcEntityTemplate} using {@link #databaseClient()} and {@link #connectionFactory()}.
+	 *
+	 * @param databaseClient must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
+	 * @return
+	 * @since 1.2
+	 */
+	@Bean
+	public R2dbcEntityTemplate r2dbcEntityTemplate(DatabaseClient databaseClient,
+			ReactiveDataAccessStrategy dataAccessStrategy) {
+
+		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
+		Assert.notNull(dataAccessStrategy, "ReactiveDataAccessStrategy must not be null!");
+
+		return new R2dbcEntityTemplate(databaseClient, dataAccessStrategy);
 	}
 
 	/**

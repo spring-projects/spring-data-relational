@@ -32,7 +32,7 @@ import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PreferredConstructor.Parameter;
+import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
@@ -48,6 +48,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -357,7 +358,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	}
 
 	private void writeSimpleInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
-		sink.put(property.getColumnName(), SettableValue.from(getPotentiallyConvertedSimpleWrite(value)));
+		sink.put(property.getColumnName(), Parameter.from(getPotentiallyConvertedSimpleWrite(value)));
 	}
 
 	private void writePropertyInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
@@ -374,7 +375,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			}
 
 			List<Object> collectionInternal = createCollection(asCollection(value), property);
-			sink.put(property.getColumnName(), SettableValue.from(collectionInternal));
+			sink.put(property.getColumnName(), Parameter.from(collectionInternal));
 			return;
 		}
 
@@ -431,7 +432,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 	private void writeNullInternal(OutboundRow sink, RelationalPersistentProperty property) {
 
-		sink.put(property.getColumnName(), SettableValue.empty(getPotentiallyConvertedSimpleNullType(property.getType())));
+		sink.put(property.getColumnName(), Parameter.empty(getPotentiallyConvertedSimpleNullType(property.getType())));
 	}
 
 	private Class<?> getPotentiallyConvertedSimpleNullType(Class<?> type) {
@@ -640,7 +641,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		 */
 		@Override
 		@Nullable
-		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
+		public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
 
 			RelationalPersistentProperty property = this.entity.getRequiredPersistentProperty(parameter.getName());
 

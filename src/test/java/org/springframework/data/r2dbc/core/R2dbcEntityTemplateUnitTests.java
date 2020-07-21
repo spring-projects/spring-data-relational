@@ -40,7 +40,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
@@ -52,6 +51,8 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -61,7 +62,7 @@ import org.springframework.util.CollectionUtils;
  */
 public class R2dbcEntityTemplateUnitTests {
 
-	DatabaseClient client;
+	org.springframework.r2dbc.core.DatabaseClient client;
 	R2dbcEntityTemplate entityTemplate;
 	StatementRecorder recorder;
 
@@ -70,8 +71,8 @@ public class R2dbcEntityTemplateUnitTests {
 
 		recorder = StatementRecorder.newInstance();
 		client = DatabaseClient.builder().connectionFactory(recorder)
-				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
-		entityTemplate = new R2dbcEntityTemplate(client);
+				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
+		entityTemplate = new R2dbcEntityTemplate(client, PostgresDialect.INSTANCE);
 	}
 
 	@Test // gh-220
@@ -92,7 +93,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
 		assertThat(statement.getSql()).isEqualTo("SELECT COUNT(person.id) FROM person WHERE person.THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
 	@Test // gh-220
@@ -113,7 +114,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("SELECT"));
 
 		assertThat(statement.getSql()).isEqualTo("SELECT person.id FROM person WHERE person.THE_NAME = $1 LIMIT 1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
 	@Test // gh-220
@@ -129,7 +130,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql())
 				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY THE_NAME ASC");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
 	@Test // gh-215
@@ -170,7 +171,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql())
 				.isEqualTo("SELECT person.* FROM person WHERE person.THE_NAME = $1 ORDER BY THE_NAME ASC LIMIT 2");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
 	@Test // gh-220
@@ -191,8 +192,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1 WHERE person.THE_NAME = $2");
-		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, SettableValue.from("Heisenberg")).containsEntry(1,
-				SettableValue.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("Heisenberg")).containsEntry(1,
+				Parameter.from("Walter"));
 	}
 
 	@Test // gh-220
@@ -212,7 +213,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
 		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
 	@Test // gh-220
@@ -229,7 +230,7 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
 
 		assertThat(statement.getSql()).isEqualTo("DELETE FROM person WHERE person.id = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Walter"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
 	@Test // gh-365
@@ -249,8 +250,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
 		assertThat(statement.getSql()).isEqualTo("INSERT INTO versioned_person (id, version, name) VALUES ($1, $2, $3)");
-		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, SettableValue.from("id")).containsEntry(1,
-				SettableValue.from(1L));
+		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameter.from("id")).containsEntry(1,
+				Parameter.from(1L));
 	}
 
 	@Test // gh-215
@@ -277,8 +278,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
 
 		assertThat(statement.getSql()).isEqualTo("INSERT INTO person (THE_NAME, description) VALUES ($1, $2)");
-		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, SettableValue.from("before-convert"))
-				.containsEntry(1, SettableValue.from("before-save"));
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from("before-convert")).containsEntry(1,
+				Parameter.from("before-save"));
 	}
 
 	@Test // gh-365
@@ -299,8 +300,8 @@ public class R2dbcEntityTemplateUnitTests {
 
 		assertThat(statement.getSql()).isEqualTo(
 				"UPDATE versioned_person SET version = $1, name = $2 WHERE versioned_person.id = $3 AND (versioned_person.version = $4)");
-		assertThat(statement.getBindings()).hasSize(4).containsEntry(0, SettableValue.from(2L)).containsEntry(3,
-				SettableValue.from(1L));
+		assertThat(statement.getBindings()).hasSize(4).containsEntry(0, Parameter.from(2L)).containsEntry(3,
+				Parameter.from(1L));
 	}
 
 	@Test // gh-215
@@ -332,8 +333,8 @@ public class R2dbcEntityTemplateUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1, description = $2 WHERE person.id = $3");
-		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, SettableValue.from("before-convert"))
-				.containsEntry(1, SettableValue.from("before-save"));
+		assertThat(statement.getBindings()).hasSize(3).containsEntry(0, Parameter.from("before-convert")).containsEntry(1,
+				Parameter.from("before-save"));
 	}
 
 	@ToString
@@ -402,7 +403,7 @@ public class R2dbcEntityTemplateUnitTests {
 		public Mono<Person> onBeforeSave(Person entity, OutboundRow outboundRow, SqlIdentifier table) {
 
 			capture(entity);
-			outboundRow.put(SqlIdentifier.unquoted("description"), SettableValue.from("before-save"));
+			outboundRow.put(SqlIdentifier.unquoted("description"), Parameter.from("before-save"));
 			return Mono.just(entity);
 		}
 	}

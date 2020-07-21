@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 
 import org.reactivestreams.Publisher;
 
-import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.springframework.r2dbc.core.Parameter;
 
 /**
  * Recorder utility for R2DBC {@link Statement}s. Allows stubbing and introspection.
@@ -255,7 +255,7 @@ public class StatementRecorder implements ConnectionFactory {
 
 		private final List<Result> results;
 
-		private final Map<Object, SettableValue> bindings = new LinkedHashMap<>();
+		private final Map<Object, Parameter> bindings = new LinkedHashMap<>();
 
 		public RecordedStatement(String sql, Result result) {
 			this(sql, Collections.singletonList(result));
@@ -266,7 +266,7 @@ public class StatementRecorder implements ConnectionFactory {
 			this.results = results;
 		}
 
-		public Map<Object, SettableValue> getBindings() {
+		public Map<Object, Parameter> getBindings() {
 			return bindings;
 		}
 
@@ -281,25 +281,25 @@ public class StatementRecorder implements ConnectionFactory {
 
 		@Override
 		public Statement bind(int index, Object o) {
-			this.bindings.put(index, SettableValue.from(o));
+			this.bindings.put(index, Parameter.from(o));
 			return this;
 		}
 
 		@Override
 		public Statement bind(String identifier, Object o) {
-			this.bindings.put(identifier, SettableValue.from(o));
+			this.bindings.put(identifier, Parameter.from(o));
 			return this;
 		}
 
 		@Override
 		public Statement bindNull(int index, Class<?> type) {
-			this.bindings.put(index, SettableValue.empty(type));
+			this.bindings.put(index, Parameter.empty(type));
 			return this;
 		}
 
 		@Override
 		public Statement bindNull(String identifier, Class<?> type) {
-			this.bindings.put(identifier, SettableValue.empty(type));
+			this.bindings.put(identifier, Parameter.empty(type));
 			return this;
 		}
 

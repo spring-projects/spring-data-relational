@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 
 /**
@@ -33,11 +34,11 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @see SqlIdentifier
- * @see SettableValue
+ * @see Parameter
  */
-public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
+public class OutboundRow implements Map<SqlIdentifier, Parameter> {
 
-	private final Map<SqlIdentifier, SettableValue> rowAsMap;
+	private final Map<SqlIdentifier, Parameter> rowAsMap;
 
 	/**
 	 * Creates an empty {@link OutboundRow} instance.
@@ -51,13 +52,13 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 *
 	 * @param map the map used to initialize the {@link OutboundRow}.
 	 */
-	public OutboundRow(Map<String, SettableValue> map) {
+	public OutboundRow(Map<String, Parameter> map) {
 
 		Assert.notNull(map, "Map must not be null");
 
 		this.rowAsMap = new LinkedHashMap<>(map.size());
 
-		map.forEach((s, settableValue) -> this.rowAsMap.put(SqlIdentifier.unquoted(s), settableValue));
+		map.forEach((s, Parameter) -> this.rowAsMap.put(SqlIdentifier.unquoted(s), Parameter));
 	}
 
 	/**
@@ -67,7 +68,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @param value value.
 	 * @see SqlIdentifier#unquoted(String)
 	 */
-	public OutboundRow(String key, SettableValue value) {
+	public OutboundRow(String key, Parameter value) {
 		this(SqlIdentifier.unquoted(key), value);
 	}
 
@@ -78,7 +79,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @param value value.
 	 * @since 1.1
 	 */
-	public OutboundRow(SqlIdentifier key, SettableValue value) {
+	public OutboundRow(SqlIdentifier key, Parameter value) {
 		this.rowAsMap = new LinkedHashMap<>();
 		this.rowAsMap.put(key, value);
 	}
@@ -96,7 +97,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @return this
 	 * @see SqlIdentifier#unquoted(String)
 	 */
-	public OutboundRow append(String key, SettableValue value) {
+	public OutboundRow append(String key, Parameter value) {
 		return append(SqlIdentifier.unquoted(key), value);
 	}
 
@@ -113,7 +114,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @return this
 	 * @since 1.1
 	 */
-	public OutboundRow append(SqlIdentifier key, SettableValue value) {
+	public OutboundRow append(SqlIdentifier key, Parameter value) {
 		this.rowAsMap.put(key, value);
 		return this;
 	}
@@ -159,7 +160,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @see java.util.Map#get(java.lang.Object)
 	 */
 	@Override
-	public SettableValue get(Object key) {
+	public Parameter get(Object key) {
 		return this.rowAsMap.get(convertKeyIfNecessary(key));
 	}
 
@@ -167,7 +168,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * (non-Javadoc)
 	 * @see java.util.Map#put(java.lang.Object, java.lang.Object)
 	 */
-	public SettableValue put(String key, SettableValue value) {
+	public Parameter put(String key, Parameter value) {
 		return put(SqlIdentifier.unquoted(key), value);
 	}
 
@@ -176,7 +177,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @see java.util.Map#put(java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public SettableValue put(SqlIdentifier key, SettableValue value) {
+	public Parameter put(SqlIdentifier key, Parameter value) {
 		return this.rowAsMap.put(key, value);
 	}
 
@@ -185,7 +186,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @see java.util.Map#remove(java.lang.Object)
 	 */
 	@Override
-	public SettableValue remove(Object key) {
+	public Parameter remove(Object key) {
 		return this.rowAsMap.remove(key);
 	}
 
@@ -194,7 +195,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @see java.util.Map#putAll(java.util.Map)
 	 */
 	@Override
-	public void putAll(Map<? extends SqlIdentifier, ? extends SettableValue> m) {
+	public void putAll(Map<? extends SqlIdentifier, ? extends Parameter> m) {
 		this.rowAsMap.putAll(m);
 	}
 
@@ -221,7 +222,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @see java.util.Map#values()
 	 */
 	@Override
-	public Collection<SettableValue> values() {
+	public Collection<Parameter> values() {
 		return this.rowAsMap.values();
 	}
 
@@ -230,7 +231,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	 * @see java.util.Map#entrySet()
 	 */
 	@Override
-	public Set<Entry<SqlIdentifier, SettableValue>> entrySet() {
+	public Set<Entry<SqlIdentifier, Parameter>> entrySet() {
 		return this.rowAsMap.entrySet();
 	}
 
@@ -273,7 +274,7 @@ public class OutboundRow implements Map<SqlIdentifier, SettableValue> {
 	}
 
 	@Override
-	public void forEach(BiConsumer<? super SqlIdentifier, ? super SettableValue> action) {
+	public void forEach(BiConsumer<? super SqlIdentifier, ? super Parameter> action) {
 		this.rowAsMap.forEach(action);
 	}
 

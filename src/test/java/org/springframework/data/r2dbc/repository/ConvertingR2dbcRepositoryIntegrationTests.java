@@ -49,6 +49,7 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
@@ -149,10 +150,10 @@ public class ConvertingR2dbcRepositoryIntegrationTests {
 			OutboundRow outboundRow = new OutboundRow();
 
 			if (convertedEntity.getId() != null) {
-				outboundRow.put("id", SettableValue.from(convertedEntity.getId()));
+				outboundRow.put("id", Parameter.from(convertedEntity.getId()));
 			}
 
-			outboundRow.put("name", SettableValue.from("prefixed: " + convertedEntity.getName()));
+			outboundRow.put("name", Parameter.from("prefixed: " + convertedEntity.getName()));
 
 			return outboundRow;
 		}

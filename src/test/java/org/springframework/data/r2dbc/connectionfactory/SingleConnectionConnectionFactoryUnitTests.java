@@ -101,23 +101,6 @@ public class SingleConnectionConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-204
-	public void releaseConnectionShouldNotCloseConnection() {
-
-		Connection connectionMock = mock(Connection.class);
-		ConnectionFactoryMetadata metadata = mock(ConnectionFactoryMetadata.class);
-
-		SingleConnectionConnectionFactory factory = new SingleConnectionConnectionFactory(connectionMock, metadata, false);
-
-		Connection connection = factory.create().block();
-
-		ConnectionFactoryUtils.releaseConnection(connection, factory) //
-				.as(StepVerifier::create) //
-				.verifyComplete();
-
-		verify(connectionMock, never()).close();
-	}
-
-	@Test // gh-204
 	public void releaseConnectionShouldCloseUnrelatedConnection() {
 
 		Connection connectionMock = mock(Connection.class);

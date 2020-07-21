@@ -17,20 +17,20 @@ package org.springframework.data.r2dbc.repository.query;
 
 import java.util.function.Supplier;
 
-import org.springframework.data.r2dbc.core.DatabaseClient.BindSpec;
+import org.springframework.r2dbc.core.DatabaseClient;
 
 /**
- * Interface declaring a query that supplies SQL and can bind parameters to a {@link BindSpec}.
+ * Interface declaring a query that supplies SQL and can bind parameters to a {@link DatabaseClient.GenericExecuteSpec}.
  *
  * @author Mark Paluch
  */
 public interface BindableQuery extends Supplier<String> {
 
 	/**
-	 * Bind parameters to the {@link BindSpec query}.
+	 * Bind parameters to the {@link DatabaseClient.GenericExecuteSpec query}.
 	 *
 	 * @param bindSpec must not be {@literal null}.
 	 * @return the bound query object.
 	 */
-	<T extends BindSpec<T>> T bind(T bindSpec);
+	DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec bindSpec);
 }

@@ -23,10 +23,8 @@ import reactor.core.publisher.Mono;
 import org.reactivestreams.Publisher;
 import org.springframework.core.KotlinDetector;
 import org.springframework.data.mapping.model.EntityInstantiators;
+import org.springframework.data.r2dbc.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec;
-import org.springframework.data.r2dbc.core.FetchSpec;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingConverter;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingExecution;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -36,6 +34,9 @@ import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.FetchSpec;
+import org.springframework.r2dbc.core.RowsFetchSpec;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.util.Assert;
 
@@ -107,8 +108,15 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		BindableQuery query = createQuery(parameterAccessor);
 
 		ResultProcessor processor = method.getResultProcessor().withDynamicProjection(parameterAccessor);
-		GenericExecuteSpec boundQuery = query.bind(databaseClient.execute(query));
-		FetchSpec<?> fetchSpec = boundQuery.as(resolveResultType(processor)).fetch();
+		DatabaseClient.GenericExecuteSpec boundQuery = query.bind(databaseClient.sql(query));
+
+		FetchSpec<?> fetchSpec;
+		if (requiresMapping()) {
+			EntityRowMapper<?> rowMapper = new EntityRowMapper<>(resolveResultType(processor), converter);
+			fetchSpec = new FetchSpecAdapter<>(boundQuery.map(rowMapper));
+		} else {
+			fetchSpec = boundQuery.fetch();
+		}
 
 		SqlIdentifier tableName = method.getEntityInformation().getTableName();
 
@@ -116,6 +124,10 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 				new ResultProcessingConverter(processor, converter.getMappingContext(), instantiators));
 
 		return execution.execute(fetchSpec, processor.getReturnedType().getDomainType(), tableName);
+	}
+
+	private boolean requiresMapping() {
+		return !isModifyingQuery();
 	}
 
 	private Class<?> resolveResultType(ResultProcessor resultProcessor) {
@@ -169,4 +181,33 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 * @return the {@link BindableQuery}.
 	 */
 	protected abstract BindableQuery createQuery(RelationalParameterAccessor accessor);
+
+	private static class FetchSpecAdapter<T> implements FetchSpec<T> {
+
+		private final RowsFetchSpec<T> delegate;
+
+		private FetchSpecAdapter(RowsFetchSpec<T> delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public Mono<T> one() {
+			return delegate.one();
+		}
+
+		@Override
+		public Mono<T> first() {
+			return delegate.first();
+		}
+
+		@Override
+		public Flux<T> all() {
+			return delegate.all();
+		}
+
+		@Override
+		public Mono<Integer> rowsUpdated() {
+			throw new UnsupportedOperationException("Not supported after applying a row mapper");
+		}
+	}
 }

@@ -128,4 +128,12 @@ public class SettableValue {
 	public String toString() {
 		return this.parameter.toString();
 	}
+
+	/**
+	 * @return the {@link Parameter} representing this settable value.
+	 * @since 1.2
+	 */
+	public Parameter toParameter() {
+		return isEmpty() ? Parameter.empty(getType()) : Parameter.fromOrEmpty(getValue(), getType());
+	}
 }

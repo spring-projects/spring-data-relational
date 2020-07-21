@@ -26,6 +26,7 @@ import org.junit.ClassRule;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MariaDbTestSupport;
+import org.springframework.r2dbc.core.DatabaseClient;
 
 /**
  * Transactional integration tests for {@link DatabaseClient} against MariaDb.
@@ -61,7 +62,7 @@ public class MariaDbTransactionalDatabaseClientIntegrationTests
 		 * And we need to delay emitting the result so that Mariadb has time to write the transaction id, which is done in
 		 * batches every now and then.
 		 */
-		return client.execute(getInsertIntoLegosetStatement()) //
+		return client.sql(getInsertIntoLegosetStatement()) //
 				.bind(0, 42055) //
 				.bind(1, "SCHAUFELRADBAGGER") //
 				.bindNull(2, Integer.class) //

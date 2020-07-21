@@ -53,7 +53,7 @@ public interface ReactiveDataAccessStrategy {
 	List<SqlIdentifier> getIdentifierColumns(Class<?> entityType);
 
 	/**
-	 * Returns a {@link OutboundRow} that maps column names to a {@link SettableValue} value.
+	 * Returns a {@link OutboundRow} that maps column names to a {@link Parameter} value.
 	 *
 	 * @param object must not be {@literal null}.
 	 * @return
@@ -101,7 +101,10 @@ public interface ReactiveDataAccessStrategy {
 	 * @param parameterProvider indexed parameter bindings.
 	 * @return the {@link PreparedOperation} encapsulating expanded SQL and namedBindings.
 	 * @throws org.springframework.dao.InvalidDataAccessApiUsageException if a named parameter value cannot be resolved.
+	 * @deprecated since 1.2. {@link org.springframework.r2dbc.core.DatabaseClient} encapsulates named parameter handling
+	 *             entirely.
 	 */
+	@Deprecated
 	PreparedOperation<?> processNamedParameters(String query, NamedParameterProvider parameterProvider);
 
 	/**

@@ -63,6 +63,7 @@ import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -73,7 +74,9 @@ import org.springframework.util.StringUtils;
  * @author Mark Paluch
  * @author Mingyuan Wu
  * @author Bogdan Ilchyshyn
+ * @deprecated since 1.2.
  */
+@Deprecated
 class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 	private final Log logger = LogFactory.getLog(getClass());
@@ -103,6 +106,11 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		this.namedParameters = namedParameters;
 		this.projectionFactory = projectionFactory;
 		this.builder = builder;
+	}
+
+	@Override
+	public ConnectionFactory getConnectionFactory() {
+		return this.connector;
 	}
 
 	@Override
@@ -1171,7 +1179,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 			StatementMapper.InsertSpec insert = mapper.createInsert(this.table);
 
 			for (SqlIdentifier column : outboundRow.keySet()) {
-				SettableValue settableValue = outboundRow.get(column);
+				Parameter settableValue = outboundRow.get(column);
 				if (settableValue.hasValue()) {
 					insert = insert.withColumn(column, settableValue);
 				}
@@ -1348,7 +1356,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 		private UpdatedRowsFetchSpec exchange(SqlIdentifier table) {
 
 			StatementMapper mapper = dataAccessStrategy.getStatementMapper();
-			Map<SqlIdentifier, SettableValue> columns = dataAccessStrategy.getOutboundRow(this.objectToUpdate);
+			Map<SqlIdentifier, Parameter> columns = dataAccessStrategy.getOutboundRow(this.objectToUpdate);
 			List<SqlIdentifier> ids = dataAccessStrategy.getIdentifierColumns(this.typeToUpdate);
 
 			if (ids.isEmpty()) {
