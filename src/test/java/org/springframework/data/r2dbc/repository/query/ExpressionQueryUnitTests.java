@@ -17,12 +17,14 @@ package org.springframework.data.r2dbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 
 /**
  * Unit tests for {@link ExpressionQuery}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class ExpressionQueryUnitTests {
 
@@ -35,10 +37,13 @@ public class ExpressionQueryUnitTests {
 		assertThat(query.getQuery())
 				.isEqualTo("INSERT IGNORE INTO table (x, y) VALUES (:__synthetic_0__, :__synthetic_1__)");
 
-		assertThat(query.getBindings()).hasSize(2);
-		assertThat(query.getBindings().get(0).getExpression()).isEqualTo("#point.x");
-		assertThat(query.getBindings().get(0).getParameterName()).isEqualTo("__synthetic_0__");
-		assertThat(query.getBindings().get(1).getExpression()).isEqualTo("#point.y");
-		assertThat(query.getBindings().get(1).getParameterName()).isEqualTo("__synthetic_1__");
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(query.getBindings()).hasSize(2);
+			softly.assertThat(query.getBindings().get(0).getExpression()).isEqualTo("#point.x");
+			softly.assertThat(query.getBindings().get(0).getParameterName()).isEqualTo("__synthetic_0__");
+			softly.assertThat(query.getBindings().get(1).getExpression()).isEqualTo("#point.y");
+			softly.assertThat(query.getBindings().get(1).getParameterName()).isEqualTo("__synthetic_1__");
+		});
 	}
 }
