@@ -48,7 +48,7 @@ import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.NoRepositoryBean;
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
@@ -56,6 +56,7 @@ import org.springframework.transaction.reactive.TransactionalOperator;
  * Abstract base class for integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
  *
  * @author Mark Paluch
+ * @author Stephen Cohen
  */
 public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
@@ -303,7 +304,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@NoRepositoryBean
-	interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
+	interface LegoSetRepository extends ReactiveSortingRepository<LegoSet, Integer> {
 
 		Flux<LegoSet> findByNameContains(String name);
 

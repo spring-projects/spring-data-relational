@@ -39,6 +39,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -55,6 +56,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author Mark Paluch
  * @author Bogdan Ilchyshyn
+ * @author Stephen Cohen
  */
 public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
@@ -311,6 +313,26 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 
 					assertThat(actual).hasSize(2).contains("SCHAUFELRADBAGGER", "FORSCHUNGSSCHIFF");
 				}).verifyComplete();
+	}
+
+	@Test // gh-407
+	public void shouldFindAllWithSort() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 15)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		repository.findAll(Sort.by("manual").ascending()) //
+				.map(LegoSet::getName) //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> assertThat(actual).containsExactly(
+						"SCHAUFELRADBAGGER",
+						"FORSCHUNGSSCHIFF",
+						"RALLYEAUTO",
+						"VOLTRON"
+				)).verifyComplete();
 	}
 
 	@Test

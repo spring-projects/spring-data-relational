@@ -34,7 +34,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Christoph Strobl
- * @see org.springframework.data.repository.reactive.ReactiveCrudRepository
+ * @see org.springframework.data.repository.reactive.ReactiveSortingRepository
  */
 public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends RepositoryFactoryBeanSupport<T, S, ID> {

@@ -16,12 +16,13 @@
 package org.springframework.data.r2dbc.repository;
 
 import org.springframework.data.repository.NoRepositoryBean;
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 
 /**
  * R2DBC specific {@link org.springframework.data.repository.Repository} interface with reactive support.
  *
  * @author Mark Paluch
+ * @author Stephen Cohen
  */
 @NoRepositoryBean
-public interface R2dbcRepository<T, ID> extends ReactiveCrudRepository<T, ID> {}
+public interface R2dbcRepository<T, ID> extends ReactiveSortingRepository<T, ID> {}

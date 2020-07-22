@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import org.reactivestreams.Publisher;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
@@ -29,20 +30,21 @@ import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 import org.springframework.data.util.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 /**
- * Simple {@link ReactiveCrudRepository} implementation using R2DBC through {@link DatabaseClient}.
+ * Simple {@link ReactiveSortingRepository} implementation using R2DBC through {@link DatabaseClient}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Mingyuan Wu
+ * @author Stephen Cohen
  */
 @Transactional(readOnly = true)
-public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, ID> {
+public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T, ID> {
 
 	private final RelationalEntityInformation<T, ID> entity;
 	private final R2dbcEntityOperations entityOperations;
@@ -170,6 +172,14 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveCrudRepository<T, I
 	@Override
 	public Flux<T> findAll() {
 		return this.entityOperations.select(Query.empty(), this.entity.getJavaType());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.springframework.data.repository.reactive.ReactiveSortingRepository#findAll(org.springframework.data.domain.Sort)
+	 */
+	@Override
+	public Flux<T> findAll(Sort sort) {
+		return this.entityOperations.select(Query.empty().sort(sort), this.entity.getJavaType());
 	}
 
 	/* (non-Javadoc)

@@ -35,7 +35,7 @@ The following example shows a repository interface for the preceding `Person` cl
 ====
 [source]
 ----
-public interface PersonRepository extends PagingAndSortingRepository<Person, String> {
+public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
 
   // additional custom query methods go here
 }
@@ -62,7 +62,8 @@ class ApplicationConfig extends AbstractR2dbcConfiguration {
 ----
 ====
 
-Because our domain repository extends `ReactiveCrudRepository`, it provides you with CRUD operations to access the entities.
+Because our domain repository extends `ReactiveCrudRepository`, it provides you with reactive CRUD operations to access the entities.
+On top of `ReactiveCrudRepository`, there is also `ReactiveSortingRepository`, which adds additional sorting functionality similar to that of `PagingAndSortingRepository`.
 Working with the repository instance is merely a matter of dependency injecting it into a client.
 Consequently, you can retrieve all `Person` objects with the following code:
 
@@ -111,7 +112,7 @@ Defining such a query is a matter of declaring a method on the repository interf
 ====
 [source,java]
 ----
-interface ReactivePersonRepository extends ReactiveSortingRepository<Person, String> {
+interface ReactivePersonRepository extends ReactiveSortingRepository<Person, Long> {
 
   Flux<Person> findByFirstname(String firstname);                                   <1>
 
