@@ -44,7 +44,7 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 
 		Assert.notNull(domainType, "DomainType must not be null");
 
-		return new ReactiveInsertSupport<>(this.template, domainType, null);
+		return new ReactiveInsertSupport<>(template, domainType, null);
 	}
 
 	static class ReactiveInsertSupport<T> implements ReactiveInsert<T> {
@@ -69,7 +69,7 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 
 			Assert.notNull(tableName, "Table name must not be null");
 
-			return new ReactiveInsertSupport<>(this.template, this.domainType, tableName);
+			return new ReactiveInsertSupport<>(template, domainType, tableName);
 		}
 
 		/*
@@ -81,11 +81,11 @@ class ReactiveInsertOperationSupport implements ReactiveInsertOperation {
 
 			Assert.notNull(object, "Object to insert must not be null");
 
-			return this.template.doInsert(object, getTableName());
+			return template.doInsert(object, getTableName());
 		}
 
 		private SqlIdentifier getTableName() {
-			return this.tableName != null ? this.tableName : this.template.getTableName(this.domainType);
+			return tableName != null ? tableName : template.getTableName(domainType);
 		}
 	}
 }

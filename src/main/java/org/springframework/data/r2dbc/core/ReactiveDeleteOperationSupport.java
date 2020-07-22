@@ -45,7 +45,7 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 
 		Assert.notNull(domainType, "DomainType must not be null");
 
-		return new ReactiveDeleteSupport(this.template, domainType, Query.empty(), null);
+		return new ReactiveDeleteSupport(template, domainType, Query.empty(), null);
 	}
 
 	static class ReactiveDeleteSupport implements ReactiveDelete, TerminatingDelete {
@@ -73,7 +73,7 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 
 			Assert.notNull(tableName, "Table name must not be null");
 
-			return new ReactiveDeleteSupport(this.template, this.domainType, this.query, tableName);
+			return new ReactiveDeleteSupport(template, domainType, query, tableName);
 		}
 
 		/*
@@ -85,7 +85,7 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 
 			Assert.notNull(query, "Query must not be null");
 
-			return new ReactiveDeleteSupport(this.template, this.domainType, query, this.tableName);
+			return new ReactiveDeleteSupport(template, domainType, query, tableName);
 		}
 
 		/*
@@ -93,11 +93,11 @@ class ReactiveDeleteOperationSupport implements ReactiveDeleteOperation {
 		 * @see org.springframework.data.r2dbc.core.ReactiveDeleteOperation.TerminatingDelete#all()
 		 */
 		public Mono<Integer> all() {
-			return this.template.doDelete(this.query, this.domainType, getTableName());
+			return template.doDelete(query, domainType, getTableName());
 		}
 
 		private SqlIdentifier getTableName() {
-			return this.tableName != null ? this.tableName : this.template.getTableName(this.domainType);
+			return tableName != null ? tableName : template.getTableName(domainType);
 		}
 	}
 }

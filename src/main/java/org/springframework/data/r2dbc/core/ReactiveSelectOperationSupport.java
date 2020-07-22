@@ -76,7 +76,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 			Assert.notNull(tableName, "Table name must not be null");
 
-			return new ReactiveSelectSupport<>(this.template, this.domainType, this.returnType, this.query, tableName);
+			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
 		}
 
 		/*
@@ -88,7 +88,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 			Assert.notNull(returnType, "ReturnType must not be null");
 
-			return new ReactiveSelectSupport<>(this.template, this.domainType, returnType, this.query, this.tableName);
+			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
 		}
 
 		/*
@@ -100,7 +100,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 
 			Assert.notNull(query, "Query must not be null");
 
-			return new ReactiveSelectSupport<>(this.template, this.domainType, this.returnType, query, this.tableName);
+			return new ReactiveSelectSupport<>(template, domainType, returnType, query, tableName);
 		}
 
 		/*
@@ -109,7 +109,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Mono<Long> count() {
-			return this.template.doCount(this.query, this.domainType, getTableName());
+			return template.doCount(query, domainType, getTableName());
 		}
 
 		/*
@@ -118,7 +118,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Mono<Boolean> exists() {
-			return this.template.doExists(this.query, this.domainType, getTableName());
+			return template.doExists(query, domainType, getTableName());
 		}
 
 		/*
@@ -127,8 +127,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Mono<T> first() {
-			return this.template.doSelect(this.query.limit(1), this.domainType, getTableName(), this.returnType,
-					RowsFetchSpec::first);
+			return template.doSelect(query.limit(1), domainType, getTableName(), returnType, RowsFetchSpec::first);
 		}
 
 		/*
@@ -137,8 +136,7 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Mono<T> one() {
-			return this.template.doSelect(this.query.limit(2), this.domainType, getTableName(), this.returnType,
-					RowsFetchSpec::one);
+			return template.doSelect(query.limit(2), domainType, getTableName(), returnType, RowsFetchSpec::one);
 		}
 
 		/*
@@ -147,11 +145,11 @@ class ReactiveSelectOperationSupport implements ReactiveSelectOperation {
 		 */
 		@Override
 		public Flux<T> all() {
-			return this.template.doSelect(this.query, this.domainType, getTableName(), this.returnType, RowsFetchSpec::all);
+			return template.doSelect(query, domainType, getTableName(), returnType, RowsFetchSpec::all);
 		}
 
 		private SqlIdentifier getTableName() {
-			return this.tableName != null ? this.tableName : this.template.getTableName(this.domainType);
+			return tableName != null ? tableName : template.getTableName(domainType);
 		}
 	}
 }

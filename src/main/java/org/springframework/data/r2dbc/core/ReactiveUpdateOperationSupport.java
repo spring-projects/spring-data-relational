@@ -46,7 +46,7 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 
 		Assert.notNull(domainType, "DomainType must not be null");
 
-		return new ReactiveUpdateSupport(this.template, domainType, Query.empty(), null);
+		return new ReactiveUpdateSupport(template, domainType, Query.empty(), null);
 	}
 
 	static class ReactiveUpdateSupport implements ReactiveUpdate, TerminatingUpdate {
@@ -74,7 +74,7 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 
 			Assert.notNull(tableName, "Table name must not be null");
 
-			return new ReactiveUpdateSupport(this.template, this.domainType, this.query, tableName);
+			return new ReactiveUpdateSupport(template, domainType, query, tableName);
 		}
 
 		/*
@@ -86,7 +86,7 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 
 			Assert.notNull(query, "Query must not be null");
 
-			return new ReactiveUpdateSupport(this.template, this.domainType, query, this.tableName);
+			return new ReactiveUpdateSupport(template, domainType, query, tableName);
 		}
 
 		/*
@@ -98,11 +98,11 @@ class ReactiveUpdateOperationSupport implements ReactiveUpdateOperation {
 
 			Assert.notNull(update, "Update must not be null");
 
-			return this.template.doUpdate(this.query, update, this.domainType, getTableName());
+			return template.doUpdate(query, update, domainType, getTableName());
 		}
 
 		private SqlIdentifier getTableName() {
-			return this.tableName != null ? this.tableName : this.template.getTableName(this.domainType);
+			return tableName != null ? tableName : template.getTableName(this.domainType);
 		}
 	}
 }
