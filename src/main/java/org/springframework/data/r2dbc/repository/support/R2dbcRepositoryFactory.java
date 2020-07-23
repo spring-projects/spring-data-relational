@@ -22,6 +22,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
@@ -54,9 +55,9 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private static final SpelExpressionParser EXPRESSION_PARSER = new SpelExpressionParser();
 
 	private final DatabaseClient databaseClient;
+	private final ReactiveDataAccessStrategy dataAccessStrategy;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final R2dbcConverter converter;
-	private final ReactiveDataAccessStrategy dataAccessStrategy;
 
 	/**
 	 * Creates a new {@link R2dbcRepositoryFactory} given {@link DatabaseClient} and {@link MappingContext}.
@@ -70,9 +71,25 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		Assert.notNull(dataAccessStrategy, "ReactiveDataAccessStrategy must not be null!");
 
 		this.databaseClient = databaseClient;
+		this.dataAccessStrategy = dataAccessStrategy;
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = this.converter.getMappingContext();
-		this.dataAccessStrategy = dataAccessStrategy;
+	}
+
+	/**
+	 * Creates a new {@link R2dbcRepositoryFactory} given {@link R2dbcEntityOperations}.
+	 *
+	 * @param operations must not be {@literal null}.
+	 * @since 1.1.3
+	 */
+	public R2dbcRepositoryFactory(R2dbcEntityOperations operations) {
+
+		Assert.notNull(operations, "R2dbcEntityOperations must not be null!");
+
+		this.databaseClient = operations.getDatabaseClient();
+		this.dataAccessStrategy = operations.getDataAccessStrategy();
+		this.converter = dataAccessStrategy.getConverter();
+		this.mappingContext = this.converter.getMappingContext();
 	}
 
 	/*

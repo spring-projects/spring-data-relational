@@ -29,6 +29,7 @@ import org.springframework.data.repository.config.RepositoryConfigurationExtensi
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.XmlRepositoryConfigurationSource;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.util.StringUtils;
 
 /**
  * Reactive {@link RepositoryConfigurationExtension} for R2DBC.
@@ -97,8 +98,13 @@ public class R2dbcRepositoryConfigurationExtension extends RepositoryConfigurati
 
 		AnnotationAttributes attributes = config.getAttributes();
 
-		builder.addPropertyReference("databaseClient", attributes.getString("databaseClientRef"));
-		builder.addPropertyReference("dataAccessStrategy", "reactiveDataAccessStrategy");
+		String entityOperationsRef = attributes.getString("entityOperationsRef");
+		if (StringUtils.hasText(entityOperationsRef)) {
+			builder.addPropertyReference("entityOperations", entityOperationsRef);
+		} else {
+			builder.addPropertyReference("databaseClient", attributes.getString("databaseClientRef"));
+			builder.addPropertyReference("dataAccessStrategy", "reactiveDataAccessStrategy");
+		}
 	}
 
 	/*

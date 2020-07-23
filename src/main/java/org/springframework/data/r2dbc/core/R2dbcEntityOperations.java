@@ -42,6 +42,15 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 */
 	DatabaseClient getDatabaseClient();
 
+	/**
+	 * Expose the underlying {@link ReactiveDataAccessStrategy} encapsulating dialect specifics.
+	 *
+	 * @return the underlying {@link ReactiveDataAccessStrategy}.
+	 * @see ReactiveDataAccessStrategy
+	 * @since 1.1.3
+	 */
+	ReactiveDataAccessStrategy getDataAccessStrategy();
+
 	// -------------------------------------------------------------------------
 	// Methods dealing with org.springframework.data.r2dbc.query.Query
 	// -------------------------------------------------------------------------

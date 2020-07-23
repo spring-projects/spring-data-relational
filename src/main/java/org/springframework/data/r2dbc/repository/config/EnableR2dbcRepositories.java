@@ -121,8 +121,20 @@ public @interface EnableR2dbcRepositories {
 	 * repositories detected.
 	 *
 	 * @return
+	 * @see #entityOperationsRef()
 	 */
 	String databaseClientRef() default "r2dbcDatabaseClient";
+
+	/**
+	 * Configures the name of the {@link org.springframework.data.r2dbc.core.R2dbcEntityOperations} bean to be used with
+	 * the repositories detected. Used as alternative to {@link #databaseClientRef()} to configure an access strategy when
+	 * using repositories with different database systems/dialects. If this attribute is set, then
+	 * {@link #databaseClientRef()} is ignored.
+	 *
+	 * @return
+	 * @since 1.1.3
+	 */
+	String entityOperationsRef() default "";
 
 	/**
 	 * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be discovered by the

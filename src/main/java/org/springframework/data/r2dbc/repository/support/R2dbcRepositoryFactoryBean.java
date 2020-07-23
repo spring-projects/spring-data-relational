@@ -19,6 +19,7 @@ import java.io.Serializable;
 
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
@@ -28,7 +29,8 @@ import org.springframework.util.Assert;
 
 /**
  * {@link org.springframework.beans.factory.FactoryBean} to create
- * {@link org.springframework.data.r2dbc.repository.R2dbcRepository} instances.
+ * {@link org.springframework.data.r2dbc.repository.R2dbcRepository} instances. Can be either configured with
+ * {@link R2dbcEntityOperations} or {@link DatabaseClient} with {@link ReactiveDataAccessStrategy}.
  *
  * @author Mark Paluch
  * @author Christoph Strobl
@@ -39,6 +41,7 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 
 	private @Nullable DatabaseClient client;
 	private @Nullable ReactiveDataAccessStrategy dataAccessStrategy;
+	private @Nullable R2dbcEntityOperations operations;
 
 	private boolean mappingContextConfigured = false;
 
@@ -56,8 +59,20 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	 *
 	 * @param client the client to set
 	 */
-	public void setDatabaseClient(@Nullable DatabaseClient client) {
+	public void setDatabaseClient(DatabaseClient client) {
 		this.client = client;
+	}
+
+	public void setDataAccessStrategy(ReactiveDataAccessStrategy dataAccessStrategy) {
+		this.dataAccessStrategy = dataAccessStrategy;
+	}
+
+	/**
+	 * @param operations
+	 * @since 1.1.3
+	 */
+	public void setEntityOperations(R2dbcEntityOperations operations) {
+		this.operations = operations;
 	}
 
 	/*
@@ -65,17 +80,10 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	 * @see org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport#setMappingContext(org.springframework.data.mapping.context.MappingContext)
 	 */
 	@Override
-	protected void setMappingContext(@Nullable MappingContext<?, ?> mappingContext) {
+	protected void setMappingContext(MappingContext<?, ?> mappingContext) {
 
+		this.mappingContextConfigured = true;
 		super.setMappingContext(mappingContext);
-
-		if (mappingContext != null) {
-			this.mappingContextConfigured = true;
-		}
-	}
-
-	public void setDataAccessStrategy(@Nullable ReactiveDataAccessStrategy dataAccessStrategy) {
-		this.dataAccessStrategy = dataAccessStrategy;
 	}
 
 	/*
@@ -84,7 +92,9 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	 */
 	@Override
 	protected final RepositoryFactorySupport createRepositoryFactory() {
-		return getFactoryInstance(client, dataAccessStrategy);
+
+		return this.operations != null ? getFactoryInstance(this.operations)
+				: getFactoryInstance(this.client, this.dataAccessStrategy);
 	}
 
 	/**
@@ -99,6 +109,17 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 		return new R2dbcRepositoryFactory(client, dataAccessStrategy);
 	}
 
+	/**
+	 * Creates and initializes a {@link RepositoryFactorySupport} instance.
+	 *
+	 * @param operations must not be {@literal null}.
+	 * @return new instance of {@link RepositoryFactorySupport}.
+	 * @since 1.1.3
+	 */
+	protected RepositoryFactorySupport getFactoryInstance(R2dbcEntityOperations operations) {
+		return new R2dbcRepositoryFactory(operations);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
@@ -106,8 +127,14 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 	@Override
 	public void afterPropertiesSet() {
 
-		Assert.state(client != null, "DatabaseClient must not be null!");
-		Assert.state(dataAccessStrategy != null, "ReactiveDataAccessStrategy must not be null!");
+		if (operations == null) {
+
+			Assert.state(client != null, "DatabaseClient must not be null when R2dbcEntityOperations is not configured!");
+			Assert.state(dataAccessStrategy != null,
+					"ReactiveDataAccessStrategy must not be null when R2dbcEntityOperations is not configured!");
+		} else {
+			dataAccessStrategy = operations.getDataAccessStrategy();
+		}
 
 		if (!mappingContextConfigured) {
 			setMappingContext(dataAccessStrategy.getConverter().getMappingContext());

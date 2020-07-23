@@ -339,3 +339,42 @@ include::../{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+
 include::../{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
 include::./r2dbc-entity-callbacks.adoc[leveloffset=+2]
 
+[[r2dbc.multiple-databases]]
+=== Working with multiple Databases
+
+When working with multiple, potentially different databases, your application will require a different approach to configuration.
+The provided `AbstractR2dbcConfiguration` support class assumes a single `ConnectionFactory` from which the `Dialect` gets derived.
+That being said, you need to define a few beans yourself to configure Spring Data R2DBC to work with multiple databases.
+
+R2DBC repositories require either a `DatabaseClient` and `ReactiveDataAccessStrategy` or `R2dbcEntityOperations` to implement repositories.
+A simple configuration to scan for repositories without using `AbstractR2dbcConfiguration` looks like:
+
+[source,java]
+----
+@Configuration
+@EnableR2dbcRepositories(basePackages = "com.acme.mysql", entityOperationsRef = "mysqlR2dbcEntityOperations")
+static class MySQLConfiguration {
+
+    @Bean
+    @Qualifier("mysql")
+    public ConnectionFactory mysqlConnectionFactory() {
+        return …;
+    }
+
+    @Bean
+    public R2dbcEntityOperations mysqlR2dbcEntityOperations(@Qualifier("mysql") ConnectionFactory connectionFactory) {
+
+        DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(MySqlDialect.INSTANCE);
+        DatabaseClient databaseClient = DatabaseClient.builder()
+                .connectionFactory(connectionFactory)
+                .dataAccessStrategy(strategy)
+                .build();
+
+        return new R2dbcEntityTemplate(databaseClient, strategy);
+    }
+}
+----
+
+Note that `@EnableR2dbcRepositories` allows configuration either through `databaseClientRef` or `entityOperationsRef`.
+Using various `DatabaseClient` beans is useful when connecting to multiple databases of the same type.
+When using different database systems that differ in their dialect, use `@EnableR2dbcRepositories`(entityOperationsRef = …)` instead.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.r2dbc.repository.config;
+package org.springframework.data.r2dbc.repository.config.sqlserver;
+
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.data.r2dbc.repository.config.Person;
 
 /**
  * @author Mark Paluch
  */
-public class Person {}
+public interface SqlServerPersonRepository extends R2dbcRepository<Person, String> {}
