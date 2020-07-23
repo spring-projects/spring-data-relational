@@ -1,5 +1,5 @@
 = Spring Data R2DBC - Reference Documentation
- Mark Paluch, Jay Bryant
+ Mark Paluch, Jay Bryant, Stephen Cohen
 :revnumber: {version}
 :revdate: {localdate}
 ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1600]]

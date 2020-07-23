@@ -81,7 +81,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 			R2dbcConverter converter, ReactiveDataAccessStrategy accessStrategy) {
 
 		this.entity = entity;
-		this.entityOperations = new R2dbcEntityTemplate(databaseClient);
+		this.entityOperations = new R2dbcEntityTemplate(databaseClient, accessStrategy);
 		this.idProperty = Lazy.of(() -> converter //
 				.getMappingContext() //
 				.getRequiredPersistentEntity(this.entity.getJavaType()) //
@@ -179,6 +179,9 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 	 */
 	@Override
 	public Flux<T> findAll(Sort sort) {
+
+		Assert.notNull(sort, "Sort must not be null!");
+
 		return this.entityOperations.select(Query.empty().sort(sort), this.entity.getJavaType());
 	}
 
