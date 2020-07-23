@@ -56,7 +56,7 @@ public interface ReactiveDeleteOperation {
 	/**
 	 * Table override (optional).
 	 */
-	interface DeleteWithTable {
+	interface DeleteWithTable extends TerminatingDelete {
 
 		/**
 		 * Explicitly set the {@link String name} of the table on which to perform the delete.
@@ -88,7 +88,7 @@ public interface ReactiveDeleteOperation {
 	/**
 	 * Required {@link Query filter}.
 	 */
-	interface DeleteWithQuery {
+	interface DeleteWithQuery extends TerminatingDelete {
 
 		/**
 		 * Define the {@link Query} used to filter elements in the delete.

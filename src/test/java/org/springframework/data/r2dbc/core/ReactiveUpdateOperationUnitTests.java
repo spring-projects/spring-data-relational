@@ -52,8 +52,46 @@ public class ReactiveUpdateOperationUnitTests {
 		entityTemplate = new R2dbcEntityTemplate(client);
 	}
 
-	@Test // gh-220
+	@Test // gh-410
 	public void shouldUpdate() {
+
+		MockResult result = MockResult.builder().rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+
+		entityTemplate.update(Person.class) //
+				.apply(Update.update("name", "Heisenberg")) //
+				.as(StepVerifier::create) //
+				.expectNext(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+
+		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Heisenberg"));
+	}
+
+	@Test // gh-410
+	public void shouldUpdateWithTable() {
+
+		MockResult result = MockResult.builder().rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+
+		entityTemplate.update(Person.class) //
+				.inTable("table").apply(Update.update("name", "Heisenberg")) //
+				.as(StepVerifier::create) //
+				.expectNext(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+
+		assertThat(statement.getSql()).isEqualTo("UPDATE table SET THE_NAME = $1");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Heisenberg"));
+	}
+
+	@Test // gh-220
+	public void shouldUpdateWithQuery() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 

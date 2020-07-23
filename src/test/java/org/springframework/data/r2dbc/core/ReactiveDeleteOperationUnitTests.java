@@ -51,8 +51,44 @@ public class ReactiveDeleteOperationUnitTests {
 		entityTemplate = new R2dbcEntityTemplate(client);
 	}
 
-	@Test // gh-220
+	@Test // gh-410
 	public void shouldDelete() {
+
+		MockResult result = MockResult.builder().rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("DELETE"), result);
+
+		entityTemplate.delete(Person.class) //
+				.all() //
+				.as(StepVerifier::create) //
+				.expectNext(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
+
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM person");
+	}
+
+	@Test // gh-410
+	public void shouldDeleteWithTable() {
+
+		MockResult result = MockResult.builder().rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("DELETE"), result);
+
+		entityTemplate.delete(Person.class) //
+				.from("table").all() //
+				.as(StepVerifier::create) //
+				.expectNext(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("DELETE"));
+
+		assertThat(statement.getSql()).isEqualTo("DELETE FROM table");
+	}
+
+	@Test // gh-220
+	public void shouldDeleteWithQuery() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 

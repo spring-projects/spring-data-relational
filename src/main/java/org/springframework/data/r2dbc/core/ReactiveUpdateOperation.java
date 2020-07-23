@@ -60,7 +60,7 @@ public interface ReactiveUpdateOperation {
 	/**
 	 * Table override (optional).
 	 */
-	interface UpdateWithTable {
+	interface UpdateWithTable extends TerminatingUpdate {
 
 		/**
 		 * Explicitly set the {@link String name} of the table on which to perform the update.
@@ -92,7 +92,7 @@ public interface ReactiveUpdateOperation {
 	/**
 	 * Define a {@link Query} used as the filter for the {@link Update}.
 	 */
-	interface UpdateWithQuery {
+	interface UpdateWithQuery extends TerminatingUpdate {
 
 		/**
 		 * Filter rows to update by the given {@link Query}.
