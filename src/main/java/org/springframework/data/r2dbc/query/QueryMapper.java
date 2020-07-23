@@ -660,7 +660,7 @@ public class QueryMapper {
 
 			super(name);
 
-			Assert.notNull(entity, "MongoPersistentEntity must not be null!");
+			Assert.notNull(entity, "RelationalPersistentEntity must not be null!");
 
 			this.entity = entity;
 			this.mappingContext = context;
@@ -713,7 +713,7 @@ public class QueryMapper {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.mongodb.core.convert.QueryMapper.Field#getTypeHint()
+		 * @see org.springframework.data.r2dbc.core.convert.QueryMapper.Field#getTypeHint()
 		 */
 		@Override
 		public TypeInformation<?> getTypeHint() {
