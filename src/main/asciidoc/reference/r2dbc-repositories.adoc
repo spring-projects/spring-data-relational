@@ -340,7 +340,7 @@ include::../{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
 include::./r2dbc-entity-callbacks.adoc[leveloffset=+2]
 
 [[r2dbc.multiple-databases]]
-=== Working with multiple Databases
+== Working with multiple Databases
 
 When working with multiple, potentially different databases, your application will require a different approach to configuration.
 The provided `AbstractR2dbcConfiguration` support class assumes a single `ConnectionFactory` from which the `Dialect` gets derived.

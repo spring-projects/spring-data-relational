@@ -47,8 +47,8 @@ public @interface EnableR2dbcRepositories {
 
 	/**
 	 * Alias for the {@link #basePackages()} attribute. Allows for more concise annotation declarations e.g.:
-	 * {@code @EnableReactiveRelationalRepositories("org.my.pkg")} instead of
-	 * {@code @EnableReactiveRelationalRepositories(basePackages="org.my.pkg")}.
+	 * {@code @EnableR2dbcRepositories("org.my.pkg")} instead of
+	 * {@code @EnableR2dbcRepositories(basePackages="org.my.pkg")}.
 	 */
 	String[] value() default {};
 
