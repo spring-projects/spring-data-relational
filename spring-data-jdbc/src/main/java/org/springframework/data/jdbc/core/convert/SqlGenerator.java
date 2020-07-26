@@ -712,8 +712,9 @@ class SqlGenerator {
 
 	private OrderByField orderToOrderByField(Sort.Order order) {
 
-		SqlIdentifier columnName = this.entity.getRequiredPersistentProperty(order.getProperty()).getColumnName();
-		Column column = Column.create(columnName, this.getTable());
+		PersistentPropertyPath<RelationalPersistentProperty> path = mappingContext.getPersistentPropertyPath(order.getProperty(), this.entity.getType());
+		PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(mappingContext, path);
+		Column column = this.getColumn(extPath);
 		return OrderByField.from(column, order.getDirection());
 	}
 

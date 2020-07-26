@@ -220,11 +220,11 @@ public class SqlGeneratorUnitTests {
 				"ORDER BY x_name ASC");
 	}
 
-	@Test // DATAJDBC-101
+	@Test // DATAJDBC-101, DATAJDBC-584
 	public void findAllSortedByMultipleFields() {
 
 		String sql = sqlGenerator.getFindAll(
-				Sort.by(new Sort.Order(Sort.Direction.DESC, "name"), new Sort.Order(Sort.Direction.ASC, "other")));
+				Sort.by(new Sort.Order(Sort.Direction.DESC, "name"), new Sort.Order(Sort.Direction.ASC, "ref.content"), new Sort.Order(Sort.Direction.DESC, "ref.further.something")));
 
 		assertThat(sql).contains("SELECT", //
 				"dummy_entity.id1 AS id1", //
@@ -238,7 +238,8 @@ public class SqlGeneratorUnitTests {
 				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
 				"ORDER BY x_name DESC", //
-				"x_other ASC");
+				"ref_x_content ASC", //
+				"ref_further_x_something DESC" );
 	}
 
 	@Test // DATAJDBC-101
