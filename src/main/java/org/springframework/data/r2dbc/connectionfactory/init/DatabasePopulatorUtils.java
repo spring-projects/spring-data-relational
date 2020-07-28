@@ -27,7 +27,8 @@ import org.springframework.util.Assert;
  * Utility methods for executing a {@link DatabasePopulator}.
  *
  * @author Mark Paluch
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.init.DatabasePopulator#populate(ConnectionFactory)} instead.
  */
 @Deprecated
 public abstract class DatabasePopulatorUtils {

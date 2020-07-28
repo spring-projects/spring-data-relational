@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Update;
@@ -68,7 +69,7 @@ public class ReactiveUpdateOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE person SET THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Heisenberg"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Heisenberg"));
 	}
 
 	@Test // gh-410
@@ -87,7 +88,7 @@ public class ReactiveUpdateOperationUnitTests {
 		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
 
 		assertThat(statement.getSql()).isEqualTo("UPDATE table SET THE_NAME = $1");
-		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, SettableValue.from("Heisenberg"));
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Heisenberg"));
 	}
 
 	@Test // gh-220

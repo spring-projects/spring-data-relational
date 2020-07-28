@@ -23,6 +23,7 @@ import org.springframework.data.r2dbc.mapping.SettableValue
  *
  * @author Sebastien Deleuze
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 suspend fun DatabaseClient.GenericExecuteSpec.await() {
 	then().awaitFirstOrNull()
 }
@@ -34,6 +35,7 @@ suspend fun DatabaseClient.GenericExecuteSpec.await() {
  * @author Ibanga Enoobong Ime
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.TypedExecuteSpec<*>.bind(index: Int, value: T?) = bind(index, SettableValue.fromOrEmpty(value, T::class.java))
 
 /**
@@ -43,6 +45,7 @@ inline fun <reified T : Any> DatabaseClient.TypedExecuteSpec<*>.bind(index: Int,
  * @author Ibanga Enoobong Ime
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.GenericExecuteSpec.bind(index: Int, value: T?) = bind(index, SettableValue.fromOrEmpty(value, T::class.java))
 
 /**
@@ -52,6 +55,7 @@ inline fun <reified T : Any> DatabaseClient.GenericExecuteSpec.bind(index: Int, 
  * @author Ibanga Enoobong Ime
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.TypedExecuteSpec<*>.bind(name: String, value: T?) = bind(name, SettableValue.fromOrEmpty(value, T::class.java))
 
 /**
@@ -61,6 +65,7 @@ inline fun <reified T : Any> DatabaseClient.TypedExecuteSpec<*>.bind(name: Strin
  * @author Ibanga Enoobong Ime
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.GenericExecuteSpec.bind(name: String, value: T?) = bind(name, SettableValue.fromOrEmpty(value, T::class.java))
 
 /**
@@ -69,6 +74,7 @@ inline fun <reified T : Any> DatabaseClient.GenericExecuteSpec.bind(name: String
  *
  * @author Sebastien Deleuze
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.GenericExecuteSpec.asType(): DatabaseClient.TypedExecuteSpec<T> =
 		`as`(T::class.java)
 
@@ -78,6 +84,7 @@ inline fun <reified T : Any> DatabaseClient.GenericExecuteSpec.asType(): Databas
  *
  * @author Sebastien Deleuze
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.GenericSelectSpec.asType(): DatabaseClient.TypedSelectSpec<T> =
 		`as`(T::class.java)
 
@@ -86,6 +93,7 @@ inline fun <reified T : Any> DatabaseClient.GenericSelectSpec.asType(): Database
  *
  * @author Sebastien Deleuze
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 suspend fun <T> DatabaseClient.TypedExecuteSpec<T>.await() {
 	then().awaitFirstOrNull()
 }
@@ -96,6 +104,7 @@ suspend fun <T> DatabaseClient.TypedExecuteSpec<T>.await() {
  *
  * @author Sebastien Deleuze
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.TypedExecuteSpec<T>.asType(): DatabaseClient.TypedExecuteSpec<T> =
 		`as`(T::class.java)
 
@@ -104,6 +113,7 @@ inline fun <reified T : Any> DatabaseClient.TypedExecuteSpec<T>.asType(): Databa
  *
  * @author Sebastien Deleuze
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 suspend fun <T> DatabaseClient.InsertSpec<T>.await() {
 	then().awaitFirstOrNull()
 }
@@ -114,6 +124,7 @@ suspend fun <T> DatabaseClient.InsertSpec<T>.await() {
  *
  * @author Sebastien Deleuze
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.InsertIntoSpec.into(): DatabaseClient.TypedInsertSpec<T> =
 		into(T::class.java)
 
@@ -123,6 +134,7 @@ inline fun <reified T : Any> DatabaseClient.InsertIntoSpec.into(): DatabaseClien
  * @author Mark Paluch
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.GenericInsertSpec<*>.value(name: String, value: T?) = value(name, SettableValue.fromOrEmpty(value, T::class.java))
 
 
@@ -132,6 +144,7 @@ inline fun <reified T : Any> DatabaseClient.GenericInsertSpec<*>.value(name: Str
  *
  * @author Jonas Bark
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.SelectFromSpec.from(): DatabaseClient.TypedSelectSpec<T> =
 		from(T::class.java)
 
@@ -141,6 +154,7 @@ inline fun <reified T : Any> DatabaseClient.SelectFromSpec.from(): DatabaseClien
  *
  * @author Mark Paluch
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.UpdateTableSpec.table(): DatabaseClient.TypedUpdateSpec<T> =
 		table(T::class.java)
 
@@ -150,5 +164,6 @@ inline fun <reified T : Any> DatabaseClient.UpdateTableSpec.table(): DatabaseCli
  *
  * @author Jonas Bark
  */
+@Deprecated("Deprecated in favor of Spring R2DBC's DatabaseClient")
 inline fun <reified T : Any> DatabaseClient.DeleteFromSpec.from(): DatabaseClient.TypedDeleteSpec<T> =
 		from(T::class.java)

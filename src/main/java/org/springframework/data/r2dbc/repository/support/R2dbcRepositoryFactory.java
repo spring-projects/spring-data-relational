@@ -21,7 +21,6 @@ import java.util.Optional;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -185,8 +184,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 				return new StringBasedR2dbcQuery(queryMethod, this.databaseClient, this.converter, EXPRESSION_PARSER,
 						this.evaluationContextProvider);
 			} else {
-				return new PartTreeR2dbcQuery(queryMethod, this.databaseClient, this.converter,
-						this.dataAccessStrategy);
+				return new PartTreeR2dbcQuery(queryMethod, this.databaseClient, this.converter, this.dataAccessStrategy);
 			}
 		}
 	}

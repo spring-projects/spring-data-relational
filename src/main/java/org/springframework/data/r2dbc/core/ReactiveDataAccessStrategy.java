@@ -68,10 +68,11 @@ public interface ReactiveDataAccessStrategy {
 	 * @since 1.1
 	 * @deprecated since 1.2, use {@link #getBindValue(Parameter)} instead.
 	 */
+	@Deprecated
 	SettableValue getBindValue(SettableValue value);
 
 	/**
-	 * Return a potentially converted {@link SettableValue} for strategies that support type conversion.
+	 * Return a potentially converted {@link Parameter} for strategies that support type conversion.
 	 *
 	 * @param value must not be {@literal null}.
 	 * @return

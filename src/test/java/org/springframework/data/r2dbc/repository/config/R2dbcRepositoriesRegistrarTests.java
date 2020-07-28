@@ -32,10 +32,11 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.MySqlDialect;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
-import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.dialect.SqlServerDialect;
 import org.springframework.data.r2dbc.repository.config.mysql.MySqlPersonRepository;
 import org.springframework.data.r2dbc.repository.config.sqlserver.SqlServerPersonRepository;
+import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 
 /**
  * Integration tests for {@link R2dbcRepositoriesRegistrar}.
@@ -86,8 +87,8 @@ public class R2dbcRepositoriesRegistrarTests {
 		public R2dbcEntityOperations mysqlR2dbcEntityOperations(@Qualifier("mysql") ConnectionFactory connectionFactory) {
 
 			DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(MySqlDialect.INSTANCE);
-			DatabaseClient databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory)
-					.dataAccessStrategy(strategy).build();
+			DatabaseClient databaseClient = DatabaseClient.builder().bindMarkers(BindMarkersFactory.anonymous("?"))
+					.connectionFactory(connectionFactory).build();
 
 			return new R2dbcEntityTemplate(databaseClient, strategy);
 		}
@@ -107,8 +108,8 @@ public class R2dbcRepositoriesRegistrarTests {
 		public DatabaseClient sqlserverDatabaseClient(
 				@Qualifier("sqlserverConnectionFactory") ConnectionFactory connectionFactory,
 				@Qualifier("sqlserverDataAccessStrategy") ReactiveDataAccessStrategy mysqlDataAccessStrategy) {
-			return DatabaseClient.builder().connectionFactory(connectionFactory).dataAccessStrategy(mysqlDataAccessStrategy)
-					.build();
+			return DatabaseClient.builder().connectionFactory(connectionFactory)
+					.bindMarkers(BindMarkersFactory.anonymous("?")).build();
 		}
 
 		@Bean
