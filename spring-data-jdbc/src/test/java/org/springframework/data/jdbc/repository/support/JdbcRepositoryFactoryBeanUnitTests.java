@@ -97,17 +97,13 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 	@Test(expected = IllegalArgumentException.class) // DATAJDBC-151
 	public void requiresListableBeanFactory() {
-
 		factoryBean.setBeanFactory(mock(BeanFactory.class));
 	}
 
-	@Test(expected = IllegalStateException.class) // DATAJDBC-155
+	@Test(expected = IllegalArgumentException.class) // DATAJDBC-155
 	public void afterPropertiesThrowsExceptionWhenNoMappingContextSet() {
 
 		factoryBean.setMappingContext(null);
-		factoryBean.setApplicationEventPublisher(publisher);
-		factoryBean.setBeanFactory(beanFactory);
-		factoryBean.afterPropertiesSet();
 	}
 
 	@Test // DATAJDBC-155
