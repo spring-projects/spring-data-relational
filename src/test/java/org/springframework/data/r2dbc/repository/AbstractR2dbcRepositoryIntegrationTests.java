@@ -17,6 +17,8 @@ package org.springframework.data.r2dbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 
+import kotlin.Unit;
+
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -297,6 +299,55 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
+	@Test // gh-421
+	public void shouldDeleteAllAndReturnCount() {
+
+		shouldInsertNewItems();
+
+		repository.deleteAllAndReturnCount() //
+				.as(StepVerifier::create) //
+				.expectNext(2) //
+				.verifyComplete();
+
+		repository.findAll() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+	}
+
+	@Test // gh-421
+	public void shouldDeleteAndReturnSuccess() {
+
+		shouldInsertNewItems();
+
+		repository.deleteByManualAndReturnSuccess(12) //
+				.as(StepVerifier::create) //
+				.expectNext(true) //
+				.verifyComplete();
+
+		repository.findAll() //
+				.map(LegoSet::getManual) //
+				.as(StepVerifier::create) //
+				.expectNext(13) //
+				.verifyComplete();
+	}
+
+	@Test // gh-421
+	public void shouldDeleteAndReturnKotlinUnit() {
+
+		shouldInsertNewItems();
+
+		repository.deleteByManualAndReturnKotlinUnit(12) //
+				.as(StepVerifier::create) //
+				.expectNext(Unit.INSTANCE) //
+				.verifyComplete();
+
+		repository.findAll() //
+				.map(LegoSet::getManual) //
+				.as(StepVerifier::create) //
+				.expectNext(13) //
+				.verifyComplete();
+	}
+
 	private Condition<? super Object> numberOf(int expected) {
 		return new Condition<>(it -> {
 			return it instanceof Number && ((Number) it).intValue() == expected;
@@ -322,8 +373,21 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		Mono<Void> deleteAllBy();
 
+		@Modifying
 		@Query("DELETE from legoset where manual = :manual")
 		Mono<Void> deleteAllByManual(int manual);
+
+		@Modifying
+		@Query("DELETE from legoset")
+		Mono<Integer> deleteAllAndReturnCount();
+
+		@Modifying
+		@Query("DELETE from legoset where manual = :manual")
+		Mono<Boolean> deleteByManualAndReturnSuccess(int manual);
+
+		@Modifying
+		@Query("DELETE from legoset where manual = :manual")
+		Mono<Unit> deleteByManualAndReturnKotlinUnit(int manual);
 
 		Mono<Integer> countByNameContains(String namePart);
 	}

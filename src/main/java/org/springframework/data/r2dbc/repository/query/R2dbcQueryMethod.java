@@ -17,9 +17,12 @@ package org.springframework.data.r2dbc.repository.query;
 
 import static org.springframework.data.repository.util.ClassUtils.*;
 
+import kotlin.Unit;
+
 import java.lang.reflect.Method;
 import java.util.Optional;
 
+import org.springframework.core.KotlinDetector;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -51,6 +54,7 @@ import org.springframework.util.ClassUtils;
  * Reactive specific implementation of {@link QueryMethod}.
  *
  * @author Mark Paluch
+ * @author Stephen Cohen
  */
 public class R2dbcQueryMethod extends QueryMethod {
 
@@ -164,7 +168,8 @@ public class R2dbcQueryMethod extends QueryMethod {
 			Class<?> returnedObjectType = getReturnedObjectType();
 			Class<?> domainClass = getDomainClass();
 
-			if (ClassUtils.isPrimitiveOrWrapper(returnedObjectType)) {
+			if (ClassUtils.isPrimitiveOrWrapper(returnedObjectType)
+					|| KotlinDetector.isKotlinPresent() && Unit.class.isAssignableFrom(returnedObjectType)) {
 
 				this.metadata = new SimpleRelationalEntityMetadata<>((Class<Object>) domainClass,
 						mappingContext.getRequiredPersistentEntity(domainClass));

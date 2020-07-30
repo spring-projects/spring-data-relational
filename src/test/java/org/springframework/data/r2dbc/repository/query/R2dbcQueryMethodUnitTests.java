@@ -17,6 +17,8 @@ package org.springframework.data.r2dbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
 
+import kotlin.Unit;
+
 import reactor.core.publisher.Mono;
 
 import java.lang.annotation.Retention;
@@ -45,6 +47,7 @@ import org.springframework.data.repository.core.support.DefaultRepositoryMetadat
  * Unit test for {@link R2dbcQueryMethod}.
  *
  * @author Mark Paluch
+ * @author Stephen Cohen
  */
 public class R2dbcQueryMethodUnitTests {
 
@@ -128,6 +131,14 @@ public class R2dbcQueryMethodUnitTests {
 		assertThat(method.getEntityInformation().getJavaType()).isAssignableFrom(Contact.class);
 	}
 
+	@Test // gh-421
+	public void fallsBackToRepositoryDomainTypeIfMethodReturnsKotlinUnit() throws Exception {
+
+		R2dbcQueryMethod method = queryMethod(PersonRepository.class, "deleteByFirstname", String.class);
+
+		assertThat(method.getEntityInformation().getJavaType()).isAssignableFrom(Contact.class);
+	}
+
 	private R2dbcQueryMethod queryMethod(Class<?> repository, String name, Class<?>... parameters) throws Exception {
 
 		Method method = repository.getMethod(name, parameters);
@@ -144,6 +155,8 @@ public class R2dbcQueryMethodUnitTests {
 		Mono<Slice<Contact>> findMonoSliceByLastname(String lastname, Pageable pageRequest);
 
 		void deleteByUserName(String userName);
+
+		Unit deleteByFirstname(String firstname);
 	}
 
 	interface SampleRepository extends Repository<Contact, Long> {
