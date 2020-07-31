@@ -17,8 +17,6 @@ package org.springframework.data.r2dbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 
-import kotlin.Unit;
-
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -50,7 +48,7 @@ import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.NoRepositoryBean;
-import org.springframework.data.repository.reactive.ReactiveSortingRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
@@ -58,7 +56,6 @@ import org.springframework.transaction.reactive.TransactionalOperator;
  * Abstract base class for integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
  *
  * @author Mark Paluch
- * @author Stephen Cohen
  */
 public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
@@ -314,40 +311,6 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test // gh-421
-	public void shouldDeleteAndReturnSuccess() {
-
-		shouldInsertNewItems();
-
-		repository.deleteByManualAndReturnSuccess(12) //
-				.as(StepVerifier::create) //
-				.expectNext(true) //
-				.verifyComplete();
-
-		repository.findAll() //
-				.map(LegoSet::getManual) //
-				.as(StepVerifier::create) //
-				.expectNext(13) //
-				.verifyComplete();
-	}
-
-	@Test // gh-421
-	public void shouldDeleteAndReturnKotlinUnit() {
-
-		shouldInsertNewItems();
-
-		repository.deleteByManualAndReturnKotlinUnit(12) //
-				.as(StepVerifier::create) //
-				.expectNext(Unit.INSTANCE) //
-				.verifyComplete();
-
-		repository.findAll() //
-				.map(LegoSet::getManual) //
-				.as(StepVerifier::create) //
-				.expectNext(13) //
-				.verifyComplete();
-	}
-
 	private Condition<? super Object> numberOf(int expected) {
 		return new Condition<>(it -> {
 			return it instanceof Number && ((Number) it).intValue() == expected;
@@ -355,7 +318,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@NoRepositoryBean
-	interface LegoSetRepository extends ReactiveSortingRepository<LegoSet, Integer> {
+	interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
 
 		Flux<LegoSet> findByNameContains(String name);
 
@@ -380,14 +343,6 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		@Modifying
 		@Query("DELETE from legoset")
 		Mono<Integer> deleteAllAndReturnCount();
-
-		@Modifying
-		@Query("DELETE from legoset where manual = :manual")
-		Mono<Boolean> deleteByManualAndReturnSuccess(int manual);
-
-		@Modifying
-		@Query("DELETE from legoset where manual = :manual")
-		Mono<Unit> deleteByManualAndReturnKotlinUnit(int manual);
 
 		Mono<Integer> countByNameContains(String namePart);
 	}

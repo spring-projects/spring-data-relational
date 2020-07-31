@@ -144,10 +144,6 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 				return (q, t, c) -> q.rowsUpdated().then();
 			}
 
-			if (KotlinDetector.isKotlinPresent() && Unit.class.isAssignableFrom(returnedType.getReturnedType())) {
-				return (q, t, c) -> q.rowsUpdated().thenReturn(Unit.INSTANCE);
-			}
-
 			return (q, t, c) -> q.rowsUpdated();
 		}
 

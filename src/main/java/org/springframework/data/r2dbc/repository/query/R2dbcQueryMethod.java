@@ -17,12 +17,9 @@ package org.springframework.data.r2dbc.repository.query;
 
 import static org.springframework.data.repository.util.ClassUtils.*;
 
-import kotlin.Unit;
-
 import java.lang.reflect.Method;
 import java.util.Optional;
 
-import org.springframework.core.KotlinDetector;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -45,6 +42,7 @@ import org.springframework.data.repository.util.ReactiveWrapperConverters;
 import org.springframework.data.repository.util.ReactiveWrappers;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.Lazy;
+import org.springframework.data.util.ReflectionUtils;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -169,7 +167,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 			Class<?> domainClass = getDomainClass();
 
 			if (ClassUtils.isPrimitiveOrWrapper(returnedObjectType)
-					|| KotlinDetector.isKotlinPresent() && Unit.class.isAssignableFrom(returnedObjectType)) {
+					|| ReflectionUtils.isVoid(returnedObjectType)) {
 
 				this.metadata = new SimpleRelationalEntityMetadata<>((Class<Object>) domainClass,
 						mappingContext.getRequiredPersistentEntity(domainClass));
