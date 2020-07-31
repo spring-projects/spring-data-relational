@@ -66,6 +66,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Myat Min
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -367,7 +368,9 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(identifierProcessing);
 
-		identifier.toMap().forEach(parameterSource::addValue);
+		identifier.toMap()
+				.forEach((sqlIdentifier, value) -> addConvertedPropertyValue(parameterSource,
+						sqlIdentifier, value, value.getClass()));
 
 		return parameterSource;
 	}

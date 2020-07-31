@@ -24,8 +24,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import lombok.Value;
 import org.junit.Before;
@@ -37,11 +39,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.KeyHolder;
@@ -52,6 +57,7 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Myat Min
  */
 public class DefaultDataAccessStrategyUnitTests {
 
@@ -181,10 +187,62 @@ public class DefaultDataAccessStrategyUnitTests {
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(rawId);
 	}
 
+	@Test // DATAJDBC-587
+	public void considersConfiguredWriteConverterForIdValueObjectsWhichReferencedInOneToManyRelationship() {
+
+		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
+
+		Dialect dialect = HsqlDbDialect.INSTANCE;
+
+		JdbcConverter converter = new BasicJdbcConverter(context, relationResolver,
+				new JdbcCustomConversions(Arrays.asList(IdValueToStringConverter.INSTANCE)),
+				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
+
+		DefaultDataAccessStrategy accessStrategy = new DefaultDataAccessStrategy( //
+				new SqlGeneratorSource(context, converter, dialect), //
+				context, //
+				converter, //
+				namedJdbcOperations);
+
+		relationResolver.setDelegate(accessStrategy);
+
+		String rawId = "batman";
+		IdValue rootIdValue = new IdValue(rawId);
+
+		DummyEntityRoot root = new DummyEntityRoot(rootIdValue);
+		DummyEntity child = new DummyEntity(ORIGINAL_ID);
+		root.dummyEntities.add(child);
+
+		additionalParameters.put(SqlIdentifier.quoted("DUMMYENTITYROOT"), rootIdValue);
+		accessStrategy.insert(root, DummyEntityRoot.class, Identifier.from(additionalParameters));
+
+		verify(namedJdbcOperations).update(anyString(), paramSourceCaptor.capture(),
+				any(KeyHolder.class));
+
+		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(rawId);
+
+		PersistentPropertyPath<RelationalPersistentProperty> path =
+				context.getPersistentPropertyPath("dummyEntities", DummyEntityRoot.class);
+
+		accessStrategy.findAllByPath(Identifier.from(additionalParameters), path);
+
+		verify(namedJdbcOperations).query(anyString(), paramSourceCaptor.capture(),
+				any(RowMapper.class));
+
+		assertThat(paramSourceCaptor.getValue().getValue("DUMMYENTITYROOT")).isEqualTo(rawId);
+	}
+
 	@RequiredArgsConstructor
 	private static class DummyEntity {
 
 		@Id private final Long id;
+	}
+
+	@RequiredArgsConstructor // DATAJDBC-587
+	private static class DummyEntityRoot {
+
+		@Id private final IdValue id;
+		List<DummyEntity> dummyEntities = new ArrayList<>();
 	}
 
 	@AllArgsConstructor
