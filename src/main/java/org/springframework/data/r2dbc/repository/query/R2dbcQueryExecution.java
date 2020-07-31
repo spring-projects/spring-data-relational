@@ -30,6 +30,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.repository.query.DtoInstantiatingConverter;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.data.util.ReflectionUtils;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -97,7 +98,7 @@ interface R2dbcQueryExecution {
 				return source;
 			}
 
-			if (Void.class == returnedType.getReturnedType()) {
+			if (ReflectionUtils.isVoid(returnedType.getReturnedType())) {
 
 				if (source instanceof Mono) {
 					return ((Mono<?>) source).then();

@@ -34,6 +34,7 @@ import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.data.util.ReflectionUtils;
 import org.springframework.util.Assert;
 
 /**
@@ -136,7 +137,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 				});
 			}
 
-			if (Void.class.isAssignableFrom(returnedType.getReturnedType())) {
+			if (ReflectionUtils.isVoid(returnedType.getReturnedType())) {
 				return (q, t, c) -> q.rowsUpdated().then();
 			}
 
@@ -152,7 +153,7 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
 	/**
 	 * Returns whether this query is a modifying one.
-	 * 
+	 *
 	 * @return
 	 * @since 1.1
 	 */
