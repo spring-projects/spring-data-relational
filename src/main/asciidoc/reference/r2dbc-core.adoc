@@ -59,7 +59,7 @@ To do so:
 ====
 [source,xml,subs="+attributes"]
 ----
-<spring.framework.version>{springVersion}</spring.framework.version>
+<spring-framework.version>{springVersion}</spring-framework.version>
 ----
 ====
 
