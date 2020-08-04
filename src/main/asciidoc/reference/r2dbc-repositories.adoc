@@ -317,6 +317,7 @@ The following table describes the strategies that Spring Data R2DBC offers for d
 If the identifier property is `null`, then the entity is assumed to be new. Otherwise, it is assumed exist in the datbase.
 |Implementing `Persistable`             |If an entity implements `Persistable`, Spring Data R2DBC delegates the new detection to the `isNew(…)` method of the entity.
 See the link:$$https://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[Javadoc] for details.
+|Optimistic Locking through `@Version`  | If an entity uses Optimistic Locking by (version property annotated with `@Version`), Spring Data R2DBC checks if the entity is new by inspecting the version property whether its value corresponds with Java's default initialization value. That is `0` for primitive types and `null` for wrapper types.
 |Implementing `EntityInformation`       |You can customize the `EntityInformation` abstraction used in `SimpleR2dbcRepository`  by creating a subclass of `R2dbcRepositoryFactory` and overriding `getEntityInformation(…)`.
 You then have to register the custom implementation of `R2dbcRepositoryFactory` as a Spring bean.
 Note that this should rarely be necessary. See the link:{spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/repository/support/R2dbcRepositoryFactory.html[Javadoc] for details.
@@ -333,6 +334,44 @@ When your database has an auto-increment column for the ID column, the generated
 One important constraint is that, after saving an entity, the entity must not be new anymore.
 Note that whether an entity is new is part of the entity's state.
 With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
+
+[[r2dbc.optimistic-locking]]
+=== Optimistic Locking
+
+The `@Version` annotation provides syntax similar to that of JPA in the context of R2DBC and makes sure updates are only applied to documents with a matching version.
+Therefore, the actual value of the version property is added to the update query in such a way that the update does not have any effect if another operation altered the document in the meantime. In that case, an `OptimisticLockingFailureException` is thrown.
+The following example shows these features:
+
+====
+[source,java]
+----
+@Table
+class Person {
+
+  @Id Long id;
+  String firstname;
+  String lastname;
+  @Version Long version;
+}
+
+R2dbcEntityTemplate template = …;
+
+Mono<Person> daenerys = template.insert(new Person("Daenerys"));                      <1>
+
+Person other = template.select(Person.class)
+				.matching(query(where("id").is(daenerys.getId())))
+				.first().block();                                                     <2>
+
+daenerys.setLastname("Targaryen");
+template.save(daenerys);                                                              <3>
+
+template.save(other).subscribe(); // emits OptimisticLockingFailureException          <4>
+----
+<1> Initially insert row. `version` is set to `0`.
+<2> Load the just inserted row. `version` is still `0`.
+<3> Update the row with `version = 0`. Set the `lastname` and bump `version` to `1`.
+<4> Try to update the previously loaded document that still has `version = 0`. The operation fails with an `OptimisticLockingFailureException`, as the current `version` is `1`.
+====
 
 :projection-collection: Flux
 include::../{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+2]
