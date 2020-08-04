@@ -58,7 +58,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 	 * @param converter
 	 * @since 1.1
 	 */
-	SimpleR2dbcRepository(RelationalEntityInformation<T, ID> entity, R2dbcEntityOperations entityOperations,
+	public SimpleR2dbcRepository(RelationalEntityInformation<T, ID> entity, R2dbcEntityOperations entityOperations,
 			R2dbcConverter converter) {
 
 		this.entity = entity;
