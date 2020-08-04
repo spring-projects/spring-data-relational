@@ -156,8 +156,8 @@ Mono<Void> insert = databaseClient.insert()
 Modifying statements allow consumption of the number of affected rows or tabular results for consuming generated keys.
 ====
 
-[r2dbc.datbaseclient.fluent-api.insert.methods]]
-==== Methods for INSERT operations
+[[r2dbc.datbaseclient.fluent-api.insert.methods]]
+=== Methods for INSERT operations
 
 The `insert()` entry point exposes the following additional methods to provide options for the operation:
 
@@ -218,8 +218,8 @@ Mono<Void> update = databaseClient.update()
 Modifying statements also allow consumption of the number of affected rows.
 ====
 
-[r2dbc.datbaseclient.fluent-api.update.methods]]
-==== Methods for UPDATE operations
+[[r2dbc.datbaseclient.fluent-api.update.methods]]
+=== Methods for UPDATE operations
 
 The `update()` entry point exposes the following additional methods to provide options for the operation:
 
@@ -257,8 +257,8 @@ Mono<Void> delete = databaseClient.delete()
 Modifying statements also allow consumption of the number of affected rows.
 ====
 
-[r2dbc.datbaseclient.fluent-api.delete.methods]]
-==== Methods for DELETE operations
+[[r2dbc.datbaseclient.fluent-api.delete.methods]]
+=== Methods for DELETE operations
 
 The `delete()` entry point exposes the following additional methods to provide options for the operation:
 
