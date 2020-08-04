@@ -260,6 +260,7 @@ As this approach is feasible for comprehensive custom functionality, you can mod
 ====
 [source,java]
 ----
+@Modifying
 @Query("UPDATE person SET firstname = :firstname where lastname = :lastname")
 Mono<Integer> setFixedFirstnameFor(String firstname, String lastname);
 ----
