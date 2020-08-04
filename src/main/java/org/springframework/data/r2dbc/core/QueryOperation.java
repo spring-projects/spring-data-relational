@@ -23,7 +23,7 @@ import java.util.function.Supplier;
  *
  * @author Mark Paluch
  * @see PreparedOperation
- * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.core} support instead.
+ * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.core.QueryOperation} support instead.
  */
 @FunctionalInterface
 @Deprecated

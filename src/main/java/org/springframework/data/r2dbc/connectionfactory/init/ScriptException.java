@@ -22,7 +22,8 @@ import org.springframework.lang.Nullable;
  * Root of the hierarchy of data access exceptions that are related to processing of SQL scripts.
  *
  * @author Mark Paluch
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init.ScriptException}
+ *             instead.
  */
 @Deprecated
 public abstract class ScriptException extends DataAccessException {

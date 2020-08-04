@@ -46,6 +46,7 @@ import org.springframework.util.Assert;
  * @author Thomas Risberg
  * @author Juergen Hoeller
  * @author Mark Paluch
+ * @deprecated since 1.2, use Spring's org.springframework.r2dbc.core.NamedParameterUtils support instead.
  */
 @Deprecated
 abstract class NamedParameterUtils {

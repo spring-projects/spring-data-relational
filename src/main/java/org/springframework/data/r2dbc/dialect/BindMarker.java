@@ -10,7 +10,8 @@ import io.r2dbc.spi.Statement;
  * @see Statement#bind
  * @see BindMarkers
  * @see BindMarkersFactory
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding.BindMarker}
+ *             instead.
  */
 @Deprecated
 public interface BindMarker extends org.springframework.r2dbc.core.binding.BindMarker {

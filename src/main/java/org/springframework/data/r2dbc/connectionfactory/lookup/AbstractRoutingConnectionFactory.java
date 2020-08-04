@@ -42,7 +42,8 @@ import org.springframework.util.Assert;
  * @see #setTargetConnectionFactories
  * @see #setDefaultTargetConnectionFactory
  * @see #determineCurrentLookupKey()
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.lookup} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.lookup.AbstractRoutingConnectionFactory} instead.
  */
 @Deprecated
 public abstract class AbstractRoutingConnectionFactory implements ConnectionFactory, InitializingBean {

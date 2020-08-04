@@ -60,7 +60,8 @@ import org.springframework.util.ReflectionUtils;
  * @see Connection#close
  * @see ConnectionFactoryUtils#doGetConnection
  * @see ConnectionFactoryUtils#doReleaseConnection
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.TransactionAwareConnectionFactoryProxy} instead.
  */
 @Deprecated
 public class TransactionAwareConnectionFactoryProxy extends DelegatingConnectionFactory {

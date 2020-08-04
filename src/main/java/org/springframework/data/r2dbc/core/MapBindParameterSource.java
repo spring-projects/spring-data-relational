@@ -30,6 +30,7 @@ import org.springframework.util.Assert;
  * {@link NamedParameterExpander} class.
  *
  * @author Mark Paluch
+ * @deprecated since 1.2, use Spring's org.springframework.r2dbc.core.MapBindParameterSource support instead.
  */
 @Deprecated
 class MapBindParameterSource implements BindParameterSource {

@@ -24,7 +24,8 @@ import org.springframework.util.Assert;
  * returned for any connection factory name.
  *
  * @author Mark Paluch
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.lookup} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.lookup.SingleConnectionFactoryLookup} instead.
  */
 @Deprecated
 public class SingleConnectionFactoryLookup implements ConnectionFactoryLookup {

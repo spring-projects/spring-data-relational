@@ -21,7 +21,8 @@ import org.springframework.core.io.support.EncodedResource;
  * Thrown by {@link ScriptUtils} if a statement in an SQL script failed when executing it against the target database.
  *
  * @author Mark Paluch
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.init.ScriptStatementFailedException} instead.
  */
 @Deprecated
 public class ScriptStatementFailedException extends ScriptException {

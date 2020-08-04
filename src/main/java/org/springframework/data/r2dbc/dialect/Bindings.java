@@ -39,7 +39,7 @@ import org.springframework.util.Assert;
  * Bindings are typically immutable.
  *
  * @author Mark Paluch
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding.Bindings} instead.
  */
 @Deprecated
 public class Bindings implements Streamable<Bindings.Binding> {

@@ -29,7 +29,7 @@ import org.springframework.data.r2dbc.dialect.BindTarget;
  * @param <T> underlying operation source.
  * @author Mark Paluch
  * @see org.springframework.data.r2dbc.core.DatabaseClient#execute(Supplier)
- * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.core} support instead.
+ * @deprecated since 1.2, use Spring R2DBC's {@link org.springframework.r2dbc.core.PreparedOperation} support instead.
  */
 @Deprecated
 public interface PreparedOperation<T> extends QueryOperation, org.springframework.r2dbc.core.PreparedOperation<T> {

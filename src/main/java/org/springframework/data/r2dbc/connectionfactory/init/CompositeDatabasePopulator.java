@@ -31,7 +31,8 @@ import org.springframework.util.Assert;
  * executing all scripts.
  *
  * @author Mark Paluch
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.init.CompositeDatabasePopulator} instead.
  */
 @Deprecated
 public class CompositeDatabasePopulator implements DatabasePopulator {

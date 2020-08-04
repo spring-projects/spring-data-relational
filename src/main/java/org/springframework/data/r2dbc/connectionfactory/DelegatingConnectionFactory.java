@@ -32,7 +32,8 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @see #create
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.DelegatingConnectionFactory} instead.
  */
 @Deprecated
 public class DelegatingConnectionFactory implements ConnectionFactory, Wrapped<ConnectionFactory> {

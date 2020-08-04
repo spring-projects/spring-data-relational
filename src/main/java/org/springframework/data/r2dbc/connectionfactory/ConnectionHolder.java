@@ -33,7 +33,8 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @see R2dbcTransactionManager
  * @see ConnectionFactoryUtils
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.ConnectionHolder}
+ *             instead.
  */
 @Deprecated
 public class ConnectionHolder extends ResourceHolderSupport {

@@ -36,7 +36,8 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Christoph Strobl
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.ConnectionFactoryUtils} instead.
  */
 @Deprecated
 public abstract class ConnectionFactoryUtils {
@@ -80,21 +81,6 @@ public abstract class ConnectionFactoryUtils {
 	 */
 	public static Mono<Connection> doGetConnection(ConnectionFactory connectionFactory) {
 		return org.springframework.r2dbc.connection.ConnectionFactoryUtils.doGetConnection(connectionFactory);
-	}
-
-	/**
-	 * Actually fetch a {@link io.r2dbc.spi.Connection} from the given {@link io.r2dbc.spi.ConnectionFactory}, defensively
-	 * turning an unexpected {@literal null} return value from {@link io.r2dbc.spi.ConnectionFactory#create()} into an
-	 * {@link IllegalStateException}.
-	 *
-	 * @param connectionFactory the {@link io.r2dbc.spi.ConnectionFactory} to obtain {@link io.r2dbc.spi.Connection}s from
-	 * @return a R2DBC {@link io.r2dbc.spi.Connection} from the given {@link io.r2dbc.spi.ConnectionFactory} (never
-	 *         {@literal null}).
-	 * @throws IllegalStateException if the {@link io.r2dbc.spi.ConnectionFactory} returned a {@literal null} value.
-	 * @see ConnectionFactory#create()
-	 */
-	private static Mono<Connection> fetchConnection(ConnectionFactory connectionFactory) {
-		return Mono.from(connectionFactory.create());
 	}
 
 	/**

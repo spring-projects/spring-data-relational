@@ -25,6 +25,7 @@ import java.util.List;
  *
  * @author Thomas Risberg
  * @author Juergen Hoeller
+ * @deprecated since 1.2, use Spring's org.springframework.r2dbc.core.ParsedSql support instead.
  */
 @Deprecated
 class ParsedSql {

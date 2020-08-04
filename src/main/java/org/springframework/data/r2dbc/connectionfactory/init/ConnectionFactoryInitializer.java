@@ -28,7 +28,8 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @see DatabasePopulator
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer} instead.
  */
 @Deprecated
 public class ConnectionFactoryInitializer implements InitializingBean, DisposableBean {

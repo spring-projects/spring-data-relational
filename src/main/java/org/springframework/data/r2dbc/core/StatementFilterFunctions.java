@@ -25,6 +25,7 @@ import org.reactivestreams.Publisher;
  *
  * @author Mark Paluch
  * @since 1.1
+ * @deprecated since 1.2, use Spring's org.springframework.r2dbc.core.StatementFilterFunctions support instead.
  */
 @Deprecated
 enum StatementFilterFunctions implements StatementFilterFunction {

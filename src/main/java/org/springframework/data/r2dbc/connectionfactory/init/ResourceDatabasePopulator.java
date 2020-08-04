@@ -45,7 +45,8 @@ import org.springframework.util.StringUtils;
  * @author Mark Paluch
  * @see DatabasePopulatorUtils
  * @see ScriptUtils
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.connection.init} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use
+ *             {@link org.springframework.r2dbc.connection.init.ResourceDatabasePopulator} instead.
  */
 @Deprecated
 public class ResourceDatabasePopulator implements DatabasePopulator {

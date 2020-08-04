@@ -31,7 +31,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 1.1
  * @see ExecuteFunction
- * @deprecated since 1.2, use Spring's {@link org.springframework.r2dbc.core} support instead.
+ * @deprecated since 1.2, use Spring's {@link org.springframework.r2dbc.core.StatementFilterFunction} support instead.
  */
 @Deprecated
 @FunctionalInterface

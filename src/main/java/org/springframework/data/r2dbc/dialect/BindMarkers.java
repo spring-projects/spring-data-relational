@@ -12,7 +12,8 @@ package org.springframework.data.r2dbc.dialect;
  * @see BindMarker
  * @see BindMarkersFactory
  * @see io.r2dbc.spi.Statement#bind
- * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding} instead.
+ * @deprecated since 1.2 in favor of Spring R2DBC. Use {@link org.springframework.r2dbc.core.binding.BindMarkers}
+ *             instead.
  */
 @FunctionalInterface
 @Deprecated
