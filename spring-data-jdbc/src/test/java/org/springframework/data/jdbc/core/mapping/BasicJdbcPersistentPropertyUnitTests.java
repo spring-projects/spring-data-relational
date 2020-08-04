@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
+import org.springframework.data.annotation.Transient;
 
 import junit.framework.AssertionFailedError;
 import lombok.Data;
@@ -83,6 +84,18 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("some_value"));
 	}
 
+	@Test //DATAJDBC-588
+	public void ignoreTransientAnnotatedProperty() {
+
+		String propertyName = "someString";
+		RelationalPersistentProperty stringProperty = context //
+				.getRequiredPersistentEntity(WithCollections.class) //
+				.getRequiredPersistentProperty(propertyName);
+		PersistentPropertyPathExtension path = getPersistentPropertyPath(DummyEntity.class, propertyName);
+
+		assertThat(stringProperty.getKeyColumn()).isEqualTo(null);
+	}
+
 	@Test // DATAJDBC-331
 	public void detectsKeyColumnOverrideNameFromMappedCollectionAnnotation() {
 
@@ -119,6 +132,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		private final AggregateReference<DummyEntity, Long> reference;
 		private final List<String> listField;
 		private final UUID uuid;
+		private final @Transient String someString;
 
 		@MappedCollection(idColumn = "dummy_column_name",
 				keyColumn = "dummy_key_column_name") private List<Integer> someList;
