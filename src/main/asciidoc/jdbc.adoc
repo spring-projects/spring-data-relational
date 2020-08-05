@@ -837,7 +837,7 @@ public ApplicationListener<BeforeSaveEvent<Object>> loggingSaves() {
 	return event -> {
 
 		Object entity = event.getEntity();
-		LOG.info("{} is getting saved.");
+		LOG.info("{} is getting saved.", entity);
 	};
 }
 ----
