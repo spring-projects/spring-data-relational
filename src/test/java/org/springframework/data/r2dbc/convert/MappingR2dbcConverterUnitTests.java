@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import io.r2dbc.spi.Row;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -189,6 +190,24 @@ public class MappingR2dbcConverterUnitTests {
 		assertThat(result.entity).isNotNull();
 	}
 
+	@Test // gh-402
+	public void writeShouldSkipPrimitiveIdIfValueIsZero() {
+
+		OutboundRow row = new OutboundRow();
+		converter.write(new WithPrimitiveId(0), row);
+
+		assertThat(row).isEmpty();
+	}
+
+	@Test // gh-402
+	public void writeShouldWritePrimitiveIdIfValueIsNonZero() {
+
+		OutboundRow row = new OutboundRow();
+		converter.write(new WithPrimitiveId(1), row);
+
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.fromOrEmpty(1L, Long.TYPE));
+	}
+
 	@AllArgsConstructor
 	static class Person {
 		@Id String id;
@@ -212,6 +231,12 @@ public class MappingR2dbcConverterUnitTests {
 		@Id String id;
 		Map<String, String> nested;
 		NonMappableEntity unsupported;
+	}
+
+	@RequiredArgsConstructor
+	static class WithPrimitiveId {
+
+		@Id final long id;
 	}
 
 	static class CustomConversionPerson {

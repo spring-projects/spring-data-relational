@@ -332,6 +332,9 @@ The ID of an entity must be annotated with Spring Data's https://docs.spring.io/
 
 When your database has an auto-increment column for the ID column, the generated value gets set in the entity after inserting it into the database.
 
+Spring Data R2DBC does not attempt to insert values of identifier columns when the entity is new and the identifier value defaults to its initial value.
+That is `0` for primitive types and `null` if the identifier property uses a numeric wrapper type such as `Long`.
+
 One important constraint is that, after saving an entity, the entity must not be new anymore.
 Note that whether an entity is new is part of the entity's state.
 With auto-increment columns, this happens automatically, because the ID gets set by Spring Data with the value from the ID column.
@@ -340,7 +343,8 @@ With auto-increment columns, this happens automatically, because the ID gets set
 === Optimistic Locking
 
 The `@Version` annotation provides syntax similar to that of JPA in the context of R2DBC and makes sure updates are only applied to documents with a matching version.
-Therefore, the actual value of the version property is added to the update query in such a way that the update does not have any effect if another operation altered the document in the meantime. In that case, an `OptimisticLockingFailureException` is thrown.
+Therefore, the actual value of the version property is added to the update query in such a way that the update does not have any effect if another operation altered the document in the meantime.
+In that case, an `OptimisticLockingFailureException` is thrown.
 The following example shows these features:
 
 ====
@@ -370,8 +374,8 @@ template.save(other).subscribe(); // emits OptimisticLockingFailureException    
 ----
 <1> Initially insert row. `version` is set to `0`.
 <2> Load the just inserted row. `version` is still `0`.
-<3> Update the row with `version = 0`. Set the `lastname` and bump `version` to `1`.
-<4> Try to update the previously loaded document that still has `version = 0`. The operation fails with an `OptimisticLockingFailureException`, as the current `version` is `1`.
+<3> Update the row with `version = 0`.Set the `lastname` and bump `version` to `1`.
+<4> Try to update the previously loaded document that still has `version = 0`.The operation fails with an `OptimisticLockingFailureException`, as the current `version` is `1`.
 ====
 
 :projection-collection: Flux

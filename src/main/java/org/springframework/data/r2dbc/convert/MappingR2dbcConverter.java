@@ -37,7 +37,6 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.support.ArrayUtils;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
@@ -330,11 +329,11 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		RelationalPersistentEntity<?> entity = getRequiredPersistentEntity(userClass);
 		PersistentPropertyAccessor<?> propertyAccessor = entity.getPropertyAccessor(source);
 
-		writeProperties(sink, entity, propertyAccessor);
+		writeProperties(sink, entity, propertyAccessor, entity.isNew(source));
 	}
 
 	private void writeProperties(OutboundRow sink, RelationalPersistentEntity<?> entity,
-			PersistentPropertyAccessor<?> accessor) {
+			PersistentPropertyAccessor<?> accessor, boolean isNew) {
 
 		for (RelationalPersistentProperty property : entity) {
 
@@ -350,18 +349,47 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			}
 
 			if (getConversions().isSimpleType(value.getClass())) {
-				writeSimpleInternal(sink, value, property);
+				writeSimpleInternal(sink, value, isNew, property);
 			} else {
-				writePropertyInternal(sink, value, property);
+				writePropertyInternal(sink, value, isNew, property);
 			}
 		}
 	}
 
-	private void writeSimpleInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
-		sink.put(property.getColumnName(), Parameter.from(getPotentiallyConvertedSimpleWrite(value)));
+	private void writeSimpleInternal(OutboundRow sink, Object value, boolean isNew,
+			RelationalPersistentProperty property) {
+
+		Object result = getPotentiallyConvertedSimpleWrite(value);
+
+		if (property.isIdProperty() && isNew) {
+			if (shouldSkipIdValue(result, property)) {
+				return;
+			}
+		}
+
+		sink.put(property.getColumnName(),
+				Parameter.fromOrEmpty(result, getPotentiallyConvertedSimpleNullType(property.getType())));
 	}
 
-	private void writePropertyInternal(OutboundRow sink, Object value, RelationalPersistentProperty property) {
+	private boolean shouldSkipIdValue(@Nullable Object value, RelationalPersistentProperty property) {
+
+		if (value == null) {
+			return true;
+		}
+
+		if (!property.getType().isPrimitive()) {
+			return value == null;
+		}
+
+		if (Number.class.isInstance(value)) {
+			return ((Number) value).longValue() == 0L;
+		}
+
+		return false;
+	}
+
+	private void writePropertyInternal(OutboundRow sink, Object value, boolean isNew,
+			RelationalPersistentProperty property) {
 
 		TypeInformation<?> valueType = ClassTypeInformation.from(value.getClass());
 
@@ -370,7 +398,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			if (valueType.getActualType() != null && valueType.getRequiredActualType().isCollectionLike()) {
 
 				// pass-thru nested collections
-				writeSimpleInternal(sink, value, property);
+				writeSimpleInternal(sink, value, isNew, property);
 				return;
 			}
 
