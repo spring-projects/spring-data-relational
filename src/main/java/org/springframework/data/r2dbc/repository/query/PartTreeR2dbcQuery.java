@@ -15,6 +15,8 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import reactor.core.publisher.Mono;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,21 +87,24 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
 	 */
 	@Override
-	protected BindableQuery createQuery(RelationalParameterAccessor accessor) {
+	protected Mono<BindableQuery> createQuery(RelationalParameterAccessor accessor) {
 
-		ReturnedType returnedType = processor.withDynamicProjection(accessor).getReturnedType();
-		List<String> projectedProperties = Collections.emptyList();
+		return Mono.fromSupplier(() -> {
 
-		if (returnedType.needsCustomConstruction()) {
-			projectedProperties = new ArrayList<>(returnedType.getInputProperties());
-		}
+			ReturnedType returnedType = processor.withDynamicProjection(accessor).getReturnedType();
+			List<String> projectedProperties = Collections.emptyList();
 
-		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
-		R2dbcQueryCreator queryCreator = new R2dbcQueryCreator(tree, dataAccessStrategy, entityMetadata, accessor,
-				projectedProperties);
-		PreparedOperation<?> preparedQuery = queryCreator.createQuery(getDynamicSort(accessor));
+			if (returnedType.needsCustomConstruction()) {
+				projectedProperties = new ArrayList<>(returnedType.getInputProperties());
+			}
 
-		return new PreparedOperationBindableQuery(preparedQuery);
+			RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
+			R2dbcQueryCreator queryCreator = new R2dbcQueryCreator(tree, dataAccessStrategy, entityMetadata, accessor,
+					projectedProperties);
+			PreparedOperation<?> preparedQuery = queryCreator.createQuery(getDynamicSort(accessor));
+
+			return new PreparedOperationBindableQuery(preparedQuery);
+		});
 	}
 
 	private Sort getDynamicSort(RelationalParameterAccessor accessor) {

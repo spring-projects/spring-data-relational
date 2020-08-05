@@ -15,10 +15,18 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
+import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
+import org.springframework.data.spel.ExpressionDependencies;
+import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.util.Assert;
@@ -35,6 +43,9 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	private final ExpressionQuery expressionQuery;
 	private final ExpressionEvaluatingParameterBinder binder;
+	private final ExpressionParser expressionParser;
+	private final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
+	private final ExpressionDependencies expressionDependencies;
 
 	/**
 	 * Creates a new {@link StringBasedR2dbcQuery} for the given {@link StringBasedR2dbcQuery}, {@link DatabaseClient},
@@ -47,8 +58,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * @param evaluationContextProvider must not be {@literal null}.
 	 */
 	public StringBasedR2dbcQuery(R2dbcQueryMethod queryMethod, DatabaseClient databaseClient, R2dbcConverter converter,
-			SpelExpressionParser expressionParser, QueryMethodEvaluationContextProvider evaluationContextProvider) {
-
+			ExpressionParser expressionParser, ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider) {
 		this(queryMethod.getRequiredAnnotatedQuery(), queryMethod, databaseClient, converter, expressionParser,
 				evaluationContextProvider);
 	}
@@ -64,15 +74,33 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * @param evaluationContextProvider must not be {@literal null}.
 	 */
 	public StringBasedR2dbcQuery(String query, R2dbcQueryMethod method, DatabaseClient databaseClient,
-			R2dbcConverter converter, SpelExpressionParser expressionParser,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+			R2dbcConverter converter, ExpressionParser expressionParser,
+			ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		super(method, databaseClient, converter);
+		this.expressionParser = expressionParser;
+		this.evaluationContextProvider = evaluationContextProvider;
 
 		Assert.hasText(query, "Query must not be empty");
 
 		this.expressionQuery = ExpressionQuery.create(query);
-		this.binder = new ExpressionEvaluatingParameterBinder(expressionParser, evaluationContextProvider, expressionQuery);
+		this.binder = new ExpressionEvaluatingParameterBinder(expressionQuery);
+		this.expressionDependencies = createExpressionDependencies();
+	}
+
+	private ExpressionDependencies createExpressionDependencies() {
+
+		if (expressionQuery.getBindings().isEmpty()) {
+			return ExpressionDependencies.none();
+		}
+
+		List<ExpressionDependencies> dependencies = new ArrayList<>();
+
+		for (ExpressionQuery.ParameterBinding binding : expressionQuery.getBindings()) {
+			dependencies.add(ExpressionDependencies.discover(expressionParser.parseExpression(binding.getExpression())));
+		}
+
+		return ExpressionDependencies.merged(dependencies);
 	}
 
 	/*
@@ -89,19 +117,28 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
 	 */
 	@Override
-	protected BindableQuery createQuery(RelationalParameterAccessor accessor) {
+	protected Mono<BindableQuery> createQuery(RelationalParameterAccessor accessor) {
 
-		return new BindableQuery() {
+		return getSpelEvaluator(accessor).map(evaluator -> new BindableQuery() {
 
 			@Override
 			public DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec bindSpec) {
-				return binder.bind(bindSpec, accessor);
+				return binder.bind(bindSpec, accessor, evaluator);
 			}
 
 			@Override
 			public String get() {
 				return expressionQuery.getQuery();
 			}
-		};
+		});
+	}
+
+	private Mono<R2dbcSpELExpressionEvaluator> getSpelEvaluator(RelationalParameterAccessor accessor) {
+
+		return evaluationContextProvider
+				.getEvaluationContextLater(getQueryMethod().getParameters(), accessor.getValues(), expressionDependencies)
+				.<R2dbcSpELExpressionEvaluator> map(
+						context -> new DefaultR2dbcSpELExpressionEvaluator(expressionParser, context))
+				.defaultIfEmpty(DefaultR2dbcSpELExpressionEvaluator.unsupported());
 	}
 }

@@ -41,7 +41,7 @@ import org.springframework.util.ClassUtils;
  */
 interface R2dbcQueryExecution {
 
-	Object execute(FetchSpec<?> query, Class<?> type, SqlIdentifier tableName);
+	Publisher<?> execute(FetchSpec<?> query, Class<?> type, SqlIdentifier tableName);
 
 	/**
 	 * An {@link R2dbcQueryExecution} that wraps the results of the given delegate with the given result processing.
@@ -60,8 +60,8 @@ interface R2dbcQueryExecution {
 		 * @see org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution#execute(org.springframework.data.r2dbc.function.FetchSpec, java.lang.Class, java.lang.String)
 		 */
 		@Override
-		public Object execute(FetchSpec<?> query, Class<?> type, SqlIdentifier tableName) {
-			return this.converter.convert(this.delegate.execute(query, type, tableName));
+		public Publisher<?> execute(FetchSpec<?> query, Class<?> type, SqlIdentifier tableName) {
+			return (Publisher<?>) this.converter.convert(this.delegate.execute(query, type, tableName));
 		}
 	}
 

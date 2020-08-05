@@ -25,12 +25,7 @@ import java.util.regex.Pattern;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.util.Assert;
 
 /**
  * {@link ExpressionEvaluatingParameterBinder} allows to evaluate, convert and bind parameters to placeholders within a
@@ -41,10 +36,6 @@ import org.springframework.util.Assert;
  */
 class ExpressionEvaluatingParameterBinder {
 
-	private final SpelExpressionParser expressionParser;
-
-	private final QueryMethodEvaluationContextProvider evaluationContextProvider;
-
 	private final ExpressionQuery expressionQuery;
 
 	private final Map<String, Boolean> namedParameters = new ConcurrentHashMap<>();
@@ -52,19 +43,9 @@ class ExpressionEvaluatingParameterBinder {
 	/**
 	 * Creates new {@link ExpressionEvaluatingParameterBinder}
 	 *
-	 * @param expressionParser must not be {@literal null}.
-	 * @param evaluationContextProvider must not be {@literal null}.
 	 * @param expressionQuery must not be {@literal null}.
 	 */
-	ExpressionEvaluatingParameterBinder(SpelExpressionParser expressionParser,
-			QueryMethodEvaluationContextProvider evaluationContextProvider, ExpressionQuery expressionQuery) {
-
-		Assert.notNull(expressionParser, "ExpressionParser must not be null");
-		Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null");
-		Assert.notNull(expressionQuery, "ExpressionQuery must not be null");
-
-		this.expressionParser = expressionParser;
-		this.evaluationContextProvider = evaluationContextProvider;
+	ExpressionEvaluatingParameterBinder(ExpressionQuery expressionQuery) {
 		this.expressionQuery = expressionQuery;
 	}
 
@@ -74,28 +55,28 @@ class ExpressionEvaluatingParameterBinder {
 	 *
 	 * @param bindSpec must not be {@literal null}.
 	 * @param parameterAccessor must not be {@literal null}.
+	 * @param evaluator must not be {@literal null}.
 	 */
-	public DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec bindSpec,
-			RelationalParameterAccessor parameterAccessor) {
+	DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec bindSpec,
+			RelationalParameterAccessor parameterAccessor, R2dbcSpELExpressionEvaluator evaluator) {
 
 		Object[] values = parameterAccessor.getValues();
 		Parameters<?, ?> bindableParameters = parameterAccessor.getBindableParameters();
 
-		DatabaseClient.GenericExecuteSpec bindSpecToUse = bindExpressions(bindSpec, values, bindableParameters);
+		DatabaseClient.GenericExecuteSpec bindSpecToUse = bindExpressions(bindSpec, evaluator);
 		bindSpecToUse = bindParameters(bindSpecToUse, parameterAccessor.hasBindableNullValue(), values, bindableParameters);
 
 		return bindSpecToUse;
 	}
 
-	private DatabaseClient.GenericExecuteSpec bindExpressions(DatabaseClient.GenericExecuteSpec bindSpec, Object[] values,
-			Parameters<?, ?> bindableParameters) {
+	private DatabaseClient.GenericExecuteSpec bindExpressions(DatabaseClient.GenericExecuteSpec bindSpec,
+			R2dbcSpELExpressionEvaluator evaluator) {
 
 		DatabaseClient.GenericExecuteSpec bindSpecToUse = bindSpec;
 
 		for (ParameterBinding binding : expressionQuery.getBindings()) {
 
-			org.springframework.r2dbc.core.Parameter valueForBinding = getParameterValueForBinding(bindableParameters, values,
-					binding);
+			org.springframework.r2dbc.core.Parameter valueForBinding = evaluator.evaluate(binding.getExpression());
 
 			if (valueForBinding.isEmpty()) {
 				bindSpecToUse = bindSpecToUse.bindNull(binding.getParameterName(), valueForBinding.getType());
@@ -108,12 +89,10 @@ class ExpressionEvaluatingParameterBinder {
 	}
 
 	private DatabaseClient.GenericExecuteSpec bindParameters(DatabaseClient.GenericExecuteSpec bindSpec,
-			boolean bindableNull, Object[] values,
-			Parameters<?, ?> bindableParameters) {
+			boolean bindableNull, Object[] values, Parameters<?, ?> bindableParameters) {
 
 		DatabaseClient.GenericExecuteSpec bindSpecToUse = bindSpec;
 		int bindingIndex = 0;
-
 
 		for (Parameter bindableParameter : bindableParameters) {
 
@@ -161,37 +140,4 @@ class ExpressionEvaluatingParameterBinder {
 		});
 	}
 
-	/**
-	 * Returns the value to be used for the given {@link ParameterBinding}.
-	 *
-	 * @param parameters must not be {@literal null}.
-	 * @param binding must not be {@literal null}.
-	 * @return the value used for the given {@link ParameterBinding}.
-	 */
-	private org.springframework.r2dbc.core.Parameter getParameterValueForBinding(Parameters<?, ?> parameters,
-			Object[] values,
-			ParameterBinding binding) {
-		return evaluateExpression(binding.getExpression(), parameters, values);
-	}
-
-	/**
-	 * Evaluates the given {@code expressionString}.
-	 *
-	 * @param expressionString must not be {@literal null} or empty.
-	 * @param parameters must not be {@literal null}.
-	 * @param parameterValues must not be {@literal null}.
-	 * @return the value of the {@code expressionString} evaluation.
-	 */
-	private org.springframework.r2dbc.core.Parameter evaluateExpression(String expressionString,
-			Parameters<?, ?> parameters,
-			Object[] parameterValues) {
-
-		EvaluationContext evaluationContext = evaluationContextProvider.getEvaluationContext(parameters, parameterValues);
-		Expression expression = expressionParser.parseExpression(expressionString);
-
-		Object value = expression.getValue(evaluationContext, Object.class);
-		Class<?> valueType = expression.getValueType(evaluationContext);
-
-		return org.springframework.r2dbc.core.Parameter.fromOrEmpty(value, valueType != null ? valueType : Object.class);
-	}
 }

@@ -15,13 +15,11 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import kotlin.Unit;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.reactivestreams.Publisher;
-import org.springframework.core.KotlinDetector;
+
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.r2dbc.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -34,10 +32,10 @@ import org.springframework.data.repository.query.ParameterAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.data.util.ReflectionUtils;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.FetchSpec;
 import org.springframework.r2dbc.core.RowsFetchSpec;
-import org.springframework.data.util.ReflectionUtils;
 import org.springframework.util.Assert;
 
 /**
@@ -86,29 +84,15 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 */
 	public Object execute(Object[] parameters) {
 
-		return method.hasReactiveWrapperParameter() ? executeDeferred(parameters)
-				: execute(new RelationalParametersParameterAccessor(method, parameters));
+		RelationalParameterAccessor parameterAccessor = new RelationalParametersParameterAccessor(method, parameters);
+
+		return createQuery(parameterAccessor).flatMapMany(it -> executeQuery(parameterAccessor, it));
 	}
 
-	@SuppressWarnings("unchecked")
-	private Object executeDeferred(Object[] parameters) {
-
-		R2dbcParameterAccessor parameterAccessor = new R2dbcParameterAccessor(method, parameters);
-
-		if (getQueryMethod().isCollectionQuery()) {
-			return Flux.defer(() -> (Publisher<Object>) execute(parameterAccessor));
-		}
-
-		return Mono.defer(() -> (Mono<Object>) execute(parameterAccessor));
-	}
-
-	private Object execute(RelationalParameterAccessor parameterAccessor) {
-
-		// TODO: ConvertingParameterAccessor
-		BindableQuery query = createQuery(parameterAccessor);
+	private Publisher<?> executeQuery(RelationalParameterAccessor parameterAccessor, BindableQuery it) {
 
 		ResultProcessor processor = method.getResultProcessor().withDynamicProjection(parameterAccessor);
-		DatabaseClient.GenericExecuteSpec boundQuery = query.bind(databaseClient.sql(query));
+		DatabaseClient.GenericExecuteSpec boundQuery = it.bind(databaseClient.sql(it));
 
 		FetchSpec<?> fetchSpec;
 		if (requiresMapping()) {
@@ -178,9 +162,9 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 * Creates a {@link BindableQuery} instance using the given {@link ParameterAccessor}
 	 *
 	 * @param accessor must not be {@literal null}.
-	 * @return the {@link BindableQuery}.
+	 * @return a mono emitting a {@link BindableQuery}.
 	 */
-	protected abstract BindableQuery createQuery(RelationalParameterAccessor accessor);
+	protected abstract Mono<BindableQuery> createQuery(RelationalParameterAccessor accessor);
 
 	private static class FetchSpecAdapter<T> implements FetchSpec<T> {
 

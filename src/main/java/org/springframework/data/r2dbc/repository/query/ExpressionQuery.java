@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.repository.query.SpelQueryContext;
+import org.springframework.data.spel.ExpressionDependencies;
 
 /**
  * Query using Spring Expression Language to indicate parameter bindings. Queries using SpEL use {@code :#{…}} to

@@ -39,7 +39,9 @@ import org.springframework.data.repository.core.support.ReactiveRepositoryFactor
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -74,6 +76,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = this.converter.getMappingContext();
+		setEvaluationContextProvider(ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 
 	/**
@@ -90,6 +93,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		this.dataAccessStrategy = operations.getDataAccessStrategy();
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = this.converter.getMappingContext();
+		setEvaluationContextProvider(ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 
 	/*
@@ -122,7 +126,8 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.of(new R2dbcQueryLookupStrategy(this.databaseClient, evaluationContextProvider, this.converter,
+		return Optional.of(new R2dbcQueryLookupStrategy(this.databaseClient,
+				(ReactiveQueryMethodEvaluationContextProvider) evaluationContextProvider, this.converter,
 				this.dataAccessStrategy));
 	}
 
@@ -151,17 +156,19 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private static class R2dbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		private final DatabaseClient databaseClient;
-		private final QueryMethodEvaluationContextProvider evaluationContextProvider;
+		private final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
 		private final R2dbcConverter converter;
 		private final ReactiveDataAccessStrategy dataAccessStrategy;
+		private final ExpressionParser parser = new CachingExpressionParser(EXPRESSION_PARSER);
 
 		R2dbcQueryLookupStrategy(DatabaseClient databaseClient,
-				QueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter,
+				ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter,
 				ReactiveDataAccessStrategy dataAccessStrategy) {
 			this.databaseClient = databaseClient;
 			this.evaluationContextProvider = evaluationContextProvider;
 			this.converter = converter;
 			this.dataAccessStrategy = dataAccessStrategy;
+
 		}
 
 		/*
@@ -179,9 +186,9 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 			if (namedQueries.hasQuery(namedQueryName)) {
 				String namedQuery = namedQueries.getQuery(namedQueryName);
 				return new StringBasedR2dbcQuery(namedQuery, queryMethod, this.databaseClient, this.converter,
-						EXPRESSION_PARSER, this.evaluationContextProvider);
+						parser, this.evaluationContextProvider);
 			} else if (queryMethod.hasAnnotatedQuery()) {
-				return new StringBasedR2dbcQuery(queryMethod, this.databaseClient, this.converter, EXPRESSION_PARSER,
+				return new StringBasedR2dbcQuery(queryMethod, this.databaseClient, this.converter, parser,
 						this.evaluationContextProvider);
 			} else {
 				return new PartTreeR2dbcQuery(queryMethod, this.databaseClient, this.converter, this.dataAccessStrategy);
