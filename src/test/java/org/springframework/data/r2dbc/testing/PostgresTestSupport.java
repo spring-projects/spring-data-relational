@@ -80,7 +80,9 @@ public class PostgresTestSupport {
 				.port(5432) //
 				.database("postgres") //
 				.username("postgres") //
-				.password("").build();
+				.password("") //
+				.jdbcUrl("jdbc:postgresql://localhost/postgres") //
+				.build();
 	}
 
 	/**

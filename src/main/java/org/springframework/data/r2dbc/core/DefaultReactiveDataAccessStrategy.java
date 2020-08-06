@@ -28,7 +28,6 @@ import java.util.function.BiFunction;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
-import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -101,11 +100,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converters, "Converters must not be null");
 
-		List<Object> storeConverters = new ArrayList<>(dialect.getConverters());
-		storeConverters.addAll(R2dbcCustomConversions.STORE_CONVERTERS);
-
-		R2dbcCustomConversions customConversions = new R2dbcCustomConversions(
-				StoreConversions.of(dialect.getSimpleTypeHolder(), storeConverters), converters);
+		R2dbcCustomConversions customConversions = R2dbcCustomConversions.of(dialect, converters);
 
 		R2dbcMappingContext context = new R2dbcMappingContext();
 		context.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());

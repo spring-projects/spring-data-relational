@@ -122,6 +122,10 @@ The following table explains how property types of an entity affect mapping:
 |Passthru
 |Can be customized using <<mapping.explicit.converters, Explicit Converters>>.
 
+|`Enum`
+|String
+|Can be customized by registering a <<mapping.explicit.converters, Explicit Converters>>.
+
 |`Blob` and `Clob`
 |Passthru
 |Can be customized using <<mapping.explicit.converters, Explicit Converters>>.
@@ -137,6 +141,10 @@ The following table explains how property types of an entity affect mapping:
 |Arrays of primitive types, wrapper types and `String`
 |Array of wrapper type (e.g. `int[]` -> `Integer[]`)
 |Conversion to Array type if supported by the configured <<r2dbc.drivers, driver>>, not supported otherwise.
+
+|Driver-specific types
+|Passthru
+|Contributed as simple type be the used `R2dbcDialect`.
 
 |Complex objects
 |Target type depends on registered `Converter`.
@@ -204,7 +212,7 @@ To selectively handle the conversion yourself, register one or more one or more 
 You can use the `r2dbcCustomConversions` method in `AbstractR2dbcConfiguration` to configure converters.
 The examples <<mapping.configuration, at the beginning of this chapter>> show how to perform the configuration with Java.
 
-NOTE: Custom top-level entity conversion requires asymmetric types for conversion. Inbound data is extracted from R2DBC's `Row`.
+NOTE: Custom top-level entity conversion requires asymmetric types for conversion.Inbound data is extracted from R2DBC's `Row`.
 Outbound data (to be used with `INSERT`/`UPDATE` statements) is represented as `OutboundRow` and later assembled to a statement.
 
 The following example of a Spring Converter implementation converts from a `Row` to a `Person` POJO:
@@ -245,6 +253,37 @@ public class PersonWriteConverter implements Converter<Person, OutboundRow> {
     row.put("age", SettableValue.from(source.getAge()));
     return row;
   }
+}
+----
+====
+
+[[mapping.explicit.enum.converters]]
+==== Overriding Enum Mapping with Explicit Converters
+
+Some databases, such as https://github.com/pgjdbc/r2dbc-postgresql#postgres-enum-types[Postgres], can natively write enum values using their database-specific enumerated column type.
+Spring Data converts `Enum` values by default to `String` values for maximum portability.
+To retain the actual enum value, register a `@Writing` converter whose source and target types use the actual enum type to avoid using `Enum.name()` conversion.
+Additionally, you need to configure the enum type on the driver level so that the driver is aware how to represent the enum type.
+
+The following example shows the involved components to read and write `Color` enum values natively:
+
+====
+[source,java]
+----
+enum Color {
+    Grey, Blue
+}
+
+class ColorConverter extends EnumWriteSupport<Color> {
+
+}
+
+
+class Product {
+    @Id long id;
+    Color color;
+
+    // …
 }
 ----
 ====

@@ -16,12 +16,19 @@
 package org.springframework.data.r2dbc.core;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.relational.core.query.Criteria.*;
 
+import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
+import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.postgresql.codec.EnumCodec;
+import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -29,13 +36,18 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.r2dbc.convert.EnumWriteSupport;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -120,6 +132,57 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 				.as(StepVerifier::create).verifyComplete();
 	}
 
+	@Test // gh-411
+	@Ignore("Depends on https://github.com/pgjdbc/r2dbc-postgresql/issues/301")
+	public void shouldWriteAndReadEnumValuesUsingDriverInternals() {
+
+		CodecRegistrar codecRegistrar = EnumCodec.builder().withEnum("state_enum", State.class).build();
+
+		PostgresqlConnectionConfiguration configuration = PostgresqlConnectionConfiguration.builder() //
+				.host(database.getHostname()) //
+				.port(database.getPort()) //
+				.database(database.getDatabase()) //
+				.username(database.getUsername()) //
+				.password(database.getPassword()) //
+				.codecRegistrar(codecRegistrar).build();
+
+		PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(configuration);
+
+		try {
+			template.execute("CREATE TYPE state_enum as enum ('Good', 'Bad')");
+		} catch (DataAccessException e) {
+			// ignore
+		}
+		template.execute("CREATE TABLE IF NOT EXISTS entity_with_enum (" //
+				+ "id serial PRIMARY KEY," //
+				+ "my_state state_enum)");
+		template.execute("DELETE FROM entity_with_enum");
+
+		ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+				Collections.singletonList(new StateConverter()));
+		R2dbcEntityTemplate entityTemplate = new R2dbcEntityTemplate(
+				org.springframework.r2dbc.core.DatabaseClient.create(connectionFactory), strategy);
+
+		entityTemplate.insert(new EntityWithEnum(0, State.Good)) //
+				.as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		entityTemplate.select(Query.query(where("my_state").is(State.Good)), EntityWithEnum.class) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual.myState).isEqualTo(State.Good);
+				}).verifyComplete();
+	}
+
+	enum State {
+		Good, Bad
+	}
+
+	static class StateConverter extends EnumWriteSupport<State> {
+
+	}
+
 	private void insert(EntityWithArrays object) {
 
 		client.insert() //
@@ -137,6 +200,13 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 				.first() //
 				.as(StepVerifier::create) //
 				.consumeNextWith(assertion).verifyComplete();
+	}
+
+	@Data
+	@AllArgsConstructor
+	static class EntityWithEnum {
+		@Id long id;
+		State myState;
 	}
 
 	@Table("with_arrays")
