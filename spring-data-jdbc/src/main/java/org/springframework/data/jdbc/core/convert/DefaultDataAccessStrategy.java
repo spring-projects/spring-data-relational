@@ -228,7 +228,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String delete = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(getIdentifierProcessing());
-		parameters.addValue(ROOT_ID_PARAMETER, rootId);
+		addConvertedPropertyValue(parameters, ROOT_ID_PARAMETER, rootId, rootId.getClass());
 		operations.update(delete, parameters);
 	}
 
