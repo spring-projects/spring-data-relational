@@ -367,9 +367,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(identifierProcessing);
 
-		identifier.toMap()
-				.forEach((sqlIdentifier, value) -> addConvertedPropertyValue(parameterSource,
-						sqlIdentifier, value, value.getClass()));
+		identifier.toMap().forEach(parameterSource::addValue);
 
 		return parameterSource;
 	}
