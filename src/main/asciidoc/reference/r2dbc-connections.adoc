@@ -19,7 +19,7 @@ As a developer, you need not know details about how to connect to the database.
 That is the responsibility of the administrator who sets up the `ConnectionFactory`.
 You most likely fill both roles as you develop and test code, but you do not necessarily have to know how the production data source is configured.
 
-When you use Spring's R2DBC layer, you can can configure your own with a connection pool implementation provided by a third party.
+When you use Spring's R2DBC layer, you can configure your own with a connection pool implementation provided by a third party.
 A popular implementation is R2DBC `Pool`.
 Implementations in the Spring distribution are meant only for testing purposes and do not provide pooling.
 
