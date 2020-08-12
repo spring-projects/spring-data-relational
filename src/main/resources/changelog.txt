@@ -1,6 +1,19 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.2.0-M2 (2020-08-12)
+----------------------------------------
+* #414 - Adopt SpEL support to use ReactiveEvaluationContextProvider.
+* #412 - Refactor Spring Data R2DBC on top of Spring R2DBC.
+* #411 - Introduce EnumWriteSupport for simpler pass-thru of enum values.
+* #407 - Add ReactiveSortingRepository support.
+* #402 - Exclude primitive id property from INSERT if it is set to 0 (zero).
+* #398 - Upgrade to MySQL JDBC connector 8.0.21.
+* #391 - Release 1.2 M2 (2020.0.0).
+* #281 - Add support for auditing.
+* #215 - Add lifecycle callbacks and EntityCallback support.
+
+
 Changes in version 1.1.2.RELEASE (2020-07-22)
 ---------------------------------------------
 * #401 - Upgrade to R2DBC Arabba-SR6.
@@ -254,6 +267,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
