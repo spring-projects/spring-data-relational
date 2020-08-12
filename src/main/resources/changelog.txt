@@ -1,6 +1,21 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.1.0-M2 (2020-08-12)
+----------------------------------------
+* DATAJDBC-586 - Guard JdbcRepositoryFactoryBean against setting null values for properties.
+* DATAJDBC-583 - Wording changes.
+* DATAJDBC-576 - Control test execution with missing licence via profile.
+* DATAJDBC-574 - Add MS SqlServer Integration tests to the CI pipeline.
+* DATAJDBC-573 - Fix failing Oracle integration test due to the database not being ready.
+* DATAJDBC-572 - Enable specification of a repository base class in @EnableJdbcRepositories.
+* DATAJDBC-571 - Release 2.1 M2 (2020.0.0).
+* DATAJDBC-570 - Remove AS from join alias.
+* DATAJDBC-569 - Support temporal properties with Oracle.
+* DATAJDBC-559 - DialectResolver does not resolve MySqlDialect for MariaDB.
+* DATAJDBC-256 - Run integration tests with Oracle.
+
+
 Changes in version 2.0.2.RELEASE (2020-07-22)
 ---------------------------------------------
 * DATAJDBC-569 - Support temporal properties with Oracle.
@@ -494,6 +509,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
