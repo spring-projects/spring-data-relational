@@ -1,6 +1,21 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.1.3.RELEASE (2020-08-12)
+---------------------------------------------
+* #429 - Fix typos in reference documentation.
+* #425 - Fix lack of @Modifying in example code.
+* #421 - MappingException when calling a modifying query method that returns kotlin.Unit.
+* #420 - Improve documentation - spring framework version.
+* #418 - Document optimistic locking using @Version.
+* #416 - SimpleR2dbcRepository does not support custom subclasses.
+* #410 - Make it possible to write delete/update operations without using matching.
+* #409 - Release 1.1.3 (Neumann SR3).
+* #408 - gh-407 - Add ReactiveSortingRepository support.
+* #406 - Repositories cannot be used with two different database systems.
+* #373 - SpEL parsing does not consider multiple usages and nested object references.
+
+
 Changes in version 1.2.0-M2 (2020-08-12)
 ----------------------------------------
 * #414 - Adopt SpEL support to use ReactiveEvaluationContextProvider.
@@ -267,6 +282,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
