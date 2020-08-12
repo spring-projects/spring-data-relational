@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.3.RELEASE (2020-08-12)
+---------------------------------------------
+* DATAJDBC-586 - Guard JdbcRepositoryFactoryBean against setting null values for properties.
+* DATAJDBC-583 - Wording changes.
+* DATAJDBC-582 - Release 2.0.3 (Neumann SR3).
+
+
 Changes in version 2.1.0-M2 (2020-08-12)
 ----------------------------------------
 * DATAJDBC-586 - Guard JdbcRepositoryFactoryBean against setting null values for properties.
@@ -521,6 +528,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
