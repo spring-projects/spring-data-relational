@@ -133,6 +133,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class),
 			jdbcOperationsRef = "qualifierJdbcOperations", dataAccessStrategyRef = "qualifierDataAccessStrategy",
+			transactionManagerRef = "transactionManager",
 			repositoryBaseClass = DummyRepositoryBaseClass.class)
 	static class TestConfiguration {
 
