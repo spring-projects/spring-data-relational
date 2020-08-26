@@ -27,6 +27,8 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Annotation to enable JDBC repositories. Will scan the package of the annotated configuration class for Spring Data
@@ -120,5 +122,11 @@ public @interface EnableJdbcRepositories {
 	 * be used to create repositories discovered through this annotation. Defaults to {@code defaultDataAccessStrategy}.
 	 */
 	String dataAccessStrategyRef() default "";
+
+    /**
+	 * Configures the name of the {@link DataSourceTransactionManager} bean definition to be used to create repositories
+	 * discovered through this annotation. Defaults to {@code transactionManager}.
+	 */
+	String transactionManagerRef() default "transactionManager";
 
 }
