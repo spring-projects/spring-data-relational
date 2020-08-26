@@ -349,4 +349,23 @@ public class SelectRendererUnitTests {
 		assertThat(rendered).isEqualTo(
 				"SELECT COUNT(\"my_table\".*) AS counter, \"my_table\".\"reserved_keyword\" FROM \"my_table\" JOIN \"join_table\" ON \"my_table\".source = \"join_table\".target");
 	}
+
+	@Test // DATAJDBC-353
+	public void shouldRenderWithColumnAlias() {
+		Table a = SQL.table("a").as("a_alias"); Column aColumn = a.column("a_col").as("a_col_alias");
+		Table b = SQL.table("b").as("b_alias"); Column bColumn = b.column("a_col").as("b_col_alias");
+
+		Select select = Select.builder().select(aColumn, bColumn)
+				.from(a)
+				.join(b).on(aColumn).equals(bColumn)
+				.build();
+
+		String target = SqlRenderer.toString(select);
+		assertThat(target)
+				.isEqualTo(
+						"SELECT a_alias.a_col AS a_col_alias, b_alias.a_col AS b_col_alias "
+								+ "FROM a a_alias "
+								+ "JOIN b b_alias ON a_alias.a_col = b_alias.a_col"
+				);
+	}
 }

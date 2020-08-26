@@ -32,6 +32,10 @@ public class Column extends AbstractSegment implements Expression, Named {
 	private final SqlIdentifier name;
 	private final Table table;
 
+	Column(Column column) {
+		this(column.name, column.table);
+	}
+
 	Column(String name, Table table) {
 
 		super(table);

@@ -320,7 +320,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		@Override
 		public SelectOnConditionComparison on(Expression column) {
 
-			this.from = column;
+			this.from = new Column((Column) column);
 			return this;
 		}
 
@@ -330,7 +330,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		 */
 		@Override
 		public JoinBuilder equals(Expression column) {
-			this.to = column;
+			this.to = new Column((Column) column);
 			return this;
 		}
 
