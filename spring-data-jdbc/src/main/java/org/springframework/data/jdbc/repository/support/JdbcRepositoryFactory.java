@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.repository.support;
 
 import java.util.Optional;
 
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -53,6 +54,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
 	private final Dialect dialect;
+	private BeanFactory beanfactory;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private EntityCallbacks entityCallbacks;
@@ -70,7 +72,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 */
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect, ApplicationEventPublisher publisher,
-			NamedParameterJdbcOperations operations) {
+			NamedParameterJdbcOperations operations, BeanFactory beanfactory) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
@@ -84,6 +86,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		this.dialect = dialect;
 		this.accessStrategy = dataAccessStrategy;
 		this.operations = operations;
+		this.beanfactory = beanfactory;
 	}
 
 	/**
@@ -142,7 +145,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		return Optional.of(new JdbcQueryLookupStrategy(publisher, entityCallbacks, context, converter, dialect,
-				queryMappingConfiguration, operations));
+				queryMappingConfiguration, operations, beanfactory));
 	}
 
 	/**

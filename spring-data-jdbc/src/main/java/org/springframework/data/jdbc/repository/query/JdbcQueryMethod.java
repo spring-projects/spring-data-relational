@@ -163,7 +163,7 @@ public class JdbcQueryMethod extends QueryMethod {
 		return StringUtils.hasText(annotatedName) ? annotatedName : getNamedQueryName();
 	}
 
-	/*
+	/**
 	 * Returns the class to be used as {@link org.springframework.jdbc.core.RowMapper}
 	 *
 	 * @return May be {@code null}.
@@ -171,6 +171,17 @@ public class JdbcQueryMethod extends QueryMethod {
 	@Nullable
 	Class<? extends RowMapper> getRowMapperClass() {
 		return getMergedAnnotationAttribute("rowMapperClass");
+	}
+
+
+	/**
+	 * Returns the bean to be used as {@link org.springframework.jdbc.core.RowMapper}
+	 *
+	 * @return May be {@code null}.
+	 */
+	@Nullable
+	Class<? extends RowMapper> getRowMapperBean() {
+		return getMergedAnnotationAttribute("rowMapperBean");
 	}
 
 	/**
@@ -181,6 +192,16 @@ public class JdbcQueryMethod extends QueryMethod {
 	@Nullable
 	Class<? extends ResultSetExtractor> getResultSetExtractorClass() {
 		return getMergedAnnotationAttribute("resultSetExtractorClass");
+	}
+
+	/**
+	 * Returns the bean to be used as {@link org.springframework.jdbc.core.ResultSetExtractor}
+	 *
+	 * @return May be {@code null}.
+	 */
+	@Nullable
+	Class<? extends ResultSetExtractor> getResultSetExtractorBean() {
+		return getMergedAnnotationAttribute("resultSetExtractorBean");
 	}
 
 	/**

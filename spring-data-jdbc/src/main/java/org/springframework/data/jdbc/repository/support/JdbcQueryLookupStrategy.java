@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -63,10 +64,12 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final Dialect dialect;
 	private final QueryMappingConfiguration queryMappingConfiguration;
 	private final NamedParameterJdbcOperations operations;
+	private BeanFactory beanfactory;
 
 	public JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 			RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
-			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations) {
+			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
+		    BeanFactory beanfactory) {
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
 		Assert.notNull(context, "RelationalMappingContextPublisher must not be null");
@@ -82,6 +85,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		this.dialect = dialect;
 		this.queryMappingConfiguration = queryMappingConfiguration;
 		this.operations = operations;
+		this.beanfactory = beanfactory;
 	}
 
 	/*
@@ -99,7 +103,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			if (namedQueries.hasQuery(queryMethod.getNamedQueryName()) || queryMethod.hasAnnotatedQuery()) {
 
 				RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
-				return new StringBasedJdbcQuery(queryMethod, operations, mapper, converter);
+				return new StringBasedJdbcQuery(queryMethod, operations, mapper, converter, beanfactory);
 			} else {
 				return new PartTreeJdbcQuery(context, queryMethod, dialect, converter, operations, createMapper(queryMethod));
 			}

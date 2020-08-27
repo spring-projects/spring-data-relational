@@ -15,18 +15,24 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import javax.sql.DataSource;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.*;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -43,6 +49,8 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -62,6 +70,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class TestConfiguration {
 
 	@Autowired DataSource dataSource;
+	@Autowired BeanFactory beanFactory;
 	@Autowired ApplicationEventPublisher publisher;
 	@Autowired(required = false) SqlSessionFactory sqlSessionFactory;
 
@@ -71,7 +80,7 @@ public class TestConfiguration {
 			Dialect dialect, JdbcConverter converter, Optional<NamedQueries> namedQueries) {
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter, dialect,
-				publisher, namedParameterJdbcTemplate());
+				publisher, namedParameterJdbcTemplate(), beanFactory);
 		namedQueries.ifPresent(factory::setNamedQueries);
 		return factory;
 	}

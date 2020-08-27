@@ -32,6 +32,7 @@ import org.assertj.core.groups.Tuple;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
@@ -82,6 +83,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 
 	DummyEntityRepository repository;
 	DefaultDataAccessStrategy dataAccessStrategy;
+	BeanFactory beanFactory = mock(BeanFactory.class);
 
 	@Before
 	public void before() {
@@ -99,7 +101,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		doReturn(true).when(dataAccessStrategy).update(any(), any());
 
 		JdbcRepositoryFactory factory = new JdbcRepositoryFactory(dataAccessStrategy, context, converter,
-				H2Dialect.INSTANCE, publisher, operations);
+				H2Dialect.INSTANCE, publisher, operations, beanFactory);
 
 		this.repository = factory.getRepository(DummyEntityRepository.class);
 	}

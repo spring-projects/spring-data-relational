@@ -24,6 +24,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -53,6 +54,7 @@ public class StringBasedJdbcQueryUnitTests {
 	NamedParameterJdbcOperations operations;
 	RelationalMappingContext context;
 	JdbcConverter converter;
+	BeanFactory beanFactory;
 
 	@Before
 	public void setup() throws NoSuchMethodException {
@@ -67,6 +69,7 @@ public class StringBasedJdbcQueryUnitTests {
 		this.operations = mock(NamedParameterJdbcOperations.class);
 		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 		this.converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
+		this.beanFactory = mock(BeanFactory.class);
 	}
 
 	@Test // DATAJDBC-165
@@ -75,7 +78,7 @@ public class StringBasedJdbcQueryUnitTests {
 		doReturn(null).when(queryMethod).getDeclaredQuery();
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter)
+				.isThrownBy(() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory)
 						.execute(new Object[] {}));
 	}
 
@@ -84,7 +87,7 @@ public class StringBasedJdbcQueryUnitTests {
 
 		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(RowMapper.class).when(queryMethod).getRowMapperClass();
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
 
 		assertThat(query.determineRowMapper(defaultRowMapper)).isEqualTo(defaultRowMapper);
 	}
@@ -93,7 +96,7 @@ public class StringBasedJdbcQueryUnitTests {
 	public void defaultRowMapperIsUsedForNull() {
 
 		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
 
 		assertThat(query.determineRowMapper(defaultRowMapper)).isEqualTo(defaultRowMapper);
 	}
@@ -104,7 +107,7 @@ public class StringBasedJdbcQueryUnitTests {
 		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
 
 		assertThat(query.determineRowMapper(defaultRowMapper)).isInstanceOf(CustomRowMapper.class);
 	}
@@ -115,9 +118,9 @@ public class StringBasedJdbcQueryUnitTests {
 		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
 
-		new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter).execute(new Object[] {});
+		new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory).execute(new Object[] {});
 
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
 
 		ResultSetExtractor<Object> resultSetExtractor = query.determineResultSetExtractor(defaultRowMapper);
 
@@ -134,7 +137,7 @@ public class StringBasedJdbcQueryUnitTests {
 		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
 
 		ResultSetExtractor<Object> resultSetExtractor = query
 				.determineResultSetExtractor(query.determineRowMapper(defaultRowMapper));
