@@ -19,6 +19,7 @@ import java.lang.reflect.Constructor;
 import java.sql.JDBCType;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
@@ -51,6 +52,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private final JdbcQueryMethod queryMethod;
 	private final JdbcQueryExecution<?> executor;
 	private final JdbcConverter converter;
+	private BeanFactory beanfactory;
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -61,12 +63,13 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter) {
+			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter, BeanFactory beanfactory) {
 
 		super(queryMethod, operations, defaultRowMapper);
 
 		this.queryMethod = queryMethod;
 		this.converter = converter;
+		this.beanfactory = beanfactory;
 
 		RowMapper<Object> rowMapper = determineRowMapper(defaultRowMapper);
 		executor = getQueryExecution( //
@@ -137,6 +140,11 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	@Nullable
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	ResultSetExtractor<Object> determineResultSetExtractor(@Nullable RowMapper<Object> rowMapper) {
+		String resultSetExtractorBean = queryMethod.getResultSetExtractorBean();
+
+		if (resultSetExtractorBean != null && !"ResultSetExtractor".equals(resultSetExtractorBean)) {
+			return (ResultSetExtractor<Object>) beanfactory.getBean(resultSetExtractorBean);
+		}
 
 		Class<? extends ResultSetExtractor> resultSetExtractorClass = queryMethod.getResultSetExtractorClass();
 
@@ -156,6 +164,12 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	@SuppressWarnings("unchecked")
 	RowMapper<Object> determineRowMapper(@Nullable RowMapper<?> defaultMapper) {
+
+		String rowMapperBean = queryMethod.getRowMapperBean();
+
+		if (rowMapperBean != null && !"RowMapper".equals(rowMapperBean)) {
+			return (RowMapper<Object>) beanfactory.getBean(rowMapperBean);
+		}
 
 		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
 

@@ -24,6 +24,7 @@ import java.text.NumberFormat;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
@@ -61,6 +62,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
 	RepositoryMetadata metadata;
 	NamedQueries namedQueries = mock(NamedQueries.class);
+	BeanFactory beanFactory = mock(BeanFactory.class);
 	NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
 	@Before
@@ -90,7 +92,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 
 		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, callbacks, mappingContext,
-				converter, H2Dialect.INSTANCE, mappingConfiguration, operations);
+				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, beanFactory);
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
 		return queryLookupStrategy.resolveQuery(method, metadata, projectionFactory, namedQueries);
