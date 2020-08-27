@@ -15,10 +15,8 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.jdbc.testing.SingleBaseMappingTestConfiguration.VALUE_PROCESSED_BY_SERVICE;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,10 +31,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jdbc.testing.SingleBaseMappingTestConfiguration.Car;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -55,7 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
-	private static String CAR_MODEL = "ResultSetExtractor Car";
+	private final static String CAR_MODEL = "ResultSetExtractor Car";
 
 	@Configuration
 	@Import(TestConfiguration.class)
@@ -89,18 +87,22 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 		assertThat(cars).allMatch(car -> CAR_MODEL.equals(car.getModel()));
 	}
 
-	interface CarRepository extends CrudRepository<Car, Long> {
+	@Test // DATAJDBC-430
+	public void customFindWithRowMapperSupportingInjection() {
+		carRepository.save(new Car(null, "Some model"));
+		List<String> names = carRepository.findByNameWithRowMapperBean();
 
-		@Query(value = "select * from car", resultSetExtractorClass = CarResultSetExtractor.class)
-		List<Car> customFindAll();
+		assertThat(names).hasSize(1);
+		assertThat(names).allMatch(name -> VALUE_PROCESSED_BY_SERVICE.equals(name));
 	}
 
-	@Data
-	@AllArgsConstructor
-	static class Car {
+	@Test // DATAJDBC-430
+	public void customFindWithResultSetExtractorSupportingInjection() {
+		carRepository.save(new Car(null, "Some model"));
+		Iterable<Car> cars = carRepository.findByNameWithResultSetExtractor();
 
-		@Id private Long id;
-		private String model;
+		assertThat(cars).hasSize(1);
+		assertThat(cars).allMatch(car -> VALUE_PROCESSED_BY_SERVICE.equals(car.getModel()));
 	}
 
 	static class CarResultSetExtractor implements ResultSetExtractor<List<Car>> {
@@ -109,6 +111,16 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 		public List<Car> extractData(ResultSet rs) throws SQLException, DataAccessException {
 			return Arrays.asList(new Car(1L, CAR_MODEL));
 		}
+	}
 
+	private interface CarRepository extends CrudRepository<Car, Long> {
+		@Query(value = "select * from car", resultSetExtractorClass = CarResultSetExtractor.class)
+		List<Car> customFindAll();
+
+		@Query(value = "select * from car", resultSetExtractorBean = "CarResultSetExtractorBean")
+		List<Car> findByNameWithResultSetExtractor();
+
+		@Query(value = "select model from car", rowMapperBean = "CustomRowMapperBean")
+		List<String> findByNameWithRowMapperBean();
 	}
 }
