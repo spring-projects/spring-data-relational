@@ -60,6 +60,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final R2dbcConverter converter;
+	private final R2dbcEntityOperations operations;
 
 	/**
 	 * Creates a new {@link R2dbcRepositoryFactory} given {@link DatabaseClient} and {@link MappingContext}.
@@ -76,6 +77,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = this.converter.getMappingContext();
+		this.operations = new R2dbcEntityTemplate(this.databaseClient, this.dataAccessStrategy);
 		setEvaluationContextProvider(ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 
@@ -93,6 +95,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 		this.dataAccessStrategy = operations.getDataAccessStrategy();
 		this.converter = dataAccessStrategy.getConverter();
 		this.mappingContext = this.converter.getMappingContext();
+		this.operations = operations;
 		setEvaluationContextProvider(ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 
@@ -116,7 +119,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 				information);
 
 		return getTargetRepositoryViaReflection(information, entityInformation,
-				new R2dbcEntityTemplate(this.databaseClient, this.dataAccessStrategy), this.converter);
+				operations, this.converter);
 	}
 
 	/*

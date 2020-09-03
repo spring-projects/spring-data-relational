@@ -17,8 +17,12 @@ package org.springframework.data.r2dbc.repository.support;
 
 import java.io.Serializable;
 
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
@@ -38,11 +42,12 @@ import org.springframework.util.Assert;
  * @see org.springframework.data.repository.reactive.ReactiveSortingRepository
  */
 public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
-		extends RepositoryFactoryBeanSupport<T, S, ID> {
+		extends RepositoryFactoryBeanSupport<T, S, ID> implements ApplicationContextAware {
 
 	private @Nullable DatabaseClient client;
 	private @Nullable ReactiveDataAccessStrategy dataAccessStrategy;
 	private @Nullable R2dbcEntityOperations operations;
+	private @Nullable ApplicationContext applicationContext;
 
 	private boolean mappingContextConfigured = false;
 
@@ -124,6 +129,15 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
+	 */
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.applicationContext = applicationContext;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
 	 */
 	@Override
@@ -134,6 +148,14 @@ public class R2dbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID exten
 			Assert.state(client != null, "DatabaseClient must not be null when R2dbcEntityOperations is not configured!");
 			Assert.state(dataAccessStrategy != null,
 					"ReactiveDataAccessStrategy must not be null when R2dbcEntityOperations is not configured!");
+
+			R2dbcEntityTemplate template = new R2dbcEntityTemplate(client, dataAccessStrategy);
+
+			if (applicationContext != null) {
+				template.setApplicationContext(applicationContext);
+			}
+
+			operations = template;
 		} else {
 			dataAccessStrategy = operations.getDataAccessStrategy();
 		}

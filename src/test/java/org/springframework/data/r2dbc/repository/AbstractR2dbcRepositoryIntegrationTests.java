@@ -366,6 +366,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@AllArgsConstructor
 	@NoArgsConstructor
 	@Getter
+	@Setter
 	static class Lego {
 		@Id Integer id;
 	}
