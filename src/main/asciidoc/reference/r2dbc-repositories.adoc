@@ -368,9 +368,9 @@ Person other = template.select(Person.class)
 				.first().block();                                                     <2>
 
 daenerys.setLastname("Targaryen");
-template.save(daenerys);                                                              <3>
+template.update(daenerys);                                                            <3>
 
-template.save(other).subscribe(); // emits OptimisticLockingFailureException          <4>
+template.update(other).subscribe(); // emits OptimisticLockingFailureException        <4>
 ----
 <1> Initially insert row. `version` is set to `0`.
 <2> Load the just inserted row. `version` is still `0`.
