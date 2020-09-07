@@ -291,7 +291,7 @@ to declare the predicate value for `lastname` (which is equivalent to the `:last
 ----
 public interface PersonRepository extends ReactiveCrudRepository<Person, String> {
 
-  @Query("SELECT * FROM person WHERE lastname = :#{[0]} }")
+  @Query("SELECT * FROM person WHERE lastname = :#{[0]}")
   List<Person> findByQueryWithExpression(String lastname);
 }
 ----
