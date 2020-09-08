@@ -19,6 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import io.r2dbc.spi.Row;
+import io.r2dbc.spi.test.MockColumnMetadata;
+import io.r2dbc.spi.test.MockRow;
+import io.r2dbc.spi.test.MockRowMetadata;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
@@ -31,9 +34,11 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
@@ -208,6 +213,21 @@ public class MappingR2dbcConverterUnitTests {
 		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.fromOrEmpty(1L, Long.TYPE));
 	}
 
+	@Test // gh-59
+	public void shouldEvaluateSpelExpression() {
+
+		MockRow row = MockRow.builder().identified("id", Object.class, 42).identified("world", Object.class, "No, universe")
+				.build();
+		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
+				.columnMetadata(MockColumnMetadata.builder().name("world").build()).build();
+
+		WithSpelExpression result = converter.read(WithSpelExpression.class, row, metadata);
+
+		assertThat(result.id).isEqualTo(42);
+		assertThat(result.hello).isNull();
+		assertThat(result.world).isEqualTo("No, universe");
+	}
+
 	@AllArgsConstructor
 	static class Person {
 		@Id String id;
@@ -310,6 +330,19 @@ public class MappingR2dbcConverterUnitTests {
 			person.entity = nested_entity != null ? new NonMappableEntity() : null;
 
 			return person;
+		}
+	}
+
+	static class WithSpelExpression {
+
+		private long id;
+		@Transient String hello;
+		@Transient String world;
+
+		public WithSpelExpression(long id, @Value("null") String hello, @Value("#root.world") String world) {
+			this.id = id;
+			this.hello = hello;
+			this.world = world;
 		}
 	}
 }

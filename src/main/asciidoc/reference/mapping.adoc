@@ -158,13 +158,21 @@ Drivers can contribute additional simple types such as Geometry types.
 [[mapping.usage.annotations]]
 === Mapping Annotation Overview
 
-The `MappingR2dbcConverter` can use metadata to drive the mapping of objects to rows. The following annotations are available:
+The `MappingR2dbcConverter` can use metadata to drive the mapping of objects to rows.
+The following annotations are available:
 
 * `@Id`: Applied at the field level to mark the primary key.
 * `@Table`: Applied at the class level to indicate this class is a candidate for mapping to the database.
 You can specify the name of the table where the database is stored.
-* `@Transient`: By default, all fields are mapped to the row. This annotation excludes the field where it is applied from being stored in the database. Transient properties cannot be used within a persistence constructor as the converter cannot materialize a value for the constructor argument.
-* `@PersistenceConstructor`: Marks a given constructor -- even a package protected one -- to use when instantiating the object from the database. Constructor arguments are mapped by name to the values in the retrieved row.
+* `@Transient`: By default, all fields are mapped to the row.
+This annotation excludes the field where it is applied from being stored in the database.
+Transient properties cannot be used within a persistence constructor as the converter cannot materialize a value for the constructor argument.
+* `@PersistenceConstructor`: Marks a given constructor -- even a package protected one -- to use when instantiating the object from the database.
+Constructor arguments are mapped by name to the values in the retrieved row.
+* `@Value`: This annotation is part of the Spring Framework.
+Within the mapping framework it can be applied to constructor arguments.
+This lets you use a Spring Expression Language statement to transform a key’s value retrieved in the database before it is used to construct a domain object.
+In order to reference a column of a given row one has to use expressions like: `@Value("#root.myProperty")` where root refers to the root of the given `Row`.
 * `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, allowing the name to be different than the field name of the class.
 
 The mapping metadata infrastructure is defined in the separate `spring-data-commons` project that is technology-agnostic.

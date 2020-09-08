@@ -35,7 +35,11 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
+import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
 import org.springframework.data.mapping.model.ParameterValueProvider;
+import org.springframework.data.mapping.model.SpELContext;
+import org.springframework.data.mapping.model.SpELExpressionEvaluator;
+import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.support.ArrayUtils;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
@@ -294,10 +298,20 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	private <S> S createInstance(Row row, @Nullable RowMetadata rowMetadata, String prefix,
 			RelationalPersistentEntity<S> entity) {
 
-		RowParameterValueProvider rowParameterValueProvider = new RowParameterValueProvider(row, rowMetadata, entity, this,
-				prefix);
+		PreferredConstructor<S, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
+		ParameterValueProvider<RelationalPersistentProperty> provider;
 
-		return createInstance(entity, rowParameterValueProvider::getParameterValue);
+		if (persistenceConstructor != null && persistenceConstructor.hasParameters()) {
+
+			SpELContext spELContext = new SpELContext(new RowPropertyAccessor(rowMetadata));
+			SpELExpressionEvaluator expressionEvaluator = new DefaultSpELExpressionEvaluator(row, spELContext);
+			provider = new SpELExpressionParameterValueProvider<>(expressionEvaluator, getConversionService(),
+					new RowParameterValueProvider(row, rowMetadata, entity, this, prefix));
+		} else {
+			provider = NoOpParameterValueProvider.INSTANCE;
+		}
+
+		return createInstance(entity, provider::getParameterValue);
 	}
 
 	// ----------------------------------
@@ -381,7 +395,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			return value == null;
 		}
 
-		if (Number.class.isInstance(value)) {
+		if (value instanceof Number) {
 			return ((Number) value).longValue() == 0L;
 		}
 
@@ -644,6 +658,16 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		}
 
 		return source.getClass().isArray() ? CollectionUtils.arrayToList(source) : Collections.singleton(source);
+	}
+
+	enum NoOpParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
+
+		INSTANCE;
+
+		@Override
+		public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
+			return null;
+		}
 	}
 
 	private static class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
