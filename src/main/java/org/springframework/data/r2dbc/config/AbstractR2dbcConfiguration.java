@@ -31,6 +31,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -147,6 +148,24 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 
 	/**
 	 * Creates a {@link ReactiveDataAccessStrategy} using the configured
+	 * {@link #r2dbcConverter(Optional, R2dbcCustomConversions)} R2dbcConverter}.
+	 *
+	 * @param converter the configured {@link R2dbcConverter}.
+	 * @return must not be {@literal null}.
+	 * @see #r2dbcConverter(R2dbcMappingContext, R2dbcCustomConversions)
+	 * @see #getDialect(ConnectionFactory)
+	 * @throws IllegalArgumentException if any of the {@literal mappingContext} is {@literal null}.
+	 */
+	@Bean
+	public ReactiveDataAccessStrategy reactiveDataAccessStrategy(R2dbcConverter converter) {
+
+		Assert.notNull(converter, "MappingContext must not be null!");
+
+		return new DefaultReactiveDataAccessStrategy(getDialect(lookupConnectionFactory()), converter);
+	}
+
+	/**
+	 * Creates a {@link org.springframework.data.r2dbc.convert.R2dbcConverter} using the configured
 	 * {@link #r2dbcMappingContext(Optional, R2dbcCustomConversions)} R2dbcMappingContext}.
 	 *
 	 * @param mappingContext the configured {@link R2dbcMappingContext}.
@@ -155,16 +174,15 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 	 * @see #r2dbcMappingContext(Optional, R2dbcCustomConversions)
 	 * @see #getDialect(ConnectionFactory)
 	 * @throws IllegalArgumentException if any of the {@literal mappingContext} is {@literal null}.
+	 * @since 1.2
 	 */
 	@Bean
-	public ReactiveDataAccessStrategy reactiveDataAccessStrategy(R2dbcMappingContext mappingContext,
+	public MappingR2dbcConverter r2dbcConverter(R2dbcMappingContext mappingContext,
 			R2dbcCustomConversions r2dbcCustomConversions) {
 
 		Assert.notNull(mappingContext, "MappingContext must not be null!");
 
-		MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext, r2dbcCustomConversions);
-
-		return new DefaultReactiveDataAccessStrategy(getDialect(lookupConnectionFactory()), converter);
+		return new MappingR2dbcConverter(mappingContext, r2dbcCustomConversions);
 	}
 
 	/**
