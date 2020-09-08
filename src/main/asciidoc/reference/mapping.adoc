@@ -174,6 +174,11 @@ Within the mapping framework it can be applied to constructor arguments.
 This lets you use a Spring Expression Language statement to transform a key’s value retrieved in the database before it is used to construct a domain object.
 In order to reference a column of a given row one has to use expressions like: `@Value("#root.myProperty")` where root refers to the root of the given `Row`.
 * `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, allowing the name to be different than the field name of the class.
+* `@Version`: Applied at field level is used for optimistic locking and checked for modification on save operations.
+The value is `null` (`zero` for primitive types) is considered as marker for entities to be new.
+The initially stored value is `zero` (`one` for primitive types).
+The version gets incremented automatically on every update.
+See <<r2dbc.optimistic-locking>> for further reference.
 
 The mapping metadata infrastructure is defined in the separate `spring-data-commons` project that is technology-agnostic.
 Specific subclasses are used in the R2DBC support to support annotation based metadata.
@@ -194,9 +199,9 @@ This works only if the parameter name information is present in the Java `.class
 ----
 class OrderItem {
 
-  private @Id String id;
-  private int quantity;
-  private double unitPrice;
+  private @Id final String id;
+  private final int quantity;
+  private final double unitPrice;
 
   OrderItem(String id, int quantity, double unitPrice) {
     this.id = id;
