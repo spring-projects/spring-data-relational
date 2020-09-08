@@ -391,7 +391,7 @@ When working with multiple, potentially different databases, your application wi
 The provided `AbstractR2dbcConfiguration` support class assumes a single `ConnectionFactory` from which the `Dialect` gets derived.
 That being said, you need to define a few beans yourself to configure Spring Data R2DBC to work with multiple databases.
 
-R2DBC repositories require either a `DatabaseClient` and `ReactiveDataAccessStrategy` or `R2dbcEntityOperations` to implement repositories.
+R2DBC repositories require `R2dbcEntityOperations` to implement repositories.
 A simple configuration to scan for repositories without using `AbstractR2dbcConfiguration` looks like:
 
 [source,java]
@@ -409,13 +409,9 @@ static class MySQLConfiguration {
     @Bean
     public R2dbcEntityOperations mysqlR2dbcEntityOperations(@Qualifier("mysql") ConnectionFactory connectionFactory) {
 
-        DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(MySqlDialect.INSTANCE);
-        DatabaseClient databaseClient = DatabaseClient.builder()
-                .connectionFactory(connectionFactory)
-                .dataAccessStrategy(strategy)
-                .build();
+        DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
 
-        return new R2dbcEntityTemplate(databaseClient, strategy);
+        return new R2dbcEntityTemplate(databaseClient, MySqlDialect.INSTANCE);
     }
 }
 ----

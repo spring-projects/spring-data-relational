@@ -50,6 +50,7 @@ import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionInformation;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
@@ -123,6 +124,20 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	/**
+	 * Create a new {@link R2dbcEntityTemplate} given {@link DatabaseClient}, {@link R2dbcDialect} and
+	 * {@link R2dbcConverter}.
+	 *
+	 * @param databaseClient must not be {@literal null}.
+	 * @param dialect the dialect to use, must not be {@literal null}.
+	 * @param converter the dialect to use, must not be {@literal null}.
+	 * @since 1.2
+	 */
+	public R2dbcEntityTemplate(org.springframework.r2dbc.core.DatabaseClient databaseClient, R2dbcDialect dialect,
+			R2dbcConverter converter) {
+		this(databaseClient, new DefaultReactiveDataAccessStrategy(dialect, converter));
+	}
+
+	/**
 	 * Create a new {@link R2dbcEntityTemplate} given {@link DatabaseClient} and {@link ReactiveDataAccessStrategy}.
 	 *
 	 * @param databaseClient must not be {@literal null}.
@@ -168,6 +183,15 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	@Override
 	public ReactiveDataAccessStrategy getDataAccessStrategy() {
 		return this.dataAccessStrategy;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#getConverter()
+	 */
+	@Override
+	public R2dbcConverter getConverter() {
+		return this.dataAccessStrategy.getConverter();
 	}
 
 	/*

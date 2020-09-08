@@ -37,7 +37,10 @@ import org.springframework.r2dbc.core.PreparedOperation;
  *
  * @author Mark Paluch
  * @see org.springframework.r2dbc.core.PreparedOperation
+ * @deprecated since 1.2 in favor of using direct usage of {@link StatementMapper},
+ *             {@link org.springframework.data.r2dbc.query.UpdateMapper} and {@link R2dbcConverter}.
  */
+@Deprecated
 public interface ReactiveDataAccessStrategy {
 
 	/**

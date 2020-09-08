@@ -174,7 +174,7 @@ Other strategies can also be put in place (if there is demand).
 [[mapping.custom.object.construction]]
 === Customized Object Construction
 
-The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation. The values to be used for the constructor parameters are resolved in the following way:
+The mapping subsystem allows the customization of the object construction by annotating a constructor with the `@PersistenceConstructor` annotation.The values to be used for the constructor parameters are resolved in the following way:
 
 * If a parameter is annotated with the `@Value` annotation, the given expression is evaluated, and the result is used as the parameter value.
 * If the Java type has a property whose name matches the given field of the input row, then its property information is used to select the appropriate constructor parameter to which to pass the input field value.
@@ -212,7 +212,8 @@ To selectively handle the conversion yourself, register one or more one or more 
 You can use the `r2dbcCustomConversions` method in `AbstractR2dbcConfiguration` to configure converters.
 The examples <<mapping.configuration, at the beginning of this chapter>> show how to perform the configuration with Java.
 
-NOTE: Custom top-level entity conversion requires asymmetric types for conversion.Inbound data is extracted from R2DBC's `Row`.
+NOTE: Custom top-level entity conversion requires asymmetric types for conversion.
+Inbound data is extracted from R2DBC's `Row`.
 Outbound data (to be used with `INSERT`/`UPDATE` statements) is represented as `OutboundRow` and later assembled to a statement.
 
 The following example of a Spring Converter implementation converts from a `Row` to a `Person` POJO:

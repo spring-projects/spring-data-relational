@@ -122,8 +122,10 @@ public @interface EnableR2dbcRepositories {
 	 *
 	 * @return
 	 * @see #entityOperationsRef()
+	 * @deprecated since 1.2, in favor of {@link #entityOperationsRef()}.
 	 */
-	String databaseClientRef() default "r2dbcDatabaseClient";
+	@Deprecated
+	String databaseClientRef() default "";
 
 	/**
 	 * Configures the name of the {@link org.springframework.data.r2dbc.core.R2dbcEntityOperations} bean to be used with
@@ -134,7 +136,7 @@ public @interface EnableR2dbcRepositories {
 	 * @return
 	 * @since 1.1.3
 	 */
-	String entityOperationsRef() default "";
+	String entityOperationsRef() default "r2dbcEntityTemplate";
 
 	/**
 	 * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be discovered by the

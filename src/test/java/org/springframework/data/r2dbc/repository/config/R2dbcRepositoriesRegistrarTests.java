@@ -50,8 +50,10 @@ public class R2dbcRepositoriesRegistrarTests {
 	static class EnableWithDatabaseClient {
 
 		@Bean
-		public DatabaseClient r2dbcDatabaseClient() {
-			return mock(DatabaseClient.class);
+		public R2dbcEntityTemplate r2dbcEntityTemplate() {
+			R2dbcEntityTemplate template = mock(R2dbcEntityTemplate.class);
+			when(template.getDataAccessStrategy()).thenReturn(reactiveDataAccessStrategy());
+			return template;
 		}
 
 		@Bean

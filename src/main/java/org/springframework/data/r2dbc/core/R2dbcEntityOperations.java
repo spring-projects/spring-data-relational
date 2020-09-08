@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -49,8 +50,19 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * @return the underlying {@link ReactiveDataAccessStrategy}.
 	 * @see ReactiveDataAccessStrategy
 	 * @since 1.1.3
+	 * @deprecated use {@link #getConverter()} instead as {@link ReactiveDataAccessStrategy} will be removed in a future
+	 *             release.
 	 */
+	@Deprecated
 	ReactiveDataAccessStrategy getDataAccessStrategy();
+
+	/**
+	 * Return the underlying {@link R2dbcConverter}.
+	 *
+	 * @return the underlying {@link R2dbcConverter}.
+	 * @since 1.2
+	 */
+	R2dbcConverter getConverter();
 
 	// -------------------------------------------------------------------------
 	// Methods dealing with org.springframework.data.r2dbc.query.Query
