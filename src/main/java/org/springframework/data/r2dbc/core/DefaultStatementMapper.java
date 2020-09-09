@@ -19,11 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.query.BoundAssignments;
 import org.springframework.data.r2dbc.query.BoundCondition;
 import org.springframework.data.r2dbc.query.UpdateMapper;
+import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -48,7 +50,17 @@ class DefaultStatementMapper implements StatementMapper {
 	private final R2dbcDialect dialect;
 	private final RenderContext renderContext;
 	private final UpdateMapper updateMapper;
-	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+	private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
+
+	DefaultStatementMapper(R2dbcDialect dialect, R2dbcConverter converter) {
+
+		RenderContextFactory factory = new RenderContextFactory(dialect);
+
+		this.dialect = dialect;
+		this.renderContext = factory.createRenderContext();
+		this.updateMapper = new UpdateMapper(dialect, converter);
+		this.mappingContext = converter.getMappingContext();
+	}
 
 	DefaultStatementMapper(R2dbcDialect dialect, RenderContext renderContext, UpdateMapper updateMapper,
 			MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext) {

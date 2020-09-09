@@ -23,11 +23,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.dialect.BindMarkers;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -38,17 +40,38 @@ import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.util.Assert;
 
 /**
  * Mapper for statement specifications to {@link PreparedOperation}. Statement mapping applies a
- * {@link org.springframework.data.r2dbc.dialect.R2dbcDialect}-specific transformation considering {@link BindMarkers}
- * and vendor-specific SQL differences.
+ * {@link org.springframework.data.r2dbc.dialect.R2dbcDialect}-specific transformation considering
+ * {@link org.springframework.r2dbc.core.binding.BindMarkers} and vendor-specific SQL differences.
+ * <p>
+ * {@link PreparedOperation Mapped statements} can be used directly with
+ * {@link org.springframework.r2dbc.core.DatabaseClient#sql(Supplier)} without specifying further SQL or bindings as the
+ * prepared operation encapsulates the specified SQL operation.
  *
  * @author Mark Paluch
  * @author Roman Chigvintsev
  * @author Mingyuan Wu
  */
 public interface StatementMapper {
+
+	/**
+	 * Create a new {@link StatementMapper} given {@link R2dbcDialect} and {@link R2dbcConverter}.
+	 *
+	 * @param dialect must not be {@literal null}.
+	 * @param converter must not be {@literal null}.
+	 * @return the new {@link StatementMapper}.
+	 * @since 1.2
+	 */
+	static StatementMapper create(R2dbcDialect dialect, R2dbcConverter converter) {
+
+		Assert.notNull(dialect, "R2dbcDialect must not be null");
+		Assert.notNull(converter, "R2dbcConverter must not be null");
+
+		return new DefaultStatementMapper(dialect, converter);
+	}
 
 	/**
 	 * Create a typed {@link StatementMapper} that considers type-specific mapping metadata.
