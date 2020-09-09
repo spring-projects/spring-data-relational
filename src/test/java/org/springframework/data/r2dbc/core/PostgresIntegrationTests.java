@@ -129,7 +129,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 		selectAndAssert(actual -> {
 
-			assertThat(actual.multidimensionalArray).hasSize(2);
+			assertThat(actual.multidimensionalArray).hasDimensions(2, 3);
 			assertThat(actual.multidimensionalArray[0]).containsExactly(1, 2, 3);
 			assertThat(actual.multidimensionalArray[1]).containsExactly(4, 5, 6);
 		});
