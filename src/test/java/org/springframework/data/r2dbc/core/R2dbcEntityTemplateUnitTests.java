@@ -16,6 +16,7 @@
 package org.springframework.data.r2dbc.core;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
@@ -27,6 +28,7 @@ import lombok.With;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,16 +36,22 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
+import org.springframework.data.auditing.ReactiveIsNewAwareAuditingHandler;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.callback.ReactiveEntityCallbacks;
+import org.springframework.data.mapping.context.PersistentEntities;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.AfterSaveCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeConvertCallback;
 import org.springframework.data.r2dbc.mapping.event.BeforeSaveCallback;
+import org.springframework.data.r2dbc.mapping.event.ReactiveAuditingEntityCallback;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Criteria;
@@ -254,6 +262,63 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from(1L));
 	}
 
+	@Test // gh-451
+	public void shouldInsertCorrectlyVersionedAndAudited() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+
+		ObjectFactory<ReactiveIsNewAwareAuditingHandler> objectFactory = mock(ObjectFactory.class);
+		when(objectFactory.getObject()).thenReturn(new ReactiveIsNewAwareAuditingHandler(
+				PersistentEntities.of(entityTemplate.getConverter().getMappingContext())));
+
+		entityTemplate
+				.setEntityCallbacks(ReactiveEntityCallbacks.create(new ReactiveAuditingEntityCallback(objectFactory)));
+		entityTemplate.insert(new WithAuditingAndOptimisticLocking(null, 0, "Walter", null, null)) //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(1);
+					assertThat(actual.getCreatedDate()).isNotNull();
+				}) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+
+		assertThat(statement.getSql()).isEqualTo(
+				"INSERT INTO with_auditing_and_optimistic_locking (version, name, created_date, last_modified_date) VALUES ($1, $2, $3, $4)");
+	}
+
+	@Test // gh-451
+	public void shouldUpdateCorrectlyVersionedAndAudited() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
+
+		ObjectFactory<ReactiveIsNewAwareAuditingHandler> objectFactory = mock(ObjectFactory.class);
+		when(objectFactory.getObject()).thenReturn(new ReactiveIsNewAwareAuditingHandler(
+				PersistentEntities.of(entityTemplate.getConverter().getMappingContext())));
+
+		entityTemplate
+				.setEntityCallbacks(ReactiveEntityCallbacks.create(new ReactiveAuditingEntityCallback(objectFactory)));
+		entityTemplate.update(new WithAuditingAndOptimisticLocking(null, 2, "Walter", null, null)) //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(3);
+					assertThat(actual.getCreatedDate()).isNull();
+					assertThat(actual.getLastModifiedDate()).isNotNull();
+				}) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("UPDATE"));
+
+		assertThat(statement.getSql()).startsWith(
+				"UPDATE with_auditing_and_optimistic_locking SET version = $1, name = $2, created_date = $3, last_modified_date = $4");
+	}
+
 	@Test // gh-215
 	public void insertShouldInvokeCallback() {
 
@@ -364,6 +429,20 @@ public class R2dbcEntityTemplateUnitTests {
 		@Version long version;
 
 		String name;
+	}
+
+	@Value
+	@With
+	static class WithAuditingAndOptimisticLocking {
+
+		@Id String id;
+
+		@Version long version;
+
+		String name;
+
+		@CreatedDate LocalDateTime createdDate;
+		@LastModifiedDate LocalDateTime lastModifiedDate;
 	}
 
 	static class ValueCapturingEntityCallback<T> {

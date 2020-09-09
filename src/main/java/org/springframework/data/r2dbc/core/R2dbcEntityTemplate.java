@@ -511,13 +511,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		T entityWithVersion = setVersionIfNecessary(persistentEntity, entity);
+		return maybeCallBeforeConvert(entity, tableName).flatMap(it -> {
 
-		return maybeCallBeforeConvert(entityWithVersion, tableName).flatMap(beforeConvert -> {
+			T initializedEntity = setVersionIfNecessary(persistentEntity, it);
 
-			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(beforeConvert);
+			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(initializedEntity);
 
-			return maybeCallBeforeSave(beforeConvert, outboundRow, tableName) //
+			return maybeCallBeforeSave(initializedEntity, outboundRow, tableName) //
 					.flatMap(entityToSave -> doInsert(entityToSave, tableName, outboundRow));
 		});
 	}
@@ -577,24 +577,24 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		T entityToUse;
-		Criteria matchingVersionCriteria;
+		return maybeCallBeforeConvert(entity, tableName).flatMap(it -> {
 
-		if (persistentEntity.hasVersionProperty()) {
+			T entityToUse;
+			Criteria matchingVersionCriteria;
 
-			matchingVersionCriteria = createMatchingVersionCriteria(entity, persistentEntity);
-			entityToUse = incrementVersion(persistentEntity, entity);
-		} else {
+			if (persistentEntity.hasVersionProperty()) {
 
-			entityToUse = entity;
-			matchingVersionCriteria = null;
-		}
+				matchingVersionCriteria = createMatchingVersionCriteria(it, persistentEntity);
+				entityToUse = incrementVersion(persistentEntity, it);
+			} else {
 
-		return maybeCallBeforeConvert(entityToUse, tableName).flatMap(beforeConvert -> {
+				entityToUse = entity;
+				matchingVersionCriteria = null;
+			}
 
-			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(beforeConvert);
+			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(entityToUse);
 
-			return maybeCallBeforeSave(beforeConvert, outboundRow, tableName) //
+			return maybeCallBeforeSave(entityToUse, outboundRow, tableName) //
 					.flatMap(entityToSave -> {
 
 						SqlIdentifier idColumn = persistentEntity.getRequiredIdProperty().getColumnName();
