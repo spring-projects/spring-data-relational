@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.repository.query;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -23,6 +24,7 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 /**
  * Simple factory to contain logic to create {@link Criteria}s from {@link Part}s.
@@ -176,7 +178,7 @@ class CriteriaFactory {
 		}
 
 		if (value.getClass().isArray()) {
-			return CollectionUtils.arrayToList(value);
+			return Arrays.asList(ObjectUtils.toObjectArray(value));
 		}
 
 		return Collections.singletonList(value);
