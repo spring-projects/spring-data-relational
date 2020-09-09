@@ -20,7 +20,14 @@ import static org.springframework.data.relational.core.query.Criteria.*;
 
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration;
 import io.r2dbc.postgresql.PostgresqlConnectionFactory;
+import io.r2dbc.postgresql.codec.Box;
+import io.r2dbc.postgresql.codec.Circle;
 import io.r2dbc.postgresql.codec.EnumCodec;
+import io.r2dbc.postgresql.codec.Line;
+import io.r2dbc.postgresql.codec.Lseg;
+import io.r2dbc.postgresql.codec.Path;
+import io.r2dbc.postgresql.codec.Point;
+import io.r2dbc.postgresql.codec.Polygon;
 import io.r2dbc.postgresql.extension.CodecRegistrar;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.AllArgsConstructor;
@@ -36,7 +43,6 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.dao.DataAccessException;
@@ -133,7 +139,6 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-411
-	@Ignore("Depends on https://github.com/pgjdbc/r2dbc-postgresql/issues/301")
 	public void shouldWriteAndReadEnumValuesUsingDriverInternals() {
 
 		CodecRegistrar codecRegistrar = EnumCodec.builder().withEnum("state_enum", State.class).build();
@@ -183,6 +188,63 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	}
 
+	@Test // gh-423
+	public void shouldReadAndWriteGeoTypes() {
+
+		GeoType geoType = new GeoType();
+		geoType.thePoint = Point.of(1, 2);
+		geoType.theBox = Box.of(Point.of(3, 4), Point.of(1, 2));
+		geoType.theCircle = Circle.of(1, 2, 3);
+		geoType.theLine = Line.of(1, 2, 3, 4);
+		geoType.theLseg = Lseg.of(Point.of(1, 2), Point.of(3, 4));
+		geoType.thePath = Path.open(Point.of(1, 2), Point.of(3, 4));
+		geoType.thePolygon = Polygon.of(Point.of(1, 2), Point.of(3, 4), Point.of(5, 6), Point.of(1, 2));
+		geoType.springDataBox = new org.springframework.data.geo.Box(new org.springframework.data.geo.Point(3, 4),
+				new org.springframework.data.geo.Point(1, 2));
+		geoType.springDataCircle = new org.springframework.data.geo.Circle(1, 2, 3);
+		geoType.springDataPoint = new org.springframework.data.geo.Point(1, 2);
+		geoType.springDataPolygon = new org.springframework.data.geo.Polygon(new org.springframework.data.geo.Point(1, 2),
+				new org.springframework.data.geo.Point(3, 4), new org.springframework.data.geo.Point(5, 6),
+				new org.springframework.data.geo.Point(1, 2));
+
+		template.execute("DROP TABLE IF EXISTS geo_type");
+		template.execute("CREATE TABLE geo_type (" //
+				+ "id serial PRIMARY KEY," //
+				+ "the_point POINT," //
+				+ "the_box BOX," //
+				+ "the_circle CIRCLE," //
+				+ "the_line LINE," //
+				+ "the_lseg LSEG," //
+				+ "the_path PATH," //
+				+ "the_polygon POLYGON," //
+				+ "spring_data_box BOX," //
+				+ "spring_data_circle CIRCLE," //
+				+ "spring_data_point POINT," //
+				+ "spring_data_polygon POLYGON" //
+				+ ")");
+
+		R2dbcEntityTemplate template = new R2dbcEntityTemplate(client,
+				new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE));
+
+		GeoType saved = template.insert(geoType).block();
+		GeoType loaded = template.select(Query.empty(), GeoType.class) //
+				.blockLast();
+
+		assertThat(saved.id).isEqualTo(loaded.id);
+		assertThat(saved.thePoint).isEqualTo(loaded.thePoint);
+		assertThat(saved.theBox).isEqualTo(loaded.theBox);
+		assertThat(saved.theCircle).isEqualTo(loaded.theCircle);
+		assertThat(saved.theLine).isEqualTo(loaded.theLine);
+		assertThat(saved.theLseg).isEqualTo(loaded.theLseg);
+		assertThat(saved.thePath).isEqualTo(loaded.thePath);
+		assertThat(saved.thePolygon).isEqualTo(loaded.thePolygon);
+		assertThat(saved.springDataBox).isEqualTo(loaded.springDataBox);
+		assertThat(saved.springDataCircle).isEqualTo(loaded.springDataCircle);
+		assertThat(saved.springDataPoint).isEqualTo(loaded.springDataPoint);
+		assertThat(saved.springDataPolygon).isEqualTo(loaded.springDataPolygon);
+		assertThat(saved).isEqualTo(loaded);
+	}
+
 	private void insert(EntityWithArrays object) {
 
 		client.insert() //
@@ -218,5 +280,24 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 		int[] primitiveArray;
 		int[][] multidimensionalArray;
 		List<Integer> collectionArray;
+	}
+
+	@Data
+	static class GeoType {
+
+		@Id Integer id;
+
+		Point thePoint;
+		Box theBox;
+		Circle theCircle;
+		Line theLine;
+		Lseg theLseg;
+		Path thePath;
+		Polygon thePolygon;
+
+		org.springframework.data.geo.Box springDataBox;
+		org.springframework.data.geo.Circle springDataCircle;
+		org.springframework.data.geo.Point springDataPoint;
+		org.springframework.data.geo.Polygon springDataPolygon;
 	}
 }

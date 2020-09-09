@@ -81,7 +81,7 @@ public class PostgresTestSupport {
 				.database("postgres") //
 				.username("postgres") //
 				.password("") //
-				.jdbcUrl("jdbc:postgresql://localhost/postgres") //
+				.jdbcUrl("jdbc:postgresql://localhost:5432/postgres") //
 				.build();
 	}
 

@@ -35,7 +35,7 @@
 		<r2dbc-spi-test.version>0.8.0.RELEASE</r2dbc-spi-test.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
 		<mariadb-jdbc.version>2.5.4</mariadb-jdbc.version>
-		<r2dbc-releasetrain.version>Arabba-SR6</r2dbc-releasetrain.version>
+		<r2dbc-releasetrain.version>Arabba-BUILD-SNAPSHOT</r2dbc-releasetrain.version>
 		<reactive-streams.version>1.0.3</reactive-streams.version>
 		<netty>4.1.47.Final</netty>
 	</properties>
@@ -221,7 +221,7 @@
 		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-postgresql</artifactId>
-			<scope>test</scope>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
