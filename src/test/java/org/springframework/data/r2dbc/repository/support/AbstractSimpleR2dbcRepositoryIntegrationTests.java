@@ -33,6 +33,7 @@ import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -105,26 +106,27 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	 */
 	protected abstract String getCreateTableStatement();
 
-	@Test
+	@Test // gh-444
 	public void shouldSaveNewObject() {
 
-		LegoSet legoSet = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
-
-		repository.save(legoSet) //
+		repository.save(new LegoSet(0, "SCHAUFELRADBAGGER", 12)) //
 				.as(StepVerifier::create) //
 				.consumeNextWith(actual -> {
 
-					assertThat(actual.getId()).isNotNull();
 				}).verifyComplete();
 
-		Map<String, Object> map = jdbc.queryForMap("SELECT * FROM legoset");
-		assertThat(map).containsEntry("name", "SCHAUFELRADBAGGER").containsEntry("manual", 12).containsKey("id");
+		repository.save(new LegoSet(0, "SCHAUFELRADBAGGER", 12)) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+
+					assertThat(actual.getId()).isGreaterThan(0);
+				}).verifyComplete();
 	}
 
 	@Test // gh-93
 	public void shouldSaveNewObjectAndSetVersionIfWrapperVersionPropertyExists() {
 
-		LegoSetVersionable legoSet = new LegoSetVersionable(null, "SCHAUFELRADBAGGER", 12, null);
+		LegoSetVersionable legoSet = new LegoSetVersionable(0, "SCHAUFELRADBAGGER", 12, null);
 
 		repository.save(legoSet) //
 				.as(StepVerifier::create) //
@@ -142,7 +144,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test // gh-93
 	public void shouldSaveNewObjectAndSetVersionIfPrimitiveVersionPropertyExists() {
 
-		LegoSetPrimitiveVersionable legoSet = new LegoSetPrimitiveVersionable(null, "SCHAUFELRADBAGGER", 12, 0);
+		LegoSetPrimitiveVersionable legoSet = new LegoSetPrimitiveVersionable(0, "SCHAUFELRADBAGGER", 12, 0);
 
 		repository.save(legoSet) //
 				.as(StepVerifier::create) //
@@ -216,10 +218,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	public void shouldSaveObjectsUsingIterable() {
 
-		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
-		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
-		LegoSet legoSet3 = new LegoSet(null, "RALLYEAUTO", 14);
-		LegoSet legoSet4 = new LegoSet(null, "VOLTRON", 15);
+		LegoSet legoSet1 = new LegoSet(0, "SCHAUFELRADBAGGER", 12);
+		LegoSet legoSet2 = new LegoSet(0, "FORSCHUNGSSCHIFF", 13);
+		LegoSet legoSet3 = new LegoSet(0, "RALLYEAUTO", 14);
+		LegoSet legoSet4 = new LegoSet(0, "VOLTRON", 15);
 
 		repository.saveAll(Arrays.asList(legoSet1, legoSet2, legoSet3, legoSet4)) //
 				.map(LegoSet::getManual) //
@@ -237,8 +239,8 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Test
 	public void shouldSaveObjectsUsingPublisher() {
 
-		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
-		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
+		LegoSet legoSet1 = new LegoSet(0, "SCHAUFELRADBAGGER", 12);
+		LegoSet legoSet2 = new LegoSet(0, "FORSCHUNGSSCHIFF", 13);
 
 		repository.saveAll(Flux.just(legoSet1, legoSet2)) //
 				.as(StepVerifier::create) //
@@ -468,27 +470,11 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	@Table("legoset")
 	@AllArgsConstructor
 	@NoArgsConstructor
-	static class LegoSet implements Persistable<Integer> {
-		@Id Integer id;
+	static class LegoSet {
+		@Id int id;
 		String name;
 		Integer manual;
 
-		@Override
-		public boolean isNew() {
-			return id == null;
-		}
-	}
-
-	static class AlwaysNewLegoSet extends LegoSet {
-
-		AlwaysNewLegoSet(Integer id, String name, Integer manual) {
-			super(id, name, manual);
-		}
-
-		@Override
-		public boolean isNew() {
-			return true;
-		}
 	}
 
 	@Data
@@ -497,7 +483,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	static class LegoSetVersionable extends LegoSet {
 		@Version Integer version;
 
-		public LegoSetVersionable(Integer id, String name, Integer manual, Integer version) {
+		public LegoSetVersionable(int id, String name, Integer manual, Integer version) {
 			super(id, name, manual);
 			this.version = version;
 		}
@@ -509,7 +495,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 	static class LegoSetPrimitiveVersionable extends LegoSet {
 		@Version int version;
 
-		public LegoSetPrimitiveVersionable(Integer id, String name, Integer manual, int version) {
+		public LegoSetPrimitiveVersionable(int id, String name, Integer manual, int version) {
 			super(id, name, manual);
 			this.version = version;
 		}

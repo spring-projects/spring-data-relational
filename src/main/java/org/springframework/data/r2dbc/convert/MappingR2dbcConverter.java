@@ -604,13 +604,22 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			PersistentPropertyAccessor<?> propertyAccessor = entity.getPropertyAccessor(object);
 			RelationalPersistentProperty idProperty = entity.getRequiredIdProperty();
 
-			if (propertyAccessor.getProperty(idProperty) != null) {
-				return object;
+			boolean idPropertyUpdateNeeded = false;
+
+			Object id = propertyAccessor.getProperty(idProperty);
+			if (idProperty.getType().isPrimitive()) {
+				idPropertyUpdateNeeded = id instanceof Number && ((Number) id).longValue() == 0;
+			} else {
+				idPropertyUpdateNeeded = id == null;
 			}
 
-			return potentiallySetId(row, metadata, propertyAccessor, idProperty) //
+			if (idPropertyUpdateNeeded) {
+				return potentiallySetId(row, metadata, propertyAccessor, idProperty) //
 					? (T) propertyAccessor.getBean() //
 					: object;
+			}
+
+			return object;
 		};
 	}
 
