@@ -1,5 +1,7 @@
 package org.springframework.data.r2dbc.dialect;
 
+import io.r2dbc.postgresql.codec.Json;
+
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
@@ -38,15 +40,15 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 
 	private static final Set<Class<?>> SIMPLE_TYPES;
 
+	private static final boolean JSON_PRESENT = ClassUtils.isPresent("io.r2dbc.postgresql.codec.Json",
+			PostgresDialect.class.getClassLoader());
+
 	private static final boolean GEO_TYPES_PRESENT = ClassUtils.isPresent("io.r2dbc.postgresql.codec.Polygon",
 			PostgresDialect.class.getClassLoader());
 
 	static {
 
 		Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class));
-
-		// conditional Postgres JSON support.
-		ifClassPresent("io.r2dbc.postgresql.codec.Json", simpleTypes::add);
 
 		// conditional Postgres Geo support.
 		Stream.of("io.r2dbc.postgresql.codec.Box", //
@@ -57,6 +59,9 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 				"io.r2dbc.postgresql.codec.Path", //
 				"io.r2dbc.postgresql.codec.Polygon") //
 				.forEach(s -> ifClassPresent(s, simpleTypes::add));
+
+		// conditional Postgres JSON support.
+		ifClassPresent("io.r2dbc.postgresql.codec.Json", simpleTypes::add);
 
 		SIMPLE_TYPES = simpleTypes;
 	}
@@ -106,14 +111,24 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 	@Override
 	public Collection<Object> getConverters() {
 
-		if (GEO_TYPES_PRESENT) {
-			return Arrays.asList(FromPostgresPointConverter.INSTANCE, ToPostgresPointConverter.INSTANCE, //
-					FromPostgresCircleConverter.INSTANCE, ToPostgresCircleConverter.INSTANCE, //
-					FromPostgresBoxConverter.INSTANCE, ToPostgresBoxConverter.INSTANCE, //
-					FromPostgresPolygonConverter.INSTANCE, ToPostgresPolygonConverter.INSTANCE);
+		if (!GEO_TYPES_PRESENT && !JSON_PRESENT) {
+			return Collections.emptyList();
 		}
 
-		return Collections.emptyList();
+		List<Object> converters = new ArrayList<>();
+
+		if (GEO_TYPES_PRESENT) {
+			converters.addAll(Arrays.asList(FromPostgresPointConverter.INSTANCE, ToPostgresPointConverter.INSTANCE, //
+					FromPostgresCircleConverter.INSTANCE, ToPostgresCircleConverter.INSTANCE, //
+					FromPostgresBoxConverter.INSTANCE, ToPostgresBoxConverter.INSTANCE, //
+					FromPostgresPolygonConverter.INSTANCE, ToPostgresPolygonConverter.INSTANCE));
+		}
+
+		if (JSON_PRESENT) {
+			converters.addAll(Arrays.asList(JsonToByteArrayConverter.INSTANCE, JsonToStringConverter.INSTANCE));
+		}
+
+		return converters;
 	}
 
 	private static class R2dbcArrayColumns implements ArrayColumns {
@@ -266,6 +281,30 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 		@NonNull
 		public io.r2dbc.postgresql.codec.Point convert(Point source) {
 			return io.r2dbc.postgresql.codec.Point.of(source.getX(), source.getY());
+		}
+	}
+
+	@ReadingConverter
+	private enum JsonToStringConverter implements Converter<Json, String> {
+
+		INSTANCE;
+
+		@Override
+		@NonNull
+		public String convert(Json source) {
+			return source.asString();
+		}
+	}
+
+	@ReadingConverter
+	private enum JsonToByteArrayConverter implements Converter<Json, byte[]> {
+
+		INSTANCE;
+
+		@Override
+		@NonNull
+		public byte[] convert(Json source) {
+			return source.asArray();
 		}
 	}
 
