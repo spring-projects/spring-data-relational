@@ -29,12 +29,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -45,6 +45,7 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureRule;
 import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.ContextConfiguration;
@@ -58,6 +59,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Thomas Lang
+ * @author Yunyung LEE
  */
 @ContextConfiguration
 @Transactional
@@ -77,6 +79,9 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		entity.setBigInteger(BigInteger.valueOf(Long.MAX_VALUE));
 		entity.setDate(Date.from(getNow().toInstant(ZoneOffset.UTC)));
 		entity.setLocalDateTime(getNow());
+		EntityWithColumnsRequiringConversionsRelation relation = new EntityWithColumnsRequiringConversionsRelation();
+		relation.setData("DUMMY");
+		entity.setRelation(singleton(relation));
 
 		return entity;
 	}
@@ -194,5 +199,13 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		// ensures conversion on id querying
 		@Id private LocalDateTime idTimestamp;
 
+		@MappedCollection(idColumn = "ID_TIMESTAMP") Set<EntityWithColumnsRequiringConversionsRelation> relation;
+	}
+
+	// DATAJDBC-349
+	@Data
+	static class EntityWithColumnsRequiringConversionsRelation {
+		@Id private LocalDateTime idTimestamp;
+		String data;
 	}
 }

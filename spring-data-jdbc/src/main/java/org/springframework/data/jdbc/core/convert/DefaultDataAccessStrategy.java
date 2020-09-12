@@ -66,6 +66,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Yunyoung LEE
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -227,7 +228,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String delete = sql(rootEntity.getType()).createDeleteByPath(propertyPath);
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(getIdentifierProcessing());
-		parameters.addValue(ROOT_ID_PARAMETER, rootId);
+		addConvertedPropertyValue( //
+				parameters, //
+				rootEntity.getRequiredIdProperty(), //
+				rootId, //
+				ROOT_ID_PARAMETER //
+		);
 		operations.update(delete, parameters);
 	}
 
@@ -367,7 +373,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		SqlIdentifierParameterSource parameterSource = new SqlIdentifierParameterSource(identifierProcessing);
 
-		identifier.toMap().forEach(parameterSource::addValue);
+		identifier.toMap()
+				.forEach((name, value) -> addConvertedPropertyValue(parameterSource, name, value, value.getClass()));
 
 		return parameterSource;
 	}
