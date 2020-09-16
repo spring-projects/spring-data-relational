@@ -1,6 +1,20 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.2.0-RC1 (2020-09-16)
+-----------------------------------------
+* #454 - Adapt to changed array assertions in AssertJ.
+* #453 - Introduce converters to consume Postgres Json and convert these to String/byte[].
+* #452 - Introduce factory method for StatementMapper.
+* #451 - CreatedDate not set on new versioned entities.
+* #450 - Add support for @Value when creating entities using their constructor.
+* #447 - Register R2dbcConverter bean and deprecate ReactiveDataAccessStrategy.
+* #444 - Id is not set after Repository.save for primitive ids.
+* #440 - Create R2dbcEntityTemplate in R2dbcRepositoryFactoryBean.
+* #431 - Release 1.2 RC1 (2020.0.0).
+* #423 - Add r2dbc-postgresql Geotypes to simple types.
+
+
 Changes in version 1.1.4.RELEASE (2020-09-16)
 ---------------------------------------------
 * #458 - Upgrade to netty 4.1.52.Final.
@@ -292,6 +306,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
