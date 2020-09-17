@@ -76,7 +76,7 @@ class R2dbcEntityTemplateSnippets {
 
 		// tag::insert[]
 		Mono<Person> insert = template.insert(Person.class)	// <1>
-		.using(new Person());																// <2>
+				.using(new Person("John", "Doe")); // <2>
 		// end::insert[]
 	}
 

@@ -51,6 +51,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionInformation;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
@@ -100,6 +101,25 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	private final SpelAwareProxyProjectionFactory projectionFactory;
 
 	private @Nullable ReactiveEntityCallbacks entityCallbacks;
+
+	/**
+	 * Create a new {@link R2dbcEntityTemplate} given {@link ConnectionFactory}.
+	 *
+	 * @param connectionFactory must not be {@literal null}.
+	 * @since 1.2
+	 */
+	public R2dbcEntityTemplate(ConnectionFactory connectionFactory) {
+
+		Assert.notNull(connectionFactory, "ConnectionFactory must not be null");
+
+		R2dbcDialect dialect = DialectResolver.getDialect(connectionFactory);
+
+		this.databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory)
+				.bindMarkers(dialect.getBindMarkersFactory()).build();
+		this.dataAccessStrategy = new DefaultReactiveDataAccessStrategy(dialect);
+		this.mappingContext = dataAccessStrategy.getConverter().getMappingContext();
+		this.projectionFactory = new SpelAwareProxyProjectionFactory();
+	}
 
 	/**
 	 * Create a new {@link R2dbcEntityTemplate} given {@link DatabaseClient}.
