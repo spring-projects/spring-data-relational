@@ -33,7 +33,7 @@ The following example shows a repository interface for the preceding `Person` cl
 
 .Basic repository interface to persist Person entities
 ====
-[source]
+[source,java]
 ----
 public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
 
@@ -56,7 +56,7 @@ class ApplicationConfig extends AbstractR2dbcConfiguration {
 
   @Override
   public ConnectionFactory connectionFactory() {
-    return …;
+    return …
   }
 }
 ----
@@ -69,32 +69,9 @@ Consequently, you can retrieve all `Person` objects with the following code:
 
 .Paging access to Person entities
 ====
-[source,java]
+[source,java,indent=0]
 ----
-@RunWith(SpringRunner.class)
-@ContextConfiguration
-public class PersonRepositoryTests {
-
-  @Autowired PersonRepository repository;
-
-  @Test
-  public void readsAllEntitiesCorrectly() {
-
-    repository.findAll()
-      .as(StepVerifier::create)
-      .expectNextCount(1)
-      .verifyComplete();
-  }
-
-  @Test
-  public void readsEntitiesByNameCorrectly() {
-
-    repository.findByFirstname("Hello World")
-      .as(StepVerifier::create)
-      .expectNextCount(1)
-      .verifyComplete();
-  }
-}
+include::../{example-root}/PersonRepositoryTests.java[tags=class]
 ----
 ====
 
@@ -135,7 +112,7 @@ interface ReactivePersonRepository extends ReactiveSortingRepository<Person, Lon
 <2> The method shows a query for all people with the given `firstname` once the `firstname` is emitted by the given `Publisher`.
 <3> Use `Pageable` to pass offset and sorting parameters to the database.
 <4> Find a single entity for the given criteria. It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
-<5> Unless <4>, the first entity is always emitted even if the query yields more result documents.
+<5> Unless <4>, the first entity is always emitted even if the query yields more result rows.
 <6> The `findByLastname` method shows a query for all people with the given last name.
 <7> A query for a single `Person` entity projecting only `firstname` and `lastname` columns.
 The annotated query uses native bind markers, which are Postgres bind markers in this example.
@@ -172,7 +149,7 @@ The following table shows the keywords that are supported for query methods:
 
 | `LessThanEqual`
 | `findByAgeLessThanEqual(int age)`
-| `age <= age`
+| `age \<= age`
 
 | `Between`
 | `findByAgeBetween(int from, int to)`
@@ -258,11 +235,9 @@ interface ReactivePersonRepository extends ReactiveSortingRepository<Person, Str
 As this approach is feasible for comprehensive custom functionality, you can modify queries that only need parameter binding by annotating the query method with `@Modifying`, as shown in the following example:
 
 ====
-[source,java]
+[source,java,indent=0]
 ----
-@Modifying
-@Query("UPDATE person SET firstname = :firstname where lastname = :lastname")
-Mono<Integer> setFixedFirstnameFor(String firstname, String lastname);
+include::../{example-root}/PersonRepository.java[tags=atModifying]
 ----
 ====
 
@@ -287,14 +262,12 @@ Expressions expose method arguments through an array that contains all the argum
 The following query uses `[0]`
 to declare the predicate value for `lastname` (which is equivalent to the `:lastname` parameter binding):
 
-[source,java]
+====
+[source,java,indent=0]
 ----
-public interface PersonRepository extends ReactiveCrudRepository<Person, String> {
-
-  @Query("SELECT * FROM person WHERE lastname = :#{[0]}")
-  List<Person> findByQueryWithExpression(String lastname);
-}
+include::../{example-root}/PersonRepository.java[tags=spel]
 ----
+====
 
 SpEL in query strings can be a powerful way to enhance queries.
 However, they can also accept a broad range of unwanted arguments.
@@ -342,8 +315,8 @@ With auto-increment columns, this happens automatically, because the ID gets set
 [[r2dbc.optimistic-locking]]
 === Optimistic Locking
 
-The `@Version` annotation provides syntax similar to that of JPA in the context of R2DBC and makes sure updates are only applied to documents with a matching version.
-Therefore, the actual value of the version property is added to the update query in such a way that the update does not have any effect if another operation altered the document in the meantime.
+The `@Version` annotation provides syntax similar to that of JPA in the context of R2DBC and makes sure updates are only applied to rows with a matching version.
+Therefore, the actual value of the version property is added to the update query in such a way that the update does not have any effect if another operation altered the row in the meantime.
 In that case, an `OptimisticLockingFailureException` is thrown.
 The following example shows these features:
 
@@ -364,8 +337,8 @@ R2dbcEntityTemplate template = …;
 Mono<Person> daenerys = template.insert(new Person("Daenerys"));                      <1>
 
 Person other = template.select(Person.class)
-				.matching(query(where("id").is(daenerys.getId())))
-				.first().block();                                                     <2>
+                 .matching(query(where("id").is(daenerys.getId())))
+                 .first().block();                                                    <2>
 
 daenerys.setLastname("Targaryen");
 template.update(daenerys);                                                            <3>
@@ -375,7 +348,7 @@ template.update(other).subscribe(); // emits OptimisticLockingFailureException  
 <1> Initially insert row. `version` is set to `0`.
 <2> Load the just inserted row. `version` is still `0`.
 <3> Update the row with `version = 0`.Set the `lastname` and bump `version` to `1`.
-<4> Try to update the previously loaded document that still has `version = 0`.The operation fails with an `OptimisticLockingFailureException`, as the current `version` is `1`.
+<4> Try to update the previously loaded row that still has `version = 0`.The operation fails with an `OptimisticLockingFailureException`, as the current `version` is `1`.
 ====
 
 :projection-collection: Flux
@@ -403,7 +376,7 @@ static class MySQLConfiguration {
     @Bean
     @Qualifier("mysql")
     public ConnectionFactory mysqlConnectionFactory() {
-        return …;
+        return …
     }
 
     @Bean

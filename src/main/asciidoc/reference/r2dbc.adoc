@@ -3,10 +3,4 @@
 
 include::r2dbc-core.adoc[]
 
-include::r2dbc-databaseclient.adoc[leveloffset=+1]
-
-include::r2dbc-sql.adoc[leveloffset=+1]
-
-include::r2dbc-fluent.adoc[leveloffset=+1]
-
-include::r2dbc-transactions.adoc[leveloffset=+1]
+include::r2dbc-template.adoc[leveloffset=+1]

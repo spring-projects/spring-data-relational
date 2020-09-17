@@ -1,14 +1,13 @@
 R2DBC contains a wide range of features:
 
 * Spring configuration support with Java-based `@Configuration` classes  for an R2DBC driver instance.
-* A `DatabaseClient` helper class that increases productivity when performing common R2DBC operations with integrated object mapping between rows and POJOs.
-* Exception translation into Spring's portable Data Access Exception hierarchy.
+* `R2dbcEntityTemplate` as central class for entity-bound operations that increases productivity when performing common R2DBC operations with integrated object mapping between rows and POJOs.
 * Feature-rich object mapping integrated with Spring's Conversion Service.
 * Annotation-based mapping metadata that is extensible to support other metadata formats.
 * Automatic implementation of Repository interfaces, including support for custom query methods.
 
-For most tasks, you should use `DatabaseClient` or the repository support, which both use the rich mapping functionality.
-`DatabaseClient` is the place to look for accessing functionality such as ad-hoc CRUD operations.
+For most tasks, you should use `R2dbcEntityTemplate` or the repository support, which both use the rich mapping functionality.
+`R2dbcEntityTemplate` is the place to look for accessing functionality such as ad-hoc CRUD operations.
 
 [[r2dbc.getting-started]]
 == Getting Started
@@ -92,37 +91,9 @@ logging.level.org.springframework.data.r2dbc=DEBUG
 Then you can, for example, create a `Person` class to persist, as follows:
 
 ====
-[source,java]
+[source,java,indent=0]
 ----
-package org.spring.r2dbc.example;
-
-public class Person {
-
-  private String id;
-  private String name;
-  private int age;
-
-  public Person(String id, String name, int age) {
-    this.id = id;
-    this.name = name;
-    this.age = age;
-  }
-
-  public String getId() {
-    return id;
-  }
-  public String getName() {
-    return name;
-  }
-  public int getAge() {
-    return age;
-  }
-
-  @Override
-  public String toString() {
-    return "Person [id=" + id + ", name=" + name + ", age=" + age + "]";
-  }
-}
+include::../{example-root}/Person.java[tags=class]
 ----
 ====
 
@@ -140,48 +111,11 @@ CREATE TABLE person
 
 You also need a main application to run, as follows:
 
+
 ====
-[source,java]
+[source,java,indent=0]
 ----
-package org.spring.r2dbc.example;
-
-public class R2dbcApp {
-
-  private static final Log log = LogFactory.getLog(R2dbcApp.class);
-
-  public static void main(String[] args) throws Exception {
-
-    ConnectionFactory connectionFactory = ConnectionFactories.get("r2dbc:h2:mem:///test?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
-
-    DatabaseClient client = DatabaseClient.create(connectionFactory);
-
-    client.execute("CREATE TABLE person" +
-        "(id VARCHAR(255) PRIMARY KEY," +
-        "name VARCHAR(255)," +
-        "age INT)")
-      .fetch()
-      .rowsUpdated()
-      .as(StepVerifier::create)
-      .expectNextCount(1)
-      .verifyComplete();
-
-    client.insert()
-      .into(Person.class)
-      .using(new Person("joe", "Joe", 34))
-      .then()
-      .as(StepVerifier::create)
-      .verifyComplete();
-
-    client.select()
-      .from(Person.class)
-      .fetch()
-      .first()
-      .doOnNext(it -> log.info(it))
-      .as(StepVerifier::create)
-      .expectNextCount(1)
-      .verifyComplete();
-  }
-}
+include::../{example-root}/R2dbcApp.java[tags=class]
 ----
 ====
 
@@ -190,19 +124,19 @@ When you run the main program, the preceding examples produce output similar to 
 ====
 [source]
 ----
-2018-11-28 10:47:03,893 DEBUG ata.r2dbc.function.DefaultDatabaseClient: 310 - Executing SQL statement [CREATE TABLE person
+2018-11-28 10:47:03,893 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 310 - Executing SQL statement [CREATE TABLE person
   (id VARCHAR(255) PRIMARY KEY,
    name VARCHAR(255),
    age INT)]
-2018-11-28 10:47:04,074 DEBUG ata.r2dbc.function.DefaultDatabaseClient: 908 - Executing SQL statement [INSERT INTO person (id, name, age) VALUES($1, $2, $3)]
-2018-11-28 10:47:04,092 DEBUG ata.r2dbc.function.DefaultDatabaseClient: 575 - Executing SQL statement [SELECT id, name, age FROM person]
+2018-11-28 10:47:04,074 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 908 - Executing SQL statement [INSERT INTO person (id, name, age) VALUES($1, $2, $3)]
+2018-11-28 10:47:04,092 DEBUG amework.core.r2dbc.DefaultDatabaseClient: 575 - Executing SQL statement [SELECT id, name, age FROM person]
 2018-11-28 10:47:04,436  INFO        org.spring.r2dbc.example.R2dbcApp:  43 - Person [id='joe', name='Joe', age=34]
 ----
 ====
 
 Even in this simple example, there are few things to notice:
 
-* You can create an instance of the central helper class in Spring Data R2DBC (<<r2dbc.datbaseclient,`DatabaseClient`>>) by using a standard `io.r2dbc.spi.ConnectionFactory` object.
+* You can create an instance of the central helper class in Spring Data R2DBC (`R2dbcEntityTemplate`) by using a standard `io.r2dbc.spi.ConnectionFactory` object.
 * The mapper works against standard POJO objects without the need for any additional metadata (though you can, optionally, provide that information -- see <<mapping,here>>.).
 * Mapping conventions can use field access. Notice that the `Person` class has only getters.
 * If the constructor argument names match the column names of the stored row, they are used to instantiate the object.
@@ -232,7 +166,7 @@ public class ApplicationConfiguration extends AbstractR2dbcConfiguration {
   @Override
   @Bean
   public ConnectionFactory connectionFactory() {
-    return …;
+    return …
   }
 }
 ----
