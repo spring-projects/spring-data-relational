@@ -22,9 +22,9 @@ import lombok.NoArgsConstructor;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -40,24 +40,24 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Integration test for {@link DatabaseClient} and repositories using H2.
  *
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration
-public class H2IntegrationTests {
+class H2IntegrationTests {
 
-	private JdbcTemplate jdbc = new JdbcTemplate(H2TestSupport.createDataSource());
+	private final JdbcTemplate jdbc = new JdbcTemplate(H2TestSupport.createDataSource());
 
 	@Autowired DatabaseClient databaseClient;
 	@Autowired H2Repository repository;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		try {
 			jdbc.execute("DROP TABLE legoset");
@@ -66,7 +66,7 @@ public class H2IntegrationTests {
 	}
 
 	@Test // gh-109
-	public void shouldSelectCountWithDatabaseClient() {
+	void shouldSelectCountWithDatabaseClient() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
 
@@ -79,7 +79,7 @@ public class H2IntegrationTests {
 	}
 
 	@Test // gh-109
-	public void shouldSelectCountWithRepository() {
+	void shouldSelectCountWithRepository() {
 
 		jdbc.execute("INSERT INTO legoset (id, name, manual) VALUES(42055, 'SCHAUFELRADBAGGER', 12)");
 

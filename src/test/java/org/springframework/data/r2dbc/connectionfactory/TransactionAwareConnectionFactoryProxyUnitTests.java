@@ -25,8 +25,8 @@ import reactor.test.StepVerifier;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.transaction.reactive.TransactionalOperator;
 
@@ -45,7 +45,7 @@ public class TransactionAwareConnectionFactoryProxyUnitTests {
 
 	private R2dbcTransactionManager tm;
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		when(connectionFactoryMock.create()).thenReturn((Mono) Mono.just(connectionMock1),

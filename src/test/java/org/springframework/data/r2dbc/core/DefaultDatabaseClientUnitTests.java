@@ -34,13 +34,15 @@ import reactor.test.StepVerifier;
 
 import java.util.Arrays;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 
@@ -59,14 +61,15 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Zsombor Gegesy
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class DefaultDatabaseClientUnitTests {
 
 	@Mock Connection connection;
 	private DatabaseClient.Builder databaseClientBuilder;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		ConnectionFactory connectionFactory = Mockito.mock(ConnectionFactory.class);
 
@@ -79,7 +82,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-48
-	public void shouldCloseConnectionOnlyOnce() {
+	void shouldCloseConnectionOnlyOnce() {
 
 		DefaultDatabaseClient databaseClient = (DefaultDatabaseClient) databaseClientBuilder.build();
 
@@ -110,7 +113,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-128
-	public void executeShouldBindNullValues() {
+	void executeShouldBindNullValues() {
 
 		Statement statement = mockStatementFor("SELECT * FROM table WHERE key = $1");
 
@@ -134,7 +137,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-162
-	public void executeShouldBindSettableValues() {
+	void executeShouldBindSettableValues() {
 
 		Statement statement = mockStatementFor("SELECT * FROM table WHERE key = $1");
 
@@ -158,7 +161,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-128
-	public void executeShouldBindNamedNullValues() {
+	void executeShouldBindNamedNullValues() {
 
 		Statement statement = mockStatementFor("SELECT * FROM table WHERE key = $1");
 		DatabaseClient databaseClient = databaseClientBuilder.build();
@@ -173,7 +176,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-178
-	public void executeShouldBindNamedValuesFromIndexes() {
+	void executeShouldBindNamedValuesFromIndexes() {
 
 		Statement statement = mockStatementFor("SELECT id, name, manual FROM legoset WHERE name IN ($1, $2, $3)");
 
@@ -193,7 +196,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-128, gh-162
-	public void executeShouldBindValues() {
+	void executeShouldBindValues() {
 
 		Statement statement = mockStatementFor("SELECT * FROM table WHERE key = $1");
 
@@ -217,7 +220,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-162
-	public void insertShouldAcceptNullValues() {
+	void insertShouldAcceptNullValues() {
 
 		Statement statement = mockStatementFor("INSERT INTO foo (first, second) VALUES ($1, $2)");
 		DatabaseClient databaseClient = databaseClientBuilder.build();
@@ -234,7 +237,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-162
-	public void insertShouldAcceptSettableValue() {
+	void insertShouldAcceptSettableValue() {
 
 		Statement statement = mockStatementFor("INSERT INTO foo (first, second) VALUES ($1, $2)");
 		DatabaseClient databaseClient = databaseClientBuilder.build();
@@ -251,7 +254,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-390
-	public void insertShouldWorkWithoutValues() {
+	void insertShouldWorkWithoutValues() {
 
 		Statement statement = mockStatementFor("INSERT INTO id_only VALUES ()");
 		DatabaseClient databaseClient = databaseClientBuilder.build();
@@ -267,7 +270,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-128
-	public void executeShouldBindNamedValuesByIndex() {
+	void executeShouldBindNamedValuesByIndex() {
 
 		Statement statement = mockStatementFor("SELECT * FROM table WHERE key = $1");
 		DatabaseClient databaseClient = databaseClientBuilder.build();
@@ -282,7 +285,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-177
-	public void deleteNotInShouldRenderCorrectQuery() {
+	void deleteNotInShouldRenderCorrectQuery() {
 
 		Statement statement = mockStatementFor("DELETE FROM tab WHERE tab.pole = $1 AND tab.id NOT IN ($2, $3)");
 		DatabaseClient databaseClient = databaseClientBuilder.build();
@@ -298,7 +301,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-243
-	public void rowsUpdatedShouldEmitSingleValue() {
+	void rowsUpdatedShouldEmitSingleValue() {
 
 		Result result = mock(Result.class);
 		when(result.getRowsUpdated()).thenReturn(Mono.empty(), Mono.just(2), Flux.just(1, 2, 3));
@@ -329,7 +332,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-250
-	public void shouldThrowExceptionForSingleColumnObjectUpdate() {
+	void shouldThrowExceptionForSingleColumnObjectUpdate() {
 
 		DatabaseClient databaseClient = databaseClientBuilder.build();
 
@@ -340,7 +343,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-260
-	public void shouldProjectGenericExecuteAs() {
+	void shouldProjectGenericExecuteAs() {
 
 		MockResult result = mockSingleColumnResult(MockRow.builder().identified(0, Object.class, "Walter"));
 		mockStatement(result);
@@ -364,7 +367,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-260
-	public void shouldProjectGenericSelectAs() {
+	void shouldProjectGenericSelectAs() {
 
 		MockResult result = mockSingleColumnResult(MockRow.builder().identified(0, Object.class, "Walter"));
 		mockStatement(result);
@@ -389,7 +392,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-260
-	public void shouldProjectTypedSelectAs() {
+	void shouldProjectTypedSelectAs() {
 
 		MockResult result = mockSingleColumnResult(MockRow.builder().identified("name", Object.class, "Walter"));
 		mockStatement(result);
@@ -412,7 +415,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-189
-	public void shouldApplyExecuteFunction() {
+	void shouldApplyExecuteFunction() {
 
 		Statement statement = mockStatement();
 		MockResult result = mockSingleColumnResult(MockRow.builder().identified(0, Object.class, "Walter"));
@@ -430,7 +433,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-189
-	public void shouldApplyStatementFilterFunctions() {
+	void shouldApplyStatementFilterFunctions() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
@@ -455,7 +458,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-189
-	public void shouldApplyStatementFilterFunctionsToTypedExecute() {
+	void shouldApplyStatementFilterFunctionsToTypedExecute() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
@@ -479,7 +482,7 @@ public class DefaultDatabaseClientUnitTests {
 	}
 
 	@Test // gh-189
-	public void shouldApplySimpleStatementFilterFunctions() {
+	void shouldApplySimpleStatementFilterFunctions() {
 
 		MockResult result = mockSingleColumnEmptyResult();
 

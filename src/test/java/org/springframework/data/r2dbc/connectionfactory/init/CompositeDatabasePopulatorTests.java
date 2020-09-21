@@ -24,31 +24,31 @@ import reactor.test.StepVerifier;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link CompositeDatabasePopulator}.
  *
  * @author Mark Paluch
  */
-public class CompositeDatabasePopulatorTests {
+class CompositeDatabasePopulatorTests {
 
-	Connection mockedConnection = mock(Connection.class);
+	private final Connection mockedConnection = mock(Connection.class);
 
-	DatabasePopulator mockedDatabasePopulator1 = mock(DatabasePopulator.class);
+	private final DatabasePopulator mockedDatabasePopulator1 = mock(DatabasePopulator.class);
 
-	DatabasePopulator mockedDatabasePopulator2 = mock(DatabasePopulator.class);
+	private final DatabasePopulator mockedDatabasePopulator2 = mock(DatabasePopulator.class);
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		when(mockedDatabasePopulator1.populate(mockedConnection)).thenReturn(Mono.empty());
 		when(mockedDatabasePopulator2.populate(mockedConnection)).thenReturn(Mono.empty());
 	}
 
 	@Test
-	public void addPopulators() {
+	void addPopulators() {
 
 		CompositeDatabasePopulator populator = new CompositeDatabasePopulator();
 		populator.addPopulators(mockedDatabasePopulator1, mockedDatabasePopulator2);
@@ -60,7 +60,7 @@ public class CompositeDatabasePopulatorTests {
 	}
 
 	@Test
-	public void setPopulatorsWithMultiple() {
+	void setPopulatorsWithMultiple() {
 
 		CompositeDatabasePopulator populator = new CompositeDatabasePopulator();
 		populator.setPopulators(mockedDatabasePopulator1, mockedDatabasePopulator2); // multiple
@@ -72,7 +72,7 @@ public class CompositeDatabasePopulatorTests {
 	}
 
 	@Test
-	public void setPopulatorsForOverride() {
+	void setPopulatorsForOverride() {
 
 		CompositeDatabasePopulator populator = new CompositeDatabasePopulator();
 		populator.setPopulators(mockedDatabasePopulator1);
@@ -85,7 +85,7 @@ public class CompositeDatabasePopulatorTests {
 	}
 
 	@Test
-	public void constructWithVarargs() {
+	void constructWithVarargs() {
 
 		CompositeDatabasePopulator populator = new CompositeDatabasePopulator(mockedDatabasePopulator1,
 				mockedDatabasePopulator2);
@@ -97,7 +97,7 @@ public class CompositeDatabasePopulatorTests {
 	}
 
 	@Test
-	public void constructWithCollection() {
+	void constructWithCollection() {
 
 		Set<DatabasePopulator> populators = new LinkedHashSet<>();
 		populators.add(mockedDatabasePopulator1);

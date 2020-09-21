@@ -21,18 +21,18 @@ import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Integration tests for {@link DatabasePopulator} using H2.
  *
  * @author Mark Paluch
  */
-public class H2DatabasePopulatorIntegrationTests extends AbstractDatabaseInitializationTests {
+class H2DatabasePopulatorIntegrationTests extends AbstractDatabaseInitializationTests {
 
-	UUID databaseName = UUID.randomUUID();
+	private final UUID databaseName = UUID.randomUUID();
 
-	ConnectionFactory connectionFactory = ConnectionFactories
+	private final ConnectionFactory connectionFactory = ConnectionFactories
 			.get("r2dbc:h2:mem:///" + databaseName + "?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
 
 	@Override
@@ -41,7 +41,7 @@ public class H2DatabasePopulatorIntegrationTests extends AbstractDatabaseInitial
 	}
 
 	@Test
-	public void shouldRunScript() {
+	void shouldRunScript() {
 
 		databasePopulator.addScript(usersSchema());
 		databasePopulator.addScript(resource("db-test-data-h2.sql"));

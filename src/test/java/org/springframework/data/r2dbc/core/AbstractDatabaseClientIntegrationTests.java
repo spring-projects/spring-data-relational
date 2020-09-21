@@ -26,18 +26,18 @@ import reactor.test.StepVerifier;
 import javax.sql.DataSource;
 
 import org.assertj.core.api.Condition;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Update;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -52,7 +52,7 @@ public abstract class AbstractDatabaseClientIntegrationTests extends R2dbcIntegr
 
 	private JdbcTemplate jdbc;
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		connectionFactory = createConnectionFactory();

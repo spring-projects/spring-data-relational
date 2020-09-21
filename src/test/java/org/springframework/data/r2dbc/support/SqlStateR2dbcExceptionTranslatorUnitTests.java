@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.spi.R2dbcException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -33,44 +33,45 @@ import org.springframework.data.r2dbc.UncategorizedR2dbcException;
  *
  * @author Mark Paluch
  */
-public class SqlStateR2dbcExceptionTranslatorUnitTests {
+class SqlStateR2dbcExceptionTranslatorUnitTests {
 
 	private static final String REASON = "The game is afoot!";
 	private static final String TASK = "Counting sheep... yawn.";
 	private static final String SQL = "select count(0) from t_sheep where over_fence = ... yawn... 1";
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testTranslateNullException() {
-		new SqlStateR2dbcExceptionTranslator().translate("", "", null);
+	@Test
+	void testTranslateNullException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> new SqlStateR2dbcExceptionTranslator().translate("", "", null));
 	}
 
 	@Test
-	public void testTranslateBadSqlGrammar() {
+	void testTranslateBadSqlGrammar() {
 		doTest("07", BadSqlGrammarException.class);
 	}
 
 	@Test
-	public void testTranslateDataIntegrityViolation() {
+	void testTranslateDataIntegrityViolation() {
 		doTest("23", DataIntegrityViolationException.class);
 	}
 
 	@Test
-	public void testTranslateDataAccessResourceFailure() {
+	void testTranslateDataAccessResourceFailure() {
 		doTest("53", DataAccessResourceFailureException.class);
 	}
 
 	@Test
-	public void testTranslateTransientDataAccessResourceFailure() {
+	void testTranslateTransientDataAccessResourceFailure() {
 		doTest("S1", TransientDataAccessResourceException.class);
 	}
 
 	@Test
-	public void testTranslateConcurrencyFailure() {
+	void testTranslateConcurrencyFailure() {
 		doTest("40", ConcurrencyFailureException.class);
 	}
 
 	@Test
-	public void testTranslateUncategorized() {
+	void testTranslateUncategorized() {
 		doTest("00000000", UncategorizedR2dbcException.class);
 	}
 

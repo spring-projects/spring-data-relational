@@ -24,22 +24,23 @@ import reactor.core.publisher.Mono;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link ConnectionFactoryInitializer}.
  *
  * @author Mark Paluch
  */
-public class ConnectionFactoryInitializerUnitTests {
+class ConnectionFactoryInitializerUnitTests {
 
-	AtomicBoolean called = new AtomicBoolean();
-	DatabasePopulator populator = mock(DatabasePopulator.class);
-	MockConnection connection = MockConnection.builder().build();
-	MockConnectionFactory connectionFactory = MockConnectionFactory.builder().connection(connection).build();
+	private final AtomicBoolean called = new AtomicBoolean();
+	private final DatabasePopulator populator = mock(DatabasePopulator.class);
+	private final MockConnection connection = MockConnection.builder().build();
+	private final MockConnectionFactory connectionFactory = MockConnectionFactory.builder().connection(connection)
+			.build();
 
 	@Test // gh-216
-	public void shouldInitializeConnectionFactory() {
+	void shouldInitializeConnectionFactory() {
 
 		when(populator.populate(any())).thenReturn(Mono.<Void> empty().doOnSubscribe(subscription -> called.set(true)));
 
@@ -53,7 +54,7 @@ public class ConnectionFactoryInitializerUnitTests {
 	}
 
 	@Test // gh-216
-	public void shouldCleanConnectionFactory() {
+	void shouldCleanConnectionFactory() {
 
 		when(populator.populate(any())).thenReturn(Mono.<Void> empty().doOnSubscribe(subscription -> called.set(true)));
 

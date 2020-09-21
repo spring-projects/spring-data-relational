@@ -26,9 +26,9 @@ import reactor.test.StepVerifier;
 
 import javax.sql.DataSource;
 
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -46,18 +46,18 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against Postgres.
  *
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration
 public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIntegrationTests {
 
-	@ClassRule public static final ExternalDatabase database = PostgresTestSupport.database();
+	@RegisterExtension public static final ExternalDatabase database = PostgresTestSupport.database();
 
 	@Autowired JsonPersonRepository jsonPersonRepository;
 
@@ -127,7 +127,7 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 	}
 
 	@Test
-	public void shouldSaveAndLoadJson() {
+	void shouldSaveAndLoadJson() {
 
 		JdbcTemplate template = new JdbcTemplate(createDataSource());
 

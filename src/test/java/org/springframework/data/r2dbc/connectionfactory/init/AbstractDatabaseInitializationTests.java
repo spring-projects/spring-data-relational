@@ -18,7 +18,7 @@ package org.springframework.data.r2dbc.connectionfactory.init;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.test.StepVerifier;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.io.ClassRelativeResourceLoader;
 import org.springframework.core.io.Resource;
@@ -29,13 +29,13 @@ import org.springframework.data.r2dbc.core.DatabaseClient;
  *
  * @author Mark Paluch
  */
-public abstract class AbstractDatabaseInitializationTests {
+abstract class AbstractDatabaseInitializationTests {
 
-	ClassRelativeResourceLoader resourceLoader = new ClassRelativeResourceLoader(getClass());
+	private final ClassRelativeResourceLoader resourceLoader = new ClassRelativeResourceLoader(getClass());
 	ResourceDatabasePopulator databasePopulator = new ResourceDatabasePopulator();
 
 	@Test
-	public void scriptWithSingleLineCommentsAndFailedDrop() {
+	void scriptWithSingleLineCommentsAndFailedDrop() {
 
 		databasePopulator.addScript(resource("db-schema-failed-drop-comments.sql"));
 		databasePopulator.addScript(resource("db-test-data.sql"));
@@ -53,7 +53,7 @@ public abstract class AbstractDatabaseInitializationTests {
 	}
 
 	@Test
-	public void scriptWithStandardEscapedLiteral() {
+	void scriptWithStandardEscapedLiteral() {
 
 		databasePopulator.addScript(defaultSchema());
 		databasePopulator.addScript(resource("db-test-data-escaped-literal.sql"));
@@ -64,7 +64,7 @@ public abstract class AbstractDatabaseInitializationTests {
 	}
 
 	@Test
-	public void scriptWithMySqlEscapedLiteral() {
+	void scriptWithMySqlEscapedLiteral() {
 
 		databasePopulator.addScript(defaultSchema());
 		databasePopulator.addScript(resource("db-test-data-mysql-escaped-literal.sql"));
@@ -75,7 +75,7 @@ public abstract class AbstractDatabaseInitializationTests {
 	}
 
 	@Test
-	public void scriptWithMultipleStatements() {
+	void scriptWithMultipleStatements() {
 
 		databasePopulator.addScript(defaultSchema());
 		databasePopulator.addScript(resource("db-test-data-multiple.sql"));
@@ -86,7 +86,7 @@ public abstract class AbstractDatabaseInitializationTests {
 	}
 
 	@Test
-	public void scriptWithMultipleStatementsAndLongSeparator() {
+	void scriptWithMultipleStatementsAndLongSeparator() {
 
 		databasePopulator.addScript(defaultSchema());
 		databasePopulator.addScript(resource("db-test-data-endings.sql"));

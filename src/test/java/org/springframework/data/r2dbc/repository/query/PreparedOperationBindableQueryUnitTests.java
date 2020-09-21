@@ -19,10 +19,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.PreparedOperation;
 
@@ -32,14 +33,14 @@ import org.springframework.r2dbc.core.PreparedOperation;
  * @author Roman Chigvintsev
  * @author Marl Paluch
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 @Ignore
-public class PreparedOperationBindableQueryUnitTests {
+class PreparedOperationBindableQueryUnitTests {
 
 	@Mock PreparedOperation<?> preparedOperation;
 
 	@Test // gh-282
-	public void bindsQueryParameterValues() {
+	void bindsQueryParameterValues() {
 
 		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
 
@@ -49,7 +50,7 @@ public class PreparedOperationBindableQueryUnitTests {
 	}
 
 	@Test // gh-282
-	public void returnsSqlQuery() {
+	void returnsSqlQuery() {
 
 		when(preparedOperation.get()).thenReturn("SELECT * FROM test");
 

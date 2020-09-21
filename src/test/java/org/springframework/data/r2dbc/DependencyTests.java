@@ -23,7 +23,7 @@ import de.schauderhaft.degraph.configuration.NamedPattern;
 import scala.runtime.AbstractFunction1;
 
 import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test package dependencies for violations.

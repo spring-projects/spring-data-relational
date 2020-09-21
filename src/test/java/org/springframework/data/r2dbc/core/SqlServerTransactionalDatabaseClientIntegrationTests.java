@@ -4,7 +4,7 @@ import io.r2dbc.spi.ConnectionFactory;
 
 import javax.sql.DataSource;
 
-import org.junit.ClassRule;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.SqlServerTestSupport;
@@ -17,7 +17,7 @@ import org.springframework.data.r2dbc.testing.SqlServerTestSupport;
 public class SqlServerTransactionalDatabaseClientIntegrationTests
 		extends AbstractTransactionalDatabaseClientIntegrationTests {
 
-	@ClassRule public static final ExternalDatabase database = SqlServerTestSupport.database();
+	@RegisterExtension public static final ExternalDatabase database = SqlServerTestSupport.database();
 
 	@Override
 	protected DataSource createDataSource() {

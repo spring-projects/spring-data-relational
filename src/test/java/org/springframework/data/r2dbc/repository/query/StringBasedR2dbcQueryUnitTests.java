@@ -21,11 +21,13 @@ import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.projection.ProjectionFactory;
@@ -49,7 +51,8 @@ import org.springframework.util.ReflectionUtils;
  *
  * @author Mark Paluch
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class StringBasedR2dbcQueryUnitTests {
 
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
@@ -62,8 +65,8 @@ public class StringBasedR2dbcQueryUnitTests {
 	private ProjectionFactory factory;
 	private RepositoryMetadata metadata;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 
 		this.mappingContext = new R2dbcMappingContext();
 		this.converter = new MappingR2dbcConverter(this.mappingContext);
@@ -75,7 +78,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test
-	public void bindsSimplePropertyCorrectly() {
+	void bindsSimplePropertyCorrectly() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("findByLastname", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
@@ -89,7 +92,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test // gh-164
-	public void bindsPositionalPropertyCorrectly() {
+	void bindsPositionalPropertyCorrectly() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("findByLastnamePositional", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
@@ -103,7 +106,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test
-	public void bindsByNamedParameter() {
+	void bindsByNamedParameter() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("findByNamedParameter", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
@@ -117,7 +120,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test
-	public void bindsByBindmarker() {
+	void bindsByBindmarker() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("findByNamedBindMarker", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
@@ -131,7 +134,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test
-	public void bindsByIndexWithNamedParameter() {
+	void bindsByIndexWithNamedParameter() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("findNotByNamedBindMarker", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
@@ -145,7 +148,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test // gh-164
-	public void bindsSimpleSpelQuery() {
+	void bindsSimpleSpelQuery() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("simpleSpel");
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod());
@@ -159,7 +162,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test // gh-164
-	public void bindsIndexedSpelQuery() {
+	void bindsIndexedSpelQuery() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("simpleIndexedSpel", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
@@ -174,7 +177,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test // gh-164
-	public void bindsPositionalSpelQuery() {
+	void bindsPositionalSpelQuery() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("simplePositionalSpel", String.class, String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White", "Walter");
@@ -191,7 +194,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test // gh-164
-	public void bindsPositionalNamedSpelQuery() {
+	void bindsPositionalNamedSpelQuery() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("simpleNamedSpel", String.class, String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White", "Walter");
@@ -208,7 +211,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test // gh-164
-	public void bindsComplexSpelQuery() {
+	void bindsComplexSpelQuery() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("queryWithSpelObject", Person.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), new Person("Walter"));
@@ -223,7 +226,7 @@ public class StringBasedR2dbcQueryUnitTests {
 	}
 
 	@Test // gh-321
-	public void skipsNonBindableParameters() {
+	void skipsNonBindableParameters() {
 
 		StringBasedR2dbcQuery query = getQueryMethod("queryWithUnusedParameter", String.class, Sort.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "Walter", null);
@@ -288,7 +291,7 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		String name;
 
-		public Person(String name) {
+		Person(String name) {
 			this.name = name;
 		}
 

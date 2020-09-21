@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -46,12 +46,12 @@ import org.springframework.data.relational.core.sql.Table;
  */
 public class UpdateMapperUnitTests {
 
-	R2dbcConverter converter = new MappingR2dbcConverter(new R2dbcMappingContext());
-	UpdateMapper mapper = new UpdateMapper(PostgresDialect.INSTANCE, converter);
-	BindTarget bindTarget = mock(BindTarget.class);
+	private final R2dbcConverter converter = new MappingR2dbcConverter(new R2dbcMappingContext());
+	private final UpdateMapper mapper = new UpdateMapper(PostgresDialect.INSTANCE, converter);
+	private final BindTarget bindTarget = mock(BindTarget.class);
 
 	@Test // gh-64
-	public void shouldMapFieldNamesInUpdate() {
+	void shouldMapFieldNamesInUpdate() {
 
 		Update update = Update.update("alternative", "foo");
 
@@ -64,7 +64,7 @@ public class UpdateMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldUpdateToSettableValue() {
+	void shouldUpdateToSettableValue() {
 
 		Update update = Update.update("alternative", SettableValue.empty(String.class));
 
@@ -80,7 +80,7 @@ public class UpdateMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldUpdateToNull() {
+	void shouldUpdateToNull() {
 
 		Update update = Update.update("alternative", null);
 
@@ -94,7 +94,7 @@ public class UpdateMapperUnitTests {
 	}
 
 	@Test // gh-195
-	public void shouldMapMultipleFields() {
+	void shouldMapMultipleFields() {
 
 		Update update = Update.update("c1", "a").set("c2", "b").set("c3", "c");
 

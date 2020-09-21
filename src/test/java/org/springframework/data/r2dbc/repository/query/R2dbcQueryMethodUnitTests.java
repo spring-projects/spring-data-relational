@@ -18,7 +18,6 @@ package org.springframework.data.r2dbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 
 import kotlin.Unit;
-
 import reactor.core.publisher.Mono;
 
 import java.lang.annotation.Retention;
@@ -26,8 +25,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -49,17 +48,17 @@ import org.springframework.data.repository.core.support.DefaultRepositoryMetadat
  * @author Mark Paluch
  * @author Stephen Cohen
  */
-public class R2dbcQueryMethodUnitTests {
+class R2dbcQueryMethodUnitTests {
 
-	RelationalMappingContext context;
+	private RelationalMappingContext context;
 
-	@Before
-	public void setUp() {
+	@BeforeEach
+	void setUp() {
 		this.context = new R2dbcMappingContext();
 	}
 
 	@Test
-	public void detectsCollectionFromReturnTypeIfReturnTypeAssignable() throws Exception {
+	void detectsCollectionFromReturnTypeIfReturnTypeAssignable() throws Exception {
 
 		R2dbcQueryMethod queryMethod = queryMethod(SampleRepository.class, "method");
 		RelationalEntityMetadata<?> metadata = queryMethod.getEntityInformation();
@@ -69,7 +68,7 @@ public class R2dbcQueryMethodUnitTests {
 	}
 
 	@Test // gh-235
-	public void detectsModifyingQuery() throws Exception {
+	void detectsModifyingQuery() throws Exception {
 
 		R2dbcQueryMethod queryMethod = queryMethod(SampleRepository.class, "method");
 
@@ -77,7 +76,7 @@ public class R2dbcQueryMethodUnitTests {
 	}
 
 	@Test // gh-235
-	public void detectsNotModifyingQuery() throws Exception {
+	void detectsNotModifyingQuery() throws Exception {
 
 		R2dbcQueryMethod queryMethod = queryMethod(SampleRepository.class, "differentTable");
 
@@ -85,7 +84,7 @@ public class R2dbcQueryMethodUnitTests {
 	}
 
 	@Test
-	public void detectsTableNameFromRepoTypeIfReturnTypeNotAssignable() throws Exception {
+	void detectsTableNameFromRepoTypeIfReturnTypeNotAssignable() throws Exception {
 
 		R2dbcQueryMethod queryMethod = queryMethod(SampleRepository.class, "differentTable");
 		RelationalEntityMetadata<?> metadata = queryMethod.getEntityInformation();
@@ -94,37 +93,40 @@ public class R2dbcQueryMethodUnitTests {
 		assertThat(metadata.getTableName()).isEqualTo(SqlIdentifier.unquoted("contact"));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void rejectsNullMappingContext() throws Exception {
+	@Test
+	void rejectsNullMappingContext() throws Exception {
 
 		Method method = PersonRepository.class.getMethod("findMonoByLastname", String.class, Pageable.class);
 
-		new R2dbcQueryMethod(method, new DefaultRepositoryMetadata(PersonRepository.class),
-				new SpelAwareProxyProjectionFactory(), null);
-	}
-
-	@Test(expected = IllegalStateException.class)
-	public void rejectsMonoPageableResult() throws Exception {
-		queryMethod(PersonRepository.class, "findMonoByLastname", String.class, Pageable.class);
+		assertThatIllegalArgumentException().isThrownBy(() -> new R2dbcQueryMethod(method,
+				new DefaultRepositoryMetadata(PersonRepository.class), new SpelAwareProxyProjectionFactory(), null));
 	}
 
 	@Test
-	public void createsQueryMethodObjectForMethodReturningAnInterface() throws Exception {
+	void rejectsMonoPageableResult() {
+		assertThatIllegalStateException()
+				.isThrownBy(() -> queryMethod(PersonRepository.class, "findMonoByLastname", String.class, Pageable.class));
+	}
+
+	@Test
+	void createsQueryMethodObjectForMethodReturningAnInterface() throws Exception {
 		queryMethod(SampleRepository.class, "methodReturningAnInterface");
 	}
 
-	@Test(expected = InvalidDataAccessApiUsageException.class)
-	public void throwsExceptionOnWrappedPage() throws Exception {
-		queryMethod(PersonRepository.class, "findMonoPageByLastname", String.class, Pageable.class);
-	}
-
-	@Test(expected = InvalidDataAccessApiUsageException.class)
-	public void throwsExceptionOnWrappedSlice() throws Exception {
-		queryMethod(PersonRepository.class, "findMonoSliceByLastname", String.class, Pageable.class);
+	@Test
+	void throwsExceptionOnWrappedPage() {
+		assertThatExceptionOfType(InvalidDataAccessApiUsageException.class)
+				.isThrownBy(() -> queryMethod(PersonRepository.class, "findMonoPageByLastname", String.class, Pageable.class));
 	}
 
 	@Test
-	public void fallsBackToRepositoryDomainTypeIfMethodDoesNotReturnADomainType() throws Exception {
+	void throwsExceptionOnWrappedSlice() {
+		assertThatExceptionOfType(InvalidDataAccessApiUsageException.class)
+				.isThrownBy(() -> queryMethod(PersonRepository.class, "findMonoSliceByLastname", String.class, Pageable.class));
+	}
+
+	@Test
+	void fallsBackToRepositoryDomainTypeIfMethodDoesNotReturnADomainType() throws Exception {
 
 		R2dbcQueryMethod method = queryMethod(PersonRepository.class, "deleteByUserName", String.class);
 
@@ -132,7 +134,7 @@ public class R2dbcQueryMethodUnitTests {
 	}
 
 	@Test // gh-421
-	public void fallsBackToRepositoryDomainTypeIfMethodReturnsKotlinUnit() throws Exception {
+	void fallsBackToRepositoryDomainTypeIfMethodReturnsKotlinUnit() throws Exception {
 
 		R2dbcQueryMethod method = queryMethod(PersonRepository.class, "deleteByFirstname", String.class);
 
@@ -173,11 +175,11 @@ public class R2dbcQueryMethodUnitTests {
 
 	static class Contact {}
 
-	static class Address {}
+	private static class Address {}
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Modifying
-	public @interface MyModifyingAnnotation {
+	@interface MyModifyingAnnotation {
 	}
 
 }

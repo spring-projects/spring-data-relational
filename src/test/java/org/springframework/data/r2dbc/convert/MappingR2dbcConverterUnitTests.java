@@ -31,8 +31,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
@@ -57,7 +57,7 @@ public class MappingR2dbcConverterUnitTests {
 	RelationalMappingContext mappingContext = new R2dbcMappingContext();
 	MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext);
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		R2dbcCustomConversions conversions = new R2dbcCustomConversions(
@@ -335,7 +335,7 @@ public class MappingR2dbcConverterUnitTests {
 
 	static class WithSpelExpression {
 
-		private long id;
+		private final long id;
 		@Transient String hello;
 		@Transient String world;
 

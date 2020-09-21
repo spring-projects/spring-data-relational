@@ -12,10 +12,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -26,7 +26,7 @@ import org.springframework.data.r2dbc.dialect.PostgresDialect;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EntityRowMapperUnitTests {
 
 	DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
@@ -35,7 +35,7 @@ public class EntityRowMapperUnitTests {
 	RowMetadata metadata = mock(RowMetadata.class);
 	Collection<String> columns = mock(Collection.class);
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		when(columns.contains(anyString())).thenReturn(true);
@@ -159,7 +159,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	enum MyEnum {
-		ONE, TWO, THREE;
+		ONE, TWO, THREE
 	}
 
 }

@@ -34,8 +34,8 @@ import java.util.stream.IntStream;
 import javax.sql.DataSource;
 
 import org.assertj.core.api.Condition;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -63,8 +63,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@Autowired private ConnectionFactory connectionFactory;
 	protected JdbcTemplate jdbc;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		this.jdbc = createJdbcTemplate(createDataSource());
 
@@ -104,7 +104,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	protected abstract Class<? extends LegoSetRepository> getRepositoryInterfaceType();
 
 	@Test
-	public void shouldInsertNewItems() {
+	void shouldInsertNewItems() {
 
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
 		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
@@ -116,7 +116,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test
-	public void shouldFindItemsByManual() {
+	void shouldFindItemsByManual() {
 
 		shouldInsertNewItems();
 
@@ -129,7 +129,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test
-	public void shouldFindItemsByNameLike() {
+	void shouldFindItemsByNameLike() {
 
 		shouldInsertNewItems();
 
@@ -143,7 +143,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test
-	public void shouldFindApplyingProjection() {
+	void shouldFindApplyingProjection() {
 
 		shouldInsertNewItems();
 
@@ -157,7 +157,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test // gh-344
-	public void shouldFindApplyingDistinctProjection() {
+	void shouldFindApplyingDistinctProjection() {
 
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
 		LegoSet legoSet2 = new LegoSet(null, "SCHAUFELRADBAGGER", 13);
@@ -177,7 +177,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test // gh-41
-	public void shouldFindApplyingSimpleTypeProjection() {
+	void shouldFindApplyingSimpleTypeProjection() {
 
 		shouldInsertNewItems();
 
@@ -190,7 +190,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test
-	public void shouldDeleteUsingQueryMethod() {
+	void shouldDeleteUsingQueryMethod() {
 
 		shouldInsertNewItems();
 
@@ -203,7 +203,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test // gh-335
-	public void shouldFindByPageable() {
+	void shouldFindByPageable() {
 
 		Flux<LegoSet> sets = Flux.fromStream(IntStream.range(0, 100).mapToObj(value -> {
 			return new LegoSet(null, "Set " + value, value);
@@ -232,7 +232,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test // gh-335
-	public void shouldFindTop10() {
+	void shouldFindTop10() {
 
 		Flux<LegoSet> sets = Flux.fromStream(IntStream.range(0, 100).mapToObj(value -> {
 			return new LegoSet(null, "Set " + value, value);
@@ -250,7 +250,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test // gh-341
-	public void shouldDeleteAll() {
+	void shouldDeleteAll() {
 
 		shouldInsertNewItems();
 
@@ -286,7 +286,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test // gh-363
-	public void derivedQueryWithCountProjection() {
+	void derivedQueryWithCountProjection() {
 
 		shouldInsertNewItems();
 
@@ -297,7 +297,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test // gh-421
-	public void shouldDeleteAllAndReturnCount() {
+	void shouldDeleteAllAndReturnCount() {
 
 		shouldInsertNewItems();
 
@@ -351,12 +351,12 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@Setter
 	@Table("legoset")
 	@NoArgsConstructor
-	static class LegoSet extends Lego {
+	public static class LegoSet extends Lego {
 		String name;
 		Integer manual;
 
 		@PersistenceConstructor
-		public LegoSet(Integer id, String name, Integer manual) {
+		LegoSet(Integer id, String name, Integer manual) {
 			super(id);
 			this.name = name;
 			this.manual = manual;

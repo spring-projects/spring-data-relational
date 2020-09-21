@@ -29,8 +29,8 @@ import java.util.Arrays;
 
 import javax.sql.DataSource;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -45,7 +45,7 @@ import org.springframework.data.r2dbc.testing.H2TestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against H2.
@@ -53,7 +53,7 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @author Mark Paluch
  * @author Zsombor Gegesy
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration
 public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIntegrationTests {
 

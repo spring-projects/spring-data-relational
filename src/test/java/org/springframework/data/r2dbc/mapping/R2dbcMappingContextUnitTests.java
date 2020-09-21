@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;

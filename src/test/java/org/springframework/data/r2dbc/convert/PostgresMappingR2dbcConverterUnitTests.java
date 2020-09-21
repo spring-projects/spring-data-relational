@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.CustomConversions;
@@ -49,7 +49,7 @@ public class PostgresMappingR2dbcConverterUnitTests {
 	RelationalMappingContext mappingContext = new R2dbcMappingContext();
 	MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext);
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		List<Object> converters = new ArrayList<>(PostgresDialect.INSTANCE.getConverters());

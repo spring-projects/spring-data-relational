@@ -22,7 +22,7 @@ import io.r2dbc.h2.H2ConnectionConfiguration;
 import io.r2dbc.h2.H2ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactory;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -34,10 +34,10 @@ import org.springframework.r2dbc.core.DatabaseClient;
  *
  * @author Mark Paluch
  */
-public class R2dbcConfigurationIntegrationTests {
+class R2dbcConfigurationIntegrationTests {
 
 	@Test // gh-95
-	public void shouldLookupConnectionFactoryThroughLocalCall() {
+	void shouldLookupConnectionFactoryThroughLocalCall() {
 
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				NonBeanConnectionFactoryConfiguration.class);
@@ -53,7 +53,7 @@ public class R2dbcConfigurationIntegrationTests {
 	}
 
 	@Test // gh-95
-	public void shouldLookupConnectionFactoryThroughLocalCallForExistingCustomBeans() {
+	void shouldLookupConnectionFactoryThroughLocalCallForExistingCustomBeans() {
 
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				CustomConnectionFactoryBeanNameConfiguration.class);
@@ -73,7 +73,7 @@ public class R2dbcConfigurationIntegrationTests {
 	}
 
 	@Test // gh-95
-	public void shouldRegisterConnectionFactory() {
+	void shouldRegisterConnectionFactory() {
 
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				BeanConnectionFactoryConfiguration.class);

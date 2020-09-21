@@ -41,9 +41,9 @@ import java.util.function.Consumer;
 
 import javax.sql.DataSource;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
@@ -63,15 +63,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
-	@ClassRule public static final ExternalDatabase database = PostgresTestSupport.database();
+	@RegisterExtension public static final ExternalDatabase database = PostgresTestSupport.database();
 
-	DataSource dataSource = PostgresTestSupport.createDataSource(database);
-	ConnectionFactory connectionFactory = PostgresTestSupport.createConnectionFactory(database);
-	JdbcTemplate template = createJdbcTemplate(dataSource);
-	DatabaseClient client = DatabaseClient.create(connectionFactory);
+	private final DataSource dataSource = PostgresTestSupport.createDataSource(database);
+	private final ConnectionFactory connectionFactory = PostgresTestSupport.createConnectionFactory(database);
+	private final JdbcTemplate template = createJdbcTemplate(dataSource);
+	private final DatabaseClient client = DatabaseClient.create(connectionFactory);
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		template.execute("DROP TABLE IF EXISTS with_arrays");
 		template.execute("CREATE TABLE with_arrays (" //
@@ -83,7 +83,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
-	public void shouldReadAndWritePrimitiveSingleDimensionArrays() {
+	void shouldReadAndWritePrimitiveSingleDimensionArrays() {
 
 		EntityWithArrays withArrays = new EntityWithArrays(null, null, new int[] { 1, 2, 3 }, null, null);
 
@@ -94,7 +94,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
-	public void shouldReadAndWriteBoxedSingleDimensionArrays() {
+	void shouldReadAndWriteBoxedSingleDimensionArrays() {
 
 		EntityWithArrays withArrays = new EntityWithArrays(null, new Integer[] { 1, 2, 3 }, null, null, null);
 
@@ -108,7 +108,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
-	public void shouldReadAndWriteConvertedDimensionArrays() {
+	void shouldReadAndWriteConvertedDimensionArrays() {
 
 		EntityWithArrays withArrays = new EntityWithArrays(null, null, null, null, Arrays.asList(5, 6, 7));
 
@@ -120,7 +120,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-30
-	public void shouldReadAndWriteMultiDimensionArrays() {
+	void shouldReadAndWriteMultiDimensionArrays() {
 
 		EntityWithArrays withArrays = new EntityWithArrays(null, null, null, new int[][] { { 1, 2, 3 }, { 4, 5, 6 } },
 				null);
@@ -139,7 +139,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 	}
 
 	@Test // gh-411
-	public void shouldWriteAndReadEnumValuesUsingDriverInternals() {
+	void shouldWriteAndReadEnumValuesUsingDriverInternals() {
 
 		CodecRegistrar codecRegistrar = EnumCodec.builder().withEnum("state_enum", State.class).build();
 
@@ -184,12 +184,12 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 		Good, Bad
 	}
 
-	static class StateConverter extends EnumWriteSupport<State> {
+	private static class StateConverter extends EnumWriteSupport<State> {
 
 	}
 
 	@Test // gh-423
-	public void shouldReadAndWriteGeoTypes() {
+	void shouldReadAndWriteGeoTypes() {
 
 		GeoType geoType = new GeoType();
 		geoType.thePoint = Point.of(1, 2);

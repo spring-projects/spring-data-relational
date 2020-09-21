@@ -26,8 +26,8 @@ import javax.sql.DataSource;
 
 import org.assertj.core.api.Condition;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -65,7 +65,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 	R2dbcTransactionManager transactionManager;
 	TransactionalOperator rxtx;
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		connectionFactory = createConnectionFactory();
@@ -293,7 +293,7 @@ public abstract class AbstractTransactionalDatabaseClientIntegrationTests extend
 
 	static class TransactionalService {
 
-		private DatabaseClient databaseClient;
+		private final DatabaseClient databaseClient;
 
 		public TransactionalService(DatabaseClient databaseClient) {
 			this.databaseClient = databaseClient;

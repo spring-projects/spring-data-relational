@@ -18,7 +18,7 @@ package org.springframework.data.r2dbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link ExpressionQuery}.
@@ -26,10 +26,10 @@ import org.junit.Test;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public class ExpressionQueryUnitTests {
+class ExpressionQueryUnitTests {
 
 	@Test // gh-373
-	public void bindsMultipleSpelParametersCorrectly() {
+	void bindsMultipleSpelParametersCorrectly() {
 
 		ExpressionQuery query = ExpressionQuery
 				.create("INSERT IGNORE INTO table (x, y) VALUES (:#{#point.x}, :#{#point.y})");

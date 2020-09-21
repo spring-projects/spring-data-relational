@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.spi.R2dbcException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.CannotSerializeTransactionException;
 import org.springframework.dao.DataAccessException;
@@ -37,9 +37,9 @@ import org.springframework.jdbc.support.SQLErrorCodes;
  *
  * @author Mark Paluch
  */
-public class SqlErrorCodeR2dbcExceptionTranslatorUnitTests {
+class SqlErrorCodeR2dbcExceptionTranslatorUnitTests {
 
-	private static SQLErrorCodes ERROR_CODES = new SQLErrorCodes();
+	private static final SQLErrorCodes ERROR_CODES = new SQLErrorCodes();
 	static {
 		ERROR_CODES.setBadSqlGrammarCodes("1", "2");
 		ERROR_CODES.setInvalidResultSetAccessCodes("3", "4");
@@ -52,7 +52,7 @@ public class SqlErrorCodeR2dbcExceptionTranslatorUnitTests {
 	}
 
 	@Test
-	public void shouldTranslateToBadGrammarException() {
+	void shouldTranslateToBadGrammarException() {
 
 		R2dbcExceptionTranslator sut = new SqlErrorCodeR2dbcExceptionTranslator(ERROR_CODES);
 
@@ -64,7 +64,7 @@ public class SqlErrorCodeR2dbcExceptionTranslatorUnitTests {
 	}
 
 	@Test
-	public void shouldTranslateToResultException() {
+	void shouldTranslateToResultException() {
 
 		R2dbcExceptionTranslator sut = new SqlErrorCodeR2dbcExceptionTranslator(ERROR_CODES);
 
@@ -76,7 +76,7 @@ public class SqlErrorCodeR2dbcExceptionTranslatorUnitTests {
 	}
 
 	@Test
-	public void shouldFallbackToUncategorized() {
+	void shouldFallbackToUncategorized() {
 
 		R2dbcExceptionTranslator sut = new SqlErrorCodeR2dbcExceptionTranslator(ERROR_CODES);
 
@@ -90,7 +90,7 @@ public class SqlErrorCodeR2dbcExceptionTranslatorUnitTests {
 	}
 
 	@Test
-	public void shouldTranslateDataIntegrityViolationException() {
+	void shouldTranslateDataIntegrityViolationException() {
 
 		R2dbcExceptionTranslator sut = new SqlErrorCodeR2dbcExceptionTranslator(ERROR_CODES);
 
@@ -101,7 +101,7 @@ public class SqlErrorCodeR2dbcExceptionTranslatorUnitTests {
 	}
 
 	@Test
-	public void errorCodeTranslation() {
+	void errorCodeTranslation() {
 
 		R2dbcExceptionTranslator sut = new SqlErrorCodeR2dbcExceptionTranslator(ERROR_CODES);
 
@@ -122,7 +122,7 @@ public class SqlErrorCodeR2dbcExceptionTranslatorUnitTests {
 	}
 
 	@Test
-	public void shouldApplyCustomTranslation() {
+	void shouldApplyCustomTranslation() {
 
 		String TASK = "TASK";
 		String SQL = "SQL SELECT *";

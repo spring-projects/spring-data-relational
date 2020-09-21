@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 
 import org.springframework.data.relational.core.dialect.LimitClause;
@@ -37,7 +37,7 @@ import com.github.jasync.sql.db.mysql.pool.MySQLConnectionFactory;
 public class DialectResolverUnitTests {
 
 	@Test // gh-20, gh-104
-	public void shouldResolveDatabaseType() {
+	void shouldResolveDatabaseType() {
 
 		PostgresqlConnectionFactory postgres = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
 				.host("localhost").database("foo").username("bar").password("password").build());
@@ -56,13 +56,13 @@ public class DialectResolverUnitTests {
 	}
 
 	@Test // gh-20, gh-104
-	public void shouldNotResolveUnknownDatabase() {
+	void shouldNotResolveUnknownDatabase() {
 		assertThatThrownBy(() -> DialectResolver.getDialect(new ExternalConnectionFactory("unknown")))
 				.isInstanceOf(DialectResolver.NoDialectException.class);
 	}
 
 	@Test // gh-104
-	public void shouldResolveExternalDialect() {
+	void shouldResolveExternalDialect() {
 		assertThat(DialectResolver.getDialect(new ExternalConnectionFactory("external")))
 				.isEqualTo(ExternalDialect.INSTANCE);
 	}

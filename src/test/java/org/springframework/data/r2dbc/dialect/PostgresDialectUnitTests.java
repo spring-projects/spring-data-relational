@@ -5,7 +5,7 @@ import static org.assertj.core.api.SoftAssertions.*;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
@@ -17,10 +17,10 @@ import org.springframework.r2dbc.core.binding.BindMarkers;
  *
  * @author Mark Paluch
  */
-public class PostgresDialectUnitTests {
+class PostgresDialectUnitTests {
 
 	@Test // gh-20
-	public void shouldUsePostgresPlaceholders() {
+	void shouldUsePostgresPlaceholders() {
 
 		BindMarkers bindMarkers = PostgresDialect.INSTANCE.getBindMarkersFactory().create();
 
@@ -32,7 +32,7 @@ public class PostgresDialectUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldConsiderSimpleTypes() {
+	void shouldConsiderSimpleTypes() {
 
 		SimpleTypeHolder holder = PostgresDialect.INSTANCE.getSimpleTypeHolder();
 
@@ -44,7 +44,7 @@ public class PostgresDialectUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldSupportArrays() {
+	void shouldSupportArrays() {
 
 		ArrayColumns arrayColumns = PostgresDialect.INSTANCE.getArraySupport();
 
@@ -52,7 +52,7 @@ public class PostgresDialectUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldUseBoxedArrayTypesForPrimitiveTypes() {
+	void shouldUseBoxedArrayTypesForPrimitiveTypes() {
 
 		ArrayColumns arrayColumns = PostgresDialect.INSTANCE.getArraySupport();
 
@@ -64,7 +64,7 @@ public class PostgresDialectUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldRejectNonSimpleArrayTypes() {
+	void shouldRejectNonSimpleArrayTypes() {
 
 		ArrayColumns arrayColumns = PostgresDialect.INSTANCE.getArraySupport();
 
@@ -72,7 +72,7 @@ public class PostgresDialectUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldRejectNestedCollections() {
+	void shouldRejectNestedCollections() {
 
 		ArrayColumns arrayColumns = PostgresDialect.INSTANCE.getArraySupport();
 

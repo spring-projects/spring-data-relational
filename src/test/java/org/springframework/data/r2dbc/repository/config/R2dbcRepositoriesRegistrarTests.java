@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -43,7 +43,7 @@ import org.springframework.r2dbc.core.binding.BindMarkersFactory;
  *
  * @author Mark Paluch
  */
-public class R2dbcRepositoriesRegistrarTests {
+class R2dbcRepositoriesRegistrarTests {
 
 	@Configuration
 	@EnableR2dbcRepositories(basePackages = "org.springframework.data.r2dbc.repository.config")
@@ -128,7 +128,7 @@ public class R2dbcRepositoriesRegistrarTests {
 	}
 
 	@Test // gh-13
-	public void testConfigurationUsingDatabaseClient() {
+	void testConfigurationUsingDatabaseClient() {
 
 		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				EnableWithDatabaseClient.class)) {
@@ -138,7 +138,7 @@ public class R2dbcRepositoriesRegistrarTests {
 	}
 
 	@Test // gh-406
-	public void testConfigurationUsingEntityOperations() {
+	void testConfigurationUsingEntityOperations() {
 
 		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				EnableWithEntityOperations.class)) {
@@ -148,7 +148,7 @@ public class R2dbcRepositoriesRegistrarTests {
 	}
 
 	@Test // gh-406
-	public void testMultipleDatabases() {
+	void testMultipleDatabases() {
 
 		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(MySQLConfiguration.class,
 				SQLServerConfiguration.class)) {

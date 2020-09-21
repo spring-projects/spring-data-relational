@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -41,7 +41,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  *
  * @author Mark Paluch
  */
-public class AuditingUnitTests {
+class AuditingUnitTests {
 
 	@EnableR2dbcAuditing(auditorAwareRef = "myAuditor")
 	static class AuditingConfiguration {
@@ -58,7 +58,7 @@ public class AuditingUnitTests {
 	}
 
 	@Test // gh-281
-	public void enablesAuditingAndSetsPropertiesAccordingly() throws Exception {
+	void enablesAuditingAndSetsPropertiesAccordingly() throws Exception {
 
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AuditingConfiguration.class);
 

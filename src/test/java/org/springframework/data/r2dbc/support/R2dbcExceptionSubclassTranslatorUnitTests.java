@@ -26,7 +26,7 @@ import io.r2dbc.spi.R2dbcRollbackException;
 import io.r2dbc.spi.R2dbcTimeoutException;
 import io.r2dbc.spi.R2dbcTransientResourceException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,12 +41,12 @@ import org.springframework.data.r2dbc.UncategorizedR2dbcException;
  *
  * @author Mark Paluch
  */
-public class R2dbcExceptionSubclassTranslatorUnitTests {
+class R2dbcExceptionSubclassTranslatorUnitTests {
 
-	R2dbcExceptionSubclassTranslator translator = new R2dbcExceptionSubclassTranslator();
+	private final R2dbcExceptionSubclassTranslator translator = new R2dbcExceptionSubclassTranslator();
 
 	@Test // gh-57
-	public void shouldTranslateTransientResourceException() {
+	void shouldTranslateTransientResourceException() {
 
 		Exception exception = translator.translate("", "", new R2dbcTransientResourceException(""));
 
@@ -55,7 +55,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void shouldTranslateRollbackException() {
+	void shouldTranslateRollbackException() {
 
 		Exception exception = translator.translate("", "", new R2dbcRollbackException());
 
@@ -63,7 +63,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void shouldTranslateTimeoutException() {
+	void shouldTranslateTimeoutException() {
 
 		Exception exception = translator.translate("", "", new R2dbcTimeoutException());
 
@@ -71,7 +71,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void shouldNotTranslateUnknownExceptions() {
+	void shouldNotTranslateUnknownExceptions() {
 
 		Exception exception = translator.translate("", "", new MyTransientExceptions());
 
@@ -79,7 +79,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void shouldTranslateNonTransientResourceException() {
+	void shouldTranslateNonTransientResourceException() {
 
 		Exception exception = translator.translate("", "", new R2dbcNonTransientResourceException());
 
@@ -87,7 +87,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void shouldTranslateIntegrityViolationException() {
+	void shouldTranslateIntegrityViolationException() {
 
 		Exception exception = translator.translate("", "", new R2dbcDataIntegrityViolationException());
 
@@ -95,7 +95,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void shouldTranslatePermissionDeniedException() {
+	void shouldTranslatePermissionDeniedException() {
 
 		Exception exception = translator.translate("", "", new R2dbcPermissionDeniedException());
 
@@ -103,7 +103,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void shouldTranslateBadSqlGrammarException() {
+	void shouldTranslateBadSqlGrammarException() {
 
 		Exception exception = translator.translate("", "", new R2dbcBadGrammarException());
 
@@ -111,7 +111,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void messageGeneration() {
+	void messageGeneration() {
 
 		Exception exception = translator.translate("TASK", "SOME-SQL", new R2dbcTransientResourceException("MESSAGE"));
 
@@ -121,7 +121,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void messageGenerationNullSQL() {
+	void messageGenerationNullSQL() {
 
 		Exception exception = translator.translate("TASK", null, new R2dbcTransientResourceException("MESSAGE"));
 
@@ -131,7 +131,7 @@ public class R2dbcExceptionSubclassTranslatorUnitTests {
 	}
 
 	@Test // gh-57
-	public void messageGenerationNullMessage() {
+	void messageGenerationNullMessage() {
 
 		Exception exception = translator.translate("TASK", "SOME-SQL", new R2dbcTransientResourceException());
 

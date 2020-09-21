@@ -25,8 +25,8 @@ import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
 import reactor.test.StepVerifier;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -40,12 +40,12 @@ import org.springframework.data.relational.core.mapping.Column;
  */
 public class ReactiveSelectOperationUnitTests {
 
-	DatabaseClient client;
-	R2dbcEntityTemplate entityTemplate;
-	StatementRecorder recorder;
+	private DatabaseClient client;
+	private R2dbcEntityTemplate entityTemplate;
+	private StatementRecorder recorder;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		recorder = StatementRecorder.newInstance();
 		client = DatabaseClient.builder().connectionFactory(recorder)
@@ -54,7 +54,7 @@ public class ReactiveSelectOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectAll() {
+	void shouldSelectAll() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();
@@ -77,7 +77,7 @@ public class ReactiveSelectOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectAs() {
+	void shouldSelectAs() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();
@@ -100,7 +100,7 @@ public class ReactiveSelectOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectFromTable() {
+	void shouldSelectFromTable() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();
@@ -123,7 +123,7 @@ public class ReactiveSelectOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectFirst() {
+	void shouldSelectFirst() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();
@@ -145,7 +145,7 @@ public class ReactiveSelectOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectOne() {
+	void shouldSelectOne() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();
@@ -167,7 +167,7 @@ public class ReactiveSelectOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectExists() {
+	void shouldSelectExists() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();
@@ -189,7 +189,7 @@ public class ReactiveSelectOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectCount() {
+	void shouldSelectCount() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();

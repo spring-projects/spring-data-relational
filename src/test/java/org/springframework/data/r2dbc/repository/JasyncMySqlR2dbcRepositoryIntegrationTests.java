@@ -21,8 +21,8 @@ import reactor.core.publisher.Mono;
 
 import javax.sql.DataSource;
 
-import org.junit.ClassRule;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
@@ -34,7 +34,7 @@ import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against MySQL using Jasync
@@ -42,11 +42,11 @@ import org.springframework.test.context.junit4.SpringRunner;
  *
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration
 public class JasyncMySqlR2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIntegrationTests {
 
-	@ClassRule public static final ExternalDatabase database = MySqlTestSupport.database();
+	@RegisterExtension public static final ExternalDatabase database = MySqlTestSupport.database();
 
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,

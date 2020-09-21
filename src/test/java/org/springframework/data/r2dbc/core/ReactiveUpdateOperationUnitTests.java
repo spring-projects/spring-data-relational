@@ -22,12 +22,11 @@ import static org.springframework.data.relational.core.query.Query.*;
 import io.r2dbc.spi.test.MockResult;
 import reactor.test.StepVerifier;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Update;
@@ -40,12 +39,12 @@ import org.springframework.r2dbc.core.Parameter;
  */
 public class ReactiveUpdateOperationUnitTests {
 
-	DatabaseClient client;
-	R2dbcEntityTemplate entityTemplate;
-	StatementRecorder recorder;
+	private DatabaseClient client;
+	private R2dbcEntityTemplate entityTemplate;
+	private StatementRecorder recorder;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		recorder = StatementRecorder.newInstance();
 		client = DatabaseClient.builder().connectionFactory(recorder)
@@ -54,7 +53,7 @@ public class ReactiveUpdateOperationUnitTests {
 	}
 
 	@Test // gh-410
-	public void shouldUpdate() {
+	void shouldUpdate() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
@@ -73,7 +72,7 @@ public class ReactiveUpdateOperationUnitTests {
 	}
 
 	@Test // gh-410
-	public void shouldUpdateWithTable() {
+	void shouldUpdateWithTable() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
@@ -92,7 +91,7 @@ public class ReactiveUpdateOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldUpdateWithQuery() {
+	void shouldUpdateWithQuery() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
@@ -113,7 +112,7 @@ public class ReactiveUpdateOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldUpdateInTable() {
+	void shouldUpdateInTable() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 

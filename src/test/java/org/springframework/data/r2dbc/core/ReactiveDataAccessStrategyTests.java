@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import java.util.Arrays;
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;

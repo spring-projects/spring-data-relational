@@ -33,8 +33,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.data.annotation.CreatedDate;
@@ -74,7 +74,7 @@ public class R2dbcEntityTemplateUnitTests {
 	R2dbcEntityTemplate entityTemplate;
 	StatementRecorder recorder;
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		recorder = StatementRecorder.newInstance();

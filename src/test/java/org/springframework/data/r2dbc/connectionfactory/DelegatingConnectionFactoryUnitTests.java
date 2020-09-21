@@ -22,8 +22,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import reactor.core.publisher.Mono;
 
-import org.junit.Test;
-import org.springframework.data.r2dbc.connectionfactory.DelegatingConnectionFactory;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link DelegatingConnectionFactory}.

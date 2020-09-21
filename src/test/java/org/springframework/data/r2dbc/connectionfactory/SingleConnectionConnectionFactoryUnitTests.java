@@ -27,7 +27,7 @@ import io.r2dbc.spi.Wrapped;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link SingleConnectionConnectionFactory}.

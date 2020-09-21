@@ -23,12 +23,11 @@ import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
 import reactor.test.StepVerifier;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.r2dbc.core.Parameter;
@@ -40,12 +39,12 @@ import org.springframework.r2dbc.core.Parameter;
  */
 public class ReactiveInsertOperationUnitTests {
 
-	DatabaseClient client;
-	R2dbcEntityTemplate entityTemplate;
-	StatementRecorder recorder;
+	private DatabaseClient client;
+	private R2dbcEntityTemplate entityTemplate;
+	private StatementRecorder recorder;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		recorder = StatementRecorder.newInstance();
 		client = DatabaseClient.builder().connectionFactory(recorder)
@@ -54,7 +53,7 @@ public class ReactiveInsertOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldInsert() {
+	void shouldInsert() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();
@@ -82,7 +81,7 @@ public class ReactiveInsertOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldUpdateInTable() {
+	void shouldUpdateInTable() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.build();

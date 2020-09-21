@@ -19,9 +19,9 @@ import io.r2dbc.spi.ConnectionFactory;
 
 import javax.sql.DataSource;
 
-import org.junit.ClassRule;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MySqlTestSupport;
@@ -33,7 +33,7 @@ import org.springframework.data.r2dbc.testing.MySqlTestSupport;
  */
 public class JasyncMySqlDatabaseClientIntegrationTests extends AbstractDatabaseClientIntegrationTests {
 
-	@ClassRule public static final ExternalDatabase database = MySqlTestSupport.database();
+	@RegisterExtension public static final ExternalDatabase database = MySqlTestSupport.database();
 
 	@Override
 	protected DataSource createDataSource() {

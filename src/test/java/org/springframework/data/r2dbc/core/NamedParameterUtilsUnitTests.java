@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
@@ -40,12 +40,12 @@ import org.springframework.util.MultiValueMap;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public class NamedParameterUtilsUnitTests {
+class NamedParameterUtilsUnitTests {
 
 	private final BindMarkersFactory BIND_MARKERS = PostgresDialect.INSTANCE.getBindMarkersFactory();
 
 	@Test // gh-23
-	public void shouldParseSql() {
+	void shouldParseSql() {
 
 		String sql = "xxx :a yyyy :b :c :a zzzzz";
 		ParsedSql psql = NamedParameterUtils.parseSqlStatement(sql);
@@ -65,7 +65,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void substituteNamedParameters() {
+	void substituteNamedParameters() {
 
 		MapBindParameterSource namedParams = new MapBindParameterSource(new HashMap<>());
 		namedParams.addValue("a", "a").addValue("b", "b").addValue("c", "c");
@@ -82,7 +82,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void substituteObjectArray() {
+	void substituteObjectArray() {
 
 		MapBindParameterSource namedParams = new MapBindParameterSource(new HashMap<>());
 		namedParams.addValue("a",
@@ -94,7 +94,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23, gh-105
-	public void shouldBindObjectArray() {
+	void shouldBindObjectArray() {
 
 		MapBindParameterSource namedParams = new MapBindParameterSource(new HashMap<>());
 		namedParams.addValue("a",
@@ -112,7 +112,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlContainingComments() {
+	void parseSqlContainingComments() {
 
 		String sql1 = "/*+ HINT */ xxx /* comment ? */ :a yyyy :b :c :a zzzzz -- :xx XX\n";
 
@@ -130,7 +130,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithPostgresCasting() {
+	void parseSqlStatementWithPostgresCasting() {
 
 		String expectedSql = "select 'first name' from artists where id = $1 and birth_date=$2::timestamp";
 		String sql = "select 'first name' from artists where id = :id and birth_date=:birthDate::timestamp";
@@ -143,7 +143,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithPostgresContainedOperator() {
+	void parseSqlStatementWithPostgresContainedOperator() {
 
 		String expectedSql = "select 'first name' from artists where info->'stat'->'albums' = ?? $1 and '[\"1\",\"2\",\"3\"]'::jsonb ?? '4'";
 		String sql = "select 'first name' from artists where info->'stat'->'albums' = ?? :album and '[\"1\",\"2\",\"3\"]'::jsonb ?? '4'";
@@ -155,7 +155,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithPostgresAnyArrayStringsExistsOperator() {
+	void parseSqlStatementWithPostgresAnyArrayStringsExistsOperator() {
 
 		String expectedSql = "select '[\"3\", \"11\"]'::jsonb ?| '{1,3,11,12,17}'::text[]";
 		String sql = "select '[\"3\", \"11\"]'::jsonb ?| '{1,3,11,12,17}'::text[]";
@@ -167,7 +167,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithPostgresAllArrayStringsExistsOperator() {
+	void parseSqlStatementWithPostgresAllArrayStringsExistsOperator() {
 
 		String expectedSql = "select '[\"3\", \"11\"]'::jsonb ?& '{1,3,11,12,17}'::text[] AND $1 = 'Back in Black'";
 		String sql = "select '[\"3\", \"11\"]'::jsonb ?& '{1,3,11,12,17}'::text[] AND :album = 'Back in Black'";
@@ -178,7 +178,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithEscapedColon() {
+	void parseSqlStatementWithEscapedColon() {
 
 		String expectedSql = "select '0\\:0' as a, foo from bar where baz < DATE($1 23:59:59) and baz = $2";
 		String sql = "select '0\\:0' as a, foo from bar where baz < DATE(:p1 23\\:59\\:59) and baz = :p2";
@@ -190,7 +190,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithBracketDelimitedParameterNames() {
+	void parseSqlStatementWithBracketDelimitedParameterNames() {
 
 		String expectedSql = "select foo from bar where baz = b$1$2z";
 		String sql = "select foo from bar where baz = b:{p1}:{p2}z";
@@ -201,7 +201,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithEmptyBracketsOrBracketsInQuotes() {
+	void parseSqlStatementWithEmptyBracketsOrBracketsInQuotes() {
 
 		String expectedSql = "select foo from bar where baz = b:{}z";
 		String sql = "select foo from bar where baz = b:{}z";
@@ -220,7 +220,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithSingleLetterInBrackets() {
+	void parseSqlStatementWithSingleLetterInBrackets() {
 
 		String expectedSql = "select foo from bar where baz = b$1z";
 		String sql = "select foo from bar where baz = b:{p}z";
@@ -231,7 +231,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithLogicalAnd() {
+	void parseSqlStatementWithLogicalAnd() {
 
 		String expectedSql = "xxx & yyyy";
 
@@ -241,7 +241,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void substituteNamedParametersWithLogicalAnd() {
+	void substituteNamedParametersWithLogicalAnd() {
 
 		String expectedSql = "xxx & yyyy";
 
@@ -249,7 +249,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void variableAssignmentOperator() {
+	void variableAssignmentOperator() {
 
 		String expectedSql = "x := 1";
 
@@ -257,7 +257,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithQuotedSingleQuote() {
+	void parseSqlStatementWithQuotedSingleQuote() {
 
 		String sql = "SELECT ':foo'':doo', :xxx FROM DUAL";
 
@@ -268,7 +268,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithQuotesAndCommentBefore() {
+	void parseSqlStatementWithQuotesAndCommentBefore() {
 
 		String sql = "SELECT /*:doo*/':foo', :xxx FROM DUAL";
 
@@ -279,7 +279,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-23
-	public void parseSqlStatementWithQuotesAndCommentAfter() {
+	void parseSqlStatementWithQuotesAndCommentAfter() {
 
 		String sql2 = "SELECT ':foo'/*:doo*/, :xxx FROM DUAL";
 
@@ -290,7 +290,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-138
-	public void shouldAllowParsingMultipleUseOfParameter() {
+	void shouldAllowParsingMultipleUseOfParameter() {
 
 		String sql = "SELECT * FROM person where name = :id or lastname = :id";
 
@@ -302,7 +302,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-138
-	public void multipleEqualParameterReferencesBindsValueOnce() {
+	void multipleEqualParameterReferencesBindsValueOnce() {
 
 		String sql = "SELECT * FROM person where name = :id or lastname = :id";
 
@@ -338,7 +338,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-310
-	public void multipleEqualCollectionParameterReferencesBindsValueOnce() {
+	void multipleEqualCollectionParameterReferencesBindsValueOnce() {
 
 		String sql = "SELECT * FROM person where name IN (:ids) or lastname IN (:ids)";
 
@@ -384,7 +384,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-138
-	public void multipleEqualParameterReferencesForAnonymousMarkersBindsValueMultipleTimes() {
+	void multipleEqualParameterReferencesForAnonymousMarkersBindsValueMultipleTimes() {
 
 		String sql = "SELECT * FROM person where name = :id or lastname = :id";
 
@@ -423,7 +423,7 @@ public class NamedParameterUtilsUnitTests {
 	}
 
 	@Test // gh-138
-	public void multipleEqualParameterReferencesBindsNullOnce() {
+	void multipleEqualParameterReferencesBindsNullOnce() {
 
 		String sql = "SELECT * FROM person where name = :id or lastname = :id";
 

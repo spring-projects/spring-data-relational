@@ -20,10 +20,10 @@ import static org.mockito.Mockito.*;
 
 import io.r2dbc.spi.ConnectionFactory;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException;
@@ -33,15 +33,15 @@ import org.springframework.beans.factory.BeanNotOfRequiredTypeException;
  *
  * @author Mark Paluch
  */
-@RunWith(MockitoJUnitRunner.class)
-public class BeanFactoryConnectionFactoryLookupUnitTests {
+@ExtendWith(MockitoExtension.class)
+class BeanFactoryConnectionFactoryLookupUnitTests {
 
 	private static final String CONNECTION_FACTORY_BEAN_NAME = "connectionFactory";
 
 	@Mock BeanFactory beanFactory;
 
 	@Test // gh-98
-	public void shouldLookupConnectionFactory() {
+	void shouldLookupConnectionFactory() {
 
 		DummyConnectionFactory expectedConnectionFactory = new DummyConnectionFactory();
 		when(beanFactory.getBean(CONNECTION_FACTORY_BEAN_NAME, ConnectionFactory.class))
@@ -57,7 +57,7 @@ public class BeanFactoryConnectionFactoryLookupUnitTests {
 	}
 
 	@Test // gh-98
-	public void shouldLookupWhereBeanFactoryYieldsNonConnectionFactoryType() {
+	void shouldLookupWhereBeanFactoryYieldsNonConnectionFactoryType() {
 
 		BeanFactory beanFactory = mock(BeanFactory.class);
 
@@ -71,7 +71,7 @@ public class BeanFactoryConnectionFactoryLookupUnitTests {
 	}
 
 	@Test // gh-98
-	public void shouldLookupWhereBeanFactoryHasNotBeenSupplied() {
+	void shouldLookupWhereBeanFactoryHasNotBeenSupplied() {
 
 		BeanFactoryConnectionFactoryLookup lookup = new BeanFactoryConnectionFactoryLookup();
 

@@ -19,26 +19,26 @@ import io.r2dbc.spi.ConnectionFactory;
 
 import javax.sql.DataSource;
 
-import org.junit.ClassRule;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Integration tests for {@link SimpleR2dbcRepository} against Postgres.
  *
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration
 public class PostgresSimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbcRepositoryIntegrationTests {
 
-	@ClassRule public static final ExternalDatabase database = PostgresTestSupport.database();
+	@RegisterExtension public static final ExternalDatabase database = PostgresTestSupport.database();
 
 	@Configuration
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {

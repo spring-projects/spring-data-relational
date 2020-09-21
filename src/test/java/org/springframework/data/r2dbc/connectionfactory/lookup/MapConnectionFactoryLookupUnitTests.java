@@ -22,7 +22,7 @@ import io.r2dbc.spi.ConnectionFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link MapConnectionFactoryLookup}.

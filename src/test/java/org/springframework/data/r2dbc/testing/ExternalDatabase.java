@@ -22,22 +22,22 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.AssumptionViolatedException;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.opentest4j.TestAbortedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
 /**
- * {@link ExternalResource} wrapper to encapsulate {@link ProvidedDatabase} and
- * {@link org.testcontainers.containers.PostgreSQLContainer}.
+ * {@link BeforeAllCallback} wrapper to encapsulate {@link ProvidedDatabase} and {@link JdbcDatabaseContainer}.
  *
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public abstract class ExternalDatabase extends ExternalResource {
+public abstract class ExternalDatabase implements BeforeAllCallback {
 
-	private static Logger LOG = LoggerFactory.getLogger(ExternalDatabase.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ExternalDatabase.class);
 
 	/**
 	 * Construct an absent database that is used as {@literal null} object if no database is available.
@@ -79,13 +79,13 @@ public abstract class ExternalDatabase extends ExternalResource {
 	public abstract String getJdbcUrl();
 
 	/**
-	 * Throws an {@link AssumptionViolatedException} if the database cannot be reached.
+	 * Throws an {@link TestAbortedException} if the database cannot be reached.
 	 */
 	@Override
-	protected void before() {
+	public void beforeAll(ExtensionContext context) {
 
 		if (!checkValidity()) {
-			throw new AssumptionViolatedException(
+			throw new TestAbortedException(
 					String.format("Cannot connect to %s:%d. Skipping tests.", getHostname(), getPort()));
 		}
 	}

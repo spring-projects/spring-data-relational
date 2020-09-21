@@ -22,20 +22,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link Bindings}.
  *
  * @author Mark Paluch
  */
-public class BindingsUnitTests {
+class BindingsUnitTests {
 
-	BindMarkersFactory markersFactory = BindMarkersFactory.indexed("$", 1);
-	BindTarget bindTarget = mock(BindTarget.class);
+	private final BindMarkersFactory markersFactory = BindMarkersFactory.indexed("$", 1);
+	private final BindTarget bindTarget = mock(BindTarget.class);
 
 	@Test // gh-64
-	public void shouldCreateBindings() {
+	void shouldCreateBindings() {
 
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
@@ -46,7 +46,7 @@ public class BindingsUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldApplyValueBinding() {
+	void shouldApplyValueBinding() {
 
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
@@ -57,7 +57,7 @@ public class BindingsUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldApplySimpleValueBinding() {
+	void shouldApplySimpleValueBinding() {
 
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
@@ -69,7 +69,7 @@ public class BindingsUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldApplyNullBinding() {
+	void shouldApplyNullBinding() {
 
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
@@ -81,7 +81,7 @@ public class BindingsUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldApplySimpleNullBinding() {
+	void shouldApplySimpleNullBinding() {
 
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
@@ -93,7 +93,7 @@ public class BindingsUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldConsumeBindings() {
+	void shouldConsumeBindings() {
 
 		MutableBindings bindings = new MutableBindings(markersFactory.create());
 
@@ -122,7 +122,7 @@ public class BindingsUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMergeBindings() {
+	void shouldMergeBindings() {
 
 		BindMarkers markers = markersFactory.create();
 

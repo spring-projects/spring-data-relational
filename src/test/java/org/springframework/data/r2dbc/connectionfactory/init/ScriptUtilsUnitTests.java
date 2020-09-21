@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.core.util.Strings;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
@@ -32,10 +32,10 @@ import org.springframework.core.io.support.EncodedResource;
  *
  * @author Mark Paluch
  */
-public class ScriptUtilsUnitTests {
+class ScriptUtilsUnitTests {
 
 	@Test
-	public void splitSqlScriptDelimitedWithSemicolon() {
+	void splitSqlScriptDelimitedWithSemicolon() {
 
 		String rawStatement1 = "insert into customer (id, name)\nvalues (1, 'Rod ; Johnson'), (2, 'Adrian \n Collier')";
 		String cleanedStatement1 = "insert into customer (id, name) values (1, 'Rod ; Johnson'), (2, 'Adrian \n Collier')";
@@ -53,7 +53,7 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void splitSqlScriptDelimitedWithNewLine() {
+	void splitSqlScriptDelimitedWithNewLine() {
 
 		String statement1 = "insert into customer (id, name) values (1, 'Rod ; Johnson'), (2, 'Adrian \n Collier')";
 		String statement2 = "insert into orders(id, order_date, customer_id) values (1, '2008-01-02', 2)";
@@ -68,7 +68,7 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void splitSqlScriptDelimitedWithNewLineButDefaultDelimiterSpecified() {
+	void splitSqlScriptDelimitedWithNewLineButDefaultDelimiterSpecified() {
 
 		String statement1 = "do something";
 		String statement2 = "do something else";
@@ -84,7 +84,7 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void splitScriptWithSingleQuotesNestedInsideDoubleQuotes() {
+	void splitScriptWithSingleQuotesNestedInsideDoubleQuotes() {
 
 		String statement1 = "select '1' as \"Dogbert's owner's\" from dual";
 		String statement2 = "select '2' as \"Dilbert's\" from dual";
@@ -99,7 +99,7 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void readAndSplitScriptWithMultipleNewlinesAsSeparator() {
+	void readAndSplitScriptWithMultipleNewlinesAsSeparator() {
 
 		String script = readScript("db-test-data-multi-newline.sql");
 		List<String> statements = new ArrayList<>();
@@ -114,13 +114,13 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void readAndSplitScriptContainingComments() {
+	void readAndSplitScriptContainingComments() {
 		String script = readScript("test-data-with-comments.sql");
 		splitScriptContainingComments(script);
 	}
 
 	@Test
-	public void readAndSplitScriptContainingCommentsWithWindowsLineEnding() {
+	void readAndSplitScriptContainingCommentsWithWindowsLineEnding() {
 		String script = readScript("test-data-with-comments.sql").replaceAll("\n", "\r\n");
 		splitScriptContainingComments(script);
 	}
@@ -139,7 +139,7 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void readAndSplitScriptContainingCommentsWithLeadingTabs() {
+	void readAndSplitScriptContainingCommentsWithLeadingTabs() {
 
 		String script = readScript("test-data-with-comments-and-leading-tabs.sql");
 		List<String> statements = new ArrayList<>();
@@ -153,7 +153,7 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void readAndSplitScriptContainingMultiLineComments() {
+	void readAndSplitScriptContainingMultiLineComments() {
 
 		String script = readScript("test-data-with-multi-line-comments.sql");
 		List<String> statements = new ArrayList<>();
@@ -166,7 +166,7 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void readAndSplitScriptContainingMultiLineNestedComments() {
+	void readAndSplitScriptContainingMultiLineNestedComments() {
 
 		String script = readScript("test-data-with-multi-line-nested-comments.sql");
 		List<String> statements = new ArrayList<>();
@@ -179,7 +179,7 @@ public class ScriptUtilsUnitTests {
 	}
 
 	@Test
-	public void containsDelimiters() {
+	void containsDelimiters() {
 
 		assertThat(ScriptUtils.containsSqlScriptDelimiters("select 1\n select ';'", ";")).isFalse();
 		assertThat(ScriptUtils.containsSqlScriptDelimiters("select 1; select 2", ";")).isTrue();

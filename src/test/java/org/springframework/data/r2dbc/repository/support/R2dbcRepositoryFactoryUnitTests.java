@@ -18,11 +18,11 @@ package org.springframework.data.r2dbc.repository.support;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
@@ -39,7 +39,7 @@ import org.springframework.r2dbc.core.DatabaseClient;
  *
  * @author Mark Paluch
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class R2dbcRepositoryFactoryUnitTests {
 
 	R2dbcConverter r2dbcConverter = new MappingR2dbcConverter(new R2dbcMappingContext());
@@ -47,7 +47,7 @@ public class R2dbcRepositoryFactoryUnitTests {
 	@Mock DatabaseClient databaseClient;
 	@Mock ReactiveDataAccessStrategy dataAccessStrategy;
 
-	@Before
+	@BeforeEach
 	@SuppressWarnings("unchecked")
 	public void before() {
 		when(dataAccessStrategy.getConverter()).thenReturn(r2dbcConverter);

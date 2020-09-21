@@ -22,12 +22,11 @@ import static org.springframework.data.relational.core.query.Query.*;
 import io.r2dbc.spi.test.MockResult;
 import reactor.test.StepVerifier;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.r2dbc.core.Parameter;
@@ -39,12 +38,12 @@ import org.springframework.r2dbc.core.Parameter;
  */
 public class ReactiveDeleteOperationUnitTests {
 
-	DatabaseClient client;
-	R2dbcEntityTemplate entityTemplate;
-	StatementRecorder recorder;
+	private DatabaseClient client;
+	private R2dbcEntityTemplate entityTemplate;
+	private StatementRecorder recorder;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		recorder = StatementRecorder.newInstance();
 		client = DatabaseClient.builder().connectionFactory(recorder)
@@ -53,7 +52,7 @@ public class ReactiveDeleteOperationUnitTests {
 	}
 
 	@Test // gh-410
-	public void shouldDelete() {
+	void shouldDelete() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
@@ -71,7 +70,7 @@ public class ReactiveDeleteOperationUnitTests {
 	}
 
 	@Test // gh-410
-	public void shouldDeleteWithTable() {
+	void shouldDeleteWithTable() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
@@ -89,7 +88,7 @@ public class ReactiveDeleteOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldDeleteWithQuery() {
+	void shouldDeleteWithQuery() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
@@ -109,7 +108,7 @@ public class ReactiveDeleteOperationUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldDeleteInTable() {
+	void shouldDeleteInTable() {
 
 		MockResult result = MockResult.builder().rowsUpdated(1).build();
 

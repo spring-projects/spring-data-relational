@@ -23,11 +23,11 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.context.Context;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Unit tests for {@link AbstractRoutingConnectionFactory}.
@@ -35,25 +35,25 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-@RunWith(MockitoJUnitRunner.class)
-public class AbstractRoutingConnectionFactoryUnitTests {
+@ExtendWith(MockitoExtension.class)
+class AbstractRoutingConnectionFactoryUnitTests {
 
 	private static final String ROUTING_KEY = "routingKey";
 
 	@Mock ConnectionFactory defaultConnectionFactory;
 	@Mock ConnectionFactory routedConnectionFactory;
 
-	DummyRoutingConnectionFactory connectionFactory;
+	private DummyRoutingConnectionFactory connectionFactory;
 
-	@Before
-	public void before() {
+	@BeforeEach
+	void before() {
 
 		connectionFactory = new DummyRoutingConnectionFactory();
 		connectionFactory.setDefaultTargetConnectionFactory(defaultConnectionFactory);
 	}
 
 	@Test // gh-98
-	public void shouldDetermineRoutedFactory() {
+	void shouldDetermineRoutedFactory() {
 
 		connectionFactory.setTargetConnectionFactories(singletonMap("key", routedConnectionFactory));
 		connectionFactory.setConnectionFactoryLookup(new MapConnectionFactoryLookup());
@@ -67,7 +67,7 @@ public class AbstractRoutingConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-98
-	public void shouldFallbackToDefaultConnectionFactory() {
+	void shouldFallbackToDefaultConnectionFactory() {
 
 		connectionFactory.setTargetConnectionFactories(singletonMap("key", routedConnectionFactory));
 		connectionFactory.afterPropertiesSet();
@@ -79,7 +79,7 @@ public class AbstractRoutingConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-98
-	public void initializationShouldFailUnsupportedLookupKey() {
+	void initializationShouldFailUnsupportedLookupKey() {
 
 		connectionFactory.setTargetConnectionFactories(singletonMap("key", new Object()));
 
@@ -87,7 +87,7 @@ public class AbstractRoutingConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-98
-	public void initializationShouldFailUnresolvableKey() {
+	void initializationShouldFailUnresolvableKey() {
 
 		connectionFactory.setTargetConnectionFactories(singletonMap("key", "value"));
 		connectionFactory.setConnectionFactoryLookup(new MapConnectionFactoryLookup());
@@ -98,7 +98,7 @@ public class AbstractRoutingConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-98
-	public void unresolvableConnectionFactoryRetrievalShouldFail() {
+	void unresolvableConnectionFactoryRetrievalShouldFail() {
 
 		connectionFactory.setLenientFallback(false);
 		connectionFactory.setConnectionFactoryLookup(new MapConnectionFactoryLookup());
@@ -112,7 +112,7 @@ public class AbstractRoutingConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-98
-	public void connectionFactoryRetrievalWithUnknownLookupKeyShouldReturnDefaultConnectionFactory() {
+	void connectionFactoryRetrievalWithUnknownLookupKeyShouldReturnDefaultConnectionFactory() {
 
 		connectionFactory.setTargetConnectionFactories(singletonMap("key", routedConnectionFactory));
 		connectionFactory.setDefaultTargetConnectionFactory(defaultConnectionFactory);
@@ -126,7 +126,7 @@ public class AbstractRoutingConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-98
-	public void connectionFactoryRetrievalWithoutLookupKeyShouldReturnDefaultConnectionFactory() {
+	void connectionFactoryRetrievalWithoutLookupKeyShouldReturnDefaultConnectionFactory() {
 
 		connectionFactory.setTargetConnectionFactories(singletonMap("key", routedConnectionFactory));
 		connectionFactory.setDefaultTargetConnectionFactory(defaultConnectionFactory);
@@ -140,7 +140,7 @@ public class AbstractRoutingConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-98
-	public void shouldLookupFromMap() {
+	void shouldLookupFromMap() {
 
 		MapConnectionFactoryLookup lookup = new MapConnectionFactoryLookup("lookup-key", routedConnectionFactory);
 
@@ -156,7 +156,7 @@ public class AbstractRoutingConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-98
-	public void shouldAllowModificationsAfterInitialization() {
+	void shouldAllowModificationsAfterInitialization() {
 
 		MapConnectionFactoryLookup lookup = new MapConnectionFactoryLookup();
 

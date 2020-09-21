@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.Collection;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.core.env.Environment;
@@ -41,32 +41,33 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
  * @author Mark Paluch
  * @author Christoph Strobl
  */
-public class R2dbcRepositoryConfigurationExtensionUnitTests {
+class R2dbcRepositoryConfigurationExtensionUnitTests {
 
-	StandardAnnotationMetadata metadata = new StandardAnnotationMetadata(Config.class, true);
-	ResourceLoader loader = new PathMatchingResourcePatternResolver();
-	Environment environment = new StandardEnvironment();
-	BeanDefinitionRegistry registry = new DefaultListableBeanFactory();
+	private final StandardAnnotationMetadata metadata = new StandardAnnotationMetadata(Config.class, true);
+	private final ResourceLoader loader = new PathMatchingResourcePatternResolver();
+	private final Environment environment = new StandardEnvironment();
+	private final BeanDefinitionRegistry registry = new DefaultListableBeanFactory();
 
-	RepositoryConfigurationSource configurationSource = new AnnotationRepositoryConfigurationSource(metadata,
+	private final RepositoryConfigurationSource configurationSource = new AnnotationRepositoryConfigurationSource(
+			metadata,
 			EnableR2dbcRepositories.class, loader, environment, registry);
 
 	@Test // gh-13
-	public void isStrictMatchIfDomainTypeIsAnnotatedWithDocument() {
+	void isStrictMatchIfDomainTypeIsAnnotatedWithDocument() {
 
 		R2dbcRepositoryConfigurationExtension extension = new R2dbcRepositoryConfigurationExtension();
 		assertHasRepo(SampleRepository.class, extension.getRepositoryConfigurations(configurationSource, loader, true));
 	}
 
 	@Test // gh-13
-	public void isStrictMatchIfRepositoryExtendsStoreSpecificBase() {
+	void isStrictMatchIfRepositoryExtendsStoreSpecificBase() {
 
 		R2dbcRepositoryConfigurationExtension extension = new R2dbcRepositoryConfigurationExtension();
 		assertHasRepo(StoreRepository.class, extension.getRepositoryConfigurations(configurationSource, loader, true));
 	}
 
 	@Test // gh-13
-	public void isNotStrictMatchIfDomainTypeIsNotAnnotatedWithDocument() {
+	void isNotStrictMatchIfDomainTypeIsNotAnnotatedWithDocument() {
 
 		R2dbcRepositoryConfigurationExtension extension = new R2dbcRepositoryConfigurationExtension();
 		assertDoesNotHaveRepo(UnannotatedRepository.class,
@@ -74,7 +75,7 @@ public class R2dbcRepositoryConfigurationExtensionUnitTests {
 	}
 
 	@Test // gh-13
-	public void doesNotHaveNonReactiveRepository() {
+	void doesNotHaveNonReactiveRepository() {
 
 		R2dbcRepositoryConfigurationExtension extension = new R2dbcRepositoryConfigurationExtension();
 		assertDoesNotHaveRepo(NonReactiveRepository.class,
@@ -105,7 +106,7 @@ public class R2dbcRepositoryConfigurationExtensionUnitTests {
 	}
 
 	@EnableR2dbcRepositories(considerNestedRepositories = true)
-	static class Config {}
+	private static class Config {}
 
 	@Table("sample")
 	static class Sample {}

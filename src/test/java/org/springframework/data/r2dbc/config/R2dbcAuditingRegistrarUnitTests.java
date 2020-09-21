@@ -17,10 +17,12 @@ package org.springframework.data.r2dbc.config;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.type.AnnotationMetadata;
@@ -30,21 +32,22 @@ import org.springframework.core.type.AnnotationMetadata;
  *
  * @author Mark Paluch
  */
-@RunWith(MockitoJUnitRunner.class)
-public class R2dbcAuditingRegistrarUnitTests {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class R2dbcAuditingRegistrarUnitTests {
 
-	private R2dbcAuditingRegistrar registrar = new R2dbcAuditingRegistrar();
+	private final R2dbcAuditingRegistrar registrar = new R2dbcAuditingRegistrar();
 
 	@Mock AnnotationMetadata metadata;
 	@Mock BeanDefinitionRegistry registry;
 
 	@Test // gh-281
-	public void rejectsNullAnnotationMetadata() {
+	void rejectsNullAnnotationMetadata() {
 		assertThatIllegalArgumentException().isThrownBy(() -> registrar.registerBeanDefinitions(null, registry));
 	}
 
 	@Test // gh-281
-	public void rejectsNullBeanDefinitionRegistry() {
+	void rejectsNullBeanDefinitionRegistry() {
 		assertThatIllegalArgumentException().isThrownBy(() -> registrar.registerBeanDefinitions(metadata, null));
 	}
 }

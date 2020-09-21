@@ -34,7 +34,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;

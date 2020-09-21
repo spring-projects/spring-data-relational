@@ -22,7 +22,7 @@ import java.time.Duration;
 
 import javax.sql.DataSource;
 
-import org.junit.ClassRule;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.MariaDbTestSupport;
@@ -36,7 +36,7 @@ import org.springframework.r2dbc.core.DatabaseClient;
 public class MariaDbTransactionalDatabaseClientIntegrationTests
 		extends AbstractTransactionalDatabaseClientIntegrationTests {
 
-	@ClassRule public static final ExternalDatabase database = MariaDbTestSupport.database();
+	@RegisterExtension public static final ExternalDatabase database = MariaDbTestSupport.database();
 
 	@Override
 	protected DataSource createDataSource() {

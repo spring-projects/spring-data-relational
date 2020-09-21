@@ -17,18 +17,17 @@ package org.springframework.data.r2dbc.mapping;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-import org.springframework.data.r2dbc.mapping.SettableValue;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link SettableValue}.
  *
  * @author Mark Paluch
  */
-public class SettableValueUnitTests {
+class SettableValueUnitTests {
 
 	@Test // gh-59
-	public void shouldCreateSettableValue() {
+	void shouldCreateSettableValue() {
 
 		SettableValue value = SettableValue.from("foo");
 
@@ -38,7 +37,7 @@ public class SettableValueUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldCreateEmpty() {
+	void shouldCreateEmpty() {
 
 		SettableValue value = SettableValue.empty(Object.class);
 
@@ -49,7 +48,7 @@ public class SettableValueUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldCreatePotentiallyEmpty() {
+	void shouldCreatePotentiallyEmpty() {
 
 		assertThat(SettableValue.fromOrEmpty("foo", Object.class).isEmpty()).isFalse();
 		assertThat(SettableValue.fromOrEmpty(null, Object.class).isEmpty()).isTrue();

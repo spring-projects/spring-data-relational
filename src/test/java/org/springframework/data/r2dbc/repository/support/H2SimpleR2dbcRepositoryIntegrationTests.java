@@ -26,8 +26,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -43,14 +43,14 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Integration tests for {@link SimpleR2dbcRepository} against H2.
  *
  * @author Mark Paluch
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration
 public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbcRepositoryIntegrationTests {
 
@@ -78,7 +78,7 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 	}
 
 	@Test // gh-90
-	public void shouldInsertNewObjectWithGivenId() {
+	void shouldInsertNewObjectWithGivenId() {
 
 		try {
 			this.jdbc.execute("DROP TABLE always_new");
@@ -108,7 +108,7 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 	}
 
 	@Test // gh-232
-	public void updateShouldFailIfRowDoesNotExist() {
+	void updateShouldFailIfRowDoesNotExist() {
 
 		LegoSet legoSet = new LegoSet(9999, "SCHAUFELRADBAGGER", 12);
 

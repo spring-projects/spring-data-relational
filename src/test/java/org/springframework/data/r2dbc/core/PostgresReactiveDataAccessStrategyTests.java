@@ -25,13 +25,12 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.Parameter;
 
@@ -50,7 +49,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	@Test // gh-161
-	public void shouldConvertPrimitiveMultidimensionArrayToWrapper() {
+	void shouldConvertPrimitiveMultidimensionArrayToWrapper() {
 
 		OutboundRow row = strategy.getOutboundRow(new WithMultidimensionalArray(new int[][] { { 1, 2, 3 }, { 4, 5 } }));
 
@@ -59,7 +58,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	@Test // gh-161
-	public void shouldConvertNullArrayToDriverArrayType() {
+	void shouldConvertNullArrayToDriverArrayType() {
 
 		OutboundRow row = strategy.getOutboundRow(new WithMultidimensionalArray(null));
 
@@ -68,7 +67,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	@Test // gh-161
-	public void shouldConvertCollectionToArray() {
+	void shouldConvertCollectionToArray() {
 
 		OutboundRow row = strategy.getOutboundRow(new WithIntegerCollection(Arrays.asList(1, 2, 3)));
 
@@ -78,7 +77,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	@Test // gh-139
-	public void shouldConvertToArray() {
+	void shouldConvertToArray() {
 
 		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
 
@@ -94,7 +93,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	@Test // gh-139
-	public void shouldApplyCustomConversion() {
+	void shouldApplyCustomConversion() {
 
 		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
 				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
@@ -109,7 +108,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	@Test // gh-139
-	public void shouldApplyCustomConversionForNull() {
+	void shouldApplyCustomConversionForNull() {
 
 		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
 				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
@@ -128,7 +127,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	@Test // gh-252
-	public void shouldConvertSetOfEnumToString() {
+	void shouldConvertSetOfEnumToString() {
 
 		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
 				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
@@ -145,7 +144,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	@Test // gh-252
-	public void shouldConvertArrayOfEnumToString() {
+	void shouldConvertArrayOfEnumToString() {
 
 		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
 				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
@@ -193,7 +192,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	static class MyObject {
 		String foo;
 
-		public MyObject(String foo) {
+		MyObject(String foo) {
 			this.foo = foo;
 		}
 
@@ -204,7 +203,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 	}
 
 	enum MyEnum {
-		ONE, TWO, THREE;
+		ONE, TWO, THREE
 	}
 
 	@WritingConverter
