@@ -89,17 +89,21 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		return createQuery(parameterAccessor).flatMapMany(it -> executeQuery(parameterAccessor, it));
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Publisher<?> executeQuery(RelationalParameterAccessor parameterAccessor, BindableQuery it) {
 
 		ResultProcessor processor = method.getResultProcessor().withDynamicProjection(parameterAccessor);
 		DatabaseClient.GenericExecuteSpec boundQuery = it.bind(databaseClient.sql(it));
 
-		FetchSpec<?> fetchSpec;
-		if (requiresMapping()) {
-			EntityRowMapper<?> rowMapper = new EntityRowMapper<>(resolveResultType(processor), converter);
+		FetchSpec<Object> fetchSpec;
+
+		if (isExistsQuery()) {
+			fetchSpec = (FetchSpec) boundQuery.map(row -> true);
+		} else if (requiresMapping()) {
+			EntityRowMapper rowMapper = new EntityRowMapper<>(resolveResultType(processor), converter);
 			fetchSpec = new FetchSpecAdapter<>(boundQuery.map(rowMapper));
 		} else {
-			fetchSpec = boundQuery.fetch();
+			fetchSpec = (FetchSpec) boundQuery.fetch();
 		}
 
 		SqlIdentifier tableName = method.getEntityInformation().getTableName();
@@ -143,6 +147,14 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 			return (q, t, c) -> q.rowsUpdated();
 		}
 
+		if (isCountQuery()) {
+			return (q, t, c) -> q.first().defaultIfEmpty(0L);
+		}
+
+		if (isExistsQuery()) {
+			return (q, t, c) -> q.first().defaultIfEmpty(false);
+		}
+
 		if (method.isCollectionQuery()) {
 			return (q, t, c) -> q.all();
 		}
@@ -157,6 +169,22 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 * @since 1.1
 	 */
 	protected abstract boolean isModifyingQuery();
+
+	/**
+	 * Returns whether the query should get a count projection applied.
+	 *
+	 * @return
+	 * @since 1.2
+	 */
+	protected abstract boolean isCountQuery();
+
+	/**
+	 * Returns whether the query should get an exists projection applied.
+	 *
+	 * @return
+	 * @since 1.2
+	 */
+	protected abstract boolean isExistsQuery();
 
 	/**
 	 * Creates a {@link BindableQuery} instance using the given {@link ParameterAccessor}

@@ -296,6 +296,33 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
+	@Test // gh-363
+	void derivedQueryWithCount() {
+
+		shouldInsertNewItems();
+
+		repository.countByNameContains("SCH") //
+				.as(StepVerifier::create) //
+				.assertNext(i -> assertThat(i).isEqualTo(2)) //
+				.verifyComplete();
+	}
+
+	@Test // gh-468
+	void derivedQueryWithExists() {
+
+		shouldInsertNewItems();
+
+		repository.existsByName("ABS") //
+				.as(StepVerifier::create) //
+				.expectNext(Boolean.FALSE) //
+				.verifyComplete();
+
+		repository.existsByName("SCHAUFELRADBAGGER") //
+				.as(StepVerifier::create) //
+				.expectNext(true) //
+				.verifyComplete();
+	}
+
 	@Test // gh-421
 	void shouldDeleteAllAndReturnCount() {
 
@@ -345,6 +372,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Mono<Integer> deleteAllAndReturnCount();
 
 		Mono<Integer> countByNameContains(String namePart);
+
+		Mono<Boolean> existsByName(String name);
 	}
 
 	@Getter

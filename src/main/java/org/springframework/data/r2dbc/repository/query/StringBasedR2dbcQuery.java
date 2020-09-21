@@ -114,6 +114,24 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isCountQuery()
+	 */
+	@Override
+	protected boolean isCountQuery() {
+		return false;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#isExistsQuery()
+	 */
+	@Override
+	protected boolean isExistsQuery() {
+		return false;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
 	 */
 	@Override
@@ -132,6 +150,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 			}
 		});
 	}
+
 
 	private Mono<R2dbcSpELExpressionEvaluator> getSpelEvaluator(RelationalParameterAccessor accessor) {
 
