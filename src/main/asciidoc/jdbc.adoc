@@ -540,7 +540,7 @@ The following table shows the keywords that are supported for query methods:
 
 | `LessThanEqual`
 | `findByAgeLessThanEqual(int age)`
-| `age <= age`
+| `age \<= age`
 
 | `Between`
 | `findByAgeBetween(int from, int to)`
