@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.repository;
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
-import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
@@ -44,7 +43,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureRule;
-import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
@@ -339,6 +337,38 @@ public class JdbcRepositoryIntegrationTests {
 		});
 	}
 
+	@Test // DATAJDBC-604
+	public void existsInWorksAsExpected() {
+
+		DummyEntity dummy = repository.save(createDummyEntity());
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(repository.existsByNameIn(dummy.getName())) //
+					.describedAs("Positive") //
+					.isTrue();
+			softly.assertThat(repository.existsByNameIn()) //
+					.describedAs("Negative") //
+					.isFalse();
+		});
+	}
+
+	@Test // DATAJDBC-604
+	public void existsNotInWorksAsExpected() {
+
+		DummyEntity dummy = repository.save(createDummyEntity());
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(repository.existsByNameNotIn(dummy.getName())) //
+					.describedAs("Positive") //
+					.isFalse();
+			softly.assertThat(repository.existsByNameNotIn()) //
+					.describedAs("Negative") //
+					.isTrue();
+		});
+	}
+
 	@Test // DATAJDBC-534
 	public void countByQueryDerivation() {
 
@@ -369,6 +399,10 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT id_Prop from dummy_entity where id_Prop = :id")
 		DummyEntity withMissingColumn(@Param("id") Long id);
+
+		boolean existsByNameIn(String... names);
+
+		boolean existsByNameNotIn(String... names);
 
 		boolean existsByName(String name);
 

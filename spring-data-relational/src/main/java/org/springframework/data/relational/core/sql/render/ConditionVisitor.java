@@ -89,7 +89,12 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 		}
 
 		if (segment instanceof In) {
-			return new InVisitor(context, builder::append);
+
+			if (((In) segment).hasExpressions()) {
+				return new InVisitor(context, builder::append);
+			} else {
+				return new EmptyInVisitor(context, builder::append);
+			}
 		}
 
 		if (segment instanceof NestedCondition) {

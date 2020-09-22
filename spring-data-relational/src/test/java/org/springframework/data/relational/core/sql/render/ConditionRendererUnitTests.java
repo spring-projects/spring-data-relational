@@ -167,6 +167,22 @@ public class ConditionRendererUnitTests {
 		assertThat(sql).endsWith("WHERE my_table.left IN (my_table.right)");
 	}
 
+	@Test // DATAJDBC-604
+	public void shouldRenderEmptyIn() {
+
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.in()).build());
+
+		assertThat(sql).endsWith("WHERE 1 = 0");
+	}
+
+	@Test // DATAJDBC-604
+	public void shouldRenderEmptyNotIn() {
+
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.notIn()).build());
+
+		assertThat(sql).endsWith("WHERE 1 = 1");
+	}
+
 	@Test // DATAJDBC-309
 	public void shouldRenderLike() {
 
