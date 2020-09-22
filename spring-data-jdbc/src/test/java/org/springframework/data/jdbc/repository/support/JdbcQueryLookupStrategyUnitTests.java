@@ -36,6 +36,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -68,6 +69,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 		this.metadata = mock(RepositoryMetadata.class);
 
 		doReturn(NumberFormat.class).when(metadata).getReturnedDomainClass(any(Method.class));
+		doReturn(ClassTypeInformation.from(NumberFormat.class)).when(metadata).getReturnType(any(Method.class));
 	}
 
 	@Test // DATAJDBC-166

@@ -32,6 +32,7 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
@@ -40,6 +41,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Moises Cisneros
+ * @author Mark Paluch
  */
 public class JdbcQueryMethodUnitTests {
 
@@ -64,6 +66,7 @@ public class JdbcQueryMethodUnitTests {
 
 		metadata = mock(RepositoryMetadata.class);
 		doReturn(String.class).when(metadata).getReturnedDomainClass(any(Method.class));
+		doReturn(ClassTypeInformation.from(String.class)).when(metadata).getReturnType(any(Method.class));
 	}
 
 	@Test // DATAJDBC-165
