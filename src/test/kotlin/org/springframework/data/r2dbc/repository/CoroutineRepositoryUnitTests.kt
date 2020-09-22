@@ -15,8 +15,12 @@
  */
 package org.springframework.data.r2dbc.repository
 
+import io.r2dbc.spi.test.MockColumnMetadata
 import io.r2dbc.spi.test.MockResult
+import io.r2dbc.spi.test.MockRow
+import io.r2dbc.spi.test.MockRowMetadata
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.data.annotation.Id
@@ -62,13 +66,31 @@ class CoroutineRepositoryUnitTests {
 		}
 	}
 
+	@Test // gh-395
+	fun shouldIssueSelectQuery() {
+
+		val rowMetadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build()).columnMetadata(MockColumnMetadata.builder().name("name").build()).build()
+		val row1 = MockRow.builder().identified("id", Object::class.java, 1L).identified("name", Object::class.java, "Walter").build()
+		val row2 = MockRow.builder().identified("id", Object::class.java, 2L).identified("name", Object::class.java, "White").build()
+
+		val result = MockResult.builder().rowMetadata(rowMetadata).row(row1).row(row2).build()
+		recorder.addStubbing({ s: String -> s.startsWith("SELECT") }, result)
+
+		val repository = repositoryFactory.getRepository(PersonRepository::class.java)
+
+		runBlocking {
+			assertThat(repository.findAllByName("Walt")).hasSize(2)
+		}
+	}
+
 	interface PersonRepository : CoroutineCrudRepository<Person, Long> {
 
 		@Modifying
 		@Query("DELETE FROM person WHERE id = :id ")
 		suspend fun deleteUserAssociation(userId: Int)
-	}
 
+		suspend fun findAllByName(name: String): List<Person>
+	}
 
 	data class Person(@Id var id: Long, var name: String)
 }

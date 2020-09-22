@@ -40,6 +40,8 @@ class ReactiveR2dbcQueryMethodCoroutineUnitTests {
 		suspend fun findSuspendAllById(): Flow<Person>
 
 		fun findAllById(): Flow<Person>
+
+		suspend fun findSuspendedAllById(): List<Person>
 	}
 
 	@Test // gh-384
@@ -48,7 +50,7 @@ class ReactiveR2dbcQueryMethodCoroutineUnitTests {
 		val method = PersonRepository::class.java.getMethod("findAllById")
 		val queryMethod = R2dbcQueryMethod(method, DefaultRepositoryMetadata(PersonRepository::class.java), projectionFactory, R2dbcMappingContext())
 
-		assertThat(queryMethod.isCollectionQuery).isTrue()
+		assertThat(queryMethod.isCollectionQuery).isTrue
 	}
 
 	@Test // gh-384
@@ -57,6 +59,15 @@ class ReactiveR2dbcQueryMethodCoroutineUnitTests {
 		val method = PersonRepository::class.java.getMethod("findSuspendAllById", Continuation::class.java)
 		val queryMethod = R2dbcQueryMethod(method, DefaultRepositoryMetadata(PersonRepository::class.java), projectionFactory, R2dbcMappingContext())
 
-		assertThat(queryMethod.isCollectionQuery).isTrue()
+		assertThat(queryMethod.isCollectionQuery).isTrue
+	}
+
+	@Test // gh-395
+	internal fun `should consider suspended methods returning List as collection queries`() {
+
+		val method = PersonRepository::class.java.getMethod("findSuspendedAllById", Continuation::class.java)
+		val queryMethod = R2dbcQueryMethod(method, DefaultRepositoryMetadata(PersonRepository::class.java), projectionFactory, R2dbcMappingContext())
+
+		assertThat(queryMethod.isCollectionQuery).isTrue
 	}
 }

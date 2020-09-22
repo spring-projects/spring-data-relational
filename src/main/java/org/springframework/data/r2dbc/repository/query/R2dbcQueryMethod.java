@@ -116,8 +116,8 @@ public class R2dbcQueryMethod extends QueryMethod {
 		this.query = Optional.ofNullable(
 				AnnotatedElementUtils.findMergedAnnotation(method, Query.class));
 		this.modifying = AnnotatedElementUtils.hasAnnotation(method, Modifying.class);
-		this.isCollectionQuery = Lazy.of(() -> !(isPageQuery() || isSliceQuery())
-				&& ReactiveWrappers.isMultiValueType(metadata.getReturnType(method).getType()));
+		this.isCollectionQuery = Lazy.of(() -> (!(isPageQuery() || isSliceQuery())
+				&& ReactiveWrappers.isMultiValueType(metadata.getReturnType(method).getType())) || super.isCollectionQuery());
 	}
 
 	/* (non-Javadoc)
