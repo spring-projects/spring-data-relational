@@ -51,6 +51,7 @@ import org.mockito.stubbing.Answer;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -642,6 +643,19 @@ public class EntityRowMapperUnitTests {
 		assertThat(result.child).isNull();
 	}
 
+	@Test // DATAJDBC-508
+	public void materializesObjectWithAtValue() throws SQLException {
+
+		ResultSet rs = mockResultSet(asList("ID", "FIRST_NAME"), //
+				123L, "Hello World");
+		rs.next();
+
+		WithAtValue result = createRowMapper(WithAtValue.class).mapRow(rs, 1);
+
+		assertThat(result.getId()).isEqualTo(123L);
+		assertThat(result.getComputed()).isEqualTo("Hello World");
+	}
+
 	// Model classes to be used in tests
 
 	@With
@@ -1220,5 +1234,18 @@ public class EntityRowMapperUnitTests {
 		final Function<T, Object> extractor;
 		final Object expectedValue;
 		final String sourceColumn;
+	}
+
+	@Getter
+	private static class WithAtValue {
+
+		@Id private final Long id;
+		private final @Transient String computed;
+
+		public WithAtValue(Long id,
+				@org.springframework.beans.factory.annotation.Value("#root.first_name") String computed) {
+			this.id = id;
+			this.computed = computed;
+		}
 	}
 }

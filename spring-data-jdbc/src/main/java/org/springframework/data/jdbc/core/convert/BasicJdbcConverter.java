@@ -24,6 +24,9 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
@@ -33,7 +36,12 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mapping.model.DefaultSpELExpressionEvaluator;
+import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.mapping.model.SpELContext;
+import org.springframework.data.mapping.model.SpELExpressionEvaluator;
+import org.springframework.data.mapping.model.SpELExpressionParameterValueProvider;
 import org.springframework.data.relational.core.conversion.BasicRelationalConverter;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
@@ -60,7 +68,7 @@ import org.springframework.util.Assert;
  * @see CustomConversions
  * @since 1.1
  */
-public class BasicJdbcConverter extends BasicRelationalConverter implements JdbcConverter {
+public class BasicJdbcConverter extends BasicRelationalConverter implements JdbcConverter, ApplicationContextAware {
 
 	private static final Logger LOG = LoggerFactory.getLogger(BasicJdbcConverter.class);
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
@@ -69,6 +77,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	private final IdentifierProcessing identifierProcessing;
 
 	private final RelationResolver relationResolver;
+	private SpELContext spELContext;
 
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext} and a
@@ -88,9 +97,10 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		Assert.notNull(relationResolver, "RelationResolver must not be null");
 
-		this.relationResolver = relationResolver;
 		this.typeFactory = JdbcTypeFactory.unsupported();
 		this.identifierProcessing = IdentifierProcessing.ANSI;
+		this.relationResolver = relationResolver;
+		this.spELContext = new SpELContext(ResultSetAccessorPropertyAccessor.INSTANCE);
 	}
 
 	/**
@@ -113,9 +123,19 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		Assert.notNull(relationResolver, "RelationResolver must not be null");
 		Assert.notNull(identifierProcessing, "IdentifierProcessing must not be null");
 
-		this.relationResolver = relationResolver;
 		this.typeFactory = typeFactory;
 		this.identifierProcessing = identifierProcessing;
+		this.relationResolver = relationResolver;
+		this.spELContext = new SpELContext(ResultSetAccessorPropertyAccessor.INSTANCE);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
+	 */
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) {
+		this.spELContext = new SpELContext(this.spELContext, applicationContext);
 	}
 
 	@Nullable
@@ -344,11 +364,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		private final JdbcPropertyValueProvider propertyValueProvider;
 		private final JdbcBackReferencePropertyValueProvider backReferencePropertyValueProvider;
+		private final ResultSetAccessor accessor;
 
 		@SuppressWarnings("unchecked")
 		private ReadingContext(PersistentPropertyPathExtension rootPath, ResultSetAccessor accessor, Identifier identifier,
 				Object key) {
-
 			RelationalPersistentEntity<T> entity = (RelationalPersistentEntity<T>) rootPath.getLeafEntity();
 
 			Assert.notNull(entity, "The rootPath must point to an entity.");
@@ -361,12 +381,13 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			this.propertyValueProvider = new JdbcPropertyValueProvider(identifierProcessing, path, accessor);
 			this.backReferencePropertyValueProvider = new JdbcBackReferencePropertyValueProvider(identifierProcessing, path,
 					accessor);
+			this.accessor = accessor;
 		}
 
 		private ReadingContext(RelationalPersistentEntity<T> entity, PersistentPropertyPathExtension rootPath,
 				PersistentPropertyPathExtension path, Identifier identifier, Object key,
 				JdbcPropertyValueProvider propertyValueProvider,
-				JdbcBackReferencePropertyValueProvider backReferencePropertyValueProvider) {
+				JdbcBackReferencePropertyValueProvider backReferencePropertyValueProvider, ResultSetAccessor accessor) {
 			this.entity = entity;
 			this.rootPath = rootPath;
 			this.path = path;
@@ -374,13 +395,14 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			this.key = key;
 			this.propertyValueProvider = propertyValueProvider;
 			this.backReferencePropertyValueProvider = backReferencePropertyValueProvider;
+			this.accessor = accessor;
 		}
 
 		private <S> ReadingContext<S> extendBy(RelationalPersistentProperty property) {
 			return new ReadingContext<>(
 					(RelationalPersistentEntity<S>) getMappingContext().getRequiredPersistentEntity(property.getActualType()),
 					rootPath.extendBy(property), path.extendBy(property), identifier, key,
-					propertyValueProvider.extendBy(property), backReferencePropertyValueProvider.extendBy(property));
+					propertyValueProvider.extendBy(property), backReferencePropertyValueProvider.extendBy(property), accessor);
 		}
 
 		T mapRow() {
@@ -529,23 +551,70 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		private T createInstanceInternal(@Nullable Object idValue) {
 
-			T instance = createInstance(entity, parameter -> {
+			PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
+			ParameterValueProvider<RelationalPersistentProperty> provider;
+
+			if (persistenceConstructor != null && persistenceConstructor.hasParameters()) {
+
+				SpELExpressionEvaluator expressionEvaluator = new DefaultSpELExpressionEvaluator(accessor, spELContext);
+				provider = new SpELExpressionParameterValueProvider<>(expressionEvaluator, getConversionService(),
+						new ResultSetParameterValueProvider(idValue, entity));
+			} else {
+				provider = NoOpParameterValueProvider.INSTANCE;
+			}
+
+			T instance = createInstance(entity, provider::getParameterValue);
+
+			return entity.requiresPropertyPopulation() ? populateProperties(instance, idValue) : instance;
+		}
+
+		/**
+		 * {@link ParameterValueProvider} that reads a simple property or materializes an object for a
+		 * {@link RelationalPersistentProperty}.
+		 *
+		 * @see #readOrLoadProperty(Object, RelationalPersistentProperty)
+		 * @since 2.1
+		 */
+		private class ResultSetParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
+
+			private final @Nullable Object idValue;
+			private final RelationalPersistentEntity<?> entity;
+
+			public ResultSetParameterValueProvider(@Nullable Object idValue, RelationalPersistentEntity<?> entity) {
+				this.idValue = idValue;
+				this.entity = entity;
+			}
+
+			/*
+			 * (non-Javadoc)
+			 * @see org.springframework.data.mapping.model.ParameterValueProvider#getParameterValue(org.springframework.data.mapping.PreferredConstructor.Parameter)
+			 */
+			@Override
+			@Nullable
+			public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
 
 				String parameterName = parameter.getName();
 
 				Assert.notNull(parameterName, "A constructor parameter name must not be null to be used with Spring Data JDBC");
 
 				RelationalPersistentProperty property = entity.getRequiredPersistentProperty(parameterName);
-				return readOrLoadProperty(idValue, property);
-			});
-
-			return entity.requiresPropertyPopulation() ? populateProperties(instance, idValue) : instance;
+				return (T) readOrLoadProperty(idValue, property);
+			}
 		}
-
 	}
 
 	private boolean isSimpleProperty(RelationalPersistentProperty property) {
 		return !property.isCollectionLike() && !property.isEntity() && !property.isMap() && !property.isEmbedded();
+	}
+
+	enum NoOpParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
+
+		INSTANCE;
+
+		@Override
+		public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
+			return null;
+		}
 	}
 
 }

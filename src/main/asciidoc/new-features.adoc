@@ -7,6 +7,7 @@ This section covers the significant changes for each version.
 == What's New in Spring Data JDBC 2.1
 
 * Dialect for Oracle databases.
+* Support for `@Value` in persistence constructors.
 
 [[new-features.2-0-0]]
 == What's New in Spring Data JDBC 2.0
