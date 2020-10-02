@@ -18,6 +18,8 @@ package org.springframework.data.r2dbc.repository.query;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 import org.reactivestreams.Publisher;
 
 import org.springframework.data.mapping.model.EntityInstantiators;
@@ -100,8 +102,17 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		if (isExistsQuery()) {
 			fetchSpec = (FetchSpec) boundQuery.map(row -> true);
 		} else if (requiresMapping()) {
-			EntityRowMapper rowMapper = new EntityRowMapper<>(resolveResultType(processor), converter);
-			fetchSpec = new FetchSpecAdapter<>(boundQuery.map(rowMapper));
+
+			Class<?> resultType = resolveResultType(processor);
+			EntityRowMapper rowMapper = new EntityRowMapper<>(resultType, converter);
+
+			if (converter.isSimpleType(resultType)) {
+				fetchSpec = new UnwrapOptionalFetchSpecAdapter<>(
+						boundQuery.map((row, rowMetadata) -> Optional.ofNullable(rowMapper.apply(row, rowMetadata))));
+
+			} else {
+				fetchSpec = new FetchSpecAdapter<>(boundQuery.map(rowMapper));
+			}
 		} else {
 			fetchSpec = (FetchSpec) boundQuery.fetch();
 		}
@@ -215,6 +226,35 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		@Override
 		public Flux<T> all() {
 			return delegate.all();
+		}
+
+		@Override
+		public Mono<Integer> rowsUpdated() {
+			throw new UnsupportedOperationException("Not supported after applying a row mapper");
+		}
+	}
+
+	private static class UnwrapOptionalFetchSpecAdapter<T> implements FetchSpec<T> {
+
+		private final RowsFetchSpec<Optional<T>> delegate;
+
+		private UnwrapOptionalFetchSpecAdapter(RowsFetchSpec<Optional<T>> delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public Mono<T> one() {
+			return delegate.one().handle((optional, sink) -> optional.ifPresent(sink::next));
+		}
+
+		@Override
+		public Mono<T> first() {
+			return delegate.first().handle((optional, sink) -> optional.ifPresent(sink::next));
+		}
+
+		@Override
+		public Flux<T> all() {
+			return delegate.all().handle((optional, sink) -> optional.ifPresent(sink::next));
 		}
 
 		@Override

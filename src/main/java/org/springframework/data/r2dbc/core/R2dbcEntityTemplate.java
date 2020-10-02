@@ -432,12 +432,21 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		PreparedOperation<?> operation = statementMapper.getMappedObject(selectSpec);
 
+		boolean simpleType;
 		BiFunction<Row, RowMetadata, T> rowMapper;
 		if (returnType.isInterface()) {
+			simpleType = getConverter().isSimpleType(entityClass);
 			rowMapper = dataAccessStrategy.getRowMapper(entityClass)
 					.andThen(o -> projectionFactory.createProjection(returnType, o));
 		} else {
+			simpleType = getConverter().isSimpleType(returnType);
 			rowMapper = dataAccessStrategy.getRowMapper(returnType);
+		}
+
+		// avoid top-level null values if the read type is a simple one (e.g. SELECT MAX(age) via Integer.class)
+		if (simpleType) {
+			return new UnwrapOptionalFetchSpecAdapter<>(this.databaseClient.sql(operation)
+					.map((row, metadata) -> Optional.ofNullable(rowMapper.apply(row, metadata))));
 		}
 
 		return this.databaseClient.sql(operation).map(rowMapper);
@@ -938,6 +947,30 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 			public Mono<Integer> rowsUpdated() {
 				return delegate.rowsUpdated();
 			}
+		}
+	}
+
+	private static class UnwrapOptionalFetchSpecAdapter<T> implements RowsFetchSpec<T> {
+
+		private final RowsFetchSpec<Optional<T>> delegate;
+
+		private UnwrapOptionalFetchSpecAdapter(RowsFetchSpec<Optional<T>> delegate) {
+			this.delegate = delegate;
+		}
+
+		@Override
+		public Mono<T> one() {
+			return delegate.one().handle((optional, sink) -> optional.ifPresent(sink::next));
+		}
+
+		@Override
+		public Mono<T> first() {
+			return delegate.first().handle((optional, sink) -> optional.ifPresent(sink::next));
+		}
+
+		@Override
+		public Flux<T> all() {
+			return delegate.all().handle((optional, sink) -> optional.ifPresent(sink::next));
 		}
 	}
 }

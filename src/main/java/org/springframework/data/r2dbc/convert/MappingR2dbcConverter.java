@@ -579,6 +579,15 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		});
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.convert.R2dbcConverter#isSimpleType(Class)
+	 */
+	@Override
+	public boolean isSimpleType(Class<?> type) {
+		return getConversions().isSimpleType(type);
+	}
+
 	// ----------------------------------
 	// Id handling
 	// ----------------------------------

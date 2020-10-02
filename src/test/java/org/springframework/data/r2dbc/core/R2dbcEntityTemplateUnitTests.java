@@ -104,7 +104,25 @@ public class R2dbcEntityTemplateUnitTests {
 		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("Walter"));
 	}
 
-	@Test // gh-220
+	@Test // gh-469
+	public void shouldProjectExistsResult() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
+		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.row(MockRow.builder().identified(0, Object.class, null).build()).build();
+
+		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
+
+		entityTemplate.select(Person.class) //
+				.as(Integer.class) //
+				.matching(Query.empty().columns("MAX(age)")) //
+				.all() //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+	}
+
+	@Test // gh-469
 	public void shouldExistsByCriteria() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()

@@ -73,6 +73,17 @@ public interface R2dbcConverter
 	Class<?> getTargetType(Class<?> valueType);
 
 	/**
+	 * Return whether the {@code type} is a simple type. Simple types are database primitives or types with a custom
+	 * mapping strategy.
+	 *
+	 * @param valueType the type to inspect, must not be {@literal null}.
+	 * @return {@literal true} if the type is a simple one.
+	 * @see org.springframework.data.mapping.model.SimpleTypeHolder
+	 * @since 1.2
+	 */
+	boolean isSimpleType(Class<?> type);
+
+	/**
 	 * Returns a {@link java.util.function.Function} that populates the id property of the {@code object} from a
 	 * {@link Row}.
 	 *

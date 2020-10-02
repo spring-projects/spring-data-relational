@@ -92,6 +92,11 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		return H2LegoSetRepository.class;
 	}
 
+	@Test // gh-469
+	public void shouldSuppressNullValues() {
+		repository.findMax("doo").as(StepVerifier::create).verifyComplete();
+	}
+
 	@Test // gh-235
 	public void shouldReturnUpdateCount() {
 
@@ -138,6 +143,9 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	interface H2LegoSetRepository extends LegoSetRepository {
+
+		@Query("SELECT MAX(manual) FROM legoset WHERE name = :name")
+		Mono<Integer> findMax(String name);
 
 		@Override
 		@Query("SELECT name FROM legoset")
