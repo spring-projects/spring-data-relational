@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
@@ -54,12 +55,15 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * @param queryMethod must not be {@literal null}.
 	 * @param databaseClient must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @param expressionParser must not be {@literal null}.
 	 * @param evaluationContextProvider must not be {@literal null}.
 	 */
 	public StringBasedR2dbcQuery(R2dbcQueryMethod queryMethod, DatabaseClient databaseClient, R2dbcConverter converter,
+			ReactiveDataAccessStrategy dataAccessStrategy,
 			ExpressionParser expressionParser, ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider) {
-		this(queryMethod.getRequiredAnnotatedQuery(), queryMethod, databaseClient, converter, expressionParser,
+		this(queryMethod.getRequiredAnnotatedQuery(), queryMethod, databaseClient, converter, dataAccessStrategy,
+				expressionParser,
 				evaluationContextProvider);
 	}
 
@@ -70,11 +74,12 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 	 * @param method must not be {@literal null}.
 	 * @param databaseClient must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
+	 * @param dataAccessStrategy must not be {@literal null}.
 	 * @param expressionParser must not be {@literal null}.
 	 * @param evaluationContextProvider must not be {@literal null}.
 	 */
 	public StringBasedR2dbcQuery(String query, R2dbcQueryMethod method, DatabaseClient databaseClient,
-			R2dbcConverter converter, ExpressionParser expressionParser,
+			R2dbcConverter converter, ReactiveDataAccessStrategy dataAccessStrategy, ExpressionParser expressionParser,
 			ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		super(method, databaseClient, converter);
@@ -84,7 +89,7 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		Assert.hasText(query, "Query must not be empty");
 
 		this.expressionQuery = ExpressionQuery.create(query);
-		this.binder = new ExpressionEvaluatingParameterBinder(expressionQuery);
+		this.binder = new ExpressionEvaluatingParameterBinder(expressionQuery, dataAccessStrategy);
 		this.expressionDependencies = createExpressionDependencies();
 	}
 

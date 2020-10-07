@@ -189,9 +189,11 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 			if (namedQueries.hasQuery(namedQueryName)) {
 				String namedQuery = namedQueries.getQuery(namedQueryName);
 				return new StringBasedR2dbcQuery(namedQuery, queryMethod, this.databaseClient, this.converter,
+						this.dataAccessStrategy,
 						parser, this.evaluationContextProvider);
 			} else if (queryMethod.hasAnnotatedQuery()) {
-				return new StringBasedR2dbcQuery(queryMethod, this.databaseClient, this.converter, parser,
+				return new StringBasedR2dbcQuery(queryMethod, this.databaseClient, this.converter, this.dataAccessStrategy,
+						this.parser,
 						this.evaluationContextProvider);
 			} else {
 				return new PartTreeR2dbcQuery(queryMethod, this.databaseClient, this.converter, this.dataAccessStrategy);

@@ -33,6 +33,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -62,6 +65,7 @@ public class StringBasedR2dbcQueryUnitTests {
 
 	private RelationalMappingContext mappingContext;
 	private MappingR2dbcConverter converter;
+	private ReactiveDataAccessStrategy accessStrategy;
 	private ProjectionFactory factory;
 	private RepositoryMetadata metadata;
 
@@ -70,6 +74,7 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		this.mappingContext = new R2dbcMappingContext();
 		this.converter = new MappingR2dbcConverter(this.mappingContext);
+		this.accessStrategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE, converter);
 		this.metadata = AbstractRepositoryMetadata.getMetadata(SampleRepository.class);
 		this.factory = new SpelAwareProxyProjectionFactory();
 
@@ -240,13 +245,26 @@ public class StringBasedR2dbcQueryUnitTests {
 		verifyNoMoreInteractions(bindSpec);
 	}
 
+	@Test // gh-465
+	void translatesEnumToDatabaseValue() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("queryWithEnum", MyEnum.class);
+		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), MyEnum.INSTANCE);
+
+		BindableQuery stringQuery = query.createQuery(accessor).block();
+		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+
+		verify(bindSpec).bind(0, "INSTANCE");
+		verifyNoMoreInteractions(bindSpec);
+	}
+
 	private StringBasedR2dbcQuery getQueryMethod(String name, Class<?>... args) {
 
 		Method method = ReflectionUtils.findMethod(SampleRepository.class, name, args);
 
 		R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory, converter.getMappingContext());
 
-		return new StringBasedR2dbcQuery(queryMethod, databaseClient, converter, PARSER,
+		return new StringBasedR2dbcQuery(queryMethod, databaseClient, converter, accessStrategy, PARSER,
 				ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 
@@ -285,6 +303,9 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		@Query("SELECT * FROM person WHERE lastname = :name")
 		Person queryWithUnusedParameter(String name, Sort unused);
+
+		@Query("SELECT * FROM person WHERE lastname = :name")
+		Person queryWithEnum(MyEnum myEnum);
 	}
 
 	static class Person {
@@ -298,5 +319,9 @@ public class StringBasedR2dbcQueryUnitTests {
 		public String getName() {
 			return name;
 		}
+	}
+
+	enum MyEnum {
+		INSTANCE;
 	}
 }
