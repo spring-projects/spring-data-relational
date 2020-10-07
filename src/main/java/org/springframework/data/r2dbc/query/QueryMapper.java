@@ -399,7 +399,7 @@ public class QueryMapper {
 	}
 
 	/**
-	 * Potentially convert the {@link SettableValue}.
+	 * Potentially convert the {@link Parameter}.
 	 *
 	 * @param value
 	 * @return
