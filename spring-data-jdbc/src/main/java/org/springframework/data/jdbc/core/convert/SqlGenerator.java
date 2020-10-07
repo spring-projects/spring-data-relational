@@ -428,6 +428,7 @@ class SqlGenerator {
 			Join join = getJoin(extPath);
 			if (join != null) {
 				joinTables.add(join);
+				continue;
 			}
 
 			Column column = getColumn(extPath);
