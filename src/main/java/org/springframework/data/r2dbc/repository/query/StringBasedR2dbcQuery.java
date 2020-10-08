@@ -26,6 +26,7 @@ import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.spel.ExpressionDependencies;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -156,6 +157,12 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		});
 	}
 
+	@Override
+	Class<?> resolveResultType(ResultProcessor resultProcessor) {
+
+		Class<?> returnedType = resultProcessor.getReturnedType().getReturnedType();
+		return !returnedType.isInterface() ? returnedType : super.resolveResultType(resultProcessor);
+	}
 
 	private Mono<R2dbcSpELExpressionEvaluator> getSpelEvaluator(RelationalParameterAccessor accessor) {
 

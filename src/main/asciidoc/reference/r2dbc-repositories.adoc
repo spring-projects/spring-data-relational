@@ -354,6 +354,21 @@ template.update(other).subscribe(); // emits OptimisticLockingFailureException  
 :projection-collection: Flux
 include::../{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+2]
 
+[[projections.resultmapping]]
+==== Result Mapping
+
+A query method returning an Interface- or DTO projection is backed by results produced by the actual query.
+Interface projections generally rely on mapping results onto the domain type first to consider potential `@Column` type mappings and the actual projection proxy uses a potentially partially materialized entity to expose projection data.
+
+Result mapping for DTO projections depends on the actual query type.
+Derived queries use the domain type to map results, and Spring Data creates DTO instances solely from properties available on the domain type.
+Declaring properties in your DTO that are not available on the domain type is not supported.
+
+String-based queries use a different approach since the actual query, specifically the field projection, and result type declaration are close together.
+DTO projections used with query methods annotated with `@Query` map query results directly into the DTO type.
+Field mappings on the domain type are not considered.
+Using the DTO type directly, your query method can benefit from a more dynamic projection that isn't restricted to the domain model.
+
 include::../{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
 include::./r2dbc-entity-callbacks.adoc[leveloffset=+2]
 

@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.Value;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -142,13 +143,27 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
-	@Test
-	void shouldFindApplyingProjection() {
+	@Test // gh-475
+	void shouldFindApplyingInterfaceProjection() {
 
 		shouldInsertNewItems();
 
 		repository.findAsProjection() //
 				.map(Named::getName) //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual).contains("SCHAUFELRADBAGGER", "FORSCHUNGSSCHIFF");
+				}).verifyComplete();
+	}
+
+	@Test // gh-475
+	void shouldByStringQueryApplyingDtoProjection() {
+
+		shouldInsertNewItems();
+
+		repository.findAsDtoProjection() //
+				.map(LegoDto::getName) //
 				.collectList() //
 				.as(StepVerifier::create) //
 				.consumeNextWith(actual -> {
@@ -355,6 +370,9 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		Flux<Named> findAsProjection();
 
+		@Query("SELECT name from legoset")
+		Flux<LegoDto> findAsDtoProjection();
+
 		Flux<Named> findDistinctBy();
 
 		Mono<LegoSet> findByManual(int manual);
@@ -398,6 +416,17 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@Setter
 	static class Lego {
 		@Id Integer id;
+	}
+
+	@Value
+	static class LegoDto {
+		String name;
+		String unknown;
+
+		public LegoDto(String name, String unknown) {
+			this.name = name;
+			this.unknown = unknown;
+		}
 	}
 
 	interface Named {

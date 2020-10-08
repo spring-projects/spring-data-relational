@@ -103,10 +103,10 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 			fetchSpec = (FetchSpec) boundQuery.map(row -> true);
 		} else if (requiresMapping()) {
 
-			Class<?> resultType = resolveResultType(processor);
-			EntityRowMapper rowMapper = new EntityRowMapper<>(resultType, converter);
+			Class<?> typeToRead = resolveResultType(processor);
+			EntityRowMapper rowMapper = new EntityRowMapper<>(typeToRead, converter);
 
-			if (converter.isSimpleType(resultType)) {
+			if (converter.isSimpleType(typeToRead)) {
 				fetchSpec = new UnwrapOptionalFetchSpecAdapter<>(
 						boundQuery.map((row, rowMetadata) -> Optional.ofNullable(rowMapper.apply(row, rowMetadata))));
 
@@ -125,15 +125,15 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		return execution.execute(fetchSpec, processor.getReturnedType().getDomainType(), tableName);
 	}
 
-	private boolean requiresMapping() {
-		return !isModifyingQuery();
-	}
-
-	private Class<?> resolveResultType(ResultProcessor resultProcessor) {
+	Class<?> resolveResultType(ResultProcessor resultProcessor) {
 
 		ReturnedType returnedType = resultProcessor.getReturnedType();
 
 		return returnedType.isProjecting() ? returnedType.getDomainType() : returnedType.getReturnedType();
+	}
+
+	private boolean requiresMapping() {
+		return !isModifyingQuery();
 	}
 
 	private R2dbcQueryExecution getExecutionToWrap(ReturnedType returnedType) {

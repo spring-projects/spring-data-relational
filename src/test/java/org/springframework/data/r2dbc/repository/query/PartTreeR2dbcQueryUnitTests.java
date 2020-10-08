@@ -37,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
@@ -621,6 +622,32 @@ class PartTreeR2dbcQueryUnitTests {
 				+ ".foo FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
+	@Test // gh-475
+	void createsQueryToFindByOpenProjection() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod("findOpenProjectionBy");
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+				dataAccessStrategy);
+		BindableQuery bindableQuery = createQuery(queryMethod, r2dbcQuery);
+
+		assertThat(bindableQuery.get()).isEqualTo(
+				"SELECT users.id, users.first_name, users.last_name, users.date_of_birth, users.age, users.active FROM "
+						+ TABLE);
+	}
+
+	@Test // gh-475
+	void createsDtoProjectionQuery() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod("findAsDtoProjectionBy");
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+				dataAccessStrategy);
+		BindableQuery bindableQuery = createQuery(queryMethod, r2dbcQuery);
+
+		assertThat(bindableQuery.get()).isEqualTo(
+				"SELECT users.id, users.first_name, users.last_name, users.date_of_birth, users.age, users.active FROM "
+						+ TABLE);
+	}
+
 	@Test // gh-363
 	void createsQueryForCountProjection() throws Exception {
 
@@ -721,6 +748,10 @@ class PartTreeR2dbcQueryUnitTests {
 
 		Mono<UserProjection> findDistinctByFirstName(String firstName);
 
+		Mono<OpenUserProjection> findOpenProjectionBy();
+
+		Mono<UserDtoProjection> findAsDtoProjectionBy();
+
 		Mono<Integer> deleteByFirstName(String firstName);
 
 		Mono<Long> countByFirstName(String firstName);
@@ -743,5 +774,19 @@ class PartTreeR2dbcQueryUnitTests {
 		String getFirstName();
 
 		String getFoo();
+	}
+
+	interface OpenUserProjection {
+
+		String getFirstName();
+
+		@Value("#firstName")
+		String getFoo();
+	}
+
+	static class UserDtoProjection {
+
+		String firstName;
+		String unknown;
 	}
 }

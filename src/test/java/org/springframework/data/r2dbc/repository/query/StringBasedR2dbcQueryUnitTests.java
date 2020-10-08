@@ -258,6 +258,22 @@ public class StringBasedR2dbcQueryUnitTests {
 		verifyNoMoreInteractions(bindSpec);
 	}
 
+	@Test // gh-475
+	void usesDomainTypeForInterfaceProjectionResultMapping() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("findAsInterfaceProjection");
+
+		assertThat(query.resolveResultType(query.getQueryMethod().getResultProcessor())).isEqualTo(Person.class);
+	}
+
+	@Test // gh-475
+	void usesDtoTypeForDtoResultMapping() {
+
+		StringBasedR2dbcQuery query = getQueryMethod("findAsDtoProjection");
+
+		assertThat(query.resolveResultType(query.getQueryMethod().getResultProcessor())).isEqualTo(PersonDto.class);
+	}
+
 	private StringBasedR2dbcQuery getQueryMethod(String name, Class<?>... args) {
 
 		Method method = ReflectionUtils.findMethod(SampleRepository.class, name, args);
@@ -306,7 +322,19 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		@Query("SELECT * FROM person WHERE lastname = :name")
 		Person queryWithEnum(MyEnum myEnum);
+
+		@Query("SELECT * FROM person")
+		PersonDto findAsDtoProjection();
+
+		@Query("SELECT * FROM person")
+		PersonProjection findAsInterfaceProjection();
 	}
+
+	static class PersonDto {
+
+	}
+
+	interface PersonProjection {}
 
 	static class Person {
 
