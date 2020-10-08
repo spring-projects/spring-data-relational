@@ -235,6 +235,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 			Join join = getJoin(sqlContext, extPath);
 			if (join != null) {
 				joinTables.add(join);
+				continue;
 			}
 
 			Column column = getColumn(sqlContext, extPath);
