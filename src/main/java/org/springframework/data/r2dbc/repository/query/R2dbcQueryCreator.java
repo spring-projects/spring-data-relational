@@ -56,6 +56,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 	private final ReactiveDataAccessStrategy dataAccessStrategy;
 	private final RelationalEntityMetadata<?> entityMetadata;
 	private final List<String> projectedProperties;
+	private final Class<?> entityToRead;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link ReactiveDataAccessStrategy},
@@ -78,6 +79,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 		this.dataAccessStrategy = dataAccessStrategy;
 		this.entityMetadata = entityMetadata;
 		this.projectedProperties = projectedProperties;
+		this.entityToRead = entityMetadata.getTableEntity().getType();
 	}
 
 	/**
@@ -90,7 +92,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 	@Override
 	protected PreparedOperation<?> complete(@Nullable Criteria criteria, Sort sort) {
 
-		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityMetadata.getJavaType());
+		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityToRead);
 
 		if (tree.isDelete()) {
 			return delete(criteria, statementMapper);
@@ -157,7 +159,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 
 		} else if (tree.isExistsProjection()) {
 
-			expressions = dataAccessStrategy.getIdentifierColumns(entityMetadata.getJavaType()).stream()
+			expressions = dataAccessStrategy.getIdentifierColumns(entityToRead).stream()
 				.map(table::column)
 				.collect(Collectors.toList());
 		} else if (tree.isCountProjection()) {
@@ -165,7 +167,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 			SqlIdentifier idColumn = entityMetadata.getTableEntity().getRequiredIdProperty().getColumnName();
 			expressions = Collections.singletonList(Functions.count(table.column(idColumn)));
 		} else {
-			expressions = dataAccessStrategy.getAllColumns(entityMetadata.getJavaType()).stream()
+			expressions = dataAccessStrategy.getAllColumns(entityToRead).stream()
 				.map(table::column)
 				.collect(Collectors.toList());
 		}
