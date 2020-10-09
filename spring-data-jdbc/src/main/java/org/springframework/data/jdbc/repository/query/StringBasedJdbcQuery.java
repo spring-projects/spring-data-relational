@@ -26,11 +26,13 @@ import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
@@ -43,6 +45,7 @@ import org.springframework.util.StringUtils;
  * @author Oliver Gierke
  * @author Maciej Walkowiak
  * @author Mark Paluch
+ * @author Hebert Coelho
  * @since 2.0
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
@@ -50,9 +53,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters. Use @Param for query method parameters, or when on Java 8+ use the javac flag -parameters.";
 
 	private final JdbcQueryMethod queryMethod;
-	private final JdbcQueryExecution<?> executor;
+	private final Lazy<JdbcQueryExecution<?>> executor;
 	private final JdbcConverter converter;
-	private BeanFactory beanfactory;
+	private BeanFactory beanFactory;
 
 	/**
 	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
@@ -63,20 +66,20 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 * @param defaultRowMapper can be {@literal null} (only in case of a modifying query).
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
-			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter, BeanFactory beanfactory) {
+			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter) {
 
 		super(queryMethod, operations, defaultRowMapper);
 
 		this.queryMethod = queryMethod;
 		this.converter = converter;
-		this.beanfactory = beanfactory;
 
-		RowMapper<Object> rowMapper = determineRowMapper(defaultRowMapper);
-		executor = getQueryExecution( //
+		executor = Lazy.of(() -> {
+			RowMapper<Object> rowMapper = determineRowMapper(defaultRowMapper);
+			return getQueryExecution( //
 				queryMethod, //
 				determineResultSetExtractor(rowMapper != defaultRowMapper ? rowMapper : null), //
 				rowMapper //
-		);
+		);});
 	}
 
 	/*
@@ -85,7 +88,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 */
 	@Override
 	public Object execute(Object[] objects) {
-		return executor.execute(determineQuery(), this.bindParameters(objects));
+		return executor.get().execute(determineQuery(), this.bindParameters(objects));
 	}
 
 	/*
@@ -97,7 +100,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return queryMethod;
 	}
 
-	MapSqlParameterSource bindParameters(Object[] objects) {
+	private MapSqlParameterSource bindParameters(Object[] objects) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
@@ -140,10 +143,14 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	@Nullable
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	ResultSetExtractor<Object> determineResultSetExtractor(@Nullable RowMapper<Object> rowMapper) {
-		String resultSetExtractorBean = queryMethod.getResultSetExtractorBean();
 
-		if (resultSetExtractorBean != null && !"ResultSetExtractor".equals(resultSetExtractorBean)) {
-			return (ResultSetExtractor<Object>) beanfactory.getBean(resultSetExtractorBean);
+		String resultSetExtractorRef = queryMethod.getResultSetExtractorRef();
+
+		if (!StringUtils.isEmpty(resultSetExtractorRef)) {
+
+			Assert.notNull(beanFactory, "When a ResultSetExtractorRef is specified the BeanFactory must not be null");
+
+			return (ResultSetExtractor<Object>) beanFactory.getBean(resultSetExtractorRef);
 		}
 
 		Class<? extends ResultSetExtractor> resultSetExtractorClass = queryMethod.getResultSetExtractorClass();
@@ -163,12 +170,16 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	}
 
 	@SuppressWarnings("unchecked")
+	@Nullable
 	RowMapper<Object> determineRowMapper(@Nullable RowMapper<?> defaultMapper) {
 
-		String rowMapperBean = queryMethod.getRowMapperBean();
+		String rowMapperRef = queryMethod.getRowMapperRef();
 
-		if (rowMapperBean != null && !"RowMapper".equals(rowMapperBean)) {
-			return (RowMapper<Object>) beanfactory.getBean(rowMapperBean);
+		if (!StringUtils.isEmpty(rowMapperRef)) {
+
+			Assert.notNull(beanFactory, "When a RowMapperRef is specified the BeanFactory must not be null");
+
+			return (RowMapper<Object>) beanFactory.getBean(rowMapperRef);
 		}
 
 		Class<?> rowMapperClass = queryMethod.getRowMapperClass();
@@ -182,5 +193,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 	private static boolean isUnconfigured(@Nullable Class<?> configuredClass, Class<?> defaultClass) {
 		return configuredClass == null || configuredClass == defaultClass;
+	}
+
+	public void setBeanFactory(BeanFactory beanFactory) {
+		this.beanFactory = beanFactory;
 	}
 }

@@ -52,6 +52,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Maciej Walkowiak
  * @author Evgeni Dimitrov
  * @author Mark Paluch
+ * @author Hebert Coelho
  */
 public class JdbcQueryLookupStrategyUnitTests {
 
@@ -62,7 +63,6 @@ public class JdbcQueryLookupStrategyUnitTests {
 	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
 	RepositoryMetadata metadata;
 	NamedQueries namedQueries = mock(NamedQueries.class);
-	BeanFactory beanFactory = mock(BeanFactory.class);
 	NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
 	@Before
@@ -92,7 +92,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 
 		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, callbacks, mappingContext,
-				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, beanFactory);
+				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null);
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
 		return queryLookupStrategy.resolveQuery(method, metadata, projectionFactory, namedQueries);

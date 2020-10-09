@@ -46,6 +46,7 @@ import org.springframework.util.StringUtils;
  * @author Jens Schauder
  * @author Kazuki Shimizu
  * @author Moises Cisneros
+ * @author Hebert Coelho
  */
 public class JdbcQueryMethod extends QueryMethod {
 
@@ -175,13 +176,13 @@ public class JdbcQueryMethod extends QueryMethod {
 
 
 	/**
-	 * Returns the bean to be used as {@link org.springframework.jdbc.core.RowMapper}
+	 * Returns the name of the bean to be used as {@link org.springframework.jdbc.core.RowMapper}
 	 *
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	String getRowMapperBean() {
-		return getMergedAnnotationAttribute("rowMapperBean");
+	String getRowMapperRef() {
+		return getMergedAnnotationAttribute("rowMapperRef");
 	}
 
 	/**
@@ -195,13 +196,13 @@ public class JdbcQueryMethod extends QueryMethod {
 	}
 
 	/**
-	 * Returns the bean to be used as {@link org.springframework.jdbc.core.ResultSetExtractor}
+	 * Returns the bean name to be used as {@link org.springframework.jdbc.core.ResultSetExtractor}
 	 *
 	 * @return May be {@code null}.
 	 */
 	@Nullable
-	String getResultSetExtractorBean() {
-		return getMergedAnnotationAttribute("resultSetExtractorBean");
+	String getResultSetExtractorRef() {
+		return getMergedAnnotationAttribute("resultSetExtractorRef");
 	}
 
 	/**

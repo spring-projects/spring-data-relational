@@ -44,6 +44,7 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @author Oliver Gierke
  * @author Mark Paluch
+ * @author Hebert Coelho
  */
 public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> implements ApplicationEventPublisherAware {
@@ -86,9 +87,10 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
 
 		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
-				converter, dialect, publisher, operations, beanFactory);
+				converter, dialect, publisher, operations);
 		jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
 		jdbcRepositoryFactory.setEntityCallbacks(entityCallbacks);
+		jdbcRepositoryFactory.setBeanFactory(beanFactory);
 
 		return jdbcRepositoryFactory;
 	}

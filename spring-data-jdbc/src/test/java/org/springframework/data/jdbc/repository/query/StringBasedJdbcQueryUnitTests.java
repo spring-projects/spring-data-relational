@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import java.sql.ResultSet;
 
 import org.assertj.core.api.Assertions;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,7 +55,6 @@ public class StringBasedJdbcQueryUnitTests {
 	NamedParameterJdbcOperations operations;
 	RelationalMappingContext context;
 	JdbcConverter converter;
-	BeanFactory beanFactory;
 
 	@Before
 	public void setup() throws NoSuchMethodException {
@@ -69,7 +69,6 @@ public class StringBasedJdbcQueryUnitTests {
 		this.operations = mock(NamedParameterJdbcOperations.class);
 		this.context = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
 		this.converter = new BasicJdbcConverter(context, mock(RelationResolver.class));
-		this.beanFactory = mock(BeanFactory.class);
 	}
 
 	@Test // DATAJDBC-165
@@ -78,8 +77,15 @@ public class StringBasedJdbcQueryUnitTests {
 		doReturn(null).when(queryMethod).getDeclaredQuery();
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory)
+				.isThrownBy(() -> createQuery()
 						.execute(new Object[] {}));
+	}
+
+	@NotNull
+	private StringBasedJdbcQuery createQuery() {
+
+		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
+		return query;
 	}
 
 	@Test // DATAJDBC-165
@@ -87,7 +93,7 @@ public class StringBasedJdbcQueryUnitTests {
 
 		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(RowMapper.class).when(queryMethod).getRowMapperClass();
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
+		StringBasedJdbcQuery query = createQuery();
 
 		assertThat(query.determineRowMapper(defaultRowMapper)).isEqualTo(defaultRowMapper);
 	}
@@ -96,7 +102,7 @@ public class StringBasedJdbcQueryUnitTests {
 	public void defaultRowMapperIsUsedForNull() {
 
 		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
+		StringBasedJdbcQuery query = createQuery();
 
 		assertThat(query.determineRowMapper(defaultRowMapper)).isEqualTo(defaultRowMapper);
 	}
@@ -107,7 +113,7 @@ public class StringBasedJdbcQueryUnitTests {
 		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
+		StringBasedJdbcQuery query = createQuery();
 
 		assertThat(query.determineRowMapper(defaultRowMapper)).isInstanceOf(CustomRowMapper.class);
 	}
@@ -118,9 +124,9 @@ public class StringBasedJdbcQueryUnitTests {
 		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
 		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
 
-		new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory).execute(new Object[] {});
+		createQuery().execute(new Object[] {});
 
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
+		StringBasedJdbcQuery query = createQuery();
 
 		ResultSetExtractor<Object> resultSetExtractor = query.determineResultSetExtractor(defaultRowMapper);
 
@@ -137,7 +143,7 @@ public class StringBasedJdbcQueryUnitTests {
 		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
 		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
 
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter, beanFactory);
+		StringBasedJdbcQuery query = createQuery();
 
 		ResultSetExtractor<Object> resultSetExtractor = query
 				.determineResultSetExtractor(query.determineRowMapper(defaultRowMapper));

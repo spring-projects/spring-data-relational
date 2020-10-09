@@ -45,6 +45,7 @@ import org.springframework.util.Assert;
  * @author Greg Turnquist
  * @author Christoph Strobl
  * @author Mark Paluch
+ * @author Hebert Coelho
  */
 public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 
@@ -54,7 +55,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
 	private final Dialect dialect;
-	private BeanFactory beanfactory;
+	@Nullable private BeanFactory beanFactory;
 
 	private QueryMappingConfiguration queryMappingConfiguration = QueryMappingConfiguration.EMPTY;
 	private EntityCallbacks entityCallbacks;
@@ -72,7 +73,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 */
 	public JdbcRepositoryFactory(DataAccessStrategy dataAccessStrategy, RelationalMappingContext context,
 			JdbcConverter converter, Dialect dialect, ApplicationEventPublisher publisher,
-			NamedParameterJdbcOperations operations, BeanFactory beanfactory) {
+			NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(dataAccessStrategy, "DataAccessStrategy must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
@@ -86,7 +87,6 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 		this.dialect = dialect;
 		this.accessStrategy = dataAccessStrategy;
 		this.operations = operations;
-		this.beanfactory = beanfactory;
 	}
 
 	/**
@@ -122,7 +122,8 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			template.setEntityCallbacks(entityCallbacks);
 		}
 
-		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(repositoryInformation.getDomainType());
+		RelationalPersistentEntity<?> persistentEntity = context
+				.getRequiredPersistentEntity(repositoryInformation.getDomainType());
 
 		return getTargetRepositoryViaReflection(repositoryInformation.getRepositoryBaseClass(), template, persistentEntity);
 	}
@@ -145,7 +146,7 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		return Optional.of(new JdbcQueryLookupStrategy(publisher, entityCallbacks, context, converter, dialect,
-				queryMappingConfiguration, operations, beanfactory));
+				queryMappingConfiguration, operations, beanFactory));
 	}
 
 	/**
@@ -154,5 +155,13 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 */
 	public void setEntityCallbacks(EntityCallbacks entityCallbacks) {
 		this.entityCallbacks = entityCallbacks;
+	}
+
+	/**
+	 * @param beanFactory the {@link BeanFactory} used for looking up {@link org.springframework.jdbc.core.RowMapper} and
+	 *          {@link org.springframework.jdbc.core.ResultSetExtractor} beans.
+	 */
+	public void setBeanFactory(@Nullable BeanFactory beanFactory) {
+		this.beanFactory = beanFactory;
 	}
 }

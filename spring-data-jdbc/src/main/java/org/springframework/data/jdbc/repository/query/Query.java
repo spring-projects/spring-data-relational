@@ -32,6 +32,7 @@ import org.springframework.jdbc.core.RowMapper;
  *
  * @author Jens Schauder
  * @author Moises Cisneros
+ * @author Hebert Coelho
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -57,10 +58,12 @@ public @interface Query {
 	Class<? extends RowMapper> rowMapperClass() default RowMapper.class;
 
 	/**
-	 * Optional bean of type {@link RowMapper} to use to convert the result of the query to domain class instances. Cannot be used
+	 * Optional name of a bean of type {@link RowMapper} to use to convert the result of the query to domain class instances. Cannot be used
 	 * along with {@link #resultSetExtractorClass()} only one of the two can be set.
+	 *
+	 * @since 2.1
 	 */
-	String rowMapperBean() default "RowMapper";
+	String rowMapperRef() default "";
 
 	/**
 	 * Optional {@link ResultSetExtractor} to use to convert the result of the query to domain class instances. Cannot be
@@ -69,8 +72,10 @@ public @interface Query {
 	Class<? extends ResultSetExtractor> resultSetExtractorClass() default ResultSetExtractor.class;
 
 	/**
-	 * Optional bean of type {@link ResultSetExtractor} to use to convert the result of the query to domain class instances. Cannot be
+	 * Optional name of a bean of type {@link ResultSetExtractor} to use to convert the result of the query to domain class instances. Cannot be
 	 * used along with {@link #rowMapperClass()} only one of the two can be set.
+	 *
+	 * @since 2.1
 	 */
-	String resultSetExtractorBean() default "ResultSetExtractor";
+	String resultSetExtractorRef() default "";
 }

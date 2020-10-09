@@ -54,6 +54,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Maciej Walkowiak
  * @author Moises Cisneros
+ * @author Hebert Coelho
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
@@ -64,9 +65,9 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	private final Dialect dialect;
 	private final QueryMappingConfiguration queryMappingConfiguration;
 	private final NamedParameterJdbcOperations operations;
-	private BeanFactory beanfactory;
+	private final BeanFactory beanfactory;
 
-	public JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
+	JdbcQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 			RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 		    BeanFactory beanfactory) {
@@ -103,12 +104,14 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			if (namedQueries.hasQuery(queryMethod.getNamedQueryName()) || queryMethod.hasAnnotatedQuery()) {
 
 				RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
-				return new StringBasedJdbcQuery(queryMethod, operations, mapper, converter, beanfactory);
+				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, mapper, converter);
+				query.setBeanFactory(beanfactory);
+				return query;
 			} else {
 				return new PartTreeJdbcQuery(context, queryMethod, dialect, converter, operations, createMapper(queryMethod));
 			}
 		} catch (Exception e) {
-			throw QueryCreationException.create(queryMethod, e.getMessage());
+			throw QueryCreationException.create(queryMethod, e);
 		}
 	}
 
@@ -120,10 +123,10 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
 
 		if (persistentEntity == null) {
-			return (RowMapper) SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService());
+			return (RowMapper<Object>) SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService());
 		}
 
-		return (RowMapper) determineDefaultMapper(queryMethod);
+		return (RowMapper<Object>) determineDefaultMapper(queryMethod);
 	}
 
 	private RowMapper<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
