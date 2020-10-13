@@ -197,15 +197,16 @@ public class JdbcRepositoryPropertyConversionIntegrationTests {
 		Date date;
 		LocalDateTime localDateTime;
 		// ensures conversion on id querying
-		@Id private LocalDateTime idTimestamp;
+		@Id
+		private LocalDateTime idTimestamp;
 
-		@MappedCollection(idColumn = "ID_TIMESTAMP") Set<EntityWithColumnsRequiringConversionsRelation> relation;
+		@MappedCollection(idColumn = "ID_TIMESTAMP")
+		Set<EntityWithColumnsRequiringConversionsRelation> relation;
 	}
 
 	// DATAJDBC-349
 	@Data
 	static class EntityWithColumnsRequiringConversionsRelation {
-		@Id private LocalDateTime idTimestamp;
 		String data;
 	}
 }
