@@ -1,6 +1,19 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.1.0-RC2 (2020-10-14)
+-----------------------------------------
+* DATAJDBC-614 - Query.with(Pageable) does not properly combine sorts.
+* DATAJDBC-610 - Small documentation fix.
+* DATAJDBC-606 - Adopt to changes in Spring Data Commons.
+* DATAJDBC-604 - Usage of In operator with emptyList.
+* DATAJDBC-602 - Release 2.1 RC2 (2020.0.0).
+* DATAJDBC-596 - LessThanEqual renders ligature instead of operator in reference documentation.
+* DATAJDBC-508 - Add support for @Value.
+* DATAJDBC-430 - Make row mappers to be a spring bean.
+* DATAJDBC-349 - JdbcCustomConversions not applied to primary key on lookup.
+
+
 Changes in version 2.1.0-RC1 (2020-09-16)
 -----------------------------------------
 * DATAJDBC-598 - Adapt to changed Spring Framework CollectionUtils.
@@ -539,6 +552,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
