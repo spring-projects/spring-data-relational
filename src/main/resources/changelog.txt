@@ -1,6 +1,19 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.2.0-RC2 (2020-10-14)
+-----------------------------------------
+* #475 - Projections doesn't work using data-repositories.
+* #469 - NPE when calling @Query returning null.
+* #468 - Result of derived ExistsBy Query not handled properly.
+* #467 - Migrate tests to JUnit 5.
+* #465 - Enum values used through @Query not converted to String.
+* #463 - Update CI jobs for Java 15.
+* #462 - Release 1.2 RC2 (2020.0.0).
+* #413 - Refine reference documentation after Spring R2DBC migration.
+* #395 - Allow suspend + List in CoroutineCrudRepository.
+
+
 Changes in version 1.2.0-RC1 (2020-09-16)
 -----------------------------------------
 * #454 - Adapt to changed array assertions in AssertJ.
@@ -306,6 +319,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
