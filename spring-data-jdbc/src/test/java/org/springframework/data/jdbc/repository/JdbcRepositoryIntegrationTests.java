@@ -28,10 +28,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -54,7 +53,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,7 +65,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 public class JdbcRepositoryIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
@@ -81,7 +80,7 @@ public class JdbcRepositoryIntegrationTests {
 		return entity;
 	}
 
-	@Before
+	@BeforeEach
 	public void before() {
 		eventListener.events.clear();
 	}

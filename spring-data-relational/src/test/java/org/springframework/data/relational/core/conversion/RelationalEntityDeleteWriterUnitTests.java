@@ -16,17 +16,23 @@
 package org.springframework.data.relational.core.conversion;
 
 import lombok.Data;
-import org.assertj.core.api.Assertions;
-import org.assertj.core.groups.Tuple;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.conversion.DbAction.*;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.assertj.core.api.Assertions;
+import org.assertj.core.groups.Tuple;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.conversion.DbAction.AcquireLockAllRoot;
+import org.springframework.data.relational.core.conversion.DbAction.AcquireLockRoot;
+import org.springframework.data.relational.core.conversion.DbAction.Delete;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteAll;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteAllRoot;
+import org.springframework.data.relational.core.conversion.DbAction.DeleteRoot;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
 /**
  * Unit tests for the {@link org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter}
@@ -34,7 +40,7 @@ import java.util.List;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RelationalEntityDeleteWriterUnitTests {
 
 	RelationalEntityDeleteWriter converter = new RelationalEntityDeleteWriter(new RelationalMappingContext());
@@ -68,8 +74,8 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(entity.id, aggregateChange);
 
 		Assertions.assertThat(extractActions(aggregateChange))
-			.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
-			.containsExactly(Tuple.tuple(DeleteRoot.class, SingleEntity.class, ""));
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
+				.containsExactly(Tuple.tuple(DeleteRoot.class, SingleEntity.class, ""));
 	}
 
 	@Test // DATAJDBC-188
@@ -97,8 +103,8 @@ public class RelationalEntityDeleteWriterUnitTests {
 		converter.write(null, aggregateChange);
 
 		Assertions.assertThat(extractActions(aggregateChange))
-			.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
-			.containsExactly(Tuple.tuple(DeleteAllRoot.class, SingleEntity.class, ""));
+				.extracting(DbAction::getClass, DbAction::getEntityType, DbActionTestSupport::extractPath) //
+				.containsExactly(Tuple.tuple(DeleteAllRoot.class, SingleEntity.class, ""));
 	}
 
 	private List<DbAction<?>> extractActions(MutableAggregateChange<?> aggregateChange) {

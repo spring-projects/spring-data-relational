@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -35,8 +35,8 @@ import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
-import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -72,7 +72,7 @@ public class SqlGeneratorUnitTests {
 		throw new UnsupportedOperationException();
 	});
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.sqlGenerator = createSqlGenerator(DummyEntity.class);
 	}
@@ -223,8 +223,8 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-101
 	public void findAllSortedByMultipleFields() {
 
-		String sql = sqlGenerator.getFindAll(
-				Sort.by(new Sort.Order(Sort.Direction.DESC, "name"), new Sort.Order(Sort.Direction.ASC, "other")));
+		String sql = sqlGenerator
+				.getFindAll(Sort.by(new Sort.Order(Sort.Direction.DESC, "name"), new Sort.Order(Sort.Direction.ASC, "other")));
 
 		assertThat(sql).contains("SELECT", //
 				"dummy_entity.id1 AS id1", //
@@ -350,9 +350,10 @@ public class SqlGeneratorUnitTests {
 				+ "WHERE dummy_entity.backref = :backref");
 	}
 
-	@Test(expected = IllegalArgumentException.class) // DATAJDBC-130
+	@Test // DATAJDBC-130
 	public void findAllByPropertyOrderedWithoutKey() {
-		sqlGenerator.getFindAllByProperty(BACKREF, null, true);
+		assertThatExceptionOfType(IllegalArgumentException.class)
+				.isThrownBy(() -> sqlGenerator.getFindAllByProperty(BACKREF, null, true));
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111

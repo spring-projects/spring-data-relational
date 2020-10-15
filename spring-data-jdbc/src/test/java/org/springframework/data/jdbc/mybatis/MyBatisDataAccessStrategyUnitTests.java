@@ -23,8 +23,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import org.apache.ibatis.session.SqlSession;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -58,7 +58,7 @@ public class MyBatisDataAccessStrategyUnitTests {
 	PersistentPropertyPath<RelationalPersistentProperty> path = PropertyPathTestingUtils.toPath("one.two",
 			DummyEntity.class, context);
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		doReturn(false).when(session).selectOne(any(), any());

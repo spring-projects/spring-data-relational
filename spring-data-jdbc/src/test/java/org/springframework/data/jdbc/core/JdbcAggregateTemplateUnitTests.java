@@ -23,12 +23,11 @@ import static org.mockito.Mockito.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
@@ -56,7 +55,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback
  * @author Mark Paluch
  * @author Milan Milanov
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JdbcAggregateTemplateUnitTests {
 
 	JdbcAggregateOperations template;
@@ -66,7 +65,7 @@ public class JdbcAggregateTemplateUnitTests {
 	@Mock RelationResolver relationResolver;
 	@Mock EntityCallbacks callbacks;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 
 		RelationalMappingContext mappingContext = new RelationalMappingContext(NamingStrategy.INSTANCE);

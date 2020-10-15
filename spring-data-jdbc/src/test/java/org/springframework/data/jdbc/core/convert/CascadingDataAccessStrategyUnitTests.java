@@ -23,7 +23,7 @@ import junit.framework.AssertionFailedError;
 
 import java.util.Collections;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.jdbc.core.convert.FunctionCollector.CombinedDataAccessException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.sql.SqlIdentifier;

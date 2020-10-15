@@ -22,10 +22,9 @@ import java.sql.ResultSet;
 
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -56,7 +55,7 @@ public class StringBasedJdbcQueryUnitTests {
 	RelationalMappingContext context;
 	JdbcConverter converter;
 
-	@Before
+	@BeforeEach
 	public void setup() throws NoSuchMethodException {
 
 		this.queryMethod = mock(JdbcQueryMethod.class);

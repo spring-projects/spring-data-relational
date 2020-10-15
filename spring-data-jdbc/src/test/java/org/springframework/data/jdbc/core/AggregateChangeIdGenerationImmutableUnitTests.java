@@ -32,8 +32,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -54,7 +54,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Myeonghyeon-Lee
  */
-@Ignore
+@Disabled
 public class AggregateChangeIdGenerationImmutableUnitTests {
 
 	DummyEntity entity = new DummyEntity();

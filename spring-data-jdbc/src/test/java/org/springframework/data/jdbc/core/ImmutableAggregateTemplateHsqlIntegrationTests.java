@@ -22,10 +22,9 @@ import lombok.Value;
 import lombok.With;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +37,7 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.rules.SpringClassRule;
 import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,10 +51,9 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration
 @Transactional
 @ActiveProfiles("hsql")
+@ExtendWith(SpringExtension.class)
 public class ImmutableAggregateTemplateHsqlIntegrationTests {
 
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 	@Autowired JdbcAggregateOperations template;
 
 	@Test // DATAJDBC-241

@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.repository.config;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.jdbc.core.RowMapper;
 

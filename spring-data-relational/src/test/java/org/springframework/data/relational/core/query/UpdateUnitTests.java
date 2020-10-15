@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.query;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;
 

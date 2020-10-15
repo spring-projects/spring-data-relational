@@ -32,8 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
@@ -75,7 +75,7 @@ public class DefaultDataAccessStrategyUnitTests {
 	JdbcConverter converter;
 	DefaultDataAccessStrategy accessStrategy;
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();

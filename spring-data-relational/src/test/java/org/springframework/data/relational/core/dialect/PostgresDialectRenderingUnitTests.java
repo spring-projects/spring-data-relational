@@ -17,8 +17,8 @@ package org.springframework.data.relational.core.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.Select;
@@ -38,7 +38,7 @@ public class PostgresDialectRenderingUnitTests {
 
 	private final RenderContextFactory factory = new RenderContextFactory(PostgresDialect.INSTANCE);
 
-	@Before
+	@BeforeEach
 	public void before() throws Exception {
 		factory.setNamingStrategy(NamingStrategies.asIs());
 	}

@@ -26,9 +26,8 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,8 +43,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -56,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
+@ExtendWith(SpringExtension.class)
 public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 	private final static String CAR_MODEL = "ResultSetExtractor Car";
@@ -146,9 +145,6 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 		@Query(value = "select model from car", rowMapperRef = "CustomRowMapperBean")
 		List<String> findByNameWithRowMapperBean();
 	}
-
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired CarRepository carRepository;

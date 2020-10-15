@@ -19,9 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +37,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -49,7 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureRule.class, mergeMode = MERGE_WITH_DEFAULTS)
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 public class JdbcAggregateTemplateSchemaIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;

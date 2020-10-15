@@ -21,10 +21,9 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
@@ -65,7 +64,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	NamedQueries namedQueries = mock(NamedQueries.class);
 	NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
-	@Before
+	@BeforeEach
 	public void setup() {
 
 		this.metadata = mock(RepositoryMetadata.class);

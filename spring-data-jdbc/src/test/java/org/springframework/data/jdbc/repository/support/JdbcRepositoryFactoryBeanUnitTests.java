@@ -20,12 +20,14 @@ import static org.mockito.Mockito.*;
 
 import java.util.function.Supplier;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -53,7 +55,8 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author Mark Paluch
  * @author Evgeni Dimitrov
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@ExtendWith(MockitoExtension.class)
 public class JdbcRepositoryFactoryBeanUnitTests {
 
 	JdbcRepositoryFactoryBean<DummyEntityRepository, DummyEntity, Long> factoryBean;
@@ -65,7 +68,7 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 
 	RelationalMappingContext mappingContext;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 
 		this.mappingContext = new JdbcMappingContext();
@@ -95,15 +98,17 @@ public class JdbcRepositoryFactoryBeanUnitTests {
 		assertThat(factoryBean.getObject()).isNotNull();
 	}
 
-	@Test(expected = IllegalArgumentException.class) // DATAJDBC-151
+	@Test // DATAJDBC-151
 	public void requiresListableBeanFactory() {
-		factoryBean.setBeanFactory(mock(BeanFactory.class));
+
+		assertThatExceptionOfType(IllegalArgumentException.class)
+				.isThrownBy(() -> factoryBean.setBeanFactory(mock(BeanFactory.class)));
 	}
 
-	@Test(expected = IllegalArgumentException.class) // DATAJDBC-155
+	@Test // DATAJDBC-155
 	public void afterPropertiesThrowsExceptionWhenNoMappingContextSet() {
 
-		factoryBean.setMappingContext(null);
+		assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> factoryBean.setMappingContext(null));
 	}
 
 	@Test // DATAJDBC-155

@@ -28,12 +28,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 
 /**

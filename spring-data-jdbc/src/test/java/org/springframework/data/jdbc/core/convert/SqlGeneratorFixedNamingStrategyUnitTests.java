@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static org.assertj.core.api.Assertions.*;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;

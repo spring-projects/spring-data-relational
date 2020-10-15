@@ -2,7 +2,7 @@ package org.springframework.data.jdbc.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.jdbc.core.mapping.AggregateReference.IdOnlyAggregateReference;
 
 /**

@@ -17,10 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Test;
-
-import org.springframework.data.relational.core.sql.DefaultIdentifierProcessing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 

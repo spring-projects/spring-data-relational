@@ -20,9 +20,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,8 +35,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @ContextConfiguration
 @Transactional
+@ExtendWith(SpringExtension.class)
 public class JdbcRepositoryEmbeddedIntegrationTests {
 
 	@Configuration
@@ -68,9 +67,6 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		}
 
 	}
-
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
@@ -92,9 +88,11 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 		assertThat(repository.findById(entity.getId())).hasValueSatisfying(it -> {
 			assertThat(it.getId()).isEqualTo(entity.getId());
 			assertThat(it.getPrefixedEmbeddable().getTest()).isEqualTo(entity.getPrefixedEmbeddable().getTest());
-			assertThat(it.getPrefixedEmbeddable().getEmbeddable().getAttr()).isEqualTo(entity.getPrefixedEmbeddable().getEmbeddable().getAttr());
+			assertThat(it.getPrefixedEmbeddable().getEmbeddable().getAttr())
+					.isEqualTo(entity.getPrefixedEmbeddable().getEmbeddable().getAttr());
 			assertThat(it.getEmbeddable().getTest()).isEqualTo(entity.getEmbeddable().getTest());
-			assertThat(it.getEmbeddable().getEmbeddable().getAttr()).isEqualTo(entity.getEmbeddable().getEmbeddable().getAttr());
+			assertThat(it.getEmbeddable().getEmbeddable().getAttr())
+					.isEqualTo(entity.getEmbeddable().getEmbeddable().getAttr());
 		});
 	}
 
@@ -129,7 +127,8 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		assertThat(repository.findById(entity.getId())).hasValueSatisfying(it -> {
 			assertThat(it.getPrefixedEmbeddable().getTest()).isEqualTo(saved.getPrefixedEmbeddable().getTest());
-			assertThat(it.getPrefixedEmbeddable().getEmbeddable().getAttr()).isEqualTo(saved.getPrefixedEmbeddable().getEmbeddable().getAttr());
+			assertThat(it.getPrefixedEmbeddable().getEmbeddable().getAttr())
+					.isEqualTo(saved.getPrefixedEmbeddable().getEmbeddable().getAttr());
 		});
 	}
 
@@ -153,7 +152,8 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 
 		assertThat(repository.findAll()) //
 				.extracting(d -> d.getPrefixedEmbeddable().getEmbeddable().getAttr()) //
-				.containsExactlyInAnyOrder(entity.getPrefixedEmbeddable().getEmbeddable().getAttr(), other.getPrefixedEmbeddable().getEmbeddable().getAttr());
+				.containsExactlyInAnyOrder(entity.getPrefixedEmbeddable().getEmbeddable().getAttr(),
+						other.getPrefixedEmbeddable().getEmbeddable().getAttr());
 	}
 
 	@Test // DATAJDBC-111
@@ -260,8 +260,7 @@ public class JdbcRepositoryEmbeddedIntegrationTests {
 	static class CascadedEmbeddable {
 		String test;
 
-		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX2_")
-		Embeddable embeddable;
+		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX2_") Embeddable embeddable;
 	}
 
 	@Data

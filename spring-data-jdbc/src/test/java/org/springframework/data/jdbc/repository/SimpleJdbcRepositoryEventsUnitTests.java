@@ -29,8 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.assertj.core.groups.Tuple;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
@@ -83,7 +83,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	DummyEntityRepository repository;
 	DefaultDataAccessStrategy dataAccessStrategy;
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		RelationalMappingContext context = new JdbcMappingContext();

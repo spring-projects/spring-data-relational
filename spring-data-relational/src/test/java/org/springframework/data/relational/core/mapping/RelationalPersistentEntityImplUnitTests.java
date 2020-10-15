@@ -18,7 +18,7 @@ package org.springframework.data.relational.core.mapping;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;

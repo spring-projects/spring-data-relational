@@ -24,8 +24,8 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.ProjectionFactory;
@@ -54,7 +54,7 @@ public class JdbcQueryMethodUnitTests {
 	NamedQueries namedQueries;
 	RepositoryMetadata metadata;
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		Properties properties = new Properties();

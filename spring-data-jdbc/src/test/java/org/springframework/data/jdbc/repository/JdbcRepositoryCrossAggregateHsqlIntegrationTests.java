@@ -17,9 +17,8 @@ package org.springframework.data.jdbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,8 +34,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration
 @Transactional
 @ActiveProfiles("hsql")
+@ExtendWith(SpringExtension.class)
 public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 	private static final long TWO_ID = 23L;
@@ -66,9 +65,6 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 			return JdbcRepositoryCrossAggregateHsqlIntegrationTests.class;
 		}
 	}
-
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired Ones ones;

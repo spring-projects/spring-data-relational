@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;

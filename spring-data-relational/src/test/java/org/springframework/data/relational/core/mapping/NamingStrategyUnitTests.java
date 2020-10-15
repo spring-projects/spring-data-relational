@@ -20,8 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.junit.Test;
-
+import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntityImplUnitTests.DummySubEntity;
 

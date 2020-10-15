@@ -25,9 +25,9 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -50,6 +50,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ReflectionUtils;
 
@@ -61,7 +62,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Evgeni Dimitrov
  * @author Fei Dong
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfiguration.class)
 public class EnableJdbcRepositoriesIntegrationTests {
 
@@ -80,7 +81,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@Autowired @Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations qualifierJdbcOperations;
 	@Autowired @Qualifier("qualifierDataAccessStrategy") DataAccessStrategy qualifierDataAccessStrategy;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setup() {
 
 		MAPPER_MAP.setAccessible(true);

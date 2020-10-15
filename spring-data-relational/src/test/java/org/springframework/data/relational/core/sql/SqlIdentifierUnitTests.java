@@ -19,12 +19,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
  * Unit tests for {@link SqlIdentifier}.

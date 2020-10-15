@@ -22,9 +22,9 @@ import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 
@@ -34,7 +34,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
  * @author Thomas Lang
  * @author Myeonghyeon Lee
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RelationalEntityUpdateWriterUnitTests {
 
 	public static final long SOME_ENTITY_ID = 23L;

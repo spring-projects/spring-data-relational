@@ -27,9 +27,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -57,7 +57,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PartTreeJdbcQueryUnitTests {
 
 	private static final String TABLE = "\"users\"";
@@ -556,8 +556,8 @@ public class PartTreeJdbcQueryUnitTests {
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery((getAccessor(queryMethod, new Object[] { "John" })));
 
-		assertThat(query.getQuery()).isEqualTo(
-			"SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
+		assertThat(query.getQuery())
+				.isEqualTo("SELECT COUNT(*) FROM " + TABLE + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
 	private PartTreeJdbcQuery createQuery(JdbcQueryMethod queryMethod) {

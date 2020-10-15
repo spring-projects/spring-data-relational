@@ -24,9 +24,8 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -41,8 +40,7 @@ import org.springframework.data.relational.core.mapping.event.BeforeConvertCallb
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Testing special cases for id generation with {@link SimpleJdbcRepository}.
@@ -51,6 +49,7 @@ import org.springframework.test.context.junit4.rules.SpringMethodRule;
  * @author Greg Turnquist
  */
 @ContextConfiguration
+@ExtendWith(SpringExtension.class)
 public class JdbcRepositoryIdGenerationIntegrationTests {
 
 	@Configuration
@@ -64,9 +63,6 @@ public class JdbcRepositoryIdGenerationIntegrationTests {
 			return JdbcRepositoryIdGenerationIntegrationTests.class;
 		}
 	}
-
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired ReadOnlyIdEntityRepository readOnlyIdrepository;

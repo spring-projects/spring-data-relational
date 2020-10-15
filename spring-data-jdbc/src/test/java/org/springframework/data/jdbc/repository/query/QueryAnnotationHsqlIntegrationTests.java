@@ -26,9 +26,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,8 +40,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.Nullable;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -54,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Transactional
 @ActiveProfiles("hsql")
+@ExtendWith(SpringExtension.class)
 public class QueryAnnotationHsqlIntegrationTests {
 
 	@Configuration
@@ -68,9 +67,6 @@ public class QueryAnnotationHsqlIntegrationTests {
 	}
 
 	@Autowired DummyEntityRepository repository;
-
-	@ClassRule public static final SpringClassRule classRule = new SpringClassRule();
-	@Rule public SpringMethodRule methodRule = new SpringMethodRule();
 
 	@Test // DATAJDBC-164
 	public void executeCustomQueryWithoutParameter() {

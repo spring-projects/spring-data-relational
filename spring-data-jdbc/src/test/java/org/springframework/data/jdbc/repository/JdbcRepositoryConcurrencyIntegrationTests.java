@@ -31,11 +31,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.UnaryOperator;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.commons.util.ExceptionUtils;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,9 +47,8 @@ import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.junit4.rules.SpringClassRule;
-import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -60,7 +58,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * @author Myeonghyeon Lee
  * @author Jens Schauder
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 public class JdbcRepositoryConcurrencyIntegrationTests {
 
 	@Configuration
@@ -90,7 +88,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 	TransactionTemplate transactionTemplate;
 	List<Exception> exceptions;
 
-	@BeforeClass
+	@BeforeAll
 	public static void beforeClass() {
 
 		Assertions.registerFormatterForType(CopyOnWriteArrayList.class, l -> {
@@ -99,7 +97,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 			l.forEach(e -> {
 
 				if (e instanceof Throwable) {
-					printThrowable(joiner,(Throwable) e);
+					printThrowable(joiner, (Throwable) e);
 				} else {
 					joiner.add(e.toString());
 				}
@@ -119,7 +117,7 @@ public class JdbcRepositoryConcurrencyIntegrationTests {
 		}
 	}
 
-	@Before
+	@BeforeEach
 	public void before() {
 
 		entity = repository.save(createDummyEntity());

@@ -22,8 +22,8 @@ import lombok.Value;
 
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.data.convert.ConverterBuilder;
@@ -44,7 +44,7 @@ public class BasicRelationalConverterUnitTests {
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalConverter converter;
 
-	@Before
+	@BeforeEach
 	public void before() throws Exception {
 
 		Set<GenericConverter> converters = ConverterBuilder.writing(MyValue.class, String.class, MyValue::getFoo)

@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 
 import org.apache.ibatis.session.SqlSession;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.core.convert.CascadingDataAccessStrategy;

@@ -16,12 +16,11 @@
 package org.springframework.data.jdbc.degraph;
 
 import static de.schauderhaft.degraph.check.JCheck.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.*;
 
 import de.schauderhaft.degraph.check.JCheck;
+import org.junit.jupiter.api.Test;
 import scala.runtime.AbstractFunction1;
-
-import org.junit.Test;
 
 /**
  * Test package dependencies for violations.

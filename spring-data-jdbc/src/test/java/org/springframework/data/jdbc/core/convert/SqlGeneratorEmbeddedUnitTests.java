@@ -19,9 +19,9 @@ import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -48,7 +48,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	});
 	private SqlGenerator sqlGenerator;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.context.setForceQuote(false);
 		this.sqlGenerator = createSqlGenerator(DummyEntity.class);
@@ -173,7 +173,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	@Ignore // this is just broken right now
+	@Disabled // this is just broken right now
 	public void deleteByPath() {
 
 		final String sql = sqlGenerator
