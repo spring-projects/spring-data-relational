@@ -29,7 +29,7 @@ import org.springframework.test.context.TestExecutionListener;
  * @author Jens Schauder
  * @author Mark Paluch
  */
-public class AssumeFeatureRule implements TestExecutionListener {
+public class AssumeFeatureTestExecutionListener implements TestExecutionListener {
 
 	@Override
 	public void beforeTestMethod(TestContext testContext) {
