@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.junit.Test
 /**
  * Unit tests for [Criteria.CriteriaStep] extensions.
  *
- * @author Juan Medina<jamedina@gmail.com>
+ * @author Juan Medina
  */
 class CriteriaStepExtensionsTests {
 
@@ -36,7 +36,7 @@ class CriteriaStepExtensionsTests {
 
         every { spec.`is`("test") } returns criteria
 
-        assertThat(spec isEquals "test").isEqualTo(criteria)
+        assertThat(spec isEqual "test").isEqualTo(criteria)
 
         verify {
             spec.`is`("test")

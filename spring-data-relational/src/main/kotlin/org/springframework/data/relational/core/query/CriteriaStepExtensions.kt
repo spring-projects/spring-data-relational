@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,31 @@
 package org.springframework.data.relational.core.query
 
 /**
- * Extension for [Criteria.CriteriaStep. is] providing a
+ * Extension for [Criteria.CriteriaStep.is] providing a
  * `isEquals(value)` variant.
  *
- * @author Juan Medina<jamedina@gmail.com>
+ * @author Juan Medina
+ * @since 2.1
  */
-infix fun Criteria.CriteriaStep.isEquals(value: Any): Criteria =
+infix fun Criteria.CriteriaStep.isEqual(value: Any): Criteria =
         `is`(value)
 
 /**
- * Extension for [Criteria.CriteriaStep. in] providing a
+ * Extension for [Criteria.CriteriaStep.in] providing a
  * `isIn(value)` variant.
  *
- * @author Juan Medina<jamedina@gmail.com>
+ * @author Juan Medina
+ * @since 2.1
  */
 fun Criteria.CriteriaStep.isIn(vararg value: Any): Criteria =
         `in`(value)
 
 /**
- * Extension for [Criteria.CriteriaStep. in] providing a
+ * Extension for [Criteria.CriteriaStep.in] providing a
  * `isIn(value)` variant.
  *
- * @author Juan Medina<jamedina@gmail.com>
+ * @author Juan Medina
+ * @since 2.1
  */
 fun Criteria.CriteriaStep.isIn(values: Collection<Any>): Criteria =
         `in`(values)

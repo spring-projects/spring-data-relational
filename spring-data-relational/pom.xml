@@ -71,7 +71,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- DATAJDBC-522: Add Kotlin extensions for Criteria -->
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-stdlib</artifactId>
