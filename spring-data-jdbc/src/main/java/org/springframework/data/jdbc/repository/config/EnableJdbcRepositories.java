@@ -38,6 +38,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Greg Turnquist
  * @author Mark Paluch
  * @author Fei Dong
+ * @author Juan Medina
  * @see AbstractJdbcConfiguration
  */
 @Target(ElementType.TYPE)
@@ -126,6 +127,7 @@ public @interface EnableJdbcRepositories {
     /**
 	 * Configures the name of the {@link DataSourceTransactionManager} bean definition to be used to create repositories
 	 * discovered through this annotation. Defaults to {@code transactionManager}.
+	 * @since 2.1
 	 */
 	String transactionManagerRef() default "transactionManager";
 

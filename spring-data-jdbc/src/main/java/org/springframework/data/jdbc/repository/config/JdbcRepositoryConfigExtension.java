@@ -35,6 +35,7 @@ import org.springframework.util.StringUtils;
  * @author Jens Schauder
  * @author Fei Dong
  * @author Mark Paluch
+ * @author Juan Medina
  */
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 

@@ -83,8 +83,8 @@ public class TestConfiguration {
 		return new NamedParameterJdbcTemplate(dataSource);
 	}
 
-	@Bean(name = "transactionManager")
-	PlatformTransactionManager defaultTransactionManager() {
+	@Bean
+	PlatformTransactionManager transactionManager() {
 		return new DataSourceTransactionManager(dataSource);
 	}
 
