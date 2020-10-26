@@ -38,7 +38,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Greg Turnquist
  * @author Mark Paluch
  * @author Fei Dong
- * @author Juan Medina
+ * @author Antoine Sauray
  * @see AbstractJdbcConfiguration
  */
 @Target(ElementType.TYPE)
