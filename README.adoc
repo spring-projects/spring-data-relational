@@ -110,7 +110,7 @@ https://docs.spring.io/spring-data/r2dbc/docs/1.0.x/reference/html/#reference[re
 * Learn the Spring basics – Spring Data builds on Spring Framework, check the https://spring.io[spring.io] web-site for a wealth of reference documentation.
 If you are just starting out with Spring, try one of the https://spring.io/guides[guides].
 * If you are upgrading, check out the https://docs.spring.io/spring-data/r2dbc/docs/1.0.x/changelog.txt[changelog] for "`new and noteworthy`" features.
-* Ask a question - we monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-data[`spring-data-r2dbc`].
+* Ask a question - we monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-data-r2dbc[`spring-data-r2dbc`].
 * Report bugs with Spring Data envers at https://github.com/spring-projects/spring-data-r2dbc/issues[github.com/spring-projects/spring-data-r2dbc/issues].
 
 == Reporting Issues
