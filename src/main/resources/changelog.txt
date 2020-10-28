@@ -1,6 +1,14 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.1.0 (2020-10-28)
+-------------------------------------
+* DATAJDBC-622 - Add support for transactionManagerRef in EnableJdbcRepository.
+* DATAJDBC-616 - Migrate to JUnit 5.
+* DATAJDBC-615 - Release 2.1 GA (2020.0.0).
+* DATAJDBC-522 - Add Kotlin extensions for Criteria.
+
+
 Changes in version 2.0.5.RELEASE (2020-10-28)
 ---------------------------------------------
 * DATAJDBC-614 - Query.with(Pageable) does not properly combine sorts.
@@ -570,6 +578,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
