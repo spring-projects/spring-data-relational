@@ -1,6 +1,11 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.0.21.RELEASE (2020-10-28)
+----------------------------------------------
+* DATAJDBC-621 - Release 1.0.21 (Lovelace SR21).
+
+
 Changes in version 2.1.0-RC2 (2020-10-14)
 -----------------------------------------
 * DATAJDBC-614 - Query.with(Pageable) does not properly combine sorts.
@@ -552,6 +557,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
