@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -48,7 +49,7 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 
 	static {
 
-		Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class));
+		Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class, Map.class));
 
 		// conditional Postgres Geo support.
 		Stream.of("io.r2dbc.postgresql.codec.Box", //
@@ -307,5 +308,4 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 			return source.asArray();
 		}
 	}
-
 }

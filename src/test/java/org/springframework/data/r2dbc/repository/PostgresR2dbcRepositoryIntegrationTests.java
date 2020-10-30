@@ -17,6 +17,8 @@ package org.springframework.data.r2dbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Map;
+
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.AllArgsConstructor;
@@ -42,6 +44,7 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.PostgresTestSupport;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -61,10 +64,12 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 
 	@Autowired JsonPersonRepository jsonPersonRepository;
 
+	@Autowired HStorePersonRepository hstorePersonRepository;
+
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(classes = { PostgresLegoSetRepository.class, JsonPersonRepository.class },
-					type = FilterType.ASSIGNABLE_TYPE))
+			includeFilters = @Filter(classes = { PostgresLegoSetRepository.class, JsonPersonRepository.class,
+					HStorePersonRepository.class }, type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
 		@Bean
@@ -147,6 +152,28 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 		}).verifyComplete();
 	}
 
+	@Test
+	void shouldSaveAndLoadHStore() {
+
+		JdbcTemplate template = new JdbcTemplate(createDataSource());
+
+		template.execute("DROP TABLE IF EXISTS hstore_person");
+		template.execute("CREATE EXTENSION IF NOT EXISTS hstore;");
+		template.execute("CREATE TABLE hstore_person (\n" //
+				+ "    id          SERIAL PRIMARY KEY,\n" //
+				+ "    hstore_value  HSTORE NOT NULL" //
+				+ ");");
+
+		HStorePerson person = new HStorePerson(null, Map.of("hello", "world"));
+		hstorePersonRepository.save(person).as(StepVerifier::create).expectNextCount(1).verifyComplete();
+
+		hstorePersonRepository.findAll().as(StepVerifier::create).consumeNextWith(actual -> {
+
+			assertThat(actual.hstoreValue).isNotNull();
+			assertThat(actual.hstoreValue).containsEntry("hello", "world");
+		}).verifyComplete();
+	}
+
 	@AllArgsConstructor
 	static class JsonPerson {
 
@@ -156,6 +183,19 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 	}
 
 	interface JsonPersonRepository extends ReactiveCrudRepository<JsonPerson, Long> {
+
+	}
+
+	@AllArgsConstructor
+	@Table("hstore_person")
+	static class HStorePerson {
+
+		@Id Long id;
+
+		Map<String, String> hstoreValue;
+	}
+
+	interface HStorePersonRepository extends ReactiveCrudRepository<HStorePerson, Long> {
 
 	}
 }
