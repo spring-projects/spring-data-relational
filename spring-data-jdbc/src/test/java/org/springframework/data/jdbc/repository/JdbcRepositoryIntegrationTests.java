@@ -204,6 +204,20 @@ public class JdbcRepositoryIntegrationTests {
 				.containsExactlyInAnyOrder(two.getIdProp());
 	}
 
+	@Test // DATAJDBC-629
+	public void deleteByIdList() {
+
+		DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+
+		repository.deleteAllById(asList(one.idProp, three.idProp));
+
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getIdProp) //
+				.containsExactlyInAnyOrder(two.getIdProp());
+	}
+
 	@Test // DATAJDBC-97
 	public void deleteAll() {
 

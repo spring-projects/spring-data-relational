@@ -228,5 +228,10 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		public void deleteAll() {
 
 		}
+
+		@Override
+		public void deleteAllById(Iterable<? extends ID> ids) {
+
+		}
 	}
 }
