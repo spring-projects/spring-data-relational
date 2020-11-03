@@ -155,6 +155,11 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 		entityOperations.deleteAll(entity.getType());
 	}
 
+	@Override
+	public void deleteAllById(Iterable<? extends ID> ids) {
+		ids.forEach(it -> entityOperations.deleteById(it, entity.getType()));
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.PagingAndSortingRepository#findAll(org.springframework.data.domain.Sort sort)
@@ -172,4 +177,5 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 	public Page<T> findAll(Pageable pageable) {
 		return entityOperations.findAll(entity.getType(), pageable);
 	}
+
 }
