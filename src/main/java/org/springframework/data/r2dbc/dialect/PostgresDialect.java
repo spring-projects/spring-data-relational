@@ -35,6 +35,7 @@ import org.springframework.util.ClassUtils;
  * An SQL dialect for Postgres.
  *
  * @author Mark Paluch
+ * @author Jose Luis Leon
  */
 public class PostgresDialect extends org.springframework.data.relational.core.dialect.PostgresDialect
 		implements R2dbcDialect {
@@ -49,7 +50,8 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 
 	static {
 
-		Set<Class<?>> simpleTypes = new HashSet<>(Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class, Map.class));
+		Set<Class<?>> simpleTypes = new HashSet<>(
+				Arrays.asList(UUID.class, URL.class, URI.class, InetAddress.class, Map.class));
 
 		// conditional Postgres Geo support.
 		Stream.of("io.r2dbc.postgresql.codec.Box", //

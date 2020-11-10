@@ -17,14 +17,15 @@ package org.springframework.data.r2dbc.repository;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.Map;
-
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.util.Collections;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -55,6 +56,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory} against Postgres.
  *
  * @author Mark Paluch
+ * @author Jose Luis Leon
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -62,14 +64,15 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 
 	@RegisterExtension public static final ExternalDatabase database = PostgresTestSupport.database();
 
-	@Autowired JsonPersonRepository jsonPersonRepository;
+	@Autowired WithJsonRepository withJsonRepository;
 
-	@Autowired HStorePersonRepository hstorePersonRepository;
+	@Autowired WithHStoreRepository hstoreRepositoryWith;
 
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
-			includeFilters = @Filter(classes = { PostgresLegoSetRepository.class, JsonPersonRepository.class,
-					HStorePersonRepository.class }, type = FilterType.ASSIGNABLE_TYPE))
+			includeFilters = @Filter(
+					classes = { PostgresLegoSetRepository.class, WithJsonRepository.class, WithHStoreRepository.class },
+					type = FilterType.ASSIGNABLE_TYPE))
 	static class IntegrationTestConfiguration extends AbstractR2dbcConfiguration {
 
 		@Bean
@@ -136,66 +139,64 @@ public class PostgresR2dbcRepositoryIntegrationTests extends AbstractR2dbcReposi
 
 		JdbcTemplate template = new JdbcTemplate(createDataSource());
 
-		template.execute("DROP TABLE IF EXISTS json_person");
-		template.execute("CREATE TABLE json_person (\n" //
+		template.execute("DROP TABLE IF EXISTS with_json");
+		template.execute("CREATE TABLE with_json (\n" //
 				+ "    id          SERIAL PRIMARY KEY,\n" //
 				+ "    json_value  JSONB NOT NULL" //
 				+ ");");
 
-		JsonPerson person = new JsonPerson(null, Json.of("{\"hello\": \"world\"}"));
-		jsonPersonRepository.save(person).as(StepVerifier::create).expectNextCount(1).verifyComplete();
+		WithJson person = new WithJson(null, Json.of("{\"hello\": \"world\"}"));
+		withJsonRepository.save(person).as(StepVerifier::create).expectNextCount(1).verifyComplete();
 
-		jsonPersonRepository.findAll().as(StepVerifier::create).consumeNextWith(actual -> {
+		withJsonRepository.findAll().as(StepVerifier::create).consumeNextWith(actual -> {
 
 			assertThat(actual.jsonValue).isNotNull();
 			assertThat(actual.jsonValue.asString()).isEqualTo("{\"hello\": \"world\"}");
 		}).verifyComplete();
 	}
 
-	@Test
+	@Test // gh-492
 	void shouldSaveAndLoadHStore() {
 
 		JdbcTemplate template = new JdbcTemplate(createDataSource());
 
-		template.execute("DROP TABLE IF EXISTS hstore_person");
+		template.execute("DROP TABLE IF EXISTS with_hstore");
 		template.execute("CREATE EXTENSION IF NOT EXISTS hstore;");
-		template.execute("CREATE TABLE hstore_person (\n" //
-				+ "    id          SERIAL PRIMARY KEY,\n" //
-				+ "    hstore_value  HSTORE NOT NULL" //
-				+ ");");
+		template.execute("CREATE TABLE with_hstore (" //
+				+ "    id            SERIAL PRIMARY KEY," //
+				+ "    hstore_value  HSTORE NOT NULL);");
 
-		HStorePerson person = new HStorePerson(null, Map.of("hello", "world"));
-		hstorePersonRepository.save(person).as(StepVerifier::create).expectNextCount(1).verifyComplete();
+		WithHStore person = new WithHStore(null, Collections.singletonMap("hello", "world"));
+		hstoreRepositoryWith.save(person).as(StepVerifier::create).expectNextCount(1).verifyComplete();
 
-		hstorePersonRepository.findAll().as(StepVerifier::create).consumeNextWith(actual -> {
+		hstoreRepositoryWith.findAll().as(StepVerifier::create).consumeNextWith(actual -> {
 
-			assertThat(actual.hstoreValue).isNotNull();
-			assertThat(actual.hstoreValue).containsEntry("hello", "world");
+			assertThat(actual.hstoreValue).isNotNull().containsEntry("hello", "world");
 		}).verifyComplete();
 	}
 
 	@AllArgsConstructor
-	static class JsonPerson {
+	static class WithJson {
 
 		@Id Long id;
 
 		Json jsonValue;
 	}
 
-	interface JsonPersonRepository extends ReactiveCrudRepository<JsonPerson, Long> {
+	interface WithJsonRepository extends ReactiveCrudRepository<WithJson, Long> {
 
 	}
 
 	@AllArgsConstructor
-	@Table("hstore_person")
-	static class HStorePerson {
+	@Table("with_hstore")
+	static class WithHStore {
 
 		@Id Long id;
 
 		Map<String, String> hstoreValue;
 	}
 
-	interface HStorePersonRepository extends ReactiveCrudRepository<HStorePerson, Long> {
+	interface WithHStoreRepository extends ReactiveCrudRepository<WithHStore, Long> {
 
 	}
 }
