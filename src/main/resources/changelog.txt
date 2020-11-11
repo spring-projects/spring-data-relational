@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.1.1 (2020-11-11)
+-------------------------------------
+* DATAJDBC-628 - Enable Maven caching for Jenkins jobs.
+* DATAJDBC-626 - Release 2.1.1 (2020.0.1).
+
+
 Changes in version 2.1.0 (2020-10-28)
 -------------------------------------
 * DATAJDBC-622 - Add support for transactionManagerRef in EnableJdbcRepository.
@@ -578,6 +584,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
