@@ -1,6 +1,12 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.2.1 (2020-11-11)
+-------------------------------------
+* #492 - Missing support for HStore data type.
+* #488 - Release 1.2.1 (2020.0.1).
+
+
 Changes in version 1.2.0 (2020-10-28)
 -------------------------------------
 * #481 - Release 1.2 GA (2020.0.0).
@@ -332,6 +338,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
