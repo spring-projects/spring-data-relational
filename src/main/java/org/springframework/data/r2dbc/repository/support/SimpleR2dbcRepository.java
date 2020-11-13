@@ -15,6 +15,9 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
+import org.springframework.data.util.StreamUtils;
+import org.springframework.data.util.Streamable;
+import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,6 +37,8 @@ import org.springframework.data.util.Lazy;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+
+import java.util.List;
 
 /**
  * Simple {@link ReactiveSortingRepository} implementation using R2DBC through {@link DatabaseClient}.
@@ -302,6 +307,16 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		Assert.notNull(iterable, "The iterable of Id's must not be null!");
 
 		return deleteAll(Flux.fromIterable(iterable));
+	}
+
+	@Override
+	public Mono<Void> deleteAllById(Iterable<? extends ID> ids) {
+
+		Assert.notNull(ids, "The iterable of Id's must not be null!");
+
+		List<? extends ID> idsList = Streamable.of(ids).toList();
+		String idProperty = getIdProperty().getName();
+		return this.entityOperations.delete(Query.query(Criteria.where(idProperty).in(idsList)), this.entity.getJavaType()).then();
 	}
 
 	/* (non-Javadoc)

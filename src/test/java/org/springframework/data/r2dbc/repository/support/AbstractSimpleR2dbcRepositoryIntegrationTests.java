@@ -16,6 +16,7 @@
 package org.springframework.data.r2dbc.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.testcontainers.shaded.com.google.common.primitives.Ints.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -57,6 +58,7 @@ import org.springframework.r2dbc.core.DatabaseClient;
  * @author Mark Paluch
  * @author Bogdan Ilchyshyn
  * @author Stephen Cohen
+ * @author Jens Schauder
  */
 public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
@@ -458,6 +460,20 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 		LegoSet legoSet = new LegoSet(id, "SCHAUFELRADBAGGER", 12);
 
 		repository.deleteAll(Mono.just(legoSet)) //
+				.as(StepVerifier::create) //
+				.verifyComplete();
+
+		Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM legoset", Integer.class);
+		assertThat(count).isEqualTo(0);
+	}
+
+	@Test // gh-498
+	void shouldDeleteAllById() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
+
+		repository.deleteAllById(asList(id)) //
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
