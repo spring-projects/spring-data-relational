@@ -18,6 +18,8 @@ Spring R2DBC's `DatabaseClient` is a more lightweight implementation that encaps
 You will notice that the method to run SQL statements changed from `DatabaseClient.execute(…)` to `DatabaseClient.sql(…)`.
 The fluent API for CRUD operations has moved into `R2dbcEntityTemplate`.
 
+If you use logging of SQL statements through the logger prefix `org.springframework.data.r2dbc`, make sure to update it to `org.springframework.r2dbc` (that is removing `.data`) to point to Spring R2DBC components.
+
 [[upgrading.1.1-1.2.deprecation]]
 === Deprecations
 
