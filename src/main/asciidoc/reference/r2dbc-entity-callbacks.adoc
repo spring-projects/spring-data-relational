@@ -35,7 +35,7 @@ Can modify the target, to be persisted, `OutboundRow` containing all mapped enti
 
 | AfterSaveCallback
 | `onAfterSave(T entity, OutboundRow row, SqlIdentifier table)`
-| Invoked before a domain object is saved. +
+| Invoked after a domain object is saved. +
 Can modify the domain object, to be returned after save, `OutboundRow` containing all mapped entity information.
 | `Ordered.LOWEST_PRECEDENCE`
 
