@@ -15,11 +15,10 @@
  */
 package org.springframework.data.r2dbc.repository.support;
 
-import org.springframework.data.util.StreamUtils;
-import org.springframework.data.util.Streamable;
-import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 import org.reactivestreams.Publisher;
 
@@ -34,11 +33,10 @@ import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 import org.springframework.data.util.Lazy;
+import org.springframework.data.util.Streamable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-
-import java.util.List;
 
 /**
  * Simple {@link ReactiveSortingRepository} implementation using R2DBC through {@link DatabaseClient}.
@@ -116,7 +114,12 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 				.getRequiredIdProperty());
 	}
 
-	/* (non-Javadoc)
+	// -------------------------------------------------------------------------
+	// Methods from ReactiveCrudRepository
+	// -------------------------------------------------------------------------
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#save(S)
 	 */
 	@Override
@@ -132,7 +135,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return this.entityOperations.update(objectToSave);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#saveAll(java.lang.Iterable)
 	 */
 	@Override
@@ -144,7 +148,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return Flux.fromIterable(objectsToSave).concatMap(this::save);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#saveAll(org.reactivestreams.Publisher)
 	 */
 	@Override
@@ -156,7 +161,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return Flux.from(objectsToSave).concatMap(this::save);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findById(java.lang.Object)
 	 */
 	@Override
@@ -167,7 +173,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return this.entityOperations.selectOne(getIdQuery(id), this.entity.getJavaType());
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findById(org.reactivestreams.Publisher)
 	 */
 	@Override
@@ -175,7 +182,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return Mono.from(publisher).flatMap(this::findById);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#existsById(java.lang.Object)
 	 */
 	@Override
@@ -186,7 +194,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return this.entityOperations.exists(getIdQuery(id), this.entity.getJavaType());
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#existsById(org.reactivestreams.Publisher)
 	 */
 	@Override
@@ -194,7 +203,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return Mono.from(publisher).flatMap(this::findById).hasElement();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findAll()
 	 */
 	@Override
@@ -202,18 +212,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return this.entityOperations.select(Query.empty(), this.entity.getJavaType());
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.repository.reactive.ReactiveSortingRepository#findAll(org.springframework.data.domain.Sort)
-	 */
-	@Override
-	public Flux<T> findAll(Sort sort) {
-
-		Assert.notNull(sort, "Sort must not be null!");
-
-		return this.entityOperations.select(Query.empty().sort(sort), this.entity.getJavaType());
-	}
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findAllById(java.lang.Iterable)
 	 */
 	@Override
@@ -224,7 +224,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return findAllById(Flux.fromIterable(iterable));
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#findAllById(org.reactivestreams.Publisher)
 	 */
 	@Override
@@ -244,7 +245,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		});
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#count()
 	 */
 	@Override
@@ -252,7 +254,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return this.entityOperations.count(Query.empty(), this.entity.getJavaType());
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteById(java.lang.Object)
 	 */
 	@Override
@@ -264,7 +267,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return this.entityOperations.delete(getIdQuery(id), this.entity.getJavaType()).then();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteById(org.reactivestreams.Publisher)
 	 */
 	@Override
@@ -285,7 +289,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		}).then();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#delete(java.lang.Object)
 	 */
 	@Override
@@ -297,7 +302,23 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return deleteById(this.entity.getRequiredId(objectToDelete));
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAllById(java.lang.Iterable)
+	 */
+	@Override
+	public Mono<Void> deleteAllById(Iterable<? extends ID> ids) {
+
+		Assert.notNull(ids, "The iterable of Id's must not be null!");
+
+		List<? extends ID> idsList = Streamable.of(ids).toList();
+		String idProperty = getIdProperty().getName();
+		return this.entityOperations.delete(Query.query(Criteria.where(idProperty).in(idsList)), this.entity.getJavaType())
+				.then();
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll(java.lang.Iterable)
 	 */
 	@Override
@@ -309,17 +330,8 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return deleteAll(Flux.fromIterable(iterable));
 	}
 
-	@Override
-	public Mono<Void> deleteAllById(Iterable<? extends ID> ids) {
-
-		Assert.notNull(ids, "The iterable of Id's must not be null!");
-
-		List<? extends ID> idsList = Streamable.of(ids).toList();
-		String idProperty = getIdProperty().getName();
-		return this.entityOperations.delete(Query.query(Criteria.where(idProperty).in(idsList)), this.entity.getJavaType()).then();
-	}
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll(org.reactivestreams.Publisher)
 	 */
 	@Override
@@ -334,13 +346,30 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		return deleteById(idPublisher);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.reactive.ReactiveCrudRepository#deleteAll()
 	 */
 	@Override
 	@Transactional
 	public Mono<Void> deleteAll() {
 		return this.entityOperations.delete(Query.empty(), this.entity.getJavaType()).then();
+	}
+
+	// -------------------------------------------------------------------------
+	// Methods from ReactiveSortingRepository
+	// -------------------------------------------------------------------------
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.reactive.ReactiveSortingRepository#findAll(org.springframework.data.domain.Sort)
+	 */
+	@Override
+	public Flux<T> findAll(Sort sort) {
+
+		Assert.notNull(sort, "Sort must not be null!");
+
+		return this.entityOperations.select(Query.empty().sort(sort), this.entity.getJavaType());
 	}
 
 	private RelationalPersistentProperty getIdProperty() {

@@ -16,7 +16,6 @@
 package org.springframework.data.r2dbc.repository.support;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.testcontainers.shaded.com.google.common.primitives.Ints.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -473,7 +472,7 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
 		Integer id = jdbc.queryForObject("SELECT id FROM legoset", Integer.class);
 
-		repository.deleteAllById(asList(id)) //
+		repository.deleteAllById(Collections.singletonList(id)) //
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
