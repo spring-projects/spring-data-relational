@@ -93,7 +93,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context,
 			RelationResolver relationResolver) {
 
-		super(context);
+		super(context, new JdbcCustomConversions());
 
 		Assert.notNull(relationResolver, "RelationResolver must not be null");
 
