@@ -19,7 +19,12 @@ import static org.assertj.core.api.Assertions.*;
 
 import lombok.Data;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
@@ -27,13 +32,12 @@ import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
-import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.util.ClassTypeInformation;
 
 /**
  * Unit tests for {@link BasicJdbcConverter}.
@@ -47,27 +51,6 @@ public class BasicJdbcConverterUnitTests {
 		throw new UnsupportedOperationException();
 	});
 
-	@Test // DATAJDBC-104
-	public void enumGetsStoredAsString() {
-
-		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
-
-		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) p -> {
-			switch (p.getName()) {
-				case "someEnum":
-					assertThat(converter.getColumnType(p)).isEqualTo(String.class);
-					break;
-				case "localDateTime":
-					assertThat(converter.getColumnType(p)).isEqualTo(Date.class);
-					break;
-				case "zonedDateTime":
-					assertThat(converter.getColumnType(p)).isEqualTo(String.class);
-					break;
-				default:
-			}
-		});
-	}
-
 	@Test // DATAJDBC-104, DATAJDBC-1384
 	public void testTargetTypesForPropertyType() {
 
@@ -76,7 +59,11 @@ public class BasicJdbcConverterUnitTests {
 		SoftAssertions softly = new SoftAssertions();
 
 		checkTargetType(softly, entity, "someEnum", String.class);
-		checkTargetType(softly, entity, "localDateTime", Date.class);
+		checkTargetType(softly, entity, "localDateTime", Timestamp.class);
+		checkTargetType(softly, entity, "localDate", Timestamp.class);
+		checkTargetType(softly, entity, "localTime", Timestamp.class);
+		checkTargetType(softly, entity, "instant", Timestamp.class);
+		checkTargetType(softly, entity, "date", Date.class);
 		checkTargetType(softly, entity, "zonedDateTime", String.class);
 		checkTargetType(softly, entity, "uuid", UUID.class);
 
@@ -114,6 +101,32 @@ public class BasicJdbcConverterUnitTests {
 		softly.assertAll();
 	}
 
+	@Test // DATAJDBC-637
+	void conversionOfDateLikeValueAndBackYieldsOriginalValue() {
+
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+
+		SoftAssertions.assertSoftly(softly -> {
+			LocalDateTime testLocalDateTime = LocalDateTime.of(2001, 2, 3, 4, 5, 6, 123456789);
+			checkConversionToTimestampAndBack(softly, persistentEntity, "localDateTime", testLocalDateTime);
+			checkConversionToTimestampAndBack(softly, persistentEntity, "localDate", LocalDate.of(2001, 2, 3));
+			checkConversionToTimestampAndBack(softly, persistentEntity, "localTime", LocalTime.of(1, 2, 3,123456789));
+			checkConversionToTimestampAndBack(softly, persistentEntity, "instant", testLocalDateTime.toInstant(ZoneOffset.UTC));
+		});
+
+	}
+
+	private void checkConversionToTimestampAndBack(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity, String propertyName,
+												   Object value) {
+
+		RelationalPersistentProperty property = persistentEntity.getRequiredPersistentProperty(propertyName);
+
+		Object converted = converter.writeValue(value, ClassTypeInformation.from(converter.getColumnType(property)));
+		Object convertedBack = converter.readValue(converted, property.getTypeInformation());
+
+		softly.assertThat(convertedBack).describedAs(propertyName).isEqualTo(value);
+	}
+
 	private void checkTargetType(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
 			String propertyName, Class<?> expected) {
 
@@ -129,6 +142,10 @@ public class BasicJdbcConverterUnitTests {
 		@Id private final Long id;
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
+		private final LocalDate localDate;
+		private final LocalTime localTime;
+		private final Instant instant;
+		private final Date date;
 		private final ZonedDateTime zonedDateTime;
 		private final AggregateReference<DummyEntity, Long> reference;
 		private final UUID uuid;

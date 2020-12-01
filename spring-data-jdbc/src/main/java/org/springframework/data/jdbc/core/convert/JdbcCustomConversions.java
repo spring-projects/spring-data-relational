@@ -15,9 +15,11 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 
 /**
@@ -25,20 +27,16 @@ import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
  * {@link org.springframework.data.mapping.model.SimpleTypeHolder}
  *
  * @author Mark Paluch
- * @see org.springframework.data.convert.CustomConversions
+ * @see CustomConversions
  * @see org.springframework.data.mapping.model.SimpleTypeHolder
  * @see JdbcSimpleTypes
  */
-public class JdbcCustomConversions extends org.springframework.data.convert.CustomConversions {
+public class JdbcCustomConversions extends CustomConversions {
 
-	private static final StoreConversions STORE_CONVERSIONS;
-	private static final List<Object> STORE_CONVERTERS;
-
-	static {
-
-		STORE_CONVERTERS = Collections.emptyList();
-		STORE_CONVERSIONS = StoreConversions.of(JdbcSimpleTypes.HOLDER, STORE_CONVERTERS);
-	}
+	private static final List<Object> STORE_CONVERTERS = Arrays
+			.asList(Jsr310TimestampBasedConverters.getConvertersToRegister().toArray());
+	private static final StoreConversions STORE_CONVERSIONS = StoreConversions.of(JdbcSimpleTypes.HOLDER,
+			STORE_CONVERTERS);
 
 	/**
 	 * Creates an empty {@link JdbcCustomConversions} object.
@@ -53,7 +51,15 @@ public class JdbcCustomConversions extends org.springframework.data.convert.Cust
 	 * @param converters must not be {@literal null}.
 	 */
 	public JdbcCustomConversions(List<?> converters) {
-		super(STORE_CONVERSIONS, converters);
+		super(new ConverterConfiguration(STORE_CONVERSIONS, converters, JdbcCustomConversions::isDateTimeApiConversion));
 	}
 
+	private static boolean isDateTimeApiConversion(
+			org.springframework.core.convert.converter.GenericConverter.ConvertiblePair cp) {
+
+		return (cp.getSourceType().getTypeName().equals("java.util.Date")
+				&& cp.getTargetType().getTypeName().startsWith("java.time.") //
+		) || (cp.getTargetType().getTypeName().equals("java.util.Date")
+				&& cp.getSourceType().getTypeName().startsWith("java.time."));
+	}
 }
