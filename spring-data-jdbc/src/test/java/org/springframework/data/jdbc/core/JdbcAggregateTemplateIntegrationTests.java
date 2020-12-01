@@ -23,6 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.With;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,6 +35,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import net.bytebuddy.asm.Advice;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.Assume;
 import org.junit.ClassRule;
@@ -850,6 +852,21 @@ public class JdbcAggregateTemplateIntegrationTests {
 		template.save(saved);
 	}
 
+	@Test // DATAJDBC-637
+	public void saveAndLoadDateTimeWithFullPrecision() {
+
+		WithLocalDateTime entity = new WithLocalDateTime();
+		entity.id = 23L;
+		entity.testTime = LocalDateTime.of(5, 5, 5, 5, 5, 5, 123456789);
+
+		template.insert(entity);
+
+		WithLocalDateTime loaded = template.findById(23L, WithLocalDateTime.class);
+
+		assertThat(loaded.testTime).isEqualTo(entity.testTime);
+	}
+
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -1194,6 +1211,14 @@ public class JdbcAggregateTemplateIntegrationTests {
 		void setVersion(Number newVersion) {
 			this.version = (short) newVersion;
 		}
+	}
+
+	@Table
+	static class WithLocalDateTime{
+
+		@Id
+		Long id;
+		LocalDateTime testTime;
 	}
 
 	@Configuration
