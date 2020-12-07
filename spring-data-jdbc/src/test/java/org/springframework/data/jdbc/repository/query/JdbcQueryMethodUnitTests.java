@@ -23,7 +23,6 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.util.Properties;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -101,7 +100,6 @@ public class JdbcQueryMethodUnitTests {
 
 	}
 
-	@NotNull
 	private JdbcQueryMethod createJdbcQueryMethod(String methodName) throws NoSuchMethodException {
 
 		Method method = JdbcQueryMethodUnitTests.class.getDeclaredMethod(methodName);

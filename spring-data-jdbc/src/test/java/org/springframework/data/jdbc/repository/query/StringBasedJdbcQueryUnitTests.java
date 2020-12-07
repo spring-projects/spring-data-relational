@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 import java.sql.ResultSet;
 
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -80,7 +79,6 @@ public class StringBasedJdbcQueryUnitTests {
 						.execute(new Object[] {}));
 	}
 
-	@NotNull
 	private StringBasedJdbcQuery createQuery() {
 
 		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);

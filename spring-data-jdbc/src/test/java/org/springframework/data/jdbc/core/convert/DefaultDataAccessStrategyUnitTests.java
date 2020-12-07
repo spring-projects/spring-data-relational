@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -192,7 +191,6 @@ public class DefaultDataAccessStrategyUnitTests {
 		assertThat(paramSourceCaptor.getValue().getValue("DUMMYENTITYROOT")).isEqualTo(rawId);
 	}
 
-	@NotNull
 	private DefaultDataAccessStrategy createAccessStrategyWithConverter(List<?> converters) {
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
 
