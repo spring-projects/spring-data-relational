@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.assertj.core.api.SoftAssertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -271,7 +270,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 
 			return new NamingStrategy() {
 
-				public String getTableName(@NotNull Class<?> type) {
+				public String getTableName(Class<?> type) {
 					return "DummyEntity";
 				}
 			};

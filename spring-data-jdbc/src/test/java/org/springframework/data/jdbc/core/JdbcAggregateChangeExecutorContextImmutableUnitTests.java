@@ -25,7 +25,6 @@ import lombok.With;
 
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
@@ -134,12 +133,10 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		return new PersistentPropertyPathExtension(context, getPersistentPropertyPath(path));
 	}
 
-	@NotNull
 	PersistentPropertyPath<RelationalPersistentProperty> getPersistentPropertyPath(String propertyName) {
 		return context.getPersistentPropertyPath(propertyName, DummyEntity.class);
 	}
 
-	@NotNull
 	Identifier createBackRef() {
 		return JdbcIdentifierBuilder.forBackReferences(converter, toPathExt("content"), 23L).build();
 	}
