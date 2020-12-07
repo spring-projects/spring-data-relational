@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 
@@ -27,6 +28,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
  * {@link org.springframework.data.mapping.model.SimpleTypeHolder}
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see CustomConversions
  * @see org.springframework.data.mapping.model.SimpleTypeHolder
  * @see JdbcSimpleTypes
@@ -54,12 +56,27 @@ public class JdbcCustomConversions extends CustomConversions {
 		super(new ConverterConfiguration(STORE_CONVERSIONS, converters, JdbcCustomConversions::isDateTimeApiConversion));
 	}
 
-	private static boolean isDateTimeApiConversion(
-			org.springframework.core.convert.converter.GenericConverter.ConvertiblePair cp) {
+	/**
+	 * Create a new {@link JdbcCustomConversions} instance given
+	 * {@link org.springframework.data.convert.CustomConversions.ConverterConfiguration}.
+	 *
+	 * @param converterConfiguration must not be {@literal null}.
+	 * @since 2.2
+	 */
+	public JdbcCustomConversions(ConverterConfiguration converterConfiguration) {
+		super(converterConfiguration);
+	}
 
-		return (cp.getSourceType().getTypeName().equals("java.util.Date")
-				&& cp.getTargetType().getTypeName().startsWith("java.time.") //
-		) || (cp.getTargetType().getTypeName().equals("java.util.Date")
-				&& cp.getSourceType().getTypeName().startsWith("java.time."));
+	private static boolean isDateTimeApiConversion(ConvertiblePair cp) {
+
+		if (cp.getSourceType().equals(java.util.Date.class) && cp.getTargetType().getTypeName().startsWith("java.time.")) {
+			return true;
+		}
+
+		if (cp.getTargetType().equals(java.util.Date.class) && cp.getSourceType().getTypeName().startsWith("java.time.")) {
+			return true;
+		}
+
+		return false;
 	}
 }
