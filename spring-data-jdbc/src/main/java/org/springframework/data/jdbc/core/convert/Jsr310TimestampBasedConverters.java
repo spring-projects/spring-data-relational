@@ -15,7 +15,6 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import static java.time.Instant.*;
 import static java.time.LocalDateTime.*;
 import static java.time.ZoneId.*;
 
@@ -41,12 +40,12 @@ import org.springframework.lang.NonNull;
 /**
  * Helper class to register JSR-310 specific {@link Converter} implementations. These converters are based on
  * {@link java.sql.Timestamp} instead of {@link Date} and therefore preserve nanosecond precision
- * 
+ *
  * @see org.springframework.data.convert.Jsr310Converters
  * @author Jens Schauder
  * @since 2.2
  */
-public abstract class Jsr310TimestampBasedConverters {
+abstract class Jsr310TimestampBasedConverters {
 
 	private static final List<Class<?>> CLASSES = Arrays.asList(LocalDateTime.class, LocalDate.class, LocalTime.class,
 			Instant.class, ZoneId.class, Duration.class, Period.class);
@@ -58,7 +57,8 @@ public abstract class Jsr310TimestampBasedConverters {
 	 */
 	public static Collection<Converter<?, ?>> getConvertersToRegister() {
 
-		List<Converter<?, ?>> converters = new ArrayList<>();
+		List<Converter<?, ?>> converters = new ArrayList<>(8);
+
 		converters.add(TimestampToLocalDateTimeConverter.INSTANCE);
 		converters.add(LocalDateTimeToTimestampConverter.INSTANCE);
 		converters.add(TimestampToLocalDateConverter.INSTANCE);
@@ -69,11 +69,6 @@ public abstract class Jsr310TimestampBasedConverters {
 		converters.add(InstantToTimestampConverter.INSTANCE);
 
 		return converters;
-	}
-
-	public static boolean supports(Class<?> type) {
-
-		return CLASSES.contains(type);
 	}
 
 	@ReadingConverter
