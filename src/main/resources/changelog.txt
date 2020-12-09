@@ -1,6 +1,14 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.1.6.RELEASE (2020-12-09)
+---------------------------------------------
+* #495 - GH-494 - Fix links to Spring-Framework reference.
+* #494 - Links to Spring-Framework reference are broken.
+* #490 - Enable Maven caching for Jenkins jobs.
+* #487 - Release 1.1.6 (Neumann SR6).
+
+
 Changes in version 1.2.1 (2020-11-11)
 -------------------------------------
 * #492 - Missing support for HStore data type.
@@ -338,6 +346,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
