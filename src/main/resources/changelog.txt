@@ -1,6 +1,12 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 1.1.12.RELEASE (2020-12-09)
+----------------------------------------------
+* DATAJDBC-628 - Enable Maven caching for Jenkins jobs.
+* DATAJDBC-624 - Release 1.1.12 (Moore SR12).
+
+
 Changes in version 2.1.1 (2020-11-11)
 -------------------------------------
 * DATAJDBC-628 - Enable Maven caching for Jenkins jobs.
@@ -584,6 +590,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
