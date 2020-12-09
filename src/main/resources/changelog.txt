@@ -1,6 +1,11 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.1.2 (2020-12-09)
+-------------------------------------
+* DATAJDBC-633 - Release 2.1.2 (2020.0.2).
+
+
 Changes in version 2.2.0-M1 (2020-12-09)
 ----------------------------------------
 * DATAJDBC-629 - Implement CrudRepository.delete(Iterable<ID> ids).
@@ -616,6 +621,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
