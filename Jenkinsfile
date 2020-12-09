@@ -34,7 +34,7 @@ pipeline {
 						docker.image('adoptopenjdk/openjdk8:latest').inside('-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -v $HOME:/tmp/jenkins-home') {
 							sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
 							sh "PROFILE=ci,all-dbs ./test.sh"
-							sh "./mvnw clean"
+							sh "./clean.sh"
 						}
 					}
 				}
@@ -65,7 +65,7 @@ pipeline {
 								docker.image('adoptopenjdk/openjdk11:latest').inside('-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -v $HOME:/tmp/jenkins-home') {
 									sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
 									sh "PROFILE=ci,java11 ./test.sh"
-									sh "./mvnw clean"
+									sh "./clean.sh"
 								}
 							}
 						}
@@ -88,7 +88,7 @@ pipeline {
 								docker.image('adoptopenjdk/openjdk15:latest').inside('-u root -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -v $HOME:/tmp/jenkins-home') {
 									sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
 									sh "PROFILE=ci,java11 ./test.sh"
-									sh "./mvnw clean"
+									sh "./clean.sh"
 								}
 							}
 						}
