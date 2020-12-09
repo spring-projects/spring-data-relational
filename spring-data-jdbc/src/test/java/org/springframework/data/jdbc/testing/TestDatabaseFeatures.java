@@ -72,6 +72,11 @@ public class TestDatabaseFeatures {
 		assumeThat(database).isNotIn(Database.MySql, Database.MariaDb, Database.SqlServer, Database.Db2, Database.Oracle);
 	}
 
+	private void supportsNanosecondPrecision() {
+
+		assumeThat(database).isNotIn(Database.MySql, Database.PostgreSql, Database.MariaDb, Database.SqlServer);
+	}
+
 	private void supportsMultiDimensionalArrays() {
 
 		supportsArrays();
@@ -109,6 +114,7 @@ public class TestDatabaseFeatures {
 		SUPPORTS_HUGE_NUMBERS(TestDatabaseFeatures::supportsHugeNumbers), //
 		SUPPORTS_ARRAYS(TestDatabaseFeatures::supportsArrays), //
 		SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES(TestDatabaseFeatures::supportsGeneratedIdsInReferencedEntities), //
+		SUPPORTS_NANOSECOND_PRECISION(TestDatabaseFeatures::supportsNanosecondPrecision), //
 		IS_HSQL(f -> f.databaseIs(Database.Hsql));
 
 		private final Consumer<TestDatabaseFeatures> featureMethod;
