@@ -853,11 +853,26 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-637
+	@EnabledOnFeature(SUPPORTS_NANOSECOND_PRECISION)
 	public void saveAndLoadDateTimeWithFullPrecision() {
 
 		WithLocalDateTime entity = new WithLocalDateTime();
 		entity.id = 23L;
-		entity.testTime = LocalDateTime.of(5, 5, 5, 5, 5, 5, 123456789);
+		entity.testTime = LocalDateTime.of(2005, 5, 5, 5, 5, 5, 123456789);
+
+		template.insert(entity);
+
+		WithLocalDateTime loaded = template.findById(23L, WithLocalDateTime.class);
+
+		assertThat(loaded.testTime).isEqualTo(entity.testTime);
+	}
+
+	@Test // DATAJDBC-637
+	public void saveAndLoadDateTimeWithMicrosecondPrecision() {
+
+		WithLocalDateTime entity = new WithLocalDateTime();
+		entity.id = 23L;
+		entity.testTime = LocalDateTime.of(2005, 5, 5, 5, 5, 5, 123456000);
 
 		template.insert(entity);
 
