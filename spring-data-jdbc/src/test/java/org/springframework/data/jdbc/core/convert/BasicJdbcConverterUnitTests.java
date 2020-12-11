@@ -102,7 +102,7 @@ public class BasicJdbcConverterUnitTests {
 	}
 
 	@Test // DATAJDBC-637
-	void conversionOfDateLikeValueAndBackYieldsOriginalValue() {
+	public void conversionOfDateLikeValueAndBackYieldsOriginalValue() {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
