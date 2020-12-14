@@ -77,7 +77,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 			RowMapper<Object> rowMapper = determineRowMapper(defaultRowMapper);
 			return getQueryExecution( //
 				queryMethod, //
-				determineResultSetExtractor(rowMapper != defaultRowMapper ? rowMapper : null), //
+				determineResultSetExtractor(rowMapper), //
 				rowMapper //
 		);});
 	}

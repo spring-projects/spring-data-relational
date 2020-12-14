@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.core.convert.EntityRowMapper;
 import org.springframework.data.jdbc.repository.config.DefaultQueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -134,6 +135,20 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 		}
 	}
 
+	public static class RowMapperResultSetExtractor implements ResultSetExtractor<RowMapper> {
+
+		final RowMapper rowMapper;
+
+		public RowMapperResultSetExtractor(RowMapper rowMapper) {
+			this.rowMapper = rowMapper;
+		}
+
+		@Override
+		public RowMapper extractData(ResultSet rs) throws SQLException, DataAccessException {
+			return rowMapper;
+		}
+	}
+
 	interface CarRepository extends CrudRepository<Car, Long> {
 
 		@Query(value = "select * from car", resultSetExtractorClass = CarResultSetExtractor.class)
@@ -144,6 +159,11 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 		@Query(value = "select model from car", rowMapperRef = "CustomRowMapperBean")
 		List<String> findByNameWithRowMapperBean();
+
+
+		@Query(value = "select * from car", resultSetExtractorClass = RowMapperResultSetExtractor.class)
+		RowMapper customFindAllWithRowMapper();
+
 	}
 
 	@Autowired NamedParameterJdbcTemplate template;
@@ -178,5 +198,14 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 		assertThat(cars).hasSize(1);
 		assertThat(cars).allMatch(car -> VALUE_PROCESSED_BY_SERVICE.equals(car.getModel()));
 	}
+
+	@Test // DATAJDBC-620
+	void defaultRowMapperGetsInjectedIntoCustomResultSetExtractor() {
+
+		RowMapper rowMapper = carRepository.customFindAllWithRowMapper();
+
+		assertThat(rowMapper).isNotNull();
+	}
+
 
 }
