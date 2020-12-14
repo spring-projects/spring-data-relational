@@ -170,7 +170,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 	@Autowired CarRepository carRepository;
 
 	@Test // DATAJDBC-290
-	public void customFindAllCarsUsesConfiguredResultSetExtractor() {
+	void customFindAllCarsUsesConfiguredResultSetExtractor() {
 
 		carRepository.save(new Car(null, "Some model"));
 		Iterable<Car> cars = carRepository.customFindAll();
@@ -180,7 +180,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 	}
 
 	@Test // DATAJDBC-430
-	public void customFindWithRowMapperBeanSupportingInjection() {
+	void customFindWithRowMapperBeanSupportingInjection() {
 
 		carRepository.save(new Car(null, "Some model"));
 		List<String> names = carRepository.findByNameWithRowMapperBean();
@@ -190,7 +190,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 	}
 
 	@Test // DATAJDBC-430
-	public void customFindWithResultSetExtractorBeanSupportingInjection() {
+	void customFindWithResultSetExtractorBeanSupportingInjection() {
 
 		carRepository.save(new Car(null, "Some model"));
 		Iterable<Car> cars = carRepository.findByNameWithResultSetExtractor();
@@ -206,6 +206,4 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 		assertThat(rowMapper).isNotNull();
 	}
-
-
 }
