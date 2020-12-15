@@ -108,7 +108,7 @@ interface ReactivePersonRepository extends ReactiveSortingRepository<Person, Lon
   Mono<Person> findFirstByLastname(String lastname);                                <7>
 }
 ----
-<1> The method shows a query for all people with the given `lastname`. The query is derived by parsing the method name for constraints that can be concatenated with `And` and `Or`. Thus, the method name results in a query expression of `SELECT … FROM person WHERE firstname = :firstname`.
+<1> The method shows a query for all people with the given `firstname`. The query is derived by parsing the method name for constraints that can be concatenated with `And` and `Or`. Thus, the method name results in a query expression of `SELECT … FROM person WHERE firstname = :firstname`.
 <2> The method shows a query for all people with the given `firstname` once the `firstname` is emitted by the given `Publisher`.
 <3> Use `Pageable` to pass offset and sorting parameters to the database.
 <4> Find a single entity for the given criteria. It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
