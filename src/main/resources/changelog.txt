@@ -3,7 +3,7 @@ Spring Data R2DBC Changelog
 
 Changes in version 1.2.2 (2020-12-09)
 -------------------------------------
-* #505 - Wrong documentation decription for AfterSaveCallback.
+* #505 - Wrong documentation description for AfterSaveCallback.
 * #503 - SQL statements not logged anymore in spring-data-r2dbc:1.2.1.
 * #497 - Release 1.2.2 (2020.0.2).
 
