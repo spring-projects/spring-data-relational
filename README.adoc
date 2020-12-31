@@ -109,9 +109,9 @@ Having trouble with Spring Data? We’d love to help!
 https://docs.spring.io/spring-data/r2dbc/docs/1.0.x/reference/html/#reference[reference documentation], and https://docs.spring.io/spring-data/r2dbc/docs/1.0.x/api/[Javadocs].
 * Learn the Spring basics – Spring Data builds on Spring Framework, check the https://spring.io[spring.io] web-site for a wealth of reference documentation.
 If you are just starting out with Spring, try one of the https://spring.io/guides[guides].
-* If you are upgrading, check out the https://docs.spring.io/spring-data/r2dbc/docs/1.0.x/changelog.txt[changelog] for "`new and noteworthy`" features.
+* If you are upgrading, check out the https://docs.spring.io/spring-data/r2dbc/docs/current/changelog.txt[changelog] for "`new and noteworthy`" features.
 * Ask a question - we monitor https://stackoverflow.com[stackoverflow.com] for questions tagged with https://stackoverflow.com/tags/spring-data-r2dbc[`spring-data-r2dbc`].
-* Report bugs with Spring Data envers at https://github.com/spring-projects/spring-data-r2dbc/issues[github.com/spring-projects/spring-data-r2dbc/issues].
+* Report bugs with Spring Data R2DBC at https://github.com/spring-projects/spring-data-r2dbc/issues[github.com/spring-projects/spring-data-r2dbc/issues].
 
 == Reporting Issues
 
@@ -119,7 +119,7 @@ Spring Data uses GitHub as issue tracking system to record bugs and feature requ
 
 * Before you log a bug, please search the
 https://github.com/spring-projects/spring-data-r2dbc/issues[issue tracker] to see if someone has already reported the problem.
-* If the issue doesn’t already exist, https://github.com/spring-projects/spring-data-r2dbc/issues/new[create a new issue].
+* If the issue does not already exist, https://github.com/spring-projects/spring-data-r2dbc/issues/new[create a new issue].
 * Please provide as much information as possible with the issue report, we like to know the version of Spring Data that you are using and JVM version.
 * If you need to paste code, or include a stack trace use Markdown +++```+++ escapes before and after your text.
 * If possible try to create a test-case or project that replicates the issue. Attach a link to your code or a compressed file containing your code.
