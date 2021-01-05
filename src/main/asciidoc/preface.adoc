@@ -70,7 +70,7 @@ Professional Support :: Professional, from-the-source support, with guaranteed r
 
 For information on the Spring Data JDBC source code repository, nightly builds, and snapshot artifacts, see the Spring Data JDBC https://spring.io/projects/spring-data-jdbc/[homepage].
 You can help make Spring Data best serve the needs of the Spring community by interacting with developers through the Community on https://stackoverflow.com/questions/tagged/spring-data[Stack Overflow].
-If you encounter a bug or want to suggest an improvement, please create a ticket on the Spring Data issue https://jira.spring.io/browse/DATAJDBC[tracker].
+If you encounter a bug or want to suggest an improvement, please create a ticket on the https://github.com/spring-projects/spring-data-jdbc/issues[Spring Data issue tracker].
 To stay up to date with the latest news and announcements in the Spring eco system, subscribe to the Spring Community https://spring.io[Portal].
 You can also follow the Spring https://spring.io/blog[blog] or the project team on Twitter (https://twitter.com/SpringData[SpringData]).
 
