@@ -43,16 +43,16 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Mark Paluch
  * @author Mingyuan Wu
  */
-public class QueryMapperUnitTests {
+class QueryMapperUnitTests {
 
-	R2dbcMappingContext context = new R2dbcMappingContext();
-	R2dbcConverter converter = new MappingR2dbcConverter(context);
+	private R2dbcMappingContext context = new R2dbcMappingContext();
+	private R2dbcConverter converter = new MappingR2dbcConverter(context);
 
-	QueryMapper mapper = new QueryMapper(PostgresDialect.INSTANCE, converter);
-	BindTarget bindTarget = mock(BindTarget.class);
+	private QueryMapper mapper = new QueryMapper(PostgresDialect.INSTANCE, converter);
+	private BindTarget bindTarget = mock(BindTarget.class);
 
 	@Test // gh-289
-	public void shouldNotMapEmptyCriteria() {
+	void shouldNotMapEmptyCriteria() {
 
 		Criteria criteria = Criteria.empty();
 
@@ -60,7 +60,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-289
-	public void shouldNotMapEmptyAndCriteria() {
+	void shouldNotMapEmptyAndCriteria() {
 
 		Criteria criteria = Criteria.empty().and(Collections.emptyList());
 
@@ -68,7 +68,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-289
-	public void shouldNotMapEmptyNestedCriteria() {
+	void shouldNotMapEmptyNestedCriteria() {
 
 		Criteria criteria = Criteria.empty().and(Collections.emptyList()).and(Criteria.empty().and(Criteria.empty()));
 
@@ -77,7 +77,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-289
-	public void shouldMapSomeNestedCriteria() {
+	void shouldMapSomeNestedCriteria() {
 
 		Criteria criteria = Criteria.empty().and(Collections.emptyList())
 				.and(Criteria.empty().and(Criteria.where("name").is("Hank")));
@@ -90,7 +90,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-289
-	public void shouldMapNestedGroup() {
+	void shouldMapNestedGroup() {
 
 		Criteria initial = Criteria.empty();
 
@@ -111,7 +111,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-289
-	public void shouldMapFrom() {
+	void shouldMapFrom() {
 
 		Criteria criteria = Criteria.from(Criteria.where("name").is("Foo")) //
 				.and(Criteria.where("name").is("Bar") //
@@ -127,7 +127,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-383
-	public void shouldMapFromConcat() {
+	void shouldMapFromConcat() {
 
 		Criteria criteria = Criteria.from(Criteria.where("name").is("Foo"), Criteria.where("name").is("Bar") //
 				.or("age").lessThan(49));
@@ -143,7 +143,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapSimpleCriteria() {
+	void shouldMapSimpleCriteria() {
 
 		Criteria criteria = Criteria.where("name").is("foo");
 
@@ -156,7 +156,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-518
-	public void shouldMapSimpleCriteriaWithIgnoreCase() {
+	void shouldMapSimpleCriteriaWithIgnoreCase() {
 
 		Criteria criteria = Criteria.where("some_col").is("foo").ignoreCase(true);
 
@@ -169,7 +169,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-300
-	public void shouldMapSimpleCriteriaWithoutEntity() {
+	void shouldMapSimpleCriteriaWithoutEntity() {
 
 		Criteria criteria = Criteria.where("name").is("foo");
 
@@ -184,7 +184,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-300
-	public void shouldMapExpression() {
+	void shouldMapExpression() {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
@@ -195,7 +195,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-300
-	public void shouldMapCountFunction() {
+	void shouldMapCountFunction() {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
@@ -206,7 +206,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-300
-	public void shouldMapExpressionToUnknownColumn() {
+	void shouldMapExpressionToUnknownColumn() {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
@@ -217,7 +217,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-300
-	public void shouldMapExpressionWithoutEntity() {
+	void shouldMapExpressionWithoutEntity() {
 
 		Table table = Table.create("my_table").as("my_aliased_table");
 
@@ -227,7 +227,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapSimpleNullableCriteria() {
+	void shouldMapSimpleNullableCriteria() {
 
 		Criteria criteria = Criteria.where("name").is(SettableValue.empty(Integer.class));
 
@@ -240,7 +240,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldConsiderColumnName() {
+	void shouldConsiderColumnName() {
 
 		Criteria criteria = Criteria.where("alternative").is("foo");
 
@@ -250,7 +250,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapAndCriteria() {
+	void shouldMapAndCriteria() {
 
 		Criteria criteria = Criteria.where("name").is("foo").and("bar").is("baz");
 
@@ -264,7 +264,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapOrCriteria() {
+	void shouldMapOrCriteria() {
 
 		Criteria criteria = Criteria.where("name").is("foo").or("bar").is("baz");
 
@@ -274,7 +274,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapAndOrCriteria() {
+	void shouldMapAndOrCriteria() {
 
 		Criteria criteria = Criteria.where("name").is("foo") //
 				.and("name").isNotNull() //
@@ -288,7 +288,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapNeq() {
+	void shouldMapNeq() {
 
 		Criteria criteria = Criteria.where("name").not("foo");
 
@@ -298,7 +298,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapIsNull() {
+	void shouldMapIsNull() {
 
 		Criteria criteria = Criteria.where("name").isNull();
 
@@ -308,7 +308,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapIsNotNull() {
+	void shouldMapIsNotNull() {
 
 		Criteria criteria = Criteria.where("name").isNotNull();
 
@@ -318,7 +318,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapIsIn() {
+	void shouldMapIsIn() {
 
 		Criteria criteria = Criteria.where("name").in("a", "b", "c");
 
@@ -328,7 +328,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64, gh-177
-	public void shouldMapIsNotIn() {
+	void shouldMapIsNotIn() {
 
 		Criteria criteria = Criteria.where("name").notIn("a", "b", "c");
 
@@ -338,7 +338,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapIsGt() {
+	void shouldMapIsGt() {
 
 		Criteria criteria = Criteria.where("name").greaterThan("a");
 
@@ -348,7 +348,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapIsGte() {
+	void shouldMapIsGte() {
 
 		Criteria criteria = Criteria.where("name").greaterThanOrEquals("a");
 
@@ -358,7 +358,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapIsLt() {
+	void shouldMapIsLt() {
 
 		Criteria criteria = Criteria.where("name").lessThan("a");
 
@@ -368,7 +368,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapIsLte() {
+	void shouldMapIsLte() {
 
 		Criteria criteria = Criteria.where("name").lessThanOrEquals("a");
 
@@ -378,7 +378,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapIsLike() {
+	void shouldMapIsLike() {
 
 		Criteria criteria = Criteria.where("name").like("a");
 
@@ -388,7 +388,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapSort() {
+	void shouldMapSort() {
 
 		Sort sort = Sort.by(desc("alternative"));
 
@@ -399,7 +399,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-369
-	public void mapSortForPropertyPathInPrimitiveShouldFallBackToColumnName() {
+	void mapSortForPropertyPathInPrimitiveShouldFallBackToColumnName() {
 
 		Sort sort = Sort.by(desc("alternative_name"));
 
@@ -408,7 +408,7 @@ public class QueryMapperUnitTests {
 	}
 
 	@Test // gh-369
-	public void mapQueryForPropertyPathInPrimitiveShouldFallBackToColumnName() {
+	void mapQueryForPropertyPathInPrimitiveShouldFallBackToColumnName() {
 
 		Criteria criteria = Criteria.where("alternative_name").is("a");
 

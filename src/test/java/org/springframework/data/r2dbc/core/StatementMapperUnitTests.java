@@ -34,15 +34,15 @@ import org.springframework.r2dbc.core.PreparedOperation;
  *
  * @author Mark Paluch
  */
-public class StatementMapperUnitTests {
+class StatementMapperUnitTests {
 
-	ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
-	StatementMapper mapper = strategy.getStatementMapper();
+	private ReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
+	private StatementMapper mapper = strategy.getStatementMapper();
 
-	BindTarget bindTarget = mock(BindTarget.class);
+	private BindTarget bindTarget = mock(BindTarget.class);
 
 	@Test // gh-64
-	public void shouldMapUpdate() {
+	void shouldMapUpdate() {
 
 		UpdateSpec updateSpec = mapper.createUpdate("foo", Update.update("column", "value"));
 
@@ -55,7 +55,7 @@ public class StatementMapperUnitTests {
 	}
 
 	@Test // gh-64
-	public void shouldMapUpdateWithCriteria() {
+	void shouldMapUpdateWithCriteria() {
 
 		UpdateSpec updateSpec = mapper.createUpdate("foo", Update.update("column", "value"))
 				.withCriteria(Criteria.where("foo").is("bar"));
@@ -70,7 +70,7 @@ public class StatementMapperUnitTests {
 	}
 
 	@Test // gh-148
-	public void shouldMapSelectWithPage() {
+	void shouldMapSelectWithPage() {
 
 		StatementMapper.SelectSpec selectSpec = StatementMapper.SelectSpec.create("table").withProjection("*")
 				.withPage(PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "id")));
