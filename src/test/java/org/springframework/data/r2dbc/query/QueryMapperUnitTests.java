@@ -155,6 +155,19 @@ public class QueryMapperUnitTests {
 		verify(bindTarget).bind(0, "foo");
 	}
 
+	@Test // gh-518
+	public void shouldMapSimpleCriteriaWithIgnoreCase() {
+
+		Criteria criteria = Criteria.where("some_col").is("foo").ignoreCase(true);
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("UPPER(person.some_col) = UPPER(?[$1])");
+
+		bindings.getBindings().apply(bindTarget);
+		verify(bindTarget).bind(0, "foo");
+	}
+
 	@Test // gh-300
 	public void shouldMapSimpleCriteriaWithoutEntity() {
 
