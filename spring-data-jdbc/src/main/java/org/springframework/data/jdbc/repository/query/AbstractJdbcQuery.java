@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -40,6 +41,7 @@ import org.springframework.util.Assert;
  * @author Oliver Gierke
  * @author Maciej Walkowiak
  * @author Mark Paluch
+ * @author Dennis Effing
  * @since 2.0
  */
 public abstract class AbstractJdbcQuery implements RepositoryQuery {
@@ -88,8 +90,12 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 			return createModifyingQueryExecutor();
 		}
 
-		if (queryMethod.isCollectionQuery() || queryMethod.isStreamQuery()) {
+		if (queryMethod.isCollectionQuery()) {
 			return extractor != null ? getQueryExecution(extractor) : collectionQuery(rowMapper);
+		}
+
+		if (queryMethod.isStreamQuery()) {
+			return extractor != null ? getQueryExecution(extractor) : streamQuery(rowMapper);
 		}
 
 		return extractor != null ? getQueryExecution(extractor) : singleObjectQuery(rowMapper);
@@ -138,6 +144,10 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		// Slight deviation from R2DBC: Allow direct mapping into DTOs
 		return returnedType.isProjecting() && returnedType.getReturnedType().isInterface() ? returnedType.getDomainType()
 				: returnedType.getReturnedType();
+	}
+
+	private <T> JdbcQueryExecution<Stream<T>> streamQuery(RowMapper<T> rowMapper) {
+		return (query, parameters) -> operations.queryForStream(query, parameters, rowMapper);
 	}
 
 	private <T> JdbcQueryExecution<T> getQueryExecution(ResultSetExtractor<T> resultSetExtractor) {

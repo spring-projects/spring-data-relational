@@ -22,11 +22,12 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,9 +40,11 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.query.DefaultParameters;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -52,6 +55,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Maciej Walkowiak
  * @author Evgeni Dimitrov
  * @author Mark Paluch
+ * @author Dennis Effing
  */
 public class StringBasedJdbcQueryUnitTests {
 
@@ -127,6 +131,28 @@ public class StringBasedJdbcQueryUnitTests {
 						"RowMapper is not expected to be custom");
 	}
 
+	@Test // DATAJDBC-356
+	public void streamQueryCallsQueryForStreamOnOperations() {
+		JdbcQueryMethod queryMethod = createMethod("findAllWithStreamReturnType");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
+
+		query.execute(new Object[] {});
+
+		verify(operations).queryForStream(eq("some sql statement"), any(SqlParameterSource.class), any(RowMapper.class));
+	}
+
+	@Test // DATAJDBC-356
+	void streamQueryFallsBackToCollectionQueryWhenCustomResultSetExtractorIsSpecified() {
+		JdbcQueryMethod queryMethod = createMethod("findAllWithStreamReturnTypeAndResultSetExtractor");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
+
+		query.execute(new Object[] {});
+
+		ArgumentCaptor<ResultSetExtractor> captor = ArgumentCaptor.forClass(ResultSetExtractor.class);
+		verify(operations).query(eq("some sql statement"), any(SqlParameterSource.class), captor.capture());
+		assertThat(captor.getValue()).isInstanceOf(CustomResultSetExtractor.class);
+	}
+
 	@Test // GH-774
 	public void sliceQueryNotSupported() {
 
@@ -172,6 +198,12 @@ public class StringBasedJdbcQueryUnitTests {
 		@Query(value = "some sql statement", rowMapperClass = CustomRowMapper.class,
 				resultSetExtractorClass = CustomResultSetExtractor.class)
 		List<Object> findAllWithCustomRowMapperAndResultSetExtractor();
+
+		@Query(value = "some sql statement")
+		Stream<Object> findAllWithStreamReturnType();
+
+		@Query(value = "some sql statement", resultSetExtractorClass = CustomResultSetExtractor.class)
+		Stream<Object> findAllWithStreamReturnTypeAndResultSetExtractor();
 
 		List<Object> noAnnotation();
 

@@ -51,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Kazuki Shimizu
  * @author Mark Paluch
+ * @author Dennis Effing
  */
 @Transactional
 @ActiveProfiles("hsql")
@@ -173,6 +174,21 @@ public class QueryAnnotationHsqlIntegrationTests {
 				.containsExactlyInAnyOrder("a", "b");
 	}
 
+	@Test // DATAJDBC-356
+	public void executeCustomQueryWithNamedParameterAndReturnTypeIsStream() {
+
+		repository.save(dummyEntity("a"));
+		repository.save(dummyEntity("b"));
+		repository.save(dummyEntity("c"));
+
+		Stream<DummyEntity> entities = repository.findByNamedRangeWithNamedParameterAndReturnTypeIsStream("a", "c");
+
+		assertThat(entities) //
+				.extracting(e -> e.name) //
+				.containsExactlyInAnyOrder("b");
+
+	}
+
 	@Test // DATAJDBC-175
 	public void executeCustomQueryWithReturnTypeIsNumber() {
 
@@ -291,6 +307,10 @@ public class QueryAnnotationHsqlIntegrationTests {
 		// DATAJDBC-172
 		@Query("SELECT * FROM DUMMY_ENTITY")
 		Stream<DummyEntity> findAllWithReturnTypeIsStream();
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE name  < :upper and name > :lower")
+		Stream<DummyEntity> findByNamedRangeWithNamedParameterAndReturnTypeIsStream(@Param("lower") String lower,
+				@Param("upper") String upper);
 
 		// DATAJDBC-175
 		@Query("SELECT count(*) FROM DUMMY_ENTITY WHERE name like concat('%', :name, '%')")
