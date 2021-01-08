@@ -25,7 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import javax.sql.DataSource;
 
@@ -93,12 +93,12 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	@Test // gh-469
-	public void shouldSuppressNullValues() {
+	void shouldSuppressNullValues() {
 		repository.findMax("doo").as(StepVerifier::create).verifyComplete();
 	}
 
 	@Test // gh-235
-	public void shouldReturnUpdateCount() {
+	void shouldReturnUpdateCount() {
 
 		shouldInsertNewItems();
 
@@ -106,7 +106,7 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	@Test // gh-235
-	public void shouldReturnUpdateCountAsDouble() {
+	void shouldReturnUpdateCountAsDouble() {
 
 		shouldInsertNewItems();
 
@@ -114,7 +114,7 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	@Test // gh-235
-	public void shouldReturnUpdateSuccess() {
+	void shouldReturnUpdateSuccess() {
 
 		shouldInsertNewItems();
 
@@ -122,7 +122,7 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	@Test // gh-235
-	public void shouldNotReturnUpdateCount() {
+	void shouldNotReturnUpdateCount() {
 
 		shouldInsertNewItems();
 
@@ -130,12 +130,12 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	@Test // gh-390
-	public void shouldInsertIdOnlyEntity() {
+	void shouldInsertIdOnlyEntity() {
 
 		this.jdbc.execute("CREATE TABLE ID_ONLY(id serial CONSTRAINT id_only_pk PRIMARY KEY)");
 
 		IdOnlyEntity entity1 = new IdOnlyEntity();
-		idOnlyEntityRepository.saveAll(Arrays.asList(entity1))
+		idOnlyEntityRepository.saveAll(Collections.singletonList(entity1))
 			.as(StepVerifier::create) //
 			.consumeNextWith( actual -> {
 				assertThat(actual.getId()).isNotNull();
@@ -143,7 +143,7 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	}
 
 	@Test // gh-519
-	public void shouldReturnEntityThroughInterface() {
+	void shouldReturnEntityThroughInterface() {
 
 		shouldInsertNewItems();
 
