@@ -129,6 +129,10 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
 		ReturnedType returnedType = resultProcessor.getReturnedType();
 
+		if (returnedType.getReturnedType().isAssignableFrom(returnedType.getDomainType())) {
+			return returnedType.getDomainType();
+		}
+
 		return returnedType.isProjecting() ? returnedType.getDomainType() : returnedType.getReturnedType();
 	}
 

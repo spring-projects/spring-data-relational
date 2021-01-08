@@ -142,7 +142,18 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 			}).verifyComplete();
 	}
 
+	@Test // gh-519
+	public void shouldReturnEntityThroughInterface() {
+
+		shouldInsertNewItems();
+
+		repository.findByName("SCHAUFELRADBAGGER").map(Buildable::getName).as(StepVerifier::create)
+				.expectNext("SCHAUFELRADBAGGER").verifyComplete();
+	}
+
 	interface H2LegoSetRepository extends LegoSetRepository {
+
+		Mono<Buildable> findByName(String name);
 
 		@Query("SELECT MAX(manual) FROM legoset WHERE name = :name")
 		Mono<Integer> findMax(String name);

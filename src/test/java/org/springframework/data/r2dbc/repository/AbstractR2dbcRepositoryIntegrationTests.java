@@ -394,11 +394,16 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Mono<Boolean> existsByName(String name);
 	}
 
+	public interface Buildable {
+
+		String getName();
+	}
+
 	@Getter
 	@Setter
 	@Table("legoset")
 	@NoArgsConstructor
-	public static class LegoSet extends Lego {
+	public static class LegoSet extends Lego implements Buildable {
 		String name;
 		Integer manual;
 
