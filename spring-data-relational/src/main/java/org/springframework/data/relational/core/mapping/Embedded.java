@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public @interface Embedded {
 	 * Set the load strategy for the embedded object if all contained fields yield {@literal null} values.
 	 * <p />
 	 * {@link Nullable @Embedded.Nullable} and {@link Empty @Embedded.Empty} offer shortcuts for this.
-	 * 
+	 *
 	 * @return never {@link} null.
 	 */
 	OnEmpty onEmpty();
@@ -56,7 +56,7 @@ public @interface Embedded {
 
 	/**
 	 * Load strategy to be used {@link Embedded#onEmpty()}.
-	 * 
+	 *
 	 * @author Christoph Strobl
 	 * @since 1.1
 	 */
@@ -73,9 +73,9 @@ public @interface Embedded {
 	 * private Address address;
 	 * </code>
 	 * </pre>
-	 * 
+	 *
 	 * as alternative to the more verbose
-	 * 
+	 *
 	 * <pre>
 	 * <code>
 	 *

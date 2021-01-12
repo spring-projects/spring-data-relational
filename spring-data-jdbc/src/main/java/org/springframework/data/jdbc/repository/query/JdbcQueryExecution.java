@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.springframework.lang.Nullable;
 /**
  * Interface specifying a query execution strategy. Implementations encapsulate information how to actually execute the
  * query and how to process the result in order to get the desired return type.
- * 
+ *
  * @author Mark Paluch
  * @since 2.0
  */
@@ -30,7 +30,7 @@ interface JdbcQueryExecution<T> {
 
 	/**
 	 * Execute the given {@code query} and {@code parameter} and transforms the result into a {@code T}.
-	 * 
+	 *
 	 * @param query the query to be executed. Must not be {@literal null}.
 	 * @param parameter the parameters to be bound to the query. Must not be {@literal null}.
 	 * @return the result of the query. Might be {@literal null}.
