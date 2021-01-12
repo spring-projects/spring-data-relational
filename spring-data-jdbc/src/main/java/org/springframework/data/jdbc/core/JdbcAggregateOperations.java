@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public interface JdbcAggregateOperations {
 	 * <p>
 	 * This is useful if the client provides an id for new aggregate roots.
 	 * </p>
-	 * 
+	 *
 	 * @param instance the aggregate root of the aggregate to be inserted. Must not be {@code null}.
 	 * @param <T> the type of the aggregate root.
 	 * @return the saved instance.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.springframework.util.Assert;
  * <p>
  * NOTE: Can also be used as an adapter. Create a lambda or an anonymous subclass and override any settings to implement
  * a different strategy on the fly.
- * 
+ *
  * @author Greg Turnquist
  * @author Michael Simons
  * @author Kazuki Shimizu
@@ -96,7 +96,7 @@ public interface NamingStrategy {
 	/**
 	 * For a map valued reference A -> Map&gt;X,B&lt; this is the name of the column in the table for B holding the key of
 	 * the map.
-	 * 
+	 *
 	 * @return name of the key column. Must not be {@code null}.
 	 */
 	default String getKeyColumn(RelationalPersistentProperty property) {
