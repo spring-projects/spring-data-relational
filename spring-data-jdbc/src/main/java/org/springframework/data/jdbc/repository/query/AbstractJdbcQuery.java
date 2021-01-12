@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	/**
 	 * Creates a {@link JdbcQueryExecution} given {@link JdbcQueryMethod}, {@link ResultSetExtractor} an
 	 * {@link RowMapper}. Prefers the given {@link ResultSetExtractor} over {@link RowMapper}.
-	 * 
+	 *
 	 * @param queryMethod must not be {@literal null}.
 	 * @param extractor must not be {@literal null}.
 	 * @param rowMapper must not be {@literal null}.
