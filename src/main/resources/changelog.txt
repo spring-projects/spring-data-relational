@@ -1,6 +1,17 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.3.0-M2 (2021-01-13)
+----------------------------------------
+* #523 - Update copyright year to 2021.
+* #520 - Use pull_request_target in PR project assignment.
+* #519 - Returning interface implemented by domain type leads to NullPointerException.
+* #518 - IgnoreCase works only if a String property can be resolved to a column.
+* #515 - Fix typo in changelog.
+* #514 - Reference Docs: typo on firstname.
+* #509 - Update CI jobs with Docker Login.
+
+
 Changes in version 1.2.3 (2021-01-13)
 -------------------------------------
 * #523 - Update copyright year to 2021.
@@ -369,6 +380,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
