@@ -54,6 +54,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
 import org.springframework.data.relational.core.mapping.event.Identifier;
@@ -115,6 +116,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
+						BeforeConvertEvent.class, //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class //
 				);
@@ -132,8 +134,10 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
+						BeforeConvertEvent.class, //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class, //
+						BeforeConvertEvent.class, //
 						BeforeSaveEvent.class, //
 						AfterSaveEvent.class //
 				);

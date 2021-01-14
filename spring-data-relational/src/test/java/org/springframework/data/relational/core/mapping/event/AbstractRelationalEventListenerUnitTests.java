@@ -46,7 +46,7 @@ public class AbstractRelationalEventListenerUnitTests {
 	@Test // DATAJDBC-454
 	public void beforeConvert() {
 
-		listener.onApplicationEvent(new BeforeConvertEvent<>(dummyEntity, MutableAggregateChange.forDelete(dummyEntity)));
+		listener.onApplicationEvent(new BeforeConvertEvent<>(dummyEntity));
 
 		assertThat(events).containsExactly("beforeConvert");
 	}
