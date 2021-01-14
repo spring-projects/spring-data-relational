@@ -404,6 +404,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	}
 
 	private <T> T triggerBeforeConvert(T aggregateRoot) {
+
+		publisher.publishEvent(new BeforeConvertEvent<>(aggregateRoot));
+
 		return entityCallbacks.callback(BeforeConvertCallback.class, aggregateRoot);
 	}
 
