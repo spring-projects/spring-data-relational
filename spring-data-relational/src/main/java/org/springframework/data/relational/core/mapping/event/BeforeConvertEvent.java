@@ -23,7 +23,7 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
  * @since 1.1
  * @author Jens Schauder
  */
-public class BeforeConvertEvent<E> extends RelationalSaveEvent<E> {
+public class BeforeConvertEvent<E> extends RelationalEventWithEntity<E> {
 
 	private static final long serialVersionUID = -5716795164911939224L;
 
@@ -33,7 +33,7 @@ public class BeforeConvertEvent<E> extends RelationalSaveEvent<E> {
 	 *          this event is fired before the conversion the change is actually empty, but contains information if the
 	 *          aggregate is considered new in {@link AggregateChange#getKind()}. Must not be {@literal null}.
 	 */
-	public BeforeConvertEvent(E instance, AggregateChange<E> change) {
-		super(instance, change);
+	public BeforeConvertEvent(E instance) {
+		super(instance);
 	}
 }
