@@ -872,7 +872,8 @@ The following table describes the available events:
 | After an aggregate root gets deleted.
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeConvertEvent.html[`BeforeConvertEvent`]
-| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
+| Before an aggregate root gets converted into a plan for executing SQL statements, but after the decision was made if the aggregate is new or not, i.e. if an update or an insert is in order.
+ This is the correct event if you want to set an id programmatically.
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveEvent.html[`BeforeSaveEvent`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
@@ -904,7 +905,8 @@ Spring Data JDBC uses the `EntityCallback` API for its auditing support and reac
 | After an aggregate root gets deleted.
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeConvertCallback.html[`BeforeConvertCallback`]
-| Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
+| Before an aggregate root gets converted into a plan for executing SQL statements, but after the decision was made if the aggregate is new or not, i.e. if an update or an insert is in order.
+This is the correct callback if you want to set an id programmatically.
 
 | {javadoc-base}/org/springframework/data/relational/core/mapping/event/BeforeSaveCallback.html[`BeforeSaveCallback`]
 | Before an aggregate root gets saved (that is, inserted or updated but after the decision about whether if it gets updated or deleted was made).
