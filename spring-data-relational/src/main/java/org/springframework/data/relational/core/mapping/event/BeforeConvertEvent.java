@@ -22,6 +22,7 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
  *
  * @since 1.1
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 public class BeforeConvertEvent<E> extends RelationalEventWithEntity<E> {
 
@@ -29,11 +30,22 @@ public class BeforeConvertEvent<E> extends RelationalEventWithEntity<E> {
 
 	/**
 	 * @param instance the saved entity. Must not be {@literal null}.
+	 * @since 2.1.4
+	 */
+	public BeforeConvertEvent(E instance) {
+		super(instance);
+	}
+
+	/**
+	 * @param instance the saved entity. Must not be {@literal null}.
 	 * @param change the {@link AggregateChange} encoding the actions to be performed on the database as change. Since
 	 *          this event is fired before the conversion the change is actually empty, but contains information if the
 	 *          aggregate is considered new in {@link AggregateChange#getKind()}. Must not be {@literal null}.
+	 * @deprecated since 2.1.4, use {@link #BeforeConvertEvent(Object)} as we don't expect an {@link AggregateChange}
+	 *             before converting an aggregate.
 	 */
-	public BeforeConvertEvent(E instance) {
+	@Deprecated
+	public BeforeConvertEvent(E instance, AggregateChange<E> change) {
 		super(instance);
 	}
 }
