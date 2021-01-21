@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.data.util.Lazy;
@@ -24,6 +25,7 @@ import org.springframework.data.util.Lazy;
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Jens Schauder
  * @since 1.1
  */
 public class SqlServerDialect extends AbstractDialect {
@@ -142,5 +144,10 @@ public class SqlServerDialect extends AbstractDialect {
 	@Override
 	public SelectRenderContext getSelectContext() {
 		return selectRenderContext.get();
+	}
+
+	@Override
+	public IdentifierProcessing getIdentifierProcessing() {
+		return IdentifierProcessing.NONE;
 	}
 }
