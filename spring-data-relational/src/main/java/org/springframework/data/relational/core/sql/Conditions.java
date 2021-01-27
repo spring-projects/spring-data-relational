@@ -204,7 +204,7 @@ public abstract class Conditions {
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(arg, "Expression argument must not be null");
 
-		return In.create(columnOrExpression, arg);
+		return In.createNotIn(columnOrExpression, arg);
 	}
 
 	/**
