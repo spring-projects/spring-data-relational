@@ -164,7 +164,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 				return readEntityFrom(row, metadata, property);
 			}
 
-			String identifier = prefix + property.getColumnName();
+			String identifier = prefix + property.getColumnName().getReference();
 			if (metadata != null && !metadata.getColumnNames().contains(identifier)) {
 				return null;
 			}

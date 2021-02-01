@@ -23,7 +23,9 @@ import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -182,8 +184,23 @@ public class MappingR2dbcConverterUnitTests {
 				.containsEntry(SqlIdentifier.unquoted("entity"), Parameter.from("nested_entity"));
 	}
 
-	@Test // gh-59
+	@Test // gh-530
 	public void shouldReadTopLevelEntity() {
+
+		mappingContext.setForceQuote(true);
+
+		Row rowMock = mock(Row.class);
+		when(rowMock.get("firstname")).thenReturn("Walter");
+		when(rowMock.get("lastname")).thenReturn("White");
+
+		ConstructorAndPropertyPopulation result = converter.read(ConstructorAndPropertyPopulation.class, rowMock);
+
+		assertThat(result.firstname).isEqualTo("Walter");
+		assertThat(result.lastname).isEqualTo("White");
+	}
+
+	@Test // gh-59
+	public void shouldReadTopLevelEntityWithConverter() {
 
 		Row rowMock = mock(Row.class);
 		when(rowMock.get("foo_column", String.class)).thenReturn("bar");
@@ -234,6 +251,14 @@ public class MappingR2dbcConverterUnitTests {
 		String firstname, lastname;
 		Instant instant;
 		LocalDateTime localDateTime;
+	}
+
+	@Getter
+	@Setter
+	@RequiredArgsConstructor
+	static class ConstructorAndPropertyPopulation {
+		final String firstname;
+		String lastname;
 	}
 
 	@AllArgsConstructor
