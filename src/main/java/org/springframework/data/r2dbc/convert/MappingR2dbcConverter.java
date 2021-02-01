@@ -47,7 +47,6 @@ import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -155,8 +154,11 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	 * @param prefix to be used for all column names accessed by this method. Must not be {@literal null}.
 	 * @return the value read from the {@link Row}. May be {@literal null}.
 	 */
+	@Nullable
 	private Object readFrom(Row row, @Nullable RowMetadata metadata, RelationalPersistentProperty property,
 			String prefix) {
+
+		String identifier = prefix + property.getColumnName().getReference();
 
 		try {
 
@@ -164,7 +166,6 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 				return readEntityFrom(row, metadata, property);
 			}
 
-			String identifier = prefix + property.getColumnName().getReference();
 			if (metadata != null && !metadata.getColumnNames().contains(identifier)) {
 				return null;
 			}
@@ -173,7 +174,8 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			return readValue(value, property.getTypeInformation());
 
 		} catch (Exception o_O) {
-			throw new MappingException(String.format("Could not read property %s from result set!", property), o_O);
+			throw new MappingException(String.format("Could not read property %s from column %s!", property, identifier),
+					o_O);
 		}
 	}
 
@@ -274,8 +276,10 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(property.getActualType());
 
-		if (readFrom(row, metadata, entity.getRequiredIdProperty(), prefix) == null) {
-			return null;
+		if (entity.hasIdProperty()) {
+			if (readFrom(row, metadata, entity.getRequiredIdProperty(), prefix) == null) {
+				return null;
+			}
 		}
 
 		Object instance = createInstance(row, metadata, prefix, entity);
@@ -637,7 +641,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		Collection<String> columns = metadata.getColumnNames();
 		Object generatedIdValue = null;
-		String idColumnName = idProperty.getColumnName().getReference(IdentifierProcessing.NONE);
+		String idColumnName = idProperty.getColumnName().getReference();
 
 		if (columns.contains(idColumnName)) {
 			generatedIdValue = row.get(idColumnName);
@@ -688,7 +692,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		}
 	}
 
-	private static class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
+	private class RowParameterValueProvider implements ParameterValueProvider<RelationalPersistentProperty> {
 
 		private final Row resultSet;
 		private final RowMetadata metadata;
@@ -714,30 +718,22 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
 
 			RelationalPersistentProperty property = this.entity.getRequiredPersistentProperty(parameter.getName());
+			Object value = readFrom(this.resultSet, this.metadata, property, this.prefix);
 
-			String reference = property.getColumnName().getReference(IdentifierProcessing.NONE);
-			String column = this.prefix.isEmpty() ? reference : this.prefix + reference;
+			if (value == null) {
+				return null;
+			}
+
+			Class<T> type = parameter.getType().getType();
+
+			if (type.isInstance(value)) {
+				return type.cast(value);
+			}
 
 			try {
-
-				if (this.metadata != null && !this.metadata.getColumnNames().contains(column)) {
-					return null;
-				}
-
-				Object value = this.resultSet.get(column);
-
-				if (value == null) {
-					return null;
-				}
-
-				Class<T> type = parameter.getType().getType();
-
-				if (type.isInstance(value)) {
-					return type.cast(value);
-				}
 				return this.converter.getConversionService().convert(value, type);
 			} catch (Exception o_O) {
-				throw new MappingException(String.format("Couldn't read column %s from Row.", column), o_O);
+				throw new MappingException(String.format("Couldn't read parameter %s.", parameter.getName()), o_O);
 			}
 		}
 	}
