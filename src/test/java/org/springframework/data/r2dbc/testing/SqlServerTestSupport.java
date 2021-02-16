@@ -28,6 +28,7 @@ public class SqlServerTestSupport {
 			+ "    id          integer IDENTITY(1,1) PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
+			+ "    extra       varchar(255),\n" //
 			+ "    manual      integer NULL\n" //
 			+ ");";
 

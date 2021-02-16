@@ -1,6 +1,11 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.1-3-0]]
+== What's New in Spring Data R2DBC 1.3.0
+
+* Introduce <<r2dbc.repositories.queries.query-by-example,Query by Example support>>.
+
 [[new-features.1-2-0]]
 == What's New in Spring Data R2DBC 1.2.0
 

@@ -28,7 +28,6 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DataAccessException;
@@ -49,6 +48,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * Integration tests for {@link SimpleR2dbcRepository} against H2.
  *
  * @author Mark Paluch
+ * @author Greg Turnquist
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -86,7 +86,7 @@ public class H2SimpleR2dbcRepositoryIntegrationTests extends AbstractSimpleR2dbc
 
 		this.jdbc.execute("CREATE TABLE always_new (\n" //
 				+ "    id          integer PRIMARY KEY,\n" //
-				+ "    name        varchar(255) NOT NULL" //
+				+ "    name        varchar(255) NOT NULL\n" //
 				+ ");");
 
 		RelationalEntityInformation<AlwaysNew, Long> entityInformation = new MappingRelationalEntityInformation<>(

@@ -21,16 +21,18 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import org.reactivestreams.Publisher;
-
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
+import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Streamable;
@@ -45,13 +47,15 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Mingyuan Wu
  * @author Stephen Cohen
+ * @author Greg Turnquist
  */
 @Transactional(readOnly = true)
-public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T, ID> {
+public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 
 	private final RelationalEntityInformation<T, ID> entity;
 	private final R2dbcEntityOperations entityOperations;
 	private final Lazy<RelationalPersistentProperty> idProperty;
+	private final RelationalExampleMapper exampleMapper;
 
 	/**
 	 * Create a new {@link SimpleR2dbcRepository}.
@@ -70,6 +74,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 				.getMappingContext() //
 				.getRequiredPersistentEntity(this.entity.getJavaType()) //
 				.getRequiredIdProperty());
+		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 	}
 
 	/**
@@ -90,6 +95,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 				.getMappingContext() //
 				.getRequiredPersistentEntity(this.entity.getJavaType()) //
 				.getRequiredIdProperty());
+		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 	}
 
 	/**
@@ -112,6 +118,7 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 				.getMappingContext() //
 				.getRequiredPersistentEntity(this.entity.getJavaType()) //
 				.getRequiredIdProperty());
+		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 	}
 
 	// -------------------------------------------------------------------------
@@ -370,6 +377,59 @@ public class SimpleR2dbcRepository<T, ID> implements ReactiveSortingRepository<T
 		Assert.notNull(sort, "Sort must not be null!");
 
 		return this.entityOperations.select(Query.empty().sort(sort), this.entity.getJavaType());
+	}
+
+	// -------------------------------------------------------------------------
+	// Methods from ReactiveQueryByExampleExecutor
+	// -------------------------------------------------------------------------
+
+	@Override
+	public <S extends T> Mono<S> findOne(Example<S> example) {
+
+		Assert.notNull(example, "Example must not be null!");
+
+		Query query = this.exampleMapper.getMappedExample(example);
+
+		return this.entityOperations.selectOne(query, example.getProbeType());
+	}
+
+	@Override
+	public <S extends T> Flux<S> findAll(Example<S> example) {
+
+		Assert.notNull(example, "Example must not be null!");
+
+		return findAll(example, Sort.unsorted());
+	}
+
+	@Override
+	public <S extends T> Flux<S> findAll(Example<S> example, Sort sort) {
+
+		Assert.notNull(example, "Example must not be null!");
+		Assert.notNull(sort, "Sort must not be null!");
+
+		Query query = this.exampleMapper.getMappedExample(example).sort(sort);
+
+		return this.entityOperations.select(query, example.getProbeType());
+	}
+
+	@Override
+	public <S extends T> Mono<Long> count(Example<S> example) {
+
+		Assert.notNull(example, "Example must not be null!");
+
+		Query query = this.exampleMapper.getMappedExample(example);
+
+		return this.entityOperations.count(query, example.getProbeType());
+	}
+
+	@Override
+	public <S extends T> Mono<Boolean> exists(Example<S> example) {
+
+		Assert.notNull(example, "Example must not be null!");
+
+		Query query = this.exampleMapper.getMappedExample(example);
+
+		return this.entityOperations.exists(query, example.getProbeType());
 	}
 
 	private RelationalPersistentProperty getIdProperty() {

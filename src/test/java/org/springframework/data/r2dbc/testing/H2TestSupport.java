@@ -43,6 +43,7 @@ public class H2TestSupport {
 			+ "    id          serial CONSTRAINT id PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
+			+ "    extra       varchar(255),\n" //
 			+ "    manual      integer NULL\n" //
 			+ ");";
 
