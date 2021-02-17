@@ -1,6 +1,16 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.0.7.RELEASE (2021-02-17)
+---------------------------------------------
+* DATAJDBC-642 - Update CI jobs with Docker Login.
+* DATAJDBC-637 - Support nanosecond precision by converting to Timestamp instead of Date.
+* #916 - Fixes Conditions.notIn() by using 'In.createNotIn()'.
+* #911 - Fix documentation of callbacks.
+* #904 - Update copyright year to 2021.
+* #257 - Update repository after GitHub issues migration.
+
+
 Changes in version 1.1.13.RELEASE (2021-02-17)
 ----------------------------------------------
 * #921 - The 1.1.x build is broken.
@@ -644,6 +654,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
