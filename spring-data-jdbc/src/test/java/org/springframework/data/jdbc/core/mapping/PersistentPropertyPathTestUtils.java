@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core.mapping;
 
 import lombok.experimental.UtilityClass;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -28,7 +27,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 @UtilityClass
 public class PersistentPropertyPathTestUtils {
 
-	@NotNull
 	public static PersistentPropertyPath<RelationalPersistentProperty> getPath(RelationalMappingContext context,
 			String path, Class<?> baseType) {
 

@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 /*
  * Copyright 2021 the original author or authors.
@@ -22,10 +22,10 @@ import org.junit.jupiter.api.Test;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-class ConditionsUnitTests {
+public class ConditionsUnitTests {
 
 	@Test // gh-916
-	void notInOfColumnAndExpression() {
+	public void notInOfColumnAndExpression() {
 
 		Table table = Table.create("t");
 		Column column = Column.create("col", table);

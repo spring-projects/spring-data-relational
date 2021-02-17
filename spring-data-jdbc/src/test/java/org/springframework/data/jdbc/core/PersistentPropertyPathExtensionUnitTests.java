@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core;
 
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -200,12 +199,10 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
-	@NotNull
 	private PersistentPropertyPathExtension extPath(RelationalPersistentEntity<?> entity) {
 		return new PersistentPropertyPathExtension(context, entity);
 	}
 
-	@NotNull
 	private PersistentPropertyPathExtension extPath(String path) {
 		return new PersistentPropertyPathExtension(context, createSimplePath(path));
 	}
