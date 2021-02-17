@@ -14,15 +14,15 @@
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
 		<artifactId>spring-data-parent</artifactId>
-		<version>2.5.0-M3</version>
+		<version>2.5.0-SNAPSHOT</version>
 	</parent>
 
 	<properties>
 
 		<dist.key>DATAR2DBC</dist.key>
 
-		<springdata.commons>2.5.0-M3</springdata.commons>
-		<springdata.jdbc>2.2.0-M3</springdata.jdbc>
+		<springdata.commons>2.5.0-SNAPSHOT</springdata.commons>
+		<springdata.jdbc>2.2.0-SNAPSHOT</springdata.jdbc>
 		<springdata.relational>${springdata.jdbc}</springdata.relational>
 		<java-module-name>spring.data.r2dbc</java-module-name>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
@@ -451,8 +451,8 @@
 
 	<repositories>
 		<repository>
-			<id>spring-libs-milestone</id>
-			<url>https://repo.spring.io/libs-milestone</url>
+			<id>spring-libs-snapshot</id>
+			<url>https://repo.spring.io/libs-snapshot</url>
 		</repository>
 		<repository>
 			<id>oss-sonatype-snapshots</id>
