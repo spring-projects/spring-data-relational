@@ -1,6 +1,14 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.1.4 (2021-02-17)
+-------------------------------------
+* DATAJDBC-620 - ResultSetExtractor can not use default row mapper.
+* #916 - Fixes Conditions.notIn() by using 'In.createNotIn()'.
+* #911 - Fix documentation of callbacks.
+* #910 - Trigger BeforeConvertEvent when saving an entity.
+
+
 Changes in version 2.0.7.RELEASE (2021-02-17)
 ---------------------------------------------
 * DATAJDBC-642 - Update CI jobs with Docker Login.
@@ -642,6 +650,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
