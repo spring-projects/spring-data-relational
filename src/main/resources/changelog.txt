@@ -1,6 +1,12 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.3.0-M3 (2021-02-17)
+----------------------------------------
+* #530 - MappingR2dbcConverter uses SqlIdentifier.toString() instead of SqlIdentifier.getReference() when calling Row.get(…).
+* #506 - Enable Project automation through GitHub Actions.
+
+
 Changes in version 1.2.4 (2021-02-17)
 -------------------------------------
 * #530 - MappingR2dbcConverter uses SqlIdentifier.toString() instead of SqlIdentifier.getReference() when calling Row.get(…).
@@ -394,6 +400,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
