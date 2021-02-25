@@ -18,18 +18,19 @@ package org.springframework.data.relational.repository.query;
 
 import static org.springframework.data.domain.ExampleMatcher.*;
 
-import java.beans.PropertyDescriptor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-import org.springframework.beans.NotReadablePropertyException;
 import org.springframework.data.domain.Example;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.support.ExampleMatcherAccessor;
 import org.springframework.util.Assert;
 
 /**
@@ -69,86 +70,68 @@ public class RelationalExampleMapper {
 		Assert.notNull(example, "Example must not be null!");
 		Assert.notNull(entity, "RelationalPersistentEntity must not be null!");
 
+		PersistentPropertyAccessor<T> propertyAccessor = entity.getPropertyAccessor(example.getProbe());
+		ExampleMatcherAccessor matcherAccessor = new ExampleMatcherAccessor(example.getMatcher());
+
+		final List<Criteria> criteriaBasedOnProperties = new ArrayList<>();
+
+		entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+
+			if (matcherAccessor.isIgnoredPath(property.getName())) {
+				return;
+			}
+
+			Optional<?> optionalConvertedPropValue = matcherAccessor //
+					.getValueTransformerForPath(property.getName()) //
+					.apply(Optional.ofNullable(propertyAccessor.getProperty(property)));
+
+			// If the value is empty, don't try to match against it
+			if (!optionalConvertedPropValue.isPresent()) {
+				return;
+			}
+
+			Object convPropValue = optionalConvertedPropValue.get();
+			boolean ignoreCase = matcherAccessor.isIgnoreCaseForPath(property.getName());
+
+			String columnName = property.getColumnName().getReference();
+
+			switch (matcherAccessor.getStringMatcherForPath(property.getName())) {
+				case DEFAULT:
+				case EXACT:
+					criteriaBasedOnProperties.add(includeNulls(example) //
+							? Criteria.where(columnName).isNull().or(columnName).is(convPropValue).ignoreCase(ignoreCase)
+							: Criteria.where(columnName).is(convPropValue).ignoreCase(ignoreCase));
+					break;
+				case ENDING:
+					criteriaBasedOnProperties.add(includeNulls(example) //
+							? Criteria.where(columnName).isNull().or(columnName).like("%" + convPropValue).ignoreCase(ignoreCase)
+							: Criteria.where(columnName).like("%" + convPropValue).ignoreCase(ignoreCase));
+					break;
+				case STARTING:
+					criteriaBasedOnProperties.add(includeNulls(example) //
+							? Criteria.where(columnName).isNull().or(columnName).like(convPropValue + "%").ignoreCase(ignoreCase)
+							: Criteria.where(columnName).like(convPropValue + "%").ignoreCase(ignoreCase));
+					break;
+				case CONTAINING:
+					criteriaBasedOnProperties.add(includeNulls(example) //
+							? Criteria.where(columnName).isNull().or(columnName).like("%" + convPropValue + "%")
+									.ignoreCase(ignoreCase)
+							: Criteria.where(columnName).like("%" + convPropValue + "%").ignoreCase(ignoreCase));
+					break;
+				default:
+					throw new IllegalStateException(example.getMatcher().getDefaultStringMatcher() + " is not supported!");
+			}
+		});
+
+		// Criteria, assemble!
 		Criteria criteria = Criteria.empty();
 
-		BeanWrapper beanWrapper = new BeanWrapperImpl(example.getProbe());
+		for (Criteria propertyCriteria : criteriaBasedOnProperties) {
 
-		for (PropertyDescriptor propertyDescriptor : beanWrapper.getPropertyDescriptors()) {
-
-			// "class" isn't grounds for a query criteria
-			if (propertyDescriptor.getName().equals("class")) {
-				continue;
-			}
-
-			// if this property descriptor is part of the ignoredPaths set, skip over it.
-			if (example.getMatcher().getIgnoredPaths().contains(propertyDescriptor.getName())) {
-				continue;
-			}
-
-			Object propertyValue = null;
-			try {
-				propertyValue = beanWrapper.getPropertyValue(propertyDescriptor.getName());
-			} catch (NotReadablePropertyException e) {}
-
-			if (propertyValue != null) {
-
-				String columnName = entity.getPersistentProperty(propertyDescriptor.getName()).getColumnName().getReference();
-
-				Criteria propertyCriteria;
-
-				// First, check the overall matcher for settings
-				StringMatcher stringMatcher = example.getMatcher().getDefaultStringMatcher();
-				boolean ignoreCase = example.getMatcher().isIgnoreCaseEnabled();
-
-				// Then, apply any property-specific overrides
-				if (example.getMatcher().getPropertySpecifiers().hasSpecifierForPath(propertyDescriptor.getName())) {
-
-					PropertySpecifier propertySpecifier = example.getMatcher().getPropertySpecifiers()
-							.getForPath(propertyDescriptor.getName());
-
-					if (propertySpecifier.getStringMatcher() != null) {
-						stringMatcher = propertySpecifier.getStringMatcher();
-					}
-
-					if (propertySpecifier.getIgnoreCase() != null) {
-						ignoreCase = propertySpecifier.getIgnoreCase();
-					}
-				}
-
-				// Assemble the property's criteria
-				switch (stringMatcher) {
-					case DEFAULT:
-					case EXACT:
-						propertyCriteria = includeNulls((Example<T>) example) //
-								? Criteria.where(columnName).isNull().or(columnName).is(propertyValue).ignoreCase(ignoreCase)
-								: Criteria.where(columnName).is(propertyValue).ignoreCase(ignoreCase);
-						break;
-					case ENDING:
-						propertyCriteria = includeNulls(example) //
-								? Criteria.where(columnName).isNull().or(columnName).like("%" + propertyValue).ignoreCase(ignoreCase)
-								: Criteria.where(columnName).like("%" + propertyValue).ignoreCase(ignoreCase);
-						break;
-					case STARTING:
-						propertyCriteria = includeNulls(example) //
-								? Criteria.where(columnName).isNull().or(columnName).like(propertyValue + "%").ignoreCase(ignoreCase)
-								: Criteria.where(columnName).like(propertyValue + "%").ignoreCase(ignoreCase);
-						break;
-					case CONTAINING:
-						propertyCriteria = includeNulls(example) //
-								? Criteria.where(columnName).isNull().or(columnName).like("%" + propertyValue + "%")
-										.ignoreCase(ignoreCase)
-								: Criteria.where(columnName).like("%" + propertyValue + "%").ignoreCase(ignoreCase);
-						break;
-					default:
-						throw new IllegalStateException(example.getMatcher().getDefaultStringMatcher() + " is not supported!");
-				}
-
-				// Add this criteria based on any/all
-				if (example.getMatcher().isAllMatching()) {
-					criteria = criteria.and(propertyCriteria);
-				} else {
-					criteria = criteria.or(propertyCriteria);
-				}
+			if (example.getMatcher().isAllMatching()) {
+				criteria = criteria.and(propertyCriteria);
+			} else {
+				criteria = criteria.or(propertyCriteria);
 			}
 		}
 
