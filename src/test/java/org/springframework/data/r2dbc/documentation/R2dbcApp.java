@@ -57,4 +57,4 @@ public class R2dbcApp {
       .verifyComplete();
   }
 }
-// tag::class[]
+// end::class[]

@@ -56,7 +56,7 @@ class R2dbcEntityTemplateSnippets {
 
 		// tag::simpleSelect[]
 		Flux<Person> people = template.select(Person.class) // <1>
-				.all();
+				.all(); // <2>
 		// end::simpleSelect[]
 	}
 

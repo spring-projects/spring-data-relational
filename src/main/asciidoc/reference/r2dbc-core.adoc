@@ -116,7 +116,7 @@ You also need a main application to run, as follows:
 ====
 [source,java,indent=0]
 ----
-include::../{example-root}/R2dbcApp.java[tags=class]
+include::../{example-root}/R2dbcApp.java[tag=class]
 ----
 ====
 

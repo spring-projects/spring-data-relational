@@ -31,7 +31,7 @@ The following example shows how to insert a row and retrieving its contents:
 ====
 [source,java,indent=0]
 ----
-include::../{example-root}/R2dbcEntityTemplateSnippets.java[tags=insertAndSelect]
+include::../{example-root}/R2dbcEntityTemplateSnippets.java[tag=insertAndSelect]
 ----
 ====
 
@@ -56,7 +56,7 @@ This functionality is supported by the <<r2dbc.drivers,`R2dbcDialect` abstractio
 ====
 [source,java,indent=0]
 ----
-include::../{example-root}/R2dbcEntityTemplateSnippets.java[tags=select]
+include::../{example-root}/R2dbcEntityTemplateSnippets.java[tag=select]
 ----
 ====
 
@@ -69,10 +69,9 @@ Consider the following simple query:
 ====
 [source,java,indent=0]
 ----
-include::../{example-root}/R2dbcEntityTemplateSnippets.java[tags=simpleSelect]
+include::../{example-root}/R2dbcEntityTemplateSnippets.java[tag=simpleSelect]
 ----
-<1> Using `Person` with the `from(…)` method sets the `FROM` table based on mapping metadata.
-It also maps tabular results on `Person` result objects.
+<1> Using `Person` with the `select(…)` method maps tabular results on `Person` result objects.
 <2> Fetching `all()` rows returns a `Flux<Person>` without limiting results.
 ====
 
@@ -81,7 +80,7 @@ The following example declares a more complex query that specifies the table nam
 ====
 [source,java,indent=0]
 ----
-include::../{example-root}/R2dbcEntityTemplateSnippets.java[tags=fullSelect]
+include::../{example-root}/R2dbcEntityTemplateSnippets.java[tag=fullSelect]
 ----
 <1> Selecting from a table by name returns row results using the given domain type.
 <2> The issued query declares a `WHERE` condition on `firstname` and `lastname` columns to filter results.
@@ -142,7 +141,7 @@ Consider the following simple typed insert operation:
 ====
 [source,java,indent=0]
 ----
-include::../{example-root}/R2dbcEntityTemplateSnippets.java[tags=insert]
+include::../{example-root}/R2dbcEntityTemplateSnippets.java[tag=insert]
 ----
 <1> Using `Person` with the `into(…)` method sets the `INTO` table, based on mapping metadata.
 It also prepares the insert statement to accept `Person` objects for inserting.
@@ -165,12 +164,12 @@ Consider the following simple typed update operation:
 ----
 Person modified = …
 
-include::../{example-root}/R2dbcEntityTemplateSnippets.java[tags=update]
+include::../{example-root}/R2dbcEntityTemplateSnippets.java[tag=update]
 ----
 <1> Update `Person` objects and apply mapping based on mapping metadata.
 <2> Set a different table name by calling the `inTable(…)` method.
-<2> Specify a query that translates into a `WHERE` clause.
-<3> Apply the `Update` object.
+<3> Specify a query that translates into a `WHERE` clause.
+<4> Apply the `Update` object.
 Set in this case `age` to `42` and return the number of affected rows.
 ====
 
@@ -185,10 +184,10 @@ Consider the following simple insert operation:
 ====
 [source,java]
 ----
-include::../{example-root}/R2dbcEntityTemplateSnippets.java[tags=delete]
+include::../{example-root}/R2dbcEntityTemplateSnippets.java[tag=delete]
 ----
 <1> Delete `Person` objects and apply mapping based on mapping metadata.
 <2> Set a different table name by calling the `from(…)` method.
-<2> Specify a query that translates into a `WHERE` clause.
-<3> Apply the delete operation and return the number of affected rows.
+<3> Specify a query that translates into a `WHERE` clause.
+<4> Apply the delete operation and return the number of affected rows.
 ====
