@@ -568,8 +568,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return this.databaseClient.sql(operation) //
 				.filter(statement -> statement.returnGeneratedValues())
 				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entity)) //
-				.first() //
-				.defaultIfEmpty(entity) //
+				.all() //
+				.last(entity)
 				.flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
 	}
 
