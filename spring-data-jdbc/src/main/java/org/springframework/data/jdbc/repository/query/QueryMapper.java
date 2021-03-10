@@ -34,6 +34,7 @@ import org.springframework.data.mapping.context.InvalidPersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.Escaper;
+import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
@@ -402,10 +403,16 @@ class QueryMapper {
 		}
 
 		if (comparator == Comparator.IS_TRUE) {
+			if (dialect instanceof SqlServerDialect) {
+				return column.isEqualTo(SQL.literalOf(1));
+			}
 			return column.isEqualTo(SQL.literalOf(true));
 		}
 
 		if (comparator == Comparator.IS_FALSE) {
+			if (dialect instanceof SqlServerDialect) {
+				return column.isEqualTo(SQL.literalOf(0));
+			}
 			return column.isEqualTo(SQL.literalOf(false));
 		}
 

@@ -38,6 +38,7 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.dialect.H2Dialect;
+import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
@@ -61,9 +62,14 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 public class PartTreeJdbcQueryUnitTests {
 
 	private static final String TABLE = "\"users\"";
+	private static final String TABLE_SQL_SERVER = "users";
 	private static final String ALL_FIELDS = "\"users\".\"ID\" AS \"ID\", \"users\".\"AGE\" AS \"AGE\", \"hated\".\"USER\" AS \"HATED_USER\", \"users\".\"ACTIVE\" AS \"ACTIVE\", \"users\".\"LAST_NAME\" AS \"LAST_NAME\", \"users\".\"FIRST_NAME\" AS \"FIRST_NAME\", \"users\".\"DATE_OF_BIRTH\" AS \"DATE_OF_BIRTH\", \"users\".\"HOBBY_REFERENCE\" AS \"HOBBY_REFERENCE\", \"hated\".\"NAME\" AS \"HATED_NAME\", \"users\".\"USER_CITY\" AS \"USER_CITY\", \"users\".\"USER_STREET\" AS \"USER_STREET\"";
+	private static final String ALL_FIELDS_SQL_SERVER = "users.id AS id, users.age AS age, hated.user AS hated_user, users.active AS active, users.last_name AS last_name, users.first_name AS first_name, users.date_of_birth AS date_of_birth, users.hobby_reference AS hobby_reference, hated.name AS hated_name, users.user_city AS user_city, users.user_street AS user_street";
 	private static final String JOIN_CLAUSE = "FROM \"users\" LEFT OUTER JOIN \"HOBBY\" \"hated\" ON \"hated\".\"USER\" = \"users\".\"ID\"";
+	private static final String JOIN_CLAUSE_SQL_SERVER = "FROM users LEFT OUTER JOIN hobby hated ON hated.user = users.id";
+
 	private static final String BASE_SELECT = "SELECT " + ALL_FIELDS + " " + JOIN_CLAUSE;
+	private static final String BASE_SELECT_SQL_SERVER = "SELECT " + ALL_FIELDS_SQL_SERVER + " " + JOIN_CLAUSE_SQL_SERVER;
 
 	JdbcMappingContext mappingContext = new JdbcMappingContext();
 	JdbcConverter converter = new BasicJdbcConverter(mappingContext, mock(RelationResolver.class));
@@ -441,6 +447,17 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"ACTIVE\" = TRUE");
 	}
 
+	@Test // issue-908
+	public void createsQueryToFindAllEntitiesByBooleanAttributeTrueForSqlServer() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByActiveTrue");
+		PartTreeJdbcQuery jdbcQuery = createQueryForSqlServer(queryMethod);
+		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
+		ParametrizedQuery query = jdbcQuery.createQuery(accessor);
+
+		assertThat(query.getQuery()).isEqualTo(BASE_SELECT_SQL_SERVER + " WHERE " + TABLE_SQL_SERVER + ".active = 1");
+	}
+
 	@Test // DATAJDBC-318
 	public void createsQueryToFindAllEntitiesByBooleanAttributeFalse() throws Exception {
 
@@ -450,6 +467,17 @@ public class PartTreeJdbcQueryUnitTests {
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor);
 
 		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"ACTIVE\" = FALSE");
+	}
+
+	@Test // issue-908
+	public void createsQueryToFindAllEntitiesByBooleanAttributeFalseForSqlServer() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByActiveFalse");
+		PartTreeJdbcQuery jdbcQuery = createQueryForSqlServer(queryMethod);
+		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
+		ParametrizedQuery query = jdbcQuery.createQuery(accessor);
+
+		assertThat(query.getQuery()).isEqualTo(BASE_SELECT_SQL_SERVER + " WHERE " + TABLE_SQL_SERVER + ".active = 0");
 	}
 
 	@Test // DATAJDBC-318
@@ -562,6 +590,11 @@ public class PartTreeJdbcQueryUnitTests {
 
 	private PartTreeJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
 		return new PartTreeJdbcQuery(mappingContext, queryMethod, H2Dialect.INSTANCE, converter,
+				mock(NamedParameterJdbcOperations.class), mock(RowMapper.class));
+	}
+
+	private PartTreeJdbcQuery createQueryForSqlServer(JdbcQueryMethod queryMethod) {
+		return new PartTreeJdbcQuery(mappingContext, queryMethod, SqlServerDialect.INSTANCE, converter,
 				mock(NamedParameterJdbcOperations.class), mock(RowMapper.class));
 	}
 
