@@ -16,6 +16,8 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.Literal;
+import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
@@ -84,5 +86,15 @@ public interface Dialect {
 
 	default IdGeneration getIdGeneration(){
 		return IdGeneration.DEFAULT;
-	};
+	}
+
+	/**
+	 * Return the boolean literal based on dialect.
+	 *
+	 * @param value the boolean value
+	 * @return the appropriate literal
+	 */
+	default Literal booleanLiteral(boolean value) {
+		return SQL.literalOf(value);
+	}
 }

@@ -16,7 +16,9 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.Literal;
 import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.data.util.Lazy;
 
@@ -149,5 +151,10 @@ public class SqlServerDialect extends AbstractDialect {
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.NONE;
+	}
+
+	@Override
+	public Literal booleanLiteral(boolean value) {
+		return value ? SQL.literalOf(1) :SQL.literalOf(0);
 	}
 }

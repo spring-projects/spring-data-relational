@@ -403,17 +403,11 @@ class QueryMapper {
 		}
 
 		if (comparator == Comparator.IS_TRUE) {
-			if (dialect instanceof SqlServerDialect) {
-				return column.isEqualTo(SQL.literalOf(1));
-			}
-			return column.isEqualTo(SQL.literalOf(true));
+			return column.isEqualTo(dialect.booleanLiteral(true));
 		}
 
 		if (comparator == Comparator.IS_FALSE) {
-			if (dialect instanceof SqlServerDialect) {
-				return column.isEqualTo(SQL.literalOf(0));
-			}
-			return column.isEqualTo(SQL.literalOf(false));
+			return column.isEqualTo(dialect.booleanLiteral(false));
 		}
 
 		Expression columnExpression = column;
