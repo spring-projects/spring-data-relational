@@ -58,11 +58,13 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Mark Paluch
  * @author Myeonghyeon Lee
  * @author Myat Min
+ * @author Radim Tlusty
  */
 public class DefaultDataAccessStrategyUnitTests {
 
 	public static final long ID_FROM_ADDITIONAL_VALUES = 23L;
 	public static final long ORIGINAL_ID = 4711L;
+	public static final long GENERATED_ID = 17;
 
 	NamedParameterJdbcOperations namedJdbcOperations = mock(NamedParameterJdbcOperations.class);
 	JdbcOperations jdbcOperations = mock(JdbcOperations.class);
@@ -99,7 +101,7 @@ public class DefaultDataAccessStrategyUnitTests {
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, Identifier.from(additionalParameters));
 
 		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\" (\"ID\") VALUES (:ID)"),
-				paramSourceCaptor.capture(), any(KeyHolder.class));
+				paramSourceCaptor.capture());
 	}
 
 	@Test // DATAJDBC-146
@@ -111,7 +113,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, Identifier.from(additionalParameters));
 
-		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
+		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture());
 
 		assertThat(sqlCaptor.getValue()) //
 				.containsSubsequence("INSERT INTO \"DUMMY_ENTITY\" (", "\"ID\"", ") VALUES (", ":id", ")") //
@@ -131,7 +133,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(entity, EntityWithBoolean.class, Identifier.empty());
 
-		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture(), any(KeyHolder.class));
+		verify(namedJdbcOperations).update(sqlCaptor.capture(), paramSourceCaptor.capture());
 
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(ORIGINAL_ID);
 		assertThat(paramSourceCaptor.getValue().getValue("flag")).isEqualTo("T");
@@ -150,7 +152,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		accessStrategy.insert(entity, WithValueObjectId.class, Identifier.empty());
 
-		verify(namedJdbcOperations).update(anyString(), paramSourceCaptor.capture(), any(KeyHolder.class));
+		verify(namedJdbcOperations).update(anyString(), paramSourceCaptor.capture());
 
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(rawId);
 		assertThat(paramSourceCaptor.getValue().getValue("value")).isEqualTo("vs. superman");
@@ -177,7 +179,7 @@ public class DefaultDataAccessStrategyUnitTests {
 		additionalParameters.put(SqlIdentifier.quoted("DUMMYENTITYROOT"), rootIdValue);
 		accessStrategy.insert(root, DummyEntityRoot.class, Identifier.from(additionalParameters));
 
-		verify(namedJdbcOperations).update(anyString(), paramSourceCaptor.capture(), any(KeyHolder.class));
+		verify(namedJdbcOperations).update(anyString(), paramSourceCaptor.capture());
 
 		assertThat(paramSourceCaptor.getValue().getValue("id")).isEqualTo(rawId);
 
@@ -189,6 +191,36 @@ public class DefaultDataAccessStrategyUnitTests {
 		verify(namedJdbcOperations).query(anyString(), paramSourceCaptor.capture(), any(RowMapper.class));
 
 		assertThat(paramSourceCaptor.getValue().getValue("DUMMYENTITYROOT")).isEqualTo(rawId);
+	}
+
+	@Test // gh-933
+	public void insertWithDefinedIdDoesNotRetrieveGeneratedKeys() {
+
+		Object generatedId = accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, Identifier.from(additionalParameters));
+
+		assertThat(generatedId).isNull();
+
+		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\" (\"ID\") VALUES (:id)"),
+				paramSourceCaptor.capture());
+	}
+
+	@Test // gh-933
+	public void insertWithUndefinedIdRetrievesGeneratedKeys() {
+
+		when(namedJdbcOperations.update(any(), any(), any()))
+				.then(invocation -> {
+
+					KeyHolder keyHolder = invocation.getArgument(2);
+					keyHolder.getKeyList().add(singletonMap("ID", GENERATED_ID));
+					return 1;
+				});
+
+		Object generatedId = accessStrategy.insert(new DummyEntity(null), DummyEntity.class, Identifier.from(additionalParameters));
+
+		assertThat(generatedId).isEqualTo(GENERATED_ID);
+
+		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\" VALUES ()"),
+				paramSourceCaptor.capture(), any(KeyHolder.class));
 	}
 
 	private DefaultDataAccessStrategy createAccessStrategyWithConverter(List<?> converters) {
