@@ -19,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
@@ -818,7 +817,7 @@ class SqlGenerator {
 
 		private void populateColumnNameCache(RelationalPersistentEntity<?> entity, String prefix) {
 
-			entity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+			entity.doWithAll(property -> {
 
 				// the referencing column of referenced entity is expected to be on the other side of the relation
 				if (!property.isEntity()) {

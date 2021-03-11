@@ -95,6 +95,15 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("override_id"));
 	}
 
+	@Test // #938
+	void considersAggregateReferenceAnAssociation() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(WithAssociations.class);
+		RelationalPersistentProperty property = entity.getRequiredPersistentProperty("association");
+
+		assertThat(property.isAssociation()).isTrue();
+	}
+
 	private PersistentPropertyPathExtension getPersistentPropertyPath(Class<?> type, String propertyName) {
 		PersistentPropertyPath<RelationalPersistentProperty> path = context
 				.findPersistentPropertyPaths(type, p -> p.getName().equals(propertyName)).getFirst()
@@ -148,5 +157,9 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		@Column(value = "some_value") //
 		@MappedCollection(idColumn = "override_id", keyColumn = "override_key") //
 		List<Integer> overrideList;
+	}
+
+	static class WithAssociations {
+		AggregateReference<Object, Long> association;
 	}
 }

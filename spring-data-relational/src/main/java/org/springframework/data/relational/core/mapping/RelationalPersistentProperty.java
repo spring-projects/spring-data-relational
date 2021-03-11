@@ -28,6 +28,11 @@ import org.springframework.lang.Nullable;
  */
 public interface RelationalPersistentProperty extends PersistentProperty<RelationalPersistentProperty> {
 
+	/**
+	 * @deprecated since 2.2, in favor of {@link #isAssociation()}
+	 * @return
+	 */
+	@Deprecated
 	boolean isReference();
 
 	/**

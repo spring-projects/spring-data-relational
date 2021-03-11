@@ -36,7 +36,6 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.dialect.IdGeneration;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -424,7 +423,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
 
-		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+		persistentEntity.doWithAll(property -> {
 
 			if (skipProperty.test(property) || !property.isWritable()) {
 				return;
