@@ -60,9 +60,21 @@ public class BasicJdbcPersistentProperty extends BasicRelationalPersistentProper
 		super(property, owner, simpleTypeHolder, namingStrategy);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.mapping.model.AnnotationBasedPersistentProperty#isAssociation()
+	 */
 	@Override
-	public boolean isReference() {
-		return AggregateReference.class.isAssignableFrom(getRawType());
+	public boolean isAssociation() {
+		return super.isAssociation() || AggregateReference.class.isAssignableFrom(getRawType());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.BasicRelationalPersistentProperty#isReference()
+	 */
+	@Override
+	public boolean isReference() {
+		return isAssociation();
+	}
 }

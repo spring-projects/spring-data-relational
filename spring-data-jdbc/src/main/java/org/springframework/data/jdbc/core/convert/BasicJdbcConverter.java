@@ -183,7 +183,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 	private Class<?> doGetColumnType(RelationalPersistentProperty property) {
 
-		if (property.isReference()) {
+		if (property.isAssociation()) {
 			return getReferenceColumnType(property);
 		}
 
@@ -419,23 +419,23 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			PersistentPropertyAccessor<T> propertyAccessor = getPropertyAccessor(entity, instance);
 			PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
 
-			for (RelationalPersistentProperty property : entity) {
+			entity.doWithAll(property -> {
 
 				if (persistenceConstructor != null && persistenceConstructor.isConstructorParameter(property)) {
-					continue;
+					return;
 				}
 
 				// skip absent simple properties
 				if (isSimpleProperty(property)) {
 
 					if (!propertyValueProvider.hasProperty(property)) {
-						continue;
+						return;
 					}
 				}
 
 				Object value = readOrLoadProperty(idValue, property);
 				propertyAccessor.setProperty(property, value);
-			}
+			});
 
 			return propertyAccessor.getBean();
 		}
@@ -513,7 +513,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			for (RelationalPersistentProperty embeddedProperty : persistentEntity) {
 
 				// if the embedded contains Lists, Sets or Maps we consider it non-empty
-				if (embeddedProperty.isQualified() || embeddedProperty.isReference()) {
+				if (embeddedProperty.isQualified() || embeddedProperty.isAssociation()) {
 					return true;
 				}
 
