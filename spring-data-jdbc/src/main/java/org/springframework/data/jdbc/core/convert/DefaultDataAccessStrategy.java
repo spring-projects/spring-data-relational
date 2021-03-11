@@ -67,6 +67,7 @@ import org.springframework.util.Assert;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Yunyoung LEE
+ * @author Radim Tlusty
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -121,24 +122,33 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
 		}
 
-		KeyHolder holder = new GeneratedKeyHolder();
-
-		IdGeneration idGeneration = sqlGeneratorSource.getDialect().getIdGeneration();
 		String insertSql = sqlGenerator.getInsert(new HashSet<>(parameterSource.getIdentifiers()));
 
-		if (idGeneration.driverRequiresKeyColumnNames()) {
+		if (idValue == null) {
 
-			String[] keyColumnNames = getKeyColumnNames(domainType);
-			if (keyColumnNames.length == 0) {
-				operations.update(insertSql, parameterSource, holder);
+			KeyHolder holder = new GeneratedKeyHolder();
+
+			IdGeneration idGeneration = sqlGeneratorSource.getDialect().getIdGeneration();
+
+			if (idGeneration.driverRequiresKeyColumnNames()) {
+
+				String[] keyColumnNames = getKeyColumnNames(domainType);
+				if (keyColumnNames.length == 0) {
+					operations.update(insertSql, parameterSource, holder);
+				} else {
+					operations.update(insertSql, parameterSource, holder, keyColumnNames);
+				}
 			} else {
-				operations.update(insertSql, parameterSource, holder, keyColumnNames);
+				operations.update(insertSql, parameterSource, holder);
 			}
-		} else {
-			operations.update(insertSql, parameterSource, holder);
-		}
 
-		return getIdFromHolder(holder, persistentEntity);
+			return getIdFromHolder(holder, persistentEntity);
+		}
+		else {
+
+			operations.update(insertSql, parameterSource);
+			return null;
+		}
 	}
 
 	/*
