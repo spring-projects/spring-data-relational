@@ -15,11 +15,14 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.util.Assert;
-import org.springframework.data.relational.core.sql.LockOptions;
 
 /**
  * A SQL dialect for MySQL.
@@ -160,5 +163,10 @@ public class MySqlDialect extends AbstractDialect {
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return identifierProcessing;
+	}
+
+	@Override
+	public Collection<Object> getConverters() {
+		return Collections.singletonList(Timestamp2OffsetDateTimeConverter.INSTANCE);
 	}
 }

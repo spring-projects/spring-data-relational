@@ -27,14 +27,16 @@ import lombok.Value;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -92,6 +94,9 @@ public class JdbcRepositoryIntegrationTests {
 
 	@BeforeEach
 	public void before() {
+
+		repository.deleteAll();
+
 		eventListener.events.clear();
 	}
 
@@ -282,17 +287,7 @@ public class JdbcRepositoryIntegrationTests {
 	@Test // DATAJDBC-464, DATAJDBC-318
 	public void executeQueryWithParameterRequiringConversion() {
 
-		Instant now = Instant.now();
-
-		DummyEntity first = repository.save(createDummyEntity());
-		first.setPointInTime(now.minusSeconds(1000L));
-		first.setName("first");
-
-		DummyEntity second = repository.save(createDummyEntity());
-		second.setPointInTime(now.plusSeconds(1000L));
-		second.setName("second");
-
-		repository.saveAll(asList(first, second));
+		Instant now = createDummyBeforeAndAfterNow();
 
 		assertThat(repository.after(now)) //
 				.extracting(DummyEntity::getName) //
@@ -408,7 +403,7 @@ public class JdbcRepositoryIntegrationTests {
 	@Test // #945
 	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
 	public void usePrimitiveArrayAsArgument() {
-		assertThat(repository.unnestPrimitive(new int[]{1, 2, 3})).containsExactly(1,2,3);
+		assertThat(repository.unnestPrimitive(new int[] { 1, 2, 3 })).containsExactly(1, 2, 3);
 	}
 
 	@Test // GH-774
@@ -440,6 +435,17 @@ public class JdbcRepositoryIntegrationTests {
 
 		assertThat(slice.getContent()).hasSize(2);
 		assertThat(slice.hasNext()).isTrue();
+	}
+
+	@Test // #935
+	public void queryByOffsetDateTime() {
+
+		Instant now = createDummyBeforeAndAfterNow();
+		OffsetDateTime timeArgument = OffsetDateTime.ofInstant(now, ZoneOffset.ofHours(2));
+
+		List<DummyEntity> entities = repository.findByOffsetDateTime(timeArgument);
+
+		assertThat(entities).extracting(DummyEntity::getName).containsExactly("second");
 	}
 
 	@Test // #971
@@ -486,6 +492,29 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result.getContent().get(0).getName()).isEqualTo("Entity Name");
 	}
 
+	private Instant createDummyBeforeAndAfterNow() {
+
+		Instant now = Instant.now();
+
+		DummyEntity first = createDummyEntity();
+		Instant earlier = now.minusSeconds(1000L);
+		OffsetDateTime earlierPlus3 = earlier.atOffset(ZoneOffset.ofHours(3));
+		first.setPointInTime(earlier);
+		first.offsetDateTime = earlierPlus3;
+
+		first.setName("first");
+
+		DummyEntity second = createDummyEntity();
+		Instant later = now.plusSeconds(1000L);
+		OffsetDateTime laterPlus3 = later.atOffset(ZoneOffset.ofHours(3));
+		second.setPointInTime(later);
+		second.offsetDateTime = laterPlus3;
+		second.setName("second");
+
+		repository.saveAll(asList(first, second));
+		return now;
+	}
+
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 		List<DummyEntity> findAllByNamedQuery();
@@ -525,6 +554,9 @@ public class JdbcRepositoryIntegrationTests {
 		Page<DummyProjection> findPageProjectionByName(String name, Pageable pageable);
 
 		Slice<DummyEntity> findSliceByNameContains(String name, Pageable pageable);
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE OFFSET_DATE_TIME > :threshhold")
+		List<DummyEntity> findByOffsetDateTime(@Param("threshhold") OffsetDateTime threshhold);
 	}
 
 	@Configuration
@@ -573,6 +605,7 @@ public class JdbcRepositoryIntegrationTests {
 	static class DummyEntity {
 		String name;
 		Instant pointInTime;
+		OffsetDateTime offsetDateTime;
 		@Id private Long idProp;
 
 		public DummyEntity(String name) {

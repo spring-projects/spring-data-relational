@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.ApplicationContext;
@@ -22,6 +25,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
@@ -33,6 +37,7 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -56,7 +61,7 @@ public class AbstractJdbcConfiguration {
 	 * Register a {@link JdbcMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
 	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
-	 * @param customConversions see {@link #jdbcCustomConversions()}.
+	 * @param customConversions see {@link #jdbcCustomConversions(Dialect)}.
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
@@ -71,10 +76,10 @@ public class AbstractJdbcConfiguration {
 
 	/**
 	 * Creates a {@link RelationalConverter} using the configured
-	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions)}. Will get {@link #jdbcCustomConversions()} applied.
+	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions)}. Will get {@link #jdbcCustomConversions(Dialect)} ()} applied.
 	 *
 	 * @see #jdbcMappingContext(Optional, JdbcCustomConversions)
-	 * @see #jdbcCustomConversions()
+	 * @see #jdbcCustomConversions(Dialect) ()
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
@@ -96,8 +101,22 @@ public class AbstractJdbcConfiguration {
 	 * @return will never be {@literal null}.
 	 */
 	@Bean
-	public JdbcCustomConversions jdbcCustomConversions() {
-		return new JdbcCustomConversions();
+	public JdbcCustomConversions jdbcCustomConversions(Dialect dialect) {
+
+		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(JdbcSimpleTypes.HOLDER,
+				storeConverters(dialect)), userConverters());
+	}
+
+	private List<?> userConverters() {
+		return Collections.emptyList();
+	}
+
+	private List<Object> storeConverters(Dialect dialect) {
+
+		List<Object> converters = new ArrayList<>();
+		converters.addAll(dialect.getConverters());
+		converters.addAll(JdbcCustomConversions.STORE_CONVERTERS);
+		return converters;
 	}
 
 	/**
@@ -134,7 +153,7 @@ public class AbstractJdbcConfiguration {
 	 * Resolves a {@link Dialect JDBC dialect} by inspecting {@link NamedParameterJdbcOperations}.
 	 *
 	 * @param operations the {@link NamedParameterJdbcOperations} allowing access to a {@link java.sql.Connection}.
-	 * @return
+	 * @return the {@link Dialect} to be used.
 	 * @since 2.0
 	 * @throws org.springframework.data.jdbc.repository.config.DialectResolver.NoDialectException if the {@link Dialect}
 	 *           cannot be determined.

@@ -22,6 +22,7 @@ import java.sql.JDBCType;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,6 +63,7 @@ public final class JdbcUtil {
 		sqlTypeMappings.put(Date.class, Types.DATE);
 		sqlTypeMappings.put(Time.class, Types.TIME);
 		sqlTypeMappings.put(Timestamp.class, Types.TIMESTAMP);
+		sqlTypeMappings.put(OffsetDateTime.class, Types.TIMESTAMP_WITH_TIMEZONE);
 	}
 
 	private JdbcUtil() {

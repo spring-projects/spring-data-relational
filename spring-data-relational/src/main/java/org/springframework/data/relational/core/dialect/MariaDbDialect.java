@@ -18,36 +18,22 @@ package org.springframework.data.relational.core.dialect;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+
 /**
- * An SQL dialect for Oracle.
+ * A SQL dialect for MariaDb.
  *
  * @author Jens Schauder
- * @since 2.1
+ * @since 2.3
  */
-public class OracleDialect extends AnsiDialect {
+public class MariaDbDialect extends MySqlDialect {
 
-	/**
-	 * Singleton instance.
-	 */
-	public static final OracleDialect INSTANCE = new OracleDialect();
-
-	private static final IdGeneration ID_GENERATION = new IdGeneration() {
-		@Override
-		public boolean driverRequiresKeyColumnNames() {
-			return true;
-		}
-	};
-
-	protected OracleDialect() {}
-
-	@Override
-	public IdGeneration getIdGeneration() {
-		return ID_GENERATION;
+	public MariaDbDialect(IdentifierProcessing identifierProcessing) {
+		super(identifierProcessing);
 	}
 
 	@Override
 	public Collection<Object> getConverters() {
 		return Collections.singletonList(Timestamp2OffsetDateTimeConverter.INSTANCE);
 	}
-
 }

@@ -15,6 +15,9 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -82,7 +85,16 @@ public interface Dialect {
 		return Escaper.DEFAULT;
 	}
 
-	default IdGeneration getIdGeneration(){
+	default IdGeneration getIdGeneration() {
 		return IdGeneration.DEFAULT;
-	};
+	}
+
+	/**
+	 * Return a collection of converters for this dialect.
+	 *
+	 * @return a collection of converters for this dialect.
+	 */
+	default Collection<Object> getConverters() {
+		return Collections.emptySet();
+	}
 }

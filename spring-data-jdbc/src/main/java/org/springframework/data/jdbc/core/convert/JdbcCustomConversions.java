@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
 import org.springframework.data.convert.CustomConversions;
@@ -35,7 +36,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
  */
 public class JdbcCustomConversions extends CustomConversions {
 
-	private static final List<Object> STORE_CONVERTERS = Arrays
+	public static final List<Object> STORE_CONVERTERS = Arrays
 			.asList(Jsr310TimestampBasedConverters.getConvertersToRegister().toArray());
 	private static final StoreConversions STORE_CONVERSIONS = StoreConversions.of(JdbcSimpleTypes.HOLDER,
 			STORE_CONVERTERS);
@@ -48,12 +49,21 @@ public class JdbcCustomConversions extends CustomConversions {
 	}
 
 	/**
-	 * Create a new {@link JdbcCustomConversions} instance registering the given converters.
+	 * Create a new {@link JdbcCustomConversions} instance registering the given converters and the default store converters.
 	 *
 	 * @param converters must not be {@literal null}.
 	 */
 	public JdbcCustomConversions(List<?> converters) {
 		super(new ConverterConfiguration(STORE_CONVERSIONS, converters, JdbcCustomConversions::isDateTimeApiConversion));
+	}
+
+	/**
+	 * Create a new {@link JdbcCustomConversions} instance registering the given converters and the default store converters.
+	 *
+	 * @since 2.3
+	 */
+	public JdbcCustomConversions(StoreConversions storeConversions, List<?> userConverters) {
+		super(new ConverterConfiguration(storeConversions, userConverters, JdbcCustomConversions::isDateTimeApiConversion));
 	}
 
 	/**
