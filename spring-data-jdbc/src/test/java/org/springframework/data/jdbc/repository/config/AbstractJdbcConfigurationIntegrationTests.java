@@ -110,7 +110,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 		}
 
 		@Override
-		public JdbcCustomConversions jdbcCustomConversions() {
+		public JdbcCustomConversions jdbcCustomConversions(Dialect dialect) {
 			return new JdbcCustomConversions(Collections.singletonList(Blah2BlubbConverter.INSTANCE));
 		}
 

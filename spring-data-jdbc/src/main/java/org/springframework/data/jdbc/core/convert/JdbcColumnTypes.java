@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Date;
@@ -52,6 +53,7 @@ public enum JdbcColumnTypes {
 
 		javaToDbType.put(Enum.class, String.class);
 		javaToDbType.put(ZonedDateTime.class, String.class);
+		javaToDbType.put(OffsetDateTime.class, OffsetDateTime.class);
 		javaToDbType.put(Temporal.class, Timestamp.class);
 	}
 

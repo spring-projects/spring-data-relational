@@ -15,6 +15,10 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -38,6 +42,7 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
@@ -108,8 +113,17 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	CustomConversions jdbcCustomConversions() {
-		return new JdbcCustomConversions();
+	CustomConversions jdbcCustomConversions(Dialect dialect) {
+		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(JdbcSimpleTypes.HOLDER,
+				storeConverters(dialect)), Collections.emptyList());
+	}
+
+	private List<Object> storeConverters(Dialect dialect) {
+
+		List<Object> converters = new ArrayList<>();
+		converters.addAll(dialect.getConverters());
+		converters.addAll(JdbcCustomConversions.STORE_CONVERTERS);
+		return converters;
 	}
 
 	@Bean

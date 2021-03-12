@@ -15,6 +15,9 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 
@@ -109,5 +112,10 @@ public class Db2Dialect extends AbstractDialect {
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.ANSI;
+	}
+
+	@Override
+	public Collection<Object> getConverters() {
+		return Collections.singletonList(Timestamp2OffsetDateTimeConverter.INSTANCE);
 	}
 }

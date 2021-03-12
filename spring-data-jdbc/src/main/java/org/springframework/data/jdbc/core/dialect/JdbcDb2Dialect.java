@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.dialect;
+package org.springframework.data.jdbc.core.dialect;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+
+import org.springframework.data.relational.core.dialect.Db2Dialect;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
- * An SQL dialect for Oracle.
+ * {@link Db2Dialect} that registers JDBC specific converters.
  *
  * @author Jens Schauder
- * @since 2.1
+ * @since 2.3
  */
-public class OracleDialect extends AnsiDialect {
+public class JdbcDb2Dialect extends Db2Dialect {
 
-	/**
-	 * Singleton instance.
-	 */
-	public static final OracleDialect INSTANCE = new OracleDialect();
-
-	private static final IdGeneration ID_GENERATION = new IdGeneration() {
-		@Override
-		public boolean driverRequiresKeyColumnNames() {
-			return true;
-		}
-	};
-
-	protected OracleDialect() {}
-
-	@Override
-	public IdGeneration getIdGeneration() {
-		return ID_GENERATION;
-	}
+	public static JdbcDb2Dialect INSTANCE = new JdbcDb2Dialect();
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(Timestamp2OffsetDateTimeConverter.INSTANCE);
+
+		ArrayList<Object> converters = new ArrayList<>(super.getConverters());
+		converters.add(OffsetDateTime2TimestampConverter.INSTANCE);
+
+		return converters;
 	}
 
 }
