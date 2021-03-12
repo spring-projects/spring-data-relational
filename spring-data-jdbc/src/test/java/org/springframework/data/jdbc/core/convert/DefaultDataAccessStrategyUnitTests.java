@@ -193,7 +193,7 @@ public class DefaultDataAccessStrategyUnitTests {
 		assertThat(paramSourceCaptor.getValue().getValue("DUMMYENTITYROOT")).isEqualTo(rawId);
 	}
 
-	@Test // gh-933
+	@Test // #933
 	public void insertWithDefinedIdDoesNotRetrieveGeneratedKeys() {
 
 		Object generatedId = accessStrategy.insert(new DummyEntity(ORIGINAL_ID), DummyEntity.class, Identifier.from(additionalParameters));
@@ -204,7 +204,7 @@ public class DefaultDataAccessStrategyUnitTests {
 				paramSourceCaptor.capture());
 	}
 
-	@Test // gh-933
+	@Test // #933
 	public void insertWithUndefinedIdRetrievesGeneratedKeys() {
 
 		when(namedJdbcOperations.update(any(), any(), any()))

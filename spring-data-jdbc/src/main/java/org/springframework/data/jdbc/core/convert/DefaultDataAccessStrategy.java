@@ -124,30 +124,34 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		String insertSql = sqlGenerator.getInsert(new HashSet<>(parameterSource.getIdentifiers()));
 
 		if (idValue == null) {
-
-			KeyHolder holder = new GeneratedKeyHolder();
-
-			IdGeneration idGeneration = sqlGeneratorSource.getDialect().getIdGeneration();
-
-			if (idGeneration.driverRequiresKeyColumnNames()) {
-
-				String[] keyColumnNames = getKeyColumnNames(domainType);
-				if (keyColumnNames.length == 0) {
-					operations.update(insertSql, parameterSource, holder);
-				} else {
-					operations.update(insertSql, parameterSource, holder, keyColumnNames);
-				}
-			} else {
-				operations.update(insertSql, parameterSource, holder);
-			}
-
-			return getIdFromHolder(holder, persistentEntity);
-		}
-		else {
+			return executeInsertAndReturnGeneratedId(domainType, persistentEntity, parameterSource, insertSql);
+		} else {
 
 			operations.update(insertSql, parameterSource);
 			return null;
 		}
+	}
+
+	@Nullable
+	private <T> Object executeInsertAndReturnGeneratedId(Class<T> domainType, RelationalPersistentEntity<T> persistentEntity, SqlIdentifierParameterSource parameterSource, String insertSql) {
+
+		KeyHolder holder = new GeneratedKeyHolder();
+
+		IdGeneration idGeneration = sqlGeneratorSource.getDialect().getIdGeneration();
+
+		if (idGeneration.driverRequiresKeyColumnNames()) {
+
+			String[] keyColumnNames = getKeyColumnNames(domainType);
+			if (keyColumnNames.length == 0) {
+				operations.update(insertSql, parameterSource, holder);
+			} else {
+				operations.update(insertSql, parameterSource, holder, keyColumnNames);
+			}
+		} else {
+			operations.update(insertSql, parameterSource, holder);
+		}
+
+		return getIdFromHolder(holder, persistentEntity);
 	}
 
 	/*
@@ -462,6 +466,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return parameters;
 	}
 
+	/**
+	 * Returns the id value if its not a primitive zero. Returns {@literal null} if the id value is null or a primitive
+	 * zero.
+	 */
 	@Nullable
 	@SuppressWarnings("unchecked")
 	private <S, ID> ID getIdValueOrNull(S instance, RelationalPersistentEntity<S> persistentEntity) {

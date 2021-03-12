@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
  */
 class ConditionsUnitTests {
 
-	@Test // gh-916
+	@Test // #916
 	void notInOfColumnAndExpression() {
 
 		Table table = Table.create("t");
