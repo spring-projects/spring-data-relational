@@ -565,8 +565,17 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		PreparedOperation<?> operation = mapper.getMappedObject(insert);
 
+		List<SqlIdentifier> identifierColumns = dataAccessStrategy.getIdentifierColumns(entity.getClass());
+
 		return this.databaseClient.sql(operation) //
-				.filter(statement -> statement.returnGeneratedValues())
+				.filter(statement -> {
+
+					if (identifierColumns.isEmpty()) {
+						return statement.returnGeneratedValues();
+					}
+
+					return statement.returnGeneratedValues(dataAccessStrategy.toSql(identifierColumns.get(0)));
+				})
 				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entity)) //
 				.all() //
 				.last(entity)
