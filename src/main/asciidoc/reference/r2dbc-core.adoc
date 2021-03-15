@@ -150,7 +150,7 @@ There is a https://github.com/spring-projects/spring-data-examples[GitHub reposi
 [[r2dbc.connecting]]
 == Connecting to a Relational Database with Spring
 
-One of the first tasks when using relational databases and Spring is to create a `io.r2dbc.spi.ConnectionFactory` object by using the IoC container. Make sure to use a <<r2dbc.drivers,supported database and driver>>.
+One of the first tasks when using relational databases and Spring is to create a `io.r2dbc.spi.ConnectionFactory` object by using the IoC container.Make sure to use a <<r2dbc.drivers,supported database and driver>>.
 
 [[r2dbc.connectionfactory]]
 === Registering a `ConnectionFactory` Instance using Java-based Metadata
@@ -173,7 +173,7 @@ public class ApplicationConfiguration extends AbstractR2dbcConfiguration {
 ----
 ====
 
-This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instance, with the container using Spring's `AbstractR2dbcConfiguration`. As compared to registering a `ConnectionFactory` instance directly, the configuration support has the added advantage of also providing the container with an `ExceptionTranslator` implementation that translates R2DBC exceptions to exceptions in Spring's portable `DataAccessException` hierarchy for data access classes annotated with the `@Repository` annotation. This hierarchy and the use of `@Repository` is described in {spring-framework-ref}/data-access.html[Spring's DAO support features].
+This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instance, with the container using Spring's `AbstractR2dbcConfiguration`.As compared to registering a `ConnectionFactory` instance directly, the configuration support has the added advantage of also providing the container with an `ExceptionTranslator` implementation that translates R2DBC exceptions to exceptions in Spring's portable `DataAccessException` hierarchy for data access classes annotated with the `@Repository` annotation.This hierarchy and the use of `@Repository` is described in {spring-framework-ref}/data-access.html[Spring's DAO support features].
 
 `AbstractR2dbcConfiguration` also registers `DatabaseClient`, which is required for database interaction and for Repository implementation.
 
@@ -191,11 +191,11 @@ Spring Data R2DBC ships with dialect impelemtations for the following drivers:
 * https://github.com/mirromutth/r2dbc-mysql[MySQL] (`dev.miku:r2dbc-mysql`)
 * https://github.com/jasync-sql/jasync-sql[jasync-sql MySQL] (`com.github.jasync-sql:jasync-r2dbc-mysql`)
 * https://github.com/r2dbc/r2dbc-postgresql[Postgres] (`io.r2dbc:r2dbc-postgresql`)
+* https://github.com/oracle/oracle-r2dbc[Oracle] (`com.oracle.database.r2dbc:oracle-r2dbc`)
 
 Spring Data R2DBC reacts to database specifics by inspecting the `ConnectionFactory` and selects the appropriate database dialect accordingly.
 You need to configure your own {spring-data-r2dbc-javadoc}/api/org/springframework/data/r2dbc/dialect/R2dbcDialect.html[`R2dbcDialect`] if the driver you use is not yet known to Spring Data R2DBC.
 
 TIP: Dialects are resolved by {spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/dialect/DialectResolver.html[`DialectResolver`] from a `ConnectionFactory`, typically by inspecting `ConnectionFactoryMetadata`.
- +
-You can let Spring auto-discover your `R2dbcDialect` by registering a class that implements `org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider` through `META-INF/spring.factories`.
++ You can let Spring auto-discover your `R2dbcDialect` by registering a class that implements `org.springframework.data.r2dbc.dialect.DialectResolver$R2dbcDialectProvider` through `META-INF/spring.factories`.
 `DialectResolver` discovers dialect provider implementations from the class path using Spring's `SpringFactoriesLoader`.
