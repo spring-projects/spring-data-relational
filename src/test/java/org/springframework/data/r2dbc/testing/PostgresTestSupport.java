@@ -98,7 +98,7 @@ public class PostgresTestSupport {
 						PostgreSQLContainer.IMAGE + ":" + PostgreSQLContainer.DEFAULT_TAG);
 				container.start();
 
-				testContainerDatabase = ProvidedDatabase.from(container);
+				testContainerDatabase = ProvidedDatabase.builder(container).database(container.getDatabaseName()).build();
 
 			} catch (IllegalStateException ise) {
 				// docker not available.

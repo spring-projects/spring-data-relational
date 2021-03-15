@@ -69,6 +69,7 @@ public class H2TestSupport {
 		dataSource.setUsername("sa");
 		dataSource.setPassword("");
 		dataSource.setUrl("jdbc:h2:mem:r2dbc;DB_CLOSE_DELAY=-1");
+		dataSource.setDriverClassName("org.h2.Driver");
 
 		return dataSource;
 	}

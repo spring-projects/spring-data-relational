@@ -85,7 +85,7 @@ public class MariaDbTestSupport {
 	}
 
 	/**
-	 * Returns a locally provided database at {@code postgres:@localhost:5432/postgres}.
+	 * Returns a locally provided database .
 	 */
 	private static ExternalDatabase local() {
 
@@ -112,6 +112,7 @@ public class MariaDbTestSupport {
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //
 						.username("root") //
+						.database(container.getDatabaseName()) //
 						.build();
 			} catch (IllegalStateException ise) {
 				// docker not available.

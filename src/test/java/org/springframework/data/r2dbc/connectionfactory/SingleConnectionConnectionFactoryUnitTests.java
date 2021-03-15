@@ -34,10 +34,10 @@ import org.junit.jupiter.api.Test;
  *
  * @author Mark Paluch
  */
-public class SingleConnectionConnectionFactoryUnitTests {
+class SingleConnectionConnectionFactoryUnitTests {
 
 	@Test // gh-204
-	public void shouldAllocateSameConnection() {
+	void shouldAllocateSameConnection() {
 
 		SingleConnectionConnectionFactory factory = new SingleConnectionConnectionFactory("r2dbc:h2:mem:///foo", false);
 
@@ -52,7 +52,7 @@ public class SingleConnectionConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-204
-	public void shouldApplyAutoCommit() {
+	void shouldApplyAutoCommit() {
 
 		SingleConnectionConnectionFactory factory = new SingleConnectionConnectionFactory("r2dbc:h2:mem:///foo", false);
 		factory.setAutoCommit(false);
@@ -71,7 +71,7 @@ public class SingleConnectionConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-204
-	public void shouldSuppressClose() {
+	void shouldSuppressClose() {
 
 		SingleConnectionConnectionFactory factory = new SingleConnectionConnectionFactory("r2dbc:h2:mem:///foo", true);
 
@@ -87,7 +87,7 @@ public class SingleConnectionConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-204
-	public void shouldNotSuppressClose() {
+	void shouldNotSuppressClose() {
 
 		SingleConnectionConnectionFactory factory = new SingleConnectionConnectionFactory("r2dbc:h2:mem:///foo", false);
 
@@ -101,7 +101,7 @@ public class SingleConnectionConnectionFactoryUnitTests {
 	}
 
 	@Test // gh-204
-	public void releaseConnectionShouldCloseUnrelatedConnection() {
+	void releaseConnectionShouldCloseUnrelatedConnection() {
 
 		Connection connectionMock = mock(Connection.class);
 		Connection otherConnection = mock(Connection.class);

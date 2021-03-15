@@ -28,7 +28,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.stream.IntStream;
 
@@ -214,7 +213,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 
 		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) AS count FROM legoset");
-		assertThat(count).hasEntrySatisfying("count", numberOf(1));
+		assertThat(getCount(count)).satisfies(numberOf(1));
 	}
 
 	@Test // gh-335
@@ -293,11 +292,13 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Mono<Map<String, Object>> nonTransactional = repository.save(legoSet2) //
 				.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset"));
 
-		transactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 0L)).verifyComplete();
-		nonTransactional.as(StepVerifier::create).expectNext(Collections.singletonMap("count", 2L)).verifyComplete();
+		transactional.as(StepVerifier::create).assertNext(actual -> assertThat(getCount(actual)).satisfies(numberOf(0)))
+				.verifyComplete();
+		nonTransactional.as(StepVerifier::create).assertNext(actual -> assertThat(getCount(actual)).satisfies(numberOf(2)))
+				.verifyComplete();
 
-		Map<String, Object> count = jdbc.queryForMap("SELECT count(*) AS count FROM legoset");
-		assertThat(count).hasEntrySatisfying("count", numberOf(2));
+		Map<String, Object> map = jdbc.queryForMap("SELECT count(*) AS count FROM legoset");
+		assertThat(getCount(map)).satisfies(numberOf(2));
 	}
 
 	@Test // gh-363
@@ -351,6 +352,10 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		repository.findAll() //
 				.as(StepVerifier::create) //
 				.verifyComplete();
+	}
+
+	private static Object getCount(Map<String, Object> map) {
+		return map.getOrDefault("count", map.get("COUNT"));
 	}
 
 	private Condition<? super Object> numberOf(int expected) {

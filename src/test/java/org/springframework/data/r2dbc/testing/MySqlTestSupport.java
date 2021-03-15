@@ -57,7 +57,7 @@ public class MySqlTestSupport {
 			+ ") ENGINE=InnoDB;";
 
 	/**
-	 * Returns a database either hosted locally at {@code postgres:@localhost:5432/postgres} or running inside Docker.
+	 * Returns a database either hosted locally or running inside Docker.
 	 *
 	 * @return information about the database. Guaranteed to be not {@literal null}.
 	 */
@@ -88,7 +88,7 @@ public class MySqlTestSupport {
 	}
 
 	/**
-	 * Returns a locally provided database at {@code postgres:@localhost:5432/postgres}.
+	 * Returns a locally provided database.
 	 */
 	private static ExternalDatabase local() {
 
@@ -114,6 +114,7 @@ public class MySqlTestSupport {
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //
+						.database(container.getDatabaseName()) //
 						.username("root") //
 						.build();
 			} catch (IllegalStateException ise) {

@@ -138,7 +138,6 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 					.port(container.getFirstMappedPort()) //
 					.username(container.getUsername()) //
 					.password(container.getPassword()) //
-					.database(container.getDatabaseName()) //
 					.jdbcUrl(container.getJdbcUrl());
 		}
 
