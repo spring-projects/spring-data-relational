@@ -1,6 +1,16 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.2.6 (2021-03-17)
+-------------------------------------
+* #558 - Consider calling Statement.returnGeneratedValues() using the primary key column name.
+* #557 - Default ID value on new record is inserted when optimistic locking is enabled.
+* #552 - R2dbcEntityTemplate.insert(…) doesn't propagate error signals after data signal.
+* #548 - Upgrade to Arabba SR9.
+* #546 - Remove .RELEASE suffix from version number in documentation.
+* #230 - Oracle with R2DBC.
+
+
 Changes in version 1.1.8.RELEASE (2021-03-17)
 ---------------------------------------------
 * #552 - R2dbcEntityTemplate.insert(…) doesn't propagate error signals after data signal.
@@ -414,6 +424,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
