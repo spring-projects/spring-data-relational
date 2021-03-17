@@ -70,12 +70,12 @@ import org.springframework.util.CollectionUtils;
  */
 public class R2dbcEntityTemplateUnitTests {
 
-	org.springframework.r2dbc.core.DatabaseClient client;
-	R2dbcEntityTemplate entityTemplate;
-	StatementRecorder recorder;
+	private org.springframework.r2dbc.core.DatabaseClient client;
+	private R2dbcEntityTemplate entityTemplate;
+	private StatementRecorder recorder;
 
 	@BeforeEach
-	public void before() {
+	void before() {
 
 		recorder = StatementRecorder.newInstance();
 		client = DatabaseClient.builder().connectionFactory(recorder)
@@ -84,7 +84,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldCountBy() {
+	void shouldCountBy() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
@@ -105,7 +105,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-469
-	public void shouldProjectExistsResult() {
+	void shouldProjectExistsResult() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
@@ -123,7 +123,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-469
-	public void shouldExistsByCriteria() {
+	void shouldExistsByCriteria() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
@@ -144,7 +144,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectByCriteria() {
+	void shouldSelectByCriteria() {
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
 
@@ -160,7 +160,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-215
-	public void selectShouldInvokeCallback() {
+	void selectShouldInvokeCallback() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
 				.columnMetadata(MockColumnMetadata.builder().name("THE_NAME").build()).build();
@@ -185,7 +185,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldSelectOne() {
+	void shouldSelectOne() {
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), Collections.emptyList());
 
@@ -201,7 +201,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldUpdateByQuery() {
+	void shouldUpdateByQuery() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
@@ -223,7 +223,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldDeleteByQuery() {
+	void shouldDeleteByQuery() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
 				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
@@ -243,7 +243,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-220
-	public void shouldDeleteEntity() {
+	void shouldDeleteEntity() {
 
 		Person person = new Person();
 		person.id = "Walter";
@@ -260,7 +260,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-365
-	public void shouldInsertVersioned() {
+	void shouldInsertVersioned() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
 		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
@@ -281,7 +281,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-557, gh-402
-	public void shouldSkipDefaultIdValueOnInsert() {
+	void shouldSkipDefaultIdValueOnInsert() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
 		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
@@ -299,7 +299,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-557, gh-402
-	public void shouldSkipDefaultIdValueOnVersionedInsert() {
+	void shouldSkipDefaultIdValueOnVersionedInsert() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
 		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
@@ -321,7 +321,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-451
-	public void shouldInsertCorrectlyVersionedAndAudited() {
+	void shouldInsertCorrectlyVersionedAndAudited() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
 		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
@@ -349,7 +349,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-451
-	public void shouldUpdateCorrectlyVersionedAndAudited() {
+	void shouldUpdateCorrectlyVersionedAndAudited() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
 		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
@@ -378,7 +378,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-215
-	public void insertShouldInvokeCallback() {
+	void insertShouldInvokeCallback() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
 		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
@@ -406,7 +406,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-365
-	public void shouldUpdateVersioned() {
+	void shouldUpdateVersioned() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
 		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
@@ -428,7 +428,7 @@ public class R2dbcEntityTemplateUnitTests {
 	}
 
 	@Test // gh-215
-	public void updateShouldInvokeCallback() {
+	void updateShouldInvokeCallback() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder().build();
 		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
@@ -480,7 +480,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 	@Value
 	@With
-	static class VersionedPerson {
+	private static class VersionedPerson {
 
 		@Id String id;
 
@@ -491,7 +491,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 	@Value
 	@With
-	static class PersonWithPrimitiveId {
+	private static class PersonWithPrimitiveId {
 
 		@Id int id;
 
@@ -500,7 +500,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 	@Value
 	@With
-	static class VersionedPersonWithPrimitiveId {
+	private static class VersionedPersonWithPrimitiveId {
 
 		@Id int id;
 
@@ -511,7 +511,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 	@Value
 	@With
-	static class WithAuditingAndOptimisticLocking {
+	private static class WithAuditingAndOptimisticLocking {
 
 		@Id String id;
 
@@ -527,7 +527,7 @@ public class R2dbcEntityTemplateUnitTests {
 
 		private final List<T> values = new ArrayList<>(1);
 
-		protected void capture(T value) {
+		void capture(T value) {
 			values.add(value);
 		}
 

@@ -56,11 +56,11 @@ import org.springframework.r2dbc.core.Parameter;
  */
 public class MappingR2dbcConverterUnitTests {
 
-	RelationalMappingContext mappingContext = new R2dbcMappingContext();
-	MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext);
+	private RelationalMappingContext mappingContext = new R2dbcMappingContext();
+	private MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext);
 
 	@BeforeEach
-	public void before() {
+	void before() {
 
 		R2dbcCustomConversions conversions = new R2dbcCustomConversions(
 				Arrays.asList(StringToMapConverter.INSTANCE, MapToStringConverter.INSTANCE,
@@ -72,7 +72,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-61, gh-207
-	public void shouldIncludeAllPropertiesInOutboundRow() {
+	void shouldIncludeAllPropertiesInOutboundRow() {
 
 		OutboundRow row = new OutboundRow();
 
@@ -89,7 +89,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-41
-	public void shouldPassThroughRow() {
+	void shouldPassThroughRow() {
 
 		Row rowMock = mock(Row.class);
 
@@ -99,7 +99,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-41
-	public void shouldConvertRowToNumber() {
+	void shouldConvertRowToNumber() {
 
 		Row rowMock = mock(Row.class);
 		when(rowMock.get(0)).thenReturn(42);
@@ -110,7 +110,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldFailOnUnsupportedEntity() {
+	void shouldFailOnUnsupportedEntity() {
 
 		PersonWithConversions withMap = new PersonWithConversions(null, null, new NonMappableEntity());
 		OutboundRow row = new OutboundRow();
@@ -119,7 +119,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldConvertMapToString() {
+	void shouldConvertMapToString() {
 
 		PersonWithConversions withMap = new PersonWithConversions("foo", Collections.singletonMap("map", "value"), null);
 		OutboundRow row = new OutboundRow();
@@ -129,7 +129,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldReadMapFromString() {
+	void shouldReadMapFromString() {
 
 		Row rowMock = mock(Row.class);
 		when(rowMock.get("nested")).thenReturn("map");
@@ -140,7 +140,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldConvertEnum() {
+	void shouldConvertEnum() {
 
 		WithEnum withMap = new WithEnum("foo", Condition.Mint);
 		OutboundRow row = new OutboundRow();
@@ -150,7 +150,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldConvertNullEnum() {
+	void shouldConvertNullEnum() {
 
 		WithEnum withMap = new WithEnum("foo", null);
 		OutboundRow row = new OutboundRow();
@@ -160,7 +160,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldReadEnum() {
+	void shouldReadEnum() {
 
 		Row rowMock = mock(Row.class);
 		when(rowMock.get("condition")).thenReturn("Mint");
@@ -171,7 +171,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldWriteTopLevelEntity() {
+	void shouldWriteTopLevelEntity() {
 
 		CustomConversionPerson person = new CustomConversionPerson();
 		person.entity = new NonMappableEntity();
@@ -185,7 +185,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-530
-	public void shouldReadTopLevelEntity() {
+	void shouldReadTopLevelEntity() {
 
 		mappingContext.setForceQuote(true);
 
@@ -200,7 +200,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldReadTopLevelEntityWithConverter() {
+	void shouldReadTopLevelEntityWithConverter() {
 
 		Row rowMock = mock(Row.class);
 		when(rowMock.get("foo_column", String.class)).thenReturn("bar");
@@ -213,7 +213,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-402
-	public void writeShouldWritePrimitiveIdIfValueIsNonZero() {
+	void writeShouldWritePrimitiveIdIfValueIsNonZero() {
 
 		OutboundRow row = new OutboundRow();
 		converter.write(new WithPrimitiveId(1), row);
@@ -222,7 +222,7 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-59
-	public void shouldEvaluateSpelExpression() {
+	void shouldEvaluateSpelExpression() {
 
 		MockRow row = MockRow.builder().identified("id", Object.class, 42).identified("world", Object.class, "No, universe")
 				.build();
@@ -281,7 +281,7 @@ public class MappingR2dbcConverterUnitTests {
 		NonMappableEntity entity;
 	}
 
-	static class NonMappableEntity {}
+	private static class NonMappableEntity {}
 
 	@ReadingConverter
 	enum StringToMapConverter implements Converter<String, Map<String, String>> {
