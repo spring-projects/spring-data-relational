@@ -213,15 +213,6 @@ public class MappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-402
-	public void writeShouldSkipPrimitiveIdIfValueIsZero() {
-
-		OutboundRow row = new OutboundRow();
-		converter.write(new WithPrimitiveId(0), row);
-
-		assertThat(row).isEmpty();
-	}
-
-	@Test // gh-402
 	public void writeShouldWritePrimitiveIdIfValueIsNonZero() {
 
 		OutboundRow row = new OutboundRow();

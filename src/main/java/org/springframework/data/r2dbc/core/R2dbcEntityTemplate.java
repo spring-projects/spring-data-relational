@@ -546,9 +546,39 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(initializedEntity);
 
+			potentiallyRemoveId(persistentEntity, outboundRow);
+
 			return maybeCallBeforeSave(initializedEntity, outboundRow, tableName) //
 					.flatMap(entityToSave -> doInsert(entityToSave, tableName, outboundRow));
 		});
+	}
+
+	private void potentiallyRemoveId(RelationalPersistentEntity<?> persistentEntity, OutboundRow outboundRow) {
+
+		RelationalPersistentProperty idProperty = persistentEntity.getIdProperty();
+		if (idProperty == null) {
+			return;
+		}
+
+		SqlIdentifier columnName = idProperty.getColumnName();
+		Parameter parameter = outboundRow.get(columnName);
+
+		if (shouldSkipIdValue(parameter, idProperty)) {
+			outboundRow.remove(columnName);
+		}
+	}
+
+	private boolean shouldSkipIdValue(@Nullable Parameter value, RelationalPersistentProperty property) {
+
+		if (value == null || value.getValue() == null) {
+			return true;
+		}
+
+		if (value.getValue() instanceof Number) {
+			return ((Number) value.getValue()).longValue() == 0L;
+		}
+
+		return false;
 	}
 
 	private <T> Mono<T> doInsert(T entity, SqlIdentifier tableName, OutboundRow outboundRow) {

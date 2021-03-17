@@ -379,31 +379,8 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		Object result = getPotentiallyConvertedSimpleWrite(value);
 
-		if (property.isIdProperty() && isNew) {
-			if (shouldSkipIdValue(result, property)) {
-				return;
-			}
-		}
-
 		sink.put(property.getColumnName(),
 				Parameter.fromOrEmpty(result, getPotentiallyConvertedSimpleNullType(property.getType())));
-	}
-
-	private boolean shouldSkipIdValue(@Nullable Object value, RelationalPersistentProperty property) {
-
-		if (value == null) {
-			return true;
-		}
-
-		if (!property.getType().isPrimitive()) {
-			return value == null;
-		}
-
-		if (value instanceof Number) {
-			return ((Number) value).longValue() == 0L;
-		}
-
-		return false;
 	}
 
 	private void writePropertyInternal(OutboundRow sink, Object value, boolean isNew,

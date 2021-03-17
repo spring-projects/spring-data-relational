@@ -280,6 +280,46 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from(1L));
 	}
 
+	@Test // gh-557, gh-402
+	public void shouldSkipDefaultIdValueOnInsert() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+
+		entityTemplate.insert(new PersonWithPrimitiveId(0, "bar")).as(StepVerifier::create) //
+				.expectNextCount(1) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+
+		assertThat(statement.getSql()).isEqualTo("INSERT INTO person_with_primitive_id (name) VALUES ($1)");
+		assertThat(statement.getBindings()).hasSize(1).containsEntry(0, Parameter.from("bar"));
+	}
+
+	@Test // gh-557, gh-402
+	public void shouldSkipDefaultIdValueOnVersionedInsert() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder().build();
+		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+
+		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
+
+		entityTemplate.insert(new VersionedPersonWithPrimitiveId(0, 0, "bar")).as(StepVerifier::create) //
+				.assertNext(actual -> {
+					assertThat(actual.getVersion()).isEqualTo(1);
+				}) //
+				.verifyComplete();
+
+		StatementRecorder.RecordedStatement statement = recorder.getCreatedStatement(s -> s.startsWith("INSERT"));
+
+		assertThat(statement.getSql())
+				.isEqualTo("INSERT INTO versioned_person_with_primitive_id (version, name) VALUES ($1, $2)");
+		assertThat(statement.getBindings()).hasSize(2).containsEntry(0, Parameter.from(1L)).containsEntry(1,
+				Parameter.from("bar"));
+	}
+
 	@Test // gh-451
 	public void shouldInsertCorrectlyVersionedAndAudited() {
 
@@ -443,6 +483,26 @@ public class R2dbcEntityTemplateUnitTests {
 	static class VersionedPerson {
 
 		@Id String id;
+
+		@Version long version;
+
+		String name;
+	}
+
+	@Value
+	@With
+	static class PersonWithPrimitiveId {
+
+		@Id int id;
+
+		String name;
+	}
+
+	@Value
+	@With
+	static class VersionedPersonWithPrimitiveId {
+
+		@Id int id;
 
 		@Version long version;
 
