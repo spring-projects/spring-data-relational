@@ -1,6 +1,15 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.2.0-M5 (2021-03-17)
+----------------------------------------
+* #939 - Don't retrieve generated keys on INSERT if primary key is defined.
+* #938 - Move to Spring Data Commons' association abstraction.
+* #937 - JdbcCustomConversion does not reject non-Date related default converters anymore.
+* #933 - Generated keys are retrieved even if the primary key value is defined.
+* #929 - Add Query by Example support.
+
+
 Changes in version 2.1.6 (2021-03-17)
 -------------------------------------
 
@@ -688,6 +697,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
