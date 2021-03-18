@@ -24,7 +24,10 @@ import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
+import org.awaitility.Awaitility;
+
 import org.springframework.data.r2dbc.testing.ExternalDatabase.ProvidedDatabase;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.util.ClassUtils;
 
@@ -119,6 +122,13 @@ public class OracleTestSupport {
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //
 						.database("XEPDB1").build();
+
+				DataSource dataSource = createDataSource(testContainerDatabase);
+
+				Awaitility.await().ignoreExceptions().until(() -> {
+					new JdbcTemplate(dataSource).queryForList("SELECT 'Hello, Oracle' FROM sys.dual");
+					return true;
+				});
 			} catch (IllegalStateException ise) {
 				// docker not available.
 				testContainerDatabase = ExternalDatabase.unavailable();
