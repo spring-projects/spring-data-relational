@@ -102,11 +102,12 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	<T> Flux<T> select(Query query, Class<T> entityClass) throws DataAccessException;
 
 	/**
-	 * Execute a {@code SELECT} query and convert the resulting item to an entity.
+	 * Execute a {@code SELECT} query and convert the resulting item to an entity ensuring exactly one result.
 	 *
 	 * @param query must not be {@literal null}.
 	 * @param entityClass The entity type must not be {@literal null}.
-	 * @return the result object returned by the action or {@link Mono#empty()}.
+	 * @return exactly one result or {@link Mono#empty()} if no match found.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 */
 	<T> Mono<T> selectOne(Query query, Class<T> entityClass) throws DataAccessException;
