@@ -605,7 +605,9 @@ NOTE: Query derivation is limited to properties that can be used in a `WHERE` cl
 === Query Lookup Strategies
 
 The JDBC module supports defining a query manually as a String in a `@Query` annotation or as named query in a property file.
-Deriving a query from the name of the method is currently not supported.
+
+Deriving a query from the name of the method is is currently limited to simple properties, that means properties present in the aggregate root directly.
+Also, only select queries are supported by this approach.
 
 [[jdbc.query-methods.at-query]]
 === Using `@Query`
