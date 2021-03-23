@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.ToString;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
+import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.CrudRepository;
@@ -395,6 +398,12 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.countByName(one.getName())).isEqualTo(2);
 	}
 
+	@Test // #945
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
+	public void usePrimitiveArrayAsArgument() {
+		assertThat(repository.unnestPrimitive(new int[]{1, 2, 3})).containsExactly(1,2,3);
+	}
+
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 		List<DummyEntity> findAllByNamedQuery();
@@ -420,6 +429,9 @@ public class JdbcRepositoryIntegrationTests {
 		boolean existsByName(String name);
 
 		int countByName(String name);
+
+		@Query("select unnest( :ids )")
+		List<Integer> unnestPrimitive(@Param("ids") int[] ids);
 	}
 
 	@Configuration

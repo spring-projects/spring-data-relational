@@ -115,6 +115,7 @@ public class TestDatabaseFeatures {
 		SUPPORTS_ARRAYS(TestDatabaseFeatures::supportsArrays), //
 		SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES(TestDatabaseFeatures::supportsGeneratedIdsInReferencedEntities), //
 		SUPPORTS_NANOSECOND_PRECISION(TestDatabaseFeatures::supportsNanosecondPrecision), //
+		IS_POSTGRES(f -> f.databaseIs(Database.PostgreSql)), //
 		IS_HSQL(f -> f.databaseIs(Database.Hsql));
 
 		private final Consumer<TestDatabaseFeatures> featureMethod;
