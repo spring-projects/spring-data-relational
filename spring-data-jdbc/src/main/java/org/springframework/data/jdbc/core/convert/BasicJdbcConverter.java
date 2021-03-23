@@ -24,7 +24,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
@@ -317,7 +316,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		Class<?> componentType = convertedValue.getClass().getComponentType();
 		if (componentType != byte.class && componentType != Byte.class) {
-			return JdbcValue.of(typeFactory.createArray((Object[]) convertedValue), JDBCType.ARRAY);
+
+			Object[] objectArray = ArrayUtil.convertToObjectArray(convertedValue);
+			return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
 		}
 
 		if (componentType == Byte.class) {
@@ -333,7 +334,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		if (canWriteAsJdbcValue(value)) {
 
 			Object converted = writeValue(value, ClassTypeInformation.from(JdbcValue.class));
-			if(converted instanceof JdbcValue) {
+			if (converted instanceof JdbcValue) {
 				return (JdbcValue) converted;
 			}
 
