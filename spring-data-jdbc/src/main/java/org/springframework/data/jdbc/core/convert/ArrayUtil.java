@@ -41,4 +41,97 @@ class ArrayUtil {
 		}
 		return bytes;
 	}
+
+	static Byte[] toObjectArray(byte[] primitiveArray) {
+
+		Byte[] objects = new Byte[primitiveArray.length];
+		for (int i = 0; i < primitiveArray.length; i++) {
+			objects[i] = primitiveArray[i];
+		}
+		return objects;
+	}
+
+	static Short[] toObjectArray(short[] primitiveArray) {
+
+		Short[] objects = new Short[primitiveArray.length];
+		for (int i = 0; i < primitiveArray.length; i++) {
+			objects[i] = primitiveArray[i];
+		}
+		return objects;
+	}
+
+	static Character[] toObjectArray(char[] primitiveArray) {
+
+		Character[] objects = new Character[primitiveArray.length];
+		for (int i = 0; i < primitiveArray.length; i++) {
+			objects[i] = primitiveArray[i];
+		}
+		return objects;
+	}
+
+	static Integer[] toObjectArray(int[] primitiveArray) {
+
+		Integer[] objects = new Integer[primitiveArray.length];
+		for (int i = 0; i < primitiveArray.length; i++) {
+			objects[i] = primitiveArray[i];
+		}
+		return objects;
+	}
+
+	static Long[] toObjectArray(long[] primitiveArray) {
+
+		Long[] objects = new Long[primitiveArray.length];
+		for (int i = 0; i < primitiveArray.length; i++) {
+			objects[i] = primitiveArray[i];
+		}
+		return objects;
+	}
+
+	static Float[] toObjectArray(float[] primitiveArray) {
+
+		Float[] objects = new Float[primitiveArray.length];
+		for (int i = 0; i < primitiveArray.length; i++) {
+			objects[i] = primitiveArray[i];
+		}
+		return objects;
+	}
+
+	static Double[] toObjectArray(double[] primitiveArray) {
+
+		Double[] objects = new Double[primitiveArray.length];
+		for (int i = 0; i < primitiveArray.length; i++) {
+			objects[i] = primitiveArray[i];
+		}
+		return objects;
+	}
+
+	static Object[] convertToObjectArray(Object unknownArray) {
+
+		Class<?> componentType = unknownArray.getClass().getComponentType();
+
+		if (componentType.isPrimitive()) {
+			if (componentType == byte.class) {
+				return toObjectArray((byte[]) unknownArray);
+			}
+			if (componentType == short.class) {
+				return toObjectArray((short[]) unknownArray);
+			}
+			if (componentType == char.class) {
+				return toObjectArray((char[]) unknownArray);
+			}
+			if (componentType == int.class) {
+				return toObjectArray((int[]) unknownArray);
+			}
+			if (componentType == long.class) {
+				return toObjectArray((long[]) unknownArray);
+			}
+			if (componentType == float.class) {
+				return toObjectArray((float[]) unknownArray);
+			}
+			if (componentType == double.class) {
+				return toObjectArray((double[]) unknownArray);
+			}
+		}
+		return (Object[]) unknownArray;
+	}
 }

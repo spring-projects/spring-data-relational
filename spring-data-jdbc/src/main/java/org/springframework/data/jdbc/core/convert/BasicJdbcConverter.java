@@ -297,7 +297,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		Class<?> componentType = convertedValue.getClass().getComponentType();
 		if (componentType != byte.class && componentType != Byte.class) {
-			return JdbcValue.of(typeFactory.createArray((Object[]) convertedValue), JDBCType.ARRAY);
+
+			Object[] objectArray = ArrayUtil.convertToObjectArray(convertedValue);
+			return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
 		}
 
 		if (componentType == Byte.class) {
