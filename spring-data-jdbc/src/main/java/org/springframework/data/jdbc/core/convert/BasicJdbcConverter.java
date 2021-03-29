@@ -298,12 +298,12 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		Class<?> componentType = convertedValue.getClass().getComponentType();
 		if (componentType != byte.class && componentType != Byte.class) {
 
-			Object[] objectArray = ArrayUtil.convertToObjectArray(convertedValue);
+			Object[] objectArray = requireObjectArray(convertedValue);
 			return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
 		}
 
 		if (componentType == Byte.class) {
-			convertedValue = ArrayUtil.toPrimitiveByteArray((Byte[]) convertedValue);
+			convertedValue = ArrayUtils.toPrimitive((Byte[]) convertedValue);
 		}
 
 		return JdbcValue.of(convertedValue, JDBCType.BINARY);
@@ -328,6 +328,43 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	@Override
 	public <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
 		return new ReadingContext<T>(path, new ResultSetAccessor(resultSet), identifier, key).mapRow();
+	}
+
+	static Object[] requireObjectArray(Object source) {
+
+		Assert.isTrue(source.getClass().isArray(), "Source object is not an array");
+
+		Class<?> componentType = source.getClass().getComponentType();
+
+		if (componentType.isPrimitive()) {
+			if (componentType == boolean.class) {
+				return ArrayUtils.toObject((boolean[]) source);
+			}
+			if (componentType == byte.class) {
+				return ArrayUtils.toObject((byte[]) source);
+			}
+			if (componentType == char.class) {
+				return ArrayUtils.toObject((char[]) source);
+			}
+			if (componentType == double.class) {
+				return ArrayUtils.toObject((double[]) source);
+			}
+			if (componentType == float.class) {
+				return ArrayUtils.toObject((float[]) source);
+			}
+			if (componentType == int.class) {
+				return ArrayUtils.toObject((int[]) source);
+			}
+			if (componentType == long.class) {
+				return ArrayUtils.toObject((long[]) source);
+			}
+			if (componentType == short.class) {
+				return ArrayUtils.toObject((short[]) source);
+			}
+
+			throw new IllegalArgumentException("Unsupported component type: " + componentType);
+		}
+		return (Object[]) source;
 	}
 
 	private class ReadingContext<T> {
