@@ -169,7 +169,7 @@ There are a couple of things one might want to customize in this setup.
 === Dialects
 
 Spring Data JDBC uses implementations of the interface `Dialect` to encapsulate behavior that is specific to a database or its JDBC driver.
-By default, the `AbstractJdbcConfiguration` tries to determine the database in use an register the correct `Dialect`.
+By default, the `AbstractJdbcConfiguration` tries to determine the database in use and register the correct `Dialect`.
 This behavior can be changed by overwriting `jdbcDialect(NamedParameterJdbcOperations)`.
 
 If you use a database for which no dialect is available, then your application won’t startup. In that case, you’ll have to ask your vendor to provide a `Dialect` implementation. Alternatively, you can:
