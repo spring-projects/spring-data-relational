@@ -18,23 +18,31 @@ package org.springframework.data.jdbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.lang.reflect.Method;
 import java.sql.ResultSet;
+import java.util.List;
+import java.util.Properties;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.repository.query.RelationalParameters;
-import org.springframework.data.repository.query.DefaultParameters;
-import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
+import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Unit tests for {@link StringBasedJdbcQuery}.
@@ -47,7 +55,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  */
 public class StringBasedJdbcQueryUnitTests {
 
-	JdbcQueryMethod queryMethod;
 
 	RowMapper<Object> defaultRowMapper;
 	NamedParameterJdbcOperations operations;
@@ -56,12 +63,6 @@ public class StringBasedJdbcQueryUnitTests {
 
 	@BeforeEach
 	public void setup() throws NoSuchMethodException {
-
-		this.queryMethod = mock(JdbcQueryMethod.class);
-
-		Parameters<?, ?> parameters = new RelationalParameters(
-				StringBasedJdbcQueryUnitTests.class.getDeclaredMethod("dummyMethod"));
-		doReturn(parameters).when(queryMethod).getParameters();
 
 		this.defaultRowMapper = mock(RowMapper.class);
 		this.operations = mock(NamedParameterJdbcOperations.class);
@@ -72,34 +73,18 @@ public class StringBasedJdbcQueryUnitTests {
 	@Test // DATAJDBC-165
 	public void emptyQueryThrowsException() {
 
-		doReturn(null).when(queryMethod).getDeclaredQuery();
+		JdbcQueryMethod queryMethod = createMethod("noAnnotation");
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> createQuery()
+				.isThrownBy(() -> createQuery(queryMethod)
 						.execute(new Object[] {}));
-	}
-
-	private StringBasedJdbcQuery createQuery() {
-
-		StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
-		return query;
 	}
 
 	@Test // DATAJDBC-165
 	public void defaultRowMapperIsUsedByDefault() {
 
-		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
-		doReturn(RowMapper.class).when(queryMethod).getRowMapperClass();
-		StringBasedJdbcQuery query = createQuery();
-
-		assertThat(query.determineRowMapper(defaultRowMapper)).isEqualTo(defaultRowMapper);
-	}
-
-	@Test // DATAJDBC-165, DATAJDBC-318
-	public void defaultRowMapperIsUsedForNull() {
-
-		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
-		StringBasedJdbcQuery query = createQuery();
+		JdbcQueryMethod queryMethod = createMethod("findAll");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
 
 		assertThat(query.determineRowMapper(defaultRowMapper)).isEqualTo(defaultRowMapper);
 	}
@@ -107,10 +92,8 @@ public class StringBasedJdbcQueryUnitTests {
 	@Test // DATAJDBC-165, DATAJDBC-318
 	public void customRowMapperIsUsedWhenSpecified() {
 
-		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
-		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
-
-		StringBasedJdbcQuery query = createQuery();
+		JdbcQueryMethod queryMethod = createMethod("findAllWithCustomRowMapper");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
 
 		assertThat(query.determineRowMapper(defaultRowMapper)).isInstanceOf(CustomRowMapper.class);
 	}
@@ -118,12 +101,8 @@ public class StringBasedJdbcQueryUnitTests {
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorIsUsedWhenSpecified() {
 
-		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
-		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
-
-		createQuery().execute(new Object[] {});
-
-		StringBasedJdbcQuery query = createQuery();
+		JdbcQueryMethod queryMethod = createMethod("findAllWithCustomResultSetExtractor");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
 
 		ResultSetExtractor<Object> resultSetExtractor = query.determineResultSetExtractor(defaultRowMapper);
 
@@ -136,11 +115,8 @@ public class StringBasedJdbcQueryUnitTests {
 	@Test // DATAJDBC-290
 	public void customResultSetExtractorAndRowMapperGetCombined() {
 
-		doReturn("some sql statement").when(queryMethod).getDeclaredQuery();
-		doReturn(CustomResultSetExtractor.class).when(queryMethod).getResultSetExtractorClass();
-		doReturn(CustomRowMapper.class).when(queryMethod).getRowMapperClass();
-
-		StringBasedJdbcQuery query = createQuery();
+		JdbcQueryMethod queryMethod = createMethod("findAllWithCustomRowMapperAndResultSetExtractor");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
 
 		ResultSetExtractor<Object> resultSetExtractor = query
 				.determineResultSetExtractor(query.determineRowMapper(defaultRowMapper));
@@ -151,11 +127,61 @@ public class StringBasedJdbcQueryUnitTests {
 						"RowMapper is not expected to be custom");
 	}
 
-	/**
-	 * The whole purpose of this method is to easily generate a {@link DefaultParameters} instance during test setup.
-	 */
-	@SuppressWarnings("unused")
-	private void dummyMethod() {}
+	@Test // GH-774
+	public void sliceQueryNotSupported() {
+
+		JdbcQueryMethod queryMethod = createMethod("sliceAll", Pageable.class);
+
+		assertThatThrownBy(() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter))
+				.isInstanceOf(UnsupportedOperationException.class)
+				.hasMessageContaining("Slice queries are not supported using string-based queries");
+	}
+
+	@Test // GH-774
+	public void pageQueryNotSupported() {
+
+		JdbcQueryMethod queryMethod = createMethod("pageAll", Pageable.class);
+
+		assertThatThrownBy(() -> new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter))
+				.isInstanceOf(UnsupportedOperationException.class)
+				.hasMessageContaining("Page queries are not supported using string-based queries");
+	}
+
+	private JdbcQueryMethod createMethod(String methodName, Class<?>... paramTypes) {
+
+		Method method = ReflectionUtils.findMethod(MyRepository.class, methodName, paramTypes);
+		return new JdbcQueryMethod(method, new DefaultRepositoryMetadata(MyRepository.class),
+				new SpelAwareProxyProjectionFactory(), new PropertiesBasedNamedQueries(new Properties()), this.context);
+	}
+
+	private StringBasedJdbcQuery createQuery(JdbcQueryMethod queryMethod) {
+		return new StringBasedJdbcQuery(queryMethod, operations, defaultRowMapper, converter);
+	}
+
+	interface MyRepository extends Repository<Object, Long> {
+
+		@Query(value = "some sql statement")
+		List<Object> findAll();
+
+		@Query(value = "some sql statement", rowMapperClass = CustomRowMapper.class)
+		List<Object> findAllWithCustomRowMapper();
+
+		@Query(value = "some sql statement", resultSetExtractorClass = CustomResultSetExtractor.class)
+		List<Object> findAllWithCustomResultSetExtractor();
+
+		@Query(value = "some sql statement", rowMapperClass = CustomRowMapper.class,
+				resultSetExtractorClass = CustomResultSetExtractor.class)
+		List<Object> findAllWithCustomRowMapperAndResultSetExtractor();
+
+		List<Object> noAnnotation();
+
+		@Query(value = "some sql statement")
+		Page<Object> pageAll(Pageable pageable);
+
+		@Query(value = "some sql statement")
+		Slice<Object> sliceAll(Pageable pageable);
+
+	}
 
 	private static class CustomRowMapper implements RowMapper<Object> {
 

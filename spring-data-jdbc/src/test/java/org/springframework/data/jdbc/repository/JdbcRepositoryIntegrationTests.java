@@ -21,17 +21,19 @@ import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import lombok.ToString;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -40,6 +42,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
@@ -404,6 +410,37 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.unnestPrimitive(new int[]{1, 2, 3})).containsExactly(1,2,3);
 	}
 
+	@Test // GH-774
+	public void pageByNameShouldReturnCorrectResult() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("a1"), new DummyEntity("a2"), new DummyEntity("a3")));
+
+		Page<DummyEntity> page = repository.findPageByNameContains("a", PageRequest.of(0, 5));
+
+		assertThat(page.getContent()).hasSize(3);
+		assertThat(page.getTotalElements()).isEqualTo(3);
+		assertThat(page.getTotalPages()).isEqualTo(1);
+
+		assertThat(repository.findPageByNameContains("a", PageRequest.of(0, 2)).getContent()).hasSize(2);
+		assertThat(repository.findPageByNameContains("a", PageRequest.of(1, 2)).getContent()).hasSize(1);
+	}
+
+	@Test // GH-774
+	public void sliceByNameShouldReturnCorrectResult() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("a1"), new DummyEntity("a2"), new DummyEntity("a3")));
+
+		Slice<DummyEntity> slice = repository.findSliceByNameContains("a", PageRequest.of(0, 5));
+
+		assertThat(slice.getContent()).hasSize(3);
+		assertThat(slice.hasNext()).isFalse();
+
+		slice = repository.findSliceByNameContains("a", PageRequest.of(0, 2));
+
+		assertThat(slice.getContent()).hasSize(2);
+		assertThat(slice.hasNext()).isTrue();
+	}
+
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 		List<DummyEntity> findAllByNamedQuery();
@@ -432,6 +469,10 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("select unnest( :ids )")
 		List<Integer> unnestPrimitive(@Param("ids") int[] ids);
+
+		Page<DummyEntity> findPageByNameContains(String name, Pageable pageable);
+
+		Slice<DummyEntity> findSliceByNameContains(String name, Pageable pageable);
 	}
 
 	@Configuration
@@ -476,10 +517,15 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Data
+	@NoArgsConstructor
 	static class DummyEntity {
 		String name;
 		Instant pointInTime;
 		@Id private Long idProp;
+
+		public DummyEntity(String name) {
+			this.name = name;
+		}
 	}
 
 	static class CustomRowMapper implements RowMapper<DummyEntity> {

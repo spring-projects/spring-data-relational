@@ -21,7 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -55,7 +57,8 @@ public class JdbcRepositoryCrossAggregateHsqlIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true,
+			includeFilters = @ComponentScan.Filter(value = Ones.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
 		@Autowired JdbcRepositoryFactory factory;

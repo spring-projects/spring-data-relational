@@ -73,6 +73,16 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		this.queryMethod = queryMethod;
 		this.converter = converter;
 
+		if (queryMethod.isSliceQuery()) {
+			throw new UnsupportedOperationException(
+					"Slice queries are not supported using string-based queries. Offending method: " + queryMethod);
+		}
+
+		if (queryMethod.isPageQuery()) {
+			throw new UnsupportedOperationException(
+					"Page queries are not supported using string-based queries. Offending method: " + queryMethod);
+		}
+
 		executor = Lazy.of(() -> {
 			RowMapper<Object> rowMapper = determineRowMapper(defaultRowMapper);
 			return getQueryExecution( //
