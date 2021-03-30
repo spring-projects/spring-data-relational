@@ -491,22 +491,28 @@ interface PersonRepository extends PagingAndSortingRepository<Person, String> {
 
   List<Person> findByFirstnameOrderByLastname(String firstname, Pageable pageable); <2>
 
-  Person findByFirstnameAndLastname(String firstname, String lastname);             <3>
+  Slice<Person> findByLastname(String lastname, Pageable pageable);                 <3>
 
-  Person findFirstByLastname(String lastname);                                      <4>
+  Page<Person> findByLastname(String lastname, Pageable pageable);                  <4>
+
+  Person findByFirstnameAndLastname(String firstname, String lastname);             <5>
+
+  Person findFirstByLastname(String lastname);                                      <6>
 
   @Query("SELECT * FROM person WHERE lastname = :lastname")
-  List<Person> findByLastname(String lastname);                                     <5>
+  List<Person> findByLastname(String lastname);                                     <7>
 }
 ----
 <1> The method shows a query for all people with the given `lastname`.
 The query is derived by parsing the method name for constraints that can be concatenated with `And` and `Or`.
 Thus, the method name results in a query expression of `SELECT … FROM person WHERE firstname = :firstname`.
 <2> Use `Pageable` to pass offset and sorting parameters to the database.
-<3> Find a single entity for the given criteria.
+<3> Return a `Slice<Person>`. Selects `LIMIT+1` rows to determine whether there's more data to consume. `ResultSetExtractor` customization is not supported.
+<4> Run a paginated query returning `Page<Person>`. Selects only data within the given page bounds and potentially a count query to determine the total count. `ResultSetExtractor` customization is not supported.
+<5> Find a single entity for the given criteria.
 It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
-<4> In contrast to <3>, the first entity is always emitted even if the query yields more result documents.
-<5> The `findByLastname` method shows a query for all people with the given last name.
+<6> In contrast to <3>, the first entity is always emitted even if the query yields more result documents.
+<7> The `findByLastname` method shows a query for all people with the given last name.
 ====
 
 The following table shows the keywords that are supported for query methods:
