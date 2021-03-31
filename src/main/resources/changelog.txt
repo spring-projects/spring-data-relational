@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.1.7 (2021-03-31)
+-------------------------------------
+* #953 - Fix small typo in dialect section.
+* #947 - Docs on "query derivation" contradicts.
+* #945 - ClassCastException on primitive arrays parameters in spring-data-jdbc 2.x.x.
+
+
 Changes in version 2.2.0-RC1 (2021-03-31)
 -----------------------------------------
 * #953 - Fix small typo in dialect section.
@@ -692,6 +699,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
