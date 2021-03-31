@@ -1,6 +1,14 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.3.0-RC1 (2021-03-31)
+-----------------------------------------
+* #570 - Adapt tests to Kotlin 1.3 language pinning.
+* #568 - Readme lists artifacts with .BUILD-SNAPSHOT suffix.
+* #566 - Update R2dbcEntityTemplate.selectOne() mentioning IncorrectResultSizeDataAccessException.
+* #560 - Enable Oracle integration tests.
+
+
 Changes in version 1.3.0-M5 (2021-03-17)
 ----------------------------------------
 * #558 - Consider calling Statement.returnGeneratedValues() using the primary key column name.
@@ -435,6 +443,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
