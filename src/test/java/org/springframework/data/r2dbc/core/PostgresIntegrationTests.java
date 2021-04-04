@@ -23,6 +23,7 @@ import io.r2dbc.postgresql.PostgresqlConnectionFactory;
 import io.r2dbc.postgresql.codec.Box;
 import io.r2dbc.postgresql.codec.Circle;
 import io.r2dbc.postgresql.codec.EnumCodec;
+import io.r2dbc.postgresql.codec.Interval;
 import io.r2dbc.postgresql.codec.Line;
 import io.r2dbc.postgresql.codec.Lseg;
 import io.r2dbc.postgresql.codec.Path;
@@ -34,6 +35,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -245,6 +247,27 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 		assertThat(saved).isEqualTo(loaded);
 	}
 
+	@Test // gh-573
+	void shouldReadAndWriteInterval() {
+		EntityWithInterval entityWithInterval = new EntityWithInterval();
+		entityWithInterval.interval = Interval.of(Duration.ofHours(3));
+
+		template.execute("DROP TABLE IF EXISTS with_interval");
+		template.execute("CREATE TABLE with_interval (" //
+						 + "id serial PRIMARY KEY," //
+						 + "interval INTERVAL" //
+						 + ")");
+
+		R2dbcEntityTemplate template = new R2dbcEntityTemplate(client,
+				new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE));
+
+		EntityWithInterval saved = template.insert(entityWithInterval).block();
+		EntityWithInterval loaded = template.select(Query.empty(), EntityWithInterval.class) //
+				.blockLast();
+
+		assertThat(saved.interval).isEqualTo(loaded.interval);
+	}
+
 	private void insert(EntityWithArrays object) {
 
 		client.insert() //
@@ -300,4 +323,15 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 		org.springframework.data.geo.Point springDataPoint;
 		org.springframework.data.geo.Polygon springDataPolygon;
 	}
+
+	@Data
+	@Table("with_interval")
+	static class EntityWithInterval {
+
+		@Id Integer id;
+
+		Interval interval;
+
+	}
+
 }

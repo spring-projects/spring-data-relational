@@ -66,6 +66,9 @@ public class PostgresDialect extends org.springframework.data.relational.core.di
 		// conditional Postgres JSON support.
 		ifClassPresent("io.r2dbc.postgresql.codec.Json", simpleTypes::add);
 
+		// conditional Postgres Interval support
+		ifClassPresent("io.r2dbc.postgresql.codec.Interval", simpleTypes::add);
+
 		SIMPLE_TYPES = simpleTypes;
 	}
 
