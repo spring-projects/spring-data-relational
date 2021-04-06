@@ -54,8 +54,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 	private final Dialect dialect;
 	private final JdbcConverter converter;
 	private final PartTree tree;
-	private final JdbcQueryExecution<?> execution;
-	private final RowMapper<Object> rowMapper;
+	/** The execution for obtaining the bulk of the data. The execution may be decorated with further processing for handling sliced or paged queries */
+	private final JdbcQueryExecution<?> coreExecution;
 
 	/**
 	 * Creates a new {@link PartTreeJdbcQuery}.
@@ -87,9 +87,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 
 		ResultSetExtractor<Boolean> extractor = tree.isExistsProjection() ? (ResultSet::next) : null;
 
-		this.execution = queryMethod.isPageQuery() || queryMethod.isSliceQuery() ? collectionQuery(rowMapper)
+		this.coreExecution = queryMethod.isPageQuery() || queryMethod.isSliceQuery() ? collectionQuery(rowMapper)
 				: getQueryExecution(queryMethod, extractor, rowMapper);
-		this.rowMapper = rowMapper;
 	}
 
 	private Sort getDynamicSort(RelationalParameterAccessor accessor) {
@@ -106,20 +105,23 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		RelationalParametersParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(),
 				values);
 		ParametrizedQuery query = createQuery(accessor);
-		JdbcQueryExecution<?> execution = getQueryExecution(accessor);
+		JdbcQueryExecution<?> execution = getDecoratedExecution(accessor);
 
 		return execution.execute(query.getQuery(), query.getParameterSource());
 	}
 
-	private JdbcQueryExecution<?> getQueryExecution(RelationalParametersParameterAccessor accessor) {
+	/**
+	 * The decorated execution is the {@link #coreExecution} decorated with further processing for handling sliced or paged queries.
+	 */
+	private JdbcQueryExecution<?> getDecoratedExecution(RelationalParametersParameterAccessor accessor) {
 
 		if (getQueryMethod().isSliceQuery()) {
-			return new SliceQueryExecution<>((JdbcQueryExecution<Collection<Object>>) this.execution, accessor.getPageable());
+			return new SliceQueryExecution<>((JdbcQueryExecution<Collection<Object>>) this.coreExecution, accessor.getPageable());
 		}
 
 		if (getQueryMethod().isPageQuery()) {
 
-			return new PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) this.execution, accessor.getPageable(),
+			return new PageQueryExecution<>((JdbcQueryExecution<Collection<Object>>) this.coreExecution, accessor.getPageable(),
 					() -> {
 
 						RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
@@ -135,7 +137,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 					});
 		}
 
-		return this.execution;
+		return this.coreExecution;
 	}
 
 	protected ParametrizedQuery createQuery(RelationalParametersParameterAccessor accessor) {
@@ -192,8 +194,8 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		private final Pageable pageable;
 		private final LongSupplier countSupplier;
 
-		public PageQueryExecution(JdbcQueryExecution<? extends Collection<T>> delegate, Pageable pageable,
-				LongSupplier countSupplier) {
+		PageQueryExecution(JdbcQueryExecution<? extends Collection<T>> delegate, Pageable pageable,
+						   LongSupplier countSupplier) {
 			this.delegate = delegate;
 			this.pageable = pageable;
 			this.countSupplier = countSupplier;
