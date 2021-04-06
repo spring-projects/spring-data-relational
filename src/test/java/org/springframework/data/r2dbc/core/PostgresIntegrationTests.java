@@ -249,6 +249,7 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 	@Test // gh-573
 	void shouldReadAndWriteInterval() {
+
 		EntityWithInterval entityWithInterval = new EntityWithInterval();
 		entityWithInterval.interval = Interval.of(Duration.ofHours(3));
 
@@ -261,11 +262,12 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 		R2dbcEntityTemplate template = new R2dbcEntityTemplate(client,
 				new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE));
 
-		EntityWithInterval saved = template.insert(entityWithInterval).block();
-		EntityWithInterval loaded = template.select(Query.empty(), EntityWithInterval.class) //
-				.blockLast();
+		template.insert(entityWithInterval).thenMany(template.select(Query.empty(), EntityWithInterval.class)) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
 
-		assertThat(saved.interval).isEqualTo(loaded.interval);
+					assertThat(actual.getInterval()).isEqualTo(entityWithInterval.interval);
+				}).verifyComplete();
 	}
 
 	private void insert(EntityWithArrays object) {
