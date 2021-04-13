@@ -42,7 +42,7 @@
 		<oracle.version>19.6.0.0</oracle.version>
 
 		<!-- test utilities-->
-		<awaitility.version>4.0.2</awaitility.version>
+		<awaitility.version>4.0.3</awaitility.version>
 		<degraph-check.version>0.1.4</degraph-check.version>
 	</properties>
 
