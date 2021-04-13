@@ -430,8 +430,7 @@ Embedded entities containing a `Collection` or a `Map` will always be considered
 Such an entity will therefore never be `null` even when using @Embedded(onEmpty = USE_NULL).
 
 [[jdbc.entity-persistence.state-detection-strategies]]
-include::{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
-
+include::{spring-data-commons-docs}/is-new-state-detection.adoc[leveloffset=+2]
 
 [[jdbc.entity-persistence.id-generation]]
 === ID Generation
@@ -882,7 +881,6 @@ The following table describes the available events:
 
 WARNING: Lifecycle events depend on an `ApplicationEventMulticaster`, which in case of the `SimpleApplicationEventMulticaster` can be configured with a `TaskExecutor`, and therefore gives no guarantees when an Event is processed.
 
-include::{spring-data-commons-docs}/is-new-state-detection.adoc[leveloffset=+2]
 
 [[jdbc.entity-callbacks]]
 === Store-specific EntityCallbacks
@@ -912,6 +910,8 @@ This is the correct callback if you want to set an id programmatically.
 | {javadoc-base}org/springframework/data/relational/core/mapping/event/AfterLoadCallback.html[`AfterLoadCallback`]
 | After an aggregate root gets created from a database `ResultSet` and all its property get set.
 |===
+
+include::{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
 
 include::jdbc-custom-conversions.adoc[]
 
