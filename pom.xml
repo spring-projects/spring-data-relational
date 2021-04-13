@@ -26,8 +26,8 @@
 
 		<!-- dependency versions -->
 		<jsr305.version>3.0.2</jsr305.version>
-		<mybatis-spring.version>2.0.0</mybatis-spring.version>
-		<mybatis.version>3.5.0</mybatis.version>
+		<mybatis-spring.version>2.0.6</mybatis-spring.version>
+		<mybatis.version>3.5.6</mybatis.version>
 
 		<!-- databases and jdbc drivers -->
 		<!-- not that these currently do not control the versions of databases used via Testcontainers for testing -->
