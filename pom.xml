@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -23,19 +24,26 @@
 		<springdata.commons>2.4.8-SNAPSHOT</springdata.commons>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
-		<degraph-check.version>0.1.4</degraph-check.version>
+		<!-- dependency versions -->
+		<jsr305.version>3.0.2</jsr305.version>
+		<mybatis-spring.version>2.0.0</mybatis-spring.version>
+		<mybatis.version>3.5.0</mybatis.version>
 
-		<awaitility.version>4.0.2</awaitility.version>
+		<!-- databases and jdbc drivers -->
+		<!-- not that these currently do not control the versions of databases used via Testcontainers for testing -->
 		<db2.version>11.5.0.0</db2.version>
+		<db2.jcc.version>11.1.4.4</db2.jcc.version>
 		<h2.version>1.4.200</h2.version>
 		<hsqldb.version>2.2.8</hsqldb.version>
+		<mariadb-java-client.version>2.6.0</mariadb-java-client.version>
 		<mssql.version>7.0.0.jre8</mssql.version>
-		<mybatis.version>3.5.0</mybatis.version>
-		<mybatis-spring.version>2.0.0</mybatis-spring.version>
 		<mysql-connector-java.version>5.1.41</mysql-connector-java.version>
 		<postgresql.version>42.0.0</postgresql.version>
-		<mariadb-java-client.version>2.6.0</mariadb-java-client.version>
-		<jsr305.version>3.0.2</jsr305.version>
+		<oracle.version>19.6.0.0</oracle.version>
+
+		<!-- test utilities-->
+		<awaitility.version>4.0.2</awaitility.version>
+		<degraph-check.version>0.1.4</degraph-check.version>
 	</properties>
 
 	<inceptionYear>2017</inceptionYear>
