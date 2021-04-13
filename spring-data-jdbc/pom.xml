@@ -196,14 +196,14 @@
 		<dependency>
 			<groupId>com.ibm.db2</groupId>
 			<artifactId>jcc</artifactId>
-			<version>11.1.4.4</version>
+			<version>${db2.jcc.version}</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc8</artifactId>
-			<version>19.6.0.0</version>
+			<version>${oracle.version}</version>
 			<scope>test</scope>
 		</dependency>
 
