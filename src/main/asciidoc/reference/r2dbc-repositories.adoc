@@ -321,22 +321,7 @@ Query By Example really shines when you you don't know all the fields needed in 
 If you were building a filter on a web page where the user can pick the fields, Query By Example is a great way to flexibly capture that into an efficient query.
 
 [[r2dbc.entity-persistence.state-detection-strategies]]
-=== Entity State Detection Strategies
-
-The following table describes the strategies that Spring Data R2DBC offers for detecting whether an entity is new:
-
-.Options for detection whether an entity is new in Spring Data R2DBC
-[options = "autowidth"]
-|===============
-|Id-Property inspection (the default)   |By default, the `save()` method inspects the identifier property of the given entity.
-If the identifier property is `null`, then the entity is assumed to be new. Otherwise, it is assumed exist in the datbase.
-|Implementing `Persistable`             |If an entity implements `Persistable`, Spring Data R2DBC delegates the new detection to the `isNew(…)` method of the entity.
-See the link:$$https://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[Javadoc] for details.
-|Optimistic Locking through `@Version`  | If an entity uses Optimistic Locking by (version property annotated with `@Version`), Spring Data R2DBC checks if the entity is new by inspecting the version property whether its value corresponds with Java's default initialization value. That is `0` for primitive types and `null` for wrapper types.
-|Implementing `EntityInformation`       |You can customize the `EntityInformation` abstraction used in `SimpleR2dbcRepository`  by creating a subclass of `R2dbcRepositoryFactory` and overriding `getEntityInformation(…)`.
-You then have to register the custom implementation of `R2dbcRepositoryFactory` as a Spring bean.
-Note that this should rarely be necessary. See the link:{spring-data-r2dbc-javadoc}/org/springframework/data/r2dbc/repository/support/R2dbcRepositoryFactory.html[Javadoc] for details.
-|===============
+include::../{spring-data-commons-docs}/is-new-state-detection.adoc[leveloffset=+2]
 
 [[r2dbc.entity-persistence.id-generation]]
 === ID Generation
