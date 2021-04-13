@@ -430,24 +430,8 @@ Embedded entities containing a `Collection` or a `Map` will always be considered
 Such an entity will therefore never be `null` even when using @Embedded(onEmpty = USE_NULL).
 
 [[jdbc.entity-persistence.state-detection-strategies]]
-=== Entity State Detection Strategies
+include::{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
 
-The following table describes the strategies that Spring Data JDBC offers for detecting whether an entity is new:
-
-.Options for detection whether an entity is new in Spring Data JDBC
-[options = "autowidth"]
-|===============
-|Id-Property inspection (the default)|By default, Spring Data JDBC inspects the version property of the given entity.
-If the identifier property is `null` or `0` in case of primitve types, then the entity is assumed to be new. Otherwise, it is assumed to not be new.
-|Version-Property inspection|If a property annotated with `@Version` is present and `null`, or in case of a version property of primitive type `0` the entity is considered new.
-If the version property is present but has a different value, the entity is considered not new.
-If no version property is present Spring Data JDBC falls back to inspection of the Id-Property.
-|Implementing `Persistable`|If an entity implements `Persistable`, Spring Data JDBC delegates the new detection to the `isNew(…)` method of the entity.
-See the link:$$https://docs.spring.io/spring-data/data-commons/docs/current/api/index.html?org/springframework/data/domain/Persistable.html$$[Javadoc] for details.
-|Implementing `EntityInformation`|You can customize the `EntityInformation` abstraction used in the `SimpleJdbcRepository` implementation by creating a subclass of `JdbcRepositoryFactory` and overriding the `getEntityInformation(…)` method.
-You then have to register the custom implementation of `JdbcRepositoryFactory` as a Spring bean.
-Note that this should rarely be necessary. See the link:{javadoc-base}org/springframework/data/jdbc/repository/support/JdbcRepositoryFactory.html[Javadoc] for details.
-|===============
 
 [[jdbc.entity-persistence.id-generation]]
 === ID Generation
@@ -892,7 +876,7 @@ The following table describes the available events:
 
 WARNING: Lifecycle events depend on an `ApplicationEventMulticaster`, which in case of the `SimpleApplicationEventMulticaster` can be configured with a `TaskExecutor`, and therefore gives no guarantees when an Event is processed.
 
-include::{spring-data-commons-docs}/entity-callbacks.adoc[leveloffset=+1]
+include::{spring-data-commons-docs}/is-new-state-detection.adoc[leveloffset=+2]
 
 [[jdbc.entity-callbacks]]
 === Store-specific EntityCallbacks
