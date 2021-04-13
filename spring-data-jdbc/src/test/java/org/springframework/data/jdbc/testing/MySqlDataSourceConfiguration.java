@@ -21,13 +21,12 @@ import java.sql.SQLException;
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
+import com.mysql.cj.jdbc.MysqlDataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.testcontainers.containers.MySQLContainer;
-
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
 /**
  * {@link DataSource} setup for MySQL. Starts a docker container with a MySql database and sets up a database name
