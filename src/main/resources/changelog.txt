@@ -1,6 +1,14 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.2.0 (2021-04-14)
+-------------------------------------
+* #961 - Upgrade dependencies.
+* #952 - Add support for `Slice` and `Page` queries using query derivation.
+* #951 - Improve documentation of entity state detection.
+* #774 - Add support for queries returning Page and Slice.
+
+
 Changes in version 2.1.8 (2021-04-14)
 -------------------------------------
 * #961 - Upgrade dependencies.
@@ -724,6 +732,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
