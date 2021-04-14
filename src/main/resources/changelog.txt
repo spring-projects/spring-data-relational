@@ -1,6 +1,13 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.2.8 (2021-04-14)
+-------------------------------------
+* #579 - Include Entity-state detection documentation snipped from Commons.
+* #573 - Add r2dbc-postgresql Interval to simple types.
+* #509 - Update CI jobs with Docker Login.
+
+
 Changes in version 1.1.9.RELEASE (2021-04-14)
 ---------------------------------------------
 * #566 - Update R2dbcEntityTemplate.selectOne() mentioning IncorrectResultSizeDataAccessException.
@@ -454,6 +461,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
