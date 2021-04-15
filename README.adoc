@@ -1,7 +1,7 @@
 image:https://spring.io/badges/spring-data-jdbc/ga.svg["Spring Data JDBC", link="https://spring.io/projects/spring-data-jdbc#learn"]
 image:https://spring.io/badges/spring-data-jdbc/snapshot.svg["Spring Data JDBC", link="https://spring.io/projects/spring-data-jdbc#learn"]
 
-= Spring Data JDBC image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-jdbc%2Fmaster&subject=Build[link=https://jenkins.spring.io/view/SpringData/job/spring-data-jdbc/] https://gitter.im/spring-projects/spring-data[image:https://badges.gitter.im/spring-projects/spring-data.svg[Gitter]]
+= Spring Data JDBC image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-jdbc%2Fmain&subject=Build[link=https://jenkins.spring.io/view/SpringData/job/spring-data-jdbc/] https://gitter.im/spring-projects/spring-data[image:https://badges.gitter.im/spring-projects/spring-data.svg[Gitter]]
 
 The primary goal of the https://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use new data access technologies such as non-relational databases, map-reduce frameworks, and cloud based data services.
 
