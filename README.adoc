@@ -1,6 +1,6 @@
 image:https://spring.io/badges/spring-data-r2dbc/snapshot.svg["Spring Data R2DBC", link="https://spring.io/projects/spring-data-r2dbc#learn"]
 
-= Spring Data R2DBC image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-r2dbc%2Fmaster&subject=Build[link=https://jenkins.spring.io/view/SpringData/job/spring-data-r2dbc/] https://gitter.im/spring-projects/spring-data[image:https://badges.gitter.im/spring-projects/spring-data.svg[Gitter]]
+= Spring Data R2DBC image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-r2dbc%2Fmain&subject=Build[link=https://jenkins.spring.io/view/SpringData/job/spring-data-r2dbc/] https://gitter.im/spring-projects/spring-data[image:https://badges.gitter.im/spring-projects/spring-data.svg[Gitter]]
 
 The primary goal of the https://projects.spring.io/spring-data[Spring Data] project is to make it easier to build Spring-powered applications that use data access technologies. *Spring Data R2DBC* offers the popular Repository abstraction based on https://r2dbc.io[R2DBC].
 
