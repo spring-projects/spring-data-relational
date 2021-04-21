@@ -117,7 +117,7 @@ pipeline {
 				script {
 					docker.withRegistry('', 'hub.docker.com-springbuildmaster') {
 						docker.image('adoptopenjdk/openjdk8:latest').inside('-v $HOME:/tmp/jenkins-home') {
-							sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,artifactory -Dmaven.repo.local=/tmp/jenkins-home/.m2/spring-data-jdbc-non-root ' +
+							sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -s settings.xml -Pci,artifactory -Dmaven.repo.local=/tmp/jenkins-home/.m2/spring-data-jdbc-non-root ' +
 								'-Dartifactory.server=https://repo.spring.io ' +
 								"-Dartifactory.username=${ARTIFACTORY_USR} " +
 								"-Dartifactory.password=${ARTIFACTORY_PSW} " +
@@ -148,7 +148,7 @@ pipeline {
 				script {
 					docker.withRegistry('', 'hub.docker.com-springbuildmaster') {
 						docker.image('adoptopenjdk/openjdk8:latest').inside('-v $HOME:/tmp/jenkins-home') {
-							sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -Pci,distribute -Dmaven.repo.local=/tmp/jenkins-home/.m2/spring-data-jdbc-non-root ' +
+							sh 'MAVEN_OPTS="-Duser.name=jenkins -Duser.home=/tmp/jenkins-home" ./mvnw -s settings.xml -Pci,distribute -Dmaven.repo.local=/tmp/jenkins-home/.m2/spring-data-jdbc-non-root ' +
 									'-Dartifactory.server=https://repo.spring.io ' +
 									"-Dartifactory.username=${ARTIFACTORY_USR} " +
 									"-Dartifactory.password=${ARTIFACTORY_PSW} " +
