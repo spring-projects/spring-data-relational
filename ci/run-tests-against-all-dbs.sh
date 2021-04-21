@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./mvnw clean install -Pall-dbs
+./mvnw -s settings.xml clean install -Pall-dbs
