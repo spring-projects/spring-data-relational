@@ -25,6 +25,7 @@ import org.springframework.util.Assert;
  *
  * @author Roman Chigvintsev
  * @author Mark Paluch
+ * @author Will Easterling
  */
 class PreparedOperationBindableQuery implements BindableQuery {
 
@@ -83,7 +84,7 @@ class PreparedOperationBindableQuery implements BindableQuery {
 
 		@Override
 		public void bindNull(int index, Class<?> type) {
-			this.bindSpec = this.bindSpec.bind(index, type);
+			this.bindSpec = this.bindSpec.bindNull(index, type);
 		}
 	}
 }
