@@ -24,14 +24,21 @@ import io.r2dbc.spi.test.MockRowMetadata;
 import lombok.AllArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.core.convert.converter.ConditionalConverter;
+import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
@@ -44,20 +51,21 @@ import org.springframework.r2dbc.core.Parameter;
  *
  * @author Mark Paluch
  */
-public class PostgresMappingR2dbcConverterUnitTests {
+class PostgresMappingR2dbcConverterUnitTests {
 
-	RelationalMappingContext mappingContext = new R2dbcMappingContext();
-	MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext);
+	private RelationalMappingContext mappingContext = new R2dbcMappingContext();
+	private MappingR2dbcConverter converter = new MappingR2dbcConverter(mappingContext);
 
 	@BeforeEach
-	public void before() {
+	void before() {
 
 		List<Object> converters = new ArrayList<>(PostgresDialect.INSTANCE.getConverters());
 		converters.addAll(R2dbcCustomConversions.STORE_CONVERTERS);
 		CustomConversions.StoreConversions storeConversions = CustomConversions.StoreConversions
 				.of(PostgresDialect.INSTANCE.getSimpleTypeHolder(), converters);
 
-		R2dbcCustomConversions customConversions = new R2dbcCustomConversions(storeConversions, Collections.emptyList());
+		R2dbcCustomConversions customConversions = new R2dbcCustomConversions(storeConversions,
+				Arrays.asList(JsonToJsonHolderConverter.INSTANCE, JsonHolderToJsonConverter.INSTANCE));
 
 		mappingContext.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
 
@@ -65,7 +73,7 @@ public class PostgresMappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-318
-	public void shouldPassThruJson() {
+	void shouldPassThruJson() {
 
 		JsonPerson person = new JsonPerson(null, Json.of("{\"hello\":\"world\"}"));
 
@@ -76,7 +84,7 @@ public class PostgresMappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-453
-	public void shouldConvertJsonToString() {
+	void shouldConvertJsonToString() {
 
 		MockRow row = MockRow.builder().identified("json_string", Object.class, Json.of("{\"hello\":\"world\"}")).build();
 
@@ -88,7 +96,7 @@ public class PostgresMappingR2dbcConverterUnitTests {
 	}
 
 	@Test // gh-453
-	public void shouldConvertJsonToByteArray() {
+	void shouldConvertJsonToByteArray() {
 
 		MockRow row = MockRow.builder().identified("json_bytes", Object.class, Json.of("{\"hello\":\"world\"}")).build();
 
@@ -97,6 +105,32 @@ public class PostgresMappingR2dbcConverterUnitTests {
 
 		ConvertedJson result = converter.read(ConvertedJson.class, row, metadata);
 		assertThat(result.jsonBytes).isEqualTo("{\"hello\":\"world\"}".getBytes());
+	}
+
+	@Test // gh-585
+	void shouldApplyCustomReadingConverter() {
+
+		MockRow row = MockRow.builder().identified("holder", Object.class, Json.of("{\"hello\":\"world\"}")).build();
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("holder").build()).build();
+
+		WithJsonHolder result = converter.read(WithJsonHolder.class, row, metadata);
+		assertThat(result.holder).isNotNull();
+		assertThat(result.holder.json).isNotNull();
+	}
+
+	@Test // gh-585
+	void shouldApplyCustomWritingConverter() {
+
+		WithJsonHolder object = new WithJsonHolder(new JsonHolder(Json.of("{\"hello\":\"world\"}")));
+
+		OutboundRow row = new OutboundRow();
+		converter.write(object, row);
+
+		Parameter parameter = row.get(SqlIdentifier.unquoted("holder"));
+		assertThat(parameter).isNotNull();
+		assertThat(parameter.getValue()).isInstanceOf(Json.class);
 	}
 
 	@AllArgsConstructor
@@ -116,4 +150,60 @@ public class PostgresMappingR2dbcConverterUnitTests {
 
 		byte[] jsonBytes;
 	}
+
+	@AllArgsConstructor
+	static class WithJsonHolder {
+
+		JsonHolder holder;
+	}
+
+	@ReadingConverter
+	enum JsonToJsonHolderConverter implements GenericConverter, ConditionalConverter {
+
+		INSTANCE;
+
+		@Override
+		public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
+			return Json.class.isAssignableFrom(sourceType.getType());
+		}
+
+		@Override
+		public Set<ConvertiblePair> getConvertibleTypes() {
+			return Collections.singleton(new GenericConverter.ConvertiblePair(Json.class, Object.class));
+		}
+
+		@Override
+		public Object convert(Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
+			return new JsonHolder((Json) source);
+		}
+	}
+
+	@WritingConverter
+	enum JsonHolderToJsonConverter implements GenericConverter, ConditionalConverter {
+
+		INSTANCE;
+
+		@Override
+		public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
+			return JsonHolder.class.isAssignableFrom(sourceType.getType());
+		}
+
+		@Override
+		public Set<ConvertiblePair> getConvertibleTypes() {
+			return Collections.singleton(new GenericConverter.ConvertiblePair(JsonHolder.class, Json.class));
+		}
+
+		@Override
+		public Object convert(Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
+			return ((JsonHolder) source).json;
+		}
+	}
+
+	@AllArgsConstructor
+	private static class JsonHolder {
+
+		private final Json json;
+
+	}
+
 }

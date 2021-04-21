@@ -162,15 +162,23 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		try {
 
+			Object value = null;
+			if (metadata == null || metadata.getColumnNames().contains(identifier)) {
+				value = row.get(identifier);
+			}
+
+			if (value != null && getConversions().hasCustomReadTarget(value.getClass(), property.getType())) {
+				return readValue(value, property.getTypeInformation());
+			}
+
 			if (property.isEntity()) {
 				return readEntityFrom(row, metadata, property);
 			}
 
-			if (metadata != null && !metadata.getColumnNames().contains(identifier)) {
+			if (value == null) {
 				return null;
 			}
 
-			Object value = row.get(identifier);
 			return readValue(value, property.getTypeInformation());
 
 		} catch (Exception o_O) {
@@ -270,7 +278,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	}
 
 	@SuppressWarnings("unchecked")
-	private <S> S readEntityFrom(Row row, RowMetadata metadata, PersistentProperty<?> property) {
+	private <S> S readEntityFrom(Row row, @Nullable RowMetadata metadata, PersistentProperty<?> property) {
 
 		String prefix = property.getName() + "_";
 
