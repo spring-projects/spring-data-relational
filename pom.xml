@@ -286,11 +286,6 @@
 			<id>spring-plugins-snapshot</id>
 			<url>https://repo.spring.io/plugins-snapshot</url>
 		</pluginRepository>
-		<pluginRepository>
-			<id>bintray-plugins</id>
-			<name>bintray-plugins</name>
-			<url>https://jcenter.bintray.com</url>
-		</pluginRepository>
 	</pluginRepositories>
 
 </project>
