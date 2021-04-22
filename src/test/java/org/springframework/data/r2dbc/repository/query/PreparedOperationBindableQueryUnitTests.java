@@ -18,7 +18,6 @@ package org.springframework.data.r2dbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -26,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.BindTarget;
 
 /**
  * Unit tests for {@link PreparedOperationBindableQuery}.
@@ -34,19 +34,35 @@ import org.springframework.r2dbc.core.PreparedOperation;
  * @author Marl Paluch
  */
 @ExtendWith(MockitoExtension.class)
-@Ignore
 class PreparedOperationBindableQueryUnitTests {
 
 	@Mock PreparedOperation<?> preparedOperation;
 
-	@Test // gh-282
+	@Test // gh-282, gh-587
 	void bindsQueryParameterValues() {
 
-		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
+		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class, RETURNS_SELF);
+
+		doAnswer(it -> {
+
+			BindTarget target = it.getArgument(0);
+
+			target.bind(0, "hello");
+			target.bind("foo", "world");
+			target.bindNull(1, String.class);
+			target.bindNull("bar", Integer.class);
+
+			return null;
+		}).when(preparedOperation).bindTo(any());
 
 		PreparedOperationBindableQuery query = new PreparedOperationBindableQuery(preparedOperation);
-		query.bind(bindSpecMock);
+		DatabaseClient.GenericExecuteSpec bind = query.bind(bindSpecMock);
+
 		verify(preparedOperation, times(1)).bindTo(any());
+		verify(bindSpecMock).bind(0, "hello");
+		verify(bindSpecMock).bind("foo", "world");
+		verify(bindSpecMock).bindNull(1, String.class);
+		verify(bindSpecMock).bindNull("bar", Integer.class);
 	}
 
 	@Test // gh-282
