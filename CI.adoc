@@ -1,6 +1,6 @@
 = Continuous Integration
 
-image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-jdbc%2Fmaster&subject=Moore%20(master)["Spring Data JDBC", link="https://jenkins.spring.io/view/SpringData/job/spring-data-jdbc/"]
+image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-jdbc%2Fmain&subject=Moore%20(main)["Spring Data JDBC", link="https://jenkins.spring.io/view/SpringData/job/spring-data-jdbc/"]
 image:https://jenkins.spring.io/buildStatus/icon?job=spring-data-jdbc%2F1.0.x&subject=Lovelace%20(1.0.x)["Spring Data JDBC", link="https://jenkins.spring.io/view/SpringData/job/spring-data-jdbc/"]
 
 == Running CI tasks locally

@@ -124,7 +124,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 */
 	@Override
 	protected Association<RelationalPersistentProperty> createAssociation() {
-		throw new UnsupportedOperationException();
+		return new Association<>(this, null);
 	}
 
 	public boolean isForceQuote() {
@@ -137,7 +137,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public boolean isEntity() {
-		return super.isEntity() && !isReference();
+		return super.isEntity() && !isAssociation();
 	}
 
 	@Override

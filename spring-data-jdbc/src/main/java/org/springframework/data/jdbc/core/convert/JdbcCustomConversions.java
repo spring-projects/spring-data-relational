@@ -69,14 +69,14 @@ public class JdbcCustomConversions extends CustomConversions {
 
 	private static boolean isDateTimeApiConversion(ConvertiblePair cp) {
 
-		if (cp.getSourceType().equals(java.util.Date.class) && cp.getTargetType().getTypeName().startsWith("java.time.")) {
-			return true;
+		if (cp.getSourceType().equals(java.util.Date.class)) {
+			return cp.getTargetType().getTypeName().startsWith("java.time.");
 		}
 
-		if (cp.getTargetType().equals(java.util.Date.class) && cp.getSourceType().getTypeName().startsWith("java.time.")) {
-			return true;
+		if (cp.getTargetType().equals(java.util.Date.class)) {
+			return cp.getSourceType().getTypeName().startsWith("java.time.");
 		}
 
-		return false;
+		return true;
 	}
 }
