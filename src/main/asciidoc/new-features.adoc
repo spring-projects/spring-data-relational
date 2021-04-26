@@ -3,6 +3,9 @@
 
 This section covers the significant changes for each version.
 
+[[new-features.2-2-0]]
+== `Page` and `Slice` support for <<jdbc.query-methods,derived queries>>.
+
 [[new-features.2-1-0]]
 == What's New in Spring Data JDBC 2.1
 

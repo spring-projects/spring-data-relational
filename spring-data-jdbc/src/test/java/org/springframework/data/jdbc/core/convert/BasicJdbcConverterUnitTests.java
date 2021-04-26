@@ -16,9 +16,11 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import lombok.Data;
 
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -35,8 +37,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.ClassTypeInformation;
 
 /**
@@ -47,9 +51,15 @@ import org.springframework.data.util.ClassTypeInformation;
 public class BasicJdbcConverterUnitTests {
 
 	JdbcMappingContext context = new JdbcMappingContext();
-	BasicJdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
-		throw new UnsupportedOperationException();
-	});
+	StubbedJdbcTypeFactory typeFactory = new StubbedJdbcTypeFactory();
+	BasicJdbcConverter converter = new BasicJdbcConverter( //
+			context, //
+			(identifier, path) -> {
+				throw new UnsupportedOperationException();
+			}, //
+			new JdbcCustomConversions(), //
+			typeFactory, IdentifierProcessing.ANSI //
+	);
 
 	@Test // DATAJDBC-104, DATAJDBC-1384
 	public void testTargetTypesForPropertyType() {
@@ -110,14 +120,25 @@ public class BasicJdbcConverterUnitTests {
 			LocalDateTime testLocalDateTime = LocalDateTime.of(2001, 2, 3, 4, 5, 6, 123456789);
 			checkConversionToTimestampAndBack(softly, persistentEntity, "localDateTime", testLocalDateTime);
 			checkConversionToTimestampAndBack(softly, persistentEntity, "localDate", LocalDate.of(2001, 2, 3));
-			checkConversionToTimestampAndBack(softly, persistentEntity, "localTime", LocalTime.of(1, 2, 3,123456789));
-			checkConversionToTimestampAndBack(softly, persistentEntity, "instant", testLocalDateTime.toInstant(ZoneOffset.UTC));
+			checkConversionToTimestampAndBack(softly, persistentEntity, "localTime", LocalTime.of(1, 2, 3, 123456789));
+			checkConversionToTimestampAndBack(softly, persistentEntity, "instant",
+					testLocalDateTime.toInstant(ZoneOffset.UTC));
 		});
 
 	}
 
-	private void checkConversionToTimestampAndBack(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity, String propertyName,
-												   Object value) {
+	@Test // #945
+	void conversionOfPrimitiveArrays() {
+
+		int[] ints = { 1, 2, 3, 4, 5 };
+		JdbcValue converted = converter.writeJdbcValue(ints, ints.getClass(), JdbcUtil.sqlTypeFor(ints.getClass()));
+
+		assertThat(converted.getValue()).isInstanceOf(Array.class);
+		assertThat(typeFactory.arraySource).containsExactly(1, 2, 3, 4, 5);
+	}
+
+	private void checkConversionToTimestampAndBack(SoftAssertions softly, RelationalPersistentEntity<?> persistentEntity,
+			String propertyName, Object value) {
 
 		RelationalPersistentProperty property = persistentEntity.getRequiredPersistentProperty(propertyName);
 
@@ -165,4 +186,14 @@ public class BasicJdbcConverterUnitTests {
 
 	@SuppressWarnings("unused")
 	private static class OtherEntity {}
+
+	private static class StubbedJdbcTypeFactory implements JdbcTypeFactory {
+		public Object[] arraySource;
+
+		@Override
+		public Array createArray(Object[] value) {
+			arraySource = value;
+			return mock(Array.class);
+		}
+	}
 }

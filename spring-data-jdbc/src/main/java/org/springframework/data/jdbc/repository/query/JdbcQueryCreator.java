@@ -66,6 +66,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	private final QueryMapper queryMapper;
 	private final RelationalEntityMetadata<?> entityMetadata;
 	private final RenderContextFactory renderContextFactory;
+	private final boolean isSliceQuery;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
@@ -77,9 +78,10 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 * @param dialect must not be {@literal null}.
 	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
 	 * @param accessor parameter metadata provider, must not be {@literal null}.
+	 * @param isSliceQuery
 	 */
 	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
-			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor) {
+			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery) {
 		super(tree, accessor);
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -93,6 +95,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		this.entityMetadata = entityMetadata;
 		this.queryMapper = new QueryMapper(dialect, converter);
 		this.renderContextFactory = new RenderContextFactory(dialect);
+		this.isSliceQuery = isSliceQuery;
 	}
 
 	/**
@@ -171,7 +174,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		return new ParametrizedQuery(sql, parameterSource);
 	}
 
-	private SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,
+	SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,
 			SelectBuilder.SelectOrdered selectOrdered) {
 
 		return sort.isSorted() ? //
@@ -179,7 +182,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 				: selectOrdered;
 	}
 
-	private SelectBuilder.SelectOrdered applyCriteria(@Nullable Criteria criteria, RelationalPersistentEntity<?> entity,
+	SelectBuilder.SelectOrdered applyCriteria(@Nullable Criteria criteria, RelationalPersistentEntity<?> entity,
 			Table table, MapSqlParameterSource parameterSource, SelectBuilder.SelectWhere whereBuilder) {
 
 		return criteria != null //
@@ -187,7 +190,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 				: whereBuilder;
 	}
 
-	private SelectBuilder.SelectWhere applyLimitAndOffset(SelectBuilder.SelectLimitOffset limitOffsetBuilder) {
+	SelectBuilder.SelectWhere applyLimitAndOffset(SelectBuilder.SelectLimitOffset limitOffsetBuilder) {
 
 		if (tree.isExistsProjection()) {
 			limitOffsetBuilder = limitOffsetBuilder.limit(1);
@@ -197,13 +200,14 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 		Pageable pageable = accessor.getPageable();
 		if (pageable.isPaged()) {
-			limitOffsetBuilder = limitOffsetBuilder.limit(pageable.getPageSize()).offset(pageable.getOffset());
+			limitOffsetBuilder = limitOffsetBuilder.limit(isSliceQuery ? pageable.getPageSize() + 1 : pageable.getPageSize())
+					.offset(pageable.getOffset());
 		}
 
 		return (SelectBuilder.SelectWhere) limitOffsetBuilder;
 	}
 
-	private SelectBuilder.SelectLimitOffset createSelectClause(RelationalPersistentEntity<?> entity, Table table) {
+	SelectBuilder.SelectLimitOffset createSelectClause(RelationalPersistentEntity<?> entity, Table table) {
 
 		SelectBuilder.SelectJoin builder;
 		if (tree.isExistsProjection()) {

@@ -30,7 +30,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
@@ -57,7 +59,8 @@ public class QueryAnnotationHsqlIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true,
+			includeFilters = @ComponentScan.Filter(value = DummyEntityRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
 		@Bean

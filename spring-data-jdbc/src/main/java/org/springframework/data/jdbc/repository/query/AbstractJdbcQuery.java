@@ -108,7 +108,7 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		};
 	}
 
-	private JdbcQueryExecution<Object> singleObjectQuery(RowMapper<?> rowMapper) {
+	JdbcQueryExecution<Object> singleObjectQuery(RowMapper<?> rowMapper) {
 
 		return (query, parameters) -> {
 			try {
@@ -119,7 +119,7 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		};
 	}
 
-	private <T> JdbcQueryExecution<List<T>> collectionQuery(RowMapper<T> rowMapper) {
+	<T> JdbcQueryExecution<List<T>> collectionQuery(RowMapper<T> rowMapper) {
 		return getQueryExecution(new RowMapperResultSetExtractor<>(rowMapper));
 	}
 

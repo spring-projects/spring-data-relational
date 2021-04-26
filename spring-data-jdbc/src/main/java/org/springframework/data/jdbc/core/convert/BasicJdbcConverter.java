@@ -24,7 +24,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
@@ -183,7 +182,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 	private Class<?> doGetColumnType(RelationalPersistentProperty property) {
 
-		if (property.isReference()) {
+		if (property.isAssociation()) {
 			return getReferenceColumnType(property);
 		}
 
@@ -317,11 +316,13 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		Class<?> componentType = convertedValue.getClass().getComponentType();
 		if (componentType != byte.class && componentType != Byte.class) {
-			return JdbcValue.of(typeFactory.createArray((Object[]) convertedValue), JDBCType.ARRAY);
+
+			Object[] objectArray = requireObjectArray(convertedValue);
+			return JdbcValue.of(typeFactory.createArray(objectArray), JDBCType.ARRAY);
 		}
 
 		if (componentType == Byte.class) {
-			convertedValue = ArrayUtil.toPrimitiveByteArray((Byte[]) convertedValue);
+			convertedValue = ArrayUtils.toPrimitive((Byte[]) convertedValue);
 		}
 
 		return JdbcValue.of(convertedValue, JDBCType.BINARY);
@@ -333,10 +334,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		if (canWriteAsJdbcValue(value)) {
 
 			Object converted = writeValue(value, ClassTypeInformation.from(JdbcValue.class));
-			if(converted instanceof JdbcValue) {
+			if (converted instanceof JdbcValue) {
 				return (JdbcValue) converted;
 			}
-
 		}
 
 		return null;
@@ -351,6 +351,43 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	@Override
 	public <T> T mapRow(PersistentPropertyPathExtension path, ResultSet resultSet, Identifier identifier, Object key) {
 		return new ReadingContext<T>(path, new ResultSetAccessor(resultSet), identifier, key).mapRow();
+	}
+
+	static Object[] requireObjectArray(Object source) {
+
+		Assert.isTrue(source.getClass().isArray(), "Source object is not an array");
+
+		Class<?> componentType = source.getClass().getComponentType();
+
+		if (componentType.isPrimitive()) {
+			if (componentType == boolean.class) {
+				return ArrayUtils.toObject((boolean[]) source);
+			}
+			if (componentType == byte.class) {
+				return ArrayUtils.toObject((byte[]) source);
+			}
+			if (componentType == char.class) {
+				return ArrayUtils.toObject((char[]) source);
+			}
+			if (componentType == double.class) {
+				return ArrayUtils.toObject((double[]) source);
+			}
+			if (componentType == float.class) {
+				return ArrayUtils.toObject((float[]) source);
+			}
+			if (componentType == int.class) {
+				return ArrayUtils.toObject((int[]) source);
+			}
+			if (componentType == long.class) {
+				return ArrayUtils.toObject((long[]) source);
+			}
+			if (componentType == short.class) {
+				return ArrayUtils.toObject((short[]) source);
+			}
+
+			throw new IllegalArgumentException("Unsupported component type: " + componentType);
+		}
+		return (Object[]) source;
 	}
 
 	private class ReadingContext<T> {
@@ -419,23 +456,23 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			PersistentPropertyAccessor<T> propertyAccessor = getPropertyAccessor(entity, instance);
 			PreferredConstructor<T, RelationalPersistentProperty> persistenceConstructor = entity.getPersistenceConstructor();
 
-			for (RelationalPersistentProperty property : entity) {
+			entity.doWithAll(property -> {
 
 				if (persistenceConstructor != null && persistenceConstructor.isConstructorParameter(property)) {
-					continue;
+					return;
 				}
 
 				// skip absent simple properties
 				if (isSimpleProperty(property)) {
 
 					if (!propertyValueProvider.hasProperty(property)) {
-						continue;
+						return;
 					}
 				}
 
 				Object value = readOrLoadProperty(idValue, property);
 				propertyAccessor.setProperty(property, value);
-			}
+			});
 
 			return propertyAccessor.getBean();
 		}
@@ -513,7 +550,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			for (RelationalPersistentProperty embeddedProperty : persistentEntity) {
 
 				// if the embedded contains Lists, Sets or Maps we consider it non-empty
-				if (embeddedProperty.isQualified() || embeddedProperty.isReference()) {
+				if (embeddedProperty.isQualified() || embeddedProperty.isAssociation()) {
 					return true;
 				}
 

@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -93,6 +94,38 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("override_key"));
 		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("override_id"));
+	}
+
+	@Test // #938
+	void considersAggregateReferenceAnAssociation() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+
+		SoftAssertions.assertSoftly(softly -> {
+
+			softly.assertThat(entity.getRequiredPersistentProperty("reference").isAssociation()) //
+					.as("reference") //
+					.isTrue();
+
+			softly.assertThat(entity.getRequiredPersistentProperty("id").isAssociation()) //
+					.as("id") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("someEnum").isAssociation()) //
+					.as("someEnum") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("localDateTime").isAssociation()) //
+					.as("localDateTime") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("zonedDateTime").isAssociation()) //
+					.as("zonedDateTime") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("listField").isAssociation()) //
+					.as("listField") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("uuid").isAssociation()) //
+					.as("uuid") //
+					.isFalse();
+		});
 	}
 
 	private PersistentPropertyPathExtension getPersistentPropertyPath(Class<?> type, String propertyName) {
