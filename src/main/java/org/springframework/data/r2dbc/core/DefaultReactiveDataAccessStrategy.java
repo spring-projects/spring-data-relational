@@ -247,13 +247,15 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		Class<?> actualType = null;
 		if (value.getValue() instanceof Collection) {
 			actualType = CollectionUtils.findCommonElementType((Collection<?>) value.getValue());
-		} else if (value.getClass().isArray()) {
-			actualType = value.getClass().getComponentType();
+		} else if (!value.isEmpty() && value.getValue().getClass().isArray()) {
+			actualType = value.getValue().getClass().getComponentType();
 		}
 
 		if (actualType == null) {
 			actualType = property.getActualType();
 		}
+
+		actualType = converter.getTargetType(actualType);
 
 		if (value.isEmpty()) {
 

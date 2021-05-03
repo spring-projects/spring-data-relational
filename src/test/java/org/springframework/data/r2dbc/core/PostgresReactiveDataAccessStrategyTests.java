@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.r2dbc.convert.EnumWriteSupport;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -126,38 +127,90 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 		assertThat(value.getType()).isEqualTo(String.class);
 	}
 
-	@Test // gh-252
-	void shouldConvertSetOfEnumToString() {
+	@Test // gh-252, gh-593
+	void shouldConvertCollectionOfEnumToString() {
 
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
-				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
 
 		WithEnumCollections withEnums = new WithEnumCollections();
 		withEnums.enumSet = EnumSet.of(MyEnum.ONE, MyEnum.TWO);
-
-		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
-
-		Parameter value = outboundRow.get(SqlIdentifier.unquoted("enum_set"));
-		assertThat(value.getValue()).isEqualTo(new String[] { "ONE", "TWO" });
-	}
-
-	@Test // gh-252
-	void shouldConvertArrayOfEnumToString() {
-
-		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
-				Collections.singletonList(MyObjectsToStringConverter.INSTANCE));
-
-		WithEnumCollections withEnums = new WithEnumCollections();
+		withEnums.enumList = Arrays.asList(MyEnum.ONE, MyEnum.TWO);
 		withEnums.enumArray = new MyEnum[] { MyEnum.ONE, MyEnum.TWO };
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
 
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_set")).getValue()).isEqualTo(new String[] { "ONE", "TWO" });
 
-		Parameter value = outboundRow.get(SqlIdentifier.unquoted("enum_array"));
-		assertThat(value.getValue()).isEqualTo(new String[] { "ONE", "TWO" });
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_array")).getValue())
+				.isEqualTo(new String[] { "ONE", "TWO" });
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_list"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_list")).getValue())
+				.isEqualTo(new String[] { "ONE", "TWO" });
+	}
+
+	@Test // gh-593
+	void shouldCorrectlyWriteConvertedEnumNullValues() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
+
+		WithEnumCollections withEnums = new WithEnumCollections();
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_set")).getType()).isEqualTo(String[].class);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_array")).getType()).isEqualTo(String[].class);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_list"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_list")).getType()).isEqualTo(String[].class);
+	}
+
+	@Test // gh-593
+	void shouldConvertCollectionOfEnumNatively() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+				Collections.singletonList(new MyEnumSupport()));
+
+		WithEnumCollections withEnums = new WithEnumCollections();
+		withEnums.enumSet = EnumSet.of(MyEnum.ONE, MyEnum.TWO);
+		withEnums.enumList = Arrays.asList(MyEnum.ONE, MyEnum.TWO);
+		withEnums.enumArray = new MyEnum[] { MyEnum.ONE, MyEnum.TWO };
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_set")).getValue()).isInstanceOf(MyEnum[].class);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_array")).getValue()).isInstanceOf(MyEnum[].class);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_list"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_list")).getValue()).isInstanceOf(MyEnum[].class);
+	}
+
+	@Test // gh-593
+	void shouldCorrectlyWriteNativeEnumNullValues() {
+
+		DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE,
+				Collections.singletonList(new MyEnumSupport()));
+
+		WithEnumCollections withEnums = new WithEnumCollections();
+
+		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_set")).getType()).isEqualTo(MyEnum[].class);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_array")).getType()).isEqualTo(MyEnum[].class);
+
+		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_list"));
+		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_list")).getType()).isEqualTo(MyEnum[].class);
 	}
 
 	@RequiredArgsConstructor
@@ -182,6 +235,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		MyEnum[] enumArray;
 		Set<MyEnum> enumSet;
+		List<MyEnum> enumList;
 	}
 
 	static class WithConversion {
@@ -216,4 +270,6 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 			return myObjects.toString();
 		}
 	}
+
+	private static class MyEnumSupport extends EnumWriteSupport<MyEnum> {}
 }

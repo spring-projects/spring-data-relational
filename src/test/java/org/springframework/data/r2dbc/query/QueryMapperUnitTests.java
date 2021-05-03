@@ -417,6 +417,16 @@ class QueryMapperUnitTests {
 		assertThat(bindings.getCondition()).hasToString("person.alternative_name = ?[$1]");
 	}
 
+	@Test // gh-593
+	void mapQueryForEnumArrayShouldMapToStringList() {
+
+		Criteria criteria = Criteria.where("enumValue").in(MyEnum.ONE, MyEnum.TWO);
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("person.enum_value IN (?[$1], ?[$2])");
+	}
+
 	private BoundCondition map(Criteria criteria) {
 
 		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);
@@ -429,5 +439,10 @@ class QueryMapperUnitTests {
 
 		String name;
 		@Column("another_name") String alternative;
+		MyEnum enumValue;
+	}
+
+	enum MyEnum {
+		ONE, TWO,
 	}
 }
