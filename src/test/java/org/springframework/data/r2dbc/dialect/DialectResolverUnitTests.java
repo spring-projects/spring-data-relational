@@ -1,7 +1,6 @@
 package org.springframework.data.r2dbc.dialect;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import dev.miku.r2dbc.mysql.MySqlConnectionConfiguration;
 import dev.miku.r2dbc.mysql.MySqlConnectionFactory;
@@ -26,9 +25,6 @@ import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
-import com.github.jasync.r2dbc.mysql.JasyncConnectionFactory;
-import com.github.jasync.sql.db.mysql.pool.MySQLConnectionFactory;
-
 /**
  * Unit tests for {@link DialectResolver}.
  *
@@ -44,14 +40,12 @@ public class DialectResolverUnitTests {
 		MssqlConnectionFactory mssql = new MssqlConnectionFactory(MssqlConnectionConfiguration.builder().host("localhost")
 				.database("foo").username("bar").password("password").build());
 		H2ConnectionFactory h2 = new H2ConnectionFactory(H2ConnectionConfiguration.builder().inMemory("mem").build());
-		JasyncConnectionFactory jasyncMysql = new JasyncConnectionFactory(mock(MySQLConnectionFactory.class));
 		MySqlConnectionFactory mysql = MySqlConnectionFactory
 				.from(MySqlConnectionConfiguration.builder().host("localhost").username("mysql").build());
 
 		assertThat(DialectResolver.getDialect(postgres)).isEqualTo(PostgresDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(mssql)).isEqualTo(SqlServerDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(h2)).isEqualTo(H2Dialect.INSTANCE);
-		assertThat(DialectResolver.getDialect(jasyncMysql)).isEqualTo(MySqlDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(mysql)).isEqualTo(MySqlDialect.INSTANCE);
 	}
 

@@ -126,15 +126,6 @@ public class MySqlTestSupport {
 	}
 
 	/**
-	 * Creates a new Jasync MySQL {@link ConnectionFactory} configured from the {@link ExternalDatabase}.
-	 */
-	public static ConnectionFactory createJasyncConnectionFactory(ExternalDatabase database) {
-
-		ConnectionFactoryOptions options = ConnectionUtils.createOptions("mysql", database);
-		return new MysqlConnectionFactoryProvider().create(options);
-	}
-
-	/**
 	 * Creates a new R2DBC MySQL {@link ConnectionFactory} configured from the {@link ExternalDatabase}.
 	 */
 	public static ConnectionFactory createConnectionFactory(ExternalDatabase database) {

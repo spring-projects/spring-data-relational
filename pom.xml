@@ -30,7 +30,6 @@
 		<degraph-check.version>0.1.4</degraph-check.version>
 		<postgresql.version>42.2.5</postgresql.version>
 		<mysql.version>8.0.21</mysql.version>
-		<jasync.version>1.0.14</jasync.version>
 		<r2dbc-spi-test.version>0.8.0.RELEASE</r2dbc-spi-test.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
 		<mariadb-jdbc.version>2.5.4</mariadb-jdbc.version>
@@ -239,13 +238,6 @@
 		<dependency>
 			<groupId>io.r2dbc</groupId>
 			<artifactId>r2dbc-mssql</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.github.jasync-sql</groupId>
-			<artifactId>jasync-r2dbc-mysql</artifactId>
-			<version>${jasync.version}</version>
 			<scope>test</scope>
 		</dependency>
 
