@@ -25,12 +25,16 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.reactivestreams.Publisher;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -39,10 +43,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.data.r2dbc.mapping.event.AfterConvertCallback;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.H2TestSupport;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -59,6 +65,7 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 
 	@Autowired private H2LegoSetRepository repository;
 	@Autowired private IdOnlyEntityRepository idOnlyEntityRepository;
+	@Autowired private AfterConvertCallbackRecorder recorder;
 
 	@Configuration
 	@EnableR2dbcRepositories(considerNestedRepositories = true,
@@ -70,6 +77,16 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 		public ConnectionFactory connectionFactory() {
 			return H2TestSupport.createConnectionFactory();
 		}
+
+		@Bean
+		public AfterConvertCallbackRecorder afterConvertCallbackRecorder() {
+			return new AfterConvertCallbackRecorder();
+		}
+	}
+
+	@BeforeEach
+	void setUp() {
+		recorder.clear();
 	}
 
 	@Override
@@ -90,6 +107,18 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	@Override
 	protected Class<? extends LegoSetRepository> getRepositoryInterfaceType() {
 		return H2LegoSetRepository.class;
+	}
+
+	@Test // gh-591
+	void shouldFindItemsByManual() {
+		super.shouldFindItemsByManual();
+		assertThat(recorder.seenEntities).hasSize(1);
+	}
+
+	@Test // gh-591
+	void shouldFindItemsByNameContains() {
+		super.shouldFindItemsByNameContains();
+		assertThat(recorder.seenEntities).hasSize(2);
 	}
 
 	@Test // gh-469
@@ -195,5 +224,20 @@ public class H2R2dbcRepositoryIntegrationTests extends AbstractR2dbcRepositoryIn
 	@NoArgsConstructor
 	static class IdOnlyEntity {
 		@Id Integer id;
+	}
+
+	static class AfterConvertCallbackRecorder implements AfterConvertCallback<LegoSet> {
+
+		List<LegoSet> seenEntities = new ArrayList<>();
+
+		@Override
+		public Publisher<LegoSet> onAfterConvert(LegoSet entity, SqlIdentifier table) {
+			seenEntities.add(entity);
+			return Mono.just(entity);
+		}
+
+		public void clear() {
+			seenEntities.clear();
+		}
 	}
 }

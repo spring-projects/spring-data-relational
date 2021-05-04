@@ -72,6 +72,21 @@ public class SettableValue {
 	}
 
 	/**
+	 * Factory method to create a {@link SettableValue} from {@link Parameter}. Retains empty/type information.
+	 *
+	 * @param parameter the parameter to create a {@link SettableValue} from.
+	 * @return a new {@link SettableValue} from {@link Parameter}.
+	 * @since 1.4
+	 */
+	public static SettableValue fromParameter(Parameter parameter) {
+
+		Assert.notNull(parameter, "Parameter must not be null");
+
+		return parameter.isEmpty() ? SettableValue.empty(parameter.getType())
+				: SettableValue.fromOrEmpty(parameter.getValue(), parameter.getType());
+	}
+
+	/**
 	 * Returns the column value. Can be {@literal null}.
 	 *
 	 * @return the column value. Can be {@literal null}.

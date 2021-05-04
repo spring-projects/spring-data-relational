@@ -42,6 +42,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
@@ -52,6 +54,8 @@ import org.springframework.data.relational.repository.query.RelationalParameters
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.BindTarget;
 
 /**
  * Unit tests for {@link PartTreeR2dbcQuery}.
@@ -75,7 +79,7 @@ class PartTreeR2dbcQueryUnitTests {
 
 	private RelationalMappingContext mappingContext;
 	private ReactiveDataAccessStrategy dataAccessStrategy;
-	private DatabaseClient databaseClient;
+	private R2dbcEntityOperations operations;
 
 	@BeforeEach
 	void setUp() {
@@ -92,18 +96,19 @@ class PartTreeR2dbcQueryUnitTests {
 		R2dbcDialect dialect = DialectResolver.getDialect(connectionFactory);
 		dataAccessStrategy = new DefaultReactiveDataAccessStrategy(dialect, r2dbcConverter);
 
-		databaseClient = DatabaseClient.builder().connectionFactory(connectionFactory).build();
+		operations = new R2dbcEntityTemplate(DatabaseClient.builder().connectionFactory(connectionFactory).build(),
+				dataAccessStrategy);
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByStringAttribute() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
-		BindableQuery bindableQuery = createQuery(queryMethod, r2dbcQuery, "John");
+		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery, "John");
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
@@ -111,11 +116,11 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryWithIsNullCondition() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
-		BindableQuery bindableQuery = createQuery(queryMethod, r2dbcQuery, new Object[] { null });
+		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery, new Object[] { null });
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name IS NULL");
 	}
 
@@ -123,9 +128,9 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryWithLimitForExistsProjection() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("existsByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
-		BindableQuery query = createQuery(queryMethod, r2dbcQuery, "John");
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, "John");
 
 		assertThat(query.get())
 				.isEqualTo("SELECT " + TABLE + ".id FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1 LIMIT 1");
@@ -135,11 +140,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByTwoStringAttributes() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameAndFirstName", String.class, String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, getAccessor(queryMethod, new Object[] { "Doe", "John" }));
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery,
+				getAccessor(queryMethod, new Object[] { "Doe", "John" }));
 
-		assertThat(bindableQuery.get()).isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE
+		assertThat(preparedOperation.get()).isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE
 				+ ".last_name = $1 AND (" + TABLE + ".first_name = $2)");
 	}
 
@@ -147,11 +153,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByOneOfTwoStringAttributes() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameOrFirstName", String.class, String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, getAccessor(queryMethod, new Object[] { "Doe", "John" }));
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery,
+				getAccessor(queryMethod, new Object[] { "Doe", "John" }));
 
-		assertThat(bindableQuery.get()).isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE
+		assertThat(preparedOperation.get()).isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE
 				+ ".last_name = $1 OR (" + TABLE + ".first_name = $2)");
 	}
 
@@ -159,34 +166,33 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByDateAttributeBetween() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBetween", Date.class, Date.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		Date from = new Date();
 		Date to = new Date();
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { from, to });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".date_of_birth BETWEEN $1 AND $2");
 
-		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
-		when(bindSpecMock.bind(anyInt(), any())).thenReturn(bindSpecMock);
-		bindableQuery.bind(bindSpecMock);
+		BindTarget bindTarget = mock(BindTarget.class);
+		preparedOperation.bindTo(bindTarget);
 
-		verify(bindSpecMock, times(1)).bind(0, from);
-		verify(bindSpecMock, times(1)).bind(1, to);
+		verify(bindTarget, times(1)).bind(0, from);
+		verify(bindTarget, times(1)).bind(1, to);
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByIntegerAttributeLessThan() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeLessThan", Integer.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 30 });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age < $1");
 	}
 
@@ -194,12 +200,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByIntegerAttributeLessThanEqual() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeLessThanEqual", Integer.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 30 });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age <= $1");
 	}
 
@@ -207,12 +213,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByIntegerAttributeGreaterThan() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeGreaterThan", Integer.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 30 });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age > $1");
 	}
 
@@ -220,12 +226,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByIntegerAttributeGreaterThanEqual() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeGreaterThanEqual", Integer.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { 30 });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age >= $1");
 	}
 
@@ -233,24 +239,24 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByDateAttributeAfter() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthAfter", Date.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { new Date() });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".date_of_birth > $1");
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByDateAttributeBefore() throws Exception {
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBefore", Date.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { new Date() });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".date_of_birth < $1");
 	}
 
@@ -258,12 +264,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByIntegerAttributeIsNull() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIsNull");
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age IS NULL");
 	}
 
@@ -271,12 +277,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByIntegerAttributeIsNotNull() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIsNotNull");
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age IS NOT NULL");
 	}
 
@@ -284,12 +290,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByStringAttributeLike() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameLike", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "%John%" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name LIKE $1");
 	}
 
@@ -297,12 +303,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByStringAttributeNotLike() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotLike", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "%John%" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name NOT LIKE $1");
 	}
 
@@ -310,148 +316,144 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByStringAttributeStartingWith() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameStartingWith", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "Jo" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name LIKE $1");
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test // gh-282
 	void appendsLikeOperatorParameterWithPercentSymbolForStartingWithQuery() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameStartingWith", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "Jo" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
-		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
-		bindableQuery.bind(bindSpecMock);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
+		BindTarget bindTarget = mock(BindTarget.class);
+		preparedOperation.bindTo(bindTarget);
 
-		verify(bindSpecMock, times(1)).bind(0, "Jo%");
+		verify(bindTarget, times(1)).bind(0, "Jo%");
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByStringAttributeEndingWith() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameEndingWith", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "hn" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name LIKE $1");
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test // gh-282
 	void prependsLikeOperatorParameterWithPercentSymbolForEndingWithQuery() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameEndingWith", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "hn" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
-		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
-		bindableQuery.bind(bindSpecMock);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
+		BindTarget bindTarget = mock(BindTarget.class);
+		preparedOperation.bindTo(bindTarget);
 
-		verify(bindSpecMock, times(1)).bind(0, "%hn");
+		verify(bindTarget, times(1)).bind(0, "%hn");
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByStringAttributeContaining() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameContaining", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name LIKE $1");
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test // gh-282
 	void wrapsLikeOperatorParameterWithPercentSymbolsForContainingQuery() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameContaining", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
-		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
-		bindableQuery.bind(bindSpecMock);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
+		BindTarget bindTarget = mock(BindTarget.class);
+		preparedOperation.bindTo(bindTarget);
 
-		verify(bindSpecMock, times(1)).bind(0, "%oh%");
+		verify(bindTarget, times(1)).bind(0, "%oh%");
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByStringAttributeNotContaining() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotContaining", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name NOT LIKE $1");
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test // gh-282
 	void wrapsLikeOperatorParameterWithPercentSymbolsForNotContainingQuery() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameNotContaining", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
-		DatabaseClient.GenericExecuteSpec bindSpecMock = mock(DatabaseClient.GenericExecuteSpec.class);
-		bindableQuery.bind(bindSpecMock);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
+		BindTarget bindTarget = mock(BindTarget.class);
+		preparedOperation.bindTo(bindTarget);
 
-		verify(bindSpecMock, times(1)).bind(0, "%oh%");
+		verify(bindTarget, times(1)).bind(0, "%oh%");
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByIntegerAttributeWithDescendingOrderingByStringAttribute()
 			throws Exception {
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeOrderByLastNameDesc", Integer.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age = $1 ORDER BY last_name DESC");
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByIntegerAttributeWithAscendingOrderingByStringAttribute() throws Exception {
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeOrderByLastNameAsc", Integer.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "oh" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age = $1 ORDER BY last_name ASC");
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByStringAttributeNot() throws Exception {
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByLastNameNot", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "Doe" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".last_name != $1");
 	}
 
@@ -459,26 +461,26 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByIntegerAttributeIn() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeIn", Collection.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod,
 				new Object[] { Collections.singleton(25) });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age IN ($1)");
 	}
 
 	@Test // gh-282
 	void createsQueryToFindAllEntitiesByIntegerAttributeNotIn() throws Exception {
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByAgeNotIn", Collection.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod,
 				new Object[] { Collections.singleton(25) });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age NOT IN ($1)");
 	}
 
@@ -486,12 +488,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByBooleanAttributeTrue() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByActiveTrue");
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".active = TRUE");
 	}
 
@@ -499,12 +501,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByBooleanAttributeFalse() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByActiveFalse");
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".active = FALSE");
 	}
 
@@ -512,12 +514,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindAllEntitiesByStringAttributeIgnoringCase() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameIgnoreCase", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE UPPER(" + TABLE + ".first_name) = UPPER($1)");
 	}
 
@@ -525,7 +527,7 @@ class PartTreeR2dbcQueryUnitTests {
 	void throwsExceptionWhenIgnoringCaseIsImpossible() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findByIdIgnoringCase", Long.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 
 		assertThatIllegalStateException()
@@ -538,7 +540,7 @@ class PartTreeR2dbcQueryUnitTests {
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByIdIn", Long.class);
 
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter, dataAccessStrategy));
+				.isThrownBy(() -> new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy));
 	}
 
 	@Test // gh-282
@@ -547,14 +549,14 @@ class PartTreeR2dbcQueryUnitTests {
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllById", Collection.class);
 
 		assertThatIllegalArgumentException()
-				.isThrownBy(() -> new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter, dataAccessStrategy));
+				.isThrownBy(() -> new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy));
 	}
 
 	@Test // gh-282
 	void throwsExceptionWhenConditionKeywordIsUnsupported() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByIdIsEmpty");
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 
 		assertThatIllegalArgumentException()
@@ -565,7 +567,7 @@ class PartTreeR2dbcQueryUnitTests {
 	void throwsExceptionWhenInvalidNumberOfParameterIsGiven() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 
 		assertThatIllegalArgumentException()
@@ -576,12 +578,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryWithLimitToFindEntitiesByStringAttribute() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findTop3ByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1 LIMIT 3");
 	}
 
@@ -589,12 +591,12 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindFirstEntityByStringAttribute() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findFirstByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get())
+		assertThat(preparedOperation.get())
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1 LIMIT 1");
 	}
 
@@ -602,23 +604,23 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToDeleteByFirstName() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("deleteByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { "John" });
-		BindableQuery bindableQuery = createQuery(r2dbcQuery, accessor);
+		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
-		assertThat(bindableQuery.get()).isEqualTo("DELETE FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
+		assertThat(preparedOperation.get()).isEqualTo("DELETE FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
 	@Test // gh-344
 	void createsQueryToFindAllEntitiesByStringAttributeWithDistinct() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findDistinctByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
-		BindableQuery bindableQuery = createQuery(queryMethod, r2dbcQuery, "John");
+		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery, "John");
 
-		assertThat(bindableQuery.get()).isEqualTo("SELECT " + DISTINCT + " " + TABLE + ".first_name, " + TABLE
+		assertThat(preparedOperation.get()).isEqualTo("SELECT " + DISTINCT + " " + TABLE + ".first_name, " + TABLE
 				+ ".foo FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
@@ -626,11 +628,11 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryToFindByOpenProjection() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findOpenProjectionBy");
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
-		BindableQuery bindableQuery = createQuery(queryMethod, r2dbcQuery);
+		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery);
 
-		assertThat(bindableQuery.get()).isEqualTo(
+		assertThat(preparedOperation.get()).isEqualTo(
 				"SELECT users.id, users.first_name, users.last_name, users.date_of_birth, users.age, users.active FROM "
 						+ TABLE);
 	}
@@ -639,11 +641,11 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsDtoProjectionQuery() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAsDtoProjectionBy");
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 				dataAccessStrategy);
-		BindableQuery bindableQuery = createQuery(queryMethod, r2dbcQuery);
+		PreparedOperation<?> preparedOperation = createQuery(queryMethod, r2dbcQuery);
 
-		assertThat(bindableQuery.get()).isEqualTo(
+		assertThat(preparedOperation.get()).isEqualTo(
 				"SELECT users.id, users.first_name, users.last_name, users.date_of_birth, users.age, users.active FROM "
 						+ TABLE);
 	}
@@ -652,19 +654,21 @@ class PartTreeR2dbcQueryUnitTests {
 	void createsQueryForCountProjection() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("countByFirstName", String.class);
-		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, databaseClient, r2dbcConverter,
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter,
 			dataAccessStrategy);
-		BindableQuery query = createQuery(queryMethod, r2dbcQuery, "John");
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, "John");
 
 		assertThat(query.get())
 			.isEqualTo("SELECT COUNT(users.id) FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
 	}
 
-	private BindableQuery createQuery(R2dbcQueryMethod queryMethod, PartTreeR2dbcQuery r2dbcQuery, Object... parameters) {
+	private PreparedOperation<?> createQuery(R2dbcQueryMethod queryMethod, PartTreeR2dbcQuery r2dbcQuery,
+			Object... parameters) {
 		return createQuery(r2dbcQuery, getAccessor(queryMethod, parameters));
 	}
 
-	private BindableQuery createQuery(PartTreeR2dbcQuery r2dbcQuery, RelationalParametersParameterAccessor accessor) {
+	private PreparedOperation<?> createQuery(PartTreeR2dbcQuery r2dbcQuery,
+			RelationalParametersParameterAccessor accessor) {
 		return r2dbcQuery.createQuery(accessor).block();
 	}
 
@@ -678,6 +682,7 @@ class PartTreeR2dbcQueryUnitTests {
 		return new RelationalParametersParameterAccessor(queryMethod, values);
 	}
 
+	@SuppressWarnings("ALL")
 	interface UserRepository extends Repository<User, Long> {
 
 		Flux<User> findAllByFirstName(String firstName);

@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -52,13 +53,13 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 	 * {@link R2dbcConverter} and {@link ReactiveDataAccessStrategy}.
 	 *
 	 * @param method query method, must not be {@literal null}.
-	 * @param databaseClient database client, must not be {@literal null}.
+	 * @param entityOperations entity operations, must not be {@literal null}.
 	 * @param converter converter, must not be {@literal null}.
 	 * @param dataAccessStrategy data access strategy, must not be {@literal null}.
 	 */
-	public PartTreeR2dbcQuery(R2dbcQueryMethod method, DatabaseClient databaseClient, R2dbcConverter converter,
+	public PartTreeR2dbcQuery(R2dbcQueryMethod method, R2dbcEntityOperations entityOperations, R2dbcConverter converter,
 			ReactiveDataAccessStrategy dataAccessStrategy) {
-		super(method, databaseClient, converter);
+		super(method, entityOperations, converter);
 
 		this.processor = method.getResultProcessor();
 		this.dataAccessStrategy = dataAccessStrategy;
@@ -105,7 +106,7 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 	 * @see org.springframework.data.r2dbc.repository.query.AbstractR2dbcQuery#createQuery(org.springframework.data.relational.repository.query.RelationalParameterAccessor)
 	 */
 	@Override
-	protected Mono<BindableQuery> createQuery(RelationalParameterAccessor accessor) {
+	protected Mono<PreparedOperation<?>> createQuery(RelationalParameterAccessor accessor) {
 
 		return Mono.fromSupplier(() -> {
 
@@ -119,13 +120,20 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 			RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
 			R2dbcQueryCreator queryCreator = new R2dbcQueryCreator(tree, dataAccessStrategy, entityMetadata, accessor,
 					projectedProperties);
-			PreparedOperation<?> preparedQuery = queryCreator.createQuery(getDynamicSort(accessor));
-
-			return new PreparedOperationBindableQuery(preparedQuery);
+			return queryCreator.createQuery(getDynamicSort(accessor));
 		});
 	}
 
 	private Sort getDynamicSort(RelationalParameterAccessor accessor) {
 		return parameters.potentiallySortsDynamically() ? accessor.getSort() : Sort.unsorted();
+	}
+
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append(getClass().getSimpleName());
+		sb.append(" [").append(getQueryMethod().getName());
+		sb.append(']');
+		return sb.toString();
 	}
 }

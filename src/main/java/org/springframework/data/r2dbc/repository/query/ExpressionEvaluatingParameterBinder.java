@@ -26,7 +26,7 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
-import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.binding.BindTarget;
 
 /**
  * {@link ExpressionEvaluatingParameterBinder} allows to evaluate, convert and bind parameters to placeholders within a
@@ -58,42 +58,35 @@ class ExpressionEvaluatingParameterBinder {
 	 * Bind values provided by {@link RelationalParameterAccessor} to placeholders in {@link ExpressionQuery} while
 	 * considering potential conversions and parameter types.
 	 *
-	 * @param bindSpec must not be {@literal null}.
+	 * @param bindTarget must not be {@literal null}.
 	 * @param parameterAccessor must not be {@literal null}.
 	 * @param evaluator must not be {@literal null}.
 	 */
-	DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec bindSpec,
+	void bind(BindTarget bindTarget,
 			RelationalParameterAccessor parameterAccessor, R2dbcSpELExpressionEvaluator evaluator) {
 
 		Object[] values = parameterAccessor.getValues();
 		Parameters<?, ?> bindableParameters = parameterAccessor.getBindableParameters();
 
-		DatabaseClient.GenericExecuteSpec bindSpecToUse = bindExpressions(bindSpec, evaluator);
-		bindSpecToUse = bindParameters(bindSpecToUse, parameterAccessor.hasBindableNullValue(), values, bindableParameters);
-
-		return bindSpecToUse;
+		bindExpressions(bindTarget, evaluator);
+		bindParameters(bindTarget, parameterAccessor.hasBindableNullValue(), values, bindableParameters);
 	}
 
-	private DatabaseClient.GenericExecuteSpec bindExpressions(DatabaseClient.GenericExecuteSpec bindSpec,
+	private void bindExpressions(BindTarget bindSpec,
 			R2dbcSpELExpressionEvaluator evaluator) {
-
-		DatabaseClient.GenericExecuteSpec bindSpecToUse = bindSpec;
 
 		for (ParameterBinding binding : expressionQuery.getBindings()) {
 
 			org.springframework.r2dbc.core.Parameter valueForBinding = getBindValue(
 					evaluator.evaluate(binding.getExpression()));
 
-			bindSpecToUse = bind(bindSpecToUse, binding.getParameterName(), valueForBinding);
+			bind(bindSpec, binding.getParameterName(), valueForBinding);
 		}
-
-		return bindSpecToUse;
 	}
 
-	private DatabaseClient.GenericExecuteSpec bindParameters(DatabaseClient.GenericExecuteSpec bindSpec,
+	private void bindParameters(BindTarget bindSpec,
 			boolean hasBindableNullValue, Object[] values, Parameters<?, ?> bindableParameters) {
 
-		DatabaseClient.GenericExecuteSpec bindSpecToUse = bindSpec;
 		int bindingIndex = 0;
 
 		for (Parameter bindableParameter : bindableParameters) {
@@ -109,7 +102,7 @@ class ExpressionEvaluatingParameterBinder {
 				org.springframework.r2dbc.core.Parameter parameter = getBindValue(values, bindableParameter);
 
 				if (!parameter.isEmpty() || hasBindableNullValue) {
-					bindSpecToUse = bind(bindSpecToUse, name.get(), parameter);
+					bind(bindSpec, name.get(), parameter);
 				}
 
 				// skip unused named parameters if there is SpEL
@@ -118,12 +111,10 @@ class ExpressionEvaluatingParameterBinder {
 				org.springframework.r2dbc.core.Parameter parameter = getBindValue(values, bindableParameter);
 
 				if (!parameter.isEmpty() || hasBindableNullValue) {
-					bindSpecToUse = bind(bindSpecToUse, bindingIndex++, parameter);
+					bind(bindSpec, bindingIndex++, parameter);
 				}
 			}
 		}
-
-		return bindSpecToUse;
 	}
 
 	private org.springframework.r2dbc.core.Parameter getBindValue(Object[] values, Parameter bindableParameter) {
@@ -134,26 +125,25 @@ class ExpressionEvaluatingParameterBinder {
 		return dataAccessStrategy.getBindValue(parameter);
 	}
 
-	private static DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec spec, String name,
+	private static void bind(BindTarget spec, String name,
 			org.springframework.r2dbc.core.Parameter parameter) {
 
 		Object value = parameter.getValue();
 		if (value == null) {
-			return spec.bindNull(name, parameter.getType());
+			spec.bindNull(name, parameter.getType());
 		} else {
-			return spec.bind(name, value);
+			spec.bind(name, value);
 		}
 	}
 
-	private static DatabaseClient.GenericExecuteSpec bind(DatabaseClient.GenericExecuteSpec spec, int index,
+	private static void bind(BindTarget spec, int index,
 			org.springframework.r2dbc.core.Parameter parameter) {
 
 		Object value = parameter.getValue();
 		if (value == null) {
-			return spec.bindNull(index, parameter.getType());
+			spec.bindNull(index, parameter.getType());
 		} else {
-
-			return spec.bind(index, value);
+			spec.bind(index, value);
 		}
 	}
 

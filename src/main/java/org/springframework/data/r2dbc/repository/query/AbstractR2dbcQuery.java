@@ -15,19 +15,15 @@
  */
 package org.springframework.data.r2dbc.repository.query;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.Optional;
 
 import org.reactivestreams.Publisher;
 
 import org.springframework.data.mapping.model.EntityInstantiators;
-import org.springframework.data.r2dbc.convert.EntityRowMapper;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingConverter;
 import org.springframework.data.r2dbc.repository.query.R2dbcQueryExecution.ResultProcessingExecution;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.ParameterAccessor;
@@ -35,8 +31,8 @@ import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.util.ReflectionUtils;
-import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.FetchSpec;
+import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.RowsFetchSpec;
 import org.springframework.util.Assert;
 
@@ -49,25 +45,26 @@ import org.springframework.util.Assert;
 public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 
 	private final R2dbcQueryMethod method;
-	private final DatabaseClient databaseClient;
+	private final R2dbcEntityOperations entityOperations;
 	private final R2dbcConverter converter;
 	private final EntityInstantiators instantiators;
 
 	/**
-	 * Creates a new {@link AbstractR2dbcQuery} from the given {@link R2dbcQueryMethod} and {@link DatabaseClient}.
+	 * Creates a new {@link AbstractR2dbcQuery} from the given {@link R2dbcQueryMethod} and {@link R2dbcEntityOperations}.
 	 *
 	 * @param method must not be {@literal null}.
-	 * @param databaseClient must not be {@literal null}.
+	 * @param entityOperations must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
+	 * @since 1.4
 	 */
-	public AbstractR2dbcQuery(R2dbcQueryMethod method, DatabaseClient databaseClient, R2dbcConverter converter) {
+	public AbstractR2dbcQuery(R2dbcQueryMethod method, R2dbcEntityOperations entityOperations, R2dbcConverter converter) {
 
 		Assert.notNull(method, "R2dbcQueryMethod must not be null!");
-		Assert.notNull(databaseClient, "DatabaseClient must not be null!");
+		Assert.notNull(entityOperations, "R2dbcEntityOperations must not be null!");
 		Assert.notNull(converter, "R2dbcConverter must not be null!");
 
 		this.method = method;
-		this.databaseClient = databaseClient;
+		this.entityOperations = entityOperations;
 		this.converter = converter;
 		this.instantiators = new EntityInstantiators();
 	}
@@ -91,38 +88,25 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		return createQuery(parameterAccessor).flatMapMany(it -> executeQuery(parameterAccessor, it));
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Publisher<?> executeQuery(RelationalParameterAccessor parameterAccessor, BindableQuery it) {
+	@SuppressWarnings("unchecked")
+	private Publisher<?> executeQuery(RelationalParameterAccessor parameterAccessor, PreparedOperation<?> operation) {
 
 		ResultProcessor processor = method.getResultProcessor().withDynamicProjection(parameterAccessor);
-		DatabaseClient.GenericExecuteSpec boundQuery = it.bind(databaseClient.sql(it));
 
-		FetchSpec<Object> fetchSpec;
+		RowsFetchSpec<?> fetchSpec;
 
-		if (isExistsQuery()) {
-			fetchSpec = (FetchSpec) boundQuery.map(row -> true);
-		} else if (requiresMapping()) {
-
-			Class<?> typeToRead = resolveResultType(processor);
-			EntityRowMapper rowMapper = new EntityRowMapper<>(typeToRead, converter);
-
-			if (converter.isSimpleType(typeToRead)) {
-				fetchSpec = new UnwrapOptionalFetchSpecAdapter<>(
-						boundQuery.map((row, rowMetadata) -> Optional.ofNullable(rowMapper.apply(row, rowMetadata))));
-
-			} else {
-				fetchSpec = new FetchSpecAdapter<>(boundQuery.map(rowMapper));
-			}
+		if (isModifyingQuery()) {
+			fetchSpec = entityOperations.getDatabaseClient().sql(operation).fetch();
+		} else if (isExistsQuery()) {
+			fetchSpec = entityOperations.getDatabaseClient().sql(operation).map(row -> true);
 		} else {
-			fetchSpec = (FetchSpec) boundQuery.fetch();
+			fetchSpec = entityOperations.query(operation, resolveResultType(processor));
 		}
-
-		SqlIdentifier tableName = method.getEntityInformation().getTableName();
 
 		R2dbcQueryExecution execution = new ResultProcessingExecution(getExecutionToWrap(processor.getReturnedType()),
 				new ResultProcessingConverter(processor, converter.getMappingContext(), instantiators));
 
-		return execution.execute(fetchSpec, processor.getReturnedType().getDomainType(), tableName);
+		return execution.execute(RowsFetchSpec.class.cast(fetchSpec));
 	}
 
 	Class<?> resolveResultType(ResultProcessor resultProcessor) {
@@ -136,45 +120,47 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 		return returnedType.isProjecting() ? returnedType.getDomainType() : returnedType.getReturnedType();
 	}
 
-	private boolean requiresMapping() {
-		return !isModifyingQuery();
-	}
-
 	private R2dbcQueryExecution getExecutionToWrap(ReturnedType returnedType) {
 
 		if (isModifyingQuery()) {
 
-			if (Boolean.class.isAssignableFrom(returnedType.getReturnedType())) {
-				return (q, t, c) -> q.rowsUpdated().map(integer -> integer > 0);
+			return fetchSpec -> {
+
+				Assert.isInstanceOf(FetchSpec.class, fetchSpec);
+
+				FetchSpec<?> fs = (FetchSpec<?>) fetchSpec;
+
+				if (Boolean.class.isAssignableFrom(returnedType.getReturnedType())) {
+					return fs.rowsUpdated().map(integer -> integer > 0);
 			}
 
 			if (Number.class.isAssignableFrom(returnedType.getReturnedType())) {
 
-				return (q, t, c) -> q.rowsUpdated().map(integer -> {
-					return converter.getConversionService().convert(integer, returnedType.getReturnedType());
-				});
+					return fs.rowsUpdated()
+							.map(integer -> converter.getConversionService().convert(integer, returnedType.getReturnedType()));
 			}
 
 			if (ReflectionUtils.isVoid(returnedType.getReturnedType())) {
-				return (q, t, c) -> q.rowsUpdated().then();
+					return fs.rowsUpdated().then();
 			}
 
-			return (q, t, c) -> q.rowsUpdated();
+				return fs.rowsUpdated();
+			};
 		}
 
 		if (isCountQuery()) {
-			return (q, t, c) -> q.first().defaultIfEmpty(0L);
+			return (fetchSpec) -> fetchSpec.first().defaultIfEmpty(0L);
 		}
 
 		if (isExistsQuery()) {
-			return (q, t, c) -> q.first().defaultIfEmpty(false);
+			return (fetchSpec) -> fetchSpec.first().defaultIfEmpty(false);
 		}
 
 		if (method.isCollectionQuery()) {
-			return (q, t, c) -> q.all();
+			return RowsFetchSpec::all;
 		}
 
-		return (q, t, c) -> q.one();
+		return RowsFetchSpec::one;
 	}
 
 	/**
@@ -207,63 +193,6 @@ public abstract class AbstractR2dbcQuery implements RepositoryQuery {
 	 * @param accessor must not be {@literal null}.
 	 * @return a mono emitting a {@link BindableQuery}.
 	 */
-	protected abstract Mono<BindableQuery> createQuery(RelationalParameterAccessor accessor);
+	protected abstract Mono<PreparedOperation<?>> createQuery(RelationalParameterAccessor accessor);
 
-	private static class FetchSpecAdapter<T> implements FetchSpec<T> {
-
-		private final RowsFetchSpec<T> delegate;
-
-		private FetchSpecAdapter(RowsFetchSpec<T> delegate) {
-			this.delegate = delegate;
-		}
-
-		@Override
-		public Mono<T> one() {
-			return delegate.one();
-		}
-
-		@Override
-		public Mono<T> first() {
-			return delegate.first();
-		}
-
-		@Override
-		public Flux<T> all() {
-			return delegate.all();
-		}
-
-		@Override
-		public Mono<Integer> rowsUpdated() {
-			throw new UnsupportedOperationException("Not supported after applying a row mapper");
-		}
-	}
-
-	private static class UnwrapOptionalFetchSpecAdapter<T> implements FetchSpec<T> {
-
-		private final RowsFetchSpec<Optional<T>> delegate;
-
-		private UnwrapOptionalFetchSpecAdapter(RowsFetchSpec<Optional<T>> delegate) {
-			this.delegate = delegate;
-		}
-
-		@Override
-		public Mono<T> one() {
-			return delegate.one().handle((optional, sink) -> optional.ifPresent(sink::next));
-		}
-
-		@Override
-		public Mono<T> first() {
-			return delegate.first().handle((optional, sink) -> optional.ifPresent(sink::next));
-		}
-
-		@Override
-		public Flux<T> all() {
-			return delegate.all().handle((optional, sink) -> optional.ifPresent(sink::next));
-		}
-
-		@Override
-		public Mono<Integer> rowsUpdated() {
-			throw new UnsupportedOperationException("Not supported after applying a row mapper");
-		}
-	}
 }

@@ -129,7 +129,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	@Test
-	void shouldFindItemsByNameLike() {
+	void shouldFindItemsByNameContains() {
 
 		shouldInsertNewItems();
 

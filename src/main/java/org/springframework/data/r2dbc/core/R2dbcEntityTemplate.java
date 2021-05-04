@@ -307,7 +307,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	public Mono<Long> count(Query query, Class<?> entityClass) throws DataAccessException {
 
 		Assert.notNull(query, "Query must not be null");
-		Assert.notNull(entityClass, "entity class must not be null");
+		Assert.notNull(entityClass, "Entity class must not be null");
 
 		return doCount(query, entityClass, getTableName(entityClass));
 	}
@@ -344,7 +344,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	public Mono<Boolean> exists(Query query, Class<?> entityClass) throws DataAccessException {
 
 		Assert.notNull(query, "Query must not be null");
-		Assert.notNull(entityClass, "entity class must not be null");
+		Assert.notNull(entityClass, "Entity class must not be null");
 
 		return doExists(query, entityClass, getTableName(entityClass));
 	}
@@ -383,7 +383,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	public <T> Flux<T> select(Query query, Class<T> entityClass) throws DataAccessException {
 
 		Assert.notNull(query, "Query must not be null");
-		Assert.notNull(entityClass, "entity class must not be null");
+		Assert.notNull(entityClass, "Entity class must not be null");
 
 		SqlIdentifier tableName = getTableName(entityClass);
 		return doSelect(query, entityClass, tableName, entityClass, RowsFetchSpec::all);
@@ -432,24 +432,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		PreparedOperation<?> operation = statementMapper.getMappedObject(selectSpec);
 
-		boolean simpleType;
-		BiFunction<Row, RowMetadata, T> rowMapper;
-		if (returnType.isInterface()) {
-			simpleType = getConverter().isSimpleType(entityClass);
-			rowMapper = dataAccessStrategy.getRowMapper(entityClass)
-					.andThen(o -> projectionFactory.createProjection(returnType, o));
-		} else {
-			simpleType = getConverter().isSimpleType(returnType);
-			rowMapper = dataAccessStrategy.getRowMapper(returnType);
-		}
-
-		// avoid top-level null values if the read type is a simple one (e.g. SELECT MAX(age) via Integer.class)
-		if (simpleType) {
-			return new UnwrapOptionalFetchSpecAdapter<>(this.databaseClient.sql(operation)
-					.map((row, metadata) -> Optional.ofNullable(rowMapper.apply(row, metadata))));
-		}
-
-		return this.databaseClient.sql(operation).map(rowMapper);
+		return getRowsFetchSpec(databaseClient.sql(operation), entityClass, returnType);
 	}
 
 	/*
@@ -470,7 +453,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		Assert.notNull(query, "Query must not be null");
 		Assert.notNull(update, "Update must not be null");
-		Assert.notNull(entityClass, "entity class must not be null");
+		Assert.notNull(entityClass, "Entity class must not be null");
 
 		return doUpdate(query, update, entityClass, getTableName(entityClass));
 	}
@@ -499,7 +482,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	public Mono<Integer> delete(Query query, Class<?> entityClass) throws DataAccessException {
 
 		Assert.notNull(query, "Query must not be null");
-		Assert.notNull(entityClass, "entity class must not be null");
+		Assert.notNull(entityClass, "Entity class must not be null");
 
 		return doDelete(query, entityClass, getTableName(entityClass));
 	}
@@ -508,16 +491,62 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		StatementMapper statementMapper = dataAccessStrategy.getStatementMapper().forType(entityClass);
 
-		StatementMapper.DeleteSpec selectSpec = statementMapper //
+		StatementMapper.DeleteSpec deleteSpec = statementMapper //
 				.createDelete(tableName);
 
 		Optional<CriteriaDefinition> criteria = query.getCriteria();
 		if (criteria.isPresent()) {
-			selectSpec = criteria.map(selectSpec::withCriteria).orElse(selectSpec);
+			deleteSpec = criteria.map(deleteSpec::withCriteria).orElse(deleteSpec);
 		}
 
-		PreparedOperation<?> operation = statementMapper.getMappedObject(selectSpec);
+		PreparedOperation<?> operation = statementMapper.getMappedObject(deleteSpec);
 		return this.databaseClient.sql(operation).fetch().rowsUpdated().defaultIfEmpty(0);
+	}
+
+	// -------------------------------------------------------------------------
+	// Methods dealing with org.springframework.r2dbc.core.PreparedOperation
+	// -------------------------------------------------------------------------
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#query(org.springframework.r2dbc.core.PreparedOperation, java.lang.Class)
+	 */
+	@Override
+	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<T> entityClass) {
+
+		Assert.notNull(operation, "PreparedOperation must not be null");
+		Assert.notNull(entityClass, "Entity class must not be null");
+
+		return new EntityCallbackAdapter<>(getRowsFetchSpec(databaseClient.sql(operation), entityClass, entityClass),
+				getTableNameOrEmpty(entityClass));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#query(org.springframework.r2dbc.core.PreparedOperation, java.util.function.BiFunction)
+	 */
+	@Override
+	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, BiFunction<Row, RowMetadata, T> rowMapper) {
+
+		Assert.notNull(operation, "PreparedOperation must not be null");
+		Assert.notNull(rowMapper, "Row mapper must not be null");
+
+		return new EntityCallbackAdapter<>(databaseClient.sql(operation).map(rowMapper), SqlIdentifier.EMPTY);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.r2dbc.core.R2dbcEntityOperations#query(org.springframework.r2dbc.core.PreparedOperation, java.lang.Class, java.util.function.BiFunction)
+	 */
+	@Override
+	public <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<?> entityClass,
+			BiFunction<Row, RowMetadata, T> rowMapper) {
+
+		Assert.notNull(operation, "PreparedOperation must not be null");
+		Assert.notNull(entityClass, "Entity class must not be null");
+		Assert.notNull(rowMapper, "Row mapper must not be null");
+
+		return new EntityCallbackAdapter<>(databaseClient.sql(operation).map(rowMapper), getTableNameOrEmpty(entityClass));
 	}
 
 	// -------------------------------------------------------------------------
@@ -817,6 +846,13 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		return getRequiredEntity(entityClass).getTableName();
 	}
 
+	SqlIdentifier getTableNameOrEmpty(Class<?> entityClass) {
+
+		RelationalPersistentEntity<?> entity = this.mappingContext.getPersistentEntity(entityClass);
+
+		return entity != null ? entity.getTableName() : SqlIdentifier.EMPTY;
+	}
+
 	private RelationalPersistentEntity<?> getRequiredEntity(Class<?> entityClass) {
 		return this.mappingContext.getRequiredPersistentEntity(entityClass);
 	}
@@ -844,6 +880,30 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 
 		return query.getColumns().stream().map(table::column).collect(Collectors.toList());
+	}
+
+	private <T> RowsFetchSpec<T> getRowsFetchSpec(DatabaseClient.GenericExecuteSpec executeSpec, Class<?> entityClass,
+			Class<T> returnType) {
+
+		boolean simpleType;
+
+		BiFunction<Row, RowMetadata, T> rowMapper;
+		if (returnType.isInterface()) {
+			simpleType = getConverter().isSimpleType(entityClass);
+			rowMapper = dataAccessStrategy.getRowMapper(entityClass)
+					.andThen(o -> projectionFactory.createProjection(returnType, o));
+		} else {
+			simpleType = getConverter().isSimpleType(returnType);
+			rowMapper = dataAccessStrategy.getRowMapper(returnType);
+		}
+
+		// avoid top-level null values if the read type is a simple one (e.g. SELECT MAX(age) via Integer.class)
+		if (simpleType) {
+			return new UnwrapOptionalFetchSpecAdapter<>(
+					executeSpec.map((row, metadata) -> Optional.ofNullable(rowMapper.apply(row, metadata))));
+		}
+
+		return executeSpec.map(rowMapper);
 	}
 
 	private static ReactiveDataAccessStrategy getDataAccessStrategy(
@@ -989,6 +1049,11 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 	}
 
+	/**
+	 * {@link RowsFetchSpec} adapter emitting values from {@link Optional} if they exist.
+	 *
+	 * @param <T>
+	 */
 	private static class UnwrapOptionalFetchSpecAdapter<T> implements RowsFetchSpec<T> {
 
 		private final RowsFetchSpec<Optional<T>> delegate;
@@ -1012,4 +1077,37 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 			return delegate.all().handle((optional, sink) -> optional.ifPresent(sink::next));
 		}
 	}
+
+	/**
+	 * {@link RowsFetchSpec} adapter applying {@link #maybeCallAfterConvert(Object, SqlIdentifier)} to each emitted
+	 * object.
+	 *
+	 * @param <T>
+	 */
+	private class EntityCallbackAdapter<T> implements RowsFetchSpec<T> {
+
+		private final RowsFetchSpec<T> delegate;
+		private final SqlIdentifier tableName;
+
+		private EntityCallbackAdapter(RowsFetchSpec<T> delegate, SqlIdentifier tableName) {
+			this.delegate = delegate;
+			this.tableName = tableName;
+		}
+
+		@Override
+		public Mono<T> one() {
+			return delegate.one().flatMap(it -> maybeCallAfterConvert(it, tableName));
+		}
+
+		@Override
+		public Mono<T> first() {
+			return delegate.first().flatMap(it -> maybeCallAfterConvert(it, tableName));
+		}
+
+		@Override
+		public Flux<T> all() {
+			return delegate.all().flatMap(it -> maybeCallAfterConvert(it, tableName));
+		}
+	}
+
 }

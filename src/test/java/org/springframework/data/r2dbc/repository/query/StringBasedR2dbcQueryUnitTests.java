@@ -16,7 +16,6 @@
 package org.springframework.data.r2dbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
@@ -34,6 +33,7 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
@@ -45,8 +45,9 @@ import org.springframework.data.repository.core.support.AbstractRepositoryMetada
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec;
+import org.springframework.r2dbc.core.Parameter;
+import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.BindTarget;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -60,8 +61,8 @@ public class StringBasedR2dbcQueryUnitTests {
 
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
-	@Mock private DatabaseClient databaseClient;
-	@Mock private GenericExecuteSpec bindSpec;
+	@Mock private R2dbcEntityOperations entityOperations;
+	@Mock private BindTarget bindTarget;
 
 	private RelationalMappingContext mappingContext;
 	private MappingR2dbcConverter converter;
@@ -77,9 +78,6 @@ public class StringBasedR2dbcQueryUnitTests {
 		this.accessStrategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE, converter);
 		this.metadata = AbstractRepositoryMetadata.getMetadata(SampleRepository.class);
 		this.factory = new SpelAwareProxyProjectionFactory();
-
-		when(bindSpec.bind(anyInt(), any())).thenReturn(bindSpec);
-		when(bindSpec.bind(anyString(), any())).thenReturn(bindSpec);
 	}
 
 	@Test
@@ -88,12 +86,12 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("findByLastname", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
 		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind(0, "White");
+		verify(bindTarget).bind(0, Parameter.from("White"));
 	}
 
 	@Test // gh-164
@@ -102,12 +100,12 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("findByLastnamePositional", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
 		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind(0, "White");
+		verify(bindTarget).bind(0, Parameter.from("White"));
 	}
 
 	@Test
@@ -116,12 +114,12 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("findByNamedParameter", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
-		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :lastname");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind("lastname", "White");
+		verify(bindTarget).bind(0, "White");
 	}
 
 	@Test
@@ -130,12 +128,12 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("findByNamedBindMarker", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
 		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = @lastname");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind("lastname", "White");
+		verify(bindTarget).bind("lastname", Parameter.from("White"));
 	}
 
 	@Test
@@ -144,12 +142,13 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("findNotByNamedBindMarker", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
-		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :unknown");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		assertThat(stringQuery.getSource()).isEqualTo("SELECT * FROM person WHERE lastname = :unknown");
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind(0, "White");
+		verify(bindTarget).bind(0, "White");
 	}
 
 	@Test // gh-164
@@ -158,12 +157,13 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("simpleSpel");
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod());
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
-		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		assertThat(stringQuery.getSource()).isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__");
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind("__synthetic_0__", "hello");
+		verify(bindTarget).bind(0, "hello");
 	}
 
 	@Test // gh-164
@@ -172,13 +172,14 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("simpleIndexedSpel", String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White");
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
-		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		assertThat(stringQuery.getSource()).isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__");
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind("__synthetic_0__", "White");
-		verifyNoMoreInteractions(bindSpec);
+		verify(bindTarget).bind(0, "White");
+		verifyNoMoreInteractions(bindTarget);
 	}
 
 	@Test // gh-164
@@ -187,15 +188,15 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("simplePositionalSpel", String.class, String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White", "Walter");
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
-		assertThat(stringQuery.get())
+		assertThat(stringQuery.getSource())
 				.isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__ and firstname = :firstname");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind("__synthetic_0__", "White");
-		verify(bindSpec).bind("firstname", "Walter");
-		verifyNoMoreInteractions(bindSpec);
+		verify(bindTarget).bind(0, "White");
+		verify(bindTarget).bind(1, "Walter");
+		verifyNoMoreInteractions(bindTarget);
 	}
 
 	@Test // gh-164
@@ -204,15 +205,15 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("simpleNamedSpel", String.class, String.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "White", "Walter");
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
 		assertThat(stringQuery.get())
-				.isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__ and firstname = :firstname");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+				.isEqualTo("SELECT * FROM person WHERE lastname = $1 and firstname = $2");
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind("__synthetic_0__", "White");
-		verify(bindSpec).bind("firstname", "Walter");
-		verifyNoMoreInteractions(bindSpec);
+		verify(bindTarget).bind(0, "White");
+		verify(bindTarget).bind(1, "Walter");
+		verifyNoMoreInteractions(bindTarget);
 	}
 
 	@Test // gh-164
@@ -221,13 +222,13 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("queryWithSpelObject", Person.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), new Person("Walter"));
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
-		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :__synthetic_0__");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind("__synthetic_0__", "Walter");
-		verifyNoMoreInteractions(bindSpec);
+		verify(bindTarget).bind(0, "Walter");
+		verifyNoMoreInteractions(bindTarget);
 	}
 
 	@Test // gh-321
@@ -236,13 +237,13 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("queryWithUnusedParameter", String.class, Sort.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), "Walter", null);
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
-		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = :name");
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind(0, "Walter");
-		verifyNoMoreInteractions(bindSpec);
+		verify(bindTarget).bind(0, "Walter");
+		verifyNoMoreInteractions(bindTarget);
 	}
 
 	@Test // gh-465
@@ -251,11 +252,11 @@ public class StringBasedR2dbcQueryUnitTests {
 		StringBasedR2dbcQuery query = getQueryMethod("queryWithEnum", MyEnum.class);
 		R2dbcParameterAccessor accessor = new R2dbcParameterAccessor(query.getQueryMethod(), MyEnum.INSTANCE);
 
-		BindableQuery stringQuery = query.createQuery(accessor).block();
-		assertThat(stringQuery.bind(bindSpec)).isNotNull();
+		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
+		stringQuery.bindTo(bindTarget);
 
-		verify(bindSpec).bind(0, "INSTANCE");
-		verifyNoMoreInteractions(bindSpec);
+		verify(bindTarget).bind(0, "INSTANCE");
+		verifyNoMoreInteractions(bindTarget);
 	}
 
 	@Test // gh-475
@@ -280,7 +281,7 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		R2dbcQueryMethod queryMethod = new R2dbcQueryMethod(method, metadata, factory, converter.getMappingContext());
 
-		return new StringBasedR2dbcQuery(queryMethod, databaseClient, converter, accessStrategy, PARSER,
+		return new StringBasedR2dbcQuery(queryMethod, entityOperations, converter, accessStrategy, PARSER,
 				ReactiveQueryMethodEvaluationContextProvider.DEFAULT);
 	}
 

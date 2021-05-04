@@ -15,8 +15,13 @@
  */
 package org.springframework.data.r2dbc.core;
 
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
@@ -24,6 +29,9 @@ import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.RowsFetchSpec;
+import org.springframework.util.Assert;
 
 /**
  * Interface specifying a basic set of reactive R2DBC operations using entities. Implemented by
@@ -95,7 +103,7 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * Execute a {@code SELECT} query and convert the resulting items to a stream of entities.
 	 *
 	 * @param query must not be {@literal null}.
-	 * @param entityClass The entity type must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return the result objects returned by the action.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 */
@@ -105,7 +113,7 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * Execute a {@code SELECT} query and convert the resulting item to an entity ensuring exactly one result.
 	 *
 	 * @param query must not be {@literal null}.
-	 * @param entityClass The entity type must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return exactly one result or {@link Mono#empty()} if no match found.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 * @throws DataAccessException if there is any problem issuing the execution.
@@ -117,7 +125,7 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 *
 	 * @param query must not be {@literal null}.
 	 * @param update must not be {@literal null}.
-	 * @param entityClass The entity type must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return the number of affected rows.
 	 * @throws DataAccessException if there is any problem executing the query.
 	 */
@@ -127,11 +135,104 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	 * Remove entities (rows)/columns from the table by {@link Query}.
 	 *
 	 * @param query must not be {@literal null}.
-	 * @param entityClass The entity type must not be {@literal null}.
+	 * @param entityClass the entity type must not be {@literal null}.
 	 * @return the number of affected rows.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 */
 	Mono<Integer> delete(Query query, Class<?> entityClass) throws DataAccessException;
+
+	// -------------------------------------------------------------------------
+	// Methods dealing with org.springframework.r2dbc.core.PreparedOperation
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Execute a query for a {@link RowsFetchSpec}, given {@link PreparedOperation}. Any provided bindings within
+	 * {@link PreparedOperation} are applied to the underlying {@link DatabaseClient}. The query is issued as-is without
+	 * additional pre-processing such as named parameter expansion. Results of the query are mapped onto
+	 * {@code entityClass}.
+	 *
+	 * @param operation the prepared operation wrapping a SQL query and bind parameters.
+	 * @param entityClass the entity type must not be {@literal null}.
+	 * @return a {@link RowsFetchSpec} ready to materialize.
+	 * @since 1.4
+	 * @throws DataAccessException if there is any problem issuing the execution.
+	 */
+	<T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<T> entityClass) throws DataAccessException;
+
+	/**
+	 * Execute a query for a {@link RowsFetchSpec}, given {@link PreparedOperation}. Any provided bindings within
+	 * {@link PreparedOperation} are applied to the underlying {@link DatabaseClient}. The query is issued as-is without
+	 * additional pre-processing such as named parameter expansion. Results of the query are mapped using {@link Function
+	 * rowMapper}.
+	 *
+	 * @param operation the prepared operation wrapping a SQL query and bind parameters.
+	 * @param rowMapper the row mapper must not be {@literal null}.
+	 * @return a {@link RowsFetchSpec} with {@link Function rowMapper} applied ready to materialize.
+	 * @throws DataAccessException if there is any problem issuing the execution.
+	 * @since 1.4
+	 * @see #query(PreparedOperation, BiFunction)
+	 */
+	default <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Function<Row, T> rowMapper)
+			throws DataAccessException {
+
+		Assert.notNull(rowMapper, "Row mapper must not be null");
+
+		return query(operation, ((row, rowMetadata) -> rowMapper.apply(row)));
+	}
+
+	/**
+	 * Execute a query for a {@link RowsFetchSpec}, given {@link PreparedOperation}. Any provided bindings within
+	 * {@link PreparedOperation} are applied to the underlying {@link DatabaseClient}. The query is issued as-is without
+	 * additional pre-processing such as named parameter expansion. Results of the query are mapped using
+	 * {@link BiFunction rowMapper}.
+	 *
+	 * @param operation the prepared operation wrapping a SQL query and bind parameters.
+	 * @param rowMapper the row mapper must not be {@literal null}.
+	 * @return a {@link RowsFetchSpec} with {@link Function rowMapper} applied ready to materialize.
+	 * @since 1.4
+	 * @throws DataAccessException if there is any problem issuing the execution.
+	 */
+	<T> RowsFetchSpec<T> query(PreparedOperation<?> operation, BiFunction<Row, RowMetadata, T> rowMapper)
+			throws DataAccessException;
+
+	/**
+	 * Execute a query for a {@link RowsFetchSpec} in the context of {@code entityClass}, given {@link PreparedOperation}.
+	 * Any provided bindings within {@link PreparedOperation} are applied to the underlying {@link DatabaseClient}. The
+	 * query is issued as-is without additional pre-processing such as named parameter expansion. Results of the query are
+	 * mapped using {@link Function rowMapper}.
+	 *
+	 * @param operation the prepared operation wrapping a SQL query and bind parameters.
+	 * @param entityClass the entity type must not be {@literal null}.
+	 * @param rowMapper the row mapper must not be {@literal null}.
+	 * @return a {@link RowsFetchSpec} with {@link Function rowMapper} applied ready to materialize.
+	 * @throws DataAccessException if there is any problem issuing the execution.
+	 * @since 1.4
+	 * @see #query(PreparedOperation, Class, BiFunction)
+	 */
+	default <T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<?> entityClass, Function<Row, T> rowMapper)
+			throws DataAccessException {
+
+		Assert.notNull(rowMapper, "Row mapper must not be null");
+
+		return query(operation, entityClass, ((row, rowMetadata) -> rowMapper.apply(row)));
+	}
+
+	/**
+	 * Execute a query for a {@link RowsFetchSpec} in the context of {@code entityClass}, given {@link PreparedOperation}.
+	 * Any provided bindings within {@link PreparedOperation} are applied to the underlying {@link DatabaseClient}. The
+	 * query is issued as-is without additional pre-processing such as named parameter expansion. Results of the query are
+	 * mapped using {@link BiFunction rowMapper}.
+	 *
+	 * @param operation the prepared operation wrapping a SQL query and bind parameters.
+	 * @param entityClass the entity type must not be {@literal null}.
+	 * @param rowMapper the row mapper must not be {@literal null}.
+	 * @return a {@link RowsFetchSpec} with {@link Function rowMapper} applied ready to materialize.
+	 * @throws DataAccessException if there is any problem issuing the execution.
+	 * @since 1.4
+	 * @see #query(PreparedOperation, Class, BiFunction)
+	 */
+	<T> RowsFetchSpec<T> query(PreparedOperation<?> operation, Class<?> entityClass,
+			BiFunction<Row, RowMetadata, T> rowMapper) throws DataAccessException;
 
 	// -------------------------------------------------------------------------
 	// Methods dealing with entities
@@ -140,7 +241,7 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	/**
 	 * Insert the given entity and emit the entity if the insert was applied.
 	 *
-	 * @param entity The entity to insert, must not be {@literal null}.
+	 * @param entity the entity to insert, must not be {@literal null}.
 	 * @return the inserted entity.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 */
@@ -149,7 +250,7 @@ public interface R2dbcEntityOperations extends FluentR2dbcOperations {
 	/**
 	 * Update the given entity and emit the entity if the update was applied.
 	 *
-	 * @param entity The entity to update, must not be {@literal null}.
+	 * @param entity the entity to update, must not be {@literal null}.
 	 * @return the updated entity.
 	 * @throws DataAccessException if there is any problem issuing the execution.
 	 * @throws TransientDataAccessResourceException if the update did not affect any rows.

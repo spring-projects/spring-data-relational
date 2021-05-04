@@ -129,7 +129,7 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.of(new R2dbcQueryLookupStrategy(this.databaseClient,
+		return Optional.of(new R2dbcQueryLookupStrategy(this.operations,
 				(ReactiveQueryMethodEvaluationContextProvider) evaluationContextProvider, this.converter,
 				this.dataAccessStrategy));
 	}
@@ -158,16 +158,16 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 	 */
 	private static class R2dbcQueryLookupStrategy implements QueryLookupStrategy {
 
-		private final DatabaseClient databaseClient;
+		private final R2dbcEntityOperations entityOperations;
 		private final ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider;
 		private final R2dbcConverter converter;
 		private final ReactiveDataAccessStrategy dataAccessStrategy;
 		private final ExpressionParser parser = new CachingExpressionParser(EXPRESSION_PARSER);
 
-		R2dbcQueryLookupStrategy(DatabaseClient databaseClient,
+		R2dbcQueryLookupStrategy(R2dbcEntityOperations entityOperations,
 				ReactiveQueryMethodEvaluationContextProvider evaluationContextProvider, R2dbcConverter converter,
 				ReactiveDataAccessStrategy dataAccessStrategy) {
-			this.databaseClient = databaseClient;
+			this.entityOperations = entityOperations;
 			this.evaluationContextProvider = evaluationContextProvider;
 			this.converter = converter;
 			this.dataAccessStrategy = dataAccessStrategy;
@@ -188,15 +188,15 @@ public class R2dbcRepositoryFactory extends ReactiveRepositoryFactorySupport {
 
 			if (namedQueries.hasQuery(namedQueryName)) {
 				String namedQuery = namedQueries.getQuery(namedQueryName);
-				return new StringBasedR2dbcQuery(namedQuery, queryMethod, this.databaseClient, this.converter,
+				return new StringBasedR2dbcQuery(namedQuery, queryMethod, this.entityOperations, this.converter,
 						this.dataAccessStrategy,
 						parser, this.evaluationContextProvider);
 			} else if (queryMethod.hasAnnotatedQuery()) {
-				return new StringBasedR2dbcQuery(queryMethod, this.databaseClient, this.converter, this.dataAccessStrategy,
+				return new StringBasedR2dbcQuery(queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy,
 						this.parser,
 						this.evaluationContextProvider);
 			} else {
-				return new PartTreeR2dbcQuery(queryMethod, this.databaseClient, this.converter, this.dataAccessStrategy);
+				return new PartTreeR2dbcQuery(queryMethod, this.entityOperations, this.converter, this.dataAccessStrategy);
 			}
 		}
 	}
