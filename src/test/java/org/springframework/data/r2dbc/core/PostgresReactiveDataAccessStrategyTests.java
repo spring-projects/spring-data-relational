@@ -15,7 +15,7 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.springframework.data.r2dbc.testing.Assertions.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,7 +33,6 @@ import org.springframework.data.r2dbc.convert.EnumWriteSupport;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.r2dbc.core.Parameter;
 
 /**
  * {@link PostgresDialect} specific tests for {@link ReactiveDataAccessStrategy}.
@@ -54,8 +53,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow row = strategy.getOutboundRow(new WithMultidimensionalArray(new int[][] { { 1, 2, 3 }, { 4, 5 } }));
 
-		assertThat(row.get(SqlIdentifier.unquoted("myarray")).hasValue()).isTrue();
-		assertThat(row.get(SqlIdentifier.unquoted("myarray")).getValue()).isInstanceOf(Integer[][].class);
+		assertThat(row).withColumn("myarray").hasValueInstanceOf(Integer[][].class);
 	}
 
 	@Test // gh-161
@@ -63,8 +61,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow row = strategy.getOutboundRow(new WithMultidimensionalArray(null));
 
-		assertThat(row.get(SqlIdentifier.unquoted("myarray")).hasValue()).isFalse();
-		assertThat(row.get(SqlIdentifier.unquoted("myarray")).getType()).isEqualTo(Integer[].class);
+		assertThat(row).withColumn("myarray").isEmpty().hasType(Integer[].class);
 	}
 
 	@Test // gh-161
@@ -72,8 +69,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow row = strategy.getOutboundRow(new WithIntegerCollection(Arrays.asList(1, 2, 3)));
 
-		assertThat(row.get(SqlIdentifier.unquoted("myarray")).hasValue()).isTrue();
-		assertThat(row.get(SqlIdentifier.unquoted("myarray")).getValue()).isInstanceOf(Integer[].class);
+		assertThat(row).withColumn("myarray").hasValueInstanceOf(Integer[].class);
 		assertThat((Integer[]) row.get(SqlIdentifier.unquoted("myarray")).getValue()).contains(1, 2, 3);
 	}
 
@@ -88,9 +84,8 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withArray);
 
-		assertThat(outboundRow) //
-				.containsEntry(SqlIdentifier.unquoted("string_array"), Parameter.from(new String[] { "hello", "world" }))
-				.containsEntry(SqlIdentifier.unquoted("string_list"), Parameter.from(new String[] { "hello", "world" }));
+		assertThat(outboundRow).containsColumnWithValue("string_array", new String[] { "hello", "world" })
+				.containsColumnWithValue("string_list", new String[] { "hello", "world" });
 	}
 
 	@Test // gh-139
@@ -104,8 +99,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withConversion);
 
-		assertThat(outboundRow) //
-				.containsEntry(SqlIdentifier.unquoted("my_objects"), Parameter.from("[one, two]"));
+		assertThat(outboundRow).containsColumnWithValue("my_objects", "[one, two]");
 	}
 
 	@Test // gh-139
@@ -119,12 +113,7 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withConversion);
 
-		assertThat(outboundRow) //
-				.containsKey(SqlIdentifier.unquoted("my_objects"));
-
-		Parameter value = outboundRow.get("my_objects");
-		assertThat(value.isEmpty()).isTrue();
-		assertThat(value.getType()).isEqualTo(String.class);
+		assertThat(outboundRow).containsColumn("my_objects").withColumn("my_objects").isEmpty().hasType(String.class);
 	}
 
 	@Test // gh-252, gh-593
@@ -139,16 +128,10 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
 
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_set")).getValue()).isEqualTo(new String[] { "ONE", "TWO" });
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_array")).getValue())
-				.isEqualTo(new String[] { "ONE", "TWO" });
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_list"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_list")).getValue())
-				.isEqualTo(new String[] { "ONE", "TWO" });
+		assertThat(outboundRow).containsColumns("enum_set", "enum_array", "enum_list");
+		assertThat(outboundRow).withColumn("enum_set").hasValue(new String[] { "ONE", "TWO" }).hasType(String[].class);
+		assertThat(outboundRow).withColumn("enum_array").hasValue(new String[] { "ONE", "TWO" }).hasType(String[].class);
+		assertThat(outboundRow).withColumn("enum_list").hasValue(new String[] { "ONE", "TWO" }).hasType(String[].class);
 	}
 
 	@Test // gh-593
@@ -160,14 +143,10 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
 
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_set")).getType()).isEqualTo(String[].class);
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_array")).getType()).isEqualTo(String[].class);
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_list"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_list")).getType()).isEqualTo(String[].class);
+		assertThat(outboundRow).containsColumns("enum_set", "enum_array", "enum_list");
+		assertThat(outboundRow).withColumn("enum_set").isEmpty().hasType(String[].class);
+		assertThat(outboundRow).withColumn("enum_array").isEmpty().hasType(String[].class);
+		assertThat(outboundRow).withColumn("enum_list").isEmpty().hasType(String[].class);
 	}
 
 	@Test // gh-593
@@ -183,14 +162,10 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
 
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_set")).getValue()).isInstanceOf(MyEnum[].class);
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_array")).getValue()).isInstanceOf(MyEnum[].class);
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_list"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_list")).getValue()).isInstanceOf(MyEnum[].class);
+		assertThat(outboundRow).containsColumns("enum_set", "enum_array", "enum_list");
+		assertThat(outboundRow).withColumn("enum_set").hasValue().hasType(MyEnum[].class);
+		assertThat(outboundRow).withColumn("enum_array").hasValue().hasType(MyEnum[].class);
+		assertThat(outboundRow).withColumn("enum_list").hasValue().hasType(MyEnum[].class);
 	}
 
 	@Test // gh-593
@@ -203,14 +178,10 @@ public class PostgresReactiveDataAccessStrategyTests extends ReactiveDataAccessS
 
 		OutboundRow outboundRow = strategy.getOutboundRow(withEnums);
 
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_set"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_set")).getType()).isEqualTo(MyEnum[].class);
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_array"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_array")).getType()).isEqualTo(MyEnum[].class);
-
-		assertThat(outboundRow).containsKey(SqlIdentifier.unquoted("enum_list"));
-		assertThat(outboundRow.get(SqlIdentifier.unquoted("enum_list")).getType()).isEqualTo(MyEnum[].class);
+		assertThat(outboundRow).containsColumns("enum_set", "enum_array", "enum_list");
+		assertThat(outboundRow).withColumn("enum_set").isEmpty().hasType(MyEnum[].class);
+		assertThat(outboundRow).withColumn("enum_array").isEmpty().hasType(MyEnum[].class);
+		assertThat(outboundRow).withColumn("enum_list").isEmpty().hasType(MyEnum[].class);
 	}
 
 	@RequiredArgsConstructor

@@ -52,135 +52,135 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 	protected abstract ReactiveDataAccessStrategy getStrategy();
 
 	@Test // gh-85
-	public void shouldReadAndWriteString() {
+	void shouldReadAndWriteString() {
 		testType(PrimitiveTypes::setString, PrimitiveTypes::getString, "foo", "string");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteCharacter() {
+	void shouldReadAndWriteCharacter() {
 		testType(PrimitiveTypes::setCharacter, PrimitiveTypes::getCharacter, 'f', "character");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBoolean() {
+	void shouldReadAndWriteBoolean() {
 		testType(PrimitiveTypes::setBooleanValue, PrimitiveTypes::isBooleanValue, true, "boolean_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBoxedBoolean() {
+	void shouldReadAndWriteBoxedBoolean() {
 		testType(PrimitiveTypes::setBoxedBooleanValue, PrimitiveTypes::getBoxedBooleanValue, true, "boxed_boolean_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteByte() {
+	void shouldReadAndWriteByte() {
 		testType(PrimitiveTypes::setByteValue, PrimitiveTypes::getByteValue, (byte) 123, "byte_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBoxedByte() {
+	void shouldReadAndWriteBoxedByte() {
 		testType(PrimitiveTypes::setBoxedByteValue, PrimitiveTypes::getBoxedByteValue, (byte) 123, "boxed_byte_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteShort() {
+	void shouldReadAndWriteShort() {
 		testType(PrimitiveTypes::setShortValue, PrimitiveTypes::getShortValue, (short) 123, "short_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBoxedShort() {
+	void shouldReadAndWriteBoxedShort() {
 		testType(PrimitiveTypes::setBoxedShortValue, PrimitiveTypes::getBoxedShortValue, (short) 123, "boxed_short_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteInteger() {
+	void shouldReadAndWriteInteger() {
 		testType(PrimitiveTypes::setIntValue, PrimitiveTypes::getIntValue, 123, "int_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBoxedInteger() {
+	void shouldReadAndWriteBoxedInteger() {
 		testType(PrimitiveTypes::setBoxedIntegerValue, PrimitiveTypes::getBoxedIntegerValue, 123, "boxed_integer_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteLong() {
+	void shouldReadAndWriteLong() {
 		testType(PrimitiveTypes::setLongValue, PrimitiveTypes::getLongValue, 123L, "long_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBoxedLong() {
+	void shouldReadAndWriteBoxedLong() {
 		testType(PrimitiveTypes::setBoxedLongValue, PrimitiveTypes::getBoxedLongValue, 123L, "boxed_long_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteFloat() {
+	void shouldReadAndWriteFloat() {
 		testType(PrimitiveTypes::setFloatValue, PrimitiveTypes::getFloatValue, 0.1f, "float_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBoxedFloat() {
+	void shouldReadAndWriteBoxedFloat() {
 		testType(PrimitiveTypes::setBoxedFloatValue, PrimitiveTypes::getBoxedFloatValue, 0.1f, "boxed_float_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteDouble() {
+	void shouldReadAndWriteDouble() {
 		testType(PrimitiveTypes::setDoubleValue, PrimitiveTypes::getDoubleValue, 0.1, "double_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBoxedDouble() {
+	void shouldReadAndWriteBoxedDouble() {
 		testType(PrimitiveTypes::setBoxedDoubleValue, PrimitiveTypes::getBoxedDoubleValue, 0.1, "boxed_double_value");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBigInteger() {
+	void shouldReadAndWriteBigInteger() {
 		testType(PrimitiveTypes::setBigInteger, PrimitiveTypes::getBigInteger, BigInteger.TEN, "big_integer");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteBigDecimal() {
+	void shouldReadAndWriteBigDecimal() {
 		testType(PrimitiveTypes::setBigDecimal, PrimitiveTypes::getBigDecimal, new BigDecimal("100.123"), "big_decimal");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteLocalDate() {
+	void shouldReadAndWriteLocalDate() {
 		testType(PrimitiveTypes::setLocalDate, PrimitiveTypes::getLocalDate, LocalDate.now(), "local_date");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteLocalTime() {
+	void shouldReadAndWriteLocalTime() {
 		testType(PrimitiveTypes::setLocalTime, PrimitiveTypes::getLocalTime, LocalTime.now(), "local_time");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteLocalDateTime() {
+	void shouldReadAndWriteLocalDateTime() {
 		testType(PrimitiveTypes::setLocalDateTime, PrimitiveTypes::getLocalDateTime, LocalDateTime.now(),
 				"local_date_time");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteZonedDateTime() {
+	void shouldReadAndWriteZonedDateTime() {
 		testType(PrimitiveTypes::setZonedDateTime, PrimitiveTypes::getZonedDateTime, ZonedDateTime.now(),
 				"zoned_date_time");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteOffsetDateTime() {
+	void shouldReadAndWriteOffsetDateTime() {
 		testType(PrimitiveTypes::setOffsetDateTime, PrimitiveTypes::getOffsetDateTime, OffsetDateTime.now(),
 				"offset_date_time");
 	}
 
 	@Test // gh-85
-	public void shouldReadAndWriteUuid() {
+	void shouldReadAndWriteUuid() {
 		testType(PrimitiveTypes::setUuid, PrimitiveTypes::getUuid, UUID.randomUUID(), "uuid");
 	}
 
 	@Test // gh-186
-	public void shouldReadAndWriteBinary() {
+	void shouldReadAndWriteBinary() {
 		testType(PrimitiveTypes::setBinary, PrimitiveTypes::getBinary, "hello".getBytes(), "binary");
 	}
 
 	@Test // gh-354
-	public void shouldNotWriteReadOnlyFields() {
+	void shouldNotWriteReadOnlyFields() {
 
 		TypeWithReadOnlyFields toSave = new TypeWithReadOnlyFields();
 
