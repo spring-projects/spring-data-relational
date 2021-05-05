@@ -52,9 +52,9 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (MYSQL_CONTAINER == null) {
 
-			MySQLContainer<?> container = new MySQLContainer<>()
-					.withUsername("root")
-					.withPassword("")
+			MySQLContainer<?> container = new MySQLContainer<>("mysql:8.0.24")
+					.withUsername("test")
+					.withPassword("test")
 					.withConfigurationOverride("");
 
 			container.start();
@@ -64,7 +64,7 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 
 		MysqlDataSource dataSource = new MysqlDataSource();
 		dataSource.setUrl(MYSQL_CONTAINER.getJdbcUrl());
-		dataSource.setUser(MYSQL_CONTAINER.getUsername());
+		dataSource.setUser("root");
 		dataSource.setPassword(MYSQL_CONTAINER.getPassword());
 		dataSource.setDatabaseName(MYSQL_CONTAINER.getDatabaseName());
 
@@ -78,5 +78,16 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 			ScriptUtils.executeSqlScript(connection,
 					new ByteArrayResource("DROP DATABASE test;CREATE DATABASE test;".getBytes()));
 		}
+	}
+
+	private DataSource createRootDataSource() {
+
+		MysqlDataSource dataSource = new MysqlDataSource();
+		dataSource.setUrl(MYSQL_CONTAINER.getJdbcUrl());
+		dataSource.setUser("root");
+		dataSource.setPassword(MYSQL_CONTAINER.getPassword());
+		dataSource.setDatabaseName(MYSQL_CONTAINER.getDatabaseName());
+
+		return dataSource;
 	}
 }
