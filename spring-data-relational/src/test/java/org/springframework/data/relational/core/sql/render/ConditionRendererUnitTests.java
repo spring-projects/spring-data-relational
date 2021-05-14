@@ -29,6 +29,7 @@ import org.springframework.data.relational.core.sql.Table;
  * Unit tests for rendered {@link org.springframework.data.relational.core.sql.Conditions}.
  *
  * @author Mark Paluch
+ * @author Daniele Canteri
  */
 public class ConditionRendererUnitTests {
 
@@ -229,5 +230,15 @@ public class ConditionRendererUnitTests {
 		sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.notIn(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left NOT IN (my_table.right)");
+	}
+
+	@Test // DATAJDBC-907
+	public void shouldRenderJust() {
+
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
+				.where(Conditions.just("sql"))
+				.build());
+
+		assertThat(sql).endsWith("WHERE sql");
 	}
 }

@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Meng Zuozhu
+ * @author Daniele Canteri
  * @since 1.1
  * @see SQL
  * @see Expressions
@@ -301,20 +302,6 @@ public abstract class Conditions {
 		Assert.notNull(subselect, "Subselect must not be null");
 
 		return notIn(column, new SubselectExpression(subselect));
-	}
-
-	static class ConstantCondition extends AbstractSegment implements Condition {
-
-		private final String condition;
-
-		ConstantCondition(String condition) {
-			this.condition = condition;
-		}
-
-		@Override
-		public String toString() {
-			return condition;
-		}
 	}
 
 	// Utility constructor.

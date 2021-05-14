@@ -19,6 +19,7 @@ import org.springframework.data.relational.core.sql.AndCondition;
 import org.springframework.data.relational.core.sql.Between;
 import org.springframework.data.relational.core.sql.Comparison;
 import org.springframework.data.relational.core.sql.Condition;
+import org.springframework.data.relational.core.sql.ConstantCondition;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.data.relational.core.sql.IsNull;
 import org.springframework.data.relational.core.sql.Like;
@@ -32,6 +33,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Daniele Canteri
  * @since 1.1
  * @see AndCondition
  * @see OrCondition
@@ -99,6 +101,10 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 
 		if (segment instanceof NestedCondition) {
 			return new NestedConditionVisitor(context, builder::append);
+		}
+
+		if (segment instanceof ConstantCondition) {
+			return new ConstantConditionVisitor(context, builder::append);
 		}
 
 		return null;
