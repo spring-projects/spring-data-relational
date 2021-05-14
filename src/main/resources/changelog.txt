@@ -1,6 +1,15 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.3.1 (2021-05-14)
+-------------------------------------
+* #597 - Upgrade to R2DBC Arabba SR10.
+* #594 - Upgrade to MySQL 8.0 for testing.
+* #593 - Saving Enum-typed Collection-like properties set to `null` are not translated to `String[]`.
+* #587 - `PreparedOperationBindableQuery.bindNull(…)` calls `GenericExecuteSpec.bind(…)` instead of `bindNull(…)`.
+* #585 - Custom converter for constructor creation no longer applied.
+
+
 Changes in version 1.2.9 (2021-05-14)
 -------------------------------------
 * #597 - Upgrade to R2DBC Arabba SR10.
@@ -476,6 +485,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
