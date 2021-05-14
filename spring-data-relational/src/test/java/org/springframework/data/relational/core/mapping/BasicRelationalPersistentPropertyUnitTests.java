@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import org.assertj.core.api.SoftAssertions;
@@ -46,7 +45,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
-
 
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
@@ -127,7 +125,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		softly.assertAll();
 	}
 
-
 	@Data
 	@SuppressWarnings("unused")
 	private static class DummyEntity {
@@ -136,7 +133,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
-		private final UUID uuid;
 
 		// DATAJDBC-259
 		private final List<String> listOfString;

@@ -18,10 +18,10 @@ package org.springframework.data.jdbc.testing;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.mariadb.jdbc.MariaDbDataSource;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
@@ -33,10 +33,11 @@ import org.testcontainers.containers.MariaDBContainer;
  *
  * @author Christoph Preißner
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @Configuration
 @Profile("mariadb")
-class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
+class MariaDBDataSourceConfiguration extends DataSourceConfiguration implements InitializingBean {
 
 	private static MariaDBContainer<?> MARIADB_CONTAINER;
 
@@ -70,8 +71,8 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 		}
 	}
 
-	@PostConstruct
-	public void initDatabase() throws SQLException {
+	@Override
+	public void afterPropertiesSet() throws Exception {
 
 		try (Connection connection = createDataSource().getConnection()) {
 			ScriptUtils.executeSqlScript(connection,

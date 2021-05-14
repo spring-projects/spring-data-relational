@@ -63,10 +63,7 @@ public class AbstractJdbcConfiguration {
 	public JdbcMappingContext jdbcMappingContext(Optional<NamingStrategy> namingStrategy,
 			JdbcCustomConversions customConversions) {
 
-		JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
-		mappingContext.setSimpleTypeHolder(customConversions.getSimpleTypeHolder());
-
-		return mappingContext;
+		return new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
 	}
 
 	/**
