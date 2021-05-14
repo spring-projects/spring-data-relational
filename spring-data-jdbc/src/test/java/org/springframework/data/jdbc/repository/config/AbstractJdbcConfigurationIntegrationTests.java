@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -27,6 +28,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -46,7 +49,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 public class AbstractJdbcConfigurationIntegrationTests {
 
 	@Test // DATAJDBC-395
-	public void configuresInfrastructureComponents() {
+	void configuresInfrastructureComponents() {
 
 		assertApplicationContext(context -> {
 
@@ -60,6 +63,18 @@ public class AbstractJdbcConfigurationIntegrationTests {
 					.map(context::getBean) //
 					.forEach(it -> assertThat(it).isNotNull());
 
+		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
+	}
+
+	@Test // #975
+	void registersSimpleTypesFromCustomConversions() {
+
+		assertApplicationContext(context -> {
+			JdbcMappingContext mappingContext = context.getBean(JdbcMappingContext.class);
+			assertThat( //
+					mappingContext.getPersistentEntity(AbstractJdbcConfigurationUnderTest.Blah.class) //
+			).describedAs("Blah should not be an entity, since there is a WritingConversion configured for it") //
+					.isNull();
 		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
 	}
 
@@ -93,6 +108,25 @@ public class AbstractJdbcConfigurationIntegrationTests {
 		public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
 			return HsqlDbDialect.INSTANCE;
 		}
+
+		@Override
+		public JdbcCustomConversions jdbcCustomConversions() {
+			return new JdbcCustomConversions(Collections.singletonList(Blah2BlubbConverter.INSTANCE));
+		}
+
+		@WritingConverter
+		enum Blah2BlubbConverter implements Converter<Blah, Blubb> {
+			INSTANCE;
+
+			@Override
+			public Blubb convert(Blah blah) {
+				return new Blubb();
+			}
+		}
+
+		private static class Blah {}
+
+		private static class Blubb {}
 	}
 
 }
