@@ -16,17 +16,17 @@
 package org.springframework.data.jdbc.testing;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
-import com.mysql.cj.jdbc.MysqlDataSource;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.testcontainers.containers.MySQLContainer;
+
+import com.mysql.cj.jdbc.MysqlDataSource;
 
 /**
  * {@link DataSource} setup for MySQL. Starts a docker container with a MySql database and sets up a database name
@@ -39,7 +39,7 @@ import org.testcontainers.containers.MySQLContainer;
  */
 @Configuration
 @Profile("mysql")
-class MySqlDataSourceConfiguration extends DataSourceConfiguration {
+class MySqlDataSourceConfiguration extends DataSourceConfiguration implements InitializingBean {
 
 	private static MySQLContainer<?> MYSQL_CONTAINER;
 
@@ -52,9 +52,7 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (MYSQL_CONTAINER == null) {
 
-			MySQLContainer<?> container = new MySQLContainer<>("mysql:8.0.24")
-					.withUsername("test")
-					.withPassword("test")
+			MySQLContainer<?> container = new MySQLContainer<>("mysql:8.0.24").withUsername("test").withPassword("test")
 					.withConfigurationOverride("");
 
 			container.start();
@@ -71,8 +69,8 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 		return dataSource;
 	}
 
-	@PostConstruct
-	public void initDatabase() throws SQLException {
+	@Override
+	public void afterPropertiesSet() throws Exception {
 
 		try (Connection connection = createDataSource().getConnection()) {
 			ScriptUtils.executeSqlScript(connection,
