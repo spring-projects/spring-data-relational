@@ -16,11 +16,10 @@
 package org.springframework.data.jdbc.testing;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
@@ -40,7 +39,7 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
  */
 @Configuration
 @Profile("mysql")
-class MySqlDataSourceConfiguration extends DataSourceConfiguration {
+class MySqlDataSourceConfiguration extends DataSourceConfiguration implements InitializingBean {
 
 	private static MySQLContainer<?> MYSQL_CONTAINER;
 
@@ -53,9 +52,7 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (MYSQL_CONTAINER == null) {
 
-			MySQLContainer<?> container = new MySQLContainer<>()
-					.withUsername("root")
-					.withPassword("")
+			MySQLContainer<?> container = new MySQLContainer<>().withUsername("root").withPassword("")
 					.withConfigurationOverride("");
 
 			container.start();
@@ -72,8 +69,8 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration {
 		return dataSource;
 	}
 
-	@PostConstruct
-	public void initDatabase() throws SQLException {
+	@Override
+	public void afterPropertiesSet() throws Exception {
 
 		try (Connection connection = createDataSource().getConnection()) {
 			ScriptUtils.executeSqlScript(connection,

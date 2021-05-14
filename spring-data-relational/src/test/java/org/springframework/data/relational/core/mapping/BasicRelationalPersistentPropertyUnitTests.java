@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import org.assertj.core.api.SoftAssertions;
@@ -47,7 +46,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-
 	@Test // DATAJDBC-106
 	public void detectsAnnotatedColumnName() {
 
@@ -61,9 +59,12 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 		RelationalPersistentProperty listProperty = entity.getRequiredPersistentProperty("someList");
 
-		PersistentPropertyPath<RelationalPersistentProperty> path = context.findPersistentPropertyPaths(DummyEntity.class, p -> p.getName().equals("someList")).getFirst().orElseThrow(() -> new AssertionFailedError("Couldn't find path for 'someList'"));
+		PersistentPropertyPath<RelationalPersistentProperty> path = context
+				.findPersistentPropertyPaths(DummyEntity.class, p -> p.getName().equals("someList")).getFirst()
+				.orElseThrow(() -> new AssertionFailedError("Couldn't find path for 'someList'"));
 
-		assertThat(listProperty.getReverseColumnName(new PersistentPropertyPathExtension(context, path))).isEqualTo(quoted("dummy_column_name"));
+		assertThat(listProperty.getReverseColumnName(new PersistentPropertyPathExtension(context, path)))
+				.isEqualTo(quoted("dummy_column_name"));
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("dummy_key_column_name"));
 	}
 
@@ -127,7 +128,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		softly.assertAll();
 	}
 
-
 	@Data
 	@SuppressWarnings("unused")
 	private static class DummyEntity {
@@ -136,7 +136,6 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		private final SomeEnum someEnum;
 		private final LocalDateTime localDateTime;
 		private final ZonedDateTime zonedDateTime;
-		private final UUID uuid;
 
 		// DATAJDBC-259
 		private final List<String> listOfString;

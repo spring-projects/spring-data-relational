@@ -46,6 +46,7 @@ public class JdbcMappingContext extends RelationalMappingContext {
 	 */
 	public JdbcMappingContext() {
 		super();
+		setSimpleTypeHolder(JdbcSimpleTypes.HOLDER);
 	}
 
 	/**
@@ -55,6 +56,7 @@ public class JdbcMappingContext extends RelationalMappingContext {
 	 */
 	public JdbcMappingContext(NamingStrategy namingStrategy) {
 		super(namingStrategy);
+		setSimpleTypeHolder(JdbcSimpleTypes.HOLDER);
 	}
 
 	/*
