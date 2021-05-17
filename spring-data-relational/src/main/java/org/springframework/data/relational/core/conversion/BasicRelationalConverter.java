@@ -15,6 +15,10 @@
  */
 package org.springframework.data.relational.core.conversion;
 
+import java.util.Collections;
+import java.util.Optional;
+import java.util.function.Function;
+
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -36,10 +40,6 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-
-import java.util.Collections;
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * {@link RelationalConverter} that uses a {@link MappingContext} to apply basic conversion of relational values to
@@ -63,7 +63,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
 	 *
-	 * @param context must not be {@literal null}. org.springframework.data.jdbc.core.DefaultDataAccessStrategyUnitTests
+	 * @param context must not be {@literal null}.
 	 */
 	public BasicRelationalConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
