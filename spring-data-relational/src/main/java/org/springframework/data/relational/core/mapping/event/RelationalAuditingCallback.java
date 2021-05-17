@@ -23,7 +23,7 @@ import org.springframework.util.Assert;
 /**
  * {@link BeforeConvertCallback} to capture auditing information on persisting and updating entities.
  * <p>
- * An instance of this class gets registered when you enable auditing for Spring Data JDBC.
+ * An instance of this class gets registered when you enable auditing for Spring Data Relational.
  *
  * @author Jens Schauder
  * @author Mark Paluch

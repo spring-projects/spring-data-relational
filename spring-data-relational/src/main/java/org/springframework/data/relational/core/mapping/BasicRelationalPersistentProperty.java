@@ -147,7 +147,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty#getColumnName()
+	 * @see org.springframework.data.relational.core.mapping.model.RelationalPersistentProperty#getColumnName()
 	 */
 	@Override
 	public SqlIdentifier getColumnName() {

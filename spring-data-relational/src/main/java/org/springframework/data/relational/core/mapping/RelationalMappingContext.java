@@ -23,7 +23,7 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
 /**
- * {@link MappingContext} implementation for JDBC.
+ * {@link MappingContext} implementation.
  *
  * @author Jens Schauder
  * @author Greg Turnquist
