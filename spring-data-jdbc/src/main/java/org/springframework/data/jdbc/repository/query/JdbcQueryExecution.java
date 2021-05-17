@@ -15,8 +15,18 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mapping.model.EntityInstantiators;
+import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.repository.query.DtoInstantiatingConverter;
+import org.springframework.data.repository.query.ResultProcessor;
+import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.data.util.Lazy;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ClassUtils;
 
 /**
  * Interface specifying a query execution strategy. Implementations encapsulate information how to actually execute the
@@ -37,4 +47,41 @@ interface JdbcQueryExecution<T> {
 	 */
 	@Nullable
 	T execute(String query, SqlParameterSource parameter);
+
+	/**
+	 * A {@link Converter} to post-process all source objects using the given {@link ResultProcessor}.
+	 *
+	 * @author Mark Paluch
+	 * @since 2.3
+	 */
+	class ResultProcessingConverter implements Converter<Object, Object> {
+
+		private final ResultProcessor processor;
+		private final Lazy<Converter<Object, Object>> converter;
+
+		ResultProcessingConverter(ResultProcessor processor,
+				MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext,
+				EntityInstantiators instantiators) {
+			this.processor = processor;
+			this.converter = Lazy.of(() -> new DtoInstantiatingConverter(processor.getReturnedType().getReturnedType(),
+					mappingContext, instantiators));
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.core.convert.converter.Converter#convert(java.lang.Object)
+		 */
+		@Override
+		public Object convert(Object source) {
+
+			ReturnedType returnedType = processor.getReturnedType();
+
+			if (ClassUtils.isPrimitiveOrWrapper(returnedType.getReturnedType())
+					|| returnedType.getReturnedType().isInstance(source)) {
+				return source;
+			}
+
+			return processor.processResult(source, converter.get());
+		}
+	}
 }

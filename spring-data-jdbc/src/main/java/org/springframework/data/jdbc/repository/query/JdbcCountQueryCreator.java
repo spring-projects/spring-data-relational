@@ -27,6 +27,7 @@ import org.springframework.data.relational.core.sql.SelectBuilder;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
+import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.PartTree;
 
 /**
@@ -38,8 +39,9 @@ import org.springframework.data.repository.query.parser.PartTree;
 class JdbcCountQueryCreator extends JdbcQueryCreator {
 
 	JdbcCountQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
-			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery) {
-		super(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery);
+			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
+			ReturnedType returnedType) {
+		super(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery, returnedType);
 	}
 
 	@Override

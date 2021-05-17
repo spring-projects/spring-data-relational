@@ -44,6 +44,7 @@ import org.springframework.data.relational.repository.query.RelationalEntityMeta
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -67,6 +68,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	private final RelationalEntityMetadata<?> entityMetadata;
 	private final RenderContextFactory renderContextFactory;
 	private final boolean isSliceQuery;
+	private final ReturnedType returnedType;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
@@ -79,14 +81,17 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
 	 * @param accessor parameter metadata provider, must not be {@literal null}.
 	 * @param isSliceQuery
+	 * @param returnedType
 	 */
 	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
-			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery) {
+			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
+			ReturnedType returnedType) {
 		super(tree, accessor);
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(entityMetadata, "Relational entity metadata must not be null");
+		Assert.notNull(returnedType, "ReturnedType must not be null");
 
 		this.context = context;
 		this.tree = tree;
@@ -96,6 +101,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		this.queryMapper = new QueryMapper(dialect, converter);
 		this.renderContextFactory = new RenderContextFactory(dialect);
 		this.isSliceQuery = isSliceQuery;
+		this.returnedType = returnedType;
 	}
 
 	/**
@@ -239,6 +245,13 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 			Join join = getJoin(sqlContext, extPath);
 			if (join != null) {
 				joinTables.add(join);
+			}
+
+			if (returnedType.needsCustomConstruction()) {
+				if (!returnedType.getInputProperties()
+						.contains(extPath.getRequiredPersistentPropertyPath().getBaseProperty().getName())) {
+					continue;
+				}
 			}
 
 			Column column = getColumn(sqlContext, extPath);
