@@ -199,6 +199,11 @@ public class BasicRelationalConverter implements RelationalConverter {
 		return conversionService.convert(value, type.getType());
 	}
 
+	@Override
+	public EntityInstantiators getEntityInstantiators() {
+		return this.entityInstantiators;
+	}
+
 	/**
 	 * Checks whether we have a custom conversion registered for the given value into an arbitrary simple JDBC type.
 	 * Returns the converted value if so. If not, we perform special enum handling or simply return the value as is.

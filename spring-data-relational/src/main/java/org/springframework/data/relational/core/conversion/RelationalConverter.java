@@ -22,6 +22,7 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.mapping.model.ParameterValueProvider;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -92,4 +93,12 @@ public interface RelationalConverter {
 	 */
 	@Nullable
 	Object writeValue(@Nullable Object value, TypeInformation<?> type);
+
+	/**
+	 * Return the underlying {@link EntityInstantiators}.
+	 *
+	 * @return
+	 * @since 2.3
+	 */
+	EntityInstantiators getEntityInstantiators();
 }

@@ -22,6 +22,7 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Value;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -441,6 +442,50 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(slice.hasNext()).isTrue();
 	}
 
+	@Test // #971
+	public void stringQueryProjectionShouldReturnProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		List<DummyProjection> result = repository.findProjectedWithSql(DummyProjection.class);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // #971
+	public void stringQueryProjectionShouldReturnDtoProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		List<DtoProjection> result = repository.findProjectedWithSql(DtoProjection.class);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // #971
+	public void partTreeQueryProjectionShouldReturnProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		List<DummyProjection> result = repository.findProjectedByName("Entity Name");
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // #971
+	public void pageQueryProjectionShouldReturnProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		Page<DummyProjection> result = repository.findPageProjectionByName("Entity Name", PageRequest.ofSize(10));
+
+		assertThat(result).hasSize(1);
+		assertThat(result.getContent().get(0).getName()).isEqualTo("Entity Name");
+	}
+
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 		List<DummyEntity> findAllByNamedQuery();
@@ -449,6 +494,11 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY")
 		List<DummyEntity> findAllWithSql();
+
+		@Query("SELECT * FROM DUMMY_ENTITY")
+		<T> List<T> findProjectedWithSql(Class<T> targetType);
+
+		List<DummyProjection> findProjectedByName(String name);
 
 		@Query(value = "SELECT * FROM DUMMY_ENTITY", rowMapperClass = CustomRowMapper.class)
 		List<DummyEntity> findAllWithCustomMapper();
@@ -471,6 +521,8 @@ public class JdbcRepositoryIntegrationTests {
 		List<Integer> unnestPrimitive(@Param("ids") int[] ids);
 
 		Page<DummyEntity> findPageByNameContains(String name, Pageable pageable);
+
+		Page<DummyProjection> findPageProjectionByName(String name, Pageable pageable);
 
 		Slice<DummyEntity> findSliceByNameContains(String name, Pageable pageable);
 	}
@@ -526,6 +578,17 @@ public class JdbcRepositoryIntegrationTests {
 		public DummyEntity(String name) {
 			this.name = name;
 		}
+	}
+
+	interface DummyProjection {
+
+		String getName();
+	}
+
+	@Value
+	static class DtoProjection {
+
+		String name;
 	}
 
 	static class CustomRowMapper implements RowMapper<DummyEntity> {

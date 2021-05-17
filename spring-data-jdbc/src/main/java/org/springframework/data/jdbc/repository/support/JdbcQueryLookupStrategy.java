@@ -103,12 +103,11 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		try {
 			if (namedQueries.hasQuery(queryMethod.getNamedQueryName()) || queryMethod.hasAnnotatedQuery()) {
 
-				RowMapper<?> mapper = queryMethod.isModifyingQuery() ? null : createMapper(queryMethod);
-				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, mapper, converter);
+				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, this::createMapper, converter);
 				query.setBeanFactory(beanfactory);
 				return query;
 			} else {
-				return new PartTreeJdbcQuery(context, queryMethod, dialect, converter, operations, createMapper(queryMethod));
+				return new PartTreeJdbcQuery(context, queryMethod, dialect, converter, operations, this::createMapper);
 			}
 		} catch (Exception e) {
 			throw QueryCreationException.create(queryMethod, e);
@@ -116,9 +115,7 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	}
 
 	@SuppressWarnings("unchecked")
-	private RowMapper<Object> createMapper(JdbcQueryMethod queryMethod) {
-
-		Class<?> returnedObjectType = queryMethod.getReturnedObjectType();
+	private RowMapper<Object> createMapper(Class<?> returnedObjectType) {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getPersistentEntity(returnedObjectType);
 
@@ -126,19 +123,18 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			return (RowMapper<Object>) SingleColumnRowMapper.newInstance(returnedObjectType, converter.getConversionService());
 		}
 
-		return (RowMapper<Object>) determineDefaultMapper(queryMethod);
+		return (RowMapper<Object>) determineDefaultMapper(returnedObjectType);
 	}
 
-	private RowMapper<?> determineDefaultMapper(JdbcQueryMethod queryMethod) {
+	private RowMapper<?> determineDefaultMapper(Class<?> returnedObjectType) {
 
-		Class<?> domainType = queryMethod.getReturnedObjectType();
-		RowMapper<?> configuredQueryMapper = queryMappingConfiguration.getRowMapper(domainType);
+		RowMapper<?> configuredQueryMapper = queryMappingConfiguration.getRowMapper(returnedObjectType);
 
 		if (configuredQueryMapper != null)
 			return configuredQueryMapper;
 
 		EntityRowMapper<?> defaultEntityRowMapper = new EntityRowMapper<>( //
-				context.getRequiredPersistentEntity(domainType), //
+				context.getRequiredPersistentEntity(returnedObjectType), //
 				converter //
 		);
 

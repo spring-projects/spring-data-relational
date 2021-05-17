@@ -1,7 +1,7 @@
 [[jdbc.repositories]]
 = JDBC Repositories
 
-This chapter points out the specialties for repository support for JDBC. This builds on the core repository support explained in <<repositories>>.
+This chapter points out the specialties for repository support for JDBC.This builds on the core repository support explained in <<repositories>>.
 You should have a sound understanding of the basic concepts explained there.
 
 [[jdbc.why]]
@@ -695,6 +695,8 @@ You can specify the following return types:
 * `void`
 * `int` (updated record count)
 * `boolean`(whether a record was updated)
+
+include::{spring-data-commons-docs}/repository-projections.adoc[leveloffset=+2]
 
 [[jdbc.mybatis]]
 == MyBatis Integration
