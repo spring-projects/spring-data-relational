@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
 
@@ -232,7 +233,7 @@ public class ConditionRendererUnitTests {
 		assertThat(sql).endsWith("WHERE my_table.left NOT IN (my_table.right)");
 	}
 
-	@Test // DATAJDBC-907
+	@Test // #907
 	public void shouldRenderJust() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
@@ -240,5 +241,15 @@ public class ConditionRendererUnitTests {
 				.build());
 
 		assertThat(sql).endsWith("WHERE sql");
+	}
+
+	@Test // #907
+	public void shouldRenderMultipleJust() {
+
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
+				.where( Conditions.just("sql1").and(Conditions.just("sql2")))
+				.build());
+
+		assertThat(sql).endsWith("WHERE sql1 AND sql2");
 	}
 }
