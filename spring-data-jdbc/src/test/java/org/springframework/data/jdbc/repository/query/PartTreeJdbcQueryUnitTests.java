@@ -126,7 +126,7 @@ public class PartTreeJdbcQueryUnitTests {
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { "John" }), returnedType);
 
-		assertThat(query.getQuery()).isEqualTo("SELECT " + TABLE + ".\"FIRST_NAME\" AS \"FIRST_NAME\" " + JOIN_CLAUSE
+		assertThat(query.getQuery()).isEqualTo("SELECT " + TABLE + ".\"FIRST_NAME\" AS \"FIRST_NAME\" FROM \"users\""
 				+ " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
@@ -600,6 +600,8 @@ public class PartTreeJdbcQueryUnitTests {
 		List<User> findAllByFirstName(String firstName);
 
 		List<User> findAllByHated(Hobby hobby);
+
+		List<User> findAllByHatedName(String name);
 
 		List<User> findAllByHobbies(Object hobbies);
 

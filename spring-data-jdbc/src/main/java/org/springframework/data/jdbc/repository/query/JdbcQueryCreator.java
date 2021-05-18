@@ -241,17 +241,17 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(context, path);
 
-			// add a join if necessary
-			Join join = getJoin(sqlContext, extPath);
-			if (join != null) {
-				joinTables.add(join);
-			}
-
 			if (returnedType.needsCustomConstruction()) {
 				if (!returnedType.getInputProperties()
 						.contains(extPath.getRequiredPersistentPropertyPath().getBaseProperty().getName())) {
 					continue;
 				}
+			}
+
+			// add a join if necessary
+			Join join = getJoin(sqlContext, extPath);
+			if (join != null) {
+				joinTables.add(join);
 			}
 
 			Column column = getColumn(sqlContext, extPath);
