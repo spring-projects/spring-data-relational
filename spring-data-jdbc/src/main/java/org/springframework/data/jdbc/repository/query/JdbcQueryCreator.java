@@ -74,14 +74,14 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
 	 * {@link RelationalEntityMetadata} and {@link RelationalParameterAccessor}.
 	 *
-	 * @param context
+	 * @param context the mapping context. Must not be {@literal null}.
 	 * @param tree part tree, must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param dialect must not be {@literal null}.
 	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
 	 * @param accessor parameter metadata provider, must not be {@literal null}.
-	 * @param isSliceQuery
-	 * @param returnedType
+	 * @param isSliceQuery flag denoting if the query returns a {@link org.springframework.data.domain.Slice}.
+	 * @param returnedType the {@link ReturnedType} to be returned by the query. Must not be {@literal null}.
 	 */
 	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
@@ -108,8 +108,8 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 * Validate parameters for the derived query. Specifically checking that the query method defines scalar parameters
 	 * and collection parameters where required and that invalid parameter declarations are rejected.
 	 *
-	 * @param tree
-	 * @param parameters
+	 * @param tree the tree structure defining the predicate of the query.
+	 * @param parameters parameters for the predicate.
 	 */
 	static void validate(PartTree tree, Parameters<?, ?> parameters,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
@@ -343,18 +343,6 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 			this.joinTable = joinTable;
 			this.joinColumn = joinColumn;
 			this.parentId = parentId;
-		}
-
-		Table getJoinTable() {
-			return this.joinTable;
-		}
-
-		Column getJoinColumn() {
-			return this.joinColumn;
-		}
-
-		Column getParentId() {
-			return this.parentId;
 		}
 
 		@Override

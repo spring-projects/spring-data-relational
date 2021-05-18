@@ -125,8 +125,8 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 	/**
 	 * Obtain the result type to read from {@link ResultProcessor}.
 	 *
-	 * @param resultProcessor
-	 * @return
+	 * @param resultProcessor  the {@link ResultProcessor} used to determine the result type. Must not be {@literal null}.
+	 * @return the type that should get loaded from the database before it gets converted into the actual return type of a method. Guaranteed to be not {@literal null}.
 	 */
 	protected Class<?> resolveTypeToRead(ResultProcessor resultProcessor) {
 
