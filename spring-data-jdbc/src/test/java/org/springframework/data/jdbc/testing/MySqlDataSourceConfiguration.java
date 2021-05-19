@@ -77,4 +77,15 @@ class MySqlDataSourceConfiguration extends DataSourceConfiguration implements In
 					new ByteArrayResource("DROP DATABASE test;CREATE DATABASE test;".getBytes()));
 		}
 	}
+
+	private DataSource createRootDataSource() {
+
+		MysqlDataSource dataSource = new MysqlDataSource();
+		dataSource.setUrl(MYSQL_CONTAINER.getJdbcUrl());
+		dataSource.setUser("root");
+		dataSource.setPassword(MYSQL_CONTAINER.getPassword());
+		dataSource.setDatabaseName(MYSQL_CONTAINER.getDatabaseName());
+
+		return dataSource;
+	}
 }
