@@ -17,9 +17,9 @@ package org.springframework.data.jdbc.core.dialect;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.data.relational.core.dialect.Db2Dialect;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
  * {@link Db2Dialect} that registers JDBC specific converters.
@@ -34,8 +34,8 @@ public class JdbcDb2Dialect extends Db2Dialect {
 	@Override
 	public Collection<Object> getConverters() {
 
-		ArrayList<Object> converters = new ArrayList<>(super.getConverters());
-		converters.add(OffsetDateTime2TimestampConverter.INSTANCE);
+		List<Object> converters = new ArrayList<>(super.getConverters());
+		converters.add(OffsetDateTimeToTimestampConverter.INSTANCE);
 
 		return converters;
 	}

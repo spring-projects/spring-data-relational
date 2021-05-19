@@ -34,6 +34,6 @@ public class MariaDbDialect extends MySqlDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(Timestamp2OffsetDateTimeConverter.INSTANCE);
+		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
 	}
 }

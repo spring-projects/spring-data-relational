@@ -38,11 +38,11 @@ public class JdbcH2Dialect extends H2Dialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(TimestampWithTimeZone2OffsetDateTimeConverter.INSTANCE);
+		return Collections.singletonList(TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE);
 	}
 
 	@ReadingConverter
-	enum TimestampWithTimeZone2OffsetDateTimeConverter implements Converter<TimestampWithTimeZone, OffsetDateTime> {
+	enum TimestampWithTimeZoneToOffsetDateTimeConverter implements Converter<TimestampWithTimeZone, OffsetDateTime> {
 		INSTANCE;
 
 

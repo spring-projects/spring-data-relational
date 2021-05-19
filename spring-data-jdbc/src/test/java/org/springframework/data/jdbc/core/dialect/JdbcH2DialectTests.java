@@ -1,13 +1,3 @@
-package org.springframework.data.jdbc.core.dialect;
-
-import static org.assertj.core.api.Assertions.*;
-
-import java.time.OffsetDateTime;
-
-import org.h2.api.TimestampWithTimeZone;
-import org.h2.util.DateTimeUtils;
-import org.junit.jupiter.api.Test;
-
 /*
  * Copyright 2021 the original author or authors.
  *
@@ -23,6 +13,15 @@ import org.junit.jupiter.api.Test;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.springframework.data.jdbc.core.dialect;
+
+import static org.assertj.core.api.Assertions.*;
+
+import java.time.OffsetDateTime;
+
+import org.h2.api.TimestampWithTimeZone;
+import org.h2.util.DateTimeUtils;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link JdbcH2Dialect}.
@@ -34,7 +33,7 @@ class JdbcH2DialectTests {
 	@Test
 	void TimestampWithTimeZone2OffsetDateTimeConverterConvertsProperly() {
 
-		JdbcH2Dialect.TimestampWithTimeZone2OffsetDateTimeConverter converter = JdbcH2Dialect.TimestampWithTimeZone2OffsetDateTimeConverter.INSTANCE;
+		JdbcH2Dialect.TimestampWithTimeZoneToOffsetDateTimeConverter converter = JdbcH2Dialect.TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE;
 		long dateValue = 123456789;
 		long timeNanos = 987654321;
 		int timeZoneOffsetSeconds = 4 * 60 * 60;

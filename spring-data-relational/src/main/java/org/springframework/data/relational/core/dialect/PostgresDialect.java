@@ -117,7 +117,7 @@ public class PostgresDialect extends AbstractDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(Timestamp2OffsetDateTimeConverter.INSTANCE);
+		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
 	}
 
 	static class PostgresLockClause implements LockClause {

@@ -23,11 +23,10 @@ import java.util.Collections;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
 
 /**
- * {@link Db2Dialect} that registers JDBC specific converters.
+ * {@link SqlServerDialect} that registers JDBC specific converters.
  *
  * @author Jens Schauder
  * @since 2.3
@@ -38,11 +37,11 @@ public class JdbcSqlServerDialect extends SqlServerDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(DateTimeOffset2OffsetDateTimeConverter.INSTANCE);
+		return Collections.singletonList(DateTimeOffsetToOffsetDateTimeConverter.INSTANCE);
 	}
 
 	@ReadingConverter
-	enum DateTimeOffset2OffsetDateTimeConverter implements Converter<DateTimeOffset, OffsetDateTime> {
+	enum DateTimeOffsetToOffsetDateTimeConverter implements Converter<DateTimeOffset, OffsetDateTime> {
 		INSTANCE;
 
 		@Override
