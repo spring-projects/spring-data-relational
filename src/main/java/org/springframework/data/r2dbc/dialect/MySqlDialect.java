@@ -20,13 +20,14 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 
 /**
@@ -50,7 +51,8 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	/**
 	 * MySQL specific converters.
 	 */
-	private static final List<Object> CONVERTERS = Collections.singletonList(ByteToBooleanConverter.INSTANCE);
+	private static final List<Object> CONVERTERS = Arrays.asList(ByteToBooleanConverter.INSTANCE,
+			BooleanToByteConverter.INSTANCE);
 
 	/*
 	 * (non-Javadoc)
@@ -85,6 +87,7 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	 *
 	 * @author Michael Berry
 	 */
+	@ReadingConverter
 	public enum ByteToBooleanConverter implements Converter<Byte, Boolean> {
 
 		INSTANCE;
@@ -97,6 +100,23 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 			}
 
 			return s != 0;
+		}
+	}
+
+	/**
+	 * Simple singleton to convert {@link Boolean}s to their {@link Byte} representation. MySQL does not have a built-in
+	 * boolean type by default, so relies on using a byte instead. {@literal true} maps to {@code 1}.
+	 *
+	 * @author Mark Paluch
+	 */
+	@WritingConverter
+	public enum BooleanToByteConverter implements Converter<Boolean, Byte> {
+
+		INSTANCE;
+
+		@Override
+		public Byte convert(Boolean s) {
+			return (byte) (s.booleanValue() ? 1 : 0);
 		}
 	}
 }
