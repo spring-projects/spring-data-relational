@@ -28,11 +28,12 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
  *
  * @author Mark Paluch
  * @author Bogdan Ilchyshyn
+ * @author Jens Schauder
  */
 public class H2TestSupport {
 
 	public static String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
-			+ "    id          integer CONSTRAINT id PRIMARY KEY,\n" //
+			+ "    id          integer CONSTRAINT id1 PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    manual      integer NULL\n," //
@@ -40,12 +41,20 @@ public class H2TestSupport {
 			+ ");";
 
 	public static String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
-			+ "    id          serial CONSTRAINT id PRIMARY KEY,\n" //
+			+ "    id          serial CONSTRAINT id1 PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    extra       varchar(255),\n" //
 			+ "    manual      integer NULL\n" //
 			+ ");";
+
+	public static String CREATE_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "CREATE TABLE \"LegoSet\" (\n" //
+			+ "    \"Id\"          serial CONSTRAINT id2 PRIMARY KEY,\n" //
+			+ "    \"Name\"        varchar(255) NOT NULL,\n" //
+			+ "    \"Manual\"      integer NULL\n" //
+			+ ");";
+
+	public static final String DROP_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "DROP TABLE \"LegoSet\"";
 
 	/**
 	 * Creates a new {@link ConnectionFactory}.

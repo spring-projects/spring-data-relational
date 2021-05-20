@@ -55,6 +55,7 @@ import org.springframework.util.CollectionUtils;
  *
  * @author Mark Paluch
  * @author Louis Morgan
+ * @author Jens Schauder
  */
 public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStrategy {
 
@@ -358,6 +359,11 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	public MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> getMappingContext() {
 		return this.mappingContext;
+	}
+
+	@Override
+	public String renderForGeneratedKeys(SqlIdentifier identifier) {
+		return dialect.renderForGeneratedKeys(identifier);
 	}
 
 	private RelationalPersistentEntity<?> getRequiredPersistentEntity(Class<?> typeToRead) {

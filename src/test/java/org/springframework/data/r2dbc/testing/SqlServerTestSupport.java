@@ -13,9 +13,9 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
  *
  * @author Mark Paluch
  * @author Bogdan Ilchyshyn
+ * @author Jens Schauder
  */
 public class SqlServerTestSupport {
-
 	public static String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
 			+ "    id          integer PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
@@ -33,6 +33,14 @@ public class SqlServerTestSupport {
 			+ ");";
 
 	public static String INSERT_INTO_LEGOSET = "INSERT INTO legoset (id, name, manual) VALUES(@P0, @P1, @P3)";
+
+	public static final String CREATE_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "CREATE TABLE LegoSet (\n" //
+			+ "    Id          integer IDENTITY(1,1) PRIMARY KEY,\n" //
+			+ "    Name        varchar(255) NOT NULL,\n" //
+			+ "    Manual      integer NULL\n" //
+			+ ");";
+
+	public static final String DROP_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "DROP TABLE LegoSet";
 
 	/**
 	 * Returns a locally provided database at {@code sqlserver:@localhost:1433/master}.

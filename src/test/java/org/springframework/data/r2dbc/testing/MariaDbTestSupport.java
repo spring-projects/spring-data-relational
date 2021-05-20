@@ -35,23 +35,32 @@ import org.testcontainers.containers.MariaDBContainer;
  * Utility class for testing against MariaDB.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class MariaDbTestSupport {
 
 	private static ExternalDatabase testContainerDatabase;
 
-	public static String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
+	public static final String CREATE_TABLE_LEGOSET = "CREATE TABLE legoset (\n" //
 			+ "    id          integer PRIMARY KEY,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    manual      integer NULL\n," //
 			+ "    cert        varbinary(255) NULL\n" //
 			+ ") ENGINE=InnoDB;";
 
-	public static String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
+	public static final String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
 			+ "    id          integer AUTO_INCREMENT PRIMARY KEY,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    manual      integer NULL\n" //
 			+ ") ENGINE=InnoDB;";
+
+	public static final String CREATE_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "CREATE TABLE `LegoSet` (\n" //
+			+ "    `Id`          integer AUTO_INCREMENT PRIMARY KEY,\n" //
+			+ "    `Name`        varchar(255) NOT NULL,\n" //
+			+ "    `Manual`      integer NULL\n" //
+			+ ") ENGINE=InnoDB;";
+
+	public static final String DROP_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "DROP TABLE `LegoSet`";
 
 	/**
 	 * Returns a database either hosted locally at {@code localhost:3306/mysql} or running inside Docker.

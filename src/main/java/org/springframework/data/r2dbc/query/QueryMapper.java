@@ -82,9 +82,10 @@ public class QueryMapper {
 
 	/**
 	 * Render a {@link SqlIdentifier} for SQL usage.
+	 * The resulting String might contain quoting characters.
 	 *
-	 * @param identifier
-	 * @return
+	 * @param identifier the identifier to be rendered.
+	 * @return an identifier String.
 	 * @since 1.1
 	 */
 	public String toSql(SqlIdentifier identifier) {

@@ -29,6 +29,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.util.Assert;
 
 /**
  * Data access strategy that generalizes convenience operations using mapped entities. Typically used internally by
@@ -36,6 +37,7 @@ import org.springframework.r2dbc.core.PreparedOperation;
  * primary keys.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see org.springframework.r2dbc.core.PreparedOperation
  * @deprecated since 1.2 in favor of using direct usage of {@link StatementMapper},
  *             {@link org.springframework.data.r2dbc.query.UpdateMapper} and {@link R2dbcConverter}.
@@ -134,6 +136,19 @@ public interface ReactiveDataAccessStrategy {
 	 * @see SqlIdentifier#toSql(IdentifierProcessing)
 	 */
 	String toSql(SqlIdentifier identifier);
+
+	/**
+	 * Render a {@link SqlIdentifier} in a way suitable for registering it as a generated key with a statement.
+	 * 
+	 * @param identifier to render. Must not be {@literal null}.
+	 * @return rendered identifier. Guaranteed to be not {@literal null}.
+	 */
+	default String renderForGeneratedKeys(SqlIdentifier identifier) {
+
+		Assert.notNull(identifier, "Indentifier must not be null.");
+
+		return identifier.toSql(IdentifierProcessing.NONE);
+	}
 
 	/**
 	 * Interface to retrieve parameters for named parameter processing.

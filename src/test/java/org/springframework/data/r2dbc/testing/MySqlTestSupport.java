@@ -35,6 +35,7 @@ import com.mysql.cj.jdbc.MysqlDataSource;
  *
  * @author Mark Paluch
  * @author Bogdan Ilchyshyn
+ * @author Jens Schauder
  */
 public class MySqlTestSupport {
 
@@ -55,6 +56,14 @@ public class MySqlTestSupport {
 			+ "    manual      integer NULL\n" //
 			+ ") ENGINE=InnoDB;";
 
+
+	public static final String CREATE_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "CREATE TABLE `LegoSet` (\n" //
+			+ "    `Id`          integer AUTO_INCREMENT PRIMARY KEY,\n" //
+			+ "    `Name`        varchar(255) NOT NULL,\n" //
+			+ "    `Manual`      integer NULL\n" //
+			+ ") ENGINE=InnoDB;";
+
+	public static final String DROP_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "DROP TABLE LegoSet";
 	/**
 	 * Returns a database either hosted locally or running inside Docker.
 	 *

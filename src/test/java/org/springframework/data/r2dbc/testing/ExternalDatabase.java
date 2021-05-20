@@ -222,7 +222,7 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 		 */
 		@Override
 		public String getHostname() {
-			throw new UnsupportedOperationException(getClass().getSimpleName());
+			return "unknown";
 		}
 
 		/* (non-Javadoc)
@@ -230,7 +230,7 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 		 */
 		@Override
 		public int getPort() {
-			throw new UnsupportedOperationException(getClass().getSimpleName());
+			return -99999;
 		}
 
 		/* (non-Javadoc)

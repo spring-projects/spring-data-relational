@@ -8,6 +8,7 @@ import java.util.Set;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.r2dbc.mapping.R2dbcSimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 
 /**
@@ -58,5 +59,17 @@ public interface R2dbcDialect extends Dialect {
 	 */
 	default Collection<Object> getConverters() {
 		return Collections.emptySet();
+	}
+
+	/**
+	 * Render a {@link SqlIdentifier} in a way suitable for registering it as a generated key with a statement. The
+	 * default implementation renders it as it would render a SQL representation of the identifier, i.e. with quotes where
+	 * applicable.
+	 *
+	 * @param identifier to render. Must not be {@literal null}.
+	 * @return rendered identifier. Guaranteed to be not {@literal null}.
+	 */
+	default String renderForGeneratedKeys(SqlIdentifier identifier) {
+		return identifier.toSql(getIdentifierProcessing());
 	}
 }

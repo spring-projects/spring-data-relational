@@ -28,12 +28,14 @@ import java.util.UUID;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 
 /**
  * An SQL dialect for MySQL.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class MySqlDialect extends org.springframework.data.relational.core.dialect.MySqlDialect
 		implements R2dbcDialect {
@@ -101,6 +103,11 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 
 			return s != 0;
 		}
+	}
+
+	@Override
+	public String renderForGeneratedKeys(SqlIdentifier identifier) {
+		return identifier.getReference(getIdentifierProcessing());
 	}
 
 	/**
