@@ -1,13 +1,12 @@
 package org.springframework.data.relational.core.dialect;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.*;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /*
  * Copyright 2021 the original author or authors.
@@ -26,17 +25,17 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 
 /**
- * Tests {@link Timestamp2OffsetDateTimeConverter}.
+ * Tests {@link TimestampAtUtcToOffsetDateTimeConverter}.
  *
  * @author Jens Schauder
  */
-class Timestamp2OffsetDateTimeConverterUnitTests {
+class TimestampAtUtcToOffsetDateTimeConverterUnitTests {
 
 	@Test
 	void conversionMaintainsInstant() {
 
 		Timestamp timestamp = Timestamp.from(Instant.now());
-		OffsetDateTime converted = Timestamp2OffsetDateTimeConverter.INSTANCE.convert(timestamp);
+		OffsetDateTime converted = TimestampAtUtcToOffsetDateTimeConverter.INSTANCE.convert(timestamp);
 
 		assertThat(converted.toInstant()).isEqualTo(timestamp.toInstant());
 	}

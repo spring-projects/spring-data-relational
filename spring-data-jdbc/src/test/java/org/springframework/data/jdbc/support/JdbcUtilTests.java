@@ -1,12 +1,3 @@
-package org.springframework.data.jdbc.support;
-
-import static org.assertj.core.api.Assertions.*;
-
-import java.sql.Types;
-import java.time.OffsetDateTime;
-
-import org.junit.jupiter.api.Test;
-
 /*
  * Copyright 2021 the original author or authors.
  *
@@ -22,6 +13,14 @@ import org.junit.jupiter.api.Test;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.springframework.data.jdbc.support;
+
+import static org.assertj.core.api.Assertions.*;
+
+import java.sql.Types;
+import java.time.OffsetDateTime;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link JdbcUtil}.

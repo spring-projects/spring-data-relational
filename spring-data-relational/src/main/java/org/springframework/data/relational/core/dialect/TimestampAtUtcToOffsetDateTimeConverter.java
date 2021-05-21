@@ -31,7 +31,7 @@ import org.springframework.data.convert.ReadingConverter;
  * @since 2.3
  */
 @ReadingConverter
-enum Timestamp2OffsetDateTimeConverter implements Converter<Timestamp, OffsetDateTime> {
+enum TimestampAtUtcToOffsetDateTimeConverter implements Converter<Timestamp, OffsetDateTime> {
 
 	INSTANCE;
 

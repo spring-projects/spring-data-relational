@@ -7,7 +7,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 /*
  * Copyright 2021 the original author or authors.
@@ -26,18 +25,18 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 
 /**
- * Tests for {@link OffsetDateTime2TimestampConverter}.
+ * Tests for {@link OffsetDateTimeToTimestampConverter}.
  *
  * @author Jens Schauder
  */
-class OffsetDateTime2TimestampConverterUnitTests {
+class OffsetDateTimeToTimestampConverterUnitTests {
 
 	@Test
 	void conversionPreservesInstant() {
 
 		OffsetDateTime offsetDateTime = OffsetDateTime.of(5, 5, 5, 5,5,5,123456789, ZoneOffset.ofHours(3));
 
-		Timestamp timestamp = OffsetDateTime2TimestampConverter.INSTANCE.convert(offsetDateTime);
+		Timestamp timestamp = OffsetDateTimeToTimestampConverter.INSTANCE.convert(offsetDateTime);
 
 		assertThat(timestamp.toInstant()).isEqualTo(offsetDateTime.toInstant());
 	}

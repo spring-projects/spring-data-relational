@@ -116,6 +116,6 @@ public class Db2Dialect extends AbstractDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(Timestamp2OffsetDateTimeConverter.INSTANCE);
+		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
 	}
 }

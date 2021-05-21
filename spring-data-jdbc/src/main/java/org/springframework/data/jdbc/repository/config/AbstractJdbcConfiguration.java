@@ -20,7 +20,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -55,13 +60,17 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
-public class AbstractJdbcConfiguration {
+public class AbstractJdbcConfiguration implements ApplicationContextAware {
+
+	private static Logger LOG = LoggerFactory.getLogger(AbstractJdbcConfiguration.class);
+
+	private ApplicationContext applicationContext;
 
 	/**
 	 * Register a {@link JdbcMappingContext} and apply an optional {@link NamingStrategy}.
 	 *
 	 * @param namingStrategy optional {@link NamingStrategy}. Use {@link NamingStrategy#INSTANCE} as fallback.
-	 * @param customConversions see {@link #jdbcCustomConversions(Dialect)}.
+	 * @param customConversions see {@link #jdbcCustomConversions()}.
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
@@ -76,10 +85,11 @@ public class AbstractJdbcConfiguration {
 
 	/**
 	 * Creates a {@link RelationalConverter} using the configured
-	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions)}. Will get {@link #jdbcCustomConversions(Dialect)} ()} applied.
+	 * {@link #jdbcMappingContext(Optional, JdbcCustomConversions)}. Will get {@link #jdbcCustomConversions()} ()}
+	 * applied.
 	 *
 	 * @see #jdbcMappingContext(Optional, JdbcCustomConversions)
-	 * @see #jdbcCustomConversions(Dialect) ()
+	 * @see #jdbcCustomConversions()
 	 * @return must not be {@literal null}.
 	 */
 	@Bean
@@ -89,7 +99,7 @@ public class AbstractJdbcConfiguration {
 		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations());
 
 		return new BasicJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory,
-			dialect.getIdentifierProcessing());
+				dialect.getIdentifierProcessing());
 	}
 
 	/**
@@ -101,10 +111,20 @@ public class AbstractJdbcConfiguration {
 	 * @return will never be {@literal null}.
 	 */
 	@Bean
-	public JdbcCustomConversions jdbcCustomConversions(Dialect dialect) {
+	public JdbcCustomConversions jdbcCustomConversions() {
 
-		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(JdbcSimpleTypes.HOLDER,
-				storeConverters(dialect)), userConverters());
+		try {
+
+			Dialect dialect = applicationContext.getBean(Dialect.class);
+
+			return new JdbcCustomConversions(
+					CustomConversions.StoreConversions.of(JdbcSimpleTypes.HOLDER, storeConverters(dialect)), userConverters());
+		} catch (NoSuchBeanDefinitionException exception) {
+
+			LOG.warn("No dialect found. CustomConversions will be configured without dialect specific conversions.");
+
+			return new JdbcCustomConversions();
+		}
 	}
 
 	private List<?> userConverters() {
@@ -161,5 +181,10 @@ public class AbstractJdbcConfiguration {
 	@Bean
 	public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
 		return DialectResolver.getDialect(operations.getJdbcOperations());
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.applicationContext = applicationContext;
 	}
 }

@@ -43,13 +43,13 @@ public class JdbcMySqlDialect extends MySqlDialect {
 	public Collection<Object> getConverters() {
 
 		ArrayList<Object> converters = new ArrayList<>(super.getConverters());
-		converters.add(OffsetDateTime2TimestampJdbcValueConverter.INSTANCE);
+		converters.add(OffsetDateTimeToTimestampJdbcValueConverter.INSTANCE);
 
 		return converters;
 	}
 
 	@WritingConverter
-	enum OffsetDateTime2TimestampJdbcValueConverter implements Converter<OffsetDateTime, JdbcValue> {
+	enum OffsetDateTimeToTimestampJdbcValueConverter implements Converter<OffsetDateTime, JdbcValue> {
 		INSTANCE;
 
 		@Override

@@ -31,7 +31,7 @@ import java.time.ZoneOffset;
  * @since 2.3
  */
 @WritingConverter
-enum OffsetDateTime2TimestampConverter implements Converter<OffsetDateTime, Timestamp> {
+enum OffsetDateTimeToTimestampConverter implements Converter<OffsetDateTime, Timestamp> {
 
 	INSTANCE;
 	@Override
