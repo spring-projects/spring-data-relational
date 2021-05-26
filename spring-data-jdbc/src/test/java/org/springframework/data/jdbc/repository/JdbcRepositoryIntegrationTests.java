@@ -492,6 +492,19 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result.getContent().get(0).getName()).isEqualTo("Entity Name");
 	}
 
+	@Test // #908
+	void derivedQueryWithBooleanLiteralFindsCorrectValues() {
+
+		repository.save(createDummyEntity());
+		DummyEntity entity = createDummyEntity();
+		entity.flag = true;
+		entity = repository.save(entity);
+
+		List<DummyEntity> result = repository.findByFlagTrue();
+
+		assertThat(result).extracting(e -> e.idProp).containsExactly(entity.idProp);
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -557,6 +570,8 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE OFFSET_DATE_TIME > :threshhold")
 		List<DummyEntity> findByOffsetDateTime(@Param("threshhold") OffsetDateTime threshhold);
+
+		List<DummyEntity> findByFlagTrue();
 	}
 
 	@Configuration
@@ -603,10 +618,12 @@ public class JdbcRepositoryIntegrationTests {
 	@Data
 	@NoArgsConstructor
 	static class DummyEntity {
+
 		String name;
 		Instant pointInTime;
 		OffsetDateTime offsetDateTime;
 		@Id private Long idProp;
+		boolean flag;
 
 		public DummyEntity(String name) {
 			this.name = name;
