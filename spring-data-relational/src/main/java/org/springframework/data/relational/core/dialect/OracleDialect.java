@@ -15,8 +15,14 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
+
 import java.util.Collection;
 import java.util.Collections;
+
+import static java.util.Arrays.*;
 
 /**
  * An SQL dialect for Oracle.
@@ -47,7 +53,25 @@ public class OracleDialect extends AnsiDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
+		return asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE, BooleanToIntegerConverter.INSTANCE);
 	}
 
+	@ReadingConverter
+	enum NumberToBooleanConverter implements Converter<Number, Boolean> {
+		INSTANCE;
+
+		@Override
+		public Boolean convert(Number number) {
+			return number.intValue() != 0;
+		}
+	}
+	@WritingConverter
+	enum BooleanToIntegerConverter implements Converter<Boolean, Integer> {
+		INSTANCE;
+
+		@Override
+		public Integer convert(Boolean bool) {
+			return bool ? 1 : 0;
+		}
+	}
 }

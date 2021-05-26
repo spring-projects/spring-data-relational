@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -457,7 +458,7 @@ public class PartTreeJdbcQueryUnitTests {
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"ACTIVE\" = TRUE");
+		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"ACTIVE\" = :active");
 	}
 
 	@Test // DATAJDBC-318
@@ -468,7 +469,7 @@ public class PartTreeJdbcQueryUnitTests {
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[0]);
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"ACTIVE\" = FALSE");
+		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"ACTIVE\" = :active");
 	}
 
 	@Test // DATAJDBC-318

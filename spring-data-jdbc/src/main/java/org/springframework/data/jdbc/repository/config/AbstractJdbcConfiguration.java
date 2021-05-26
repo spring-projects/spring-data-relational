@@ -133,7 +133,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 		}
 	}
 
-	private List<?> userConverters() {
+	protected List<?> userConverters() {
 		return Collections.emptyList();
 	}
 

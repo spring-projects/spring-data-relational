@@ -501,6 +501,19 @@ public class JdbcRepositoryIntegrationTests {
 		repository.updateWithIntervalCalculation(23L, LocalDateTime.now());
 	}
 
+	@Test // #908
+	void derivedQueryWithBooleanLiteralFindsCorrectValues() {
+
+		repository.save(createDummyEntity());
+		DummyEntity entity = createDummyEntity();
+		entity.flag = true;
+		entity = repository.save(entity);
+
+		List<DummyEntity> result = repository.findByFlagTrue();
+
+		assertThat(result).extracting(e -> e.idProp).containsExactly(entity.idProp);
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -570,6 +583,8 @@ public class JdbcRepositoryIntegrationTests {
 		@Modifying
 		@Query("UPDATE dummy_entity SET point_in_time = :start - interval '30 minutes' WHERE id_prop = :id")
 		void updateWithIntervalCalculation(@Param("id") Long id, @Param("start") LocalDateTime start);
+
+		List<DummyEntity> findByFlagTrue();
 	}
 
 	@Configuration
@@ -616,10 +631,12 @@ public class JdbcRepositoryIntegrationTests {
 	@Data
 	@NoArgsConstructor
 	static class DummyEntity {
+
 		String name;
 		Instant pointInTime;
 		OffsetDateTime offsetDateTime;
 		@Id private Long idProp;
+		boolean flag;
 
 		public DummyEntity(String name) {
 			this.name = name;

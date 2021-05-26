@@ -402,11 +402,15 @@ class QueryMapper {
 		}
 
 		if (comparator == Comparator.IS_TRUE) {
-			return column.isEqualTo(SQL.literalOf(true));
+
+			Expression bind = bindBoolean(column, parameterSource, true);
+			return column.isEqualTo(bind);
 		}
 
 		if (comparator == Comparator.IS_FALSE) {
-			return column.isEqualTo(SQL.literalOf(false));
+
+			Expression bind = bindBoolean(column, parameterSource, false);
+			return column.isEqualTo(bind);
 		}
 
 		Expression columnExpression = column;
@@ -493,6 +497,12 @@ class QueryMapper {
 			default:
 				throw new UnsupportedOperationException("Comparator " + comparator + " not supported");
 		}
+	}
+
+	private Expression bindBoolean(Column column, MapSqlParameterSource parameterSource, boolean value) {
+
+		Object converted = converter.writeValue(value, ClassTypeInformation.OBJECT);
+		return bind(converted, Types.BIT, parameterSource, column.getName().getReference());
 	}
 
 	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, SqlIdentifier key) {
