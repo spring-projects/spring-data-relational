@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.dialect;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -30,6 +31,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Christoph Strobl
  * @since 1.1
  */
 public interface Dialect {
@@ -95,6 +97,16 @@ public interface Dialect {
 	 * @return a collection of converters for this dialect.
 	 */
 	default Collection<Object> getConverters() {
+		return Collections.emptySet();
+	}
+
+	/**
+	 * Return the {@link Set} of types considered store native types that can be handeled by the driver.
+	 *
+	 * @return never {@literal null}.
+	 * @since 2.3
+	 */
+	default Set<Class<?>> simpleTypes() {
 		return Collections.emptySet();
 	}
 }
