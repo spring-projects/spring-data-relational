@@ -18,8 +18,9 @@ package org.springframework.data.jdbc.core.dialect;
 import microsoft.sql.DateTimeOffset;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
@@ -29,6 +30,7 @@ import org.springframework.data.relational.core.dialect.SqlServerDialect;
  * {@link SqlServerDialect} that registers JDBC specific converters.
  *
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @since 2.3
  */
 public class JdbcSqlServerDialect extends SqlServerDialect {
@@ -37,11 +39,15 @@ public class JdbcSqlServerDialect extends SqlServerDialect {
 
 	@Override
 	public Collection<Object> getConverters() {
-		return Collections.singletonList(DateTimeOffsetToOffsetDateTimeConverter.INSTANCE);
+
+		List<Object> converters = new ArrayList<>(super.getConverters());
+		converters.add(DateTimeOffsetToOffsetDateTimeConverter.INSTANCE);
+		return converters;
 	}
 
 	@ReadingConverter
 	enum DateTimeOffsetToOffsetDateTimeConverter implements Converter<DateTimeOffset, OffsetDateTime> {
+
 		INSTANCE;
 
 		@Override

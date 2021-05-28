@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
@@ -41,9 +42,12 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -116,9 +120,11 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 		try {
 
 			Dialect dialect = applicationContext.getBean(Dialect.class);
+			SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER : new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
 
 			return new JdbcCustomConversions(
-					CustomConversions.StoreConversions.of(JdbcSimpleTypes.HOLDER, storeConverters(dialect)), userConverters());
+					CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)), userConverters());
+
 		} catch (NoSuchBeanDefinitionException exception) {
 
 			LOG.warn("No dialect found. CustomConversions will be configured without dialect specific conversions.");
@@ -135,7 +141,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 		List<Object> converters = new ArrayList<>();
 		converters.addAll(dialect.getConverters());
-		converters.addAll(JdbcCustomConversions.STORE_CONVERTERS);
+		converters.addAll(JdbcCustomConversions.storeConverters());
 		return converters;
 	}
 

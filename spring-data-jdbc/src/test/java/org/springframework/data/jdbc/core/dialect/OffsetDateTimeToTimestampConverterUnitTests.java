@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 
 /**
- * Tests for {@link OffsetDateTimeToTimestampConverter}.
+ * Tests for {@link JdbcDb2Dialect.OffsetDateTimeToTimestampConverter}.
  *
  * @author Jens Schauder
  */
@@ -36,7 +36,7 @@ class OffsetDateTimeToTimestampConverterUnitTests {
 
 		OffsetDateTime offsetDateTime = OffsetDateTime.of(5, 5, 5, 5,5,5,123456789, ZoneOffset.ofHours(3));
 
-		Timestamp timestamp = OffsetDateTimeToTimestampConverter.INSTANCE.convert(offsetDateTime);
+		Timestamp timestamp = JdbcDb2Dialect.OffsetDateTimeToTimestampConverter.INSTANCE.convert(offsetDateTime);
 
 		assertThat(timestamp.toInstant()).isEqualTo(offsetDateTime.toInstant());
 	}

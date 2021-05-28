@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
@@ -30,14 +31,14 @@ import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @see CustomConversions
  * @see org.springframework.data.mapping.model.SimpleTypeHolder
  * @see JdbcSimpleTypes
  */
 public class JdbcCustomConversions extends CustomConversions {
 
-	public static final List<Object> STORE_CONVERTERS = Arrays
-			.asList(Jsr310TimestampBasedConverters.getConvertersToRegister().toArray());
+	private static final Collection<Object> STORE_CONVERTERS = Collections.unmodifiableCollection(Jsr310TimestampBasedConverters.getConvertersToRegister());
 	private static final StoreConversions STORE_CONVERSIONS = StoreConversions.of(JdbcSimpleTypes.HOLDER,
 			STORE_CONVERTERS);
 
@@ -75,6 +76,16 @@ public class JdbcCustomConversions extends CustomConversions {
 	 */
 	public JdbcCustomConversions(ConverterConfiguration converterConfiguration) {
 		super(converterConfiguration);
+	}
+
+	/**
+	 * Obtain a read only copy of default store converters.
+	 *
+	 * @return never {@literal null}.
+	 * @since 2.3
+	 */
+	public static Collection<Object> storeConverters() {
+		return STORE_CONVERTERS;
 	}
 
 	private static boolean isDateTimeApiConversion(ConvertiblePair cp) {

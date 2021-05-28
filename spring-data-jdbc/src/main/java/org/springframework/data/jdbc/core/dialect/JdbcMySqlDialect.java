@@ -31,6 +31,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * {@link Db2Dialect} that registers JDBC specific converters.
  *
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @since 2.3
  */
 public class JdbcMySqlDialect extends MySqlDialect {
@@ -38,6 +39,8 @@ public class JdbcMySqlDialect extends MySqlDialect {
 	public JdbcMySqlDialect(IdentifierProcessing identifierProcessing) {
 		super(identifierProcessing);
 	}
+
+	protected JdbcMySqlDialect() {}
 
 	@Override
 	public Collection<Object> getConverters() {
@@ -50,6 +53,7 @@ public class JdbcMySqlDialect extends MySqlDialect {
 
 	@WritingConverter
 	enum OffsetDateTimeToTimestampJdbcValueConverter implements Converter<OffsetDateTime, JdbcValue> {
+
 		INSTANCE;
 
 		@Override

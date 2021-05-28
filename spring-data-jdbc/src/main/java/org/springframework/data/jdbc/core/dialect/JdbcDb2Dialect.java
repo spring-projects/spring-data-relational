@@ -15,21 +15,28 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
+import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.relational.core.dialect.Db2Dialect;
 
 /**
  * {@link Db2Dialect} that registers JDBC specific converters.
  *
  * @author Jens Schauder
+ * @author Christoph Strobl
  * @since 2.3
  */
 public class JdbcDb2Dialect extends Db2Dialect {
 
 	public static JdbcDb2Dialect INSTANCE = new JdbcDb2Dialect();
+
+	protected JdbcDb2Dialect() {}
 
 	@Override
 	public Collection<Object> getConverters() {
@@ -40,4 +47,21 @@ public class JdbcDb2Dialect extends Db2Dialect {
 		return converters;
 	}
 
+	/**
+	 * {@link WritingConverter} from {@link OffsetDateTime} to {@link Timestamp}. The conversion preserves the
+	 * {@link java.time.Instant} represented by {@link OffsetDateTime}
+	 *
+	 * @author Jens Schauder
+	 * @since 2.3
+	 */
+	@WritingConverter
+	enum OffsetDateTimeToTimestampConverter implements Converter<OffsetDateTime, Timestamp> {
+
+		INSTANCE;
+
+		@Override
+		public Timestamp convert(OffsetDateTime source) {
+			return Timestamp.from(source.toInstant());
+		}
+	}
 }

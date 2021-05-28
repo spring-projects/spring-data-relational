@@ -16,7 +16,6 @@
 package org.springframework.data.jdbc.testing;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +44,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -62,6 +62,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Mark Paluch
  * @author Fei Dong
  * @author Myeonghyeon Lee
+ * @author Christoph Strobl
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -114,15 +115,19 @@ public class TestConfiguration {
 
 	@Bean
 	CustomConversions jdbcCustomConversions(Dialect dialect) {
-		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(JdbcSimpleTypes.HOLDER,
-				storeConverters(dialect)), Collections.emptyList());
+
+		SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER
+				: new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+
+		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
+				Collections.emptyList());
 	}
 
 	private List<Object> storeConverters(Dialect dialect) {
 
 		List<Object> converters = new ArrayList<>();
 		converters.addAll(dialect.getConverters());
-		converters.addAll(JdbcCustomConversions.STORE_CONVERTERS);
+		converters.addAll(JdbcCustomConversions.storeConverters());
 		return converters;
 	}
 
