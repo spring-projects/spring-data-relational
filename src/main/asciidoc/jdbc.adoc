@@ -239,7 +239,29 @@ So, if you remove the reference, the previously referenced entity gets deleted.
 This also means references are 1-1 or 1-n, but not n-1 or n-m.
 
 If you have n-1 or n-m references, you are, by definition, dealing with two separate aggregates.
-References between those should be encoded as simple `id` values, which should map properly with Spring Data JDBC.
+References between those may be encoded as simple `id` values, which map properly with Spring Data JDBC.
+A better way to encode these is to make them instances of `AggregateReference`.
+An `AggregateReference` is a wrapper around an id value which marks that value as a reference to a different aggregate.
+Also, the type of that aggregate is encoded in a type parameter.
+
+
+.Declaring and setting an `AggregateReference`
+====
+[source,java]
+----
+class Person {
+	@Id long id;
+	AggregateReference<Person, Long> bestFriend;
+}
+
+// ...
+
+Person p1, p2 = // some initialization
+
+p1.bestFriend = AggregateReference.to(p2.id);
+
+----
+====
 
 [[jdbc.entity-persistence.custom-converters]]
 === Custom converters
