@@ -37,9 +37,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import net.bytebuddy.asm.Advice;
 import org.assertj.core.api.SoftAssertions;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -312,7 +310,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature({SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES})
+	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
 	public void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);
@@ -851,7 +849,6 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(loaded.testTime).isEqualTo(entity.testTime);
 	}
 
-
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -1199,10 +1196,9 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Table
-	static class WithLocalDateTime{
+	static class WithLocalDateTime {
 
-		@Id
-		Long id;
+		@Id Long id;
 		LocalDateTime testTime;
 	}
 
