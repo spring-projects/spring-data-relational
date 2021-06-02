@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
@@ -27,11 +28,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -64,7 +63,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 public class PartTreeJdbcQueryUnitTests {
 
 	private static final String TABLE = "\"users\"";
-	private static final String ALL_FIELDS = "\"users\".\"ID\" AS \"ID\", \"users\".\"AGE\" AS \"AGE\", \"hated\".\"USER\" AS \"HATED_USER\", \"users\".\"ACTIVE\" AS \"ACTIVE\", \"users\".\"LAST_NAME\" AS \"LAST_NAME\", \"users\".\"FIRST_NAME\" AS \"FIRST_NAME\", \"users\".\"DATE_OF_BIRTH\" AS \"DATE_OF_BIRTH\", \"users\".\"HOBBY_REFERENCE\" AS \"HOBBY_REFERENCE\", \"hated\".\"NAME\" AS \"HATED_NAME\", \"users\".\"USER_CITY\" AS \"USER_CITY\", \"users\".\"USER_STREET\" AS \"USER_STREET\"";
+	private static final String ALL_FIELDS = "\"users\".\"ID\" AS \"ID\", \"users\".\"AGE\" AS \"AGE\", \"users\".\"ACTIVE\" AS \"ACTIVE\", \"users\".\"LAST_NAME\" AS \"LAST_NAME\", \"users\".\"FIRST_NAME\" AS \"FIRST_NAME\", \"users\".\"DATE_OF_BIRTH\" AS \"DATE_OF_BIRTH\", \"users\".\"HOBBY_REFERENCE\" AS \"HOBBY_REFERENCE\", \"hated\".\"NAME\" AS \"HATED_NAME\", \"users\".\"USER_CITY\" AS \"USER_CITY\", \"users\".\"USER_STREET\" AS \"USER_STREET\"";
 	private static final String JOIN_CLAUSE = "FROM \"users\" LEFT OUTER JOIN \"HOBBY\" \"hated\" ON \"hated\".\"USER\" = \"users\".\"ID\"";
 	private static final String BASE_SELECT = "SELECT " + ALL_FIELDS + " " + JOIN_CLAUSE;
 
@@ -79,11 +78,22 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
-	@Test // DATAJDBC-318
-	public void shouldFailForQueryByAggregateReference() throws Exception {
+	@Test // #922
+	public void createQueryByAggregateReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbyReference", Hobby.class);
-		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		final Hobby hobby = new Hobby();
+		hobby.name = "twentythree";
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(query.getQuery())
+					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
+
+			softly.assertThat(query.getParameterSource().getValue("hobby_reference")).isEqualTo("twentythree");
+		});
 	}
 
 	@Test // DATAJDBC-318
@@ -100,11 +110,38 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
-	@Test // DATAJDBC-318
-	public void shouldFailForAggregateReference() throws Exception {
+	@Test // #922
+	public void createQueryForQueryByAggregateReference() throws Exception {
 
-		JdbcQueryMethod queryMethod = getQueryMethod("findByAnotherEmbeddedList", Object.class);
-		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
+		JdbcQueryMethod queryMethod = getQueryMethod("findViaReferenceByHobbyReference", AggregateReference.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		final AggregateReference<Object, String> hobby = AggregateReference.to("twentythree");
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(query.getQuery())
+					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
+
+			softly.assertThat(query.getParameterSource().getValue("hobby_reference")).isEqualTo("twentythree");
+		});
+	}
+
+	@Test // #922
+	public void createQueryForQueryByAggregateReferenceId() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findViaIdByHobbyReference", String.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+		final String hobby = "twentythree";
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(query.getQuery())
+					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
+
+			softly.assertThat(query.getParameterSource().getValue("hobby_reference")).isEqualTo("twentythree");
+		});
 	}
 
 	@Test // DATAJDBC-318
@@ -176,6 +213,7 @@ public class PartTreeJdbcQueryUnitTests {
 				+ ".\"FIRST_NAME\" = :first_name)");
 	}
 
+
 	@Test // DATAJDBC-318
 	public void createsQueryToFindAllEntitiesByDateAttributeBetween() throws Exception {
 
@@ -186,11 +224,14 @@ public class PartTreeJdbcQueryUnitTests {
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { from, to });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"DATE_OF_BIRTH\" BETWEEN :date_of_birth AND :date_of_birth1");
+		assertSoftly(softly -> {
 
-		assertThat(query.getParameterSource().getValue("date_of_birth")).isEqualTo(from);
-		assertThat(query.getParameterSource().getValue("date_of_birth1")).isEqualTo(to);
+			softly.assertThat(query.getQuery())
+					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"DATE_OF_BIRTH\" BETWEEN :date_of_birth AND :date_of_birth1");
+
+			softly.assertThat(query.getParameterSource().getValue("date_of_birth")).isEqualTo(from);
+			softly.assertThat(query.getParameterSource().getValue("date_of_birth1")).isEqualTo(to);
+		});
 	}
 
 	@Test // DATAJDBC-318
@@ -250,6 +291,7 @@ public class PartTreeJdbcQueryUnitTests {
 
 	@Test // DATAJDBC-318
 	public void createsQueryToFindAllEntitiesByDateAttributeBefore() throws Exception {
+
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBefore", Date.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		RelationalParametersParameterAccessor accessor = getAccessor(queryMethod, new Object[] { new Date() });
@@ -608,6 +650,10 @@ public class PartTreeJdbcQueryUnitTests {
 
 		List<User> findAllByHobbyReference(Hobby hobby);
 
+		List<User> findViaReferenceByHobbyReference(AggregateReference<Hobby, String> hobby);
+
+		List<User> findViaIdByHobbyReference(String hobby);
+
 		List<User> findAllByLastNameAndFirstName(String lastName, String firstName);
 
 		List<User> findAllByLastNameOrFirstName(String lastName, String firstName);
@@ -708,6 +754,7 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	static class Hobby {
+		@Id
 		String name;
 	}
 }

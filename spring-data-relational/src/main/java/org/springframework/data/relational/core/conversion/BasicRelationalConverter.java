@@ -157,8 +157,12 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return null;
 		}
 
-		if (conversions.hasCustomReadTarget(value.getClass(), type.getType())) {
-			return conversionService.convert(value, type.getType());
+		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
+
+			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
+			TypeDescriptor targetDescriptor = typeInformationToTypeDescriptor(type);
+
+			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
 		}
 
 		return getPotentiallyConvertedSimpleRead(value, type.getType());
@@ -244,6 +248,13 @@ public class BasicRelationalConverter implements RelationalConverter {
 		}
 
 		return conversionService.convert(value, target);
+	}
+
+	protected static TypeDescriptor typeInformationToTypeDescriptor(TypeInformation<?> type) {
+
+		Class<?>[] generics = type.getTypeArguments().stream().map(TypeInformation::getType).toArray(Class[]::new);
+
+		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), null, null);
 	}
 
 	/**

@@ -50,6 +50,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -514,6 +515,32 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result).extracting(e -> e.idProp).containsExactly(entity.idProp);
 	}
 
+	@Test // #987
+	void queryBySimpleReference() {
+
+		final DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = createDummyEntity();
+		two.ref = AggregateReference.to(one.idProp);
+		two = repository.save(two);
+
+		List<DummyEntity> result = repository.findByRef(one.idProp.intValue());
+
+		assertThat(result).extracting(e -> e.idProp).containsExactly(two.idProp);
+	}
+
+	@Test // #987
+	void queryByAggregateReference() {
+
+		final DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = createDummyEntity();
+		two.ref = AggregateReference.to(one.idProp);
+		two = repository.save(two);
+
+		List<DummyEntity> result = repository.findByRef(two.ref);
+
+		assertThat(result).extracting(e -> e.idProp).containsExactly(two.idProp);
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -585,6 +612,9 @@ public class JdbcRepositoryIntegrationTests {
 		void updateWithIntervalCalculation(@Param("id") Long id, @Param("start") LocalDateTime start);
 
 		List<DummyEntity> findByFlagTrue();
+
+		List<DummyEntity> findByRef(int ref);
+		List<DummyEntity> findByRef(AggregateReference<DummyEntity, Long> ref);
 	}
 
 	@Configuration
@@ -637,6 +667,7 @@ public class JdbcRepositoryIntegrationTests {
 		OffsetDateTime offsetDateTime;
 		@Id private Long idProp;
 		boolean flag;
+		AggregateReference<DummyEntity, Long> ref;
 
 		public DummyEntity(String name) {
 			this.name = name;

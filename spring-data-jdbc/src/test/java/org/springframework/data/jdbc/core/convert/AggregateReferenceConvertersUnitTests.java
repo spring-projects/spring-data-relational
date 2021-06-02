@@ -46,7 +46,8 @@ class AggregateReferenceConvertersUnitTests {
 	@Test // GH-992
 	void convertsFromSimpleValue() {
 
-		ResolvableType aggregateReferenceWithIdTypeInteger = ResolvableType.forClassWithGenerics(AggregateReference.class, String.class, Integer.class);
+		ResolvableType aggregateReferenceWithIdTypeInteger = ResolvableType.forClassWithGenerics(AggregateReference.class,
+				String.class, Integer.class);
 		Object converted = conversionService.convert(23, TypeDescriptor.forObject(23),
 				new TypeDescriptor(aggregateReferenceWithIdTypeInteger, null, null));
 
@@ -56,7 +57,8 @@ class AggregateReferenceConvertersUnitTests {
 	@Test // GH-992
 	void convertsFromSimpleValueThatNeedsSeparateConversion() {
 
-		ResolvableType aggregateReferenceWithIdTypeInteger = ResolvableType.forClassWithGenerics(AggregateReference.class, String.class, Long.class);
+		ResolvableType aggregateReferenceWithIdTypeInteger = ResolvableType.forClassWithGenerics(AggregateReference.class,
+				String.class, Long.class);
 		Object converted = conversionService.convert(23, TypeDescriptor.forObject(23),
 				new TypeDescriptor(aggregateReferenceWithIdTypeInteger, null, null));
 

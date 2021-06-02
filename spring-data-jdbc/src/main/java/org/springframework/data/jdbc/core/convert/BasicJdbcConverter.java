@@ -232,7 +232,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 					targetDescriptor);
 		}
 
-		if (value instanceof Array) {
+		if ( !getConversions().hasCustomReadTarget(value.getClass(), type.getType()) &&
+				value instanceof Array) {
 			try {
 				return readValue(((Array) value).getArray(), type);
 			} catch (SQLException | ConverterNotFoundException e) {
