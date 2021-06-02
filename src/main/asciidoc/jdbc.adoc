@@ -263,48 +263,7 @@ p1.bestFriend = AggregateReference.to(p2.id);
 ----
 ====
 
-[[jdbc.entity-persistence.custom-converters]]
-=== Custom converters
-
-Custom converters can be registered, for types that are not supported by default, by inheriting your configuration from `AbstractJdbcConfiguration` and overwriting the method `jdbcCustomConversions()`.
-
-====
-[source,java]
-----
-@Configuration
-class DataJdbcConfiguration extends AbstractJdbcConfiguration {
-
-    @Override
-    public JdbcCustomConversions jdbcCustomConversions() {
-      return new JdbcCustomConversions(Collections.singletonList(TimestampTzToDateConverter.INSTANCE));
-    }
-
-    @ReadingConverter
-    enum TimestampTzToDateConverter implements Converter<TIMESTAMPTZ, Date> {
-
-        INSTANCE;
-
-        @Override
-        public Date convert(TIMESTAMPTZ source) {
-            //...
-        }
-    }
-}
-----
-====
-
-The constructor of `JdbcCustomConversions` accepts a list of `org.springframework.core.convert.converter.Converter`.
-
-Converters should be annotated with `@ReadingConverter` or `@WritingConverter` in order to control their applicability to only reading from or to writing to the database.
-
-`TIMESTAMPTZ` in the example is a database specific data type that needs conversion into something more suitable for a domain model.
-
-[[jdbc.entity-persistence.custom-converters.jdbc-value]]
-==== JdbcValue
-
-Value conversion uses `JdbcValue` to enrich values propagated to JDBC operations with a `java.sql.Types` type.
-Register a custom write converter if you need to specify a JDBC-specific type instead of using type derivation.
-This converter should convert the value to `JdbcValue` which has a field for the value and for the actual `JDBCType`.
+* Types for which you registered suitable [[jdbc.custom-converters, custom conversions]].
 
 [[jdbc.entity-persistence.naming-strategy]]
 === `NamingStrategy`

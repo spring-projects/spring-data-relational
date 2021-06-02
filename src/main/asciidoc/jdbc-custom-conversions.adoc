@@ -1,4 +1,6 @@
 [[jdbc.custom-converters]]
+// for backward compatibility only:
+[[jdbc.entity-persistence.custom-converters]]
 == Custom Conversions
 
 Spring Data JDBC allows registration of custom converters to influence how values are mapped in the database.
@@ -55,12 +57,26 @@ class MyJdbcConfiguration extends AbstractJdbcConfiguration {
 
     // …
 
-    @Overwrite
-    @Bean
-    public JdbcCustomConversions jdbcCustomConversions() {
-        return new JdbcCustomConversions(Arrays.asList(new BooleanToStringConverter(), new StringToBooleanConverter()));
-    }
+	@Override
+    protected List<?> userConverters() {
+		return Arrays.asList(new BooleanToStringConverter(), new StringToBooleanConverter());
+	}
+
 }
 ----
+
+NOTE: In previous versions of Spring Data JDBC it was recommended to directly overwrite `AbstractJdbcConfiguration.jdbcCustomConversions()`.
+This is no longer necessary or even recommended, since that method assembles conversions intended for all databases, conversions registered by the `Dialect` used and conversions registered by the user.
+If you are migrating from an older version of Spring Data JDBC and have `AbstractJdbcConfiguration.jdbcCustomConversions()` overwritten conversions from your `Dialect` will not get registered.
+
+[[jdbc.custom-converters.jdbc-value]]
+// for backward compatibility only:
+[[jdbc.entity-persistence.custom-converters.jdbc-value]]
+=== JdbcValue
+
+Value conversion uses `JdbcValue` to enrich values propagated to JDBC operations with a `java.sql.Types` type.
+Register a custom write converter if you need to specify a JDBC-specific type instead of using type derivation.
+This converter should convert the value to `JdbcValue` which has a field for the value and for the actual `JDBCType`.
+
 
 include::{spring-data-commons-docs}/custom-conversions.adoc[leveloffset=+3]
