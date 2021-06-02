@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import java.sql.JDBCType;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -245,8 +246,8 @@ class QueryMapper {
 		return mapCondition(criteria, parameterSource, table, entity);
 	}
 
-	private Condition combine(@Nullable Condition currentCondition,
-			CriteriaDefinition.Combinator combinator, Condition nextCondition) {
+	private Condition combine(@Nullable Condition currentCondition, CriteriaDefinition.Combinator combinator,
+			Condition nextCondition) {
 
 		if (currentCondition == null) {
 			currentCondition = nextCondition;
@@ -292,6 +293,17 @@ class QueryMapper {
 
 			mappedValue = convertValue(value, propertyField.getTypeHint());
 			sqlType = propertyField.getSqlType();
+
+		} else if (propertyField instanceof MetadataBackedField //
+				&& ((MetadataBackedField) propertyField).property != null //
+				&& (criteria.getValue() == null || !criteria.getValue().getClass().isArray())) {
+
+			final RelationalPersistentProperty property = ((MetadataBackedField) propertyField).property;
+			JdbcValue jdbcValue = convertSpecial(property, criteria.getValue());
+			mappedValue = jdbcValue.getValue();
+			sqlType = jdbcValue.getJdbcType() != null ? jdbcValue.getJdbcType().getVendorTypeNumber()
+					: propertyField.getSqlType();
+
 		} else {
 
 			mappedValue = convertValue(criteria.getValue(), propertyField.getTypeHint());
@@ -300,6 +312,84 @@ class QueryMapper {
 
 		return createCondition(column, mappedValue, sqlType, parameterSource, criteria.getComparator(),
 				criteria.isIgnoreCase());
+	}
+
+	/**
+	 * Converts values while taking special value types like arrays, {@link Iterable}, or {@link Pair}.
+	 * 
+	 * @param property the property to which the value relates. It determines the type to convert to. Must not be
+	 *          {@literal null}.
+	 * @param value the value to be converted.
+	 * @return a non null {@link JdbcValue} holding the converted value and the appropriate JDBC type information.
+	 */
+	private JdbcValue convertSpecial(RelationalPersistentProperty property, @Nullable Object value) {
+
+		if (value == null) {
+			return JdbcValue.of(null, JDBCType.NULL);
+		}
+
+		if (value instanceof Pair) {
+
+			final JdbcValue first = convertSimple(property, ((Pair<?, ?>) value).getFirst());
+			final JdbcValue second = convertSimple(property, ((Pair<?, ?>) value).getSecond());
+			return JdbcValue.of(Pair.of(first.getValue(), second.getValue()), first.getJdbcType());
+		}
+
+		if (value instanceof Iterable) {
+
+			List<Object> mapped = new ArrayList<>();
+			JDBCType jdbcType = null;
+
+			for (Object o : (Iterable<?>) value) {
+
+				final JdbcValue jdbcValue = convertSimple(property, o);
+				if (jdbcType == null) {
+					jdbcType = jdbcValue.getJdbcType();
+				}
+
+				mapped.add(jdbcValue.getValue());
+			}
+
+			return JdbcValue.of(mapped, jdbcType);
+		}
+
+		if (value.getClass().isArray()) {
+
+			final Object[] valueAsArray = (Object[]) value;
+			final Object[] mappedValueArray = new Object[valueAsArray.length];
+			JDBCType jdbcType = null;
+
+			for (int i = 0; i < valueAsArray.length; i++) {
+
+				final JdbcValue jdbcValue = convertSimple(property, valueAsArray[i]);
+				if (jdbcType == null) {
+					jdbcType = jdbcValue.getJdbcType();
+				}
+
+				mappedValueArray[i] = jdbcValue.getValue();
+			}
+
+			return JdbcValue.of(mappedValueArray, jdbcType);
+		}
+
+		return convertSimple(property, value);
+	}
+
+	/**
+	 * Converts values to a {@link JdbcValue}.
+	 *
+	 * @param property the property to which the value relates. It determines the type to convert to. Must not be
+	 *          {@literal null}.
+	 * @param value the value to be converted.
+	 * @return a non null {@link JdbcValue} holding the converted value and the appropriate JDBC type information.
+	 */
+	private JdbcValue convertSimple(RelationalPersistentProperty property, Object value) {
+
+		return converter.writeJdbcValue( //
+				value, //
+				converter.getColumnType(property), //
+				converter.getSqlType(property) //
+		);
 	}
 
 	private Condition mapEmbeddedObjectCondition(CriteriaDefinition criteria, MapSqlParameterSource parameterSource,
@@ -738,11 +828,6 @@ class QueryMapper {
 
 			if (this.property.getType().isArray()) {
 				return this.property.getTypeInformation();
-			}
-
-			if (this.property.getType().isInterface()
-					|| (java.lang.reflect.Modifier.isAbstract(this.property.getType().getModifiers()))) {
-				return ClassTypeInformation.OBJECT;
 			}
 
 			return this.property.getTypeInformation();

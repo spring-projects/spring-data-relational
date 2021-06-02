@@ -221,16 +221,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return value;
 		}
 
-		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
-
-			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
-			TypeDescriptor targetDescriptor = typeInformationToTypeDescriptor(type);
-
-			return getConversionService().convert(value, sourceDescriptor,
-					targetDescriptor);
-		}
-
-		if (value instanceof Array) {
+		if ( !getConversions().hasCustomReadTarget(value.getClass(), type.getType()) &&
+				value instanceof Array) {
 			try {
 				return readValue(((Array) value).getArray(), type);
 			} catch (SQLException | ConverterNotFoundException e) {
@@ -239,13 +231,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		return super.readValue(value, type);
-	}
-
-	private static TypeDescriptor typeInformationToTypeDescriptor(TypeInformation<?> type) {
-
-		Class<?>[] generics = type.getTypeArguments().stream().map(TypeInformation::getType).toArray(Class[]::new);
-
-		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), null, null);
 	}
 
 	/*

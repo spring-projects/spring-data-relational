@@ -146,11 +146,6 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 			throw new IllegalArgumentException(
 					String.format("Cannot query by nested entity: %s", path.getRequiredPersistentPropertyPath().toDotPath()));
 		}
-
-		if (path.getRequiredPersistentPropertyPath().getLeafProperty().isReference()) {
-			throw new IllegalArgumentException(
-					String.format("Cannot query by reference: %s", path.getRequiredPersistentPropertyPath().toDotPath()));
-		}
 	}
 
 	/**

@@ -35,6 +35,7 @@ import org.springframework.lang.Nullable;
  * @since 2.6
  */
 class AggregateReferenceConverters {
+
 	/**
 	 * Prevent instantiation.
 	 */
@@ -65,7 +66,7 @@ class AggregateReferenceConverters {
 				return null;
 			}
 
-			// if the target type is an AggregateReference we just going to assume it is of the correct type,
+			// if the target type is an AggregateReference we are going to assume it is of the correct type,
 			// because it was already converted.
 			Class<?> objectType = targetDescriptor.getObjectType();
 			if (objectType.isAssignableFrom(AggregateReference.class)) {
