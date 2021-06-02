@@ -15,10 +15,12 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -29,14 +31,19 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
+import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
+import org.springframework.data.relational.core.dialect.LimitClause;
+import org.springframework.data.relational.core.dialect.LockClause;
+import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -53,7 +60,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 
 		assertApplicationContext(context -> {
 
-			List<Class<?>> expectedBeanTypes = Arrays.asList(DataAccessStrategy.class, //
+			List<Class<?>> expectedBeanTypes = asList(DataAccessStrategy.class, //
 					JdbcMappingContext.class, //
 					JdbcConverter.class, //
 					JdbcCustomConversions.class, //
@@ -106,12 +113,12 @@ public class AbstractJdbcConfigurationIntegrationTests {
 		@Override
 		@Bean
 		public Dialect jdbcDialect(NamedParameterJdbcOperations operations) {
-			return HsqlDbDialect.INSTANCE;
+			return new DummyDialect();
 		}
 
 		@Override
-		public JdbcCustomConversions jdbcCustomConversions() {
-			return new JdbcCustomConversions(Collections.singletonList(Blah2BlubbConverter.INSTANCE));
+		protected List<?> userConverters() {
+			return asList(Blah2BlubbConverter.INSTANCE);
 		}
 
 		@WritingConverter
@@ -127,6 +134,70 @@ public class AbstractJdbcConfigurationIntegrationTests {
 		private static class Blah {}
 
 		private static class Blubb {}
+
+		private static class DummyDialect implements Dialect {
+			@Override
+			public LimitClause limit() {
+				return null;
+			}
+
+			@Override
+			public LockClause lock() {
+				return null;
+			}
+
+			@Override
+			public SelectRenderContext getSelectContext() {
+				return null;
+			}
+
+			@Override
+			public Collection<Object> getConverters() {
+				return asList(BooleanToNumberConverter.INSTANCE);
+			}
+		}
+
+		@WritingConverter
+		enum BooleanToNumberConverter implements Converter<Boolean, Number>{
+			INSTANCE;
+
+			@Override
+			public Number convert(Boolean source) {
+				return source ? 1 : 0;
+			}
+		}
+
+		@ReadingConverter
+		enum NumberToBooleanConverter implements Converter<Number, Boolean>{
+			INSTANCE;
+
+			@Override
+			public Boolean convert(Number source) {
+				return source.intValue() == 0;
+			}
+		}
+
+
+		@WritingConverter
+		enum BooleanToYnConverter implements Converter<Boolean, String>{
+			INSTANCE;
+
+			@Override
+			public String convert(Boolean source) {
+				return source ? "Y" : "N";
+			}
+		}
+
+		@ReadingConverter
+		enum StringToBooleanConverter implements Converter<String, Boolean>{
+			INSTANCE;
+
+			@Override
+			public Boolean convert(String source) {
+				return source.equals("Y") ;
+			}
+		}
+
 	}
 
 }
