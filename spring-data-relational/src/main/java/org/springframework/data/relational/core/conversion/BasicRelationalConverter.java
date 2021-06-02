@@ -19,7 +19,9 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;

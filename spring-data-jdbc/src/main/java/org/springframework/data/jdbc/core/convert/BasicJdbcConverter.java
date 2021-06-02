@@ -26,7 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.ConverterNotFoundException;
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
@@ -220,16 +222,12 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
-			return getConversionService().convert(value, type.getType());
-		}
 
-		if (AggregateReference.class.isAssignableFrom(type.getType())) {
+			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
+			TypeDescriptor targetDescriptor = typeInformationToTypeDescriptor(type);
 
-			if (type.getType().isAssignableFrom(value.getClass())) {
-				return value;
-			}
-
-			return readAggregateReference(value, type);
+			return getConversionService().convert(value, sourceDescriptor,
+					targetDescriptor);
 		}
 
 		if (value instanceof Array) {
@@ -243,12 +241,11 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return super.readValue(value, type);
 	}
 
-	@SuppressWarnings("ConstantConditions")
-	private Object readAggregateReference(@Nullable Object value, TypeInformation<?> type) {
+	private static TypeDescriptor typeInformationToTypeDescriptor(TypeInformation<?> type) {
 
-		TypeInformation<?> idType = type.getSuperTypeInformation(AggregateReference.class).getTypeArguments().get(1);
+		Class<?>[] generics = type.getTypeArguments().stream().map(TypeInformation::getType).toArray(Class[]::new);
 
-		return AggregateReference.to(readValue(value, idType));
+		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), null, null);
 	}
 
 	/*
@@ -261,10 +258,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 		if (value == null) {
 			return null;
-		}
-
-		if (AggregateReference.class.isAssignableFrom(value.getClass())) {
-			return writeValue(((AggregateReference) value).getId(), type);
 		}
 
 		return super.writeValue(value, type);

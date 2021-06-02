@@ -15,11 +15,15 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 
@@ -36,8 +40,19 @@ import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
  */
 public class JdbcCustomConversions extends CustomConversions {
 
-	private static final Collection<Object> STORE_CONVERTERS = Collections
-			.unmodifiableCollection(Jsr310TimestampBasedConverters.getConvertersToRegister());
+	private static final Collection<Object> STORE_CONVERTERS;
+
+	static {
+
+		List<Object> converters = new ArrayList<>(Jsr310TimestampBasedConverters.getConvertersToRegister());
+
+		ConversionService conversionService = DefaultConversionService.getSharedInstance();
+		converters.add(new AggregateReferenceConverters.AggregateReferenceToSimpleTypeConverter(conversionService));
+		converters.add(new AggregateReferenceConverters.SimpleTypeToAggregateReferenceConverter(conversionService));
+
+		STORE_CONVERTERS = Collections.unmodifiableCollection(converters);
+
+	}
 	private static final StoreConversions STORE_CONVERSIONS = StoreConversions.of(JdbcSimpleTypes.HOLDER,
 			STORE_CONVERTERS);
 
