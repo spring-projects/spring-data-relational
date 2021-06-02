@@ -19,10 +19,9 @@ import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
@@ -37,10 +36,8 @@ import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -77,11 +74,26 @@ public class AbstractJdbcConfigurationIntegrationTests {
 	void registersSimpleTypesFromCustomConversions() {
 
 		assertApplicationContext(context -> {
+
 			JdbcMappingContext mappingContext = context.getBean(JdbcMappingContext.class);
 			assertThat( //
 					mappingContext.getPersistentEntity(AbstractJdbcConfigurationUnderTest.Blah.class) //
 			).describedAs("Blah should not be an entity, since there is a WritingConversion configured for it") //
 					.isNull();
+
+		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
+	}
+
+	@Test // #908
+	void userProvidedConversionsOverwriteDialectSpecificConversions() {
+
+		assertApplicationContext(applicationContext -> {
+
+			Optional<Class<?>> customWriteTarget = applicationContext.getBean(JdbcCustomConversions.class)
+					.getCustomWriteTarget(Boolean.class);
+
+			assertThat(customWriteTarget).contains(String.class);
+
 		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
 	}
 
@@ -118,7 +130,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 
 		@Override
 		protected List<?> userConverters() {
-			return asList(Blah2BlubbConverter.INSTANCE);
+			return asList(Blah2BlubbConverter.INSTANCE, BooleanToYnConverter.INSTANCE);
 		}
 
 		@WritingConverter
@@ -153,12 +165,12 @@ public class AbstractJdbcConfigurationIntegrationTests {
 
 			@Override
 			public Collection<Object> getConverters() {
-				return asList(BooleanToNumberConverter.INSTANCE);
+				return asList(BooleanToNumberConverter.INSTANCE, NumberToBooleanConverter.INSTANCE);
 			}
 		}
 
 		@WritingConverter
-		enum BooleanToNumberConverter implements Converter<Boolean, Number>{
+		enum BooleanToNumberConverter implements Converter<Boolean, Number> {
 			INSTANCE;
 
 			@Override
@@ -168,7 +180,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 		}
 
 		@ReadingConverter
-		enum NumberToBooleanConverter implements Converter<Number, Boolean>{
+		enum NumberToBooleanConverter implements Converter<Number, Boolean> {
 			INSTANCE;
 
 			@Override
@@ -177,24 +189,13 @@ public class AbstractJdbcConfigurationIntegrationTests {
 			}
 		}
 
-
 		@WritingConverter
-		enum BooleanToYnConverter implements Converter<Boolean, String>{
+		enum BooleanToYnConverter implements Converter<Boolean, String> {
 			INSTANCE;
 
 			@Override
 			public String convert(Boolean source) {
 				return source ? "Y" : "N";
-			}
-		}
-
-		@ReadingConverter
-		enum StringToBooleanConverter implements Converter<String, Boolean>{
-			INSTANCE;
-
-			@Override
-			public Boolean convert(String source) {
-				return source.equals("Y") ;
 			}
 		}
 
