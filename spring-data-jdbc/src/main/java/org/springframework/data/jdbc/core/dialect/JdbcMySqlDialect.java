@@ -15,17 +15,23 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
+import static java.time.ZoneId.*;
+
 import java.sql.JDBCType;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.lang.NonNull;
 
 /**
  * {@link Db2Dialect} that registers JDBC specific converters.
@@ -47,6 +53,7 @@ public class JdbcMySqlDialect extends MySqlDialect {
 
 		ArrayList<Object> converters = new ArrayList<>(super.getConverters());
 		converters.add(OffsetDateTimeToTimestampJdbcValueConverter.INSTANCE);
+		converters.add(LocalDateTimeToDateConverter.INSTANCE);
 
 		return converters;
 	}
@@ -59,6 +66,18 @@ public class JdbcMySqlDialect extends MySqlDialect {
 		@Override
 		public JdbcValue convert(OffsetDateTime source) {
 			return JdbcValue.of(source, JDBCType.TIMESTAMP);
+		}
+	}
+
+	@ReadingConverter
+	enum LocalDateTimeToDateConverter implements Converter<LocalDateTime, Date> {
+
+		INSTANCE;
+
+		@NonNull
+		@Override
+		public Date convert(LocalDateTime source) {
+			return Date.from(source.atZone(systemDefault()).toInstant());
 		}
 	}
 }

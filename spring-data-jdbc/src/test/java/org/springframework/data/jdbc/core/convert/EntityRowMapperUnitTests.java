@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -43,12 +44,10 @@ import java.util.stream.Stream;
 
 import javax.naming.OperationNotSupportedException;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.annotation.Transient;
@@ -1217,7 +1216,7 @@ public class EntityRowMapperUnitTests {
 
 		public void assertOn(T result) {
 
-			SoftAssertions.assertSoftly(softly -> {
+			assertSoftly(softly -> {
 				expectations.forEach(expectation -> {
 
 					softly.assertThat(expectation.extractor.apply(result)).describedAs("From column: " + expectation.sourceColumn)

@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.Data;
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -69,12 +71,14 @@ public class BasicJdbcConverterUnitTests {
 		SoftAssertions softly = new SoftAssertions();
 
 		checkTargetType(softly, entity, "someEnum", String.class);
-		checkTargetType(softly, entity, "localDateTime", Timestamp.class);
+		checkTargetType(softly, entity, "localDateTime", LocalDateTime.class);
 		checkTargetType(softly, entity, "localDate", Timestamp.class);
 		checkTargetType(softly, entity, "localTime", Timestamp.class);
+		checkTargetType(softly, entity, "zonedDateTime", String.class);
+		checkTargetType(softly, entity, "offsetDateTime", OffsetDateTime.class);
 		checkTargetType(softly, entity, "instant", Timestamp.class);
 		checkTargetType(softly, entity, "date", Date.class);
-		checkTargetType(softly, entity, "zonedDateTime", String.class);
+		checkTargetType(softly, entity, "timestamp", Timestamp.class);
 		checkTargetType(softly, entity, "uuid", UUID.class);
 
 		softly.assertAll();
@@ -116,7 +120,7 @@ public class BasicJdbcConverterUnitTests {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 			LocalDateTime testLocalDateTime = LocalDateTime.of(2001, 2, 3, 4, 5, 6, 123456789);
 			checkConversionToTimestampAndBack(softly, persistentEntity, "localDateTime", testLocalDateTime);
 			checkConversionToTimestampAndBack(softly, persistentEntity, "localDate", LocalDate.of(2001, 2, 3));
@@ -165,9 +169,11 @@ public class BasicJdbcConverterUnitTests {
 		private final LocalDateTime localDateTime;
 		private final LocalDate localDate;
 		private final LocalTime localTime;
+		private final ZonedDateTime zonedDateTime;
+		private final OffsetDateTime offsetDateTime;
 		private final Instant instant;
 		private final Date date;
-		private final ZonedDateTime zonedDateTime;
+		private final Timestamp timestamp;
 		private final AggregateReference<DummyEntity, Long> reference;
 		private final UUID uuid;
 

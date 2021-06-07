@@ -16,11 +16,10 @@
 package org.springframework.data.relational.core.sql;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 
@@ -80,7 +79,7 @@ public class SqlIdentifierUnitTests {
 		SqlIdentifier quoted = quoted("simple");
 		SqlIdentifier notSimple = SqlIdentifier.from(unquoted("simple"), unquoted("not"));
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(basis).isEqualTo(equal);
 			softly.assertThat(equal).isEqualTo(basis);

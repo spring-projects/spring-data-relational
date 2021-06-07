@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import junit.framework.AssertionFailedError;
@@ -27,7 +28,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -101,7 +101,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.getRequiredPersistentProperty("reference").isAssociation()) //
 					.as("reference") //

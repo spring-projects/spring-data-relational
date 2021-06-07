@@ -15,7 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import org.assertj.core.api.SoftAssertions;
+import static org.assertj.core.api.SoftAssertions.*;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -34,7 +35,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 
 		SqlIdentifierParameterSource parameters = new SqlIdentifierParameterSource(identifierProcessing);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(parameters.getParameterNames()).isEmpty();
 			softly.assertThat(parameters.getValue("blah")).isNull();
@@ -50,7 +51,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 
 		parameters.addValue(SqlIdentifier.unquoted("key"), 23);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(parameters.getParameterNames()).isEqualTo(new String[] { "key" });
 			softly.assertThat(parameters.getValue("key")).isEqualTo(23);
@@ -69,7 +70,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 
 		parameters.addValue(SqlIdentifier.unquoted("key"), 23, 42);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(parameters.getParameterNames()).isEqualTo(new String[] { "key" });
 			softly.assertThat(parameters.getValue("key")).isEqualTo(23);
@@ -95,7 +96,7 @@ public class SqlIdentifierParameterSourceUnitTests {
 
 		parameters.addAll(parameters2);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(parameters.getParameterNames()).isEqualTo(new String[] { "key1", "key2", "key3" });
 			softly.assertThat(parameters.getValue("key1")).isEqualTo(111);

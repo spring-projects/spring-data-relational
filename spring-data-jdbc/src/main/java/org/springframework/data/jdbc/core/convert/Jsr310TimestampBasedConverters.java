@@ -45,22 +45,21 @@ import org.springframework.lang.NonNull;
  * @author Jens Schauder
  * @since 2.2
  */
-abstract class Jsr310TimestampBasedConverters {
-
-	private static final List<Class<?>> CLASSES = Arrays.asList(LocalDateTime.class, LocalDate.class, LocalTime.class,
-			Instant.class, ZoneId.class, Duration.class, Period.class);
+public abstract class Jsr310TimestampBasedConverters {
 
 	/**
-	 * Returns the converters to be registered. Will only return converters in case we're running on Java 8.
+	 * Returns the converters to be registered.
 	 *
-	 * @return
+	 * Note that the {@link LocalDateTimeToTimestampConverter} is not included, since many database don't need that conversion.
+	 * Databases that do need it, should include it in the conversions offered by their respective dialect.
+	 *
+	 * @return a collection of converters. Guaranteed to be not {@literal null}.
 	 */
 	public static Collection<Converter<?, ?>> getConvertersToRegister() {
 
 		List<Converter<?, ?>> converters = new ArrayList<>(8);
 
 		converters.add(TimestampToLocalDateTimeConverter.INSTANCE);
-		converters.add(LocalDateTimeToTimestampConverter.INSTANCE);
 		converters.add(TimestampToLocalDateConverter.INSTANCE);
 		converters.add(LocalDateToTimestampConverter.INSTANCE);
 		converters.add(TimestampToLocalTimeConverter.INSTANCE);
