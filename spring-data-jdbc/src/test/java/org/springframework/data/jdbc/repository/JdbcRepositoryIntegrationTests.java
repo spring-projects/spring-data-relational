@@ -27,6 +27,7 @@ import lombok.Value;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
@@ -492,6 +494,13 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result.getContent().get(0).getName()).isEqualTo("Entity Name");
 	}
 
+	@Test // #974
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
+	void intervalCalculation() {
+
+		repository.updateWithIntervalCalculation(23L, LocalDateTime.now());
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -557,6 +566,10 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY WHERE OFFSET_DATE_TIME > :threshhold")
 		List<DummyEntity> findByOffsetDateTime(@Param("threshhold") OffsetDateTime threshhold);
+
+		@Modifying
+		@Query("UPDATE dummy_entity SET point_in_time = :start - interval '30 minutes' WHERE id_prop = :id")
+		void updateWithIntervalCalculation(@Param("id") Long id, @Param("start") LocalDateTime start);
 	}
 
 	@Configuration

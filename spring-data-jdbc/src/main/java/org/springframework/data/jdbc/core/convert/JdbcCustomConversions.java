@@ -15,12 +15,12 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
@@ -38,9 +38,12 @@ import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
  */
 public class JdbcCustomConversions extends CustomConversions {
 
-	private static final Collection<Object> STORE_CONVERTERS = Collections.unmodifiableCollection(Jsr310TimestampBasedConverters.getConvertersToRegister());
+	private static final Collection<Object> STORE_CONVERTERS = Collections
+			.unmodifiableCollection(Jsr310TimestampBasedConverters.getConvertersToRegister());
 	private static final StoreConversions STORE_CONVERSIONS = StoreConversions.of(JdbcSimpleTypes.HOLDER,
 			STORE_CONVERTERS);
+
+	private static final Predicate<ConvertiblePair> excludeConversionsBetweenDateAndJsr310Types= cp -> !isDateTimeApiConversion(cp);
 
 	/**
 	 * Creates an empty {@link JdbcCustomConversions} object.
@@ -50,21 +53,23 @@ public class JdbcCustomConversions extends CustomConversions {
 	}
 
 	/**
-	 * Create a new {@link JdbcCustomConversions} instance registering the given converters and the default store converters.
+	 * Create a new {@link JdbcCustomConversions} instance registering the given converters and the default store
+	 * converters.
 	 *
 	 * @param converters must not be {@literal null}.
 	 */
 	public JdbcCustomConversions(List<?> converters) {
-		super(new ConverterConfiguration(STORE_CONVERSIONS, converters, JdbcCustomConversions::isDateTimeApiConversion));
+		super(new ConverterConfiguration(STORE_CONVERSIONS, converters, excludeConversionsBetweenDateAndJsr310Types));
 	}
 
 	/**
-	 * Create a new {@link JdbcCustomConversions} instance registering the given converters and the default store converters.
+	 * Create a new {@link JdbcCustomConversions} instance registering the given converters and the default store
+	 * converters.
 	 *
 	 * @since 2.3
 	 */
 	public JdbcCustomConversions(StoreConversions storeConversions, List<?> userConverters) {
-		super(new ConverterConfiguration(storeConversions, userConverters, JdbcCustomConversions::isDateTimeApiConversion));
+		super(new ConverterConfiguration(storeConversions, userConverters, cp -> !isDateTimeApiConversion(cp)));
 	}
 
 	/**
@@ -98,6 +103,6 @@ public class JdbcCustomConversions extends CustomConversions {
 			return cp.getSourceType().getTypeName().startsWith("java.time.");
 		}
 
-		return true;
+		return false;
 	}
 }

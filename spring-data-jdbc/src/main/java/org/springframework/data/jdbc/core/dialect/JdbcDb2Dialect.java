@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.jdbc.core.convert.Jsr310TimestampBasedConverters;
 import org.springframework.data.relational.core.dialect.Db2Dialect;
 
 /**
@@ -43,6 +44,7 @@ public class JdbcDb2Dialect extends Db2Dialect {
 
 		List<Object> converters = new ArrayList<>(super.getConverters());
 		converters.add(OffsetDateTimeToTimestampConverter.INSTANCE);
+		converters.add(Jsr310TimestampBasedConverters.LocalDateTimeToTimestampConverter.INSTANCE);
 
 		return converters;
 	}
