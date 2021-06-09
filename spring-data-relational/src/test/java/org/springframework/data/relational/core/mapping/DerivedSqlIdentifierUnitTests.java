@@ -16,10 +16,9 @@
 package org.springframework.data.relational.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
@@ -75,7 +74,7 @@ public class DerivedSqlIdentifierUnitTests {
 		SqlIdentifier notSimple = SqlIdentifier.from(new DerivedSqlIdentifier("simple", false),
 				new DerivedSqlIdentifier("not", false));
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(basis).isEqualTo(equal);
 			softly.assertThat(equal).isEqualTo(basis);

@@ -17,8 +17,8 @@ package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ import org.springframework.lang.Nullable;
  */
 public class SqlGeneratorEmbeddedUnitTests {
 
-	private RelationalMappingContext context = new JdbcMappingContext();
+	private final RelationalMappingContext context = new JdbcMappingContext();
 	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
@@ -63,7 +63,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	public void findOne() {
 		final String sql = sqlGenerator.getFindOne();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(sql).startsWith("SELECT") //
 					.contains("dummy_entity.id1 AS id1") //
@@ -86,7 +86,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	public void findAll() {
 		final String sql = sqlGenerator.getFindAll();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(sql).startsWith("SELECT") //
 					.contains("dummy_entity.id1 AS id1") //
@@ -109,7 +109,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	public void findAllInList() {
 		final String sql = sqlGenerator.getFindAllInList();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(sql).startsWith("SELECT") //
 					.contains("dummy_entity.id1 AS id1") //
@@ -132,7 +132,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	public void insert() {
 		final String sql = sqlGenerator.getInsert(emptySet());
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(sql) //
 					.startsWith("INSERT INTO") //
@@ -154,7 +154,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 	public void update() {
 		final String sql = sqlGenerator.getUpdate();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(sql) //
 					.startsWith("UPDATE") //
@@ -267,7 +267,7 @@ public class SqlGeneratorEmbeddedUnitTests {
 
 		SqlGenerator.Join join = generateJoin("embedded.other", DummyEntity2.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(join.getJoinTable().getName()).isEqualTo(SqlIdentifier.unquoted("other_entity"));
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());

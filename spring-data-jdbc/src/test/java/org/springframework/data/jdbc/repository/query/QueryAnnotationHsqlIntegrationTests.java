@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.repository.query;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 
 import lombok.Value;
 
@@ -25,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -192,7 +192,7 @@ public class QueryAnnotationHsqlIntegrationTests {
 		repository.save(dummyEntity("bbb"));
 		repository.save(dummyEntity("cac"));
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(repository.existsByNameContaining("a")).describedAs("entities with A in the name").isTrue();
 			softly.assertThat(repository.existsByNameContaining("d")).describedAs("entities with D in the name").isFalse();

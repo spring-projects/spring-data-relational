@@ -18,9 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 
-import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
@@ -43,8 +41,6 @@ public class JdbcCustomConversions extends CustomConversions {
 	private static final StoreConversions STORE_CONVERSIONS = StoreConversions.of(JdbcSimpleTypes.HOLDER,
 			STORE_CONVERTERS);
 
-	private static final Predicate<ConvertiblePair> excludeConversionsBetweenDateAndJsr310Types= cp -> !isDateTimeApiConversion(cp);
-
 	/**
 	 * Creates an empty {@link JdbcCustomConversions} object.
 	 */
@@ -59,7 +55,12 @@ public class JdbcCustomConversions extends CustomConversions {
 	 * @param converters must not be {@literal null}.
 	 */
 	public JdbcCustomConversions(List<?> converters) {
-		super(new ConverterConfiguration(STORE_CONVERSIONS, converters, excludeConversionsBetweenDateAndJsr310Types));
+
+		super(new ConverterConfiguration( //
+				STORE_CONVERSIONS, //
+				converters, //
+				JdbcCustomConversions::excludeConversionsBetweenDateAndJsr310Types //
+		));
 	}
 
 	/**
@@ -69,7 +70,12 @@ public class JdbcCustomConversions extends CustomConversions {
 	 * @since 2.3
 	 */
 	public JdbcCustomConversions(StoreConversions storeConversions, List<?> userConverters) {
-		super(new ConverterConfiguration(storeConversions, userConverters, cp -> !isDateTimeApiConversion(cp)));
+
+		super(new ConverterConfiguration( //
+				storeConversions, //
+				userConverters, //
+				JdbcCustomConversions::excludeConversionsBetweenDateAndJsr310Types //
+		));
 	}
 
 	/**
@@ -104,5 +110,9 @@ public class JdbcCustomConversions extends CustomConversions {
 		}
 
 		return false;
+	}
+
+	private static boolean excludeConversionsBetweenDateAndJsr310Types(ConvertiblePair cp) {
+		return !isDateTimeApiConversion(cp);
 	}
 }

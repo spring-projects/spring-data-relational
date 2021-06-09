@@ -15,11 +15,12 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
+import static org.assertj.core.api.SoftAssertions.*;
+
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
@@ -37,7 +38,7 @@ class JdbcMySqlDialectUnitTests {
 		JdbcCustomConversions customConversions = new JdbcCustomConversions(
 				(List<?>) new JdbcMySqlDialect().getConverters());
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(customConversions.getCustomWriteTarget(LocalDateTime.class)).isEmpty();
 			softly.assertThat(customConversions.getCustomWriteTarget(OffsetDateTime.class)).contains(JdbcValue.class);

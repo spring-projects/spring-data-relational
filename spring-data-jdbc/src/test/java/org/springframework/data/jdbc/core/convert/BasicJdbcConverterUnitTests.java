@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.Data;
@@ -119,7 +120,7 @@ public class BasicJdbcConverterUnitTests {
 
 		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 			LocalDateTime testLocalDateTime = LocalDateTime.of(2001, 2, 3, 4, 5, 6, 123456789);
 			checkConversionToTimestampAndBack(softly, persistentEntity, "localDateTime", testLocalDateTime);
 			checkConversionToTimestampAndBack(softly, persistentEntity, "localDate", LocalDate.of(2001, 2, 3));

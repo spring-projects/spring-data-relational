@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
@@ -664,7 +665,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		NoIdListChain4 saved = template.save(createNoIdTree());
 		template.deleteById(saved.four, NoIdListChain4.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(count("NO_ID_LIST_CHAIN4")).describedAs("Chain4 elements got deleted").isEqualTo(0);
 			softly.assertThat(count("NO_ID_LIST_CHAIN3")).describedAs("Chain3 elements got deleted").isEqualTo(0);
@@ -691,7 +692,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		NoIdMapChain4 saved = template.save(createNoIdMapTree());
 		template.deleteById(saved.four, NoIdMapChain4.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(count("NO_ID_MAP_CHAIN4")).describedAs("Chain4 elements got deleted").isEqualTo(0);
 			softly.assertThat(count("NO_ID_MAP_CHAIN3")).describedAs("Chain3 elements got deleted").isEqualTo(0);
