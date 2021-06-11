@@ -634,7 +634,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 						return statement.returnGeneratedValues();
 					}
 
-					return statement.returnGeneratedValues(dataAccessStrategy.renderForGeneratedKeys(identifierColumns.get(0)));
+					return statement.returnGeneratedValues(dataAccessStrategy.renderForGeneratedValues(identifierColumns.get(0)));
 				})
 				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entity)) //
 				.all() //

@@ -36,7 +36,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * Integration tests for {@link LegoSetRepository} with table and column names that contain * upper and lower case
+ * Integration tests for {@link LegoSetRepository} with table and column names that contain upper and lower case
  * characters against H2.
  *
  * @author Jens Schauder

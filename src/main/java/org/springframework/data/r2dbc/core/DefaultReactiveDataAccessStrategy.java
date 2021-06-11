@@ -362,8 +362,8 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	}
 
 	@Override
-	public String renderForGeneratedKeys(SqlIdentifier identifier) {
-		return dialect.renderForGeneratedKeys(identifier);
+	public String renderForGeneratedValues(SqlIdentifier identifier) {
+		return dialect.renderForGeneratedValues(identifier);
 	}
 
 	private RelationalPersistentEntity<?> getRequiredPersistentEntity(Class<?> typeToRead) {

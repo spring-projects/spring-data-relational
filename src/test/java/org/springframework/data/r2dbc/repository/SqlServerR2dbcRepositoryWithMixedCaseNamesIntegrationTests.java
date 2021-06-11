@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +32,6 @@ import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
-import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.ExternalDatabase;
 import org.springframework.data.r2dbc.testing.SqlServerTestSupport;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
@@ -39,8 +39,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * Integration tests for {@link LegoSetRepository} with table and column names that contain
- *  * upper and lower case characters against SQL-Server.
+ * Integration tests for {@link LegoSetRepository} with table and column names that contain upper and lower case
+ * characters against SQL-Server.
  *
  * @author Jens Schauder
  */

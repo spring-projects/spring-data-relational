@@ -16,7 +16,7 @@ public class H2Dialect extends PostgresDialect {
 	public static final H2Dialect INSTANCE = new H2Dialect();
 
 	@Override
-	public String renderForGeneratedKeys(SqlIdentifier identifier) {
+	public String renderForGeneratedValues(SqlIdentifier identifier) {
 		return identifier.getReference(getIdentifierProcessing());
 	}
 }

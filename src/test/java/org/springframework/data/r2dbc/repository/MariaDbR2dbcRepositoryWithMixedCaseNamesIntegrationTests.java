@@ -38,11 +38,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * Integration tests for {@link LegoSetRepository} with table and column names that contain * upper and lower case
+ * Integration tests for {@link LegoSetRepository} with table and column names that contain upper and lower case
  * characters against MariaDb.
  *
- * @author Mark Paluch
- * @author Zsombor Gegesy
+ * @author Jens Schauder
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration

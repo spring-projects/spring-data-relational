@@ -138,14 +138,16 @@ public interface ReactiveDataAccessStrategy {
 	String toSql(SqlIdentifier identifier);
 
 	/**
-	 * Render a {@link SqlIdentifier} in a way suitable for registering it as a generated key with a statement.
-	 * 
+	 * Render a {@link SqlIdentifier} in a way suitable for registering it as a generated key with a statement through
+	 * {@code Statement#returnGeneratedValues}.
+	 *
 	 * @param identifier to render. Must not be {@literal null}.
 	 * @return rendered identifier. Guaranteed to be not {@literal null}.
+	 * @since 1.3.2
 	 */
-	default String renderForGeneratedKeys(SqlIdentifier identifier) {
+	default String renderForGeneratedValues(SqlIdentifier identifier) {
 
-		Assert.notNull(identifier, "Indentifier must not be null.");
+		Assert.notNull(identifier, "SqlIdentifier must not be null.");
 
 		return identifier.toSql(IdentifierProcessing.NONE);
 	}

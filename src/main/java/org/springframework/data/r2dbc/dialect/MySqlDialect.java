@@ -106,7 +106,7 @@ public class MySqlDialect extends org.springframework.data.relational.core.diale
 	}
 
 	@Override
-	public String renderForGeneratedKeys(SqlIdentifier identifier) {
+	public String renderForGeneratedValues(SqlIdentifier identifier) {
 		return identifier.getReference(getIdentifierProcessing());
 	}
 
