@@ -586,7 +586,7 @@ public class SqlGeneratorUnitTests {
 			softly.assertThat(join.getJoinTable().getName()).isEqualTo(SqlIdentifier.quoted("REFERENCED_ENTITY"));
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
 			softly.assertThat(join.getJoinColumn().getName()).isEqualTo(SqlIdentifier.quoted("DUMMY_ENTITY"));
-			softly.assertThat(join.getParentId().getName()).isEqualTo(SqlIdentifier.quoted("id1"));
+			softly.assertThat(join.getParentId().getName()).isEqualTo(SqlIdentifier.quoted("X_REF"));
 			softly.assertThat(join.getParentId().getTable().getName()).isEqualTo(SqlIdentifier.quoted("DUMMY_ENTITY"));
 		});
 	}
