@@ -103,7 +103,7 @@ public class SqlGeneratorUnitTests {
 				.contains("dummy_entity.x_other AS x_other,") //
 				.contains("ref.x_l1id AS ref_x_l1id") //
 				.contains("ref.x_content AS ref_x_content").contains(" FROM dummy_entity") //
-				.contains("ON ref.dummy_entity = dummy_entity.id1") //
+				.contains("ON ref.x_l1id = dummy_entity.x_ref") //
 				.contains("WHERE dummy_entity.id1 = :id") //
 				// 1-N relationships do not get loaded via join
 				.doesNotContain("Element AS elements"));

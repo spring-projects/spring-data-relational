@@ -526,8 +526,8 @@ class SqlGenerator {
 
 		return new Join( //
 				currentTable, //
-				currentTable.column(path.getReverseColumnName()), //
-				parentTable.column(idDefiningParentPath.getIdColumnName()) //
+				currentTable.column(path.getIdColumnName()), //
+				parentTable.column(path.getColumnName()) //
 		);
 	}
 
