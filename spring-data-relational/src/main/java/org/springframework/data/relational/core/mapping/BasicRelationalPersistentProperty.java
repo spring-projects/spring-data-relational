@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	 */
 	@Override
 	protected Association<RelationalPersistentProperty> createAssociation() {
-		throw new UnsupportedOperationException();
+		return new Association<>(this, null);
 	}
 
 	public boolean isForceQuote() {
@@ -137,7 +137,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	@Override
 	public boolean isEntity() {
-		return super.isEntity() && !isReference();
+		return super.isEntity() && !isAssociation();
 	}
 
 	@Override
@@ -147,7 +147,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentProperty#getColumnName()
+	 * @see org.springframework.data.relational.core.mapping.model.RelationalPersistentProperty#getColumnName()
 	 */
 	@Override
 	public SqlIdentifier getColumnName() {

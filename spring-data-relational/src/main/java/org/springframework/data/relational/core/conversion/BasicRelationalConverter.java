@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 package org.springframework.data.relational.core.conversion;
+
+import java.util.Collections;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
@@ -37,10 +41,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.function.Function;
-
 /**
  * {@link RelationalConverter} that uses a {@link MappingContext} to apply basic conversion of relational values to
  * property values.
@@ -63,7 +63,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	/**
 	 * Creates a new {@link BasicRelationalConverter} given {@link MappingContext}.
 	 *
-	 * @param context must not be {@literal null}. org.springframework.data.jdbc.core.DefaultDataAccessStrategyUnitTests
+	 * @param context must not be {@literal null}.
 	 */
 	public BasicRelationalConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
@@ -197,6 +197,11 @@ public class BasicRelationalConverter implements RelationalConverter {
 		}
 
 		return conversionService.convert(value, type.getType());
+	}
+
+	@Override
+	public EntityInstantiators getEntityInstantiators() {
+		return this.entityInstantiators;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
@@ -25,6 +26,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.With;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +39,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.SoftAssertions;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -310,7 +311,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-112
-	@EnabledOnFeature({SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES})
+	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
 	public void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);
@@ -664,7 +665,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		NoIdListChain4 saved = template.save(createNoIdTree());
 		template.deleteById(saved.four, NoIdListChain4.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(count("NO_ID_LIST_CHAIN4")).describedAs("Chain4 elements got deleted").isEqualTo(0);
 			softly.assertThat(count("NO_ID_LIST_CHAIN3")).describedAs("Chain3 elements got deleted").isEqualTo(0);
@@ -691,7 +692,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		NoIdMapChain4 saved = template.save(createNoIdMapTree());
 		template.deleteById(saved.four, NoIdMapChain4.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(count("NO_ID_MAP_CHAIN4")).describedAs("Chain4 elements got deleted").isEqualTo(0);
 			softly.assertThat(count("NO_ID_MAP_CHAIN3")).describedAs("Chain3 elements got deleted").isEqualTo(0);
@@ -818,6 +819,35 @@ public class JdbcAggregateTemplateIntegrationTests {
 		LegoSet saved = template.save(legoSet);
 
 		template.save(saved);
+	}
+
+	@Test // DATAJDBC-637
+	@EnabledOnFeature(SUPPORTS_NANOSECOND_PRECISION)
+	public void saveAndLoadDateTimeWithFullPrecision() {
+
+		WithLocalDateTime entity = new WithLocalDateTime();
+		entity.id = 23L;
+		entity.testTime = LocalDateTime.of(2005, 5, 5, 5, 5, 5, 123456789);
+
+		template.insert(entity);
+
+		WithLocalDateTime loaded = template.findById(23L, WithLocalDateTime.class);
+
+		assertThat(loaded.testTime).isEqualTo(entity.testTime);
+	}
+
+	@Test // DATAJDBC-637
+	public void saveAndLoadDateTimeWithMicrosecondPrecision() {
+
+		WithLocalDateTime entity = new WithLocalDateTime();
+		entity.id = 23L;
+		entity.testTime = LocalDateTime.of(2005, 5, 5, 5, 5, 5, 123456000);
+
+		template.insert(entity);
+
+		WithLocalDateTime loaded = template.findById(23L, WithLocalDateTime.class);
+
+		assertThat(loaded.testTime).isEqualTo(entity.testTime);
 	}
 
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
@@ -1164,6 +1194,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		void setVersion(Number newVersion) {
 			this.version = (short) newVersion;
 		}
+	}
+
+	@Table
+	static class WithLocalDateTime {
+
+		@Id Long id;
+		LocalDateTime testTime;
 	}
 
 	@Configuration

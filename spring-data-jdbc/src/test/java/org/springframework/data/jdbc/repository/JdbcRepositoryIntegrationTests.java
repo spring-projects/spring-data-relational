@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,18 @@ import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.Value;
 
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -39,10 +46,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
+import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
+import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.CrudRepository;
@@ -82,6 +96,9 @@ public class JdbcRepositoryIntegrationTests {
 
 	@BeforeEach
 	public void before() {
+
+		repository.deleteAll();
+
 		eventListener.events.clear();
 	}
 
@@ -204,6 +221,20 @@ public class JdbcRepositoryIntegrationTests {
 				.containsExactlyInAnyOrder(two.getIdProp());
 	}
 
+	@Test // DATAJDBC-629
+	public void deleteByIdList() {
+
+		DummyEntity one = repository.save(createDummyEntity());
+		DummyEntity two = repository.save(createDummyEntity());
+		DummyEntity three = repository.save(createDummyEntity());
+
+		repository.deleteAllById(asList(one.idProp, three.idProp));
+
+		assertThat(repository.findAll()) //
+				.extracting(DummyEntity::getIdProp) //
+				.containsExactlyInAnyOrder(two.getIdProp());
+	}
+
 	@Test // DATAJDBC-97
 	public void deleteAll() {
 
@@ -258,17 +289,7 @@ public class JdbcRepositoryIntegrationTests {
 	@Test // DATAJDBC-464, DATAJDBC-318
 	public void executeQueryWithParameterRequiringConversion() {
 
-		Instant now = Instant.now();
-
-		DummyEntity first = repository.save(createDummyEntity());
-		first.setPointInTime(now.minusSeconds(1000L));
-		first.setName("first");
-
-		DummyEntity second = repository.save(createDummyEntity());
-		second.setPointInTime(now.plusSeconds(1000L));
-		second.setName("second");
-
-		repository.saveAll(asList(first, second));
+		Instant now = createDummyBeforeAndAfterNow();
 
 		assertThat(repository.after(now)) //
 				.extracting(DummyEntity::getName) //
@@ -381,6 +402,141 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.countByName(one.getName())).isEqualTo(2);
 	}
 
+	@Test // #945
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
+	public void usePrimitiveArrayAsArgument() {
+		assertThat(repository.unnestPrimitive(new int[] { 1, 2, 3 })).containsExactly(1, 2, 3);
+	}
+
+	@Test // GH-774
+	public void pageByNameShouldReturnCorrectResult() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("a1"), new DummyEntity("a2"), new DummyEntity("a3")));
+
+		Page<DummyEntity> page = repository.findPageByNameContains("a", PageRequest.of(0, 5));
+
+		assertThat(page.getContent()).hasSize(3);
+		assertThat(page.getTotalElements()).isEqualTo(3);
+		assertThat(page.getTotalPages()).isEqualTo(1);
+
+		assertThat(repository.findPageByNameContains("a", PageRequest.of(0, 2)).getContent()).hasSize(2);
+		assertThat(repository.findPageByNameContains("a", PageRequest.of(1, 2)).getContent()).hasSize(1);
+	}
+
+	@Test // GH-774
+	public void sliceByNameShouldReturnCorrectResult() {
+
+		repository.saveAll(Arrays.asList(new DummyEntity("a1"), new DummyEntity("a2"), new DummyEntity("a3")));
+
+		Slice<DummyEntity> slice = repository.findSliceByNameContains("a", PageRequest.of(0, 5));
+
+		assertThat(slice.getContent()).hasSize(3);
+		assertThat(slice.hasNext()).isFalse();
+
+		slice = repository.findSliceByNameContains("a", PageRequest.of(0, 2));
+
+		assertThat(slice.getContent()).hasSize(2);
+		assertThat(slice.hasNext()).isTrue();
+	}
+
+	@Test // #935
+	public void queryByOffsetDateTime() {
+
+		Instant now = createDummyBeforeAndAfterNow();
+		OffsetDateTime timeArgument = OffsetDateTime.ofInstant(now, ZoneOffset.ofHours(2));
+
+		List<DummyEntity> entities = repository.findByOffsetDateTime(timeArgument);
+
+		assertThat(entities).extracting(DummyEntity::getName).containsExactly("second");
+	}
+
+	@Test // #971
+	public void stringQueryProjectionShouldReturnProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		List<DummyProjection> result = repository.findProjectedWithSql(DummyProjection.class);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // #971
+	public void stringQueryProjectionShouldReturnDtoProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		List<DtoProjection> result = repository.findProjectedWithSql(DtoProjection.class);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // #971
+	public void partTreeQueryProjectionShouldReturnProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		List<DummyProjection> result = repository.findProjectedByName("Entity Name");
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // #971
+	public void pageQueryProjectionShouldReturnProjectedEntities() {
+
+		repository.save(createDummyEntity());
+
+		Page<DummyProjection> result = repository.findPageProjectionByName("Entity Name", PageRequest.ofSize(10));
+
+		assertThat(result).hasSize(1);
+		assertThat(result.getContent().get(0).getName()).isEqualTo("Entity Name");
+	}
+
+	@Test // #974
+	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
+	void intervalCalculation() {
+
+		repository.updateWithIntervalCalculation(23L, LocalDateTime.now());
+	}
+
+	@Test // #908
+	void derivedQueryWithBooleanLiteralFindsCorrectValues() {
+
+		repository.save(createDummyEntity());
+		DummyEntity entity = createDummyEntity();
+		entity.flag = true;
+		entity = repository.save(entity);
+
+		List<DummyEntity> result = repository.findByFlagTrue();
+
+		assertThat(result).extracting(e -> e.idProp).containsExactly(entity.idProp);
+	}
+
+	private Instant createDummyBeforeAndAfterNow() {
+
+		Instant now = Instant.now();
+
+		DummyEntity first = createDummyEntity();
+		Instant earlier = now.minusSeconds(1000L);
+		OffsetDateTime earlierPlus3 = earlier.atOffset(ZoneOffset.ofHours(3));
+		first.setPointInTime(earlier);
+		first.offsetDateTime = earlierPlus3;
+
+		first.setName("first");
+
+		DummyEntity second = createDummyEntity();
+		Instant later = now.plusSeconds(1000L);
+		OffsetDateTime laterPlus3 = later.atOffset(ZoneOffset.ofHours(3));
+		second.setPointInTime(later);
+		second.offsetDateTime = laterPlus3;
+		second.setName("second");
+
+		repository.saveAll(asList(first, second));
+		return now;
+	}
+
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 		List<DummyEntity> findAllByNamedQuery();
@@ -389,6 +545,11 @@ public class JdbcRepositoryIntegrationTests {
 
 		@Query("SELECT * FROM DUMMY_ENTITY")
 		List<DummyEntity> findAllWithSql();
+
+		@Query("SELECT * FROM DUMMY_ENTITY")
+		<T> List<T> findProjectedWithSql(Class<T> targetType);
+
+		List<DummyProjection> findProjectedByName(String name);
 
 		@Query(value = "SELECT * FROM DUMMY_ENTITY", rowMapperClass = CustomRowMapper.class)
 		List<DummyEntity> findAllWithCustomMapper();
@@ -406,6 +567,24 @@ public class JdbcRepositoryIntegrationTests {
 		boolean existsByName(String name);
 
 		int countByName(String name);
+
+		@Query("select unnest( :ids )")
+		List<Integer> unnestPrimitive(@Param("ids") int[] ids);
+
+		Page<DummyEntity> findPageByNameContains(String name, Pageable pageable);
+
+		Page<DummyProjection> findPageProjectionByName(String name, Pageable pageable);
+
+		Slice<DummyEntity> findSliceByNameContains(String name, Pageable pageable);
+
+		@Query("SELECT * FROM DUMMY_ENTITY WHERE OFFSET_DATE_TIME > :threshhold")
+		List<DummyEntity> findByOffsetDateTime(@Param("threshhold") OffsetDateTime threshhold);
+
+		@Modifying
+		@Query("UPDATE dummy_entity SET point_in_time = :start - interval '30 minutes' WHERE id_prop = :id")
+		void updateWithIntervalCalculation(@Param("id") Long id, @Param("start") LocalDateTime start);
+
+		List<DummyEntity> findByFlagTrue();
 	}
 
 	@Configuration
@@ -450,10 +629,29 @@ public class JdbcRepositoryIntegrationTests {
 	}
 
 	@Data
+	@NoArgsConstructor
 	static class DummyEntity {
+
 		String name;
 		Instant pointInTime;
+		OffsetDateTime offsetDateTime;
 		@Id private Long idProp;
+		boolean flag;
+
+		public DummyEntity(String name) {
+			this.name = name;
+		}
+	}
+
+	interface DummyProjection {
+
+		String getName();
+	}
+
+	@Value
+	static class DtoProjection {
+
+		String name;
 	}
 
 	static class CustomRowMapper implements RowMapper<DummyEntity> {

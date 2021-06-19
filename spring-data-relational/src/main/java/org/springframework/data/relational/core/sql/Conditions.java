@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Meng Zuozhu
+ * @author Daniele Canteri
  * @since 1.1
  * @see SQL
  * @see Expressions
@@ -254,7 +256,7 @@ public abstract class Conditions {
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
 		Assert.notNull(arg, "Expression argument must not be null");
 
-		return In.create(columnOrExpression, arg);
+		return In.createNotIn(columnOrExpression, arg);
 	}
 
 	/**
@@ -300,20 +302,6 @@ public abstract class Conditions {
 		Assert.notNull(subselect, "Subselect must not be null");
 
 		return notIn(column, new SubselectExpression(subselect));
-	}
-
-	static class ConstantCondition extends AbstractSegment implements Condition {
-
-		private final String condition;
-
-		ConstantCondition(String condition) {
-			this.condition = condition;
-		}
-
-		@Override
-		public String toString() {
-			return condition;
-		}
 	}
 
 	// Utility constructor.

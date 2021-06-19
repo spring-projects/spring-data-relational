@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package org.springframework.data.jdbc.mybatis;
 
+import static org.assertj.core.api.SoftAssertions.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -36,7 +37,7 @@ public class MyBatisContextUnitTests {
 
 		MyBatisContext context = new MyBatisContext(Identifier.from(map), null, null);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(context.get("one")).isEqualTo("oneValue");
 			softly.assertThat(context.get("two")).isEqualTo("twoValue");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.relational.core.dialect.IdGeneration;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -67,6 +66,7 @@ import org.springframework.util.Assert;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Yunyoung LEE
+ * @author Radim Tlusty
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -121,10 +121,23 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
 		}
 
+		String insertSql = sqlGenerator.getInsert(new HashSet<>(parameterSource.getIdentifiers()));
+
+		if (idValue == null) {
+			return executeInsertAndReturnGeneratedId(domainType, persistentEntity, parameterSource, insertSql);
+		} else {
+
+			operations.update(insertSql, parameterSource);
+			return null;
+		}
+	}
+
+	@Nullable
+	private <T> Object executeInsertAndReturnGeneratedId(Class<T> domainType, RelationalPersistentEntity<T> persistentEntity, SqlIdentifierParameterSource parameterSource, String insertSql) {
+
 		KeyHolder holder = new GeneratedKeyHolder();
 
 		IdGeneration idGeneration = sqlGeneratorSource.getDialect().getIdGeneration();
-		String insertSql = sqlGenerator.getInsert(new HashSet<>(parameterSource.getIdentifiers()));
 
 		if (idGeneration.driverRequiresKeyColumnNames()) {
 
@@ -424,7 +437,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		PersistentPropertyAccessor<S> propertyAccessor = instance != null ? persistentEntity.getPropertyAccessor(instance)
 				: NoValuePropertyAccessor.instance();
 
-		persistentEntity.doWithProperties((PropertyHandler<RelationalPersistentProperty>) property -> {
+		persistentEntity.doWithAll(property -> {
 
 			if (skipProperty.test(property) || !property.isWritable()) {
 				return;
@@ -453,6 +466,10 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return parameters;
 	}
 
+	/**
+	 * Returns the id value if its not a primitive zero. Returns {@literal null} if the id value is null or a primitive
+	 * zero.
+	 */
 	@Nullable
 	@SuppressWarnings("unchecked")
 	private <S, ID> ID getIdValueOrNull(S instance, RelationalPersistentEntity<S> persistentEntity) {

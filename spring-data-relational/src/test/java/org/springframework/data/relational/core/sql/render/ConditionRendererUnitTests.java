@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Conditions;
 import org.springframework.data.relational.core.sql.Functions;
+import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
 
@@ -29,6 +30,7 @@ import org.springframework.data.relational.core.sql.Table;
  * Unit tests for rendered {@link org.springframework.data.relational.core.sql.Conditions}.
  *
  * @author Mark Paluch
+ * @author Daniele Canteri
  */
 public class ConditionRendererUnitTests {
 
@@ -229,5 +231,25 @@ public class ConditionRendererUnitTests {
 		sql = SqlRenderer.toString(StatementBuilder.select(left).from(table).where(left.notIn(right)).build());
 
 		assertThat(sql).endsWith("WHERE my_table.left NOT IN (my_table.right)");
+	}
+
+	@Test // #907
+	public void shouldRenderJust() {
+
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
+				.where(Conditions.just("sql"))
+				.build());
+
+		assertThat(sql).endsWith("WHERE sql");
+	}
+
+	@Test // #907
+	public void shouldRenderMultipleJust() {
+
+		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
+				.where( Conditions.just("sql1").and(Conditions.just("sql2")))
+				.build());
+
+		assertThat(sql).endsWith("WHERE sql1 AND sql2");
 	}
 }

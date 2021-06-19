@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package org.springframework.data.jdbc.testing;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.mariadb.jdbc.MariaDbDataSource;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
@@ -30,13 +30,14 @@ import org.testcontainers.containers.MariaDBContainer;
 
 /**
  * {@link DataSource} setup for MariaDB. Starts a Docker-container with a MariaDB database, and sets up database "test".
- * 
+ *
  * @author Christoph Preißner
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 @Configuration
 @Profile("mariadb")
-class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
+class MariaDBDataSourceConfiguration extends DataSourceConfiguration implements InitializingBean {
 
 	private static MariaDBContainer<?> MARIADB_CONTAINER;
 
@@ -49,9 +50,7 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 
 		if (MARIADB_CONTAINER == null) {
 
-			MariaDBContainer<?> container = new MariaDBContainer<>("mariadb:10.5")
-					.withUsername("root")
-					.withPassword("")
+			MariaDBContainer<?> container = new MariaDBContainer<>("mariadb:10.5").withUsername("root").withPassword("")
 					.withConfigurationOverride("");
 			container.start();
 
@@ -70,13 +69,12 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration {
 		}
 	}
 
-	@PostConstruct
-	public void initDatabase() throws SQLException {
+	@Override
+	public void afterPropertiesSet() throws Exception {
 
 		try (Connection connection = createDataSource().getConnection()) {
 			ScriptUtils.executeSqlScript(connection,
 					new ByteArrayResource("DROP DATABASE test;CREATE DATABASE test;".getBytes()));
 		}
 	}
-
 }

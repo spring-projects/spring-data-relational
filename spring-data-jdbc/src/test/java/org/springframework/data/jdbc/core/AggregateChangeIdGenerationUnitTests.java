@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
@@ -26,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -87,7 +87,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		executor.execute(aggregateChange);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.single.id).isEqualTo(2);
@@ -107,7 +107,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		executor.execute(aggregateChange);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList).extracting(c -> c.id).containsExactly(2, 3);
@@ -171,7 +171,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		executor.execute(aggregateChange);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.single.id).isEqualTo(2);
@@ -198,7 +198,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		executor.execute(aggregateChange);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentSet) //
@@ -233,7 +233,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		executor.execute(aggregateChange);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList) //
@@ -267,7 +267,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		executor.execute(aggregateChange);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentList) //
@@ -305,7 +305,7 @@ public class AggregateChangeIdGenerationUnitTests {
 
 		executor.execute(aggregateChange);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(entity.rootId).isEqualTo(1);
 			softly.assertThat(entity.contentMap.entrySet()) //

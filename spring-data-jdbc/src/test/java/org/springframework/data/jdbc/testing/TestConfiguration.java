@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -38,8 +41,10 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
+import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -57,6 +62,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Mark Paluch
  * @author Fei Dong
  * @author Myeonghyeon Lee
+ * @author Christoph Strobl
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -108,8 +114,21 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	CustomConversions jdbcCustomConversions() {
-		return new JdbcCustomConversions();
+	CustomConversions jdbcCustomConversions(Dialect dialect) {
+
+		SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER
+				: new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+
+		return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
+				Collections.emptyList());
+	}
+
+	private List<Object> storeConverters(Dialect dialect) {
+
+		List<Object> converters = new ArrayList<>();
+		converters.addAll(dialect.getConverters());
+		converters.addAll(JdbcCustomConversions.storeConverters());
+		return converters;
 	}
 
 	@Bean

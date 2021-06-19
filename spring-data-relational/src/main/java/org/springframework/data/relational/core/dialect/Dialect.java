@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -27,6 +31,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Christoph Strobl
  * @since 1.1
  */
 public interface Dialect {
@@ -82,7 +87,26 @@ public interface Dialect {
 		return Escaper.DEFAULT;
 	}
 
-	default IdGeneration getIdGeneration(){
+	default IdGeneration getIdGeneration() {
 		return IdGeneration.DEFAULT;
-	};
+	}
+
+	/**
+	 * Return a collection of converters for this dialect.
+	 *
+	 * @return a collection of converters for this dialect.
+	 */
+	default Collection<Object> getConverters() {
+		return Collections.emptySet();
+	}
+
+	/**
+	 * Return the {@link Set} of types considered store native types that can be handeled by the driver.
+	 *
+	 * @return never {@literal null}.
+	 * @since 2.3
+	 */
+	default Set<Class<?>> simpleTypes() {
+		return Collections.emptySet();
+	}
 }

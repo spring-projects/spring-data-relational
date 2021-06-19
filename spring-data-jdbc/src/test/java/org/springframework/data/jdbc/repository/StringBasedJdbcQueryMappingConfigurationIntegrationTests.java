@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,12 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.annotation.Id;
@@ -62,7 +65,8 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 	@Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true)
+	@EnableJdbcRepositories(considerNestedRepositories = true,
+			includeFilters = @ComponentScan.Filter(value = CarRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
 		@Bean
@@ -134,6 +138,20 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 		}
 	}
 
+	public static class RowMapperResultSetExtractor implements ResultSetExtractor<RowMapper> {
+
+		final RowMapper rowMapper;
+
+		public RowMapperResultSetExtractor(RowMapper rowMapper) {
+			this.rowMapper = rowMapper;
+		}
+
+		@Override
+		public RowMapper extractData(ResultSet rs) throws SQLException, DataAccessException {
+			return rowMapper;
+		}
+	}
+
 	interface CarRepository extends CrudRepository<Car, Long> {
 
 		@Query(value = "select * from car", resultSetExtractorClass = CarResultSetExtractor.class)
@@ -144,13 +162,18 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 
 		@Query(value = "select model from car", rowMapperRef = "CustomRowMapperBean")
 		List<String> findByNameWithRowMapperBean();
+
+
+		@Query(value = "select * from car", resultSetExtractorClass = RowMapperResultSetExtractor.class)
+		RowMapper customFindAllWithRowMapper();
+
 	}
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired CarRepository carRepository;
 
 	@Test // DATAJDBC-290
-	public void customFindAllCarsUsesConfiguredResultSetExtractor() {
+	void customFindAllCarsUsesConfiguredResultSetExtractor() {
 
 		carRepository.save(new Car(null, "Some model"));
 		Iterable<Car> cars = carRepository.customFindAll();
@@ -160,7 +183,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 	}
 
 	@Test // DATAJDBC-430
-	public void customFindWithRowMapperBeanSupportingInjection() {
+	void customFindWithRowMapperBeanSupportingInjection() {
 
 		carRepository.save(new Car(null, "Some model"));
 		List<String> names = carRepository.findByNameWithRowMapperBean();
@@ -170,7 +193,7 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 	}
 
 	@Test // DATAJDBC-430
-	public void customFindWithResultSetExtractorBeanSupportingInjection() {
+	void customFindWithResultSetExtractorBeanSupportingInjection() {
 
 		carRepository.save(new Car(null, "Some model"));
 		Iterable<Car> cars = carRepository.findByNameWithResultSetExtractor();
@@ -179,4 +202,11 @@ public class StringBasedJdbcQueryMappingConfigurationIntegrationTests {
 		assertThat(cars).allMatch(car -> VALUE_PROCESSED_BY_SERVICE.equals(car.getModel()));
 	}
 
+	@Test // DATAJDBC-620
+	void defaultRowMapperGetsInjectedIntoCustomResultSetExtractor() {
+
+		RowMapper rowMapper = carRepository.customFindAllWithRowMapper();
+
+		assertThat(rowMapper).isNotNull();
+	}
 }

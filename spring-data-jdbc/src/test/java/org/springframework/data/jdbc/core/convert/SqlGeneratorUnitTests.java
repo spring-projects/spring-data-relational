@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import java.util.Map;
@@ -94,7 +95,7 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.getFindOne();
 
-		SoftAssertions.assertSoftly(softly -> softly //
+		assertSoftly(softly -> softly //
 				.assertThat(sql) //
 				.startsWith("SELECT") //
 				.contains("dummy_entity.id1 AS id1,") //
@@ -113,7 +114,7 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.getAcquireLockById(LockMode.PESSIMISTIC_WRITE);
 
-		SoftAssertions.assertSoftly(softly -> softly //
+		assertSoftly(softly -> softly //
 				.assertThat(sql) //
 				.startsWith("SELECT") //
 				.contains("dummy_entity.id1") //
@@ -127,7 +128,7 @@ public class SqlGeneratorUnitTests {
 
 		String sql = sqlGenerator.getAcquireLockAll(LockMode.PESSIMISTIC_WRITE);
 
-		SoftAssertions.assertSoftly(softly -> softly //
+		assertSoftly(softly -> softly //
 				.assertThat(sql) //
 				.startsWith("SELECT") //
 				.contains("dummy_entity.id1") //
@@ -580,7 +581,7 @@ public class SqlGeneratorUnitTests {
 
 		SqlGenerator.Join join = generateJoin("ref", DummyEntity.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(join.getJoinTable().getName()).isEqualTo(SqlIdentifier.quoted("REFERENCED_ENTITY"));
 			softly.assertThat(join.getJoinColumn().getTable()).isEqualTo(join.getJoinTable());
@@ -612,7 +613,7 @@ public class SqlGeneratorUnitTests {
 
 		SqlGenerator.Join join = generateJoin("ref.further", DummyEntity.class);
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(join.getJoinTable().getName())
 					.isEqualTo(SqlIdentifier.quoted("SECOND_LEVEL_REFERENCED_ENTITY"));
@@ -629,7 +630,7 @@ public class SqlGeneratorUnitTests {
 		SqlGenerator.Join join = generateJoin("child", ParentOfNoIdChild.class);
 		Table joinTable = join.getJoinTable();
 
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 
 			softly.assertThat(joinTable.getName()).isEqualTo(SqlIdentifier.quoted("NO_ID_CHILD"));
 			softly.assertThat(joinTable).isInstanceOf(Aliased.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.springframework.data.jdbc.core.mapping;
 
 import lombok.experimental.UtilityClass;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -28,7 +27,6 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 @UtilityClass
 public class PersistentPropertyPathTestUtils {
 
-	@NotNull
 	public static PersistentPropertyPath<RelationalPersistentProperty> getPath(RelationalMappingContext context,
 			String path, Class<?> baseType) {
 

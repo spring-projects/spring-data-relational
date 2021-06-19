@@ -30,7 +30,7 @@ Especially the integration tests (if you are reading this on github, type `t` an
 
 We are keeping an eye on the (soon to be created) https://stackoverflow.com/questions/tagged/spring-data-jdbc[spring-data-jdbc tag on stackoverflow].
 
-If you think you found a bug, or have a feature request please https://jira.spring.io/browse/DATAJDBC/?selectedTab=com.atlassian.jira.jira-projects-plugin:summary-panel[create a ticket in our issue tracker].
+If you think you found a bug, or have a feature request please https://github.com/spring-projects/spring-data-jdbc/issues[create a ticket in our issue tracker].
 
 == Execute Tests
 

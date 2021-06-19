@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import junit.framework.AssertionFailedError;
@@ -93,6 +94,38 @@ public class BasicJdbcPersistentPropertyUnitTests {
 
 		assertThat(listProperty.getKeyColumn()).isEqualTo(quoted("override_key"));
 		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("override_id"));
+	}
+
+	@Test // #938
+	void considersAggregateReferenceAnAssociation() {
+
+		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(entity.getRequiredPersistentProperty("reference").isAssociation()) //
+					.as("reference") //
+					.isTrue();
+
+			softly.assertThat(entity.getRequiredPersistentProperty("id").isAssociation()) //
+					.as("id") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("someEnum").isAssociation()) //
+					.as("someEnum") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("localDateTime").isAssociation()) //
+					.as("localDateTime") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("zonedDateTime").isAssociation()) //
+					.as("zonedDateTime") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("listField").isAssociation()) //
+					.as("listField") //
+					.isFalse();
+			softly.assertThat(entity.getRequiredPersistentProperty("uuid").isAssociation()) //
+					.as("uuid") //
+					.isFalse();
+		});
 	}
 
 	private PersistentPropertyPathExtension getPersistentPropertyPath(Class<?> type, String propertyName) {

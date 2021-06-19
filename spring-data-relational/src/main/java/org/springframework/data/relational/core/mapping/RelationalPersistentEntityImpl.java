@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.mapping;
 import java.util.Optional;
 
 import org.springframework.data.mapping.model.BasicPersistentEntity;
-import org.springframework.data.mapping.model.PersistentPropertyAccessorFactory;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
@@ -74,7 +73,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.mapping.model.JdbcPersistentEntity#getTableName()
+	 * @see org.springframework.data.relational.mapping.model.RelationalPersistentEntity#getTableName()
 	 */
 	@Override
 	public SqlIdentifier getTableName() {
@@ -90,7 +89,7 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.mapping.model.JdbcPersistentEntity#getIdColumn()
+	 * @see org.springframework.data.relational.core.mapping.model.RelationalPersistentEntity#getIdColumn()
 	 */
 	@Override
 	public SqlIdentifier getIdColumn() {

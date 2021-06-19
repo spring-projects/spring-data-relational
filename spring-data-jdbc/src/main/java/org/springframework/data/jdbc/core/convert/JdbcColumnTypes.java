@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import java.util.Date;
@@ -51,7 +54,9 @@ public enum JdbcColumnTypes {
 
 		javaToDbType.put(Enum.class, String.class);
 		javaToDbType.put(ZonedDateTime.class, String.class);
-		javaToDbType.put(Temporal.class, Date.class);
+		javaToDbType.put(OffsetDateTime.class, OffsetDateTime.class);
+		javaToDbType.put(LocalDateTime.class, LocalDateTime.class);
+		javaToDbType.put(Temporal.class, Timestamp.class);
 	}
 
 	public abstract Class<?> resolvePrimitiveType(Class<?> type);

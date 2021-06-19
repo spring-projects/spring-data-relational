@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import java.util.List;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.LockOptions;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
+import java.util.Collection;
+import java.util.Collections;
+
+import static java.util.Arrays.*;
 
 /**
  * An SQL dialect for Oracle.
@@ -50,5 +49,29 @@ public class OracleDialect extends AnsiDialect {
 	@Override
 	public IdGeneration getIdGeneration() {
 		return ID_GENERATION;
+	}
+
+	@Override
+	public Collection<Object> getConverters() {
+		return asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE, BooleanToIntegerConverter.INSTANCE);
+	}
+
+	@ReadingConverter
+	enum NumberToBooleanConverter implements Converter<Number, Boolean> {
+		INSTANCE;
+
+		@Override
+		public Boolean convert(Number number) {
+			return number.intValue() != 0;
+		}
+	}
+	@WritingConverter
+	enum BooleanToIntegerConverter implements Converter<Boolean, Integer> {
+		INSTANCE;
+
+		@Override
+		public Integer convert(Boolean bool) {
+			return bool ? 1 : 0;
+		}
 	}
 }

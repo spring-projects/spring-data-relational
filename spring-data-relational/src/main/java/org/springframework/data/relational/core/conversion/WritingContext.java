@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ class WritingContext {
 	 * Leaves out the isNew check as defined in #DATAJDBC-282
 	 *
 	 * @return List of {@link DbAction}s
-	 * @see <a href="https://jira.spring.io/browse/DATAJDBC-282">DAJDBC-282</a>
+	 * @see <a href="https://github.com/spring-projects/spring-data-jdbc/issues/507">DAJDBC-282</a>
 	 */
 	List<DbAction<?>> insert() {
 
@@ -76,8 +76,8 @@ class WritingContext {
 	 * Leaves out the isNew check as defined in #DATAJDBC-282 Possible Deadlocks in Execution Order in #DATAJDBC-488
 	 *
 	 * @return List of {@link DbAction}s
-	 * @see <a href="https://jira.spring.io/browse/DATAJDBC-282">DAJDBC-282</a>
-	 * @see <a href="https://jira.spring.io/browse/DATAJDBC-488">DAJDBC-488</a>
+	 * @see <a href="https://github.com/spring-projects/spring-data-jdbc/issues/507">DAJDBC-282</a>
+	 * @see <a href="https://github.com/spring-projects/spring-data-jdbc/issues/714">DAJDBC-488</a>
 	 */
 	List<DbAction<?>> update() {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -24,9 +27,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of the {@link org.springframework.data.repository.CrudRepository} interface.
@@ -140,6 +140,15 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.deleteAll#delete(java.lang.Iterable)
+	 */
+	@Override
+	public void deleteAllById(Iterable<? extends ID> ids) {
+		ids.forEach(it -> entityOperations.deleteById(it, entity.getType()));
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.data.repository.CrudRepository#delete(java.lang.Iterable)
 	 */
 	@Transactional
@@ -149,6 +158,10 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 		entities.forEach(it -> entityOperations.delete(it, (Class<T>) it.getClass()));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.repository.CrudRepository#deleteAll()
+	 */
 	@Transactional
 	@Override
 	public void deleteAll() {
@@ -172,4 +185,5 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 	public Page<T> findAll(Pageable pageable) {
 		return entityOperations.findAll(entity.getType(), pageable);
 	}
+
 }

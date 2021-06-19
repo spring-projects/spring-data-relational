@@ -1,6 +1,150 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.2.1 (2021-05-14)
+-------------------------------------
+
+
+Changes in version 2.1.9 (2021-05-14)
+-------------------------------------
+
+
+Changes in version 2.2.0 (2021-04-14)
+-------------------------------------
+* #961 - Upgrade dependencies.
+* #952 - Add support for `Slice` and `Page` queries using query derivation.
+* #951 - Improve documentation of entity state detection.
+* #774 - Add support for queries returning Page and Slice.
+
+
+Changes in version 2.1.8 (2021-04-14)
+-------------------------------------
+* #961 - Upgrade dependencies.
+* #951 - Improve documentation of entity state detection.
+
+
+Changes in version 2.0.9.RELEASE (2021-04-14)
+---------------------------------------------
+* #953 - Fix small typo in dialect section.
+* #947 - Docs on "query derivation" contradicts.
+* #945 - ClassCastException on primitive arrays parameters in spring-data-jdbc 2.x.x.
+
+
+Changes in version 2.1.7 (2021-03-31)
+-------------------------------------
+* #953 - Fix small typo in dialect section.
+* #947 - Docs on "query derivation" contradicts.
+* #945 - ClassCastException on primitive arrays parameters in spring-data-jdbc 2.x.x.
+
+
+Changes in version 2.2.0-RC1 (2021-03-31)
+-----------------------------------------
+* #953 - Fix small typo in dialect section.
+* #947 - Docs on "query derivation" contradicts.
+* #945 - ClassCastException on primitive arrays parameters in spring-data-jdbc 2.x.x.
+
+
+Changes in version 2.2.0-M5 (2021-03-17)
+----------------------------------------
+* #939 - Don't retrieve generated keys on INSERT if primary key is defined.
+* #938 - Move to Spring Data Commons' association abstraction.
+* #937 - JdbcCustomConversion does not reject non-Date related default converters anymore.
+* #933 - Generated keys are retrieved even if the primary key value is defined.
+* #929 - Add Query by Example support.
+
+
+Changes in version 2.1.6 (2021-03-17)
+-------------------------------------
+
+
+Changes in version 2.0.8.RELEASE (2021-03-17)
+---------------------------------------------
+
+
+Changes in version 2.2.0-M4 (2021-02-18)
+----------------------------------------
+
+
+Changes in version 2.1.5 (2021-02-18)
+-------------------------------------
+
+
+Changes in version 2.2.0-M3 (2021-02-17)
+----------------------------------------
+* DATAJDBC-620 - ResultSetExtractor can not use default row mapper.
+* #916 - Fixes Conditions.notIn() by using 'In.createNotIn()'.
+* #914 - SqlServerDialect should be case sensitive.
+* #911 - Fix documentation of callbacks.
+* #910 - Trigger BeforeConvertEvent when saving an entity.
+* #257 - Update repository after GitHub issues migration.
+
+
+Changes in version 2.1.4 (2021-02-17)
+-------------------------------------
+* DATAJDBC-620 - ResultSetExtractor can not use default row mapper.
+* #916 - Fixes Conditions.notIn() by using 'In.createNotIn()'.
+* #911 - Fix documentation of callbacks.
+* #910 - Trigger BeforeConvertEvent when saving an entity.
+
+
+Changes in version 2.0.7.RELEASE (2021-02-17)
+---------------------------------------------
+* DATAJDBC-642 - Update CI jobs with Docker Login.
+* DATAJDBC-637 - Support nanosecond precision by converting to Timestamp instead of Date.
+* #916 - Fixes Conditions.notIn() by using 'In.createNotIn()'.
+* #911 - Fix documentation of callbacks.
+* #904 - Update copyright year to 2021.
+* #257 - Update repository after GitHub issues migration.
+
+
+Changes in version 1.1.13.RELEASE (2021-02-17)
+----------------------------------------------
+* #921 - The 1.1.x build is broken.
+* #916 - Fixes Conditions.notIn() by using 'In.createNotIn()'.
+* #904 - Update copyright year to 2021.
+
+
+Changes in version 2.2.0-M2 (2021-01-13)
+----------------------------------------
+* DATAJDBC-642 - Update CI jobs with Docker Login.
+* DATAJDBC-637 - Support nanosecond precision by converting to Timestamp instead of Date.
+* #904 - Update copyright year to 2021.
+* #257 - Update repository after GitHub issues migration.
+
+
+Changes in version 2.1.3 (2021-01-13)
+-------------------------------------
+* DATAJDBC-642 - Update CI jobs with Docker Login.
+* DATAJDBC-637 - Support nanosecond precision by converting to Timestamp instead of Date.
+* #904 - Update copyright year to 2021.
+* #257 - Update repository after GitHub issues migration.
+
+
+Changes in version 2.1.2 (2020-12-09)
+-------------------------------------
+* DATAJDBC-633 - Release 2.1.2 (2020.0.2).
+
+
+Changes in version 2.2.0-M1 (2020-12-09)
+----------------------------------------
+* DATAJDBC-629 - Implement CrudRepository.delete(Iterable<ID> ids).
+* DATAJDBC-628 - Enable Maven caching for Jenkins jobs.
+* DATAJDBC-627 - Release 2.2 M1 (2021.0.0).
+* DATAJDBC-531 - Skip count query if Page Query result page size is 1.
+
+
+Changes in version 2.0.6.RELEASE (2020-12-09)
+---------------------------------------------
+* DATAJDBC-628 - Enable Maven caching for Jenkins jobs.
+* DATAJDBC-625 - Release 2.0.6 (Neumann SR6).
+
+
+Changes in version 1.1.12.RELEASE (2020-12-09)
+----------------------------------------------
+* DATAJDBC-628 - Enable Maven caching for Jenkins jobs.
+* DATAJDBC-624 - Release 1.1.12 (Moore SR12).
+
+
 Changes in version 2.1.1 (2020-11-11)
 -------------------------------------
 * DATAJDBC-628 - Enable Maven caching for Jenkins jobs.
@@ -596,6 +740,28 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,24 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
+import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
+
 import java.lang.reflect.Constructor;
 import java.sql.JDBCType;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
+import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
-import org.springframework.data.util.Lazy;
+import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -53,8 +59,8 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	private static final String PARAMETER_NEEDS_TO_BE_NAMED = "For queries with named parameters you need to provide names for method parameters. Use @Param for query method parameters, or when on Java 8+ use the javac flag -parameters.";
 
 	private final JdbcQueryMethod queryMethod;
-	private final Lazy<JdbcQueryExecution<?>> executor;
 	private final JdbcConverter converter;
+	private final RowMapperFactory rowMapperFactory;
 	private BeanFactory beanFactory;
 
 	/**
@@ -67,19 +73,38 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 */
 	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
 			@Nullable RowMapper<?> defaultRowMapper, JdbcConverter converter) {
+		this(queryMethod, operations, result -> (RowMapper<Object>) defaultRowMapper, converter);
+	}
 
-		super(queryMethod, operations, defaultRowMapper);
+	/**
+	 * Creates a new {@link StringBasedJdbcQuery} for the given {@link JdbcQueryMethod}, {@link RelationalMappingContext}
+	 * and {@link RowMapperFactory}.
+	 *
+	 * @param queryMethod must not be {@literal null}.
+	 * @param operations must not be {@literal null}.
+	 * @param rowMapperFactory must not be {@literal null}.
+	 * @since 2.3
+	 */
+	public StringBasedJdbcQuery(JdbcQueryMethod queryMethod, NamedParameterJdbcOperations operations,
+			RowMapperFactory rowMapperFactory, JdbcConverter converter) {
+
+		super(queryMethod, operations);
+
+		Assert.notNull(rowMapperFactory, "RowMapperFactory must not be null");
 
 		this.queryMethod = queryMethod;
 		this.converter = converter;
+		this.rowMapperFactory = rowMapperFactory;
 
-		executor = Lazy.of(() -> {
-			RowMapper<Object> rowMapper = determineRowMapper(defaultRowMapper);
-			return getQueryExecution( //
-				queryMethod, //
-				determineResultSetExtractor(rowMapper != defaultRowMapper ? rowMapper : null), //
-				rowMapper //
-		);});
+		if (queryMethod.isSliceQuery()) {
+			throw new UnsupportedOperationException(
+					"Slice queries are not supported using string-based queries. Offending method: " + queryMethod);
+		}
+
+		if (queryMethod.isPageQuery()) {
+			throw new UnsupportedOperationException(
+					"Page queries are not supported using string-based queries. Offending method: " + queryMethod);
+		}
 	}
 
 	/*
@@ -88,7 +113,21 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 	 */
 	@Override
 	public Object execute(Object[] objects) {
-		return executor.get().execute(determineQuery(), this.bindParameters(objects));
+
+		RelationalParameterAccessor accessor = new RelationalParametersParameterAccessor(getQueryMethod(), objects);
+		ResultProcessor processor = getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
+		ResultProcessingConverter converter = new ResultProcessingConverter(processor, this.converter.getMappingContext(),
+				this.converter.getEntityInstantiators());
+
+		RowMapper<Object> rowMapper = determineRowMapper(rowMapperFactory.create(resolveTypeToRead(processor)), converter,
+				accessor.findDynamicProjection() != null);
+
+		JdbcQueryExecution<?> queryExecution = getQueryExecution(//
+				queryMethod, //
+				determineResultSetExtractor(rowMapper), //
+				rowMapper);
+
+		return queryExecution.execute(determineQuery(), this.bindParameters(accessor));
 	}
 
 	/*
@@ -100,12 +139,15 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return queryMethod;
 	}
 
-	private MapSqlParameterSource bindParameters(Object[] objects) {
+	private MapSqlParameterSource bindParameters(RelationalParameterAccessor accessor) {
 
 		MapSqlParameterSource parameters = new MapSqlParameterSource();
 
-		queryMethod.getParameters().getBindableParameters()
-				.forEach(p -> convertAndAddParameter(parameters, p, objects[p.getIndex()]));
+		Parameters<?, ?> bindableParameters = accessor.getBindableParameters();
+
+		for (Parameter bindableParameter : bindableParameters) {
+			convertAndAddParameter(parameters, bindableParameter, accessor.getBindableValue(bindableParameter.getIndex()));
+		}
 
 		return parameters;
 	}
@@ -167,6 +209,19 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		}
 
 		return BeanUtils.instantiateClass(resultSetExtractorClass);
+	}
+
+	@Nullable
+	RowMapper<Object> determineRowMapper(@Nullable RowMapper<?> defaultMapper,
+			Converter<Object, Object> resultProcessingConverter, boolean hasDynamicProjection) {
+
+		RowMapper<Object> rowMapperToUse = determineRowMapper(defaultMapper);
+
+		if ((hasDynamicProjection || rowMapperToUse == defaultMapper) && rowMapperToUse != null) {
+			return new ConvertingRowMapper<>(rowMapperToUse, resultProcessingConverter);
+		}
+
+		return rowMapperToUse;
 	}
 
 	@SuppressWarnings("unchecked")

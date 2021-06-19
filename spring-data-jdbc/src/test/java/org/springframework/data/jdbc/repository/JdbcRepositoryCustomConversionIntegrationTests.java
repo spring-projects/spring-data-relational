@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package org.springframework.data.jdbc.repository;
 
 import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
 import java.math.BigDecimal;
 import java.sql.JDBCType;
 import java.util.Date;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,7 +130,7 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		EntityWithStringyBigDecimal reloaded = repository.findById(entity.id).get();
 
 		// loading the number from the database might result in additional zeros at the end.
-		SoftAssertions.assertSoftly(softly -> {
+		assertSoftly(softly -> {
 			String stringyNumber = reloaded.stringyNumber;
 			softly.assertThat(stringyNumber).startsWith(entity.stringyNumber);
 			softly.assertThat(stringyNumber.substring(entity.stringyNumber.length())).matches("0*");

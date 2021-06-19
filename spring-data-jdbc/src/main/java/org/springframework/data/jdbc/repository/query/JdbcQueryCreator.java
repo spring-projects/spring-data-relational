@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.springframework.data.relational.repository.query.RelationalEntityMeta
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -66,25 +67,31 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	private final QueryMapper queryMapper;
 	private final RelationalEntityMetadata<?> entityMetadata;
 	private final RenderContextFactory renderContextFactory;
+	private final boolean isSliceQuery;
+	private final ReturnedType returnedType;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
 	 * {@link RelationalEntityMetadata} and {@link RelationalParameterAccessor}.
 	 *
-	 * @param context
+	 * @param context the mapping context. Must not be {@literal null}.
 	 * @param tree part tree, must not be {@literal null}.
 	 * @param converter must not be {@literal null}.
 	 * @param dialect must not be {@literal null}.
 	 * @param entityMetadata relational entity metadata, must not be {@literal null}.
 	 * @param accessor parameter metadata provider, must not be {@literal null}.
+	 * @param isSliceQuery flag denoting if the query returns a {@link org.springframework.data.domain.Slice}.
+	 * @param returnedType the {@link ReturnedType} to be returned by the query. Must not be {@literal null}.
 	 */
 	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
-			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor) {
+			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
+			ReturnedType returnedType) {
 		super(tree, accessor);
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(entityMetadata, "Relational entity metadata must not be null");
+		Assert.notNull(returnedType, "ReturnedType must not be null");
 
 		this.context = context;
 		this.tree = tree;
@@ -93,14 +100,16 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		this.entityMetadata = entityMetadata;
 		this.queryMapper = new QueryMapper(dialect, converter);
 		this.renderContextFactory = new RenderContextFactory(dialect);
+		this.isSliceQuery = isSliceQuery;
+		this.returnedType = returnedType;
 	}
 
 	/**
 	 * Validate parameters for the derived query. Specifically checking that the query method defines scalar parameters
 	 * and collection parameters where required and that invalid parameter declarations are rejected.
 	 *
-	 * @param tree
-	 * @param parameters
+	 * @param tree the tree structure defining the predicate of the query.
+	 * @param parameters parameters for the predicate.
 	 */
 	static void validate(PartTree tree, Parameters<?, ?> parameters,
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
@@ -171,7 +180,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		return new ParametrizedQuery(sql, parameterSource);
 	}
 
-	private SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,
+	SelectBuilder.SelectOrdered applyOrderBy(Sort sort, RelationalPersistentEntity<?> entity, Table table,
 			SelectBuilder.SelectOrdered selectOrdered) {
 
 		return sort.isSorted() ? //
@@ -179,7 +188,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 				: selectOrdered;
 	}
 
-	private SelectBuilder.SelectOrdered applyCriteria(@Nullable Criteria criteria, RelationalPersistentEntity<?> entity,
+	SelectBuilder.SelectOrdered applyCriteria(@Nullable Criteria criteria, RelationalPersistentEntity<?> entity,
 			Table table, MapSqlParameterSource parameterSource, SelectBuilder.SelectWhere whereBuilder) {
 
 		return criteria != null //
@@ -187,7 +196,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 				: whereBuilder;
 	}
 
-	private SelectBuilder.SelectWhere applyLimitAndOffset(SelectBuilder.SelectLimitOffset limitOffsetBuilder) {
+	SelectBuilder.SelectWhere applyLimitAndOffset(SelectBuilder.SelectLimitOffset limitOffsetBuilder) {
 
 		if (tree.isExistsProjection()) {
 			limitOffsetBuilder = limitOffsetBuilder.limit(1);
@@ -197,13 +206,14 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 
 		Pageable pageable = accessor.getPageable();
 		if (pageable.isPaged()) {
-			limitOffsetBuilder = limitOffsetBuilder.limit(pageable.getPageSize()).offset(pageable.getOffset());
+			limitOffsetBuilder = limitOffsetBuilder.limit(isSliceQuery ? pageable.getPageSize() + 1 : pageable.getPageSize())
+					.offset(pageable.getOffset());
 		}
 
 		return (SelectBuilder.SelectWhere) limitOffsetBuilder;
 	}
 
-	private SelectBuilder.SelectLimitOffset createSelectClause(RelationalPersistentEntity<?> entity, Table table) {
+	SelectBuilder.SelectLimitOffset createSelectClause(RelationalPersistentEntity<?> entity, Table table) {
 
 		SelectBuilder.SelectJoin builder;
 		if (tree.isExistsProjection()) {
@@ -230,6 +240,13 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
 
 			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(context, path);
+
+			if (returnedType.needsCustomConstruction()) {
+				if (!returnedType.getInputProperties()
+						.contains(extPath.getRequiredPersistentPropertyPath().getBaseProperty().getName())) {
+					continue;
+				}
+			}
 
 			// add a join if necessary
 			Join join = getJoin(sqlContext, extPath);
@@ -326,18 +343,6 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 			this.joinTable = joinTable;
 			this.joinColumn = joinColumn;
 			this.parentId = parentId;
-		}
-
-		Table getJoinTable() {
-			return this.joinTable;
-		}
-
-		Column getJoinColumn() {
-			return this.joinColumn;
-		}
-
-		Column getParentId() {
-			return this.parentId;
 		}
 
 		@Override

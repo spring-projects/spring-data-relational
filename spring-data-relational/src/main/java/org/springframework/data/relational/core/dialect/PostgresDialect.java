@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
-import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
+import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -113,6 +115,11 @@ public class PostgresDialect extends AbstractDialect {
 		return ARRAY_COLUMNS;
 	}
 
+	@Override
+	public Collection<Object> getConverters() {
+		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
+	}
+
 	static class PostgresLockClause implements LockClause {
 
 		private final IdentifierProcessing identifierProcessing;
@@ -165,7 +172,7 @@ public class PostgresDialect extends AbstractDialect {
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
 		}
-	};
+	}
 
 	static class PostgresArrayColumns implements ArrayColumns {
 
@@ -195,4 +202,5 @@ public class PostgresDialect extends AbstractDialect {
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.LOWER_CASE);
 	}
+
 }

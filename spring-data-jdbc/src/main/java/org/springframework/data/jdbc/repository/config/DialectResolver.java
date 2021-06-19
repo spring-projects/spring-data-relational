@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
 import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
+import org.springframework.data.relational.core.dialect.MariaDbDialect;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.dialect.OracleDialect;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
@@ -118,19 +123,22 @@ public class DialectResolver {
 				return HsqlDbDialect.INSTANCE;
 			}
 			if (name.contains("h2")) {
-				return H2Dialect.INSTANCE;
+				return JdbcH2Dialect.INSTANCE;
 			}
-			if (name.contains("mysql") || name.contains("mariadb")) {
-				return new MySqlDialect(getIdentifierProcessing(metaData));
+			if (name.contains("mysql")) {
+				return new JdbcMySqlDialect(getIdentifierProcessing(metaData));
+			}
+			if (name.contains("mariadb")) {
+				return new MariaDbDialect(getIdentifierProcessing(metaData));
 			}
 			if (name.contains("postgresql")) {
 				return PostgresDialect.INSTANCE;
 			}
 			if (name.contains("microsoft")) {
-				return SqlServerDialect.INSTANCE;
+				return JdbcSqlServerDialect.INSTANCE;
 			}
 			if (name.contains("db2")) {
-				return Db2Dialect.INSTANCE;
+				return JdbcDb2Dialect.INSTANCE;
 			}
 			if (name.contains("oracle")) {
 				return OracleDialect.INSTANCE;

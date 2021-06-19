@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import lombok.With;
 
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
@@ -134,12 +133,10 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		return new PersistentPropertyPathExtension(context, getPersistentPropertyPath(path));
 	}
 
-	@NotNull
 	PersistentPropertyPath<RelationalPersistentProperty> getPersistentPropertyPath(String propertyName) {
 		return context.getPersistentPropertyPath(propertyName, DummyEntity.class);
 	}
 
-	@NotNull
 	Identifier createBackRef() {
 		return JdbcIdentifierBuilder.forBackReferences(converter, toPathExt("content"), 23L).build();
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
@@ -26,6 +29,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Christph Strobl
  * @since 2.0
  */
 public class H2Dialect extends AbstractDialect {
@@ -136,5 +140,22 @@ public class H2Dialect extends AbstractDialect {
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.UPPER_CASE);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#simpleTypes()
+	 */
+	@Override
+	public Set<Class<?>> simpleTypes() {
+
+		if (!ClassUtils.isPresent("org.h2.api.TimestampWithTimeZone", getClass().getClassLoader())) {
+			return Collections.emptySet();
+		}
+		try {
+			return Collections.singleton(ClassUtils.forName("org.h2.api.TimestampWithTimeZone", getClass().getClassLoader()));
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 }

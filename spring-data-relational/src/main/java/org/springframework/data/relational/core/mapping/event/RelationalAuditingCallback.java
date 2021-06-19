@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.springframework.util.Assert;
 /**
  * {@link BeforeConvertCallback} to capture auditing information on persisting and updating entities.
  * <p>
- * An instance of this class gets registered when you enable auditing for Spring Data JDBC.
+ * An instance of this class gets registered when you enable auditing for Spring Data Relational.
  *
  * @author Jens Schauder
  * @author Mark Paluch
