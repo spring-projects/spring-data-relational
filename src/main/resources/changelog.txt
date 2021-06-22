@@ -1,6 +1,13 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.3.2 (2021-06-22)
+-------------------------------------
+* #607 - Dynamic projection skipped if projection type not already registered with MappingContext.
+* #589 - MySQL dialect converts all `byte` properties to `boolean`.
+* #483 - Spring R2DBC should support camel case columns in Postgresql out of the box or should provide configuration for supporting it..
+
+
 Changes in version 1.2.10 (2021-06-22)
 --------------------------------------
 * #607 - Dynamic projection skipped if projection type not already registered with MappingContext.
@@ -492,6 +499,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
