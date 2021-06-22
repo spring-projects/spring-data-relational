@@ -1,6 +1,13 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.2.2 (2021-06-22)
+-------------------------------------
+* #979 - Fix Readme section about creating issues.
+* #975 - Fixes build failures with JDK16.
+* #972 - Fix split-package between `spring.data.jdbc` and `spring.data.relational`.
+
+
 Changes in version 2.1.10 (2021-06-22)
 --------------------------------------
 * #979 - Fix Readme section about creating issues.
@@ -747,6 +754,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
