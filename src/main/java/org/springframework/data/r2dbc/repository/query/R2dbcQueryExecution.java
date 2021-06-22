@@ -93,10 +93,6 @@ interface R2dbcQueryExecution {
 				return source;
 			}
 
-			if (!mappingContext.hasPersistentEntityFor(returnedType.getReturnedType())) {
-				return source;
-			}
-
 			if (ReflectionUtils.isVoid(returnedType.getReturnedType())) {
 
 				if (source instanceof Mono) {

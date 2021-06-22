@@ -142,13 +142,21 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
-	@Test // gh-475
+	@Test // gh-475, gh-607
 	void shouldFindApplyingInterfaceProjection() {
 
 		shouldInsertNewItems();
 
 		repository.findAsProjection() //
 				.map(Named::getName) //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual).contains("SCHAUFELRADBAGGER", "FORSCHUNGSSCHIFF");
+				}).verifyComplete();
+
+		repository.findBy(WithName.class) //
+				.map(WithName::getName) //
 				.collectList() //
 				.as(StepVerifier::create) //
 				.consumeNextWith(actual -> {
@@ -375,6 +383,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 		Flux<Named> findAsProjection();
 
+		<T> Flux<T> findBy(Class<T> theClass);
+
 		@Query("SELECT name from legoset")
 		Flux<LegoDto> findAsDtoProjection();
 
@@ -440,6 +450,10 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	}
 
 	interface Named {
+		String getName();
+	}
+
+	interface WithName {
 		String getName();
 	}
 }
