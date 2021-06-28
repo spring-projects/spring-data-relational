@@ -95,7 +95,7 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		}
 
 		if (queryMethod.isStreamQuery()) {
-			return streamQuery(rowMapper);
+			return extractor != null ? getQueryExecution(extractor) : streamQuery(rowMapper);
 		}
 
 		return extractor != null ? getQueryExecution(extractor) : singleObjectQuery(rowMapper);

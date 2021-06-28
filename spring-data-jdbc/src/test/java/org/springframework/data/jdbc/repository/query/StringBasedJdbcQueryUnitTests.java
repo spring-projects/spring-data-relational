@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -140,6 +141,18 @@ public class StringBasedJdbcQueryUnitTests {
 		verify(operations).queryForStream(eq("some sql statement"), any(SqlParameterSource.class), any(RowMapper.class));
 	}
 
+	@Test // DATAJDBC-356
+	void streamQueryFallsBackToCollectionQueryWhenCustomResultSetExtractorIsSpecified() {
+		JdbcQueryMethod queryMethod = createMethod("findAllWithStreamReturnTypeAndResultSetExtractor");
+		StringBasedJdbcQuery query = createQuery(queryMethod);
+
+		query.execute(new Object[] {});
+
+		ArgumentCaptor<ResultSetExtractor> captor = ArgumentCaptor.forClass(ResultSetExtractor.class);
+		verify(operations).query(eq("some sql statement"), any(SqlParameterSource.class), captor.capture());
+		assertThat(captor.getValue()).isInstanceOf(CustomResultSetExtractor.class);
+	}
+
 	@Test // GH-774
 	public void sliceQueryNotSupported() {
 
@@ -188,6 +201,9 @@ public class StringBasedJdbcQueryUnitTests {
 
 		@Query(value = "some sql statement")
 		Stream<Object> findAllWithStreamReturnType();
+
+		@Query(value = "some sql statement", resultSetExtractorClass = CustomResultSetExtractor.class)
+		Stream<Object> findAllWithStreamReturnTypeAndResultSetExtractor();
 
 		List<Object> noAnnotation();
 
