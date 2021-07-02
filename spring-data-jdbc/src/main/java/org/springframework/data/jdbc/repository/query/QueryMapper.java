@@ -298,7 +298,7 @@ class QueryMapper {
 				&& ((MetadataBackedField) propertyField).property != null //
 				&& (criteria.getValue() == null || !criteria.getValue().getClass().isArray())) {
 
-			final RelationalPersistentProperty property = ((MetadataBackedField) propertyField).property;
+			RelationalPersistentProperty property = ((MetadataBackedField) propertyField).property;
 			JdbcValue jdbcValue = convertSpecial(property, criteria.getValue());
 			mappedValue = jdbcValue.getValue();
 			sqlType = jdbcValue.getJdbcType() != null ? jdbcValue.getJdbcType().getVendorTypeNumber()
