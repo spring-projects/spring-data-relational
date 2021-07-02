@@ -34,7 +34,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @since 2.6
  */
-final class AggregateReferenceConverters {
+class AggregateReferenceConverters {
 	/**
 	 * Prevent instantiation.
 	 */
@@ -45,11 +45,11 @@ final class AggregateReferenceConverters {
 	 * delegate {@link ConversionService}.
 	 */
 	@WritingConverter
-	public static class AggregateReferenceToSimpleTypeConverter implements GenericConverter {
+	static class AggregateReferenceToSimpleTypeConverter implements GenericConverter {
 
 		private final ConversionService delegate;
 
-		public AggregateReferenceToSimpleTypeConverter(ConversionService delegate) {
+		AggregateReferenceToSimpleTypeConverter(ConversionService delegate) {
 			this.delegate = delegate;
 		}
 
@@ -90,11 +90,11 @@ final class AggregateReferenceConverters {
 	 * {@link ConversionService}.
 	 */
 	@ReadingConverter
-	public static class SimpleTypeToAggregateReferenceConverter implements GenericConverter {
+	static class SimpleTypeToAggregateReferenceConverter implements GenericConverter {
 
 		private final ConversionService delegate;
 
-		public SimpleTypeToAggregateReferenceConverter(ConversionService delegate) {
+		SimpleTypeToAggregateReferenceConverter(ConversionService delegate) {
 			this.delegate = delegate;
 		}
 
@@ -110,7 +110,6 @@ final class AggregateReferenceConverters {
 				return null;
 			}
 
-			// TODO check
 			ResolvableType componentType = targetDescriptor.getResolvableType().getGenerics()[1];
 			TypeDescriptor targetType = TypeDescriptor.valueOf(componentType.resolve());
 			Object convertedId = delegate.convert(source, TypeDescriptor.valueOf(source.getClass()), targetType);
