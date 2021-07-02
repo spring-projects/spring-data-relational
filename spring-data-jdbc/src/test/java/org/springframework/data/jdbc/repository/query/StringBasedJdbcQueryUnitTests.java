@@ -40,7 +40,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
-import org.springframework.data.repository.query.DefaultParameters;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -57,8 +56,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Mark Paluch
  * @author Dennis Effing
  */
-public class StringBasedJdbcQueryUnitTests {
-
+class StringBasedJdbcQueryUnitTests {
 
 	RowMapper<Object> defaultRowMapper;
 	NamedParameterJdbcOperations operations;
@@ -66,7 +64,7 @@ public class StringBasedJdbcQueryUnitTests {
 	JdbcConverter converter;
 
 	@BeforeEach
-	public void setup() throws NoSuchMethodException {
+	void setup() throws NoSuchMethodException {
 
 		this.defaultRowMapper = mock(RowMapper.class);
 		this.operations = mock(NamedParameterJdbcOperations.class);
@@ -75,17 +73,16 @@ public class StringBasedJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-165
-	public void emptyQueryThrowsException() {
+	void emptyQueryThrowsException() {
 
 		JdbcQueryMethod queryMethod = createMethod("noAnnotation");
 
 		Assertions.assertThatExceptionOfType(IllegalStateException.class) //
-				.isThrownBy(() -> createQuery(queryMethod)
-						.execute(new Object[] {}));
+				.isThrownBy(() -> createQuery(queryMethod).execute(new Object[] {}));
 	}
 
 	@Test // DATAJDBC-165
-	public void defaultRowMapperIsUsedByDefault() {
+	void defaultRowMapperIsUsedByDefault() {
 
 		JdbcQueryMethod queryMethod = createMethod("findAll");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
@@ -94,7 +91,7 @@ public class StringBasedJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-165, DATAJDBC-318
-	public void customRowMapperIsUsedWhenSpecified() {
+	void customRowMapperIsUsedWhenSpecified() {
 
 		JdbcQueryMethod queryMethod = createMethod("findAllWithCustomRowMapper");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
@@ -103,7 +100,7 @@ public class StringBasedJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-290
-	public void customResultSetExtractorIsUsedWhenSpecified() {
+	void customResultSetExtractorIsUsedWhenSpecified() {
 
 		JdbcQueryMethod queryMethod = createMethod("findAllWithCustomResultSetExtractor");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
@@ -117,7 +114,7 @@ public class StringBasedJdbcQueryUnitTests {
 	}
 
 	@Test // DATAJDBC-290
-	public void customResultSetExtractorAndRowMapperGetCombined() {
+	void customResultSetExtractorAndRowMapperGetCombined() {
 
 		JdbcQueryMethod queryMethod = createMethod("findAllWithCustomRowMapperAndResultSetExtractor");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
@@ -131,8 +128,9 @@ public class StringBasedJdbcQueryUnitTests {
 						"RowMapper is not expected to be custom");
 	}
 
-	@Test // DATAJDBC-356
-	public void streamQueryCallsQueryForStreamOnOperations() {
+	@Test // GH-578
+	void streamQueryCallsQueryForStreamOnOperations() {
+
 		JdbcQueryMethod queryMethod = createMethod("findAllWithStreamReturnType");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
 
@@ -141,20 +139,21 @@ public class StringBasedJdbcQueryUnitTests {
 		verify(operations).queryForStream(eq("some sql statement"), any(SqlParameterSource.class), any(RowMapper.class));
 	}
 
-	@Test // DATAJDBC-356
+	@Test // GH-578
 	void streamQueryFallsBackToCollectionQueryWhenCustomResultSetExtractorIsSpecified() {
+
 		JdbcQueryMethod queryMethod = createMethod("findAllWithStreamReturnTypeAndResultSetExtractor");
 		StringBasedJdbcQuery query = createQuery(queryMethod);
 
 		query.execute(new Object[] {});
 
-		ArgumentCaptor<ResultSetExtractor> captor = ArgumentCaptor.forClass(ResultSetExtractor.class);
+		ArgumentCaptor<ResultSetExtractor<?>> captor = ArgumentCaptor.forClass(ResultSetExtractor.class);
 		verify(operations).query(eq("some sql statement"), any(SqlParameterSource.class), captor.capture());
 		assertThat(captor.getValue()).isInstanceOf(CustomResultSetExtractor.class);
 	}
 
 	@Test // GH-774
-	public void sliceQueryNotSupported() {
+	void sliceQueryNotSupported() {
 
 		JdbcQueryMethod queryMethod = createMethod("sliceAll", Pageable.class);
 
@@ -164,7 +163,7 @@ public class StringBasedJdbcQueryUnitTests {
 	}
 
 	@Test // GH-774
-	public void pageQueryNotSupported() {
+	void pageQueryNotSupported() {
 
 		JdbcQueryMethod queryMethod = createMethod("pageAll", Pageable.class);
 

@@ -174,7 +174,7 @@ public class QueryAnnotationHsqlIntegrationTests {
 				.containsExactlyInAnyOrder("a", "b");
 	}
 
-	@Test // DATAJDBC-356
+	@Test // GH-578
 	public void executeCustomQueryWithNamedParameterAndReturnTypeIsStream() {
 
 		repository.save(dummyEntity("a"));
