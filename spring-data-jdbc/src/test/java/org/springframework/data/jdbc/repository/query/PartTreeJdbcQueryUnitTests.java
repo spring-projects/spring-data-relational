@@ -117,7 +117,7 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"FIRST_NAME\" = :first_name");
 	}
 
-	@Test // #971
+	@Test // GH-971
 	public void createsQueryToFindAllEntitiesByProjectionAttribute() throws Exception {
 
 		when(returnedType.needsCustomConstruction()).thenReturn(true);

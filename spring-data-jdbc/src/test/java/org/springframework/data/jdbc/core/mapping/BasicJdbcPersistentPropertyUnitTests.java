@@ -96,7 +96,7 @@ public class BasicJdbcPersistentPropertyUnitTests {
 		assertThat(listProperty.getReverseColumnName(path)).isEqualTo(quoted("override_id"));
 	}
 
-	@Test // #938
+	@Test // GH-938
 	void considersAggregateReferenceAnAssociation() {
 
 		RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);

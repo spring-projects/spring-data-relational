@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
  */
 class JdbcCustomConversionsUnitTests {
 
-	@Test // #937
+	@Test // GH-937
 	void registersNonDateDefaultConverter() {
 
 		JdbcCustomConversions conversions = new JdbcCustomConversions();

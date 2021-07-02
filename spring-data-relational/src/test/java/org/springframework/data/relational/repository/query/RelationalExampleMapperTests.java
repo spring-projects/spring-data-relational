@@ -49,7 +49,7 @@ public class RelationalExampleMapperTests {
 		exampleMapper = new RelationalExampleMapper(new RelationalMappingContext());
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithId() {
 
 		Person person = new Person();
@@ -64,7 +64,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(id = 'id1')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstname() {
 
 		Person person = new Person();
@@ -79,7 +79,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname = 'Frodo')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameAndLastname() {
 
 		Person person = new Person();
@@ -95,7 +95,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname = 'Frodo') AND (lastname = 'Baggins')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithNullMatchingLastName() {
 
 		Person person = new Person();
@@ -111,7 +111,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(lastname IS NULL OR lastname = 'Baggins')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithNullMatchingFirstnameAndLastname() {
 
 		Person person = new Person();
@@ -128,7 +128,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname IS NULL OR firstname = 'Bilbo') AND (lastname IS NULL OR lastname = 'Baggins')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameAndLastnameIgnoringFirstname() {
 
 		Person person = new Person();
@@ -145,7 +145,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(lastname = 'Baggins')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameAndLastnameWithNullMatchingIgnoringFirstName() {
 
 		Person person = new Person();
@@ -162,7 +162,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(lastname IS NULL OR lastname = 'Baggins')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingAtTheBeginning() {
 
 		Person person = new Person();
@@ -178,7 +178,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname LIKE 'Fro%')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingOnTheEnding() {
 
 		Person person = new Person();
@@ -194,7 +194,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname LIKE '%do')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingContaining() {
 
 		Person person = new Person();
@@ -210,7 +210,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname LIKE '%do%')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingRegEx() {
 
 		Person person = new Person();
@@ -223,7 +223,7 @@ public class RelationalExampleMapperTests {
 				.withMessageContaining("REGEX is not supported!");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithFieldSpecificStringMatcherEndsWith() {
 
 		Person person = new Person();
@@ -239,7 +239,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname LIKE '%do')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithFieldSpecificStringMatcherStartsWith() {
 
 		Person person = new Person();
@@ -255,7 +255,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname LIKE 'Fro%')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithFieldSpecificStringMatcherContains() {
 
 		Person person = new Person();
@@ -271,7 +271,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname LIKE '%do%')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingAtTheBeginningIncludingNull() {
 
 		Person person = new Person();
@@ -287,7 +287,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname IS NULL OR firstname LIKE 'Fro%')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingOnTheEndingIncludingNull() {
 
 		Person person = new Person();
@@ -303,7 +303,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname IS NULL OR firstname LIKE '%do')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameIgnoreCaseFieldLevel() {
 
 		Person person = new Person();
@@ -321,7 +321,7 @@ public class RelationalExampleMapperTests {
 		assertThat(example.getMatcher().getPropertySpecifiers().getForPath("firstname").getIgnoreCase()).isTrue();
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameWithStringMatchingContainingIncludingNull() {
 
 		Person person = new Person();
@@ -337,7 +337,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname IS NULL OR firstname LIKE '%do%')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameIgnoreCase() {
 
 		Person person = new Person();
@@ -355,7 +355,7 @@ public class RelationalExampleMapperTests {
 		assertThat(example.getMatcher().isIgnoreCaseEnabled()).isTrue();
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleWithFirstnameOrLastname() {
 
 		Person person = new Person();
@@ -372,7 +372,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname = 'Frodo') OR (lastname = 'Baggins')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleEvenHandlesInvisibleFields() {
 
 		Person person = new Person();
@@ -388,7 +388,7 @@ public class RelationalExampleMapperTests {
 				.hasValue("(firstname = 'Frodo') AND (secret = 'I have the ring!')");
 	}
 
-	@Test // #929
+	@Test // GH-929
 	void queryByExampleSupportsPropertyTransforms() {
 
 		Person person = new Person();

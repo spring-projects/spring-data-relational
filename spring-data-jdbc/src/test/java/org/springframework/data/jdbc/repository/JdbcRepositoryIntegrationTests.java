@@ -402,7 +402,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.countByName(one.getName())).isEqualTo(2);
 	}
 
-	@Test // #945
+	@Test // GH-945
 	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
 	public void usePrimitiveArrayAsArgument() {
 		assertThat(repository.unnestPrimitive(new int[] { 1, 2, 3 })).containsExactly(1, 2, 3);
@@ -439,7 +439,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(slice.hasNext()).isTrue();
 	}
 
-	@Test // #935
+	@Test // GH-935
 	public void queryByOffsetDateTime() {
 
 		Instant now = createDummyBeforeAndAfterNow();
@@ -450,7 +450,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(entities).extracting(DummyEntity::getName).containsExactly("second");
 	}
 
-	@Test // #971
+	@Test // GH-971
 	public void stringQueryProjectionShouldReturnProjectedEntities() {
 
 		repository.save(createDummyEntity());
@@ -461,7 +461,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
 	}
 
-	@Test // #971
+	@Test // GH-971
 	public void stringQueryProjectionShouldReturnDtoProjectedEntities() {
 
 		repository.save(createDummyEntity());
@@ -472,7 +472,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
 	}
 
-	@Test // #971
+	@Test // GH-971
 	public void partTreeQueryProjectionShouldReturnProjectedEntities() {
 
 		repository.save(createDummyEntity());
@@ -483,7 +483,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result.get(0).getName()).isEqualTo("Entity Name");
 	}
 
-	@Test // #971
+	@Test // GH-971
 	public void pageQueryProjectionShouldReturnProjectedEntities() {
 
 		repository.save(createDummyEntity());
@@ -494,14 +494,14 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result.getContent().get(0).getName()).isEqualTo("Entity Name");
 	}
 
-	@Test // #974
+	@Test // GH-974
 	@EnabledOnFeature(TestDatabaseFeatures.Feature.IS_POSTGRES)
 	void intervalCalculation() {
 
 		repository.updateWithIntervalCalculation(23L, LocalDateTime.now());
 	}
 
-	@Test // #908
+	@Test // GH-908
 	void derivedQueryWithBooleanLiteralFindsCorrectValues() {
 
 		repository.save(createDummyEntity());

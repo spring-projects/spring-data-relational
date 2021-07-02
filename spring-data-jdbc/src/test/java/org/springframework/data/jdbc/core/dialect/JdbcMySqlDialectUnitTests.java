@@ -32,7 +32,7 @@ import org.springframework.data.jdbc.core.convert.JdbcValue;
  */
 class JdbcMySqlDialectUnitTests {
 
-	@Test // #974
+	@Test // GH-974
 	void testCustomConversions() {
 
 		JdbcCustomConversions customConversions = new JdbcCustomConversions(

@@ -131,7 +131,7 @@ public class BasicJdbcConverterUnitTests {
 
 	}
 
-	@Test // #945
+	@Test // GH-945
 	void conversionOfPrimitiveArrays() {
 
 		int[] ints = { 1, 2, 3, 4, 5 };

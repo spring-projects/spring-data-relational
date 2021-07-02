@@ -70,7 +70,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
 	}
 
-	@Test // #975
+	@Test // GH-975
 	void registersSimpleTypesFromCustomConversions() {
 
 		assertApplicationContext(context -> {
@@ -84,7 +84,7 @@ public class AbstractJdbcConfigurationIntegrationTests {
 		}, AbstractJdbcConfigurationUnderTest.class, Infrastructure.class);
 	}
 
-	@Test // #908
+	@Test // GH-908
 	void userProvidedConversionsOverwriteDialectSpecificConversions() {
 
 		assertApplicationContext(applicationContext -> {

@@ -233,7 +233,7 @@ public class ConditionRendererUnitTests {
 		assertThat(sql).endsWith("WHERE my_table.left NOT IN (my_table.right)");
 	}
 
-	@Test // #907
+	@Test // GH-907
 	public void shouldRenderJust() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)
@@ -243,7 +243,7 @@ public class ConditionRendererUnitTests {
 		assertThat(sql).endsWith("WHERE sql");
 	}
 
-	@Test // #907
+	@Test // GH-907
 	public void shouldRenderMultipleJust() {
 
 		String sql = SqlRenderer.toString(StatementBuilder.select(left).from(table)

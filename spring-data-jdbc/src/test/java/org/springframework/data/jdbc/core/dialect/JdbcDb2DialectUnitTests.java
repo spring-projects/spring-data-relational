@@ -32,7 +32,7 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
  */
 class JdbcDb2DialectUnitTests {
 
-	@Test // #974
+	@Test // GH-974
 	void testCustomConversions() {
 
 		JdbcCustomConversions customConversions = new JdbcCustomConversions(
