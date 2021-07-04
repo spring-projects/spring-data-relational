@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.dialect;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
@@ -201,6 +202,23 @@ public class PostgresDialect extends AbstractDialect {
 	@Override
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.LOWER_CASE);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#simpleTypes()
+	 */
+	@Override
+	public Set<Class<?>> simpleTypes() {
+
+		if (!ClassUtils.isPresent("org.postgresql.util.PGobject", getClass().getClassLoader())) {
+			return Collections.emptySet();
+		}
+		try {
+			return Collections.singleton(ClassUtils.forName("org.postgresql.util.PGobject", getClass().getClassLoader()));
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 }

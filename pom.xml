@@ -38,6 +38,7 @@
 		<mysql-connector-java.version>8.0.23</mysql-connector-java.version>
 		<postgresql.version>42.2.19</postgresql.version>
 		<oracle.version>19.6.0.0</oracle.version>
+		<jackson.databind.version>2.12.3</jackson.databind.version>
 
 		<!-- test utilities-->
 		<awaitility.version>4.0.3</awaitility.version>
