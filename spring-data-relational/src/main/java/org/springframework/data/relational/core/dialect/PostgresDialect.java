@@ -17,7 +17,10 @@ package org.springframework.data.relational.core.dialect;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
@@ -34,6 +37,7 @@ import org.springframework.util.ClassUtils;
  * @author Mark Paluch
  * @author Myeonghyeon Lee
  * @author Jens Schauder
+ * @author Nikita Konev
  * @since 1.1
  */
 public class PostgresDialect extends AbstractDialect {
@@ -203,4 +207,26 @@ public class PostgresDialect extends AbstractDialect {
 		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.LOWER_CASE);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#simpleTypes()
+	 */
+	@Override
+	public Set<Class<?>> simpleTypes() {
+		Set<Class<?>> simpleTypes = new HashSet<>();
+		ifClassPresent("org.postgresql.util.PGobject", simpleTypes::add);
+		return Collections.unmodifiableSet(simpleTypes);
+	}
+
+	/**
+	 * If the class is present on the class path, invoke the specified consumer {@code action} with the class object,
+	 * otherwise do nothing.
+	 *
+	 * @param action block to be executed if a value is present.
+	 */
+	private static void ifClassPresent(String className, Consumer<Class<?>> action) {
+		if (ClassUtils.isPresent(className, PostgresDialect.class.getClassLoader())) {
+			action.accept(ClassUtils.resolveClassName(className, PostgresDialect.class.getClassLoader()));
+		}
+	}
 }

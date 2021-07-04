@@ -11,3 +11,6 @@ target/
 
 #prevent license accepting file to get accidentially commited to git
 container-license-acceptance.txt
+
+# macOS Finder files
+.DS_Store

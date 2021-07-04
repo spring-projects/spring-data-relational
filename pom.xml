@@ -42,6 +42,7 @@
 		<!-- test utilities-->
 		<awaitility.version>4.0.3</awaitility.version>
 		<degraph-check.version>0.1.4</degraph-check.version>
+		<jackson.databind.version>2.12.3</jackson.databind.version>
 	</properties>
 
 	<inceptionYear>2017</inceptionYear>
