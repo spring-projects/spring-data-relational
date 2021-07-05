@@ -183,7 +183,7 @@ This approach lets you use the standard `io.r2dbc.spi.ConnectionFactory` instanc
 Spring Data R2DBC supports drivers through R2DBC's pluggable SPI mechanism.
 You can use any driver that implements the R2DBC spec with Spring Data R2DBC.
 Since Spring Data R2DBC reacts to specific features of each database, it requires a `Dialect` implementation otherwise your application won't start up.
-Spring Data R2DBC ships with dialect impelemtations for the following drivers:
+Spring Data R2DBC ships with dialect implementations for the following drivers:
 
 * https://github.com/r2dbc/r2dbc-h2[H2] (`io.r2dbc:r2dbc-h2`)
 * https://github.com/mariadb-corporation/mariadb-connector-r2dbc[MariaDB] (`org.mariadb:r2dbc-mariadb`)
