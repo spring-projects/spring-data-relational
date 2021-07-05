@@ -7,7 +7,7 @@ This section covers the significant changes for each version.
 ==  What's New in Spring Data JDBC 2.3
 
 * Support for <<jdbc.query-methods.at-query.streaming-results, streaming results>>.
-* Support for specifying projection types as return type or using generics and providing a Class parameter to query methods.
+* Support for specifying projection types as the return type or using generics and providing a Class parameter to query methods.
 
 [[new-features.2-2-0]]
 ==  What's New in Spring Data JDBC 2.2

@@ -480,7 +480,7 @@ Thus, the method name results in a query expression of `SELECT … FROM person W
 It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
 <6> In contrast to <3>, the first entity is always emitted even if the query yields more result documents.
 <7> The `findByLastname` method shows a query for all people with the given last name.
-<8> The `streamByLastname` method returns a `Stream` which makes values possible as soon as they are returned from the database.
+<8> The `streamByLastname` method returns a `Stream`, which makes values possible as soon as they are returned from the database.
 ====
 
 The following table shows the keywords that are supported for query methods:
@@ -628,13 +628,13 @@ The location of that file may be changed by setting a value to `@EnableJdbcRepos
 [[jdbc.query-methods.at-query.streaming-results]]
 ==== Streaming Results
 
-When you specify `Stream` as the return type of a query method Spring Data JDBC will return elements as soon as they become available.
+When you specify Stream as the return type of a query method, Spring Data JDBC returns elements as soon as they become available.
 When dealing with large amounts of data this is suitable for reducing latency and memory requirements.
 
 The stream contains an open connection to the database.
-To avoid memory leaks that connection needs to be closed eventually by closing the stream.
-The recommended way to do that is a try-with-resource clause.
-It also means once the connection to the database is closed, the stream cannot obtain further elements and will likely throw an exception.
+To avoid memory leaks, that connection needs to be closed eventually, by closing the stream.
+The recommended way to do that is a `try-with-resource clause`.
+It also means that, once the connection to the database is closed, the stream cannot obtain further elements and likely throws an exception.
 
 [[jdbc.query-methods.at-query.custom-rowmapper]]
 ==== Custom `RowMapper`
