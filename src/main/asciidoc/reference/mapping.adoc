@@ -17,12 +17,12 @@ include::../{spring-data-commons-docs}/object-mapping.adoc[leveloffset=+1]
 The conventions are:
 
 * The short Java class name is mapped to the table name in the following manner.
-The class `com.bigbank.SavingsAccount` maps to the `SAVINGS_ACCOUNT` table name.
+The `com.bigbank.SavingsAccount` class maps to the `SAVINGS_ACCOUNT` table name.
 The same name mapping is applied for mapping fields to column names.
-For example a field `firstName` will be mapped to a column `FIRST_NAME`
-You can control this mapping by providing a custom `NamingStrategy`. See <<mapping.configuration>> for more details.
+For example, the `firstName` field maps to the `FIRST_NAME` column.
+You can control this mapping by providing a custom `NamingStrategy`. See <<mapping.configuration>> for more detail.
 Table and column names that are derived from property or class names are used in SQL statements without quotes by default.
-This behaviour can be controlled by setting `R2dbcMappingContext.setForceQuote(true)`.
+You can control this behavior by setting `R2dbcMappingContext.setForceQuote(true)`.
 
 * Nested objects are not supported.
 
@@ -44,14 +44,14 @@ By creating your own instance, you can register Spring converters to map specifi
 
 You can configure the `MappingR2dbcConverter` as well as `DatabaseClient` and `ConnectionFactory` by using  Java-based metadata. The following example uses Spring's Java-based configuration:
 
-If you set `setForceQuote` of the `R2dbcMappingContext to `true` table and column names derived from classes and properties will be used with database specific quotes.
-This means it is ok to use reserved SQL words like for example `order` in these names.
-This can be done by overriding `r2dbcMappingContext(Optional<NamingStrategy>)` of `AbstractR2dbcConfiguration`.
+If you set `setForceQuote` of the `R2dbcMappingContext to` true, table and column names derived from classes and properties are used with database specific quotes.
+This means that it is OK to use reserved SQL words (such as order) in these names.
+You can do so by overriding `r2dbcMappingContext(Optional<NamingStrategy>)` of `AbstractR2dbcConfiguration`.
 Spring Data converts the letter casing of such a name to that form which is also used by the configured database when no quoting is used.
-Therefore, you can use unquoted names when creating tables, as long as you don't use keywords or special characters in your names.
-For databases adhering to the SQL standard with that respect this means, names will be converted to upper case.
-The quoting character used, and the way names get capitalized is controlled by the used `Dialect`.
-See <<r2dbc.drivers>> for details how to configure custom dialects.
+Therefore, you can use unquoted names when creating tables, as long as you do not use keywords or special characters in your names.
+For databases that adhere to the SQL standard, this means that names are converted to upper case.
+The quoting character and the way names get capitalized is controlled by the used `Dialect`.
+See <<r2dbc.drivers>> for how to configure custom dialects.
 
 .@Configuration class to configure R2DBC mapping support
 ====
@@ -82,7 +82,7 @@ public class MyAppConfig extends AbstractR2dbcConfiguration {
 
 You can add additional converters to the converter by overriding the `r2dbcCustomConversions` method.
 
-You may configure a custom `NamingStrategy` by registering it as a bean.
+You can configure a custom `NamingStrategy` by registering it as a bean.
 The `NamingStrategy` controls how the names of classes and properties get converted to the names of tables and columns.
 
 NOTE: `AbstractR2dbcConfiguration` creates a `DatabaseClient` instance and registers it with the container under the name of `databaseClient`.
@@ -161,7 +161,7 @@ The following table explains how property types of an entity affect mapping:
 
 |Driver-specific types
 |Passthru
-|Contributed as simple type by the used `R2dbcDialect`.
+|Contributed as a simple type by the used `R2dbcDialect`.
 
 |Complex objects
 |Target type depends on registered `Converter`.
@@ -190,9 +190,11 @@ Constructor arguments are mapped by name to the values in the retrieved row.
 Within the mapping framework it can be applied to constructor arguments.
 This lets you use a Spring Expression Language statement to transform a key’s value retrieved in the database before it is used to construct a domain object.
 In order to reference a column of a given row one has to use expressions like: `@Value("#root.myProperty")` where root refers to the root of the given `Row`.
-* `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, allowing the name to be different from the field name of the class.
+* `@Column`: Applied at the field level to describe the name of the column as it is represented in the row, letting the name be different from the field name of the class.
 Names specified with a `@Column` annotation are always quoted when used in SQL statements.
-For most databases this means these names are case-sensitive. It also means you may use special characters in these names, although this is not recommended since it may cause problems with other tools.
+For most databases, this means that these names are case-sensitive.
+It also means that you can use special characters in these names.
+However, this is not recommended, since it may cause problems with other tools.
 * `@Version`: Applied at field level is used for optimistic locking and checked for modification on save operations.
 The value is `null` (`zero` for primitive types) is considered as marker for entities to be new.
 The initially stored value is `zero` (`one` for primitive types).
