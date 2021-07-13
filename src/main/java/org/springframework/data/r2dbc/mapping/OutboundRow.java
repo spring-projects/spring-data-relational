@@ -36,7 +36,7 @@ import org.springframework.util.Assert;
  * @see SqlIdentifier
  * @see Parameter
  */
-public class OutboundRow implements Map<SqlIdentifier, Parameter> {
+public class OutboundRow implements Map<SqlIdentifier, Parameter>, Cloneable {
 
 	private final Map<SqlIdentifier, Parameter> rowAsMap;
 
@@ -59,6 +59,12 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter> {
 		this.rowAsMap = new LinkedHashMap<>(map.size());
 
 		map.forEach((s, Parameter) -> this.rowAsMap.put(SqlIdentifier.unquoted(s), Parameter));
+	}
+
+	private OutboundRow(OutboundRow map) {
+
+		this.rowAsMap = new LinkedHashMap<>(map.size());
+		this.rowAsMap.putAll(map);
 	}
 
 	/**
@@ -135,6 +141,15 @@ public class OutboundRow implements Map<SqlIdentifier, Parameter> {
 	@Override
 	public boolean isEmpty() {
 		return this.rowAsMap.isEmpty();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
+	@Override
+	protected OutboundRow clone() {
+		return new OutboundRow(this);
 	}
 
 	/*
