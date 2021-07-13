@@ -39,6 +39,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Mark Paluch
  * @author Fei Dong
  * @author Antoine Sauray
+ * @author Tomohiko Ozawa
  * @see AbstractJdbcConfiguration
  */
 @Target(ElementType.TYPE)
@@ -131,4 +132,11 @@ public @interface EnableJdbcRepositories {
 	 */
 	String transactionManagerRef() default "transactionManager";
 
+	/**
+	 * Configures the name of the {@link org.springframework.data.jdbc.core.convert.JdbcConverter} bean definition to be
+	 * used to create repositories discovered through this annotation. Defaults to {@code converter}.
+	 * 
+	 * @since 2.3
+	 */
+	String jdbcConverterRef() default "converter";
 }

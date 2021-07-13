@@ -66,6 +66,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Fei Dong
  * @author Myeonghyeon Lee
  * @author Christoph Strobl
+ * @author Tomohiko Ozawa
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -135,7 +136,7 @@ public class TestConfiguration {
 	}
 
 	@Bean
-	JdbcConverter relationalConverter(RelationalMappingContext mappingContext, @Lazy RelationResolver relationResolver,
+	JdbcConverter converter(RelationalMappingContext mappingContext, @Lazy RelationResolver relationResolver,
 			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 			Dialect dialect) {
 

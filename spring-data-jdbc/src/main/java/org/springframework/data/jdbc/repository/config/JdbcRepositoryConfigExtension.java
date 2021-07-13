@@ -36,6 +36,7 @@ import org.springframework.util.StringUtils;
  * @author Fei Dong
  * @author Mark Paluch
  * @author Antoine Sauray
+ * @author Tomohiko Ozawa
  */
 public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
 
@@ -85,6 +86,9 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 
 		Optional<String> transactionManagerRef = source.getAttribute("transactionManagerRef");
 		builder.addPropertyValue("transactionManager", transactionManagerRef.orElse(DEFAULT_TRANSACTION_MANAGER_BEAN_NAME));
+
+		source.getAttribute("jdbcConverterRef").filter(StringUtils::hasText) //
+				.ifPresent(s -> builder.addPropertyReference("converter", s));
 	}
 
 	/**

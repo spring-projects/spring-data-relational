@@ -33,17 +33,23 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositoriesIntegrationTests.TestConfiguration;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.RowMapper;
@@ -60,6 +66,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Greg Turnquist
  * @author Evgeni Dimitrov
  * @author Fei Dong
+ * @author Tomohiko Ozawa
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TestConfiguration.class)
@@ -70,6 +77,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	static final Field OPERATIONS = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "operations");
 	static final Field DATA_ACCESS_STRATEGY = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class,
 			"dataAccessStrategy");
+	static final Field CONVERTER = ReflectionUtils.findField(JdbcRepositoryFactoryBean.class, "converter");
 	public static final RowMapper DUMMY_ENTITY_ROW_MAPPER = mock(RowMapper.class);
 	public static final RowMapper STRING_ROW_MAPPER = mock(RowMapper.class);
 
@@ -77,8 +85,10 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@Autowired DummyRepository repository;
 	@Autowired @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations defaultOperations;
 	@Autowired @Qualifier("defaultDataAccessStrategy") DataAccessStrategy defaultDataAccessStrategy;
+	@Autowired @Qualifier("converter") JdbcConverter defaultJdbcConverter;
 	@Autowired @Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations qualifierJdbcOperations;
 	@Autowired @Qualifier("qualifierDataAccessStrategy") DataAccessStrategy qualifierDataAccessStrategy;
+	@Autowired @Qualifier("qualifierJdbcConverter") JdbcConverter qualifierJdbcConverter;
 
 	@BeforeAll
 	public static void setup() {
@@ -86,6 +96,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		MAPPER_MAP.setAccessible(true);
 		OPERATIONS.setAccessible(true);
 		DATA_ACCESS_STRATEGY.setAccessible(true);
+		CONVERTER.setAccessible(true);
 	}
 
 	@Test // DATAJDBC-100
@@ -118,6 +129,9 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		DataAccessStrategy dataAccessStrategy = (DataAccessStrategy) ReflectionUtils.getField(DATA_ACCESS_STRATEGY,
 				factoryBean);
 		assertThat(dataAccessStrategy).isNotSameAs(defaultDataAccessStrategy).isSameAs(qualifierDataAccessStrategy);
+
+		JdbcConverter converter = (JdbcConverter) ReflectionUtils.getField(CONVERTER, factoryBean);
+		assertThat(converter).isNotSameAs(defaultJdbcConverter).isSameAs(qualifierJdbcConverter);
 	}
 
 	interface DummyRepository extends CrudRepository<DummyEntity, Long> {
@@ -133,7 +147,7 @@ public class EnableJdbcRepositoriesIntegrationTests {
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = DummyRepository.class),
 			jdbcOperationsRef = "qualifierJdbcOperations", dataAccessStrategyRef = "qualifierDataAccessStrategy",
-			repositoryBaseClass = DummyRepositoryBaseClass.class)
+			jdbcConverterRef = "qualifierJdbcConverter", repositoryBaseClass = DummyRepositoryBaseClass.class)
 	static class TestConfiguration {
 
 		@Bean
@@ -165,6 +179,19 @@ public class EnableJdbcRepositoriesIntegrationTests {
 		@Bean
 		Dialect jdbcDialect(@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations operations) {
 			return DialectResolver.getDialect(operations.getJdbcOperations());
+		}
+
+		@Bean("qualifierJdbcConverter")
+		JdbcConverter qualifierJdbcConverter(Optional<NamingStrategy> namingStrategy,
+				@Qualifier("qualifierJdbcOperations") NamedParameterJdbcOperations operations,
+				@Lazy @Qualifier("qualifierDataAccessStrategy") DataAccessStrategy dataAccessStrategy) {
+			JdbcCustomConversions conversions = new JdbcCustomConversions();
+			JdbcMappingContext mappingContext = new JdbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
+			mappingContext.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+			DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations());
+			Dialect dialect = DialectResolver.getDialect(operations.getJdbcOperations());
+			return new BasicJdbcConverter(mappingContext, dataAccessStrategy, conversions, jdbcTypeFactory,
+					dialect.getIdentifierProcessing());
 		}
 	}
 
