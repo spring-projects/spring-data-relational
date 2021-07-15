@@ -55,6 +55,7 @@ import org.springframework.util.ClassUtils;
  * conversion.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 2.0
  */
 class QueryMapper {
@@ -299,7 +300,7 @@ class QueryMapper {
 				&& (criteria.getValue() == null || !criteria.getValue().getClass().isArray())) {
 
 			RelationalPersistentProperty property = ((MetadataBackedField) propertyField).property;
-			JdbcValue jdbcValue = convertSpecial(property, criteria.getValue());
+			JdbcValue jdbcValue = convertToJdbcValue(property, criteria.getValue());
 			mappedValue = jdbcValue.getValue();
 			sqlType = jdbcValue.getJdbcType() != null ? jdbcValue.getJdbcType().getVendorTypeNumber()
 					: propertyField.getSqlType();
@@ -315,14 +316,14 @@ class QueryMapper {
 	}
 
 	/**
-	 * Converts values while taking special value types like arrays, {@link Iterable}, or {@link Pair}.
-	 * 
+	 * Converts values while taking specific value types like arrays, {@link Iterable}, or {@link Pair}.
+	 *
 	 * @param property the property to which the value relates. It determines the type to convert to. Must not be
 	 *          {@literal null}.
 	 * @param value the value to be converted.
 	 * @return a non null {@link JdbcValue} holding the converted value and the appropriate JDBC type information.
 	 */
-	private JdbcValue convertSpecial(RelationalPersistentProperty property, @Nullable Object value) {
+	private JdbcValue convertToJdbcValue(RelationalPersistentProperty property, @Nullable Object value) {
 
 		if (value == null) {
 			return JdbcValue.of(null, JDBCType.NULL);
@@ -330,8 +331,8 @@ class QueryMapper {
 
 		if (value instanceof Pair) {
 
-			final JdbcValue first = convertSimple(property, ((Pair<?, ?>) value).getFirst());
-			final JdbcValue second = convertSimple(property, ((Pair<?, ?>) value).getSecond());
+			JdbcValue first = getWriteValue(property, ((Pair<?, ?>) value).getFirst());
+			JdbcValue second = getWriteValue(property, ((Pair<?, ?>) value).getSecond());
 			return JdbcValue.of(Pair.of(first.getValue(), second.getValue()), first.getJdbcType());
 		}
 
@@ -342,7 +343,7 @@ class QueryMapper {
 
 			for (Object o : (Iterable<?>) value) {
 
-				final JdbcValue jdbcValue = convertSimple(property, o);
+				JdbcValue jdbcValue = getWriteValue(property, o);
 				if (jdbcType == null) {
 					jdbcType = jdbcValue.getJdbcType();
 				}
@@ -355,13 +356,13 @@ class QueryMapper {
 
 		if (value.getClass().isArray()) {
 
-			final Object[] valueAsArray = (Object[]) value;
-			final Object[] mappedValueArray = new Object[valueAsArray.length];
+			Object[] valueAsArray = (Object[]) value;
+			Object[] mappedValueArray = new Object[valueAsArray.length];
 			JDBCType jdbcType = null;
 
 			for (int i = 0; i < valueAsArray.length; i++) {
 
-				final JdbcValue jdbcValue = convertSimple(property, valueAsArray[i]);
+				JdbcValue jdbcValue = getWriteValue(property, valueAsArray[i]);
 				if (jdbcType == null) {
 					jdbcType = jdbcValue.getJdbcType();
 				}
@@ -372,7 +373,7 @@ class QueryMapper {
 			return JdbcValue.of(mappedValueArray, jdbcType);
 		}
 
-		return convertSimple(property, value);
+		return getWriteValue(property, value);
 	}
 
 	/**
@@ -383,7 +384,7 @@ class QueryMapper {
 	 * @param value the value to be converted.
 	 * @return a non null {@link JdbcValue} holding the converted value and the appropriate JDBC type information.
 	 */
-	private JdbcValue convertSimple(RelationalPersistentProperty property, Object value) {
+	private JdbcValue getWriteValue(RelationalPersistentProperty property, Object value) {
 
 		return converter.writeJdbcValue( //
 				value, //

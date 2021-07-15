@@ -32,12 +32,12 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -515,7 +515,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result).extracting(e -> e.idProp).containsExactly(entity.idProp);
 	}
 
-	@Test // #987
+	@Test // GH-987
 	void queryBySimpleReference() {
 
 		final DummyEntity one = repository.save(createDummyEntity());
@@ -528,7 +528,7 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result).extracting(e -> e.idProp).containsExactly(two.idProp);
 	}
 
-	@Test // #987
+	@Test // GH-987
 	void queryByAggregateReference() {
 
 		final DummyEntity one = repository.save(createDummyEntity());

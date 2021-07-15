@@ -19,7 +19,6 @@ import java.sql.Array;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.ConverterNotFoundException;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
@@ -228,12 +226,10 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
 			TypeDescriptor targetDescriptor = createTypeDescriptor(type);
 
-			return getConversionService().convert(value, sourceDescriptor,
-					targetDescriptor);
+			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
 		}
 
-		if ( !getConversions().hasCustomReadTarget(value.getClass(), type.getType()) &&
-				value instanceof Array) {
+		if (value instanceof Array) {
 			try {
 				return readValue(((Array) value).getArray(), type);
 			} catch (SQLException | ConverterNotFoundException e) {
@@ -242,17 +238,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		return super.readValue(value, type);
-	}
-
-	private static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
-
-		List<TypeInformation<?>> typeArguments = type.getTypeArguments();
-		Class<?>[] generics = new Class[typeArguments.size()];
-		for (int i = 0; i < typeArguments.size(); i++) {
-			generics[i] = typeArguments.get(i).getType();
-		}
-
-		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), type.getType(), null);
 	}
 
 	/*

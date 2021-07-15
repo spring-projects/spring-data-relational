@@ -16,10 +16,13 @@
 package org.springframework.data.relational.core.conversion;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;
@@ -160,7 +163,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
 
 			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
-			TypeDescriptor targetDescriptor = typeInformationToTypeDescriptor(type);
+			TypeDescriptor targetDescriptor = createTypeDescriptor(type);
 
 			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
 		}
@@ -250,11 +253,15 @@ public class BasicRelationalConverter implements RelationalConverter {
 		return conversionService.convert(value, target);
 	}
 
-	protected static TypeDescriptor typeInformationToTypeDescriptor(TypeInformation<?> type) {
+	protected static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
 
-		Class<?>[] generics = type.getTypeArguments().stream().map(TypeInformation::getType).toArray(Class[]::new);
+		List<TypeInformation<?>> typeArguments = type.getTypeArguments();
+		Class<?>[] generics = new Class[typeArguments.size()];
+		for (int i = 0; i < typeArguments.size(); i++) {
+			generics[i] = typeArguments.get(i).getType();
+		}
 
-		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), null, null);
+		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), type.getType(), null);
 	}
 
 	/**

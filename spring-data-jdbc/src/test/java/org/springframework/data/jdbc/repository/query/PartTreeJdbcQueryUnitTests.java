@@ -78,12 +78,12 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
-	@Test // #922
+	@Test // GH-922
 	public void createQueryByAggregateReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findAllByHobbyReference", Hobby.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
-		final Hobby hobby = new Hobby();
+		Hobby hobby = new Hobby();
 		hobby.name = "twentythree";
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
 
@@ -110,12 +110,12 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThatIllegalArgumentException().isThrownBy(() -> createQuery(queryMethod));
 	}
 
-	@Test // #922
+	@Test // GH-922
 	public void createQueryForQueryByAggregateReference() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findViaReferenceByHobbyReference", AggregateReference.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
-		final AggregateReference<Object, String> hobby = AggregateReference.to("twentythree");
+		AggregateReference<Object, String> hobby = AggregateReference.to("twentythree");
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
 
 		assertSoftly(softly -> {
@@ -127,12 +127,12 @@ public class PartTreeJdbcQueryUnitTests {
 		});
 	}
 
-	@Test // #922
+	@Test // GH-922
 	public void createQueryForQueryByAggregateReferenceId() throws Exception {
 
 		JdbcQueryMethod queryMethod = getQueryMethod("findViaIdByHobbyReference", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
-		final String hobby = "twentythree";
+		String hobby = "twentythree";
 		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
 
 		assertSoftly(softly -> {
