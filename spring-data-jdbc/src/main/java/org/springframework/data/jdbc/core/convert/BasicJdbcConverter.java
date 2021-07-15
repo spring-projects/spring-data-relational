@@ -19,11 +19,13 @@ import java.sql.Array;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.ResolvableType;
@@ -224,7 +226,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
 
 			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
-			TypeDescriptor targetDescriptor = typeInformationToTypeDescriptor(type);
+			TypeDescriptor targetDescriptor = createTypeDescriptor(type);
 
 			return getConversionService().convert(value, sourceDescriptor,
 					targetDescriptor);
@@ -241,11 +243,15 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return super.readValue(value, type);
 	}
 
-	private static TypeDescriptor typeInformationToTypeDescriptor(TypeInformation<?> type) {
+	private static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
 
-		Class<?>[] generics = type.getTypeArguments().stream().map(TypeInformation::getType).toArray(Class[]::new);
+		List<TypeInformation<?>> typeArguments = type.getTypeArguments();
+		Class<?>[] generics = new Class[typeArguments.size()];
+		for (int i = 0; i < typeArguments.size(); i++) {
+			generics[i] = typeArguments.get(i).getType();
+		}
 
-		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), null, null);
+		return new TypeDescriptor(ResolvableType.forClassWithGenerics(type.getType(), generics), type.getType(), null);
 	}
 
 	/*

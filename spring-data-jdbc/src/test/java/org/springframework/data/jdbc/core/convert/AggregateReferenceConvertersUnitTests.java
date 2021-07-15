@@ -15,69 +15,83 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for converters from an to {@link org.springframework.data.jdbc.core.mapping.AggregateReference}.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  */
 class AggregateReferenceConvertersUnitTests {
 
-	AggregateReferenceConverters.SimpleTypeToAggregateReferenceConverter simpleToAggregate = new AggregateReferenceConverters.SimpleTypeToAggregateReferenceConverter(DefaultConversionService.getSharedInstance());
-	AggregateReferenceConverters.AggregateReferenceToSimpleTypeConverter aggregateToSimple = new AggregateReferenceConverters.AggregateReferenceToSimpleTypeConverter(DefaultConversionService.getSharedInstance());
+	ConfigurableConversionService conversionService;
 
-	@Test // #992
+	@BeforeEach
+	void setUp() {
+		conversionService = new DefaultConversionService();
+		AggregateReferenceConverters.getConvertersToRegister(DefaultConversionService.getSharedInstance())
+				.forEach(it -> conversionService.addConverter(it));
+	}
+
+	@Test // GH-992
 	void convertsFromSimpleValue() {
 
 		ResolvableType aggregateReferenceWithIdTypeInteger = ResolvableType.forClassWithGenerics(AggregateReference.class, String.class, Integer.class);
-		final Object converted = simpleToAggregate.convert(23, TypeDescriptor.forObject(23), new TypeDescriptor(aggregateReferenceWithIdTypeInteger, null, null));
+		Object converted = conversionService.convert(23, TypeDescriptor.forObject(23),
+				new TypeDescriptor(aggregateReferenceWithIdTypeInteger, null, null));
 
 		assertThat(converted).isEqualTo(AggregateReference.to(23));
 	}
 
-	@Test // #992
+	@Test // GH-992
 	void convertsFromSimpleValueThatNeedsSeparateConversion() {
 
 		ResolvableType aggregateReferenceWithIdTypeInteger = ResolvableType.forClassWithGenerics(AggregateReference.class, String.class, Long.class);
-		final Object converted = simpleToAggregate.convert(23, TypeDescriptor.forObject(23), new TypeDescriptor(aggregateReferenceWithIdTypeInteger, null, null));
+		Object converted = conversionService.convert(23, TypeDescriptor.forObject(23),
+				new TypeDescriptor(aggregateReferenceWithIdTypeInteger, null, null));
 
 		assertThat(converted).isEqualTo(AggregateReference.to(23L));
 	}
 
-	@Test // #992
+	@Test // GH-992
 	void convertsFromSimpleValueWithMissingTypeInformation() {
 
-		final Object converted = simpleToAggregate.convert(23, TypeDescriptor.forObject(23), TypeDescriptor.valueOf(AggregateReference.class));
+		Object converted = conversionService.convert(23, TypeDescriptor.forObject(23),
+				TypeDescriptor.valueOf(AggregateReference.class));
 
 		assertThat(converted).isEqualTo(AggregateReference.to(23));
 	}
 
-	@Test // #992
+	@Test // GH-992
 	void convertsToSimpleValue() {
 
-		final AggregateReference<Object, Integer> source = AggregateReference.to(23);
+		AggregateReference<Object, Integer> source = AggregateReference.to(23);
 
-		final Object converted = aggregateToSimple.convert(source, TypeDescriptor.forObject(source), TypeDescriptor.valueOf(Integer.class));
+		Object converted = conversionService.convert(source, TypeDescriptor.forObject(source),
+				TypeDescriptor.valueOf(Integer.class));
 
 		assertThat(converted).isEqualTo(23);
 	}
 
-	@Test // #992
+	@Test // GH-992
 	void convertsToSimpleValueThatNeedsSeparateConversion() {
 
-		final AggregateReference<Object, Integer> source = AggregateReference.to(23);
+		AggregateReference<Object, Integer> source = AggregateReference.to(23);
 
-		final Object converted = aggregateToSimple.convert(source, TypeDescriptor.forObject(source), TypeDescriptor.valueOf(Long.class));
+		Object converted = conversionService.convert(source, TypeDescriptor.forObject(source),
+				TypeDescriptor.valueOf(Long.class));
 
 		assertThat(converted).isEqualTo(23L);
 	}
-
 
 }

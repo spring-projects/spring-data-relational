@@ -15,6 +15,8 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -32,20 +34,31 @@ import org.springframework.lang.Nullable;
  * content of the {@link AggregateReference}.
  *
  * @author Jens Schauder
- * @since 2.6
+ * @author Mark Paluch
+ * @since 2.3
  */
 class AggregateReferenceConverters {
+
 	/**
-	 * Prevent instantiation.
+	 * Returns the converters to be registered.
+	 *
+	 * @return a collection of converters. Guaranteed to be not {@literal null}.
 	 */
-	private AggregateReferenceConverters() {}
+	public static Collection<GenericConverter> getConvertersToRegister(ConversionService conversionService) {
+
+		return Arrays.asList(new AggregateReferenceToSimpleTypeConverter(conversionService),
+				new SimpleTypeToAggregateReferenceConverter(conversionService));
+	}
 
 	/**
 	 * Converts from an AggregateReference to its id, leaving the conversion of the id to the ultimate target type to the
 	 * delegate {@link ConversionService}.
 	 */
 	@WritingConverter
-	static class AggregateReferenceToSimpleTypeConverter implements GenericConverter {
+	private static class AggregateReferenceToSimpleTypeConverter implements GenericConverter {
+
+		private static final Set<ConvertiblePair> CONVERTIBLE_TYPES = Collections
+				.singleton(new ConvertiblePair(AggregateReference.class, Object.class));
 
 		private final ConversionService delegate;
 
@@ -55,7 +68,7 @@ class AggregateReferenceConverters {
 
 		@Override
 		public Set<ConvertiblePair> getConvertibleTypes() {
-			return Collections.singleton(new ConvertiblePair(AggregateReference.class, Object.class));
+			return CONVERTIBLE_TYPES;
 		}
 
 		@Override
@@ -90,7 +103,10 @@ class AggregateReferenceConverters {
 	 * {@link ConversionService}.
 	 */
 	@ReadingConverter
-	static class SimpleTypeToAggregateReferenceConverter implements GenericConverter {
+	private static class SimpleTypeToAggregateReferenceConverter implements GenericConverter {
+
+		private static final Set<ConvertiblePair> CONVERTIBLE_TYPES = Collections
+				.singleton(new ConvertiblePair(Object.class, AggregateReference.class));
 
 		private final ConversionService delegate;
 
@@ -100,7 +116,7 @@ class AggregateReferenceConverters {
 
 		@Override
 		public Set<ConvertiblePair> getConvertibleTypes() {
-			return Collections.singleton(new ConvertiblePair(Object.class, AggregateReference.class));
+			return CONVERTIBLE_TYPES;
 		}
 
 		@Override

@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.GenericConverter.ConvertiblePair;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;
@@ -46,9 +44,8 @@ public class JdbcCustomConversions extends CustomConversions {
 
 		List<Object> converters = new ArrayList<>(Jsr310TimestampBasedConverters.getConvertersToRegister());
 
-		ConversionService conversionService = DefaultConversionService.getSharedInstance();
-		converters.add(new AggregateReferenceConverters.AggregateReferenceToSimpleTypeConverter(conversionService));
-		converters.add(new AggregateReferenceConverters.SimpleTypeToAggregateReferenceConverter(conversionService));
+		converters
+				.addAll(AggregateReferenceConverters.getConvertersToRegister(DefaultConversionService.getSharedInstance()));
 
 		STORE_CONVERTERS = Collections.unmodifiableCollection(converters);
 
