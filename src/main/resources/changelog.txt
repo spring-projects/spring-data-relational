@@ -1,6 +1,22 @@
 Spring Data R2DBC Changelog
 ===========================
 
+Changes in version 1.4.0-M1 (2021-07-16)
+----------------------------------------
+* #620 - Introduce `OutboundRow.clone()` method.
+* #616 - Document default `NamingStrategy` and explain configuration options.
+* #607 - Dynamic projection skipped if projection type not already registered with MappingContext.
+* #597 - Upgrade to R2DBC Arabba SR10.
+* #594 - Upgrade to MySQL 8.0 for testing.
+* #593 - Saving Enum-typed Collection-like properties set to `null` are not translated to `String[]`.
+* #591 - Entity callbacks not fired for String-based queries or named query methods.
+* #589 - MySQL dialect converts all `byte` properties to `boolean`.
+* #587 - `PreparedOperationBindableQuery.bindNull(…)` calls `GenericExecuteSpec.bind(…)` instead of `bindNull(…)`.
+* #585 - Custom converter for constructor creation no longer applied.
+* #567 - Update CI to Java 16.
+* #483 - Spring R2DBC should support camel case columns in Postgresql out of the box or should provide configuration for supporting it..
+
+
 Changes in version 1.2.11 (2021-07-16)
 --------------------------------------
 * #616 - Document default `NamingStrategy` and explain configuration options.
@@ -504,6 +520,7 @@ Changes in version 1.0.0.M1 (2018-12-12)
 * #5 - Build failures due to failing Oracle JDK downloads.
 * #2 - Add initial support for DatabaseClient and Reactive Repositories.
 * #1 - Setup repository.
+
 
 
 
