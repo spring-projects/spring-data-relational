@@ -1,6 +1,26 @@
 Spring Data JDBC Changelog
 =========================
 
+Changes in version 2.3.0-M1 (2021-07-16)
+----------------------------------------
+* #1000 - No connections in poll available when performing multiple queries in parallel.
+* #992 - Convert AggregateReference using Converters instead of custom code paths.
+* #987 - Support `AggregateReference` in derived query methods.
+* #980 - Add support for repository query method projections.
+* #979 - Fix Readme section about creating issues.
+* #978 - Handle ConstantCondition in ConditionVisitor.
+* #975 - Fixes build failures with JDK16.
+* #974 - After Upgrading spring-data-jdbbc from 1.1.12.RELEASE to 2.0.6.RELEASE LocalDateTime parameters in Repository methods fail.
+* #972 - Fix split-package between `spring.data.jdbc` and `spring.data.relational`.
+* #971 - Add support for projections using repository query methods.
+* #946 - Update CI to Java 16.
+* #935 - spring-data-jdbc and postgres: Trailing junk on timestamp.
+* #934 - Properly document AggregateReference.
+* #908 - MSSQL bit wrongly mapped to boolean value TRUE.
+* #907 - org.springframework.data.relational.core.sql.render.ConditionVisitor does not handle ConstantConditions.
+* #578 - Support for reading large resultsets [DATAJDBC-356].
+
+
 Changes in version 2.1.11 (2021-07-16)
 --------------------------------------
 
@@ -758,6 +778,7 @@ Changes in version 1.0.0.M2 (2018-04-13)
 Changes in version 1.0.0.M1 (2018-02-06)
 ----------------------------------------
 * DATAJDBC-171 - Release 1.0 M1 (Lovelace).
+
 
 
 
