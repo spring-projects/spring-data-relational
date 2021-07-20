@@ -1,23 +1,33 @@
 package org.springframework.data.jdbc.core.dialect;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.assertj.core.api.Assertions.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import lombok.Value;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.postgresql.util.PGobject;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
@@ -30,20 +40,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
- * Tests for PostgreSQL Dialect.
- * Start this test with -Dspring.profiles.active=postgres
+ * Integration tests for PostgreSQL Dialect. Start this test with {@code -Dspring.profiles.active=postgres}.
  *
  * @author Nikita Konev
+ * @author Mark Paluch
  */
 @EnabledIfSystemProperty(named = "spring.profiles.active", matches = "postgres")
 @ContextConfiguration
@@ -51,189 +52,104 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(SpringExtension.class)
 public class PostgresDialectIntegrationTests {
 
-    private static final ByteArrayOutputStream capturedOutContent = new ByteArrayOutputStream();
-    private static PrintStream previousOutput;
+	@Autowired CustomerRepository customerRepository;
 
-    @Profile("postgres")
-    @Configuration
-    @Import(TestConfiguration.class)
-    @EnableJdbcRepositories(considerNestedRepositories = true,
-            includeFilters = @ComponentScan.Filter(value = CustomerRepository.class, type = FilterType.ASSIGNABLE_TYPE))
-    static class Config {
+	@Test // GH-920
+	void shouldSaveAndLoadJson() throws SQLException {
 
-        private final ObjectMapper objectMapper = new ObjectMapper();
+		PGobject sessionData = new PGobject();
+		sessionData.setType("jsonb");
+		sessionData.setValue("{\"hello\": \"json\"}");
 
-        @Bean
-        Class<?> testClass() {
-            return PostgresDialectIntegrationTests.class;
-        }
+		Customer saved = customerRepository
+				.save(new Customer(null, "Adam Smith", new JsonHolder("{\"hello\": \"world\"}"), sessionData));
 
-        @WritingConverter
-        static class PersonDataWritingConverter extends AbstractPostgresJsonWritingConverter<PersonData> {
+		Optional<Customer> loaded = customerRepository.findById(saved.getId());
 
-            public PersonDataWritingConverter(ObjectMapper objectMapper) {
-                super(objectMapper, true);
-            }
-        }
+		assertThat(loaded).hasValueSatisfying(actual -> {
 
-        @ReadingConverter
-        static class PersonDataReadingConverter extends AbstractPostgresJsonReadingConverter<PersonData> {
-            public PersonDataReadingConverter(ObjectMapper objectMapper) {
-                super(objectMapper, PersonData.class);
-            }
-        }
+			assertThat(actual.getPersonData().getContent()).isEqualTo("{\"hello\": \"world\"}");
+			assertThat(actual.getSessionData().getValue()).isEqualTo("{\"hello\": \"json\"}");
+		});
+	}
 
-        @WritingConverter
-        static class SessionDataWritingConverter extends AbstractPostgresJsonWritingConverter<SessionData> {
-            public SessionDataWritingConverter(ObjectMapper objectMapper) {
-                super(objectMapper, true);
-            }
-        }
+	@Profile("postgres")
+	@Configuration
+	@Import(TestConfiguration.class)
+	@EnableJdbcRepositories(considerNestedRepositories = true,
+			includeFilters = @ComponentScan.Filter(value = CustomerRepository.class, type = FilterType.ASSIGNABLE_TYPE))
+	static class Config {
 
-        @ReadingConverter
-        static class SessionDataReadingConverter extends AbstractPostgresJsonReadingConverter<SessionData> {
-            public SessionDataReadingConverter(ObjectMapper objectMapper) {
-                super(objectMapper, SessionData.class);
-            }
-        }
+		@Bean
+		Class<?> testClass() {
+			return PostgresDialectIntegrationTests.class;
+		}
 
-        private List<Object> storeConverters(Dialect dialect) {
+		@Bean
+		CustomConversions jdbcCustomConversions(Dialect dialect) {
+			SimpleTypeHolder simpleTypeHolder = new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
 
-            List<Object> converters = new ArrayList<>();
-            converters.addAll(dialect.getConverters());
-            converters.addAll(JdbcCustomConversions.storeConverters());
-            return converters;
-        }
+			return new JdbcCustomConversions(
+					CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)), userConverters());
+		}
 
-        protected List<?> userConverters() {
-            final List<Converter> list = new ArrayList<>();
-            list.add(new PersonDataWritingConverter(objectMapper));
-            list.add(new PersonDataReadingConverter(objectMapper));
-            list.add(new SessionDataWritingConverter(objectMapper));
-            list.add(new SessionDataReadingConverter(objectMapper));
-            return list;
-        }
+		private List<Object> storeConverters(Dialect dialect) {
 
-        @Primary
-        @Bean
-        CustomConversions jdbcCustomConversions(Dialect dialect) {
-            SimpleTypeHolder simpleTypeHolder = new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+			List<Object> converters = new ArrayList<>();
+			converters.addAll(dialect.getConverters());
+			converters.addAll(JdbcCustomConversions.storeConverters());
+			return converters;
+		}
 
-            return new JdbcCustomConversions(CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)),
-                    userConverters());
-        }
+		private List<Object> userConverters() {
+			return Arrays.asList(JsonHolderToPGobjectConverter.INSTANCE, PGobjectToJsonHolderConverter.INSTANCE);
+		}
+	}
 
-    }
+	enum JsonHolderToPGobjectConverter implements Converter<JsonHolder, PGobject> {
 
-    @BeforeAll
-    public static void ba() {
-        previousOutput = System.out;
-        System.setOut(new PrintStream(capturedOutContent));
-    }
+		INSTANCE;
 
-    @AfterAll
-    public static void aa() {
-        System.setOut(previousOutput);
-        previousOutput = null;
-    }
+		@Override
+		public PGobject convert(JsonHolder source) {
+			PGobject result = new PGobject();
+			result.setType("json");
+			try {
+				result.setValue(source.getContent());
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+			return result;
+		}
+	}
 
-    /**
-     * An abstract class for building your own converter for PostgerSQL's JSON[b].
-     */
-    static class AbstractPostgresJsonReadingConverter<T> implements Converter<PGobject, T> {
-        private final ObjectMapper objectMapper;
-        private final Class<T> valueType;
+	enum PGobjectToJsonHolderConverter implements Converter<PGobject, JsonHolder> {
 
-        public AbstractPostgresJsonReadingConverter(ObjectMapper objectMapper, Class<T> valueType) {
-            this.objectMapper = objectMapper;
-            this.valueType = valueType;
-        }
+		INSTANCE;
 
-        @Override
-        public T convert(PGobject pgObject) {
-            try {
-                final String source = pgObject.getValue();
-                return objectMapper.readValue(source, valueType);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Unable to deserialize to json " + pgObject, e);
-            }
-        }
-    }
+		@Override
+		public JsonHolder convert(PGobject source) {
+			return new JsonHolder(source.getValue());
+		}
+	}
 
-    /**
-     * An abstract class for building your own converter for PostgerSQL's JSON[b].
-     */
-    static class AbstractPostgresJsonWritingConverter<T> implements Converter<T, PGobject> {
-        private final ObjectMapper objectMapper;
-        private final boolean jsonb;
+	@Value
+	@Table("customers")
+	public static class Customer {
 
-        public AbstractPostgresJsonWritingConverter(ObjectMapper objectMapper, boolean jsonb) {
-            this.objectMapper = objectMapper;
-            this.jsonb = jsonb;
-        }
+		@Id Long id;
+		String name;
+		JsonHolder personData;
+		PGobject sessionData;
+	}
 
-        @Override
-        public PGobject convert(T source) {
-            try {
-                final PGobject pGobject = new PGobject();
-                pGobject.setType(jsonb ? "jsonb" : "json");
-                pGobject.setValue(objectMapper.writeValueAsString(source));
-                return pGobject;
-            } catch (JsonProcessingException | SQLException e) {
-                throw new RuntimeException("Unable to serialize to json " + source, e);
-            }
-        }
-    }
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class JsonHolder {
+		String content;
+	}
 
-    @Data
-    @AllArgsConstructor
-    @Table("customers")
-    public static class Customer {
-
-        @Id
-        private Long id;
-        private String name;
-        private PersonData personData;
-        private SessionData sessionData;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class PersonData {
-        private int age;
-        private String petName;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SessionData {
-        private String token;
-        private Long ttl;
-    }
-
-    interface CustomerRepository extends CrudRepository<Customer, Long> {
-
-    }
-
-    @Autowired
-    CustomerRepository customerRepository;
-
-    @Test
-    void testWarningShouldNotBeShown() {
-        final Customer saved = customerRepository.save(new Customer(null, "Adam Smith", new PersonData(30, "Casper"), null));
-        assertThat(saved.getId()).isNotZero();
-        final Optional<Customer> byId = customerRepository.findById(saved.getId());
-        assertThat(byId.isPresent()).isTrue();
-        final Customer foundCustomer = byId.get();
-        assertThat(foundCustomer.getName()).isEqualTo("Adam Smith");
-        assertThat(foundCustomer.getPersonData()).isNotNull();
-        assertThat(foundCustomer.getPersonData().getAge()).isEqualTo(30);
-        assertThat(foundCustomer.getPersonData().getPetName()).isEqualTo("Casper");
-        assertThat(foundCustomer.getSessionData()).isNull();
-
-        assertThat(capturedOutContent.toString()).doesNotContain("although it doesn't convert from a store-supported type");
-    }
+	interface CustomerRepository extends CrudRepository<Customer, Long> {}
 
 }
