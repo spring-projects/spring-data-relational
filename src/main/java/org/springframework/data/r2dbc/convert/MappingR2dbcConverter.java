@@ -70,7 +70,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	 */
 	public MappingR2dbcConverter(
 			MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> context) {
-		super(context, new R2dbcCustomConversions(Collections.emptyList()));
+		super(context, new R2dbcCustomConversions(CustomConversions.StoreConversions.NONE, Collections.emptyList()));
 	}
 
 	/**

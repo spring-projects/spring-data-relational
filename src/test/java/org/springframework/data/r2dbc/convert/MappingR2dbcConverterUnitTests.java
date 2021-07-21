@@ -41,6 +41,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
@@ -62,7 +63,7 @@ public class MappingR2dbcConverterUnitTests {
 	@BeforeEach
 	void before() {
 
-		R2dbcCustomConversions conversions = new R2dbcCustomConversions(
+		R2dbcCustomConversions conversions = new R2dbcCustomConversions(CustomConversions.StoreConversions.NONE,
 				Arrays.asList(StringToMapConverter.INSTANCE, MapToStringConverter.INSTANCE,
 						CustomConversionPersonToOutboundRowConverter.INSTANCE, RowToCustomConversionPerson.INSTANCE));
 

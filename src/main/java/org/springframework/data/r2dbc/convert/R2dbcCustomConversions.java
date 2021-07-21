@@ -41,7 +41,11 @@ public class R2dbcCustomConversions extends CustomConversions {
 	 * Create a new {@link R2dbcCustomConversions} instance registering the given converters.
 	 *
 	 * @param converters must not be {@literal null}.
+	 * @deprecated since 1.3, use {@link #of(R2dbcDialect, Object...)} or
+	 *             {@link #R2dbcCustomConversions(StoreConversions, Collection)} directly to consider dialect-native
+	 *             simple types. Use {@link CustomConversions.StoreConversions#NONE} to omit store-specific converters.
 	 */
+	@Deprecated
 	public R2dbcCustomConversions(Collection<?> converters) {
 		super(new R2dbcCustomConversionsConfiguration(STORE_CONVERSIONS, appendOverrides(converters)));
 	}

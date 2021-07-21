@@ -45,7 +45,7 @@ public class R2dbcMappingContextUnitTests {
 	@Test
 	public void shouldCreateMetadataForConvertedTypes() {
 
-		R2dbcCustomConversions conversions = new R2dbcCustomConversions(
+		R2dbcCustomConversions conversions = new R2dbcCustomConversions(CustomConversions.StoreConversions.NONE,
 				Arrays.asList(ConvertedEntityToRow.INSTANCE, RowToConvertedEntity.INSTANCE));
 		R2dbcMappingContext context = new R2dbcMappingContext();
 		context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
