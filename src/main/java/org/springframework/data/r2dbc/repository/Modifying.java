@@ -22,12 +22,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates a query method should be considered a modifying query as that changes the way it needs to be executed.
+ * Indicates a query method should be considered a modifying query that returns nothing or the number of rows affected
+ * by the query.
  * <p>
- * Queries that should be annotated with a {@code @Modifying} annotation include {@code INSERT}, {@code UPDATE},
- * {@code DELETE}, and DDL statements. The result of these queries can be consumed as affected row count.
+ * Query methods annotated with {@code @Modifying} are typically {@code INSERT}, {@code UPDATE}, {@code DELETE}, and DDL
+ * statements that do not return tabular results. This annotation isn't applicable if the query method returns results
+ * such as {@code INSERT} with generated keys.
  *
  * @author Mark Paluch
+ * @see io.r2dbc.spi.Result#getRowsUpdated()
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
