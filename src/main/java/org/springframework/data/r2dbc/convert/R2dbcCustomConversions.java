@@ -24,7 +24,7 @@ public class R2dbcCustomConversions extends CustomConversions {
 
 	public static final List<Object> STORE_CONVERTERS;
 
-	private static final StoreConversions STORE_CONVERSIONS;
+	public static final StoreConversions STORE_CONVERSIONS;
 
 	static {
 

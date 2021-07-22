@@ -42,6 +42,7 @@ import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
@@ -54,6 +55,7 @@ import org.springframework.data.repository.core.support.AbstractRepositoryMetada
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindTarget;
@@ -216,8 +218,7 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		PreparedOperation<?> stringQuery = query.createQuery(accessor).block();
 
-		assertThat(stringQuery.get())
-				.isEqualTo("SELECT * FROM person WHERE lastname = $1 and firstname = $2");
+		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1 and firstname = $2");
 		stringQuery.bindTo(bindTarget);
 
 		verify(bindTarget).bind(0, "White");
@@ -284,7 +285,7 @@ public class StringBasedR2dbcQueryUnitTests {
 		assertThat(query.resolveResultType(query.getQueryMethod().getResultProcessor())).isEqualTo(PersonDto.class);
 	}
 
-	@Test // gh-475
+	@Test // gh-612
 	void selectsSimpleType() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
@@ -296,9 +297,10 @@ public class StringBasedR2dbcQueryUnitTests {
 		StatementRecorder recorder = StatementRecorder.newInstance();
 		recorder.addStubbing(s -> s.equals("SELECT MAX(DATE)"), result);
 
-		databaseClient = DatabaseClient.builder() //
+		DatabaseClient databaseClient = DatabaseClient.builder() //
 				.connectionFactory(recorder) //
 				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
+		entityOperations = new R2dbcEntityTemplate(databaseClient, PostgresDialect.INSTANCE, converter);
 
 		StringBasedR2dbcQuery query = getQueryMethod("findAllLocalDates");
 
