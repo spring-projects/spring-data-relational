@@ -176,6 +176,21 @@ class SelectRendererUnitTests {
 				+ "OR employee.tenant != department.tenant");
 	}
 
+	@Test // GH-1009
+	public void shouldRenderJoinWithJustExpression() {
+
+		Table employee = SQL.table("employee");
+		Table department = SQL.table("department");
+
+		Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
+				.join(department)
+				.on(Expressions.just("alpha")).equals(Expressions.just("beta")) //
+				.build();
+
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+				+ "JOIN department ON alpha = beta");
+	}
+
 	@Test // DATAJDBC-309
 	void shouldRenderMultipleJoinWithAnd() {
 
