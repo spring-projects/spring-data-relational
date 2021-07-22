@@ -505,10 +505,10 @@ public interface SelectBuilder {
 		/**
 		 * Declare a join condition in one step.
 		 *
-		 * This is harder to use but more flexible then the fluent style of {@link #on(Expression)} which only allows for equality comparisons chained together with `AND`.
+		 * Using conditions allows more flexibility in comparison to  {@link #on(Expression)} which only allows for equality comparisons chained together with `AND`.
 		 *
-		 * @param condition Must not be {@literal null}.
-		 * @return @return {@code this} builder.
+		 * @param condition must not be {@literal null}.
+		 * @return {@code this} builder.
 		 * @see Conditions
 		 */
 		SelectFromAndJoinCondition on(Condition condition);
