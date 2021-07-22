@@ -156,6 +156,28 @@ class SelectRendererUnitTests {
 				+ "AND employee.tenant = department.tenant");
 	}
 
+	@Test // GH-995
+	public void shouldRenderArbitraryJoinCondition() {
+
+		Table employee = SQL.table("employee");
+		Table department = SQL.table("department");
+
+		Select select = Select.builder() //
+				.select(employee.column("id"), department.column("name")) //
+				.from(employee) //
+				.join(department) //
+				.on(
+						Conditions.isEqual( employee.column("department_id"),department.column("id")) //
+								.or( //
+						Conditions.isNotEqual( employee.column("tenant"),department.column("tenant")) //
+				)) //
+				.build();
+
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
+				+ "JOIN department ON employee.department_id = department.id " //
+				+ "OR employee.tenant != department.tenant");
+	}
+
 	@Test // DATAJDBC-309
 	void shouldRenderMultipleJoinWithAnd() {
 

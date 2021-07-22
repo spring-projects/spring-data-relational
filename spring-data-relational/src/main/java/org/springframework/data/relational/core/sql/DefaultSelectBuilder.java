@@ -325,6 +325,18 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 			return this;
 		}
 
+		@Override
+		public SelectFromAndJoinCondition on(Condition condition) {
+
+			if (this.condition == null) {
+				this.condition = condition;
+			} else {
+				this.condition = this.condition.and(condition);
+			}
+
+			return this;
+		}
+
 		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOnConditionComparison#equals(org.springframework.data.relational.core.sql.Expression)
@@ -348,6 +360,12 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		}
 
 		private void finishCondition() {
+
+			// Nothing to do if a complete join condition was used.
+			if (from == null && to == null) {
+				return;
+			}
+
 			Comparison comparison = Comparison.create(from, "=", to);
 
 			if (condition == null) {
