@@ -28,6 +28,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.repository.query.DtoInstantiatingConverter;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.data.util.Lazy;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.r2dbc.core.RowsFetchSpec;
 import org.springframework.util.ClassUtils;
@@ -72,6 +73,7 @@ interface R2dbcQueryExecution {
 		private final ResultProcessor processor;
 		private final MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 		private final EntityInstantiators instantiators;
+		private final Lazy<DtoInstantiatingConverter> converter;
 
 		ResultProcessingConverter(ResultProcessor processor,
 				MappingContext<? extends RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext,
@@ -79,6 +81,8 @@ interface R2dbcQueryExecution {
 			this.processor = processor;
 			this.mappingContext = mappingContext;
 			this.instantiators = instantiators;
+			this.converter = Lazy.of(() -> new DtoInstantiatingConverter(processor.getReturnedType().getReturnedType(),
+					this.mappingContext, this.instantiators));
 		}
 
 		/* (non-Javadoc)
@@ -108,10 +112,7 @@ interface R2dbcQueryExecution {
 				}
 			}
 
-			Converter<Object, Object> converter = new DtoInstantiatingConverter(returnedType.getReturnedType(),
-					this.mappingContext, this.instantiators);
-
-			return this.processor.processResult(source, converter);
+			return this.processor.processResult(source, it -> this.converter.get().convert(it));
 		}
 	}
 }

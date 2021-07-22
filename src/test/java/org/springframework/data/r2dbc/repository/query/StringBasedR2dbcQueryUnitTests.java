@@ -18,7 +18,15 @@ package org.springframework.data.r2dbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.test.MockColumnMetadata;
+import io.r2dbc.spi.test.MockResult;
+import io.r2dbc.spi.test.MockRow;
+import io.r2dbc.spi.test.MockRowMetadata;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
 import java.lang.reflect.Method;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +46,7 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -275,6 +284,29 @@ public class StringBasedR2dbcQueryUnitTests {
 		assertThat(query.resolveResultType(query.getQueryMethod().getResultProcessor())).isEqualTo(PersonDto.class);
 	}
 
+	@Test // gh-475
+	void selectsSimpleType() {
+
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("date").build()).build();
+		LocalDate value = LocalDate.now();
+		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.row(MockRow.builder().identified(0, LocalDate.class, value).build()).build();
+
+		StatementRecorder recorder = StatementRecorder.newInstance();
+		recorder.addStubbing(s -> s.equals("SELECT MAX(DATE)"), result);
+
+		databaseClient = DatabaseClient.builder() //
+				.connectionFactory(recorder) //
+				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
+
+		StringBasedR2dbcQuery query = getQueryMethod("findAllLocalDates");
+
+		Flux<Object> flux = (Flux) query.execute(new Object[0]);
+
+		flux.as(StepVerifier::create).expectNext(value).verifyComplete();
+	}
+
 	private StringBasedR2dbcQuery getQueryMethod(String name, Class<?>... args) {
 
 		Method method = ReflectionUtils.findMethod(SampleRepository.class, name, args);
@@ -329,6 +361,9 @@ public class StringBasedR2dbcQueryUnitTests {
 
 		@Query("SELECT * FROM person")
 		PersonProjection findAsInterfaceProjection();
+
+		@Query("SELECT MAX(DATE)")
+		Flux<LocalDate> findAllLocalDates();
 	}
 
 	static class PersonDto {
