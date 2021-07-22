@@ -501,6 +501,17 @@ public interface SelectBuilder {
 		 * @see Table#column(String)
 		 */
 		SelectOnConditionComparison on(Expression column);
+
+		/**
+		 * Declare a join condition in one step.
+		 *
+		 * Using conditions allows more flexibility in comparison to  {@link #on(Expression)} which only allows for equality comparisons chained together with `AND`.
+		 *
+		 * @param condition must not be {@literal null}.
+		 * @return {@code this} builder.
+		 * @see Conditions
+		 */
+		SelectFromAndJoinCondition on(Condition condition);
 	}
 
 	/**
