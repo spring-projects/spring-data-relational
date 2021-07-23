@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.springframework.data.relational.core.sql.AsteriskFromTable;
 import org.springframework.data.relational.core.sql.BindMarker;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Condition;
@@ -24,6 +25,7 @@ import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SubselectExpression;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * {@link PartRenderer} for {@link Expression}s.
@@ -37,12 +39,33 @@ import org.springframework.lang.Nullable;
 class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartRenderer {
 
 	private final RenderContext context;
+	private final AliasHandling aliasHandling;
 
 	private CharSequence value = "";
 	private @Nullable PartRenderer partRenderer;
 
+	/**
+	 * Creates an {@code ExpressionVisitor} that does not use aliases for column names
+	 * @param context must not be {@literal null}.
+	 */
 	ExpressionVisitor(RenderContext context) {
+		this(context, AliasHandling.IGNORE);
+	}
+
+	/**
+	 * Creates an {@code ExpressionVisitor}.
+	 *
+	 * @param context must not be {@literal null}.
+	 * @param aliasHandling controls if columns should be rendered as their alias or using their table names.
+	 * @since 2.3
+	 */
+	ExpressionVisitor(RenderContext context, AliasHandling aliasHandling) {
+
+		Assert.notNull(context, "The render context must not be null");
+		Assert.notNull(aliasHandling, "The aliasHandling must not be null");
+
 		this.context = context;
+		this.aliasHandling = aliasHandling;
 	}
 
 	/*
@@ -70,7 +93,8 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 
 			Column column = (Column) segment;
 
-			value = NameRenderer.fullyQualifiedReference(context, column);
+			value = aliasHandling == AliasHandling.USE ? NameRenderer.fullyQualifiedReference(context, column)
+					: NameRenderer.fullyQualifiedUnaliasedReference(context, column);
 		} else if (segment instanceof BindMarker) {
 
 			if (segment instanceof Named) {
@@ -78,7 +102,10 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			} else {
 				value = segment.toString();
 			}
-		} else { // works for Literal and SimpleExpression and possibly more
+		} else if (segment instanceof AsteriskFromTable) {
+			value = NameRenderer.render(context, ((AsteriskFromTable) segment).getTable()) + ".*";
+		} else {
+			// works for literals and just and possibly more
 			value = segment.toString();
 		}
 
@@ -93,6 +120,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Condition) {
+
 			ConditionVisitor visitor = new ConditionVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
@@ -123,5 +151,21 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	@Override
 	public CharSequence getRenderedPart() {
 		return value;
+	}
+
+	/**
+	 * Describes how aliases of columns should be rendered.
+	 * @since 2.3
+	 */
+	enum AliasHandling {
+		/**
+		 * The alias does not get used.
+		 */
+		IGNORE,
+
+		/**
+		 * The alias gets used. This means aliased columns get rendered as {@literal <alias>}.
+		 */
+		USE
 	}
 }

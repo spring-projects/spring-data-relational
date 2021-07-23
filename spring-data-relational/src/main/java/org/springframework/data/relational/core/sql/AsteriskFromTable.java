@@ -18,13 +18,7 @@ package org.springframework.data.relational.core.sql;
 /**
  * {@link Segment} to select all columns from a {@link Table}.
  * <p/>
- * * Renders to: {@code
- *
-<table>
- * .*} as in {@code SELECT
- *
-<table>
- * .* FROM …}.
+ * Renders to: {@code <table>.*} as in {@code SELECT <table>.* FROM …}.
  *
  * @author Mark Paluch
  * @since 1.1
@@ -32,9 +26,9 @@ package org.springframework.data.relational.core.sql;
  */
 public class AsteriskFromTable extends AbstractSegment implements Expression {
 
-	private final Table table;
+	private final TableLike table;
 
-	AsteriskFromTable(Table table) {
+	AsteriskFromTable(TableLike table) {
 		super(table);
 		this.table = table;
 	}
@@ -46,7 +40,7 @@ public class AsteriskFromTable extends AbstractSegment implements Expression {
 	/**
 	 * @return the associated {@link Table}.
 	 */
-	public Table getTable() {
+	public TableLike getTable() {
 		return table;
 	}
 

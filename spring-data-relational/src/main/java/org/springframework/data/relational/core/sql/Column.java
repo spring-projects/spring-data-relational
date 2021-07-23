@@ -30,9 +30,9 @@ import org.springframework.util.Assert;
 public class Column extends AbstractSegment implements Expression, Named {
 
 	private final SqlIdentifier name;
-	private final Table table;
+	private final TableLike table;
 
-	Column(String name, Table table) {
+	Column(String name, TableLike table) {
 
 		super(table);
 		Assert.notNull(name, "Name must not be null");
@@ -41,7 +41,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 		this.table = table;
 	}
 
-	Column(SqlIdentifier name, Table table) {
+	Column(SqlIdentifier name, TableLike table) {
 
 		super(table);
 		Assert.notNull(name, "Name must not be null");
@@ -57,7 +57,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 * @param table the table, must not be {@literal null}.
 	 * @return the new {@link Column}.
 	 */
-	public static Column create(String name, Table table) {
+	public static Column create(String name, TableLike table) {
 
 		Assert.hasText(name, "Name must not be null or empty");
 		Assert.notNull(table, "Table must not be null");
@@ -341,7 +341,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 *         {@link Table}.
 	 */
 	@Nullable
-	public Table getTable() {
+	public TableLike getTable() {
 		return table;
 	}
 
@@ -370,12 +370,12 @@ public class Column extends AbstractSegment implements Expression, Named {
 
 		private final SqlIdentifier alias;
 
-		private AliasedColumn(String name, Table table, String alias) {
+		private AliasedColumn(String name, TableLike table, String alias) {
 			super(name, table);
 			this.alias = SqlIdentifier.unquoted(alias);
 		}
 
-		private AliasedColumn(SqlIdentifier name, Table table, SqlIdentifier alias) {
+		private AliasedColumn(SqlIdentifier name, TableLike table, SqlIdentifier alias) {
 			super(name, table);
 			this.alias = alias;
 		}

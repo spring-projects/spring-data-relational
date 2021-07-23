@@ -34,10 +34,10 @@ class SelectValidator extends AbstractImportValidator {
 	private final Stack<Select> selects = new Stack<>();
 
 	private int selectFieldCount;
-	private Set<Table> requiredBySelect = new HashSet<>();
-	private Set<Table> requiredByOrderBy = new HashSet<>();
+	private Set<TableLike> requiredBySelect = new HashSet<>();
+	private Set<TableLike> requiredByOrderBy = new HashSet<>();
 
-	private Set<Table> join = new HashSet<>();
+	private Set<TableLike> join = new HashSet<>();
 
 	/**
 	 * Validates a {@link Select} statement.
@@ -57,7 +57,7 @@ class SelectValidator extends AbstractImportValidator {
 			throw new IllegalStateException("SELECT does not declare a select list");
 		}
 
-		for (Table table : requiredBySelect) {
+		for (TableLike table : requiredBySelect) {
 			if (!join.contains(table) && !from.contains(table)) {
 				throw new IllegalStateException(String
 						.format("Required table [%s] by a SELECT column not imported by FROM %s or JOIN %s", table, from, join));
@@ -71,7 +71,7 @@ class SelectValidator extends AbstractImportValidator {
 			}
 		}
 
-		for (Table table : requiredByOrderBy) {
+		for (TableLike table : requiredByOrderBy) {
 			if (!join.contains(table) && !from.contains(table)) {
 				throw new IllegalStateException(String
 						.format("Required table [%s] by a ORDER BY column not imported by FROM %s or JOIN %s", table, from, join));
@@ -100,13 +100,13 @@ class SelectValidator extends AbstractImportValidator {
 
 		if (segment instanceof AsteriskFromTable && parent instanceof Select) {
 
-			Table table = ((AsteriskFromTable) segment).getTable();
+			TableLike table = ((AsteriskFromTable) segment).getTable();
 			requiredBySelect.add(table);
 		}
 
 		if (segment instanceof Column && (parent instanceof Select || parent instanceof SimpleFunction)) {
 
-			Table table = ((Column) segment).getTable();
+			TableLike table = ((Column) segment).getTable();
 
 			if (table != null) {
 				requiredBySelect.add(table);
@@ -115,15 +115,15 @@ class SelectValidator extends AbstractImportValidator {
 
 		if (segment instanceof Column && parent instanceof OrderByField) {
 
-			Table table = ((Column) segment).getTable();
+			TableLike table = ((Column) segment).getTable();
 
 			if (table != null) {
 				requiredByOrderBy.add(table);
 			}
 		}
 
-		if (segment instanceof Table && parent instanceof Join) {
-			join.add((Table) segment);
+		if (segment instanceof TableLike && parent instanceof Join) {
+			join.add((TableLike) segment);
 		}
 		super.enter(segment);
 	}

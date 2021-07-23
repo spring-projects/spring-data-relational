@@ -23,11 +23,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.LockOptions;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
+import org.springframework.data.relational.core.sql.LockOptions;
+import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -139,7 +139,7 @@ public class PostgresDialect extends AbstractDialect {
 		@Override
 		public String getLock(LockOptions lockOptions) {
 
-			List<Table> tables = lockOptions.getFrom().getTables();
+			List<TableLike> tables = lockOptions.getFrom().getTables();
 			if (tables.isEmpty()) {
 				return "";
 			}

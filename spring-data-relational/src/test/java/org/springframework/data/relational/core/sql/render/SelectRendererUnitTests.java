@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.sql.render;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
 import org.springframework.data.relational.core.sql.*;
@@ -41,6 +40,18 @@ public class SelectRendererUnitTests {
 		Select select = Select.builder().select(foo).from(bar).limitOffset(1, 2).build();
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT bar.foo FROM bar");
+	}
+
+	@Test
+	public void honorsNamingStrategy() {
+
+		Table bar = SQL.table("bar");
+		Column foo = bar.column("foo");
+
+		Select select = Select.builder().select(foo).from(bar).build();
+
+		assertThat(SqlRenderer.create(new SimpleRenderContext(NamingStrategies.toUpper())).render(select))
+				.isEqualTo("SELECT BAR.FOO FROM BAR");
 	}
 
 	@Test // DATAJDBC-309
@@ -162,6 +173,55 @@ public class SelectRendererUnitTests {
 				+ "JOIN department ON employee.department_id = department.id " //
 				+ "AND employee.tenant = department.tenant " //
 				+ "JOIN tenant tenant_base ON tenant_base.tenant_id = department.tenant");
+	}
+
+	@Test // GH-1003
+	public void shouldRenderJoinWithInlineQuery() {
+
+		Table employee = SQL.table("employee");
+		Table department = SQL.table("department");
+
+		Select innerSelect = Select.builder()
+				.select(employee.column("id"), employee.column("department_Id"), employee.column("name")).from(employee)
+				.build();
+
+		final InlineQuery one = InlineQuery.create(innerSelect, "one");
+
+		Select select = Select.builder().select(one.column("id"), department.column("name")).from(department) //
+				.join(one).on(one.column("department_id")).equals(department.column("id")) //
+				.build();
+
+		final String sql = SqlRenderer.toString(select);
+
+		assertThat(sql).isEqualTo("SELECT one.id, department.name FROM department " //
+				+ "JOIN (SELECT employee.id, employee.department_Id, employee.name FROM employee) one " //
+				+ "ON one.department_id = department.id");
+	}
+
+	@Test // GH-1003
+	public void shouldRenderJoinWithTwoInlineQueries() {
+
+		Table employee = SQL.table("employee");
+		Table department = SQL.table("department");
+
+		Select innerSelectOne = Select.builder()
+				.select(employee.column("id"), employee.column("department_Id"), employee.column("name")).from(employee)
+				.build();
+		Select innerSelectTwo = Select.builder().select(department.column("id"), department.column("name")).from(department)
+				.build();
+
+		final InlineQuery one = InlineQuery.create(innerSelectOne, "one");
+		final InlineQuery two = InlineQuery.create(innerSelectTwo, "two");
+
+		Select select = Select.builder().select(one.column("id"), two.column("name")).from(one) //
+				.join(two).on(two.column("department_id")).equals(one.column("id")) //
+				.build();
+
+		final String sql = SqlRenderer.toString(select);
+		assertThat(sql).isEqualTo("SELECT one.id, two.name FROM (" //
+				+ "SELECT employee.id, employee.department_Id, employee.name FROM employee) one " //
+				+ "JOIN (SELECT department.id, department.name FROM department) two " //
+				+ "ON two.department_id = one.id");
 	}
 
 	@Test // DATAJDBC-309

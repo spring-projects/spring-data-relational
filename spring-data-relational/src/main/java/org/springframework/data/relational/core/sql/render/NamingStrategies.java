@@ -15,13 +15,14 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import java.util.Locale;
+import java.util.function.Function;
+
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.util.Assert;
-
-import java.util.Locale;
-import java.util.function.Function;
 
 /**
  * Factory for {@link RenderNamingStrategy} objects.
@@ -110,7 +111,7 @@ public abstract class NamingStrategies {
 	}
 
 	enum AsIs implements RenderNamingStrategy {
-		INSTANCE;
+		INSTANCE
 	}
 
 	static class DelegatingRenderNamingStrategy implements RenderNamingStrategy {
@@ -135,12 +136,12 @@ public abstract class NamingStrategies {
 		}
 
 		@Override
-		public SqlIdentifier getName(Table table) {
+		public SqlIdentifier getName(TableLike table) {
 			return delegate.getName(table).transform(mappingFunction::apply);
 		}
 
 		@Override
-		public SqlIdentifier getReferenceName(Table table) {
+		public SqlIdentifier getReferenceName(TableLike table) {
 			return delegate.getReferenceName(table).transform(mappingFunction::apply);
 		}
 	}
