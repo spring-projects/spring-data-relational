@@ -29,10 +29,10 @@ package org.springframework.data.relational.core.sql;
 public class Join extends AbstractSegment {
 
 	private final JoinType type;
-	private final Table joinTable;
+	private final TableLike joinTable;
 	private final Condition on;
 
-	Join(JoinType type, Table joinTable, Condition on) {
+	Join(JoinType type, TableLike joinTable, Condition on) {
 
 		super(joinTable, on);
 
@@ -51,7 +51,7 @@ public class Join extends AbstractSegment {
 	/**
 	 * @return the joined {@link Table}.
 	 */
-	public Table getJoinTable() {
+	public TableLike getJoinTable() {
 		return joinTable;
 	}
 

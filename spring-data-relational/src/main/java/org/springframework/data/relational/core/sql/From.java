@@ -29,20 +29,20 @@ import org.springframework.util.StringUtils;
  */
 public class From extends AbstractSegment {
 
-	private final List<Table> tables;
+	private final List<TableLike> tables;
 
-	From(Table... tables) {
+	From(TableLike... tables) {
 		this(Arrays.asList(tables));
 	}
 
-	From(List<Table> tables) {
+	From(List<TableLike> tables) {
 
-		super(tables.toArray(new Table[] {}));
+		super(tables.toArray(new TableLike[] {}));
 
 		this.tables = Collections.unmodifiableList(tables);
 	}
 
-	public List<Table> getTables() {
+	public List<TableLike> getTables() {
 		return this.tables;
 	}
 

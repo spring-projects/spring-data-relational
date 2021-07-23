@@ -134,7 +134,7 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		@Override
-		SelectFromAndJoin from(Table table);
+		SelectFromAndJoin from(TableLike table);
 
 		/**
 		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
@@ -146,7 +146,7 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		@Override
-		SelectFromAndJoin from(Table... tables);
+		SelectFromAndJoin from(TableLike... tables);
 
 		/**
 		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
@@ -158,7 +158,7 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		@Override
-		SelectFromAndJoin from(Collection<? extends Table> tables);
+		SelectFromAndJoin from(Collection<? extends TableLike> tables);
 	}
 
 	/**
@@ -186,7 +186,7 @@ public interface SelectBuilder {
 		 * @see From
 		 * @see SQL#table(String)
 		 */
-		SelectFromAndOrderBy from(Table table);
+		SelectFromAndOrderBy from(TableLike table);
 
 		/**
 		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
@@ -197,7 +197,7 @@ public interface SelectBuilder {
 		 * @see From
 		 * @see SQL#table(String)
 		 */
-		SelectFromAndOrderBy from(Table... tables);
+		SelectFromAndOrderBy from(TableLike... tables);
 
 		/**
 		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
@@ -208,7 +208,7 @@ public interface SelectBuilder {
 		 * @see From
 		 * @see SQL#table(String)
 		 */
-		SelectFromAndOrderBy from(Collection<? extends Table> tables);
+		SelectFromAndOrderBy from(Collection<? extends TableLike> tables);
 	}
 
 	/**
@@ -229,13 +229,13 @@ public interface SelectBuilder {
 		SelectFromAndOrderBy from(String table);
 
 		@Override
-		SelectFromAndOrderBy from(Table table);
+		SelectFromAndOrderBy from(TableLike table);
 
 		@Override
-		SelectFromAndOrderBy from(Table... tables);
+		SelectFromAndOrderBy from(TableLike... tables);
 
 		@Override
-		SelectFromAndOrderBy from(Collection<? extends Table> tables);
+		SelectFromAndOrderBy from(Collection<? extends TableLike> tables);
 
 		@Override
 		SelectFromAndOrderBy orderBy(Column... columns);
@@ -263,7 +263,7 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		@Override
-		SelectFromAndJoin from(Table table);
+		SelectFromAndJoin from(TableLike table);
 
 		/**
 		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
@@ -275,7 +275,7 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		@Override
-		SelectFromAndJoin from(Table... tables);
+		SelectFromAndJoin from(TableLike... tables);
 
 		/**
 		 * Declare one or more {@link Table}s to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods
@@ -287,7 +287,7 @@ public interface SelectBuilder {
 		 * @see SQL#table(String)
 		 */
 		@Override
-		SelectFromAndJoin from(Collection<? extends Table> tables);
+		SelectFromAndJoin from(Collection<? extends TableLike> tables);
 
 		/**
 		 * Apply {@code limit} and {@code offset} parameters to the select statement. To read the first 20 rows from start
@@ -474,17 +474,17 @@ public interface SelectBuilder {
 		 * @see Join
 		 * @see SQL#table(String)
 		 */
-		SelectOn join(Table table);
+		SelectOn join(TableLike table);
 
 		/**
 		 * Declare a {@code LEFT OUTER JOIN} {@link Table}.
 		 *
-		 * @param table name of the table, must not be {@literal null}.
+		 * @param table must not be {@literal null}.
 		 * @return {@code this} builder.
 		 * @see Join
 		 * @see SQL#table(String)
 		 */
-		SelectOn leftOuterJoin(Table table);
+		SelectOn leftOuterJoin(TableLike table);
 	}
 
 	/**

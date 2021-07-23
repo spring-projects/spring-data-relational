@@ -15,14 +15,7 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.Aliased;
-import org.springframework.data.relational.core.sql.AsteriskFromTable;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.SelectList;
-import org.springframework.data.relational.core.sql.SimpleFunction;
-import org.springframework.data.relational.core.sql.Table;
-import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.data.relational.core.sql.*;
 
 /**
  * {@link PartRenderer} for {@link SelectList}s.
@@ -38,11 +31,14 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	private final RenderTarget target;
 	private boolean requiresComma = false;
 	private boolean insideFunction = false; // this is hackery and should be fix with a proper visitor for
+	private ExpressionVisitor expressionVisitor;
 	// subelements.
 
 	SelectListVisitor(RenderContext context, RenderTarget target) {
+
 		this.context = context;
 		this.target = target;
+		this.expressionVisitor = new ExpressionVisitor(context, ExpressionVisitor.AliasHandling.IGNORE);
 	}
 
 	/*
@@ -56,9 +52,8 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 			builder.append(", ");
 			requiresComma = false;
 		}
-		if (segment instanceof SimpleFunction) {
-			builder.append(((SimpleFunction) segment).getFunctionName()).append("(");
-			insideFunction = true;
+		if (segment instanceof Expression) {
+			return Delegation.delegateTo(expressionVisitor);
 		}
 
 		return super.enterNested(segment);
@@ -82,34 +77,14 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
-		if (segment instanceof Table) {
-			builder.append(NameRenderer.reference(context, (Table) segment)).append('.');
+		if (segment instanceof Expression) {
+
+			builder.append(expressionVisitor.getRenderedPart());
+			requiresComma = true;
 		}
 
-		if (segment instanceof SimpleFunction) {
-
-			builder.append(")");
-			if (segment instanceof Aliased) {
-				builder.append(" AS ").append(NameRenderer.render(context, (Aliased) segment));
-			}
-
-			insideFunction = false;
-			requiresComma = true;
-		} else if (segment instanceof AsteriskFromTable) {
-			builder.append("*");
-			requiresComma = true;
-		} else if (segment instanceof Column) {
-
-			builder.append(NameRenderer.render(context, (Column) segment));
-			if (segment instanceof Aliased && !insideFunction) {
-				builder.append(" AS ").append(NameRenderer.render(context, (Aliased) segment));
-			}
-			requiresComma = true;
-		} else if (segment instanceof AsteriskFromTable) {
-			// the toString of AsteriskFromTable includes the table name, which would cause it to appear twice.
-			builder.append("*");
-		} else if (segment instanceof Expression) {
-			builder.append(segment.toString());
+		if (segment instanceof Aliased && !insideFunction) {
+			builder.append(" AS ").append(NameRenderer.render(context, (Aliased) segment));
 		}
 
 		return super.leaveNested(segment);
@@ -123,4 +98,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	public CharSequence getRenderedPart() {
 		return builder;
 	}
+
+
 }

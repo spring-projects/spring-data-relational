@@ -42,7 +42,7 @@ class DefaultSelect implements Select {
 	private final List<OrderByField> orderBy;
 	private final @Nullable LockMode lockMode;
 
-	DefaultSelect(boolean distinct, List<Expression> selectList, List<Table> from, long limit, long offset,
+	DefaultSelect(boolean distinct, List<Expression> selectList, List<TableLike> from, long limit, long offset,
 			List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy, @Nullable LockMode lockMode) {
 
 		this.distinct = distinct;

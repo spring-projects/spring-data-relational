@@ -15,10 +15,9 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Join;
-import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.data.relational.core.sql.Visitable;
 
 /**
@@ -30,18 +29,18 @@ import org.springframework.data.relational.core.sql.Visitable;
  */
 class JoinVisitor extends TypedSubtreeVisitor<Join> {
 
-	private final RenderContext context;
 	private final RenderTarget parent;
 	private final StringBuilder joinClause = new StringBuilder();
+	private final FromTableVisitor fromTableVisitor;
 	private final ConditionVisitor conditionVisitor;
 	private boolean inCondition = false;
 	private boolean hasSeenCondition = false;
 
 	JoinVisitor(RenderContext context, RenderTarget parent) {
 
-		this.context = context;
 		this.parent = parent;
 		this.conditionVisitor = new ConditionVisitor(context);
+		this.fromTableVisitor = new FromTableVisitor(context, joinClause::append);
 	}
 
 	/*
@@ -63,11 +62,8 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 	@Override
 	Delegation enterNested(Visitable segment) {
 
-		if (segment instanceof Table && !inCondition) {
-			joinClause.append(NameRenderer.render(context, (Table) segment));
-			if (segment instanceof Aliased) {
-				joinClause.append(" ").append(NameRenderer.render(context, (Aliased) segment));
-			}
+		if (segment instanceof TableLike && !inCondition) {
+			return Delegation.delegateTo(fromTableVisitor);
 		} else if (segment instanceof Condition) {
 
 			inCondition = true;
@@ -108,6 +104,7 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 	 */
 	@Override
 	Delegation leaveMatched(Join segment) {
+
 		parent.onRendered(joinClause);
 		return super.leaveMatched(segment);
 	}

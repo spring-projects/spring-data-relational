@@ -17,12 +17,14 @@ package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
 /**
- * Renderer for {@link Column}s.
+ * Renderer for {@link Column}s. Renders a column as {@literal 
+ * <table>
+ * .<column>} or {@literal <column>}.
  *
  * @author Mark Paluch
  * @since 1.1
@@ -65,8 +67,8 @@ class ColumnVisitor extends TypedSubtreeVisitor<Column> {
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
-		if (segment instanceof Table) {
-			tableName = context.getNamingStrategy().getReferenceName((Table) segment);
+		if (segment instanceof TableLike) {
+			tableName = context.getNamingStrategy().getReferenceName((TableLike) segment);
 		}
 
 		return super.leaveNested(segment);

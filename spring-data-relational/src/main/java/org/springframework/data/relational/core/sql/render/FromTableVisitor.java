@@ -17,20 +17,28 @@ package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.From;
-import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.InlineQuery;
+import org.springframework.data.relational.core.sql.TableLike;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
- * Renderer for {@link Table} used within a {@link From} clause. Uses a {@link RenderTarget} to call back for render
+ * Renderer for {@link TableLike} used within a {@link From} or
+ * {@link org.springframework.data.relational.core.sql.Join} clause. Uses a {@link RenderTarget} to call back for render
  * results.
  *
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 1.1
  */
-class FromTableVisitor extends TypedSubtreeVisitor<Table> {
+class FromTableVisitor extends TypedSubtreeVisitor<TableLike> {
 
 	private final RenderContext context;
 	private final RenderTarget parent;
+	@Nullable
+	private SelectStatementVisitor delegate;
+	@Nullable
+	private StringBuilder builder = null;
 
 	FromTableVisitor(RenderContext context, RenderTarget parent) {
 		super();
@@ -43,9 +51,32 @@ class FromTableVisitor extends TypedSubtreeVisitor<Table> {
 	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
 	 */
 	@Override
-	Delegation enterMatched(Table segment) {
+	Delegation enterMatched(TableLike segment) {
 
-		StringBuilder builder = new StringBuilder();
+		builder = new StringBuilder();
+
+		if (segment instanceof InlineQuery) {
+
+			builder.append("(");
+			delegate = new SelectStatementVisitor(context);
+			return Delegation.delegateTo(delegate);
+		}
+
+		return super.enterMatched(segment);
+	}
+
+	@Override
+	Delegation leaveMatched(TableLike segment) {
+
+		Assert.state(builder != null, "Builder must not be null in leaveMatched.");
+
+		if (delegate != null) {
+
+			builder.append(delegate.getRenderedPart());
+			builder.append(") ");
+
+			delegate = null;
+		}
 
 		builder.append(NameRenderer.render(context, segment));
 		if (segment instanceof Aliased) {
@@ -54,6 +85,6 @@ class FromTableVisitor extends TypedSubtreeVisitor<Table> {
 
 		parent.onRendered(builder);
 
-		return super.enterMatched(segment);
+		return super.leaveMatched(segment);
 	}
 }

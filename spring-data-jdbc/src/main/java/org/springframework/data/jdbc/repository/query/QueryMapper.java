@@ -121,7 +121,7 @@ class QueryMapper {
 
 			Column column = (Column) expression;
 			Field field = createPropertyField(entity, column.getName());
-			Table table = column.getTable();
+			TableLike table = column.getTable();
 
 			Assert.state(table != null, String.format("The column %s must have a table set.", column));
 

@@ -20,6 +20,7 @@ import java.util.function.Function;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.TableLike;
 import org.springframework.data.relational.core.sql.render.NamingStrategies.DelegatingRenderNamingStrategy;
 import org.springframework.util.Assert;
 
@@ -27,6 +28,7 @@ import org.springframework.util.Assert;
  * Naming strategy for SQL rendering.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see NamingStrategies
  * @since 1.1
  */
@@ -55,24 +57,24 @@ public interface RenderNamingStrategy {
 	}
 
 	/**
-	 * Return the {@link Table#getName() table name}.
+	 * Return the {@link TableLike#getName() table name}.
 	 *
 	 * @param table the table.
-	 * @return the {@link Table#getName() table name}.
+	 * @return the {@link TableLike#getName() table name}.
 	 * @see Table#getName()
 	 */
-	default SqlIdentifier getName(Table table) {
+	default SqlIdentifier getName(TableLike table) {
 		return table.getName();
 	}
 
 	/**
-	 * Return the {@link Table#getReferenceName() table reference name}.
+	 * Return the {@link TableLike#getReferenceName() table reference name}.
 	 *
 	 * @param table the table.
-	 * @return the {@link Table#getReferenceName() table name}.
-	 * @see Table#getReferenceName()
+	 * @return the {@link TableLike#getReferenceName() table name}.
+	 * @see TableLike#getReferenceName()
 	 */
-	default SqlIdentifier getReferenceName(Table table) {
+	default SqlIdentifier getReferenceName(TableLike table) {
 		return table.getReferenceName();
 	}
 
