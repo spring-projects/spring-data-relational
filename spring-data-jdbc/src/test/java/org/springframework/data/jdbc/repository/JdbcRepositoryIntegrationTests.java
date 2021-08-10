@@ -330,6 +330,13 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.findAllByNamedQuery()).hasSize(1);
 	}
 
+	@Test // GH-1022
+	public void findAllByCustomQueryName() {
+
+		repository.save(createDummyEntity());
+		assertThat(repository.findAllByCustomNamedQuery()).hasSize(1);
+	}
+
 	@Test // DATAJDBC-341
 	public void findWithMissingQuery() {
 
@@ -567,6 +574,8 @@ public class JdbcRepositoryIntegrationTests {
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
 		List<DummyEntity> findAllByNamedQuery();
+		@Query(name = "DummyEntity.customQuery")
+		List<DummyEntity> findAllByCustomNamedQuery();
 
 		List<DummyEntity> findAllByPointInTimeAfter(Instant instant);
 

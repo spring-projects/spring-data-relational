@@ -147,21 +147,16 @@ public class JdbcQueryMethod extends QueryMethod {
 	@Nullable
 	private String getNamedQuery() {
 
-		String name = getQueryName();
+		String name = getNamedQueryName();
 		return this.namedQueries.hasQuery(name) ? this.namedQueries.getQuery(name) : null;
 	}
 
-	/**
-	 * Returns the annotated query name.
-	 *
-	 * @return May be {@code null}.
-	 */
-
-	private String getQueryName() {
+	@Override
+	public String getNamedQueryName() {
 
 		String annotatedName = getMergedAnnotationAttribute("name");
 
-		return StringUtils.hasText(annotatedName) ? annotatedName : getNamedQueryName();
+		return StringUtils.hasText(annotatedName) ? annotatedName : super.getNamedQueryName();
 	}
 
 	/**
@@ -173,7 +168,6 @@ public class JdbcQueryMethod extends QueryMethod {
 	Class<? extends RowMapper> getRowMapperClass() {
 		return getMergedAnnotationAttribute("rowMapperClass");
 	}
-
 
 	/**
 	 * Returns the name of the bean to be used as {@link org.springframework.jdbc.core.RowMapper}
