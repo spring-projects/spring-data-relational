@@ -533,7 +533,7 @@ The following table shows the keywords that are supported for query methods:
 | `age BETWEEN from AND to`
 
 | `NotBetween`
-| `findByAgeBetween(int from, int to)`
+| `findByAgeNotBetween(int from, int to)`
 | `age NOT BETWEEN from AND to`
 
 | `In`
