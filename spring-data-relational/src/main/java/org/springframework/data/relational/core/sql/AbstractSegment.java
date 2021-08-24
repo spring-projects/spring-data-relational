@@ -17,6 +17,9 @@ package org.springframework.data.relational.core.sql;
 
 import org.springframework.util.Assert;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Abstract implementation to support {@link Segment} implementations.
  *
@@ -28,8 +31,21 @@ abstract class AbstractSegment implements Segment {
 	private final Segment[] children;
 
 	protected AbstractSegment(Segment... children) {
-		this.children = children;
+		this.children = toSegmentArray(children);
 	}
+
+	private Segment[] toSegmentArray(Segment... children) {
+		List<Segment> list = new ArrayList<>();
+		if (children != null) {
+			for (Segment child : children) {
+				if (child != null) {
+					list.add(child);
+				}
+			}
+		}
+		return list.toArray(new Segment[list.size()]);
+	}
+
 
 	/*
 	 * (non-Javadoc)
