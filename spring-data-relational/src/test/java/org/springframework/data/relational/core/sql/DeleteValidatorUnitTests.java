@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
  * Unit tests for {@link DeleteValidator}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class DeleteValidatorUnitTests {
 
@@ -35,7 +36,7 @@ public class DeleteValidatorUnitTests {
 		assertThatThrownBy(() -> {
 			StatementBuilder.delete() //
 					.from(bar) //
-					.where(new SimpleCondition(column, "=", "foo")) //
+					.where(column.isEqualTo(SQL.literalOf("foo"))) //
 					.build();
 		}).isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Required table [table] by a WHERE predicate not imported by FROM [bar]");
