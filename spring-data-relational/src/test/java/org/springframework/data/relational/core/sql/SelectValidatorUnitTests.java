@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.*;
  * Unit tests for {@link SelectValidator}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class SelectValidatorUnitTests {
 
@@ -83,7 +84,7 @@ public class SelectValidatorUnitTests {
 		assertThatThrownBy(() -> {
 			StatementBuilder.select(bar.column("foo")) //
 					.from(bar) //
-					.where(new SimpleCondition(column, "=", "foo")) //
+					.where(column.isEqualTo(SQL.literalOf("foo"))) //
 					.build();
 		}).isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Required table [table] by a WHERE predicate not imported by FROM [bar] or JOIN []");

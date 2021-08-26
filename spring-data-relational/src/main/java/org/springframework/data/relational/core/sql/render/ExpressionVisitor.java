@@ -19,7 +19,6 @@ import org.springframework.data.relational.core.sql.BindMarker;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Literal;
 import org.springframework.data.relational.core.sql.Named;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SubselectExpression;
@@ -79,7 +78,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			} else {
 				value = segment.toString();
 			}
-		} else if (segment instanceof Literal) {
+		} else { // works for Literal and SimpleExpression and possibly more
 			value = segment.toString();
 		}
 

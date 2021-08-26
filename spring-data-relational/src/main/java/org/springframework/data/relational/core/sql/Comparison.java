@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
  * Results in a rendered condition: {@code <left> <comparator> <right>} (e.g. {@code col = 'predicate'}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 public class Comparison extends AbstractSegment implements Condition {
@@ -56,6 +57,24 @@ public class Comparison extends AbstractSegment implements Condition {
 		Assert.notNull(rightColumnOrExpression, "Right expression must not be null!");
 
 		return new Comparison(leftColumnOrExpression, comparator, rightColumnOrExpression);
+	}
+
+	/**
+	 * Creates a new {@link Comparison} from simple {@literal StringP} arguments
+	 * @param unqualifiedColumnName gets turned in a {@link Expressions#just(String)} and is expected to be an unqualified unique column name but also could be an verbatim expression. Must not be {@literal null}.
+	 * @param comparator must not be {@literal null}.
+	 * @param rightValue is considered a {@link Literal}. Must not be {@literal null}.
+	 * @return a new {@literal Comparison} of the first with the third argument using the second argument as comparison operator. Guaranteed to be not {@literal null}.
+	 *
+	 * @since 2.3
+	 */
+	public static Comparison create(String unqualifiedColumnName, String comparator, Object rightValue) {
+
+		Assert.notNull(unqualifiedColumnName, "UnqualifiedColumnName must not be null.");
+		Assert.notNull(comparator, "Comparator must not be null.");
+		Assert.notNull(rightValue, "RightValue must not be null.");
+
+		return new Comparison(Expressions.just(unqualifiedColumnName), comparator, SQL.literalOf(rightValue));
 	}
 
 	@Override

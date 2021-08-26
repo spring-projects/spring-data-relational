@@ -20,7 +20,9 @@ package org.springframework.data.relational.core.sql;
  *
  * @author Mark Paluch
  * @since 1.1
+ * @deprecated use {@link Comparison} instead.
  */
+@Deprecated
 public class SimpleCondition extends AbstractSegment implements Condition {
 
 	private final Expression expression;
@@ -40,11 +42,6 @@ public class SimpleCondition extends AbstractSegment implements Condition {
 
 	/**
 	 * Creates a simple {@link Condition} given {@code column}, {@code comparator} and {@code predicate}.
-	 *
-	 * @param column
-	 * @param comparator
-	 * @param predicate
-	 * @return
 	 */
 	public static SimpleCondition create(String column, String comparator, String predicate) {
 		return new SimpleCondition(new Column(column, null), comparator, predicate);
