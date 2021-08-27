@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.Array;
 import java.sql.JDBCType;
+import java.util.function.Function;
 
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -33,6 +34,7 @@ import org.springframework.util.Assert;
 public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 
 	private final JdbcOperations operations;
+	private final Function<JDBCType, String> jdbcTypeToSqlName;
 
 	/**
 	 * Creates a new {@link DefaultJdbcTypeFactory}.
@@ -40,10 +42,21 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 	 * @param operations must not be {@literal null}.
 	 */
 	public DefaultJdbcTypeFactory(JdbcOperations operations) {
+		this(operations, JDBCType::getName);
+	}
+
+	/**
+	 * Creates a new {@link DefaultJdbcTypeFactory}.
+	 *
+	 * @param operations must not be {@literal null}.
+	 */
+	public DefaultJdbcTypeFactory(JdbcOperations operations, Function<JDBCType, String> jdbcTypeToSqlName) {
 
 		Assert.notNull(operations, "JdbcOperations must not be null");
+		Assert.notNull(jdbcTypeToSqlName, "JdbcTypeToSqlName must not be null");
 
 		this.operations = operations;
+		this.jdbcTypeToSqlName = jdbcTypeToSqlName;
 	}
 
 	@Override
@@ -55,7 +68,7 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 
 		JDBCType jdbcType = JdbcUtil.jdbcTypeFor(componentType);
 		Assert.notNull(jdbcType, () -> String.format("Couldn't determine JDBCType for %s", componentType));
-		String typeName = jdbcType.getName();
+		String typeName = jdbcTypeToSqlName.apply(jdbcType);
 
 		return operations.execute((ConnectionCallback<Array>) c -> c.createArrayOf(typeName, value));
 	}

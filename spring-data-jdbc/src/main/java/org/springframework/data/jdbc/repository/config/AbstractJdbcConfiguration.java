@@ -15,10 +15,12 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
+import java.sql.JDBCType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +33,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.convert.CustomConversions.StoreConversions;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
@@ -42,12 +43,11 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
-import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
-import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -66,7 +66,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 @Configuration(proxyBeanMethods = false)
 public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
-	private static Logger LOG = LoggerFactory.getLogger(AbstractJdbcConfiguration.class);
+	private static final Logger LOG = LoggerFactory.getLogger(AbstractJdbcConfiguration.class);
 
 	private ApplicationContext applicationContext;
 
@@ -100,7 +100,11 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public JdbcConverter jdbcConverter(JdbcMappingContext mappingContext, NamedParameterJdbcOperations operations,
 			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions, Dialect dialect) {
 
-		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations());
+		Function<JDBCType, String> jdbcTypeToSqlName = dialect instanceof JdbcDialect
+				? ((JdbcDialect) dialect).getArraySupport()::getSqlTypeRepresentation
+				: JDBCType::getName;
+		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(),
+				jdbcTypeToSqlName);
 
 		return new BasicJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory,
 				dialect.getIdentifierProcessing());
@@ -120,7 +124,8 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 		try {
 
 			Dialect dialect = applicationContext.getBean(Dialect.class);
-			SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER : new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
+			SimpleTypeHolder simpleTypeHolder = dialect.simpleTypes().isEmpty() ? JdbcSimpleTypes.HOLDER
+					: new SimpleTypeHolder(dialect.simpleTypes(), JdbcSimpleTypes.HOLDER);
 
 			return new JdbcCustomConversions(
 					CustomConversions.StoreConversions.of(simpleTypeHolder, storeConverters(dialect)), userConverters());
