@@ -555,6 +555,24 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(Arrays.asList("one", "two", "three"));
 	}
 
+	@Test // GH-1033
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
+	public void saveAndLoadAnEntityWithListOfDouble() {
+
+		DoubleListOwner doubleListOwner = new DoubleListOwner();
+		doubleListOwner.digits.addAll(Arrays.asList(1.2, 1.3, 1.4));
+
+		DoubleListOwner saved = template.save(doubleListOwner);
+
+		assertThat(saved.id).isNotNull();
+
+		DoubleListOwner reloaded = template.findById(saved.id, DoubleListOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+		assertThat(reloaded.digits).isEqualTo(Arrays.asList(1.2, 1.3, 1.4));
+	}
+
 	@Test // DATAJDBC-259
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithSet() {
@@ -911,12 +929,18 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		List<String> digits = new ArrayList<>();
 	}
-
 	@Table("ARRAY_OWNER")
 	private static class SetOwner {
 		@Id Long id;
 
 		Set<String> digits = new HashSet<>();
+	}
+
+	private static class DoubleListOwner {
+
+		@Id Long id;
+
+		List<Double> digits = new ArrayList<>();
 	}
 
 	@Data

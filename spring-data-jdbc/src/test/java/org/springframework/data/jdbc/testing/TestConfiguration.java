@@ -15,10 +15,12 @@
  */
 package org.springframework.data.jdbc.testing;
 
+import java.sql.JDBCType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javax.sql.DataSource;
 
@@ -40,6 +42,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
@@ -136,11 +139,15 @@ public class TestConfiguration {
 			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 			Dialect dialect) {
 
+		Function<JDBCType, String> jdbcTypeToSqlName = dialect instanceof JdbcDialect
+				? ((JdbcDialect) dialect).getArraySupport()::getSqlTypeRepresentation
+				: JDBCType::getName;
+
 		return new BasicJdbcConverter( //
 				mappingContext, //
 				relationResolver, //
 				conversions, //
-				new DefaultJdbcTypeFactory(template.getJdbcOperations()), //
+				new DefaultJdbcTypeFactory(template.getJdbcOperations(), jdbcTypeToSqlName), //
 				dialect.getIdentifierProcessing());
 	}
 

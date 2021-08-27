@@ -31,16 +31,12 @@ import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
 import org.springframework.data.jdbc.core.dialect.JdbcH2Dialect;
 import org.springframework.data.jdbc.core.dialect.JdbcMySqlDialect;
+import org.springframework.data.jdbc.core.dialect.JdbcPostgresDialect;
 import org.springframework.data.jdbc.core.dialect.JdbcSqlServerDialect;
-import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.dialect.MariaDbDialect;
-import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.dialect.OracleDialect;
-import org.springframework.data.relational.core.dialect.PostgresDialect;
-import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.Optionals;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -132,7 +128,7 @@ public class DialectResolver {
 				return new MariaDbDialect(getIdentifierProcessing(metaData));
 			}
 			if (name.contains("postgresql")) {
-				return PostgresDialect.INSTANCE;
+				return JdbcPostgresDialect.INSTANCE;
 			}
 			if (name.contains("microsoft")) {
 				return JdbcSqlServerDialect.INSTANCE;
@@ -144,7 +140,7 @@ public class DialectResolver {
 				return OracleDialect.INSTANCE;
 			}
 
-			LOG.info(String.format("Couldn't determine Dialect for \"%s\"", name) );
+			LOG.info(String.format("Couldn't determine Dialect for \"%s\"", name));
 			return null;
 		}
 

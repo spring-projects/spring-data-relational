@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.sql.JDBCType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -178,7 +179,7 @@ public class PostgresDialect extends AbstractDialect {
 		}
 	}
 
-	static class PostgresArrayColumns implements ArrayColumns {
+	protected static class PostgresArrayColumns implements ArrayColumns {
 
 		/*
 		 * (non-Javadoc)
