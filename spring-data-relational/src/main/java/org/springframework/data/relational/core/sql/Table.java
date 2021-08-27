@@ -26,7 +26,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @since 1.1
  */
-public class  Table extends AbstractSegment implements TableLike {
+public class Table extends AbstractSegment implements TableLike {
 
 	private final SqlIdentifier name;
 
