@@ -219,22 +219,9 @@ public class JdbcQueryMethod extends QueryMethod {
 
 	/**
 	 * Returns whether the method has an annotated query.
-	 *
-	 * @return
 	 */
 	public boolean hasAnnotatedQuery() {
 		return findAnnotatedQuery().isPresent();
-	}
-
-	/**
-	 * Returns the query string declared in a {@link Query} annotation or {@literal null} if neither the annotation found
-	 * nor the attribute was specified.
-	 *
-	 * @return
-	 */
-	@Nullable
-	String getAnnotatedQuery() {
-		return findAnnotatedQuery().orElse(null);
 	}
 
 	private Optional<String> findAnnotatedQuery() {
