@@ -573,6 +573,25 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(Arrays.asList(1.2, 1.3, 1.4));
 	}
 
+	@Test // GH-1033
+	@EnabledOnFeature(SUPPORTS_ARRAYS)
+	public void saveAndLoadAnEntityWithListOfFloat() {
+
+		FloatListOwner floatListOwner = new FloatListOwner();
+		final List<Float> values = Arrays.asList(1.2f, 1.3f, 1.4f);
+		floatListOwner.digits.addAll(values);
+
+		FloatListOwner saved = template.save(floatListOwner);
+
+		assertThat(saved.id).isNotNull();
+
+		FloatListOwner reloaded = template.findById(saved.id, FloatListOwner.class);
+
+		assertThat(reloaded).isNotNull();
+		assertThat(reloaded.id).isEqualTo(saved.id);
+
+	}
+
 	@Test // DATAJDBC-259
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithSet() {
@@ -929,6 +948,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		List<String> digits = new ArrayList<>();
 	}
+
 	@Table("ARRAY_OWNER")
 	private static class SetOwner {
 		@Id Long id;
@@ -941,6 +961,13 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long id;
 
 		List<Double> digits = new ArrayList<>();
+	}
+
+	private static class FloatListOwner {
+
+		@Id Long id;
+
+		List<Float> digits = new ArrayList<>();
 	}
 
 	@Data
