@@ -38,7 +38,15 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 	static class JdbcPostgresArrayColumns extends PostgresArrayColumns implements JdbcArrayColumns {
 		@Override
 		public String getSqlTypeRepresentation(JDBCType jdbcType) {
-			return jdbcType == JDBCType.DOUBLE ? "FLOAT8" : jdbcType.getName();
+
+			if (jdbcType == JDBCType.DOUBLE) {
+				return "FLOAT8";
+			}
+			if (jdbcType == JDBCType.REAL) {
+				return "FLOAT4";
+			}
+
+			return jdbcType.getName();
 		}
 	}
 }
