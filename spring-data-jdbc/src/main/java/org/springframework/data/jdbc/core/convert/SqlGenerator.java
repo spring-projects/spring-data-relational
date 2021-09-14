@@ -81,6 +81,8 @@ class SqlGenerator {
 	private final Lazy<String> deleteByIdAndVersionSql = Lazy.of(this::createDeleteByIdAndVersionSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
 
+	private final Dialect dialect;
+
 	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
 	 *
@@ -92,6 +94,7 @@ class SqlGenerator {
 	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
 			Dialect dialect) {
 
+		this.dialect = dialect;
 		this.mappingContext = mappingContext;
 		this.entity = entity;
 		this.sqlContext = new SqlContext(entity);
@@ -571,7 +574,7 @@ class SqlGenerator {
 		columnNamesForInsert.addAll(columns.getInsertableColumns());
 		columnNamesForInsert.addAll(additionalColumns);
 
-		InsertBuilder.InsertIntoColumnsAndValuesWithBuild insert = Insert.builder().into(table);
+		InsertBuilder.InsertIntoColumnsAndValuesWithBuild insert = Insert.builder().dialect(dialect).into(table);
 
 		for (SqlIdentifier cn : columnNamesForInsert) {
 			insert = insert.column(table.column(cn));

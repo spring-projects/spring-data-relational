@@ -133,6 +133,15 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	/**
+	 *
+	 * @return default implementation of InsertWithDefaultValues
+	 */
+	@Override
+	public InsertWithDefaultValues getSqlInsertWithDefaultValues() {
+		return new InsertWithDefaultValues(){};
+	}
+
+	/**
 	 * After {@code ORDER BY} function rendering the {@link LimitClause}.
 	 */
 	static class AfterOrderByLimitRenderFunction implements Function<Select, CharSequence> {

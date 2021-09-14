@@ -17,7 +17,10 @@ package org.springframework.data.relational.core.sql.render;
 
 import static org.assertj.core.api.Assertions.*;
 
+import ch.qos.logback.core.db.dialect.MsSQLDialect;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.relational.core.dialect.PostgresDialect;
+import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Table;
@@ -64,11 +67,12 @@ public class InsertRendererUnitTests {
 	@Test // DATAJDBC-340
 	public void shouldRenderInsertWithZeroColumns() {
 
-		Table bar = SQL.table("bar");
+		final String testTableName = "bar";
+		Table bar = SQL.table(testTableName);
 
-		Insert insert = Insert.builder().into(bar).build();
+		Insert insert = Insert.builder().dialect(SqlServerDialect.INSTANCE).into(bar).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar VALUES ()");
+		assertThat(SqlRenderer.toString(insert)).contains(SqlServerDialect.INSTANCE.getSqlInsertWithDefaultValues().getDefaultInsertPart());
 	}
 
 }

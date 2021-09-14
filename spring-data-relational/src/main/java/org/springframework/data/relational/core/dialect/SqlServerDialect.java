@@ -150,4 +150,14 @@ public class SqlServerDialect extends AbstractDialect {
 	public IdentifierProcessing getIdentifierProcessing() {
 		return IdentifierProcessing.NONE;
 	}
+
+	@Override
+	public InsertWithDefaultValues getSqlInsertWithDefaultValues() {
+		return new InsertWithDefaultValues() {
+			@Override
+			public String getDefaultInsertPart() {
+				return " DEFAULT VALUES ";
+			}
+		};
+	}
 }

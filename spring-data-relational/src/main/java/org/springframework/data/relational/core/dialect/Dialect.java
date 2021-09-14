@@ -109,4 +109,6 @@ public interface Dialect {
 	default Set<Class<?>> simpleTypes() {
 		return Collections.emptySet();
 	}
+
+	InsertWithDefaultValues getSqlInsertWithDefaultValues();
 }

@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -33,11 +34,13 @@ class DefaultInsert implements Insert {
 	private final Into into;
 	private final List<Column> columns;
 	private final Values values;
+	private final Dialect dialect;
 
-	DefaultInsert(@Nullable Table into, List<Column> columns, List<Expression> values) {
+	DefaultInsert(@Nullable Table into, List<Column> columns, List<Expression> values, Dialect dialect) {
 		this.into = new Into(into);
 		this.columns = new ArrayList<>(columns);
 		this.values = new Values(new ArrayList<>(values));
+		this.dialect = dialect;
 	}
 
 	/*
@@ -76,5 +79,10 @@ class DefaultInsert implements Insert {
 		builder.append(" ").append(this.values);
 
 		return builder.toString();
+	}
+
+	@Override
+	public Dialect getInsertDialect() {
+		return dialect;
 	}
 }

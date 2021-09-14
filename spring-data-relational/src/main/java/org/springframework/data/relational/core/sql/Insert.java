@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.data.relational.core.dialect.Dialect;
+
 /**
  * AST for a {@code INSERT} statement. Visiting order:
  * <ol>
@@ -40,4 +42,6 @@ public interface Insert extends Segment, Visitable {
 	static InsertBuilder builder() {
 		return new DefaultInsertBuilder();
 	}
+
+	Dialect getInsertDialect();
 }
