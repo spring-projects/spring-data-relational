@@ -28,6 +28,7 @@ import org.springframework.data.relational.core.sql.Visitable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {

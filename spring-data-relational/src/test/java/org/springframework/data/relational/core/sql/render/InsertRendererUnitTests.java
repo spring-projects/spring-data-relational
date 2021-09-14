@@ -30,6 +30,7 @@ import org.springframework.data.relational.core.sql.Table;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 public class InsertRendererUnitTests {
 

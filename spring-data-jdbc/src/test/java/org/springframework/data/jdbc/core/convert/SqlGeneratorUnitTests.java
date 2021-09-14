@@ -62,6 +62,7 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Tom Hombergs
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
  */
 public class SqlGeneratorUnitTests {
 

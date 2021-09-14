@@ -80,6 +80,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Tyler Van Gorder
  * @author Clemens Hahn
  * @author Milan Milanov
+ * @author Mikhail Polivakha
  */
 @ContextConfiguration
 @Transactional
@@ -887,6 +888,12 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(loaded.testTime).isEqualTo(entity.testTime);
 	}
 
+	@Test // DATAJDBC-557
+	public void insertWithIdOnly() {
+		WithIdOnly entity = new WithIdOnly();
+		assertThat(template.save(entity).id).isNotNull();
+	}
+
 	private <T extends Number> void saveAndUpdateAggregateWithVersion(VersionedAggregate aggregate,
 			Function<Number, T> toConcreteNumber) {
 		saveAndUpdateAggregateWithVersion(aggregate, toConcreteNumber, 0);
@@ -1252,6 +1259,11 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		@Id Long id;
 		LocalDateTime testTime;
+	}
+
+	@Table
+	class WithIdOnly {
+		@Id Long id;
 	}
 
 	@Configuration

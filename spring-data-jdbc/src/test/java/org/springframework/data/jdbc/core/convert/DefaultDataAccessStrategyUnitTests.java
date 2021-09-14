@@ -60,6 +60,7 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Myeonghyeon Lee
  * @author Myat Min
  * @author Radim Tlusty
+ * @author Mikhail Polivakha
  */
 public class DefaultDataAccessStrategyUnitTests {
 

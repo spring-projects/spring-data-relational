@@ -50,6 +50,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  * Integration tests for {@link AbstractJdbcConfiguration}.
  *
  * @author Oliver Drotbohm
+ * @author Mikhail Polivakha
  */
 public class AbstractJdbcConfigurationIntegrationTests {
 

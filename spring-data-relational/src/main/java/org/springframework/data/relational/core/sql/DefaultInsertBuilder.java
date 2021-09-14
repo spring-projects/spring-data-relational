@@ -28,6 +28,7 @@ import org.springframework.util.Assert;
  * Default {@link InsertBuilder} implementation.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 class DefaultInsertBuilder

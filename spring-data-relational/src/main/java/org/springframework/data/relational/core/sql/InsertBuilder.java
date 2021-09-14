@@ -24,6 +24,7 @@ import java.util.Collection;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 1.1
  * @see StatementBuilder
  */

@@ -32,6 +32,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  * @author Jens Schauder
  * @author Myeonghyeon Lee
  * @author Christoph Strobl
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public interface Dialect {
@@ -110,5 +111,10 @@ public interface Dialect {
 		return Collections.emptySet();
 	}
 
+	/**
+	 * @return an appropriate {@link InsertWithDefaultValues } for that specific dialect.
+	 *         for most of the Dialects the default implementation will be valid, but, for
+	 *         example, in case of {@link SqlServerDialect} it is not
+	 */
 	InsertWithDefaultValues getSqlInsertWithDefaultValues();
 }

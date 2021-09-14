@@ -28,6 +28,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public abstract class AbstractDialect implements Dialect {

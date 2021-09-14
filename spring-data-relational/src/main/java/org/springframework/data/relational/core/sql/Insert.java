@@ -27,6 +27,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
  * </ol>
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 1.1
  * @see StatementBuilder
  * @see InsertBuilder

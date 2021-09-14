@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
  * Default {@link Insert} implementation.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 class DefaultInsert implements Insert {

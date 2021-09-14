@@ -26,6 +26,7 @@ import org.springframework.data.util.Lazy;
  * @author Mark Paluch
  * @author Myeonghyeon Lee
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class SqlServerDialect extends AbstractDialect {
