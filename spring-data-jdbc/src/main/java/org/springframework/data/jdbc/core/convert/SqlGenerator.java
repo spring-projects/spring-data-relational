@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
  */
 class SqlGenerator {
 
@@ -92,12 +93,14 @@ class SqlGenerator {
 	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
 			Dialect dialect) {
 
+		final RenderContextFactory renderContextFactory = new RenderContextFactory(dialect);
+
 		this.mappingContext = mappingContext;
 		this.entity = entity;
 		this.sqlContext = new SqlContext(entity);
-		this.sqlRenderer = SqlRenderer.create(new RenderContextFactory(dialect).createRenderContext());
+		this.sqlRenderer = SqlRenderer.create(renderContextFactory.createRenderContext());
 		this.columns = new Columns(entity, mappingContext, converter);
-		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
+		this.renderContext = renderContextFactory.createRenderContext();
 	}
 
 	/**

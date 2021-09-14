@@ -68,7 +68,7 @@ public class InsertRendererUnitTests {
 
 		Insert insert = Insert.builder().into(bar).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar VALUES ()");
+		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar VALUES (DEFAULT)");
 	}
 
 }

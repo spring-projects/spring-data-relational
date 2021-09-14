@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.data.relational.core.sql.render.InsertRenderContext;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
@@ -26,6 +27,7 @@ import org.springframework.util.Assert;
  * Factory for {@link RenderContext} based on {@link Dialect}.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public class RenderContextFactory {
@@ -65,9 +67,9 @@ public class RenderContextFactory {
 	 */
 	public RenderContext createRenderContext() {
 
-		SelectRenderContext select = dialect.getSelectContext();
+		SelectRenderContext selectRenderContext = dialect.getSelectContext();
 
-		return new DialectRenderContext(namingStrategy, dialect.getIdentifierProcessing(), select);
+		return new DialectRenderContext(namingStrategy, dialect, selectRenderContext);
 	}
 
 	/**
@@ -76,17 +78,18 @@ public class RenderContextFactory {
 	static class DialectRenderContext implements RenderContext {
 
 		private final RenderNamingStrategy renderNamingStrategy;
-		private final IdentifierProcessing identifierProcessing;
 		private final SelectRenderContext selectRenderContext;
+		private final Dialect renderingDialect;
 
-		DialectRenderContext(RenderNamingStrategy renderNamingStrategy, IdentifierProcessing identifierProcessing, SelectRenderContext selectRenderContext) {
+		DialectRenderContext(RenderNamingStrategy renderNamingStrategy, Dialect renderingDialect, SelectRenderContext selectRenderContext) {
 
 			Assert.notNull(renderNamingStrategy, "RenderNamingStrategy must not be null");
-			Assert.notNull(identifierProcessing, "IdentifierProcessing must not be null");
+			Assert.notNull(renderingDialect, "renderingDialect must not be null");
+			Assert.notNull(renderingDialect.getIdentifierProcessing(), "IdentifierProcessing of renderingDialect must not be null");
 			Assert.notNull(selectRenderContext, "SelectRenderContext must not be null");
 
 			this.renderNamingStrategy = renderNamingStrategy;
-			this.identifierProcessing = identifierProcessing;
+			this.renderingDialect = renderingDialect;
 			this.selectRenderContext = selectRenderContext;
 		}
 
@@ -105,7 +108,7 @@ public class RenderContextFactory {
 		 */
 		@Override
 		public IdentifierProcessing getIdentifierProcessing() {
-			return identifierProcessing;
+			return renderingDialect.getIdentifierProcessing();
 		}
 
 		/*
@@ -113,8 +116,18 @@ public class RenderContextFactory {
 		 * @see org.springframework.data.relational.core.sql.render.RenderContext#getSelect()
 		 */
 		@Override
-		public SelectRenderContext getSelect() {
+		public SelectRenderContext getSelectRenderContext() {
 			return selectRenderContext;
+		}
+
+		@Override
+		public InsertRenderContext getInsertRenderContext() {
+			return new InsertRenderContext() {
+				@Override
+				public String getInsertDefaultValuesPartSQL() {
+					return renderingDialect.getSqlInsertWithDefaultValues().getDefaultInsertPart();
+				}
+			};
 		}
 	}
 }

@@ -21,6 +21,7 @@ import org.springframework.data.relational.core.sql.IdentifierProcessing;
  * Render context providing {@link RenderNamingStrategy} and other resources that are required during rendering.
  *
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 public interface RenderContext {
@@ -43,5 +44,10 @@ public interface RenderContext {
 	/**
 	 * @return the {@link SelectRenderContext}.
 	 */
-	SelectRenderContext getSelect();
+	SelectRenderContext getSelectRenderContext();
+
+	/**
+	 * @return the {@link InsertRenderContext}
+	 */
+	InsertRenderContext getInsertRenderContext();
 }

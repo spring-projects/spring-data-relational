@@ -15,51 +15,42 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Into;
 import org.springframework.data.relational.core.sql.Values;
 import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.util.Assert;
 
 /**
  * {@link PartRenderer} for {@link Insert} statements.
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
-	private StringBuilder builder = new StringBuilder();
-	private StringBuilder into = new StringBuilder();
-	private StringBuilder columns = new StringBuilder();
-	private StringBuilder values = new StringBuilder();
+	private final StringBuilder builder = new StringBuilder();
+	private final StringBuilder into = new StringBuilder();
+	private final StringBuilder columns = new StringBuilder();
+	private final StringBuilder values = new StringBuilder();
 
-	private IntoClauseVisitor intoClauseVisitor;
-	private ColumnVisitor columnVisitor;
-	private ValuesVisitor valuesVisitor;
+	private final IntoClauseVisitor intoClauseVisitor;
+	private final ColumnVisitor columnVisitor;
+	private final ValuesVisitor valuesVisitor;
+	private final RenderContext renderContext;
 
-	InsertStatementVisitor(RenderContext context) {
+	InsertStatementVisitor(RenderContext renderContext) {
 
-		this.intoClauseVisitor = new IntoClauseVisitor(context, it -> {
+		Assert.notNull(renderContext, "renderContext must not be null!");
 
-			if (into.length() != 0) {
-				into.append(", ");
-			}
-
-			into.append(it);
-		});
-
-		this.columnVisitor = new ColumnVisitor(context, false, it -> {
-
-			if (columns.length() != 0) {
-				columns.append(", ");
-			}
-
-			columns.append(it);
-		});
-
-		this.valuesVisitor = new ValuesVisitor(context, values::append);
+		this.renderContext = renderContext;
+		this.intoClauseVisitor = createIntoClauseVisitor(renderContext);
+		this.columnVisitor = createColumnVisitor(renderContext);
+		this.valuesVisitor = new ValuesVisitor(renderContext, values::append);
 	}
 
 	/*
@@ -97,16 +88,32 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 			builder.append(" INTO ").append(into);
 
-			if (columns.length() != 0) {
-				builder.append(" (").append(columns).append(")");
-			}
+			addInsertColumnsIfPresent();
 
-			builder.append(" VALUES (").append(values).append(")");
+			addInsertValuesIfPresentElseDefault();
 
 			return Delegation.leave();
 		}
 
 		return Delegation.retain();
+	}
+
+	private void addInsertValuesIfPresentElseDefault() {
+		if (values.length() != 0) {
+			builder.append(" VALUES (").append(values).append(")");
+		} else {
+			addInsertWithDefaultValuesToBuilder();
+		}
+	}
+
+	private void addInsertColumnsIfPresent() {
+		if (columns.length() != 0) {
+			builder.append(" (").append(columns).append(")");
+		}
+	}
+
+	private void addInsertWithDefaultValuesToBuilder() {
+		builder.append(renderContext.getInsertRenderContext().getInsertDefaultValuesPartSQL());
 	}
 
 	/*
@@ -116,5 +123,29 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;
+	}
+
+	@NotNull
+	private ColumnVisitor createColumnVisitor(RenderContext context) {
+		return new ColumnVisitor(context, false, it -> {
+
+			if (columns.length() != 0) {
+				columns.append(", ");
+			}
+
+			columns.append(it);
+		});
+	}
+
+	@NotNull
+	private IntoClauseVisitor createIntoClauseVisitor(RenderContext context) {
+		return new IntoClauseVisitor(context, it -> {
+
+			if (into.length() != 0) {
+				into.append(", ");
+			}
+
+			into.append(it);
+		});
 	}
 }
