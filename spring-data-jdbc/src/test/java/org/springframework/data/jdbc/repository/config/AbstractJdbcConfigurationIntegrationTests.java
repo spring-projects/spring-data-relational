@@ -38,6 +38,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.InsertWithDefaultValues;
 import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -166,6 +167,11 @@ public class AbstractJdbcConfigurationIntegrationTests {
 			@Override
 			public Collection<Object> getConverters() {
 				return asList(BooleanToNumberConverter.INSTANCE, NumberToBooleanConverter.INSTANCE);
+			}
+
+			@Override
+			public InsertWithDefaultValues getSqlInsertWithDefaultValues() {
+				return null;
 			}
 		}
 

@@ -42,6 +42,7 @@ import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
+import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -76,11 +77,13 @@ public class DefaultDataAccessStrategyUnitTests {
 	JdbcConverter converter;
 	DefaultDataAccessStrategy accessStrategy;
 
+	private Dialect dialect;
+
 	@BeforeEach
 	public void before() {
 
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
-		Dialect dialect = HsqlDbDialect.INSTANCE;
+		dialect = HsqlDbDialect.INSTANCE;
 
 		converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
@@ -219,7 +222,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		assertThat(generatedId).isEqualTo(GENERATED_ID);
 
-		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\" VALUES ()"),
+		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\"" + dialect.getSqlInsertWithDefaultValues().getDefaultInsertPart()),
 				paramSourceCaptor.capture(), any(KeyHolder.class));
 	}
 

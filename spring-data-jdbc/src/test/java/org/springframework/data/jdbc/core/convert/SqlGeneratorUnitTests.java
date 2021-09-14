@@ -39,6 +39,7 @@ import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtil
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
@@ -392,11 +393,11 @@ public class SqlGeneratorUnitTests {
 	@Test // DATAJDBC-264
 	public void getInsertForEmptyColumnList() {
 
-		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class);
+		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class, PostgresDialect.INSTANCE);
 
 		String insert = sqlGenerator.getInsert(emptySet());
 
-		assertThat(insert).endsWith("()");
+		assertThat(insert).endsWith(PostgresDialect.INSTANCE.getSqlInsertWithDefaultValues().getDefaultInsertPart());
 	}
 
 	@Test // DATAJDBC-334
