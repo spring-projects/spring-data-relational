@@ -26,14 +26,14 @@ import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
  * @author Mark Paluch
  * @since 1.2
  */
-class PersistentEntitiesFactoryBean implements FactoryBean<PersistentEntities> {
+public class PersistentEntitiesFactoryBean implements FactoryBean<PersistentEntities> {
 
 	private final R2dbcMappingContext mappingContext;
 
 	/**
 	 * Creates a new {@link PersistentEntitiesFactoryBean} for the given {@link R2dbcMappingContext}.
 	 *
-	 * @param converter must not be {@literal null}.
+	 * @param mappingContext must not be {@literal null}.
 	 */
 	public PersistentEntitiesFactoryBean(R2dbcMappingContext mappingContext) {
 		this.mappingContext = mappingContext;
