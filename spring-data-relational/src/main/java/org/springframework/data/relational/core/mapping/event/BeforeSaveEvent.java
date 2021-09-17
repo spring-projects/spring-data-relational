@@ -15,12 +15,14 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 
 /**
  * Gets published before an entity gets saved to the database.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 public class BeforeSaveEvent<E> extends RelationalSaveEvent<E> {
 
@@ -33,5 +35,14 @@ public class BeforeSaveEvent<E> extends RelationalSaveEvent<E> {
 	 */
 	public BeforeSaveEvent(E instance, AggregateChange<E> change) {
 		super(instance, change);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.event.RelationalEvent#getCallback()
+	 */
+	@Override
+	public Class<? extends EntityCallback> getCallback() {
+		return BeforeSaveCallback.class;
 	}
 }

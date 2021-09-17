@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.lang.Nullable;
 
 /**
@@ -24,6 +25,7 @@ import org.springframework.lang.Nullable;
  * @author Oliver Gierke
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 public interface RelationalEvent<E> {
 
@@ -38,4 +40,10 @@ public interface RelationalEvent<E> {
 	 * @since 2.0
 	 */
 	Class<E> getType();
+
+	/**
+	 * @return the instance of corresponding {@link EntityCallback}, that
+	 * 			will be triggered after the event will be omitted.
+	 */
+	Class<? extends EntityCallback> getCallback();
 }

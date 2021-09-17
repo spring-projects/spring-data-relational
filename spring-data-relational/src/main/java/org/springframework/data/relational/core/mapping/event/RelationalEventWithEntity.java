@@ -15,12 +15,14 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * An event that is guaranteed to have an entity.
  *
  * @author Jens Schauder
  */
-public class RelationalEventWithEntity<E> extends AbstractRelationalEvent<E> implements WithEntity<E> {
+public abstract class RelationalEventWithEntity<E> extends AbstractRelationalEvent<E> implements WithEntity<E> {
 
 	private static final long serialVersionUID = 4891455396602090638L;
 	private final E entity;
@@ -35,6 +37,7 @@ public class RelationalEventWithEntity<E> extends AbstractRelationalEvent<E> imp
 	/**
 	 * @return the entity to which this event refers. Guaranteed to be not {@literal null}.
 	 */
+	@NotNull
 	@Override
 	public E getEntity() {
 		return entity;

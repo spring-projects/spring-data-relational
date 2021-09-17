@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.lang.Nullable;
 
@@ -22,6 +23,7 @@ import org.springframework.lang.Nullable;
  * Gets published when an entity is about to get deleted.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 public class BeforeDeleteEvent<E> extends RelationalDeleteEvent<E> {
 
@@ -34,5 +36,14 @@ public class BeforeDeleteEvent<E> extends RelationalDeleteEvent<E> {
 	 */
 	public BeforeDeleteEvent(Identifier id, @Nullable E entity, AggregateChange<E> change) {
 		super(id, entity, change);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.event.RelationalEvent#getCallback()
+	 */
+	@Override
+	public Class<? extends EntityCallback> getCallback() {
+		return BeforeDeleteCallback.class;
 	}
 }

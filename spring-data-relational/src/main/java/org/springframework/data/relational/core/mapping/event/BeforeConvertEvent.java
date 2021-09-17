@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 
 /**
@@ -23,6 +24,7 @@ import org.springframework.data.relational.core.conversion.AggregateChange;
  * @since 1.1
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  */
 public class BeforeConvertEvent<E> extends RelationalEventWithEntity<E> {
 
@@ -47,5 +49,14 @@ public class BeforeConvertEvent<E> extends RelationalEventWithEntity<E> {
 	@Deprecated
 	public BeforeConvertEvent(E instance, AggregateChange<E> change) {
 		super(instance);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.event.RelationalEvent#getCallback()
+	 */
+	@Override
+	public Class<? extends EntityCallback> getCallback() {
+		return BeforeConvertCallback.class;
 	}
 }

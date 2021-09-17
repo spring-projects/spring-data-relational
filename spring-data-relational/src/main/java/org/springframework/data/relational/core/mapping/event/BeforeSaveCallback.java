@@ -19,16 +19,15 @@ import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 
 /**
- * An {@link EntityCallbackBefore} that gets invoked before changes are applied to the database, after the aggregate was
+ * An {@link EntityCallback} that gets invoked before changes are applied to the database, after the aggregate was
  * converted to a database change.
  *
  * @author Jens Schauder
  * @author Mark Paluch
- * @author Mikhail Polivakha
  * @since 1.1
  */
 @FunctionalInterface
-public interface BeforeSaveCallback<T> extends EntityCallbackBefore<T> {
+public interface BeforeSaveCallback<T> extends EntityCallback<T> {
 
 	/**
 	 * Entity callback method invoked before an aggregate root is saved. Can return either the same or a modified instance

@@ -15,11 +15,14 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.data.mapping.callback.EntityCallback;
+
 /**
  * Gets published after instantiation and setting of all the properties of an entity. This allows to do some
  * postprocessing of entities if the entities are mutable. For immutable entities use {@link AfterLoadCallback}.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  */
 public class AfterLoadEvent<E> extends RelationalEventWithEntity<E> {
 
@@ -30,5 +33,14 @@ public class AfterLoadEvent<E> extends RelationalEventWithEntity<E> {
 	 */
 	public AfterLoadEvent(E entity) {
 		super(entity);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.event.RelationalEvent#getCallback()
+	 */
+	@Override
+	public Class<? extends EntityCallback> getCallback() {
+		return AfterLoadCallback.class;
 	}
 }

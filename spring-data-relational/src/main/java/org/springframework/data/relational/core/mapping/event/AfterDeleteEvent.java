@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
+import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.relational.core.conversion.AggregateChange;
 import org.springframework.lang.Nullable;
 
@@ -23,6 +24,7 @@ import org.springframework.lang.Nullable;
  * {@literal null} or not depends on the delete method used.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public class AfterDeleteEvent<E> extends RelationalDeleteEvent<E> {
@@ -37,5 +39,14 @@ public class AfterDeleteEvent<E> extends RelationalDeleteEvent<E> {
 	 */
 	public AfterDeleteEvent(Identifier id, @Nullable E instance, AggregateChange<E> change) {
 		super(id, instance, change);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.mapping.event.RelationalEvent#getCallback()
+	 */
+	@Override
+	public Class<? extends EntityCallback> getCallback() {
+		return AfterDeleteCallback.class;
 	}
 }
