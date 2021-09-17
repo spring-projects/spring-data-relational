@@ -40,6 +40,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
@@ -339,7 +340,7 @@ public class EnableJdbcAuditingHsqlIntegrationTests {
 	 * set the auditing data.
 	 */
 	@Component
-	static class OrderAssertingCallback implements BeforeConvertCallback {
+	static class OrderAssertingCallback implements BeforeConvertCallback<Object> {
 
 		@Override
 		public Object onBeforeConvert(Object entity) {

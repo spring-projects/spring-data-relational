@@ -22,10 +22,11 @@ import org.springframework.data.mapping.callback.EntityCallback;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 @FunctionalInterface
-public interface AfterSaveCallback<T> extends EntityCallback<T> {
+public interface AfterSaveCallback<T> extends EntityCallbackAfter<T> {
 
 	/**
 	 * Entity callback method invoked after an aggregate root was persisted. Can return either the same or a modified

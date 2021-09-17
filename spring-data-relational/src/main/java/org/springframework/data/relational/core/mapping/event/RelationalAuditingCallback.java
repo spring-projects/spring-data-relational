@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.mapping.event;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
+import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.util.Assert;
 
 /**

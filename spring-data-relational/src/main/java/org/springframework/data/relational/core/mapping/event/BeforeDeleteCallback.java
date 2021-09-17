@@ -19,16 +19,17 @@ import org.springframework.data.mapping.callback.EntityCallback;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 
 /**
- * An {@link EntityCallback} that gets invoked before an entity is deleted. This callback gets only invoked if the
+ * An {@link EntityCallbackBefore} that gets invoked before an entity is deleted. This callback gets only invoked if the
  * method deleting the aggregate received an instance of that aggregate as an argument. Methods deleting entities by id
  * or without any parameter don't invoke this callback.
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 1.1
  */
 @FunctionalInterface
-public interface BeforeDeleteCallback<T> extends EntityCallback<T> {
+public interface BeforeDeleteCallback<T> extends EntityCallbackBefore<T> {
 
 	/**
 	 * Entity callback method invoked before an aggregate root is deleted. Can return either the same or a modified
