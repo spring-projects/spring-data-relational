@@ -54,6 +54,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
@@ -155,13 +156,14 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				this::getEntity, //
 				this::getId //
 		).containsExactly( //
+				Tuple.tuple(BeforeConvertEvent.class, entity, null),
 				Tuple.tuple(BeforeDeleteEvent.class, entity, Identifier.of(23L)), //
 				Tuple.tuple(AfterDeleteEvent.class, entity, Identifier.of(23L)) //
 		);
 	}
 
-	private Identifier getId(RelationalEvent e) {
-		return ((WithId) e).getId();
+	private Identifier getId(RelationalEvent<?> e) {
+		return e instanceof WithId ? ((WithId<?>) e).getId() : null;
 	}
 
 	@Nullable

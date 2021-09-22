@@ -294,8 +294,8 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		IdentifierAccessor identifierAccessor = context.getRequiredPersistentEntity(domainType)
 				.getIdentifierAccessor(aggregateRoot);
 
-		deleteTree(identifierAccessor.getRequiredIdentifier(), aggregateRoot, domainType);
 		triggerBeforeConvert(aggregateRoot);
+		deleteTree(identifierAccessor.getRequiredIdentifier(), aggregateRoot, domainType);
 	}
 
 	/*

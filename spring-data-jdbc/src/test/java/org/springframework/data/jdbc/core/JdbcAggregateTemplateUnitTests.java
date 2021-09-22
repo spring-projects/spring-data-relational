@@ -120,6 +120,7 @@ public class JdbcAggregateTemplateUnitTests {
 
 		template.delete(first, SampleEntity.class);
 
+		verify(callbacks).callback(eq(BeforeConvertCallback.class), eq(first), any(MutableAggregateChange.class));
 		verify(callbacks).callback(eq(BeforeDeleteCallback.class), eq(first), any(MutableAggregateChange.class));
 		verify(callbacks).callback(AfterDeleteCallback.class, second);
 	}
