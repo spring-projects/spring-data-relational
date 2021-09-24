@@ -25,6 +25,7 @@ import org.springframework.data.auditing.IsNewAwareAuditingHandler;
 import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport;
 import org.springframework.data.auditing.config.AuditingConfiguration;
 import org.springframework.data.relational.core.mapping.event.RelationalAuditingCallback;
+import org.springframework.data.repository.config.PersistentEntitiesFactoryBean;
 import org.springframework.util.Assert;
 
 /**
@@ -73,7 +74,12 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 
 		BeanDefinitionBuilder builder = configureDefaultAuditHandlerAttributes(configuration,
 				BeanDefinitionBuilder.rootBeanDefinition(IsNewAwareAuditingHandler.class));
-		return builder.addConstructorArgReference(JDBC_MAPPING_CONTEXT_BEAN_NAME);
+
+
+		BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(PersistentEntitiesFactoryBean.class);
+		definition.addConstructorArgReference(JDBC_MAPPING_CONTEXT_BEAN_NAME);
+
+		return builder.addConstructorArgValue(definition.getBeanDefinition());
 	}
 
 	/**
