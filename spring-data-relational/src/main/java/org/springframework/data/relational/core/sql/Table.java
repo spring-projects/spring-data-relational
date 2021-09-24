@@ -20,8 +20,9 @@ import org.springframework.util.Assert;
 /**
  * Represents a table reference within a SQL statement. Typically used to denote {@code FROM} or {@code JOIN} or to
  * prefix a {@link Column}.
- * <p/>
+ * <p>
  * Renders to: {@code <name>} or {@code <name> AS <name>}.
+ * </p>
  *
  * @author Mark Paluch
  * @since 1.1
@@ -106,7 +107,6 @@ public class Table extends AbstractSegment implements TableLike {
 
 		return new AliasedTable(name, alias);
 	}
-
 
 	/*
 	 * (non-Javadoc)

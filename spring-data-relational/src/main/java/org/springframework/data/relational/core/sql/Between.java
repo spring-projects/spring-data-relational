@@ -19,9 +19,10 @@ import org.springframework.util.Assert;
 
 /**
  * BETWEEN {@link Condition} comparing between {@link Expression}s.
- * <p/>
+ * <p>
  * Results in a rendered condition: {@code <left> BETWEEN <begin> AND <end>}.
- *
+ * </p>
+ * 
  * @author Mark Paluch
  * @since 2.2
  */

@@ -19,9 +19,9 @@ import org.springframework.util.Assert;
 
 /**
  * LIKE {@link Condition} comparing two {@link Expression}s.
- * <p/>
+ * <p>
  * Results in a rendered condition: {@code <left> LIKE <right>}.
- *
+ * </p>
  * @author Mark Paluch
  * @since 1.1
  */
