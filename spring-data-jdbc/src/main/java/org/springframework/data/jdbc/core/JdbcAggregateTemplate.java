@@ -208,7 +208,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		T entity = accessStrategy.findById(id, domainType);
 		if (entity != null) {
-			return triggerAfterLoad(entity);
+			return triggerAfterConvert(entity);
 		}
 		return entity;
 	}
@@ -236,7 +236,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		Iterable<T> all = accessStrategy.findAll(domainType, sort);
-		return triggerAfterLoad(all);
+		return triggerAfterConvert(all);
 	}
 
 	/*
@@ -248,7 +248,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		Assert.notNull(domainType, "Domain type must not be null!");
 
-		Iterable<T> items = triggerAfterLoad(accessStrategy.findAll(domainType, pageable));
+		Iterable<T> items = triggerAfterConvert(accessStrategy.findAll(domainType, pageable));
 		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
 
 		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(domainType));
@@ -264,7 +264,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		Iterable<T> all = accessStrategy.findAll(domainType);
-		return triggerAfterLoad(all);
+		return triggerAfterConvert(all);
 	}
 
 	/*
@@ -278,7 +278,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		Assert.notNull(domainType, "Domain type must not be null!");
 
 		Iterable<T> allById = accessStrategy.findAllById(ids, domainType);
-		return triggerAfterLoad(allById);
+		return triggerAfterConvert(allById);
 	}
 
 	/*
@@ -385,22 +385,24 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return aggregateChange;
 	}
 
-	private <T> Iterable<T> triggerAfterLoad(Iterable<T> all) {
+	private <T> Iterable<T> triggerAfterConvert(Iterable<T> all) {
 
 		List<T> result = new ArrayList<>();
 
 		for (T e : all) {
-			result.add(triggerAfterLoad(e));
+			result.add(triggerAfterConvert(e));
 		}
 
 		return result;
 	}
 
-	private <T> T triggerAfterLoad(T entity) {
+	private <T> T triggerAfterConvert(T entity) {
 
 		publisher.publishEvent(new AfterLoadEvent<>(entity));
+		publisher.publishEvent(new AfterConvertEvent<>(entity));
 
-		return entityCallbacks.callback(AfterLoadCallback.class, entity);
+		entity = entityCallbacks.callback(AfterLoadCallback.class, entity);
+		return entityCallbacks.callback(AfterConvertCallback.class, entity);
 	}
 
 	private <T> T triggerBeforeConvert(T aggregateRoot) {

@@ -32,6 +32,8 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.event.AfterConvertCallback;
+import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.core.NamedQueries;
@@ -157,9 +159,11 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 			if (entity != null) {
 
 				publisher.publishEvent(new AfterLoadEvent<>(entity));
+				publisher.publishEvent(new AfterConvertEvent<>(entity));
 
 				if (callbacks != null) {
-					return callbacks.callback(AfterLoadCallback.class, entity);
+					entity = callbacks.callback(AfterLoadCallback.class, entity);
+					return callbacks.callback(AfterConvertCallback.class, entity);
 				}
 			}
 

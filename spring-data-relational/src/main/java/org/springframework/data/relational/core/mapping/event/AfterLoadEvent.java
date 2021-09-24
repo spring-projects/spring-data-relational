@@ -20,7 +20,9 @@ package org.springframework.data.relational.core.mapping.event;
  * postprocessing of entities if the entities are mutable. For immutable entities use {@link AfterLoadCallback}.
  *
  * @author Jens Schauder
+ * @deprecated Use {@link AfterConvertEvent} instead.
  */
+@Deprecated
 public class AfterLoadEvent<E> extends RelationalEventWithEntity<E> {
 
 	private static final long serialVersionUID = 7343072117054666699L;

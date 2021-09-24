@@ -59,6 +59,7 @@ import org.springframework.data.jdbc.testing.EnabledOnFeature;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
+import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
@@ -309,7 +310,7 @@ public class JdbcRepositoryIntegrationTests {
 
 		repository.findAllWithSql();
 
-		assertThat(eventListener.events).hasSize(1).hasOnlyElementsOfType(AfterLoadEvent.class);
+		assertThat(eventListener.events).hasSize(2).hasOnlyElementsOfTypes(AfterLoadEvent.class, AfterConvertEvent.class);
 	}
 
 	@Test // DATAJDBC-318

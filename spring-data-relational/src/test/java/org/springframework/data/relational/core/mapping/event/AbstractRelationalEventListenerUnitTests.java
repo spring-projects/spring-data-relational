@@ -43,6 +43,14 @@ public class AbstractRelationalEventListenerUnitTests {
 		assertThat(events).containsExactly("afterLoad");
 	}
 
+	@Test // GH-1053
+	public void afterConvert() {
+
+		listener.onApplicationEvent(new AfterConvertEvent<>(dummyEntity));
+
+		assertThat(events).containsExactly("afterConvert");
+	}
+
 	@Test // DATAJDBC-454
 	public void beforeConvert() {
 
@@ -120,6 +128,11 @@ public class AbstractRelationalEventListenerUnitTests {
 		@Override
 		protected void onAfterLoad(AfterLoadEvent<DummyEntity> event) {
 			events.add("afterLoad");
+		}
+
+		@Override
+		protected void onAfterConvert(AfterConvertEvent<DummyEntity> event) {
+			events.add("afterConvert");
 		}
 
 		@Override
