@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 public class DependencyTests {
 
 	@Test // DATAJDBC-114
+	@Disabled // Replace by ArchUnit test
 	public void cycleFree() {
 
 		assertThat( //
@@ -45,6 +46,7 @@ public class DependencyTests {
 	}
 
 	@Test // DATAJDBC-220
+	@Disabled // Replace by ArchUnit test
 	public void acrossModules() {
 
 		assertThat( //

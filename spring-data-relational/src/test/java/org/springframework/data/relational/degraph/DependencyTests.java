@@ -19,6 +19,8 @@ import static de.schauderhaft.degraph.check.JCheck.*;
 import static org.hamcrest.MatcherAssert.*;
 
 import de.schauderhaft.degraph.check.JCheck;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import scala.runtime.AbstractFunction1;
 
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 public class DependencyTests {
 
 	@Test // DATAJDBC-114
+	@Disabled // Replace by ArchUnit test
 	public void cycleFree() {
 
 		assertThat( //
@@ -48,6 +51,7 @@ public class DependencyTests {
 	}
 
 	@Test // DATAJDBC-220
+	@Disabled // Replace by ArchUnit test
 	public void acrossModules() {
 
 		assertThat( //
