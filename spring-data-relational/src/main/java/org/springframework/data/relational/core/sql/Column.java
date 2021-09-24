@@ -20,9 +20,10 @@ import org.springframework.util.Assert;
 
 /**
  * Column name within a {@code SELECT … FROM} clause.
- * <p/>
+ * <p>
  * Renders to: {@code <name>} or {@code <table(alias)>.<name>}.
- *
+ * </p>
+ * 
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 1.1

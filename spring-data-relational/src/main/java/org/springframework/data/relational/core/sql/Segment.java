@@ -26,9 +26,10 @@ public interface Segment extends Visitable {
 
 	/**
 	 * Check whether this {@link Segment} is equal to another {@link Segment}.
-	 * <p/>
+	 * <p>
 	 * Equality is typically given if the {@link #toString()} representation matches.
-	 *
+	 * </p>
+	 * 
 	 * @param other the reference object with which to compare.
 	 * @return {@literal true} if this object is the same as the {@code other} argument; {@literal false} otherwise.
 	 */
@@ -37,10 +38,11 @@ public interface Segment extends Visitable {
 
 	/**
 	 * Generate a hash code from this{@link Segment}.
-	 * <p/>
+	 * <p>
 	 * Hashcode typically derives from the {@link #toString()} representation so two {@link Segment}s yield the same
 	 * {@link #hashCode()} if their {@link #toString()} representation matches.
-	 *
+	 * </p>
+	 * 
 	 * @return a hash code value for this object.
 	 */
 	@Override
@@ -48,11 +50,12 @@ public interface Segment extends Visitable {
 
 	/**
 	 * Return a SQL string representation of this {@link Segment}.
-	 * <p/>
+	 * <p>
 	 * The representation is intended for debugging purposes and an approximation to the generated SQL. While it might
 	 * work in the context of a specific dialect, you should not assume that the {@link #toString()} representation works across
 	 * multiple databases.
-	 *
+	 * </p>
+	 * 
 	 * @return a SQL string representation of this {@link Segment}.
 	 */
 	@Override

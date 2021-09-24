@@ -21,10 +21,10 @@ import java.util.Stack;
 
 /**
  * Validator for {@link Select} statements.
- * <p/>
+ * <p>
  * Validates that all {@link Column}s using a table qualifier have a table import from either the {@code FROM} or
  * {@code JOIN} clause.
- *
+ * </p>
  * @author Mark Paluch
  * @author Jens Schauder
  * @since 1.1

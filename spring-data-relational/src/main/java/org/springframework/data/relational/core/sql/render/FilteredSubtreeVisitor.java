@@ -25,7 +25,7 @@ import org.springframework.lang.Nullable;
  * Filtering {@link DelegatingVisitor visitor} applying a {@link Predicate filter}. Typically used as base class for
  * {@link Visitor visitors} that wish to apply hierarchical processing based on a well-defined entry {@link Visitor
  * segment}.
- * <p/>
+ * <p>
  * Filtering is a three-way process:
  * <ol>
  * <li>Ignores elements that do not match the filter {@link Predicate}.</li>
@@ -35,7 +35,8 @@ import org.springframework.lang.Nullable;
  * children of the matched {@link Visitable} until {@link #leaveMatched(Visitable) leaving the matched}
  * {@link Visitable}.</li>
  * </ol>
- *
+ * </p>
+ * 
  * @author Mark Paluch
  * @see TypedSubtreeVisitor
  * @since 1.1

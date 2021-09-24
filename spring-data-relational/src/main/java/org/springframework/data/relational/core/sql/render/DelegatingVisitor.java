@@ -26,18 +26,21 @@ import org.springframework.util.Assert;
  * Abstract base class for delegating {@link Visitor} implementations. This class implements a delegation pattern using
  * visitors. A delegating {@link Visitor} can implement {@link #doEnter(Visitable)} and {@link #doLeave(Visitable)}
  * methods to provide its functionality.
- * <p/>
+ * <p>
  * <h3>Delegation</h3> Typically, a {@link Visitor} is scoped to a single responsibility. If a {@link Visitor segment}
  * requires {@link #doEnter(Visitable) processing} that is not directly implemented by the visitor itself, the current
  * {@link Visitor} can delegate processing to a {@link DelegatingVisitor delegate}. Once a delegation is installed, the
  * {@link DelegatingVisitor delegate} is used as {@link Visitor} for the current and all subsequent items until it
  * {@link #doLeave(Visitable) signals} that it is no longer responsible.
- * <p/>
+ * </p>
+ * <p>
  * Nested visitors are required to properly signal once they are no longer responsible for a {@link Visitor segment} to
  * step back from the delegation. Otherwise, parents are no longer involved in the visitation.
- * <p/>
+ * </p>
+ * <p>
  * Delegation is recursive and limited by the stack size.
- *
+ * </p>
+ * 
  * @author Mark Paluch
  * @since 1.1
  * @see FilteredSubtreeVisitor
@@ -49,11 +52,12 @@ abstract class DelegatingVisitor implements Visitor {
 
 	/**
 	 * Invoked for a {@link Visitable segment} when entering the segment.
-	 * <p/>
+	 * <p>
 	 * This method can signal whether it is responsible for handling the {@link Visitor segment} or whether the segment
 	 * requires delegation to a sub-{@link Visitor}. When delegating to a sub-{@link Visitor}, {@link #doEnter(Visitable)}
 	 * is called on the {@link DelegatingVisitor delegate}.
-	 *
+	 * </p>
+	 * 
 	 * @param segment must not be {@literal null}.
 	 * @return
 	 */
@@ -86,11 +90,12 @@ abstract class DelegatingVisitor implements Visitor {
 
 	/**
 	 * Invoked for a {@link Visitable segment} when leaving the segment.
-	 * <p/>
+	 * <p>
 	 * This method can signal whether this {@link Visitor} should remain responsible for handling subsequent
 	 * {@link Visitor segments} or whether it should step back from delegation. When stepping back from delegation,
 	 * {@link #doLeave(Visitable)} is called on the {@link DelegatingVisitor parent delegate}.
-	 *
+	 * </p>
+	 * 
 	 * @param segment must not be {@literal null}.
 	 * @return
 	 */
