@@ -51,15 +51,7 @@ import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.mapping.event.AfterDeleteEvent;
-import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
-import org.springframework.data.relational.core.mapping.event.AfterSaveEvent;
-import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
-import org.springframework.data.relational.core.mapping.event.BeforeDeleteEvent;
-import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
-import org.springframework.data.relational.core.mapping.event.Identifier;
-import org.springframework.data.relational.core.mapping.event.RelationalEvent;
-import org.springframework.data.relational.core.mapping.event.WithId;
+import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -198,7 +190,9 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
 						AfterLoadEvent.class, //
-						AfterLoadEvent.class //
+						AfterConvertEvent.class, //
+						AfterLoadEvent.class, //
+						AfterConvertEvent.class //
 				);
 	}
 
@@ -217,7 +211,9 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
 						AfterLoadEvent.class, //
-						AfterLoadEvent.class //
+						AfterConvertEvent.class, //
+						AfterLoadEvent.class, //
+						AfterConvertEvent.class //
 				);
 	}
 
@@ -234,7 +230,8 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		assertThat(publisher.events) //
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
-						AfterLoadEvent.class //
+						AfterLoadEvent.class, //
+						AfterConvertEvent.class //
 				);
 	}
 
@@ -253,7 +250,9 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
 						AfterLoadEvent.class, //
-						AfterLoadEvent.class //
+						AfterConvertEvent.class, //
+						AfterLoadEvent.class, //
+						AfterConvertEvent.class //
 				);
 	}
 
@@ -273,7 +272,9 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 				.extracting(e -> (Class) e.getClass()) //
 				.containsExactly( //
 						AfterLoadEvent.class, //
-						AfterLoadEvent.class //
+						AfterConvertEvent.class, //
+						AfterLoadEvent.class, //
+						AfterConvertEvent.class //
 				);
 	}
 

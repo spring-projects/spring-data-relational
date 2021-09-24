@@ -41,6 +41,7 @@ import org.springframework.data.relational.core.conversion.MutableAggregateChang
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.mapping.event.AfterConvertCallback;
 import org.springframework.data.relational.core.mapping.event.AfterDeleteCallback;
 import org.springframework.data.relational.core.mapping.event.AfterLoadCallback;
 import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
@@ -136,7 +137,9 @@ public class JdbcAggregateTemplateUnitTests {
 		when(dataAccessStrategy.findAll(SampleEntity.class)).thenReturn(asList(alfred1, neumann1));
 
 		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(alfred2), any())).thenReturn(alfred2);
 		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(neumann2), any())).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class);
 
@@ -158,12 +161,16 @@ public class JdbcAggregateTemplateUnitTests {
 		when(dataAccessStrategy.findAll(SampleEntity.class, Sort.by("name"))).thenReturn(asList(alfred1, neumann1));
 
 		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(alfred2), any())).thenReturn(alfred2);
 		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(neumann2), any())).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, Sort.by("name"));
 
 		verify(callbacks).callback(AfterLoadCallback.class, alfred1);
+		verify(callbacks).callback(AfterConvertCallback.class, alfred2);
 		verify(callbacks).callback(AfterLoadCallback.class, neumann1);
+		verify(callbacks).callback(AfterConvertCallback.class, neumann2);
 
 		assertThat(all).containsExactly(alfred2, neumann2);
 	}
@@ -180,12 +187,16 @@ public class JdbcAggregateTemplateUnitTests {
 		when(dataAccessStrategy.findAll(SampleEntity.class, PageRequest.of(0, 20))).thenReturn(asList(alfred1, neumann1));
 
 		when(callbacks.callback(any(Class.class), eq(alfred1), any())).thenReturn(alfred2);
+		when(callbacks.callback(any(Class.class), eq(alfred2), any())).thenReturn(alfred2);
 		when(callbacks.callback(any(Class.class), eq(neumann1), any())).thenReturn(neumann2);
+		when(callbacks.callback(any(Class.class), eq(neumann2), any())).thenReturn(neumann2);
 
 		Iterable<SampleEntity> all = template.findAll(SampleEntity.class, PageRequest.of(0, 20));
 
 		verify(callbacks).callback(AfterLoadCallback.class, alfred1);
+		verify(callbacks).callback(AfterConvertCallback.class, alfred2);
 		verify(callbacks).callback(AfterLoadCallback.class, neumann1);
+		verify(callbacks).callback(AfterConvertCallback.class, neumann2);
 
 		assertThat(all).containsExactly(alfred2, neumann2);
 	}

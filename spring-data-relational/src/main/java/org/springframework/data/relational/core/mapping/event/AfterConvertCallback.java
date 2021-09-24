@@ -18,23 +18,20 @@ package org.springframework.data.relational.core.mapping.event;
 import org.springframework.data.mapping.callback.EntityCallback;
 
 /**
- * An {@link EntityCallback} that gets invoked after an aggregate was loaded from the database.
+ * An {@link EntityCallback} that gets invoked after an aggregate was converted from the database into an entity.
  *
  * @author Jens Schauder
- * @author Mark Paluch
- * @since 1.1
- * @deprecated Use {@link AfterConvertCallback} instead.
+ * @since 2.6
  */
-@Deprecated
 @FunctionalInterface
-public interface AfterLoadCallback<T> extends EntityCallback<T> {
+public interface AfterConvertCallback<T> extends EntityCallback<T> {
 
 	/**
-	 * Entity callback method invoked after an aggregate root was loaded. Can return either the same or a modified
+	 * Entity callback method invoked after an aggregate root was converted. Can return either the same or a modified
 	 * instance of the domain object.
 	 *
-	 * @param aggregate the loaded aggregate.
-	 * @return the loaded aggregate.
+	 * @param aggregate the converted aggregate.
+	 * @return the converted and possibly modified aggregate.
 	 */
-	T onAfterLoad(T aggregate);
+	T onAfterConvert(T aggregate);
 }

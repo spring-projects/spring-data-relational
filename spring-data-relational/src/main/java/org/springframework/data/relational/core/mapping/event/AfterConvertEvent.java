@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2017-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,21 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import org.springframework.data.mapping.callback.EntityCallback;
-
 /**
- * An {@link EntityCallback} that gets invoked after an aggregate was loaded from the database.
+ * Gets published after instantiation and setting of all the properties of an entity. This allows to do some
+ * postprocessing of entities if the entities are mutable. For immutable entities use {@link AfterConvertCallback}.
  *
  * @author Jens Schauder
- * @author Mark Paluch
- * @since 1.1
- * @deprecated Use {@link AfterConvertCallback} instead.
+ * @since 2.6
  */
-@Deprecated
-@FunctionalInterface
-public interface AfterLoadCallback<T> extends EntityCallback<T> {
+public class AfterConvertEvent<E> extends RelationalEventWithEntity<E> {
+
+	private static final long serialVersionUID = 7343072117054666699L;
 
 	/**
-	 * Entity callback method invoked after an aggregate root was loaded. Can return either the same or a modified
-	 * instance of the domain object.
-	 *
-	 * @param aggregate the loaded aggregate.
-	 * @return the loaded aggregate.
+	 * @param entity the newly instantiated entity. Must not be {@literal null}.
 	 */
-	T onAfterLoad(T aggregate);
+	public AfterConvertEvent(E entity) {
+		super(entity);
+	}
 }
