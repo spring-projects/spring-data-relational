@@ -218,7 +218,7 @@ public class JdbcQueryMethod extends QueryMethod {
 	}
 
 	/**
-	 * Returns whether the method has an annotated query.
+	 * @return {@code true} if the method has an annotated query.
 	 */
 	public boolean hasAnnotatedQuery() {
 		return findAnnotatedQuery().isPresent();
