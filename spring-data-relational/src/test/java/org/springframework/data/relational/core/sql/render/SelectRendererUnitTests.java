@@ -176,8 +176,8 @@ class SelectRendererUnitTests {
 				+ "OR employee.tenant != department.tenant");
 	}
 
-	@Test // GH-1009
-	public void shouldRenderJoinWithJustExpression() {
+	@Test // #1009
+	void shouldRenderJoinWithJustExpression() {
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");
