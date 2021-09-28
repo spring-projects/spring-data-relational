@@ -156,8 +156,8 @@ class SelectRendererUnitTests {
 				+ "AND employee.tenant = department.tenant");
 	}
 
-	@Test // GH-995
-	public void shouldRenderArbitraryJoinCondition() {
+	@Test // #995
+	void shouldRenderArbitraryJoinCondition() {
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");
@@ -166,11 +166,9 @@ class SelectRendererUnitTests {
 				.select(employee.column("id"), department.column("name")) //
 				.from(employee) //
 				.join(department) //
-				.on(
-						Conditions.isEqual( employee.column("department_id"),department.column("id")) //
-								.or( //
-						Conditions.isNotEqual( employee.column("tenant"),department.column("tenant")) //
-				)) //
+				.on(Conditions.isEqual(employee.column("department_id"), department.column("id")) //
+						.or(Conditions.isNotEqual(employee.column("tenant"), department.column("tenant")) //
+						))
 				.build();
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
@@ -424,16 +422,12 @@ class SelectRendererUnitTests {
 				"SELECT COUNT(\"my_table\".*) AS counter, \"my_table\".\"reserved_keyword\" FROM \"my_table\" JOIN \"join_table\" ON \"my_table\".source = \"join_table\".target");
 	}
 
-
 	@Test // GH-1034
 	void simpleComparisonWithStringArguments() {
 
 		Table table_user = SQL.table("User");
-		Select select = StatementBuilder
-				.select(table_user.column("name"),table_user.column("age"))
-				.from(table_user)
-				.where(Comparison.create("age",">",20))
-				.build();
+		Select select = StatementBuilder.select(table_user.column("name"), table_user.column("age")).from(table_user)
+				.where(Comparison.create("age", ">", 20)).build();
 
 		final String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name, User.age FROM User WHERE age > 20");
@@ -443,11 +437,8 @@ class SelectRendererUnitTests {
 	void simpleComparison() {
 
 		Table table_user = SQL.table("User");
-		Select select = StatementBuilder
-				.select(table_user.column("name"),table_user.column("age"))
-				.from(table_user)
-				.where(Comparison.create(table_user.column("age"),">",SQL.literalOf(20)))
-				.build();
+		Select select = StatementBuilder.select(table_user.column("name"), table_user.column("age")).from(table_user)
+				.where(Comparison.create(table_user.column("age"), ">", SQL.literalOf(20))).build();
 
 		final String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name, User.age FROM User WHERE User.age > 20");
