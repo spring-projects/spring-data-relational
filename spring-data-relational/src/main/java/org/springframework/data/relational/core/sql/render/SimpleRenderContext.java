@@ -48,9 +48,7 @@ final class SimpleRenderContext implements RenderContext {
 	@Override
 	public String toString() {
 
-		return "SimpleRenderContext{" +
-				"namingStrategy=" + namingStrategy +
-				'}';
+		return "SimpleRenderContext{" + "namingStrategy=" + namingStrategy + '}';
 	}
 
 	enum DefaultSelectRenderContext implements SelectRenderContext {

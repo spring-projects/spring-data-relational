@@ -46,6 +46,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 
 	/**
 	 * Creates an {@code ExpressionVisitor} that does not use aliases for column names
+	 *
 	 * @param context must not be {@literal null}.
 	 */
 	ExpressionVisitor(RenderContext context) {
@@ -155,6 +156,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 
 	/**
 	 * Describes how aliases of columns should be rendered.
+	 *
 	 * @since 2.3
 	 */
 	enum AliasHandling {

@@ -23,14 +23,14 @@ package org.springframework.data.relational.core.sql;
  */
 public class ConstantCondition extends AbstractSegment implements Condition {
 
-    private final String condition;
+	private final String condition;
 
-    ConstantCondition(String condition) {
-        this.condition = condition;
-    }
+	ConstantCondition(String condition) {
+		this.condition = condition;
+	}
 
-    @Override
-    public String toString() {
-        return condition;
-    }
+	@Override
+	public String toString() {
+		return condition;
+	}
 }

@@ -15,12 +15,12 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.util.Assert;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import org.springframework.util.Assert;
 
 /**
  * A segment that can be used as table in a query.
@@ -61,6 +61,7 @@ public interface TableLike extends Segment {
 
 		return new Column(name, this);
 	}
+
 	/**
 	 * Creates a {@link List} of {@link Column}s associated with this {@link Table}.
 	 * <p/>
@@ -132,7 +133,14 @@ public interface TableLike extends Segment {
 		return new AsteriskFromTable(this);
 	}
 
+	/**
+	 * @return the table name.
+	 */
 	SqlIdentifier getName();
 
+	/**
+	 * @return the table name as it is used in references. This can be the actual {@link #getName() name} or an
+	 *         {@link Aliased#getAlias() alias}.
+	 */
 	SqlIdentifier getReferenceName();
 }

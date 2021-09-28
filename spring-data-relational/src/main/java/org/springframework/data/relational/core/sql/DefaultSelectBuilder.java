@@ -285,7 +285,8 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	@Override
 	public Select build() {
 
-		DefaultSelect select = new DefaultSelect(distinct, selectList, from, limit, offset, joins, where, orderBy, lockMode);
+		DefaultSelect select = new DefaultSelect(distinct, selectList, from, limit, offset, joins, where, orderBy,
+				lockMode);
 		SelectValidator.validate(select);
 		return select;
 	}

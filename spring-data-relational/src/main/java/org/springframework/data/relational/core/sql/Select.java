@@ -15,10 +15,10 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.lang.Nullable;
-
 import java.util.List;
 import java.util.OptionalLong;
+
+import org.springframework.lang.Nullable;
 
 /**
  * AST for a {@code SELECT} statement. Visiting order:

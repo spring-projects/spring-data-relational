@@ -41,8 +41,7 @@ public interface SelectRenderContext {
 	}
 
 	/**
-	 * Customization hook: Rendition of a part after {@code FROM} table.
-	 * Renders an empty string by default.
+	 * Customization hook: Rendition of a part after {@code FROM} table. Renders an empty string by default.
 	 *
 	 * @return render {@link Function} invoked after rendering {@code FROM} table.
 	 */

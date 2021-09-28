@@ -15,7 +15,10 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.*;
+import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.SelectList;
+import org.springframework.data.relational.core.sql.Visitable;
 
 /**
  * {@link PartRenderer} for {@link SelectList}s.
@@ -98,6 +101,5 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	public CharSequence getRenderedPart() {
 		return builder;
 	}
-
 
 }

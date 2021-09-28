@@ -61,11 +61,13 @@ public class Comparison extends AbstractSegment implements Condition {
 
 	/**
 	 * Creates a new {@link Comparison} from simple {@literal StringP} arguments
-	 * @param unqualifiedColumnName gets turned in a {@link Expressions#just(String)} and is expected to be an unqualified unique column name but also could be an verbatim expression. Must not be {@literal null}.
+	 *
+	 * @param unqualifiedColumnName gets turned in a {@link Expressions#just(String)} and is expected to be an unqualified
+	 *          unique column name but also could be an verbatim expression. Must not be {@literal null}.
 	 * @param comparator must not be {@literal null}.
 	 * @param rightValue is considered a {@link Literal}. Must not be {@literal null}.
-	 * @return a new {@literal Comparison} of the first with the third argument using the second argument as comparison operator. Guaranteed to be not {@literal null}.
-	 *
+	 * @return a new {@literal Comparison} of the first with the third argument using the second argument as comparison
+	 *         operator. Guaranteed to be not {@literal null}.
 	 * @since 2.3
 	 */
 	public static Comparison create(String unqualifiedColumnName, String comparator, Object rightValue) {

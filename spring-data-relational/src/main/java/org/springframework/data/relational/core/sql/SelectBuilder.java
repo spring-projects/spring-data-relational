@@ -251,7 +251,7 @@ public interface SelectBuilder {
 	 * Builder exposing {@code FROM}, {@code JOIN}, {@code WHERE}, {@code LIMIT/OFFSET} and {@code LOCK} methods.
 	 */
 	interface SelectFromAndJoin
-		extends SelectFromAndOrderBy, BuildSelect, SelectJoin, SelectWhere, SelectLimitOffset, SelectLock {
+			extends SelectFromAndOrderBy, BuildSelect, SelectJoin, SelectWhere, SelectLimitOffset, SelectLock {
 
 		/**
 		 * Declare a {@link Table} to {@code SELECT … FROM}. Multiple calls to this or other {@code from} methods keep
@@ -317,7 +317,8 @@ public interface SelectBuilder {
 	}
 
 	/**
-	 * Builder exposing {@code FROM}, {@code WHERE}, {@code LIMIT/OFFSET}, JOIN {@code AND} and {@code LOCK} continuation methods.
+	 * Builder exposing {@code FROM}, {@code WHERE}, {@code LIMIT/OFFSET}, JOIN {@code AND} and {@code LOCK} continuation
+	 * methods.
 	 */
 	interface SelectFromAndJoinCondition
 			extends BuildSelect, SelectJoin, SelectWhere, SelectOnCondition, SelectLimitOffset, SelectLock {

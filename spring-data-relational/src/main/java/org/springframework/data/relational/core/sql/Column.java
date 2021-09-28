@@ -56,6 +56,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 	 * @param name column name, must not {@literal null} or empty.
 	 * @param table the table, must not be {@literal null}.
 	 * @return the new {@link Column}.
+	 * @since 2.3
 	 */
 	public static Column create(String name, TableLike table) {
 

@@ -35,10 +35,8 @@ class FromTableVisitor extends TypedSubtreeVisitor<TableLike> {
 
 	private final RenderContext context;
 	private final RenderTarget parent;
-	@Nullable
-	private SelectStatementVisitor delegate;
-	@Nullable
-	private StringBuilder builder = null;
+	@Nullable private SelectStatementVisitor delegate;
+	@Nullable private StringBuilder builder = null;
 
 	FromTableVisitor(RenderContext context, RenderTarget parent) {
 		super();

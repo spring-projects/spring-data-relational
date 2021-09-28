@@ -107,13 +107,12 @@ public class Table extends AbstractSegment implements TableLike {
 		return new AliasedTable(name, alias);
 	}
 
-	/**
-	 * @return the table name.
-	 */
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.Named#getName()
 	 */
+	@Override
 	public SqlIdentifier getName() {
 		return name;
 	}
@@ -122,6 +121,7 @@ public class Table extends AbstractSegment implements TableLike {
 	 * @return the table name as it is used in references. This can be the actual {@link #getName() name} or an
 	 *         {@link Aliased#getAlias() alias}.
 	 */
+	@Override
 	public SqlIdentifier getReferenceName() {
 		return name;
 	}

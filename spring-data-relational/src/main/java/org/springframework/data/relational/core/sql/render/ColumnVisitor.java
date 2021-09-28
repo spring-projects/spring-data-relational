@@ -22,9 +22,8 @@ import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
 
 /**
- * Renderer for {@link Column}s. Renders a column as {@literal 
- * <table>
- * .<column>} or {@literal <column>}.
+ * Renderer for {@link Column}s. Renders a column as {@literal &gt;table&lt;.&gt;column&lt;} or
+ * {@literal &gt;column&lt;}.
  *
  * @author Mark Paluch
  * @since 1.1

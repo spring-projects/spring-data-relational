@@ -29,10 +29,10 @@ import org.springframework.util.StringUtils;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public class SelectRendererUnitTests {
+class SelectRendererUnitTests {
 
 	@Test // DATAJDBC-309, DATAJDBC-278
-	public void shouldRenderSingleColumn() {
+	void shouldRenderSingleColumn() {
 
 		Table bar = SQL.table("bar");
 		Column foo = bar.column("foo");
@@ -43,7 +43,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test
-	public void honorsNamingStrategy() {
+	void honorsNamingStrategy() {
 
 		Table bar = SQL.table("bar");
 		Column foo = bar.column("foo");
@@ -55,7 +55,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderAliasedColumnAndFrom() {
+	void shouldRenderAliasedColumnAndFrom() {
 
 		Table table = Table.create("bar").as("my_bar");
 
@@ -65,7 +65,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderMultipleColumnsFromTables() {
+	void shouldRenderMultipleColumnsFromTables() {
 
 		Table table1 = Table.create("table1");
 		Table table2 = Table.create("table2");
@@ -77,7 +77,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderDistinct() {
+	void shouldRenderDistinct() {
 
 		Table table = SQL.table("bar");
 		Column foo = table.column("foo");
@@ -89,7 +89,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderCountFunction() {
+	void shouldRenderCountFunction() {
 
 		Table table = SQL.table("bar");
 		Column foo = table.column("foo");
@@ -101,7 +101,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void shouldRenderCountFunctionWithAliasedColumn() {
+	void shouldRenderCountFunctionWithAliasedColumn() {
 
 		Table table = SQL.table("bar");
 		Column foo = table.column("foo").as("foo_bar");
@@ -112,7 +112,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderSimpleJoin() {
+	void shouldRenderSimpleJoin() {
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");
@@ -126,7 +126,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void shouldRenderOuterJoin() {
+	void shouldRenderOuterJoin() {
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");
@@ -141,7 +141,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderSimpleJoinWithAnd() {
+	void shouldRenderSimpleJoinWithAnd() {
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");
@@ -157,7 +157,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderMultipleJoinWithAnd() {
+	void shouldRenderMultipleJoinWithAnd() {
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");
@@ -176,7 +176,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // GH-1003
-	public void shouldRenderJoinWithInlineQuery() {
+	void shouldRenderJoinWithInlineQuery() {
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");
@@ -199,7 +199,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // GH-1003
-	public void shouldRenderJoinWithTwoInlineQueries() {
+	void shouldRenderJoinWithTwoInlineQueries() {
 
 		Table employee = SQL.table("employee");
 		Table department = SQL.table("department");
@@ -225,7 +225,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderOrderByName() {
+	void shouldRenderOrderByName() {
 
 		Table employee = SQL.table("employee").as("emp");
 		Column column = employee.column("name").as("emp_name");
@@ -237,7 +237,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderIsNull() {
+	void shouldRenderIsNull() {
 
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
@@ -248,7 +248,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderNotNull() {
+	void shouldRenderNotNull() {
 
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
@@ -259,7 +259,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderEqualityCondition() {
+	void shouldRenderEqualityCondition() {
 
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
@@ -271,7 +271,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRendersAndOrConditionWithProperParentheses() {
+	void shouldRendersAndOrConditionWithProperParentheses() {
 
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
@@ -285,7 +285,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldInWithNamedParameter() {
+	void shouldInWithNamedParameter() {
 
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
@@ -296,7 +296,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldInWithNamedParameters() {
+	void shouldInWithNamedParameters() {
 
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
@@ -308,7 +308,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderInSubselect() {
+	void shouldRenderInSubselect() {
 
 		Table foo = SQL.table("foo");
 		Column bar = foo.column("bar");
@@ -325,7 +325,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldConsiderNamingStrategy() {
+	void shouldConsiderNamingStrategy() {
 
 		Table foo = SQL.table("Foo");
 		Column bar = foo.column("BaR");
@@ -345,7 +345,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void shouldRenderCountStar() {
+	void shouldRenderCountStar() {
 
 		Select select = Select.builder() //
 				.select(Functions.count(Expressions.asterisk())) //
@@ -358,7 +358,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void shouldRenderCountTableStar() {
+	void shouldRenderCountTableStar() {
 
 		Table foo = SQL.table("foo");
 		Select select = Select.builder() //
@@ -372,7 +372,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void shouldRenderFunctionWithAlias() {
+	void shouldRenderFunctionWithAlias() {
 
 		Table foo = SQL.table("foo");
 		Select select = Select.builder() //
@@ -386,7 +386,7 @@ public class SelectRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-479
-	public void shouldRenderWithRenderContext() {
+	void shouldRenderWithRenderContext() {
 
 		Table table = Table.create(SqlIdentifier.quoted("my_table"));
 		Table join_table = Table.create(SqlIdentifier.quoted("join_table"));

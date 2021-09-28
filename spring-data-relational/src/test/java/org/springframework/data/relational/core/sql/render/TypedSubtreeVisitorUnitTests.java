@@ -29,7 +29,7 @@ import org.springframework.data.relational.core.sql.Visitable;
 
 /**
  * Unit tests for {@link org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor}.
- * 
+ *
  * @author Jens Schauder
  */
 class TypedSubtreeVisitorUnitTests {
@@ -39,8 +39,8 @@ class TypedSubtreeVisitorUnitTests {
 	@Test // GH-1003
 	void enterAndLeavesSingleSegment() {
 
-		final TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
-		final TestSegment root = new TestSegment("root");
+		TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
+		TestSegment root = new TestSegment("root");
 
 		root.visit(visitor);
 
@@ -50,8 +50,8 @@ class TypedSubtreeVisitorUnitTests {
 	@Test // GH-1003
 	void enterAndLeavesChainOfMatchingSegmentsAsNested() {
 
-		final TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
-		final TestSegment root = new TestSegment("root", new TestSegment("level 1", new TestSegment("level 2")));
+		TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
+		TestSegment root = new TestSegment("root", new TestSegment("level 1", new TestSegment("level 2")));
 
 		root.visit(visitor);
 
@@ -62,8 +62,8 @@ class TypedSubtreeVisitorUnitTests {
 	@Test // GH-1003
 	void enterAndLeavesMatchingChildrenAsNested() {
 
-		final TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
-		final TestSegment root = new TestSegment("root", new TestSegment("child 1"), new TestSegment("child 2"));
+		TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
+		TestSegment root = new TestSegment("root", new TestSegment("child 1"), new TestSegment("child 2"));
 
 		root.visit(visitor);
 
@@ -74,8 +74,8 @@ class TypedSubtreeVisitorUnitTests {
 	@Test // GH-1003
 	void enterAndLeavesChainOfOtherSegmentsAsNested() {
 
-		final TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
-		final TestSegment root = new TestSegment("root", new OtherSegment("level 1", new OtherSegment("level 2")));
+		TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
+		TestSegment root = new TestSegment("root", new OtherSegment("level 1", new OtherSegment("level 2")));
 
 		root.visit(visitor);
 
@@ -86,8 +86,8 @@ class TypedSubtreeVisitorUnitTests {
 	@Test // GH-1003
 	void enterAndLeavesOtherChildrenAsNested() {
 
-		final TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
-		final TestSegment root = new TestSegment("root", new OtherSegment("child 1"), new OtherSegment("child 2"));
+		TypedSubtreeVisitor<TestSegment> visitor = new LoggingTypedSubtreeVisitor();
+		TestSegment root = new TestSegment("root", new OtherSegment("child 1"), new OtherSegment("child 2"));
 
 		root.visit(visitor);
 
@@ -98,9 +98,9 @@ class TypedSubtreeVisitorUnitTests {
 	@Test // GH-1003
 	void visitorIsReentrant() {
 
-		final LoggingTypedSubtreeVisitor visitor = new LoggingTypedSubtreeVisitor();
-		final TestSegment root1 = new TestSegment("root 1");
-		final TestSegment root2 = new TestSegment("root 2");
+		LoggingTypedSubtreeVisitor visitor = new LoggingTypedSubtreeVisitor();
+		TestSegment root1 = new TestSegment("root 1");
+		TestSegment root2 = new TestSegment("root 2");
 
 		root1.visit(visitor);
 		root2.visit(visitor);
@@ -112,10 +112,10 @@ class TypedSubtreeVisitorUnitTests {
 	@Test // GH-1003
 	void delegateToOtherVisitorOnEnterMatchedRevisitsTheSegment() {
 
-		final LoggingTypedSubtreeVisitor first = new LoggingTypedSubtreeVisitor("first ");
-		final LoggingTypedSubtreeVisitor second = new LoggingTypedSubtreeVisitor("second ");
+		LoggingTypedSubtreeVisitor first = new LoggingTypedSubtreeVisitor("first ");
+		LoggingTypedSubtreeVisitor second = new LoggingTypedSubtreeVisitor("second ");
 		first.enterMatched(s -> delegateTo(second));
-		final TestSegment root = new TestSegment("root", new TestSegment("child 1"), new TestSegment("child 2"));
+		TestSegment root = new TestSegment("root", new TestSegment("child 1"), new TestSegment("child 2"));
 
 		root.visit(first);
 
@@ -127,11 +127,11 @@ class TypedSubtreeVisitorUnitTests {
 	@Test // GH-1003
 	void delegateToOtherVisitorOnEnterNestedRevisitsTheNestedSegment() {
 
-		final LoggingTypedSubtreeVisitor first = new LoggingTypedSubtreeVisitor("first ");
-		final LoggingTypedSubtreeVisitor second = new LoggingTypedSubtreeVisitor("second ");
+		LoggingTypedSubtreeVisitor first = new LoggingTypedSubtreeVisitor("first ");
+		LoggingTypedSubtreeVisitor second = new LoggingTypedSubtreeVisitor("second ");
 		first.enterNested(
 				s -> ((TestSegment) s).name.equals("child 2") ? delegateTo(second) : DelegatingVisitor.Delegation.retain());
-		final TestSegment root = new TestSegment("root", new TestSegment("child 1"), new TestSegment("child 2"),
+		TestSegment root = new TestSegment("root", new TestSegment("child 1"), new TestSegment("child 2"),
 				new TestSegment("child 3"));
 
 		root.visit(first);
@@ -144,7 +144,7 @@ class TypedSubtreeVisitorUnitTests {
 
 	static class TestSegment extends AbstractTestSegment {
 
-		private final String name;
+		private String name;
 
 		TestSegment(String name, Segment... children) {
 
@@ -160,7 +160,7 @@ class TypedSubtreeVisitorUnitTests {
 
 	static class OtherSegment extends AbstractTestSegment {
 
-		private final String name;
+		private String name;
 
 		public OtherSegment(String name, Segment... children) {
 
@@ -176,7 +176,7 @@ class TypedSubtreeVisitorUnitTests {
 
 	class LoggingTypedSubtreeVisitor extends TypedSubtreeVisitor<TestSegment> {
 
-		final String prefix;
+		String prefix;
 		Function<TestSegment, Delegation> enterMatchedDelegation;
 		Function<Visitable, Delegation> enterNestedDelegation;
 
@@ -192,7 +192,7 @@ class TypedSubtreeVisitorUnitTests {
 		Delegation enterMatched(TestSegment segment) {
 
 			events.add(prefix + "enter matched " + segment);
-			final Delegation delegation = super.enterMatched(segment);
+			Delegation delegation = super.enterMatched(segment);
 
 			return enterMatchedDelegation == null ? delegation : enterMatchedDelegation.apply(segment);
 		}

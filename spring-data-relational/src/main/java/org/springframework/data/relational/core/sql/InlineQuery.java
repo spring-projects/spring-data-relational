@@ -18,14 +18,14 @@ package org.springframework.data.relational.core.sql;
 import org.springframework.util.Assert;
 
 /**
- * Represents a inline query within a SQL statement. Typically used in {@code FROM} or {@code JOIN} clauses.
- * <p/>
- * Renders to: {@code (<SELECT>) AS <ALIAS>} in a from or join clause, and to {@code <ALIAS>} when used in an
- * expression.
- * <p/>
+ * Represents a inline query within a SQL statement. Typically, used in {@code FROM} or {@code JOIN} clauses.
+ * <p>
+ * Renders to: {@code (&gt;SELECT&lt;) AS &gt;ALIAS&lt;} in a from or join clause, and to {@code &gt;ALIAS&lt;} when
+ * used in an expression.
+ * <p>
  * Note that this does not implement {@link Aliased} because the Alias is not optional but required and therefore more
  * like a name although the SQL term is "alias".
- * 
+ *
  * @author Jens Schauder
  * @since 2.3
  */
@@ -68,13 +68,11 @@ public class InlineQuery extends AbstractSegment implements TableLike {
 		return create(select, SqlIdentifier.unquoted(alias));
 	}
 
-	/**
-	 * @return the table name.
-	 */
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.Named#getName()
 	 */
+	@Override
 	public SqlIdentifier getName() {
 		return alias;
 	}
@@ -83,6 +81,7 @@ public class InlineQuery extends AbstractSegment implements TableLike {
 	 * @return the table name as it is used in references. This can be the actual {@link #getName() name} or an
 	 *         {@link Aliased#getAlias() alias}.
 	 */
+	@Override
 	public SqlIdentifier getReferenceName() {
 		return alias;
 	}

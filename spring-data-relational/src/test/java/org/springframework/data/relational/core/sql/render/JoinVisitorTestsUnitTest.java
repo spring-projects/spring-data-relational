@@ -15,13 +15,14 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.InlineQuery;
 import org.springframework.data.relational.core.sql.Join;
@@ -30,6 +31,11 @@ import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.relational.core.sql.TestJoin;
 import org.springframework.data.relational.core.sql.Visitor;
 
+/**
+ * Unit tests for {@link JoinVisitor}.
+ *
+ * @author Jens Schauder
+ */
 public class JoinVisitorTestsUnitTest {
 
 	final StringBuilder builder = new StringBuilder();
@@ -43,7 +49,7 @@ public class JoinVisitorTestsUnitTest {
 
 		join.visit(visitor);
 
-		assertThat(builder.toString()).isEqualTo(f.renderResult);
+		assertThat(builder).hasToString(f.renderResult);
 	}
 
 	static List<Fixture> renderJoins() {
@@ -51,11 +57,11 @@ public class JoinVisitorTestsUnitTest {
 		Column colOne = Column.create("colOne", Table.create("tabOne"));
 		Table tabTwo = Table.create("tabTwo");
 		Column colTwo = Column.create("colTwo", tabTwo);
-		final Column renamed = colOne.as("renamed");
-		final Select select = Select.builder().select(renamed).from(colOne.getTable()).build();
-		final InlineQuery inlineQuery = InlineQuery.create(select, "inline");
+		Column renamed = colOne.as("renamed");
+		Select select = Select.builder().select(renamed).from(colOne.getTable()).build();
+		InlineQuery inlineQuery = InlineQuery.create(select, "inline");
 
-		return asList(
+		return Arrays.asList(
 				fixture("simple join", new TestJoin(Join.JoinType.JOIN, tabTwo, colOne.isEqualTo(colTwo)),
 						"JOIN tabTwo ON tabOne.colOne = tabTwo.colTwo"),
 				fixture("inlineQuery",
@@ -65,7 +71,7 @@ public class JoinVisitorTestsUnitTest {
 
 	private static Fixture fixture(String comment, Join join, String renderResult) {
 
-		final Fixture fixture = new Fixture();
+		Fixture fixture = new Fixture();
 		fixture.comment = comment;
 		fixture.join = join;
 		fixture.renderResult = renderResult;
