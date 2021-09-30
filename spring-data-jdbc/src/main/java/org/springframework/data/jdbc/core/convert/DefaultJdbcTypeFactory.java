@@ -17,8 +17,8 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.Array;
 import java.sql.JDBCType;
-import java.util.function.Function;
 
+import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -29,12 +29,13 @@ import org.springframework.util.Assert;
  * {@link JdbcOperations#execute(ConnectionCallback)}.
  *
  * @author Jens Schauder
+ * @author Mark Paluch
  * @since 1.1
  */
 public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 
 	private final JdbcOperations operations;
-	private final Function<JDBCType, String> jdbcTypeToSqlName;
+	private final JdbcArrayColumns arrayColumns;
 
 	/**
 	 * Creates a new {@link DefaultJdbcTypeFactory}.
@@ -42,21 +43,22 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 	 * @param operations must not be {@literal null}.
 	 */
 	public DefaultJdbcTypeFactory(JdbcOperations operations) {
-		this(operations, JDBCType::getName);
+		this(operations, JdbcArrayColumns.DefaultSupport.INSTANCE);
 	}
 
 	/**
 	 * Creates a new {@link DefaultJdbcTypeFactory}.
 	 *
 	 * @param operations must not be {@literal null}.
+	 * @since 2.3
 	 */
-	public DefaultJdbcTypeFactory(JdbcOperations operations, Function<JDBCType, String> jdbcTypeToSqlName) {
+	public DefaultJdbcTypeFactory(JdbcOperations operations, JdbcArrayColumns arrayColumns) {
 
 		Assert.notNull(operations, "JdbcOperations must not be null");
-		Assert.notNull(jdbcTypeToSqlName, "JdbcTypeToSqlName must not be null");
+		Assert.notNull(arrayColumns, "JdbcArrayColumns must not be null");
 
 		this.operations = operations;
-		this.jdbcTypeToSqlName = jdbcTypeToSqlName;
+		this.arrayColumns = arrayColumns;
 	}
 
 	@Override
@@ -64,21 +66,13 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 
 		Assert.notNull(value, "Value must not be null.");
 
-		Class<?> componentType = innermostComponentType(value);
+		Class<?> componentType = arrayColumns.getArrayType(value.getClass());
 
 		JDBCType jdbcType = JdbcUtil.jdbcTypeFor(componentType);
 		Assert.notNull(jdbcType, () -> String.format("Couldn't determine JDBCType for %s", componentType));
-		String typeName = jdbcTypeToSqlName.apply(jdbcType);
+		String typeName = arrayColumns.getArrayTypeName(jdbcType);
 
 		return operations.execute((ConnectionCallback<Array>) c -> c.createArrayOf(typeName, value));
 	}
 
-	private static Class<?> innermostComponentType(Object convertedValue) {
-
-		Class<?> componentType = convertedValue.getClass();
-		while (componentType.isArray()) {
-			componentType = componentType.getComponentType();
-		}
-		return componentType;
-	}
 }

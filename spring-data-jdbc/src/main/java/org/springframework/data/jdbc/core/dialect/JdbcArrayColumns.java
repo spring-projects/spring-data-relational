@@ -15,46 +15,98 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
-import java.sql.JDBCType;
+import java.sql.SQLType;
 
 import org.springframework.data.relational.core.dialect.ArrayColumns;
 
 /**
- * {@link org.springframework.data.relational.core.dialect.ArrayColumns} that offer JDBC specific functionality.
- * 
+ * {@link org.springframework.data.relational.core.dialect.ArrayColumns} that offer JDBC-specific functionality.
+ *
  * @author Jens Schauder
  * @since 2.3
  */
 public interface JdbcArrayColumns extends ArrayColumns {
 
-	JdbcArrayColumns UNSUPPORTED = new JdbcArrayColumns() {
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.ArrayColumns#getArrayType(java.lang.Class)
+	 */
+	@Override
+	default Class<?> getArrayType(Class<?> userType) {
+
+		Class<?> componentType = userType;
+		while (componentType.isArray()) {
+			componentType = componentType.getComponentType();
+		}
+
+		return componentType;
+	}
+
+	/**
+	 * The appropriate SQL type as a String which should be used to represent the given {@link SQLType} in an
+	 * {@link java.sql.Array}. Defaults to the name of the argument.
+	 *
+	 * @param jdbcType the {@link SQLType} value representing the type that should be stored in the
+	 *          {@link java.sql.Array}. Must not be {@literal null}.
+	 * @return the appropriate SQL type as a String which should be used to represent the given {@link SQLType} in an
+	 *         {@link java.sql.Array}. Guaranteed to be not {@literal null}.
+	 */
+	default String getArrayTypeName(SQLType jdbcType) {
+		return jdbcType.getName();
+	}
+
+	/**
+	 * Default {@link ArrayColumns} implementation for dialects that do not support array-typed columns.
+	 */
+	enum Unsupported implements JdbcArrayColumns {
+
+		INSTANCE;
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#isSupported()
+		 */
 		@Override
 		public boolean isSupported() {
 			return false;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#JdbcArrayColumns(JDBCType)
+		 */
 		@Override
-		public Class<?> getArrayType(Class<?> userType) {
+		public String getArrayTypeName(SQLType jdbcType) {
 			throw new UnsupportedOperationException("Array types not supported");
 		}
 
-		@Override
-		public String getSqlTypeRepresentation(JDBCType jdbcType) {
-			throw new UnsupportedOperationException("Array types not supported");
-		}
-	};
+	}
 
 	/**
-	 * The appropriate SQL type as a String which should be used to represent the given {@link JDBCType} in an
-	 * {@link java.sql.Array}. Defaults to the name of the argument.
-	 * 
-	 * @param jdbcType the {@link JDBCType} value representing the type that should be stored in the
-	 *          {@link java.sql.Array}. Must not be {@literal null}.
-	 * @return the appropriate SQL type as a String which should be used to represent the given {@link JDBCType} in an
-	 *         {@link java.sql.Array}. Guaranteed to be not {@literal null}.
+	 * Default {@link ArrayColumns} implementation for dialects that do not support array-typed columns.
 	 */
-	default String getSqlTypeRepresentation(JDBCType jdbcType) {
-		return jdbcType.getName();
+	enum DefaultSupport implements JdbcArrayColumns {
+
+		INSTANCE;
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#isSupported()
+		 */
+		@Override
+		public boolean isSupported() {
+			return true;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#JdbcArrayColumns(JDBCType)
+		 */
+		@Override
+		public String getArrayTypeName(SQLType jdbcType) {
+			return jdbcType.getName();
+		}
+
 	}
 
 }

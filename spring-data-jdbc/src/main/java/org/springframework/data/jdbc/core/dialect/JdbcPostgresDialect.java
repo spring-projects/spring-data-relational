@@ -16,18 +16,20 @@
 package org.springframework.data.jdbc.core.dialect;
 
 import java.sql.JDBCType;
+import java.sql.SQLType;
 
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 
 /**
  * JDBC specific Postgres Dialect.
- * 
+ *
  * @author Jens Schauder
  * @since 2.3
  */
 public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect {
 
 	public static final JdbcPostgresDialect INSTANCE = new JdbcPostgresDialect();
+
 	private static final JdbcPostgresArrayColumns ARRAY_COLUMNS = new JdbcPostgresArrayColumns();
 
 	@Override
@@ -36,8 +38,14 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 	}
 
 	static class JdbcPostgresArrayColumns extends PostgresArrayColumns implements JdbcArrayColumns {
+
 		@Override
-		public String getSqlTypeRepresentation(JDBCType jdbcType) {
+		public Class<?> getArrayType(Class<?> userType) {
+			return JdbcArrayColumns.super.getArrayType(userType);
+		}
+
+		@Override
+		public String getArrayTypeName(SQLType jdbcType) {
 
 			if (jdbcType == JDBCType.DOUBLE) {
 				return "FLOAT8";

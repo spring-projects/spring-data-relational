@@ -19,14 +19,17 @@ import static de.schauderhaft.degraph.check.JCheck.*;
 import static org.hamcrest.MatcherAssert.*;
 
 import de.schauderhaft.degraph.check.JCheck;
-import org.junit.jupiter.api.Test;
 import scala.runtime.AbstractFunction1;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test package dependencies for violations.
  *
  * @author Jens Schauder
  */
+@Disabled("org.springframework.data.jdbc.core.dialect.** needs rework")
 public class DependencyTests {
 
 	@Test // DATAJDBC-114

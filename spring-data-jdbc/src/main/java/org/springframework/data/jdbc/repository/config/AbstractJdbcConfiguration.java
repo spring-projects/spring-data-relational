@@ -15,15 +15,14 @@
  */
 package org.springframework.data.jdbc.repository.config;
 
-import java.sql.JDBCType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -43,6 +42,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
@@ -100,11 +100,10 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	public JdbcConverter jdbcConverter(JdbcMappingContext mappingContext, NamedParameterJdbcOperations operations,
 			@Lazy RelationResolver relationResolver, JdbcCustomConversions conversions, Dialect dialect) {
 
-		Function<JDBCType, String> jdbcTypeToSqlName = dialect instanceof JdbcDialect
-				? ((JdbcDialect) dialect).getArraySupport()::getSqlTypeRepresentation
-				: JDBCType::getName;
+		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
+				: JdbcArrayColumns.DefaultSupport.INSTANCE;
 		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(),
-				jdbcTypeToSqlName);
+				arrayColumns);
 
 		return new BasicJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory,
 				dialect.getIdentifierProcessing());

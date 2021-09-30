@@ -15,16 +15,15 @@
  */
 package org.springframework.data.jdbc.testing;
 
-import java.sql.JDBCType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
+
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -42,6 +41,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.RelationResolver;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.JdbcSimpleTypes;
@@ -139,15 +139,14 @@ public class TestConfiguration {
 			CustomConversions conversions, @Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations template,
 			Dialect dialect) {
 
-		Function<JDBCType, String> jdbcTypeToSqlName = dialect instanceof JdbcDialect
-				? ((JdbcDialect) dialect).getArraySupport()::getSqlTypeRepresentation
-				: JDBCType::getName;
+		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
+				: JdbcArrayColumns.DefaultSupport.INSTANCE;
 
 		return new BasicJdbcConverter( //
 				mappingContext, //
 				relationResolver, //
 				conversions, //
-				new DefaultJdbcTypeFactory(template.getJdbcOperations(), jdbcTypeToSqlName), //
+				new DefaultJdbcTypeFactory(template.getJdbcOperations(), arrayColumns), //
 				dialect.getIdentifierProcessing());
 	}
 
