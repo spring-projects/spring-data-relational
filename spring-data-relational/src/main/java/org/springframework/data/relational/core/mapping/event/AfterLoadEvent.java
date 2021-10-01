@@ -16,8 +16,8 @@
 package org.springframework.data.relational.core.mapping.event;
 
 /**
- * Gets published after instantiation and setting of all the properties of an entity. This allows to do some
- * postprocessing of entities if the entities are mutable. For immutable entities use {@link AfterLoadCallback}.
+ * Gets published after instantiation and setting of all the properties of an entity. If you want to mutate an entity
+ * after loading, use {@link AfterConvertCallback}.
  *
  * @author Jens Schauder
  * @deprecated Use {@link AfterConvertEvent} instead.

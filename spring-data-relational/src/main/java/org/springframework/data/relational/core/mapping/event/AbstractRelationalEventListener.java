@@ -114,6 +114,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	 * @param event will never be {@literal null}.
 	 * @deprecated use {@link #onAfterConvert(AfterConvertEvent)} instead.
 	 */
+	@Deprecated
 	protected void onAfterLoad(AfterLoadEvent<E> event) {
 
 		if (LOG.isDebugEnabled()) {
@@ -125,6 +126,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	 * Captures {@link AfterConvertEvent}.
 	 *
 	 * @param event will never be {@literal null}.
+	 * @since 2.3
 	 */
 	protected void onAfterConvert(AfterConvertEvent<E> event) {
 

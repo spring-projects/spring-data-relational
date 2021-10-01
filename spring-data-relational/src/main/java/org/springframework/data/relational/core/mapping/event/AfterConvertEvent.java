@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package org.springframework.data.relational.core.mapping.event;
 
 /**
- * Gets published after instantiation and setting of all the properties of an entity. This allows to do some
- * postprocessing of entities if the entities are mutable. For immutable entities use {@link AfterConvertCallback}.
+ * Gets published after instantiation and setting of all the properties of an entity. If you want to mutate an entity
+ * after loading, use {@link AfterConvertCallback}.
  *
  * @author Jens Schauder
- * @since 2.6
+ * @since 2.3
  */
 public class AfterConvertEvent<E> extends RelationalEventWithEntity<E> {
 
