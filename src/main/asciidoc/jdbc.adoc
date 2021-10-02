@@ -489,7 +489,7 @@ interface PersonRepository extends PagingAndSortingRepository<Person, String> {
   List<Person> findByLastname(String lastname);                                     <7>
 }
 ----
-<1> The method shows a query for all people with the given `lastname`.
+<1> The method shows a query for all people with the given `firstname`.
 The query is derived by parsing the method name for constraints that can be concatenated with `And` and `Or`.
 Thus, the method name results in a query expression of `SELECT … FROM person WHERE firstname = :firstname`.
 <2> Use `Pageable` to pass offset and sorting parameters to the database.
@@ -498,7 +498,7 @@ Thus, the method name results in a query expression of `SELECT … FROM person W
 <5> Find a single entity for the given criteria.
 It completes with `IncorrectResultSizeDataAccessException` on non-unique results.
 <6> In contrast to <3>, the first entity is always emitted even if the query yields more result documents.
-<7> The `findByLastname` method shows a query for all people with the given last name.
+<7> The `findByLastname` method shows a query for all people with the given `lastname`.
 ====
 
 The following table shows the keywords that are supported for query methods:
