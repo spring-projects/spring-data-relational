@@ -23,6 +23,7 @@ import de.schauderhaft.degraph.configuration.NamedPattern;
 import scala.runtime.AbstractFunction1;
 
 import org.junit.Assume;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Jens Schauder
  */
+@Disabled("To be replaced with ArchUnit")
 public class DependencyTests {
 
 	@Test // DATAJDBC-114
