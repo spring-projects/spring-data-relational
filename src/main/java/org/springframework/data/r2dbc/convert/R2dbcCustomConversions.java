@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.convert.JodaTimeConverters;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcSimpleTypeHolder;
 
@@ -28,10 +27,7 @@ public class R2dbcCustomConversions extends CustomConversions {
 
 	static {
 
-		List<Object> converters = new ArrayList<>();
-
-		converters.addAll(R2dbcConverters.getConvertersToRegister());
-		converters.addAll(JodaTimeConverters.getConvertersToRegister());
+		List<Object> converters = new ArrayList<>(R2dbcConverters.getConvertersToRegister());
 
 		STORE_CONVERTERS = Collections.unmodifiableList(converters);
 		STORE_CONVERSIONS = StoreConversions.of(R2dbcSimpleTypeHolder.HOLDER, STORE_CONVERTERS);
