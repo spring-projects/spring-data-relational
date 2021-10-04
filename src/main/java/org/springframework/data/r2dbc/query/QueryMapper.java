@@ -161,7 +161,7 @@ public class QueryMapper {
 
 			Column column = (Column) expression;
 			Field field = createPropertyField(entity, column.getName());
-			Table table = column.getTable();
+			TableLike table = column.getTable();
 
 			Column columnFromTable = table.column(field.getMappedColumnName());
 			return column instanceof Aliased ? columnFromTable.as(((Aliased) column).getAlias()) : columnFromTable;
