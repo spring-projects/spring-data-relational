@@ -27,7 +27,7 @@ import org.springframework.dao.DataAccessException;
  * Interface declaring methods that accept callback {@link Function} to operate within the scope of a
  * {@link Connection}. Callback functions operate on a provided connection and must not close the connection as the
  * connections may be pooled or be subject to other kinds of resource management.
- * <p/>
+ * <p>
  * Callback functions are responsible for creating a {@link org.reactivestreams.Publisher} that defines the scope of how
  * long the allocated {@link Connection} is valid. Connections are released after the publisher terminates.
  *

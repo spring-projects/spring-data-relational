@@ -243,7 +243,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 * Set the {@link ReactiveEntityCallbacks} instance to use when invoking
 	 * {@link org.springframework.data.mapping.callback.ReactiveEntityCallbacks callbacks} like the
 	 * {@link BeforeSaveCallback}.
-	 * <p />
+	 * <p>
 	 * Overrides potentially existing {@link ReactiveEntityCallbacks}.
 	 *
 	 * @param entityCallbacks must not be {@literal null}.

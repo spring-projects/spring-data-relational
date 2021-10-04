@@ -148,7 +148,7 @@ public abstract class AbstractR2dbcConfiguration implements ApplicationContextAw
 
 	/**
 	 * Creates a {@link ReactiveDataAccessStrategy} using the configured
-	 * {@link #r2dbcConverter(Optional, R2dbcCustomConversions)} R2dbcConverter}.
+	 * {@link #r2dbcConverter(R2dbcMappingContext, R2dbcCustomConversions) R2dbcConverter}.
 	 *
 	 * @param converter the configured {@link R2dbcConverter}.
 	 * @return must not be {@literal null}.

@@ -160,7 +160,7 @@ public class ResourceDatabasePopulator implements DatabasePopulator {
 
 	/**
 	 * Specify the statement separator, if a custom one.
-	 * <p/>
+	 * <p>
 	 * Defaults to {@code ";"} if not specified and falls back to {@code "\n"} as a last resort; may be set to
 	 * {@link ScriptUtils#EOF_STATEMENT_SEPARATOR} to signal that each script contains a single statement without a
 	 * separator.
@@ -173,7 +173,7 @@ public class ResourceDatabasePopulator implements DatabasePopulator {
 
 	/**
 	 * Set the prefix that identifies single-line comments within the SQL scripts.
-	 * <p/>
+	 * <p>
 	 * Defaults to {@code "--"}.
 	 *
 	 * @param commentPrefix the prefix for single-line comments
@@ -184,7 +184,7 @@ public class ResourceDatabasePopulator implements DatabasePopulator {
 
 	/**
 	 * Set the start delimiter that identifies block comments within the SQL scripts.
-	 * <p/>
+	 * <p>
 	 * Defaults to {@code "/*"}.
 	 *
 	 * @param blockCommentStartDelimiter the start delimiter for block comments (never {@literal null} or empty).
@@ -199,7 +199,7 @@ public class ResourceDatabasePopulator implements DatabasePopulator {
 
 	/**
 	 * Set the end delimiter that identifies block comments within the SQL scripts.
-	 * <p/>
+	 * <p>
 	 * Defaults to {@code "*&#47;"}.
 	 *
 	 * @param blockCommentEndDelimiter the end delimiter for block comments (never {@literal null} or empty)
@@ -214,7 +214,7 @@ public class ResourceDatabasePopulator implements DatabasePopulator {
 
 	/**
 	 * Flag to indicate that all failures in SQL should be logged but not cause a failure.
-	 * <p/>
+	 * <p>
 	 * Defaults to {@literal false}.
 	 *
 	 * @param continueOnError {@literal true} if script execution should continue on error.
@@ -225,10 +225,10 @@ public class ResourceDatabasePopulator implements DatabasePopulator {
 
 	/**
 	 * Flag to indicate that a failed SQL {@code DROP} statement can be ignored.
-	 * <p/>
+	 * <p>
 	 * This is useful for a non-embedded database whose SQL dialect does not support an {@code IF EXISTS} clause in a
 	 * {@code DROP} statement.
-	 * <p/>
+	 * <p>
 	 * The default is {@literal false} so that if the populator runs accidentally, it will fail fast if a script starts
 	 * with a {@code DROP} statement.
 	 *
@@ -240,7 +240,7 @@ public class ResourceDatabasePopulator implements DatabasePopulator {
 
 	/**
 	 * Set the {@link DataBufferFactory} to use for {@link Resource} loading.
-	 * <p/>
+	 * <p>
 	 * Defaults to {@link DefaultDataBufferFactory}.
 	 *
 	 * @param dataBufferFactory the {@link DataBufferFactory} to use, must not be {@literal null}.
@@ -269,7 +269,7 @@ public class ResourceDatabasePopulator implements DatabasePopulator {
 
 	/**
 	 * Execute this {@link ResourceDatabasePopulator} against the given {@link ConnectionFactory}.
-	 * <p/>
+	 * <p>
 	 * Delegates to {@link DatabasePopulatorUtils#execute}.
 	 *
 	 * @param connectionFactory the {@link ConnectionFactory} to execute against, must not be {@literal null}..

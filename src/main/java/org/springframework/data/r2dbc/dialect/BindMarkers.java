@@ -4,7 +4,7 @@ package org.springframework.data.r2dbc.dialect;
  * Bind markers represent placeholders in SQL queries for substitution for an actual parameter. Using bind markers
  * allows creating safe queries so query strings are not required to contain escaped values but rather the driver
  * encodes parameter in the appropriate representation.
- * <p/>
+ * <p>
  * {@link BindMarkers} is stateful and can be only used for a single binding pass of one or more parameters. It
  * maintains bind indexes/bind parameter names.
  *

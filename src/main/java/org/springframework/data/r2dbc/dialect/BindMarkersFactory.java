@@ -6,7 +6,7 @@ import org.springframework.util.Assert;
 
 /**
  * This class creates new {@link BindMarkers} instances to bind parameter for a specific {@link io.r2dbc.spi.Statement}.
- * <p/>
+ * <p>
  * Bind markers can be typically represented as placeholder and identifier. Placeholders are used within the query to
  * execute so the underlying database system can substitute the placeholder with the actual value. Identifiers are used
  * in R2DBC drivers to bind a value to a bind marker. Identifiers are typically a part of an entire bind marker when
@@ -106,7 +106,7 @@ public interface BindMarkersFactory extends org.springframework.r2dbc.core.bindi
 	 * Create named {@link BindMarkers} using identifiers to bind parameters. Named bind markers can support
 	 * {@link BindMarkers#next(String) name hints}. If no {@link BindMarkers#next(String) hint} is given, named bind
 	 * markers can use a counter or a random value source to generate unique bind markers.
-	 * <p/>
+	 * <p>
 	 * Allow customization of the bind marker placeholder {@code prefix} and {@code namePrefix} to represent the bind
 	 * marker as placeholder within the query.
 	 *

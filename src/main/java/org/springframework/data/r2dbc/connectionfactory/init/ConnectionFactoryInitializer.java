@@ -45,7 +45,7 @@ public class ConnectionFactoryInitializer implements InitializingBean, Disposabl
 	/**
 	 * The {@link ConnectionFactory} for the database to populate when this component is initialized and to clean up when
 	 * this component is shut down.
-	 * <p/>
+	 * <p>
 	 * This property is mandatory with no default provided.
 	 *
 	 * @param connectionFactory the R2DBC {@link ConnectionFactory}.

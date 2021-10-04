@@ -21,7 +21,7 @@ import io.r2dbc.spi.Wrapped;
 /**
  * Sub interface of {@link Connection} to be implemented by Connection proxies. Allows access to the underlying target
  * Connection.
- * <p/>
+ * <p>
  * This interface can be checked when there is a need to cast to a native R2DBC {@link Connection}.
  *
  * @author Mark Paluch
@@ -33,7 +33,7 @@ public interface ConnectionProxy extends Connection, Wrapped<Connection> {
 
 	/**
 	 * Return the target {@link Connection} of this proxy.
-	 * <p/>
+	 * <p>
 	 * This will typically be the native driver {@link Connection} or a wrapper from a connection pool.
 	 *
 	 * @return the underlying Connection (never {@literal null})

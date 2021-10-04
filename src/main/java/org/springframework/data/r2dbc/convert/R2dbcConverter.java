@@ -76,7 +76,7 @@ public interface R2dbcConverter
 	 * Return whether the {@code type} is a simple type. Simple types are database primitives or types with a custom
 	 * mapping strategy.
 	 *
-	 * @param valueType the type to inspect, must not be {@literal null}.
+	 * @param type the type to inspect, must not be {@literal null}.
 	 * @return {@literal true} if the type is a simple one.
 	 * @see org.springframework.data.mapping.model.SimpleTypeHolder
 	 * @since 1.2
