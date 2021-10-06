@@ -34,6 +34,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -143,7 +144,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 
 		String query = queryMethod.getDeclaredQuery();
 
-		if (StringUtils.isEmpty(query)) {
+		if (ObjectUtils.isEmpty(query)) {
 			throw new IllegalStateException(String.format("No query specified on %s", queryMethod.getName()));
 		}
 

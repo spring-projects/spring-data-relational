@@ -151,6 +151,15 @@ public class JdbcQueryMethod extends QueryMethod {
 		return this.namedQueries.hasQuery(name) ? this.namedQueries.getQuery(name) : null;
 	}
 
+	/**
+	 * @return {@literal true} if the method is annotated with {@code @Query(name=…)}.
+	 */
+	public boolean hasAnnotatedQueryName() {
+		return lookupQueryAnnotation() //
+				.map(Query::name) //
+				.map(StringUtils::hasText).orElse(false);
+	}
+
 	@Override
 	public String getNamedQueryName() {
 
@@ -158,6 +167,7 @@ public class JdbcQueryMethod extends QueryMethod {
 
 		return StringUtils.hasText(annotatedName) ? annotatedName : super.getNamedQueryName();
 	}
+
 
 	/**
 	 * Returns the class to be used as {@link org.springframework.jdbc.core.RowMapper}

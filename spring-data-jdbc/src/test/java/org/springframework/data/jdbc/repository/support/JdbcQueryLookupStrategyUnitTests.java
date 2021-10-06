@@ -88,6 +88,20 @@ public class JdbcQueryLookupStrategyUnitTests {
 		verify(operations).queryForObject(anyString(), any(SqlParameterSource.class), any(RowMapper.class));
 	}
 
+	@Test // GH-1061
+	public void prefersDeclaredQuery() {
+
+		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
+		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
+				.registerRowMapper(NumberFormat.class, numberFormatMapper);
+
+		RepositoryQuery repositoryQuery = getRepositoryQuery("annotatedQueryWithQueryAndQueryName", mappingConfiguration);
+
+		repositoryQuery.execute(new Object[] {});
+
+		verify(operations).queryForObject(eq("some SQL"), any(SqlParameterSource.class), any(RowMapper.class));
+	}
+
 	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
 
 		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, callbacks, mappingContext,
@@ -102,5 +116,8 @@ public class JdbcQueryLookupStrategyUnitTests {
 		// NumberFormat is just used as an arbitrary non simple type.
 		@Query("some SQL")
 		NumberFormat returningNumberFormat();
+
+		@Query(value = "some SQL", name = "query-name")
+		void annotatedQueryWithQueryAndQueryName();
 	}
 }
