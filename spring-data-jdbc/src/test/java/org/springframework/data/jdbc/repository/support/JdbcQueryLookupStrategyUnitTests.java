@@ -53,19 +53,19 @@ import org.springframework.util.ReflectionUtils;
  * @author Mark Paluch
  * @author Hebert Coelho
  */
-public class JdbcQueryLookupStrategyUnitTests {
+class JdbcQueryLookupStrategyUnitTests {
 
-	ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
-	EntityCallbacks callbacks = mock(EntityCallbacks.class);
-	RelationalMappingContext mappingContext = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
-	JdbcConverter converter = mock(JdbcConverter.class);
-	ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
-	RepositoryMetadata metadata;
-	NamedQueries namedQueries = mock(NamedQueries.class);
-	NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
+	private ApplicationEventPublisher publisher = mock(ApplicationEventPublisher.class);
+	private EntityCallbacks callbacks = mock(EntityCallbacks.class);
+	private RelationalMappingContext mappingContext = mock(RelationalMappingContext.class, RETURNS_DEEP_STUBS);
+	private JdbcConverter converter = mock(JdbcConverter.class);
+	private ProjectionFactory projectionFactory = mock(ProjectionFactory.class);
+	private RepositoryMetadata metadata;
+	private NamedQueries namedQueries = mock(NamedQueries.class);
+	private NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 
 	@BeforeEach
-	public void setup() {
+	void setup() {
 
 		this.metadata = mock(RepositoryMetadata.class);
 
@@ -75,7 +75,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 
 	@Test // DATAJDBC-166
 	@SuppressWarnings("unchecked")
-	public void typeBasedRowMapperGetsUsedForQuery() {
+	void typeBasedRowMapperGetsUsedForQuery() {
 
 		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
 		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
@@ -89,7 +89,7 @@ public class JdbcQueryLookupStrategyUnitTests {
 	}
 
 	@Test // GH-1061
-	public void prefersDeclaredQuery() {
+	void prefersDeclaredQuery() {
 
 		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
 		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
