@@ -19,6 +19,9 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.EntityRowMapper;
@@ -59,6 +62,8 @@ import org.springframework.util.Assert;
  * @author Hebert Coelho
  */
 class JdbcQueryLookupStrategy implements QueryLookupStrategy {
+
+	private static final Log LOG = LogFactory.getLog(JdbcQueryLookupStrategy.class);
 
 	private final ApplicationEventPublisher publisher;
 	private final @Nullable EntityCallbacks callbacks;
@@ -104,6 +109,11 @@ class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 		try {
 			if (namedQueries.hasQuery(queryMethod.getNamedQueryName()) || queryMethod.hasAnnotatedQuery()) {
+
+				if (queryMethod.hasAnnotatedQuery() && queryMethod.hasAnnotatedQueryName()) {
+					LOG.warn(String.format(
+							"Query method %s is annotated with both, a query and a query name. Using the declared query.", method));
+				}
 
 				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, operations, this::createMapper, converter);
 				query.setBeanFactory(beanfactory);
