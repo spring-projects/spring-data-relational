@@ -38,10 +38,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
@@ -51,6 +53,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentEnti
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.support.MappingRelationalEntityInformation;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
 
@@ -771,6 +774,214 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 				.verifyComplete();
 	}
 
+	@Test // GH-663
+	void findByShouldReturnFirstResult() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 12)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 15)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setName("FORSCHUNGSSCHIFF");
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), FluentQuery.ReactiveFluentQuery::first) //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+
+					assertThat(actual.getManual()).isEqualTo(13);
+				}).verifyComplete();
+	}
+
+	@Test // GH-663
+	void findByShouldReturnOneResult() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setName("FORSCHUNGSSCHIFF");
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), FluentQuery.ReactiveFluentQuery::one) //
+				.as(StepVerifier::create) //
+				.assertNext(actual -> {
+
+					assertThat(actual.getManual()).isEqualTo(13);
+				}).verifyComplete();
+
+		probe = new LegoSet();
+		probe.setManual(13);
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), FluentQuery.ReactiveFluentQuery::one) //
+				.as(StepVerifier::create) //
+				.verifyError(IncorrectResultSizeDataAccessException.class);
+	}
+
+	@Test // GH-663
+	void findByShouldReturnAll() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setManual(13);
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), FluentQuery.ReactiveFluentQuery::all) //
+				.as(StepVerifier::create) //
+				.expectNextCount(3) //
+				.verifyComplete();
+	}
+
+	@Test // GH-663
+	void findByShouldApplySortAll() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setManual(13);
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), it -> it.sortBy(Sort.by("name")).all())
+				.map(LegoSet::getName) //
+				.as(StepVerifier::create) //
+				.expectNext("FORSCHUNGSSCHIFF", "SCHAUFELRADBAGGER", "VOLTRON") //
+				.verifyComplete();
+
+		repository
+				.findBy(Example.of(probe, matching().withIgnorePaths("id")),
+						it -> it.sortBy(Sort.by(Sort.Direction.DESC, "name")).all())
+				.map(LegoSet::getName) //
+				.as(StepVerifier::create) //
+				.expectNext("VOLTRON", "SCHAUFELRADBAGGER", "FORSCHUNGSSCHIFF") //
+				.verifyComplete();
+	}
+
+	@Test // GH-663
+	void findByShouldApplyProjection() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setName("FORSCHUNGSSCHIFF");
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), it -> it.project("name").first()) //
+				.as(StepVerifier::create) //
+				.assertNext(it -> {
+
+					assertThat(it.getName()).isNotNull();
+					assertThat(it.getManual()).isNull();
+				}).verifyComplete();
+	}
+
+	@Test // GH-663
+	void findByShouldApplyProjectionAs() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setName("FORSCHUNGSSCHIFF");
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), it -> it.as(LegoSetProjection.class).first()) //
+				.as(StepVerifier::create) //
+				.assertNext(it -> {
+
+					assertThat(it.getName()).isEqualTo("FORSCHUNGSSCHIFF");
+				}).verifyComplete();
+	}
+
+	@Test // GH-663
+	void findByShouldApplyPagination() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setManual(13);
+
+		repository
+				.findBy(Example.of(probe, matching().withIgnorePaths("id")),
+						it -> it.page(PageRequest.of(0, 1, Sort.by("name")))) //
+				.as(StepVerifier::create) //
+				.assertNext(it -> {
+
+					assertThat(it.getTotalElements()).isEqualTo(3);
+					assertThat(it.getContent()).extracting(LegoSet::getName).containsOnly("FORSCHUNGSSCHIFF");
+				}).verifyComplete();
+
+		repository
+				.findBy(Example.of(probe, matching().withIgnorePaths("id")),
+						it -> it.page(PageRequest.of(1, 1, Sort.by("name")))) //
+				.as(StepVerifier::create) //
+				.assertNext(it -> {
+
+					assertThat(it.getTotalElements()).isEqualTo(3);
+					assertThat(it.getContent()).extracting(LegoSet::getName).containsOnly("SCHAUFELRADBAGGER");
+				}).verifyComplete();
+	}
+
+	@Test // GH-663
+	void findByShouldCount() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('FORSCHUNGSSCHIFF', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setManual(13);
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), FluentQuery.ReactiveFluentQuery::count) //
+				.as(StepVerifier::create) //
+				.expectNext(3L) //
+				.verifyComplete();
+
+		probe = new LegoSet();
+		probe.setManual(0);
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), FluentQuery.ReactiveFluentQuery::count) //
+				.as(StepVerifier::create) //
+				.expectNext(0L) //
+				.verifyComplete();
+	}
+
+	@Test // GH-663
+	void findByShouldReportExists() {
+
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('SCHAUFELRADBAGGER', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('VOLTRON', 13)");
+		jdbc.execute("INSERT INTO legoset (name, manual) VALUES('RALLYEAUTO', 14)");
+
+		LegoSet probe = new LegoSet();
+		probe.setManual(13);
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), FluentQuery.ReactiveFluentQuery::exists) //
+				.as(StepVerifier::create) //
+				.expectNext(true) //
+				.verifyComplete();
+
+		probe = new LegoSet();
+		probe.setManual(0);
+
+		repository.findBy(Example.of(probe, matching().withIgnorePaths("id")), FluentQuery.ReactiveFluentQuery::exists) //
+				.as(StepVerifier::create) //
+				.expectNext(false) //
+				.verifyComplete();
+	}
+
 	@Data
 	@Table("legoset")
 	@AllArgsConstructor
@@ -780,6 +991,10 @@ public abstract class AbstractSimpleR2dbcRepositoryIntegrationTests extends R2db
 		@Id int id;
 		String name;
 		Integer manual;
+	}
+
+	interface LegoSetProjection {
+		String getName();
 	}
 
 	@Data

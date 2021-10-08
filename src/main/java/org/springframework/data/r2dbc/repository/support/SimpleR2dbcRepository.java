@@ -18,21 +18,28 @@ package org.springframework.data.r2dbc.repository.support;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import org.reactivestreams.Publisher;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.core.ReactiveSelectOperation;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.repository.query.RelationalEntityInformation;
 import org.springframework.data.relational.repository.query.RelationalExampleMapper;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Streamable;
@@ -432,11 +439,130 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		return this.entityOperations.exists(query, example.getProbeType());
 	}
 
+	@Override
+	public <S extends T, R, P extends Publisher<R>> P findBy(Example<S> example,
+			Function<FluentQuery.ReactiveFluentQuery<S>, P> queryFunction) {
+
+		Assert.notNull(example, "Sample must not be null!");
+		Assert.notNull(queryFunction, "Query function must not be null!");
+
+		return queryFunction.apply(new ReactiveFluentQueryByExample<>(example, example.getProbeType()));
+	}
+
 	private RelationalPersistentProperty getIdProperty() {
 		return this.idProperty.get();
 	}
 
 	private Query getIdQuery(Object id) {
 		return Query.query(Criteria.where(getIdProperty().getName()).is(id));
+	}
+
+	/**
+	 * {@link org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery} using {@link Example}.
+	 *
+	 * @author Mark Paluch
+	 * @since 1.4
+	 */
+	class ReactiveFluentQueryByExample<S, T> extends ReactiveFluentQuerySupport<Example<S>, T> {
+
+		ReactiveFluentQueryByExample(Example<S> example, Class<T> resultType) {
+			this(example, Sort.unsorted(), resultType, Collections.emptyList());
+		}
+
+		ReactiveFluentQueryByExample(Example<S> example, Sort sort, Class<T> resultType, List<String> fieldsToInclude) {
+			super(example, sort, resultType, fieldsToInclude);
+		}
+
+		@Override
+		protected <R> ReactiveFluentQueryByExample<S, R> create(Example<S> predicate, Sort sort, Class<R> resultType,
+				List<String> fieldsToInclude) {
+			return new ReactiveFluentQueryByExample<>(predicate, sort, resultType, fieldsToInclude);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#one()
+		 */
+		@Override
+		public Mono<T> one() {
+			return createQuery().one();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#first()
+		 */
+		@Override
+		public Mono<T> first() {
+			return createQuery().first();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#all()
+		 */
+		@Override
+		public Flux<T> all() {
+			return createQuery().all();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#page(org.springframework.data.domain.Pageable)
+		 */
+		@Override
+		public Mono<Page<T>> page(Pageable pageable) {
+
+			Assert.notNull(pageable, "Pageable must not be null!");
+
+			Mono<List<T>> items = createQuery(q -> q.with(pageable)).all().collectList();
+
+			return items.flatMap(content -> ReactivePageableExecutionUtils.getPage(content, pageable, this.count()));
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#count()
+		 */
+		@Override
+		public Mono<Long> count() {
+			return createQuery().count();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery#exists()
+		 */
+		@Override
+		public Mono<Boolean> exists() {
+			return createQuery().exists();
+		}
+
+		private ReactiveSelectOperation.TerminatingSelect<T> createQuery() {
+			return createQuery(UnaryOperator.identity());
+		}
+
+		@SuppressWarnings("unchecked")
+		private ReactiveSelectOperation.TerminatingSelect<T> createQuery(UnaryOperator<Query> queryCustomizer) {
+
+			Query query = exampleMapper.getMappedExample(getPredicate());
+
+			if (getSort().isSorted()) {
+				query = query.sort(getSort());
+			}
+
+			if (!getFieldsToInclude().isEmpty()) {
+				query = query.columns(getFieldsToInclude().toArray(new String[0]));
+			}
+
+			query = queryCustomizer.apply(query);
+
+			ReactiveSelectOperation.ReactiveSelect<S> select = entityOperations.select(getPredicate().getProbeType());
+
+			if (getResultType() != getPredicate().getProbeType()) {
+				return select.as(getResultType()).matching(query);
+			}
+			return (ReactiveSelectOperation.TerminatingSelect<T>) select.matching(query);
+		}
 	}
 }
