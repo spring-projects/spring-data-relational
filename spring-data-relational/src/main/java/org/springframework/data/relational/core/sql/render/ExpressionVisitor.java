@@ -15,15 +15,7 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.sql.AsteriskFromTable;
-import org.springframework.data.relational.core.sql.BindMarker;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Condition;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Named;
-import org.springframework.data.relational.core.sql.SimpleFunction;
-import org.springframework.data.relational.core.sql.SubselectExpression;
-import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -105,6 +97,11 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			}
 		} else if (segment instanceof AsteriskFromTable) {
 			value = NameRenderer.render(context, ((AsteriskFromTable) segment).getTable()) + ".*";
+		} else if (segment instanceof Cast) {
+
+			final CastVisitor visitor = new CastVisitor(context);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
 		} else {
 			// works for literals and just and possibly more
 			value = segment.toString();
@@ -138,6 +135,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	Delegation leaveMatched(Expression segment) {
 
 		if (partRenderer != null) {
+
 			value = partRenderer.getRenderedPart();
 			partRenderer = null;
 		}

@@ -15,6 +15,10 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.springframework.util.Assert;
 
 /**
@@ -63,5 +67,10 @@ abstract class AbstractSegment implements Segment {
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof Segment && toString().equals(obj.toString());
+	}
+
+	@Override
+	public String toString() {
+		return "AbstractSegment(" + Arrays.stream(children).map(Objects::toString).collect(Collectors.joining(", ")) + ")";
 	}
 }
