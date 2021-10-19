@@ -53,6 +53,13 @@ public abstract class Expressions {
 		return table.asterisk();
 	}
 
+	/**
+	 * @return a new {@link Cast} expression.
+	 */
+	public static Expression cast(Expression expression, String targetType) {
+		return Cast.create(expression, targetType);
+	}
+
 	// Utility constructor.
 	private Expressions() {}
 

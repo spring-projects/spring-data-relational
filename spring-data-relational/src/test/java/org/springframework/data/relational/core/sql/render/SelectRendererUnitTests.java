@@ -168,8 +168,7 @@ class SelectRendererUnitTests {
 				.join(department) //
 				.on(Conditions.isEqual(employee.column("department_id"), department.column("id")) //
 						.or(Conditions.isNotEqual(employee.column("tenant"), department.column("tenant")) //
-						))
-				.build();
+						)).build();
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee " //
 				+ "JOIN department ON employee.department_id = department.id " //
@@ -183,12 +182,11 @@ class SelectRendererUnitTests {
 		Table department = SQL.table("department");
 
 		Select select = Select.builder().select(employee.column("id"), department.column("name")).from(employee) //
-				.join(department)
-				.on(Expressions.just("alpha")).equals(Expressions.just("beta")) //
+				.join(department).on(Expressions.just("alpha")).equals(Expressions.just("beta")) //
 				.build();
 
-		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
-				+ "JOIN department ON alpha = beta");
+		assertThat(SqlRenderer.toString(select))
+				.isEqualTo("SELECT employee.id, department.name FROM employee " + "JOIN department ON alpha = beta");
 	}
 
 	@Test // DATAJDBC-309
@@ -457,5 +455,16 @@ class SelectRendererUnitTests {
 
 		final String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name, User.age FROM User WHERE User.age > 20");
+	}
+
+	@Test // GH-1066
+	void shouldRenderCast() {
+
+		Table table_user = SQL.table("User");
+		Select select = StatementBuilder.select(Expressions.cast(table_user.column("name"), "VARCHAR2")).from(table_user)
+				.build();
+
+		final String rendered = SqlRenderer.toString(select);
+		assertThat(rendered).isEqualTo("SELECT CAST(User.name AS VARCHAR2) FROM User");
 	}
 }

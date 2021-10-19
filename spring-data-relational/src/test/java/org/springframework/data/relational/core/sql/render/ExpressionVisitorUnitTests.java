@@ -68,7 +68,10 @@ public class ExpressionVisitorUnitTests {
 				fixture("Count *", Functions.count(Expressions.asterisk()), "COUNT(*)"), //
 				fixture("Function", SimpleFunction.create("Function", asList(SQL.literalOf("one"), SQL.literalOf("two"))), //
 						"Function('one', 'two')"), //
-				fixture("Null", SQL.nullLiteral(), "NULL")); //
+				fixture("Null", SQL.nullLiteral(), "NULL"), //
+				fixture("Cast", Expressions.cast(Column.create("col", Table.create("tab")), "JSON"), "CAST(tab.col AS JSON)"), //
+				fixture("Cast with alias", Expressions.cast(Column.create("col", Table.create("tab")).as("alias"), "JSON"),
+						"CAST(tab.col AS JSON)")); //
 	}
 
 	@Test // GH-1003
