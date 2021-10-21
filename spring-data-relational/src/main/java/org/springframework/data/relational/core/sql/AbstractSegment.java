@@ -15,12 +15,15 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Arrays;
+
 import org.springframework.util.Assert;
 
 /**
  * Abstract implementation to support {@link Segment} implementations.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 abstract class AbstractSegment implements Segment {
@@ -47,21 +50,21 @@ abstract class AbstractSegment implements Segment {
 		visitor.leave(this);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
-	public int hashCode() {
-		return toString().hashCode();
+	public boolean equals(Object o) {
+
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		AbstractSegment that = (AbstractSegment) o;
+		return Arrays.equals(children, that.children);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof Segment && toString().equals(obj.toString());
+	public int hashCode() {
+		return Arrays.hashCode(children);
 	}
 }

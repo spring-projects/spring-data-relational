@@ -23,7 +23,6 @@ import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 import java.util.Map;
 import java.util.Set;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
@@ -374,6 +373,23 @@ public class SqlGeneratorUnitTests {
 				+ "WHERE dummy_entity.backref = :backref " + "ORDER BY key-column");
 	}
 
+	@Test // GH-1073
+	public void findAllByPropertyAvoidsDuplicateColumns() {
+
+		final SqlGenerator sqlGenerator = createSqlGenerator(ReferencedEntity.class);
+		final String sql = sqlGenerator.getFindAllByProperty(
+				Identifier.of(quoted("id"), "parent-id-value", DummyEntity.class), //
+				quoted("X_L1ID"), // this key column collides with the name derived by the naming strategy for the id of
+													// ReferencedEntity.
+				false);
+
+		final String id = "referenced_entity.x_l1id AS x_l1id";
+		assertThat(sql.indexOf(id)) //
+				.describedAs(sql) //
+				.isEqualTo(sql.lastIndexOf(id));
+
+	}
+
 	@Test // DATAJDBC-219
 	public void updateWithVersion() {
 
@@ -709,6 +725,7 @@ public class SqlGeneratorUnitTests {
 		Set<Element> elements;
 		Map<Integer, Element> mappedElements;
 		AggregateReference<OtherAggregate, Long> other;
+		Map<Long, ReferencedEntity> mappedReference;
 	}
 
 	static class VersionedEntity extends DummyEntity {

@@ -381,11 +381,11 @@ class SqlGenerator {
 		Table table = this.getTable();
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
-			.from(table) //
-			.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
-			.lock(lockMode) //
-			.build();
+				.select(getIdColumn()) //
+				.from(table) //
+				.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
+				.lock(lockMode) //
+				.build();
 
 		return render(select);
 	}
@@ -395,10 +395,10 @@ class SqlGenerator {
 		Table table = this.getTable();
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
-			.from(table) //
-			.lock(lockMode) //
-			.build();
+				.select(getIdColumn()) //
+				.from(table) //
+				.lock(lockMode) //
+				.build();
 
 		return render(select);
 	}
@@ -727,9 +727,9 @@ class SqlGenerator {
 
 		Join(Table joinTable, Column joinColumn, Column parentId) {
 
-			Assert.notNull( joinTable,"JoinTable must not be null.");
-			Assert.notNull( joinColumn,"JoinColumn must not be null.");
-			Assert.notNull( parentId,"ParentId must not be null.");
+			Assert.notNull(joinTable, "JoinTable must not be null.");
+			Assert.notNull(joinColumn, "JoinColumn must not be null.");
+			Assert.notNull(parentId, "ParentId must not be null.");
 
 			this.joinTable = joinTable;
 			this.joinColumn = joinColumn;
