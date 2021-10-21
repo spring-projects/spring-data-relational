@@ -982,9 +982,13 @@ class SqlGenerator {
 		public boolean equals(Object o) {
 
 			if (this == o)
+				{
 				return true;
+			}
 			if (o == null || getClass() != o.getClass())
+				{
 				return false;
+			}
 			Join join = (Join) o;
 			return joinTable.equals(join.joinTable) && joinColumn.equals(join.joinColumn) && parentId.equals(join.parentId);
 		}
@@ -997,7 +1001,11 @@ class SqlGenerator {
 		@Override
 		public String toString() {
 
-			return "Join{" + "joinTable=" + joinTable + ", joinColumn=" + joinColumn + ", parentId=" + parentId + '}';
+			return "Join{" + //
+					"joinTable=" + joinTable + //
+					", joinColumn=" + joinColumn + //
+					", parentId=" + parentId + //
+					'}';
 		}
 	}
 
