@@ -15,16 +15,19 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Objects;
+
 import org.springframework.util.Assert;
 
 /**
- * Represents a table reference within a SQL statement. Typically used to denote {@code FROM} or {@code JOIN} or to
+ * Represents a table reference within a SQL statement. Typically, used to denote {@code FROM} or {@code JOIN} or to
  * prefix a {@link Column}.
  * <p>
  * Renders to: {@code <name>} or {@code <name> AS <name>}.
  * </p>
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 public class Table extends AbstractSegment implements TableLike {
@@ -127,6 +130,26 @@ public class Table extends AbstractSegment implements TableLike {
 		return name.toString();
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		if (!super.equals(o)) {
+			return false;
+		}
+		Table table = (Table) o;
+		return name.equals(table.name);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), name);
+	}
+
 	/**
 	 * {@link Aliased} {@link Table} implementation.
 	 */
@@ -163,6 +186,27 @@ public class Table extends AbstractSegment implements TableLike {
 		@Override
 		public String toString() {
 			return getName() + " AS " + getAlias();
+		}
+
+		@Override
+		public boolean equals(Object o) {
+
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			if (!super.equals(o)) {
+				return false;
+			}
+			AliasedTable that = (AliasedTable) o;
+			return alias.equals(that.alias);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(super.hashCode(), alias);
 		}
 	}
 }

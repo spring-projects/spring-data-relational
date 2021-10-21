@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Objects;
+
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -357,6 +359,27 @@ public class Column extends AbstractSegment implements Expression, Named {
 		return prefix;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		if (!super.equals(o)) {
+			return false;
+		}
+		Column column = (Column) o;
+		return name.equals(column.name) && table.equals(column.table);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), name, table);
+	}
+
 	/**
 	 * {@link Aliased} {@link Column} implementation.
 	 */
@@ -395,6 +418,27 @@ public class Column extends AbstractSegment implements Expression, Named {
 		@Override
 		public String toString() {
 			return getPrefix() + getName() + " AS " + getAlias();
+		}
+
+		@Override
+		public boolean equals(Object o) {
+
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			if (!super.equals(o)) {
+				return false;
+			}
+			AliasedColumn that = (AliasedColumn) o;
+			return alias.equals(that.alias);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(super.hashCode(), alias);
 		}
 	}
 }
