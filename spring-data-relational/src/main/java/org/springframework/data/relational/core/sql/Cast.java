@@ -45,7 +45,7 @@ public class Cast extends AbstractSegment implements Expression {
 	 * @param targetType the type to cast to. Must not be {@literal null}.
 	 * @return guaranteed to be not {@literal null}.
 	 */
-	public static Expression create(Expression expression, String targetType) {
+	static Expression create(Expression expression, String targetType) {
 		return new Cast(expression, targetType);
 	}
 

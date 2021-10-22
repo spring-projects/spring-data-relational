@@ -20,6 +20,7 @@ import java.util.StringJoiner;
 import org.springframework.data.relational.core.sql.Cast;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * Renders a CAST expression, by delegating to an {@link ExpressionVisitor} and building the expression out of the
@@ -57,12 +58,8 @@ class CastVisitor extends TypedSubtreeVisitor<Cast> implements PartRenderer {
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
-		if (joiner == null) {
-			throw new IllegalStateException("Joiner must not be null.");
-		}
-		if (expressionVisitor == null) {
-			throw new IllegalStateException("ExpressionVisitor must not be null.");
-		}
+		Assert.state(joiner != null, "Joiner must not be null.");
+		Assert.state(expressionVisitor != null, "ExpressionVisitor must not be null.");
 
 		joiner.add(expressionVisitor.getRenderedPart());
 		return super.leaveNested(segment);

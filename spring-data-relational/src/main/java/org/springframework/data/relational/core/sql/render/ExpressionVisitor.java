@@ -99,7 +99,7 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			value = NameRenderer.render(context, ((AsteriskFromTable) segment).getTable()) + ".*";
 		} else if (segment instanceof Cast) {
 
-			final CastVisitor visitor = new CastVisitor(context);
+			CastVisitor visitor = new CastVisitor(context);
 			partRenderer = visitor;
 			return Delegation.delegateTo(visitor);
 		} else {

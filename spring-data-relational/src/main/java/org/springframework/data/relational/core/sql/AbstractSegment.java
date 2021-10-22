@@ -16,10 +16,9 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.Arrays;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Abstract implementation to support {@link Segment} implementations.
@@ -71,6 +70,7 @@ abstract class AbstractSegment implements Segment {
 
 	@Override
 	public String toString() {
-		return "AbstractSegment(" + Arrays.stream(children).map(Objects::toString).collect(Collectors.joining(", ")) + ")";
+		return StringUtils.collectionToDelimitedString(Arrays.asList(children), ", ", getClass().getSimpleName() + "(",
+				")");
 	}
 }

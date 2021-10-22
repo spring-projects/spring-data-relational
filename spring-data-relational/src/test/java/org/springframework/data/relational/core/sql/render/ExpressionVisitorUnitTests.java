@@ -23,7 +23,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.data.relational.core.sql.Cast;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Expressions;
@@ -70,8 +69,8 @@ public class ExpressionVisitorUnitTests {
 				fixture("Function", SimpleFunction.create("Function", asList(SQL.literalOf("one"), SQL.literalOf("two"))), //
 						"Function('one', 'two')"), //
 				fixture("Null", SQL.nullLiteral(), "NULL"), //
-				fixture("Cast", Cast.create(Column.create("col", Table.create("tab")), "JSON"), "CAST(tab.col AS JSON)"), //
-				fixture("Cast with alias", Cast.create(Column.create("col", Table.create("tab")).as("alias"), "JSON"),
+				fixture("Cast", Expressions.cast(Column.create("col", Table.create("tab")), "JSON"), "CAST(tab.col AS JSON)"), //
+				fixture("Cast with alias", Expressions.cast(Column.create("col", Table.create("tab")).as("alias"), "JSON"),
 						"CAST(tab.col AS JSON)")); //
 	}
 

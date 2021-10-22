@@ -461,7 +461,7 @@ class SelectRendererUnitTests {
 	void shouldRenderCast() {
 
 		Table table_user = SQL.table("User");
-		Select select = StatementBuilder.select(Cast.create(table_user.column("name"), "VARCHAR2")).from(table_user)
+		Select select = StatementBuilder.select(Expressions.cast(table_user.column("name"), "VARCHAR2")).from(table_user)
 				.build();
 
 		final String rendered = SqlRenderer.toString(select);
