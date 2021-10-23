@@ -22,6 +22,7 @@ import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Into;
 import org.springframework.data.relational.core.sql.Values;
 import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.util.Assert;
 
 /**
  * {@link PartRenderer} for {@link Insert} statements.
@@ -41,6 +42,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	private final IntoClauseVisitor intoClauseVisitor;
 	private final ColumnVisitor columnVisitor;
 	private final ValuesVisitor valuesVisitor;
+	private Dialect dialect;
 
 	InsertStatementVisitor(RenderContext context) {
 		this.intoClauseVisitor = createIntoClauseVisitor(context);
@@ -85,7 +87,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 			addInsertColumnsIfPresent();
 
-			addInsertValuesIfPresentElseDefault((Insert) segment);
+			addInsertValuesIfPresentElseDefault();
 
 			return Delegation.leave();
 		}
@@ -93,11 +95,11 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		return Delegation.retain();
 	}
 
-	private void addInsertValuesIfPresentElseDefault(Insert segment) {
+	private void addInsertValuesIfPresentElseDefault() {
 		if (values.length() != 0) {
 			builder.append(" VALUES (").append(values).append(")");
 		} else {
-			addInsertWithDefaultValuesToBuilder(segment.getInsertDialect());
+			addInsertWithDefaultValuesToBuilder();
 		}
 	}
 
@@ -107,7 +109,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		}
 	}
 
-	private void addInsertWithDefaultValuesToBuilder(Dialect dialect) {
+	private void addInsertWithDefaultValuesToBuilder() {
 		builder.append(dialect.getSqlInsertWithDefaultValues().getDefaultInsertPart());
 	}
 
@@ -142,5 +144,10 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 			into.append(it);
 		});
+	}
+
+	public void setDialect(Dialect dialect) {
+		Assert.notNull(dialect, "Dialect must not be null!");
+		this.dialect = dialect;
 	}
 }

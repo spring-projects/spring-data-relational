@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import org.springframework.data.relational.core.dialect.Dialect;
-
 import java.util.Collection;
 
 /**
@@ -24,7 +22,6 @@ import java.util.Collection;
  *
  * @author Mark Paluch
  * @author Jens Schauder
- * @author Mikhail Polivakha
  * @since 1.1
  * @see StatementBuilder
  */
@@ -39,8 +36,6 @@ public interface InsertBuilder {
 	 * @see SQL#table(String)
 	 */
 	InsertIntoColumnsAndValuesWithBuild into(Table table);
-
-	InsertBuilder dialect(Dialect dialect);
 
 	/**
 	 * Interface exposing {@code WHERE} methods.

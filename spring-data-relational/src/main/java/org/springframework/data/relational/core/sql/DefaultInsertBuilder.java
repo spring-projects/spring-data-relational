@@ -15,20 +15,18 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-
 /**
  * Default {@link InsertBuilder} implementation.
  *
  * @author Mark Paluch
- * @author Mikhail Polivakha
  * @since 1.1
  */
 class DefaultInsertBuilder
@@ -37,7 +35,7 @@ class DefaultInsertBuilder
 	private @Nullable Table into;
 	private final List<Column> columns = new ArrayList<>();
 	private final List<Expression> values = new ArrayList<>();
-	private Dialect dialect;
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.InsertBuilder#into(org.springframework.data.relational.core.sql.Table)
@@ -48,15 +46,6 @@ class DefaultInsertBuilder
 		Assert.notNull(table, "Insert Into Table must not be null!");
 
 		this.into = table;
-		return this;
-	}
-
-	@Override
-	public InsertBuilder dialect(Dialect dialect) {
-
-		Assert.notNull(dialect, "Dialect provided for insert must not be null");
-
-		this.dialect = dialect;
 		return this;
 	}
 
@@ -146,6 +135,6 @@ class DefaultInsertBuilder
 	 */
 	@Override
 	public Insert build() {
-		return new DefaultInsert(this.into, this.columns, this.values, dialect);
+		return new DefaultInsert(this.into, this.columns, this.values);
 	}
 }

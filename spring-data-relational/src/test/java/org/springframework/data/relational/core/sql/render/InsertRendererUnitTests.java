@@ -15,15 +15,13 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import static org.assertj.core.api.Assertions.*;
-
-import ch.qos.logback.core.db.dialect.MsSQLDialect;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Table;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link SqlRenderer}.
@@ -41,7 +39,7 @@ public class InsertRendererUnitTests {
 
 		Insert insert = Insert.builder().into(bar).values(SQL.bindMarker()).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar VALUES (?)");
+		assertThat(SqlRenderer.create().render(insert)).isEqualTo("INSERT INTO bar VALUES (?)");
 	}
 
 	@Test // DATAJDBC-335
@@ -51,7 +49,7 @@ public class InsertRendererUnitTests {
 
 		Insert insert = Insert.builder().into(bar).column(bar.column("foo")).values(SQL.bindMarker()).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (foo) VALUES (?)");
+		assertThat(SqlRenderer.create().render(insert)).isEqualTo("INSERT INTO bar (foo) VALUES (?)");
 	}
 
 	@Test // DATAJDBC-335
@@ -62,18 +60,16 @@ public class InsertRendererUnitTests {
 		Insert insert = Insert.builder().into(bar).columns(bar.columns("foo", "baz")).value(SQL.bindMarker())
 				.value(SQL.literalOf("foo")).build();
 
-		assertThat(SqlRenderer.toString(insert)).isEqualTo("INSERT INTO bar (foo, baz) VALUES (?, 'foo')");
+		assertThat(SqlRenderer.create().render(insert)).isEqualTo("INSERT INTO bar (foo, baz) VALUES (?, 'foo')");
 	}
 
 	@Test // DATAJDBC-340
 	public void shouldRenderInsertWithZeroColumns() {
 
-		final String testTableName = "bar";
-		Table bar = SQL.table(testTableName);
+		Table bar = Table.create("bar");
 
-		Insert insert = Insert.builder().dialect(SqlServerDialect.INSTANCE).into(bar).build();
+		Insert insert = Insert.builder().into(bar).build();
 
-		assertThat(SqlRenderer.toString(insert)).contains(SqlServerDialect.INSTANCE.getSqlInsertWithDefaultValues().getDefaultInsertPart());
+		assertThat(SqlRenderer.create().render(insert, SqlServerDialect.INSTANCE)).contains(SqlServerDialect.INSTANCE.getSqlInsertWithDefaultValues().getDefaultInsertPart());
 	}
-
 }

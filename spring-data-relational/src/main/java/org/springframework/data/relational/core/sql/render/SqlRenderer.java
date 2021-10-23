@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Select;
@@ -26,6 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 1.1
  * @see RenderContext
  */
@@ -67,16 +69,6 @@ public class SqlRenderer implements Renderer {
 	 */
 	public static String toString(Select select) {
 		return create().render(select);
-	}
-
-	/**
-	 * Renders a {@link Insert} statement into its SQL representation.
-	 *
-	 * @param insert must not be {@literal null}.
-	 * @return the rendered statement.
-	 */
-	public static String toString(Insert insert) {
-		return create().render(insert);
 	}
 
 	/**
@@ -123,7 +115,18 @@ public class SqlRenderer implements Renderer {
 
 		InsertStatementVisitor visitor = new InsertStatementVisitor(context);
 		insert.visit(visitor);
+		return visitor.getRenderedPart().toString();
+	}
 
+	/**
+	 * (non-Javadoc)
+	 * @see Renderer
+	 */
+	@Override
+	public String render(Insert insert, Dialect dialect) {
+		InsertStatementVisitor visitor = new InsertStatementVisitor(context);
+		visitor.setDialect(dialect);
+		insert.visit(visitor);
 		return visitor.getRenderedPart().toString();
 	}
 

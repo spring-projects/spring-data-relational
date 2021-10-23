@@ -134,7 +134,6 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	/**
-	 *
 	 * @return default implementation of InsertWithDefaultValues
 	 */
 	@Override

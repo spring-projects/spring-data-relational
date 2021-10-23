@@ -157,7 +157,7 @@ public class SqlServerDialect extends AbstractDialect {
 		return new InsertWithDefaultValues() {
 			@Override
 			public String getDefaultInsertPart() {
-				return " DEFAULT VALUES ";
+				return InsertDefaultValues.MS_SQL_SERVER.getDefaultInsertPart();
 			}
 		};
 	}

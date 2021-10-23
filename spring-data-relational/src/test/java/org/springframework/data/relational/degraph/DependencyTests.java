@@ -37,8 +37,8 @@ public class DependencyTests {
 		assertThat( //
 				classpath() //
 						.noJars() //
-						.including("org.springframework.data.relational.**") //
-						.excluding("org.springframework.data.relational.core.dialect.**") //
+						.including("org.springframework.data.relational.**")
+						.excluding("org.springframework.data.relational.core.sql.render.**")
 						.filterClasspath("*target/classes") // exclude test code
 						.printOnFailure("degraph-relational.graphml"),
 				JCheck.violationFree());

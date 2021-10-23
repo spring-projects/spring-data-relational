@@ -575,7 +575,7 @@ class SqlGenerator {
 		columnNamesForInsert.addAll(columns.getInsertableColumns());
 		columnNamesForInsert.addAll(additionalColumns);
 
-		InsertBuilder.InsertIntoColumnsAndValuesWithBuild insert = Insert.builder().dialect(dialect).into(table);
+		InsertBuilder.InsertIntoColumnsAndValuesWithBuild insert = Insert.builder().into(table);
 
 		for (SqlIdentifier cn : columnNamesForInsert) {
 			insert = insert.column(table.column(cn));
@@ -679,7 +679,7 @@ class SqlGenerator {
 	}
 
 	private String render(Insert insert) {
-		return this.sqlRenderer.render(insert);
+		return this.sqlRenderer.render(insert, dialect);
 	}
 
 	private String render(Update update) {
