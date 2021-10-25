@@ -5,7 +5,7 @@ The Spring Data R2DBC project applies core Spring concepts to the development of
 We provide a `DatabaseClient` as a high-level abstraction for storing and querying rows.
 
 This document is the reference guide for Spring Data - R2DBC Support.
-It explains R2DBC module concepts and semantics and.
+It explains R2DBC module concepts and semantics.
 
 This section provides some basic introduction to Spring and databases.
 [[get-started:first-steps:spring]]
