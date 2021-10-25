@@ -38,6 +38,6 @@ public class SubselectExpression extends AbstractSegment implements Expression {
 	 */
 	@Override
 	public String toString() {
-		return "(" + subselect.toString() + ")";
+		return "(" + subselect + ")";
 	}
 }

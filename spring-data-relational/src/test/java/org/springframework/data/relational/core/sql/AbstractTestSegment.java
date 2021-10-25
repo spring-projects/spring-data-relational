@@ -20,7 +20,7 @@ package org.springframework.data.relational.core.sql;
  *
  * @author Jens Schauder
  */
-public class AbstractTestSegment extends AbstractSegment{
+public class AbstractTestSegment extends AbstractSegment {
 	protected AbstractTestSegment(Segment... children) {
 		super(children);
 	}

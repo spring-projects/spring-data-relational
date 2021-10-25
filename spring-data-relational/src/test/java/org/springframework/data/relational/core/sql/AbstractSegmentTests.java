@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,23 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import static org.assertj.core.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
+
 /**
- * @author Jens Schauder
- * @since 1.1
+ * Unit tests for {@link AbstractSegment}.
+ *
+ * @author Mark Paluch
  */
-public class Not extends AbstractSegment implements Condition {
+class AbstractSegmentTests {
 
-	private final Condition condition;
+	@Test // GH-1066
+	void shouldReportToStringCorrectly() {
 
-	Not(Condition condition) {
+		Table table = Table.create("foo");
+		AbstractSegment segment = new AbstractTestSegment(table.column("col1"), table.column("col2"));
 
-		super(condition);
-
-		this.condition = condition;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Condition#not()
-	 */
-	@Override
-	public Condition not() {
-		return condition;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return "NOT " + condition;
+		assertThat(segment).hasToString("AbstractTestSegment(foo.col1, foo.col2)");
 	}
 }

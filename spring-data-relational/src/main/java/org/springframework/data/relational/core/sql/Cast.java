@@ -18,7 +18,7 @@ package org.springframework.data.relational.core.sql;
 import org.springframework.util.Assert;
 
 /**
- * Represents a CAST expression like {@code CAST(something AS JSON}.
+ * Represents a {@code CAST} expression like {@code CAST(something AS JSON}.
  *
  * @author Jens Schauder
  * @since 2.3
@@ -39,13 +39,13 @@ public class Cast extends AbstractSegment implements Expression {
 	}
 
 	/**
-	 * Creates a new CAST expression.
+	 * Creates a new {@code CAST} expression.
 	 *
 	 * @param expression the expression to cast. Must not be {@literal null}.
 	 * @param targetType the type to cast to. Must not be {@literal null}.
-	 * @return guaranteed to be not {@literal null}.
+	 * @return the {@code CAST} for {@code expression} into {@code targetType}.
 	 */
-	static Expression create(Expression expression, String targetType) {
+	public static Expression create(Expression expression, String targetType) {
 		return new Cast(expression, targetType);
 	}
 

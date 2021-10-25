@@ -57,6 +57,6 @@ class AliasedExpression extends AbstractSegment implements Aliased, Expression {
 	 */
 	@Override
 	public String toString() {
-		return expression.toString() + " AS " + alias;
+		return expression + " AS " + alias;
 	}
 }

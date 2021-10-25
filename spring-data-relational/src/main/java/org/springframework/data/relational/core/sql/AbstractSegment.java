@@ -15,8 +15,6 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import java.util.Arrays;
-
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -70,7 +68,6 @@ abstract class AbstractSegment implements Segment {
 
 	@Override
 	public String toString() {
-		return StringUtils.collectionToDelimitedString(Arrays.asList(children), ", ", getClass().getSimpleName() + "(",
-				")");
+		return getClass().getSimpleName() + "(" + StringUtils.arrayToDelimitedString(children, ", ") + ")";
 	}
 }

@@ -55,6 +55,7 @@ public abstract class Expressions {
 
 	/**
 	 * @return a new {@link Cast} expression.
+	 * @since 2.3
 	 */
 	public static Expression cast(Expression expression, String targetType) {
 		return Cast.create(expression, targetType);

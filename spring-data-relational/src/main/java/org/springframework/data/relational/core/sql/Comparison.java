@@ -116,6 +116,6 @@ public class Comparison extends AbstractSegment implements Condition {
 
 	@Override
 	public String toString() {
-		return left.toString() + " " + comparator + " " + right.toString();
+		return left + " " + comparator + " " + right;
 	}
 }
