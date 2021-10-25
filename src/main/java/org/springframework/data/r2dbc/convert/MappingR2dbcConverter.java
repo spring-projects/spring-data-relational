@@ -167,16 +167,16 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 				value = row.get(identifier);
 			}
 
-			if (value != null && getConversions().hasCustomReadTarget(value.getClass(), property.getType())) {
+			if (value == null) {
+				return null;
+			}
+
+			if (getConversions().hasCustomReadTarget(value.getClass(), property.getType())) {
 				return readValue(value, property.getTypeInformation());
 			}
 
 			if (property.isEntity()) {
 				return readEntityFrom(row, metadata, property);
-			}
-
-			if (value == null) {
-				return null;
 			}
 
 			return readValue(value, property.getTypeInformation());
@@ -613,8 +613,8 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 			if (idPropertyUpdateNeeded) {
 				return potentiallySetId(row, metadata, propertyAccessor, idProperty) //
-					? (T) propertyAccessor.getBean() //
-					: object;
+						? (T) propertyAccessor.getBean() //
+						: object;
 			}
 
 			return object;
