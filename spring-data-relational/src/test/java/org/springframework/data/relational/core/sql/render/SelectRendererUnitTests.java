@@ -37,7 +37,7 @@ class SelectRendererUnitTests {
 		Table bar = SQL.table("bar");
 		Column foo = bar.column("foo");
 
-		Select select = Select.builder().select(foo).from(bar).limitOffset(1, 2).build();
+		Select select = Select.builder().select(foo).from(bar).build();
 
 		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT bar.foo FROM bar");
 	}
@@ -466,5 +466,64 @@ class SelectRendererUnitTests {
 
 		final String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT CAST(User.name AS VARCHAR2) FROM User");
+	}
+
+	@Test // GH-1076
+	void rendersLimitAndOffset() {
+
+		Table table_user = SQL.table("User");
+		Select select = StatementBuilder.select(table_user.column("name")).from(table_user).limitOffset(10, 5).build();
+
+		final String rendered = SqlRenderer.toString(select);
+		assertThat(rendered).isEqualTo("SELECT User.name FROM User OFFSET 5 ROWS FETCH FIRST 10 ROWS ONLY");
+	}
+
+	@Test // GH-1076
+	void rendersLimit() {
+
+		Table table_user = SQL.table("User");
+		Select select = StatementBuilder.select(table_user.column("name")).from(table_user) //
+				.limit(3) //
+				.build();
+
+		final String rendered = SqlRenderer.toString(select);
+		assertThat(rendered).isEqualTo("SELECT User.name FROM User FETCH FIRST 3 ROWS ONLY");
+	}
+
+	@Test // GH-1076
+	void rendersLock() {
+
+		Table table_user = SQL.table("User");
+		Select select = StatementBuilder.select(table_user.column("name")).from(table_user) //
+				.lock(LockMode.PESSIMISTIC_READ) //
+				.build();
+
+		final String rendered = SqlRenderer.toString(select);
+		assertThat(rendered).isEqualTo("SELECT User.name FROM User FOR UPDATE");
+	}
+
+	@Test // GH-1076
+	void rendersLockAndOffset() {
+
+		Table table_user = SQL.table("User");
+		Select select = StatementBuilder.select(table_user.column("name")).from(table_user).offset(3) //
+				.lock(LockMode.PESSIMISTIC_WRITE) //
+				.build();
+
+		final String rendered = SqlRenderer.toString(select);
+		assertThat(rendered).isEqualTo("SELECT User.name FROM User FOR UPDATE OFFSET 3 ROWS");
+	}
+
+	@Test // GH-1076
+	void rendersLockAndOffsetUsingDialect() {
+
+		Table table_user = SQL.table("User");
+		Select select = StatementBuilder.select(table_user.column("name")).from(table_user).limitOffset(3, 6) //
+				.lock(LockMode.PESSIMISTIC_WRITE) //
+				.build();
+
+		String rendered = SqlRenderer.create(new RenderContextFactory(PostgresDialect.INSTANCE).createRenderContext())
+				.render(select);
+		assertThat(rendered).isEqualTo("SELECT User.name FROM User LIMIT 3 OFFSET 6 FOR UPDATE OF User");
 	}
 }
