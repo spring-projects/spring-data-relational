@@ -33,6 +33,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -163,7 +164,7 @@ public class TestConfiguration {
 		return new TestDatabaseFeatures(operations.getJdbcOperations());
 	}
 	
-	@Bean JdbcAggregateTemplate jdbcAggregateTemplate(
+	@Bean JdbcAggregateOperations jdbcAggregateOperations(
 			ApplicationContext applicationContext,
 			@Qualifier("converter") JdbcConverter jdbcConverter,
 			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy,

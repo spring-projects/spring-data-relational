@@ -132,10 +132,10 @@ public @interface EnableJdbcRepositories {
 	String transactionManagerRef() default "transactionManager";
 
 	/**
-	 * Configures the name of the {@link org.springframework.data.jdbc.core.JdbcAggregateTemplate} bean definition to be
+	 * Configures the name of the {@link org.springframework.data.jdbc.core.JdbcAggregateOperations} bean definition to be
 	 * used to create repositories discovered through this annotation.
 	 * 
 	 * @since 2.3
 	 */
-	String jdbcAggregateTemplateRef() default "";
+	String jdbcAggregateOperationsRef() default "";
 }

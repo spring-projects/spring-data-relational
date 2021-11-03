@@ -21,6 +21,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
@@ -59,12 +60,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private NamedParameterJdbcOperations operations;
 	private EntityCallbacks entityCallbacks;
 	private Dialect dialect;
-
-	public void setJdbcAggregateTemplate(JdbcAggregateTemplate jdbcAggregateTemplate) {
-		this.jdbcAggregateTemplate = jdbcAggregateTemplate;
-	}
-
-	private JdbcAggregateTemplate jdbcAggregateTemplate;
+	private JdbcAggregateOperations jdbcAggregateOperations;
 
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
@@ -87,14 +83,18 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 		this.publisher = publisher;
 	}
 
+	public void setJdbcAggregateOperations(JdbcAggregateOperations jdbcAggregateOperations) {
+		this.jdbcAggregateOperations = jdbcAggregateOperations;
+	}
+
 	/**
 	 * Creates the actual {@link RepositoryFactorySupport} instance.
 	 */
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
 		JdbcRepositoryFactory  jdbcRepositoryFactory;
-		if (jdbcAggregateTemplate != null) {
-			jdbcRepositoryFactory = new JdbcRepositoryFactory(jdbcAggregateTemplate, publisher);
+		if (jdbcAggregateOperations != null) {
+			jdbcRepositoryFactory = new JdbcRepositoryFactory(jdbcAggregateOperations, publisher);
 		} else {
 			jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
 					converter, dialect, publisher, operations);

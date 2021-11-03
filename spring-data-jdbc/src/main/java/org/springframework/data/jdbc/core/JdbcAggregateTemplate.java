@@ -55,17 +55,6 @@ import org.springframework.util.Assert;
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
-	public RelationalMappingContext getContext() {
-		return context;
-	}
-
-	public DataAccessStrategy getAccessStrategy() {
-		return accessStrategy;
-	}
-
-	public NamedParameterJdbcOperations getNamedParameterJdbcOperations() {
-		return operations;
-	}
 
 	private final ApplicationEventPublisher publisher;
 	private final RelationalMappingContext context;
@@ -77,10 +66,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	private final DataAccessStrategy accessStrategy;
 	private final NamedParameterJdbcOperations operations;
 	private final AggregateChangeExecutor executor;
-
-	public JdbcConverter getConverter() {
-		return converter;
-	}
 
 	private final JdbcConverter converter;
 
@@ -144,6 +129,22 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
+	}
+
+	public RelationalMappingContext getRelationalMappingContext() {
+		return context;
+	}
+
+	public DataAccessStrategy getDataAccessStrategy() {
+		return accessStrategy;
+	}
+
+	public NamedParameterJdbcOperations getNamedParameterJdbcOperations() {
+		return operations;
+	}
+	
+	public JdbcConverter getJdbcConverter() {
+		return converter;
 	}
 
 	/**

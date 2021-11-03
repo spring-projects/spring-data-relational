@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -94,16 +95,16 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link JdbcAggregateTemplate} and
 	 * {@link ApplicationEventPublisher}.
 	 * 
-	 * @param template
+	 * @param operations
 	 * @param publisher
 	 */
-	public JdbcRepositoryFactory(JdbcAggregateTemplate template, ApplicationEventPublisher publisher) {
+	public JdbcRepositoryFactory(JdbcAggregateOperations operations, ApplicationEventPublisher publisher) {
 		this.publisher = publisher;
-		this.context = template.getContext();
-		this.converter = template.getConverter();
-		this.dialect = DialectResolver.getDialect(template.getNamedParameterJdbcOperations().getJdbcOperations());
-		this.accessStrategy = template.getAccessStrategy();
-		this.operations = template.getNamedParameterJdbcOperations();
+		this.context = operations.getRelationalMappingContext();
+		this.converter = operations.getJdbcConverter();
+		this.dialect = DialectResolver.getDialect(operations.getNamedParameterJdbcOperations().getJdbcOperations());
+		this.accessStrategy = operations.getDataAccessStrategy();
+		this.operations = operations.getNamedParameterJdbcOperations();
 	}
 
 	/**

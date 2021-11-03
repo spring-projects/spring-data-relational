@@ -18,6 +18,10 @@ package org.springframework.data.jdbc.core;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
+import org.springframework.data.jdbc.core.convert.JdbcConverter;
+import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 
 /**
@@ -28,6 +32,14 @@ import org.springframework.lang.Nullable;
  * @author Milan Milanov
  */
 public interface JdbcAggregateOperations {
+
+	RelationalMappingContext getRelationalMappingContext();
+
+	DataAccessStrategy getDataAccessStrategy();
+
+	JdbcConverter getJdbcConverter();
+	
+	NamedParameterJdbcOperations getNamedParameterJdbcOperations();
 
 	/**
 	 * Saves an instance of an aggregate, including all the members of the aggregate.
