@@ -21,6 +21,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -59,6 +60,12 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	private EntityCallbacks entityCallbacks;
 	private Dialect dialect;
 
+	public void setJdbcAggregateTemplate(JdbcAggregateTemplate jdbcAggregateTemplate) {
+		this.jdbcAggregateTemplate = jdbcAggregateTemplate;
+	}
+
+	private JdbcAggregateTemplate jdbcAggregateTemplate;
+
 	/**
 	 * Creates a new {@link JdbcRepositoryFactoryBean} for the given repository interface.
 	 *
@@ -85,9 +92,13 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	 */
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-
-		JdbcRepositoryFactory jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
-				converter, dialect, publisher, operations);
+		JdbcRepositoryFactory  jdbcRepositoryFactory;
+		if (jdbcAggregateTemplate != null) {
+			jdbcRepositoryFactory = new JdbcRepositoryFactory(jdbcAggregateTemplate, publisher);
+		} else {
+			jdbcRepositoryFactory = new JdbcRepositoryFactory(dataAccessStrategy, mappingContext,
+					converter, dialect, publisher, operations);
+		}
 		jdbcRepositoryFactory.setQueryMappingConfiguration(queryMappingConfiguration);
 		jdbcRepositoryFactory.setEntityCallbacks(entityCallbacks);
 		jdbcRepositoryFactory.setBeanFactory(beanFactory);

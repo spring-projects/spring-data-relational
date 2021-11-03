@@ -87,8 +87,10 @@ public class JdbcRepositoryConfigExtension extends RepositoryConfigurationExtens
 		Optional<String> transactionManagerRef = source.getAttribute("transactionManagerRef");
 		builder.addPropertyValue("transactionManager", transactionManagerRef.orElse(DEFAULT_TRANSACTION_MANAGER_BEAN_NAME));
 
-		source.getAttribute("jdbcConverterRef").filter(StringUtils::hasText) //
-				.ifPresent(s -> builder.addPropertyReference("converter", s));
+		source.getAttribute("jdbcAggregateTemplateRef")
+				.filter(StringUtils::hasText)
+				.ifPresent(s -> builder.addPropertyReference("jdbcAggregateTemplate", s));
+
 	}
 
 	/**

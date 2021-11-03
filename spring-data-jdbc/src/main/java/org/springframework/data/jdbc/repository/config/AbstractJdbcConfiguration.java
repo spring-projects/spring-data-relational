@@ -22,7 +22,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -102,8 +101,7 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
 		JdbcArrayColumns arrayColumns = dialect instanceof JdbcDialect ? ((JdbcDialect) dialect).getArraySupport()
 				: JdbcArrayColumns.DefaultSupport.INSTANCE;
-		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(),
-				arrayColumns);
+		DefaultJdbcTypeFactory jdbcTypeFactory = new DefaultJdbcTypeFactory(operations.getJdbcOperations(), arrayColumns);
 
 		return new BasicJdbcConverter(mappingContext, relationResolver, conversions, jdbcTypeFactory,
 				dialect.getIdentifierProcessing());
@@ -156,13 +154,15 @@ public class AbstractJdbcConfiguration implements ApplicationContextAware {
 	 * @param applicationContext for publishing events. Must not be {@literal null}.
 	 * @param mappingContext the mapping context to be used. Must not be {@literal null}.
 	 * @param converter the conversions used when reading and writing from/to the database. Must not be {@literal null}.
+	 * @param operations the {@link NamedParameterJdbcOperations} allowing access to a {@link java.sql.Connection}.
 	 * @return a {@link JdbcAggregateTemplate}. Will never be {@literal null}.
 	 */
 	@Bean
 	public JdbcAggregateTemplate jdbcAggregateTemplate(ApplicationContext applicationContext,
-			JdbcMappingContext mappingContext, JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
+			JdbcMappingContext mappingContext, JdbcConverter converter, DataAccessStrategy dataAccessStrategy,
+			NamedParameterJdbcOperations operations) {
 
-		return new JdbcAggregateTemplate(applicationContext, mappingContext, converter, dataAccessStrategy);
+		return new JdbcAggregateTemplate(applicationContext, mappingContext, converter, dataAccessStrategy, operations);
 	}
 
 	/**

@@ -23,6 +23,7 @@ import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
+import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
@@ -90,6 +91,22 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	}
 
 	/**
+	 * Creates a new {@link JdbcRepositoryFactory} for the given {@link JdbcAggregateTemplate} and
+	 * {@link ApplicationEventPublisher}.
+	 * 
+	 * @param template
+	 * @param publisher
+	 */
+	public JdbcRepositoryFactory(JdbcAggregateTemplate template, ApplicationEventPublisher publisher) {
+		this.publisher = publisher;
+		this.context = template.getContext();
+		this.converter = template.getConverter();
+		this.dialect = DialectResolver.getDialect(template.getNamedParameterJdbcOperations().getJdbcOperations());
+		this.accessStrategy = template.getAccessStrategy();
+		this.operations = template.getNamedParameterJdbcOperations();
+	}
+
+	/**
 	 * @param queryMappingConfiguration must not be {@literal null} consider {@link QueryMappingConfiguration#EMPTY}
 	 *          instead.
 	 */
@@ -116,7 +133,8 @@ public class JdbcRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	protected Object getTargetRepository(RepositoryInformation repositoryInformation) {
 
-		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, converter, accessStrategy);
+		JdbcAggregateTemplate template = new JdbcAggregateTemplate(publisher, context, converter, accessStrategy,
+				operations);
 
 		if (entityCallbacks != null) {
 			template.setEntityCallbacks(entityCallbacks);

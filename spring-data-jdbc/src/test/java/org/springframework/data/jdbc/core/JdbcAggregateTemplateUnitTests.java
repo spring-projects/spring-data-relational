@@ -48,6 +48,7 @@ import org.springframework.data.relational.core.mapping.event.AfterSaveCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeDeleteCallback;
 import org.springframework.data.relational.core.mapping.event.BeforeSaveCallback;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 
 /**
  * Unit tests for {@link JdbcAggregateTemplate}.
@@ -65,6 +66,7 @@ public class JdbcAggregateTemplateUnitTests {
 	@Mock ApplicationEventPublisher eventPublisher;
 	@Mock RelationResolver relationResolver;
 	@Mock EntityCallbacks callbacks;
+	@Mock NamedParameterJdbcOperations operations;
 
 	@BeforeEach
 	public void setUp() {
@@ -72,7 +74,7 @@ public class JdbcAggregateTemplateUnitTests {
 		RelationalMappingContext mappingContext = new RelationalMappingContext(NamingStrategy.INSTANCE);
 		JdbcConverter converter = new BasicJdbcConverter(mappingContext, relationResolver);
 
-		template = new JdbcAggregateTemplate(eventPublisher, mappingContext, converter, dataAccessStrategy);
+		template = new JdbcAggregateTemplate(eventPublisher, mappingContext, converter, dataAccessStrategy, operations);
 		((JdbcAggregateTemplate) template).setEntityCallbacks(callbacks);
 
 	}

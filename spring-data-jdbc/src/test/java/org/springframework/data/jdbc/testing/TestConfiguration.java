@@ -23,16 +23,17 @@ import java.util.Optional;
 import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
@@ -160,5 +161,18 @@ public class TestConfiguration {
 	@Bean
 	TestDatabaseFeatures features(NamedParameterJdbcOperations operations) {
 		return new TestDatabaseFeatures(operations.getJdbcOperations());
+	}
+	
+	@Bean JdbcAggregateTemplate jdbcAggregateTemplate(
+			ApplicationContext applicationContext,
+			@Qualifier("converter") JdbcConverter jdbcConverter,
+			@Qualifier("defaultDataAccessStrategy") DataAccessStrategy dataAccessStrategy,
+			@Qualifier("namedParameterJdbcTemplate") NamedParameterJdbcOperations operations) {
+		return new JdbcAggregateTemplate(
+				applicationContext,
+				new RelationalMappingContext(),
+				jdbcConverter,
+				dataAccessStrategy,
+				operations);
 	}
 }

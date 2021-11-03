@@ -39,6 +39,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -54,6 +55,18 @@ import org.springframework.util.Assert;
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
+	public RelationalMappingContext getContext() {
+		return context;
+	}
+
+	public DataAccessStrategy getAccessStrategy() {
+		return accessStrategy;
+	}
+
+	public NamedParameterJdbcOperations getNamedParameterJdbcOperations() {
+		return operations;
+	}
+
 	private final ApplicationEventPublisher publisher;
 	private final RelationalMappingContext context;
 
@@ -62,7 +75,14 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	private final RelationalEntityUpdateWriter jdbcEntityUpdateWriter;
 
 	private final DataAccessStrategy accessStrategy;
+	private final NamedParameterJdbcOperations operations;
 	private final AggregateChangeExecutor executor;
+
+	public JdbcConverter getConverter() {
+		return converter;
+	}
+
+	private final JdbcConverter converter;
 
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
 
@@ -76,7 +96,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * @since 1.1
 	 */
 	public JdbcAggregateTemplate(ApplicationContext publisher, RelationalMappingContext context, JdbcConverter converter,
-			DataAccessStrategy dataAccessStrategy) {
+			DataAccessStrategy dataAccessStrategy, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(publisher, "ApplicationContext must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
@@ -85,7 +105,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		this.publisher = publisher;
 		this.context = context;
+		this.converter = converter;
 		this.accessStrategy = dataAccessStrategy;
+		this.operations = operations;
 
 		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
@@ -105,7 +127,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 	 * @param dataAccessStrategy must not be {@literal null}.
 	 */
 	public JdbcAggregateTemplate(ApplicationEventPublisher publisher, RelationalMappingContext context,
-			JdbcConverter converter, DataAccessStrategy dataAccessStrategy) {
+			JdbcConverter converter, DataAccessStrategy dataAccessStrategy, NamedParameterJdbcOperations operations) {
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null!");
 		Assert.notNull(context, "RelationalMappingContext must not be null!");
@@ -114,7 +136,9 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		this.publisher = publisher;
 		this.context = context;
+		this.converter = converter;
 		this.accessStrategy = dataAccessStrategy;
+		this.operations = operations;
 
 		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);

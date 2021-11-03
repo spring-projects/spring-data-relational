@@ -28,7 +28,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Annotation to enable JDBC repositories. Will scan the package of the annotated configuration class for Spring Data
@@ -133,10 +132,10 @@ public @interface EnableJdbcRepositories {
 	String transactionManagerRef() default "transactionManager";
 
 	/**
-	 * Configures the name of the {@link org.springframework.data.jdbc.core.convert.JdbcConverter} bean definition to be
-	 * used to create repositories discovered through this annotation. Defaults to {@code converter}.
+	 * Configures the name of the {@link org.springframework.data.jdbc.core.JdbcAggregateTemplate} bean definition to be
+	 * used to create repositories discovered through this annotation.
 	 * 
 	 * @since 2.3
 	 */
-	String jdbcConverterRef() default "converter";
+	String jdbcAggregateTemplateRef() default "";
 }
