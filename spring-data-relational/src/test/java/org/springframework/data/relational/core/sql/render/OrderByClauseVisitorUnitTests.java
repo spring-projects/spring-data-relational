@@ -32,7 +32,7 @@ import org.springframework.data.relational.core.sql.Table;
 public class OrderByClauseVisitorUnitTests {
 
 	@Test // DATAJDBC-309
-	public void shouldRenderOrderByName() {
+	public void shouldRenderOrderByAlias() {
 
 		Table employee = SQL.table("employee").as("emp");
 		Column column = employee.column("name").as("emp_name");
@@ -42,9 +42,8 @@ public class OrderByClauseVisitorUnitTests {
 		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
 		select.visit(visitor);
 
-		assertThat(visitor.getRenderedPart().toString()).isEqualTo("emp_name ASC");
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("emp.emp_name ASC");
 	}
-
 	@Test // DATAJDBC-309
 	public void shouldApplyNamingStrategy() {
 
@@ -56,6 +55,37 @@ public class OrderByClauseVisitorUnitTests {
 		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.toUpper()));
 		select.visit(visitor);
 
-		assertThat(visitor.getRenderedPart().toString()).isEqualTo("EMP_NAME ASC");
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("EMP.EMP_NAME ASC");
 	}
+
+	@Test // GH-968
+	public void shouldRenderOrderByFullyQualifiedName() {
+
+		Table employee = SQL.table("employee");
+		Column column = employee.column("name");
+
+		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
+
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
+		select.visit(visitor);
+
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("employee.name ASC");
+	}
+
+	@Test // GH-968
+	public void shouldRenderOrderByFullyQualifiedNameWithTableAlias() {
+
+		Table employee = SQL.table("employee").as("emp");
+		Column column = employee.column("name");
+
+		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
+
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
+		select.visit(visitor);
+
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("emp.name ASC");
+	}
+
+
+
 }

@@ -445,7 +445,7 @@ public class PartTreeJdbcQueryUnitTests {
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
 		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"LAST_NAME\" DESC");
+				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" DESC");
 	}
 
 	@Test // DATAJDBC-318
@@ -456,7 +456,7 @@ public class PartTreeJdbcQueryUnitTests {
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
 		assertThat(query.getQuery())
-				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"LAST_NAME\" ASC");
+				.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"AGE\" = :age ORDER BY \"users\".\"LAST_NAME\" ASC");
 	}
 
 	@Test // DATAJDBC-318

@@ -49,14 +49,4 @@ class NameRendererUnitTests {
 
 		assertThat(rendered).isEqualTo("tab_alias.col_alias");
 	}
-
-	@Test // GH-1003
-	void fullyQualifiedUnaliasedReference() {
-
-		Column column = Column.aliased("col", Table.aliased("table", "tab_alias"), "col_alias");
-
-		CharSequence rendered = NameRenderer.fullyQualifiedUnaliasedReference(context, column);
-
-		assertThat(rendered).isEqualTo("tab_alias.col");
-	}
 }

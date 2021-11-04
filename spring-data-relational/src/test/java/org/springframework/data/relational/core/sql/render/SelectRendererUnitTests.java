@@ -266,7 +266,7 @@ class SelectRendererUnitTests {
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
 
 		assertThat(SqlRenderer.toString(select))
-				.isEqualTo("SELECT emp.name AS emp_name FROM employee emp ORDER BY emp_name ASC");
+				.isEqualTo("SELECT emp.name AS emp_name FROM employee emp ORDER BY emp.emp_name ASC");
 	}
 
 	@Test // DATAJDBC-309
@@ -466,5 +466,27 @@ class SelectRendererUnitTests {
 
 		final String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT CAST(User.name AS VARCHAR2) FROM User");
+	}
+
+	@Test // GH-968
+	void rendersFullyQualifiedNamesInOrderBy() {
+
+		Table tableA = SQL.table("tableA");
+		Column tableAName = tableA.column("name");
+		Column tableAId = tableA.column("id");
+
+		Table tableB = SQL.table("tableB");
+		Column tableBId = tableB.column("id");
+		Column tableBName = tableB.column("name");
+
+		Select select = StatementBuilder.select(Expressions.asterisk()) //
+				.from(tableA) //
+				.join(tableB).on(tableAId.isEqualTo(tableBId)) //
+				.orderBy(tableAName, tableBName) //
+				.build();
+
+		final String rendered = SqlRenderer.toString(select);
+		assertThat(rendered)
+				.isEqualTo("SELECT * FROM tableA JOIN tableB ON tableA.id = tableB.id ORDER BY tableA.name, tableB.name");
 	}
 }

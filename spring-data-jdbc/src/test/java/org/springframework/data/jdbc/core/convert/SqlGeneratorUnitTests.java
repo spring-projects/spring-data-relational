@@ -218,7 +218,7 @@ public class SqlGeneratorUnitTests {
 				"FROM dummy_entity ", //
 				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
-				"ORDER BY x_name ASC");
+				"ORDER BY dummy_entity.x_name ASC");
 	}
 
 	@Test // DATAJDBC-101
@@ -238,7 +238,7 @@ public class SqlGeneratorUnitTests {
 				"FROM dummy_entity ", //
 				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
-				"ORDER BY x_name DESC", //
+				"ORDER BY dummy_entity.x_name DESC", //
 				"x_other ASC");
 	}
 
@@ -286,7 +286,7 @@ public class SqlGeneratorUnitTests {
 				"FROM dummy_entity ", //
 				"LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1", //
 				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
-				"ORDER BY x_name ASC", //
+				"ORDER BY dummy_entity.x_name ASC", //
 				"OFFSET 30", //
 				"LIMIT 10");
 	}
@@ -371,7 +371,8 @@ public class SqlGeneratorUnitTests {
 				+ "FROM dummy_entity " //
 				+ "LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id " //
-				+ "WHERE dummy_entity.backref = :backref " + "ORDER BY key-column");
+				+ "WHERE dummy_entity.backref = :backref " //
+				+ "ORDER BY dummy_entity.key-column");
 	}
 
 	@Test // DATAJDBC-219
@@ -493,7 +494,7 @@ public class SqlGeneratorUnitTests {
 						+ "entity_with_read_only_property.key-column AS key-column " //
 						+ "FROM entity_with_read_only_property " //
 						+ "WHERE entity_with_read_only_property.backref = :backref " //
-						+ "ORDER BY key-column" //
+						+ "ORDER BY entity_with_read_only_property.key-column" //
 		);
 	}
 
