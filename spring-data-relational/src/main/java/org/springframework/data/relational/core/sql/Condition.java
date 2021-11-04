@@ -23,7 +23,7 @@ package org.springframework.data.relational.core.sql;
  * @since 1.1
  * @see Conditions
  */
-public interface Condition extends Segment {
+public interface Condition extends Segment, Expression {
 
 	/**
 	 * Combine another {@link Condition} using {@code AND}.
