@@ -480,6 +480,20 @@ class SelectRendererUnitTests {
 		assertThat(rendered).isEqualTo("SELECT CAST(User.name AS VARCHAR2) FROM User");
 	}
 
+	@Test // GH-1007
+	void shouldRenderConditionAsExpression() {
+
+		Table table = SQL.table("User");
+		Select select = StatementBuilder.select( //
+				Conditions.isGreater(table.column("age"), SQL.literalOf(18)) //
+		) //
+				.from(table) //
+				.build();
+
+		final String rendered = SqlRenderer.toString(select);
+		assertThat(rendered).isEqualTo("SELECT User.age > 18 FROM User");
+	}
+
 	@Test // GH-968
 	void rendersFullyQualifiedNamesInOrderBy() {
 
