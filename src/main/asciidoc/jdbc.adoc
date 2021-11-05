@@ -963,8 +963,7 @@ public class UserManagementImpl implements UserManagement {
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
 
-  @Autowired
-  public UserManagementImpl(UserRepository userRepository,
+  UserManagementImpl(UserRepository userRepository,
     RoleRepository roleRepository) {
     this.userRepository = userRepository;
     this.roleRepository = roleRepository;
