@@ -58,7 +58,7 @@ public interface SelectRenderContext {
 	 * <p>
 	 * Renders lock, limit and offset clause as appropriate.
 	 * </p>
-	 * 
+	 *
 	 * @param hasOrderBy the actual value whether the {@link Select} statement has a {@code ORDER BY} clause.
 	 * @return render {@link Function} invoked after rendering {@code ORDER BY}.
 	 */
@@ -73,15 +73,16 @@ public interface SelectRenderContext {
 			String lockPrefix = (lockMode == null) ? "" : " FOR UPDATE";
 
 			if (limit.isPresent() && offset.isPresent()) {
-				return lockPrefix
-						+ String.format(" OFFSET %d ROWS FETCH FIRST %d ROWS ONLY", offset.getAsLong(), limit.getAsLong());
+				return String.format("%s OFFSET %d ROWS FETCH FIRST %d ROWS ONLY", lockPrefix, offset.getAsLong(),
+						limit.getAsLong());
 			}
 			if (limit.isPresent()) {
-				return lockPrefix + String.format(" FETCH FIRST %d ROWS ONLY", limit.getAsLong());
+				return String.format("%s FETCH FIRST %d ROWS ONLY", lockPrefix, limit.getAsLong());
 			}
 			if (offset.isPresent()) {
-				return lockPrefix + String.format(" OFFSET %d ROWS", offset.getAsLong());
+				return String.format("%s OFFSET %d ROWS", lockPrefix, offset.getAsLong());
 			}
+
 			return lockPrefix;
 		};
 	}

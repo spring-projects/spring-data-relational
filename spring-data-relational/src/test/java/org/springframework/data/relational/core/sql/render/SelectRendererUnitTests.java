@@ -218,13 +218,13 @@ class SelectRendererUnitTests {
 				.select(employee.column("id"), employee.column("department_Id"), employee.column("name")).from(employee)
 				.build();
 
-		final InlineQuery one = InlineQuery.create(innerSelect, "one");
+		InlineQuery one = InlineQuery.create(innerSelect, "one");
 
 		Select select = Select.builder().select(one.column("id"), department.column("name")).from(department) //
 				.join(one).on(one.column("department_id")).equals(department.column("id")) //
 				.build();
 
-		final String sql = SqlRenderer.toString(select);
+		String sql = SqlRenderer.toString(select);
 
 		assertThat(sql).isEqualTo("SELECT one.id, department.name FROM department " //
 				+ "JOIN (SELECT employee.id, employee.department_Id, employee.name FROM employee) one " //
@@ -243,14 +243,14 @@ class SelectRendererUnitTests {
 		Select innerSelectTwo = Select.builder().select(department.column("id"), department.column("name")).from(department)
 				.build();
 
-		final InlineQuery one = InlineQuery.create(innerSelectOne, "one");
-		final InlineQuery two = InlineQuery.create(innerSelectTwo, "two");
+		InlineQuery one = InlineQuery.create(innerSelectOne, "one");
+		InlineQuery two = InlineQuery.create(innerSelectTwo, "two");
 
 		Select select = Select.builder().select(one.column("id"), two.column("name")).from(one) //
 				.join(two).on(two.column("department_id")).equals(one.column("id")) //
 				.build();
 
-		final String sql = SqlRenderer.toString(select);
+		String sql = SqlRenderer.toString(select);
 		assertThat(sql).isEqualTo("SELECT one.id, two.name FROM (" //
 				+ "SELECT employee.id, employee.department_Id, employee.name FROM employee) one " //
 				+ "JOIN (SELECT department.id, department.name FROM department) two " //
@@ -454,7 +454,7 @@ class SelectRendererUnitTests {
 		Select select = StatementBuilder.select(table_user.column("name"), table_user.column("age")).from(table_user)
 				.where(Comparison.create("age", ">", 20)).build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name, User.age FROM User WHERE age > 20");
 	}
 
@@ -465,7 +465,7 @@ class SelectRendererUnitTests {
 		Select select = StatementBuilder.select(table_user.column("name"), table_user.column("age")).from(table_user)
 				.where(Comparison.create(table_user.column("age"), ">", SQL.literalOf(20))).build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name, User.age FROM User WHERE User.age > 20");
 	}
 
@@ -476,7 +476,7 @@ class SelectRendererUnitTests {
 		Select select = StatementBuilder.select(Expressions.cast(table_user.column("name"), "VARCHAR2")).from(table_user)
 				.build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT CAST(User.name AS VARCHAR2) FROM User");
 	}
 
@@ -486,7 +486,7 @@ class SelectRendererUnitTests {
 		Table table_user = SQL.table("User");
 		Select select = StatementBuilder.select(table_user.column("name")).from(table_user).limitOffset(10, 5).build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name FROM User OFFSET 5 ROWS FETCH FIRST 10 ROWS ONLY");
 	}
 
@@ -498,7 +498,7 @@ class SelectRendererUnitTests {
 				.limit(3) //
 				.build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name FROM User FETCH FIRST 3 ROWS ONLY");
 	}
 
@@ -510,7 +510,7 @@ class SelectRendererUnitTests {
 				.lock(LockMode.PESSIMISTIC_READ) //
 				.build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name FROM User FOR UPDATE");
 	}
 
@@ -522,7 +522,7 @@ class SelectRendererUnitTests {
 				.lock(LockMode.PESSIMISTIC_WRITE) //
 				.build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.name FROM User FOR UPDATE OFFSET 3 ROWS");
 	}
 
@@ -550,7 +550,7 @@ class SelectRendererUnitTests {
 				.from(table) //
 				.build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered).isEqualTo("SELECT User.age > 18 FROM User");
 	}
 
