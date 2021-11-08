@@ -77,6 +77,7 @@ class StatementMapperUnitTests {
 
 		PreparedOperation<?> preparedOperation = mapper.getMappedObject(selectSpec);
 
-		assertThat(preparedOperation.toQuery()).isEqualTo("SELECT table.* FROM table ORDER BY id DESC LIMIT 2 OFFSET 2");
+		assertThat(preparedOperation.toQuery())
+				.isEqualTo("SELECT table.* FROM table ORDER BY table.id DESC LIMIT 2 OFFSET 2");
 	}
 }

@@ -430,7 +430,8 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
 		assertThat(preparedOperation.get())
-				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age = $1 ORDER BY last_name DESC");
+				.isEqualTo(
+						"SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age = $1 ORDER BY users.last_name DESC");
 	}
 
 	@Test // gh-282
@@ -442,7 +443,8 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
 		assertThat(preparedOperation.get())
-				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age = $1 ORDER BY last_name ASC");
+				.isEqualTo(
+						"SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age = $1 ORDER BY users.last_name ASC");
 	}
 
 	@Test // gh-282
