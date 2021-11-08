@@ -68,7 +68,6 @@ abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisit
 			return Delegation.delegateTo(visitor);
 		}
 
-
 		throw new IllegalStateException("Cannot provide visitor for " + segment);
 	}
 

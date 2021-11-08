@@ -485,7 +485,8 @@ class SelectRendererUnitTests {
 
 		Table table = SQL.table("User");
 		Select select = StatementBuilder.select( //
-				Conditions.isGreater(table.column("age"), SQL.literalOf(18)) //
+				Conditions.isGreater(table.column("age"), SQL.literalOf(
+						18))
 		) //
 				.from(table) //
 				.build();
