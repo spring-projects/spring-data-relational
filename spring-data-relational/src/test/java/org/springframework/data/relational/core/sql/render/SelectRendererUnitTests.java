@@ -261,12 +261,24 @@ class SelectRendererUnitTests {
 	void shouldRenderOrderByName() {
 
 		Table employee = SQL.table("employee").as("emp");
-		Column column = employee.column("name").as("emp_name");
+		Column column = employee.column("name");
 
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
 
 		assertThat(SqlRenderer.toString(select))
-				.isEqualTo("SELECT emp.name AS emp_name FROM employee emp ORDER BY emp.emp_name ASC");
+				.isEqualTo("SELECT emp.name FROM employee emp ORDER BY emp.name ASC");
+	}
+
+	@Test // GH-968
+	void shouldRenderOrderByAlias() {
+
+		Table employee = SQL.table("employee").as("emp");
+		Column column = employee.column("name").as("my_emp_name");
+
+		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
+
+		assertThat(SqlRenderer.toString(select))
+				.isEqualTo("SELECT emp.name AS my_emp_name FROM employee emp ORDER BY my_emp_name ASC");
 	}
 
 	@Test // DATAJDBC-309
@@ -485,7 +497,7 @@ class SelectRendererUnitTests {
 				.orderBy(tableAName, tableBName) //
 				.build();
 
-		final String rendered = SqlRenderer.toString(select);
+		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered)
 				.isEqualTo("SELECT * FROM tableA JOIN tableB ON tableA.id = tableB.id ORDER BY tableA.name, tableB.name");
 	}

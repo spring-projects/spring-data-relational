@@ -23,9 +23,9 @@ import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 import java.util.Map;
 import java.util.Set;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -62,19 +62,19 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  */
-public class SqlGeneratorUnitTests {
+class SqlGeneratorUnitTests {
 
-	static final Identifier BACKREF = Identifier.of(unquoted("backref"), "some-value", String.class);
+	private static final Identifier BACKREF = Identifier.of(unquoted("backref"), "some-value", String.class);
 
-	SqlGenerator sqlGenerator;
-	NamingStrategy namingStrategy = new PrefixingNamingStrategy();
-	RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
-	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
+	private SqlGenerator sqlGenerator;
+	private NamingStrategy namingStrategy = new PrefixingNamingStrategy();
+	private RelationalMappingContext context = new JdbcMappingContext(namingStrategy);
+	private JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
 
 	@BeforeEach
-	public void setUp() {
+	void setUp() {
 		this.sqlGenerator = createSqlGenerator(DummyEntity.class);
 	}
 
@@ -91,7 +91,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-112
-	public void findOne() {
+	void findOne() {
 
 		String sql = sqlGenerator.getFindOne();
 
@@ -110,7 +110,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-493
-	public void getAcquireLockById() {
+	void getAcquireLockById() {
 
 		String sql = sqlGenerator.getAcquireLockById(LockMode.PESSIMISTIC_WRITE);
 
@@ -124,7 +124,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-493
-	public void getAcquireLockAll() {
+	void getAcquireLockAll() {
 
 		String sql = sqlGenerator.getAcquireLockAll(LockMode.PESSIMISTIC_WRITE);
 
@@ -137,7 +137,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-112
-	public void cascadingDeleteFirstLevel() {
+	void cascadingDeleteFirstLevel() {
 
 		String sql = sqlGenerator.createDeleteByPath(getPath("ref", DummyEntity.class));
 
@@ -145,7 +145,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-112
-	public void cascadingDeleteByPathSecondLevel() {
+	void cascadingDeleteByPathSecondLevel() {
 
 		String sql = sqlGenerator.createDeleteByPath(getPath("ref.further", DummyEntity.class));
 
@@ -154,7 +154,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-112
-	public void deleteAll() {
+	void deleteAll() {
 
 		String sql = sqlGenerator.createDeleteAllSql(null);
 
@@ -162,7 +162,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-112
-	public void cascadingDeleteAllFirstLevel() {
+	void cascadingDeleteAllFirstLevel() {
 
 		String sql = sqlGenerator.createDeleteAllSql(getPath("ref", DummyEntity.class));
 
@@ -170,7 +170,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-112
-	public void cascadingDeleteAllSecondLevel() {
+	void cascadingDeleteAllSecondLevel() {
 
 		String sql = sqlGenerator.createDeleteAllSql(getPath("ref.further", DummyEntity.class));
 
@@ -179,7 +179,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-227
-	public void deleteAllMap() {
+	void deleteAllMap() {
 
 		String sql = sqlGenerator.createDeleteAllSql(getPath("mappedElements", DummyEntity.class));
 
@@ -187,7 +187,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-227
-	public void deleteMapByPath() {
+	void deleteMapByPath() {
 
 		String sql = sqlGenerator.createDeleteByPath(getPath("mappedElements", DummyEntity.class));
 
@@ -195,7 +195,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void findAllSortedByUnsorted() {
+	void findAllSortedByUnsorted() {
 
 		String sql = sqlGenerator.getFindAll(Sort.unsorted());
 
@@ -203,7 +203,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void findAllSortedBySingleField() {
+	void findAllSortedBySingleField() {
 
 		String sql = sqlGenerator.getFindAll(Sort.by("name"));
 
@@ -222,7 +222,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void findAllSortedByMultipleFields() {
+	void findAllSortedByMultipleFields() {
 
 		String sql = sqlGenerator
 				.getFindAll(Sort.by(new Sort.Order(Sort.Direction.DESC, "name"), new Sort.Order(Sort.Direction.ASC, "other")));
@@ -243,7 +243,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void findAllPagedByUnpaged() {
+	void findAllPagedByUnpaged() {
 
 		String sql = sqlGenerator.getFindAll(Pageable.unpaged());
 
@@ -251,7 +251,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void findAllPaged() {
+	void findAllPaged() {
 
 		String sql = sqlGenerator.getFindAll(PageRequest.of(2, 20));
 
@@ -271,7 +271,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-101
-	public void findAllPagedAndSorted() {
+	void findAllPagedAndSorted() {
 
 		String sql = sqlGenerator.getFindAll(PageRequest.of(3, 10, Sort.by("name")));
 
@@ -292,7 +292,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
-	public void findAllByProperty() {
+	void findAllByProperty() {
 
 		// this would get called when ListParent is the element type of a Set
 		String sql = sqlGenerator.getFindAllByProperty(BACKREF, null, false);
@@ -312,7 +312,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-223
-	public void findAllByPropertyWithMultipartIdentifier() {
+	void findAllByPropertyWithMultipartIdentifier() {
 
 		// this would get called when ListParent is the element type of a Set
 		Identifier parentIdentifier = Identifier.of(unquoted("backref"), "some-value", String.class) //
@@ -335,7 +335,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
-	public void findAllByPropertyWithKey() {
+	void findAllByPropertyWithKey() {
 
 		// this would get called when ListParent is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty(BACKREF, unquoted("key-column"), false);
@@ -352,13 +352,13 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-130
-	public void findAllByPropertyOrderedWithoutKey() {
+	void findAllByPropertyOrderedWithoutKey() {
 		assertThatExceptionOfType(IllegalArgumentException.class)
 				.isThrownBy(() -> sqlGenerator.getFindAllByProperty(BACKREF, null, true));
 	}
 
 	@Test // DATAJDBC-131, DATAJDBC-111
-	public void findAllByPropertyWithKeyOrdered() {
+	void findAllByPropertyWithKeyOrdered() {
 
 		// this would get called when ListParent is th element type of a Map
 		String sql = sqlGenerator.getFindAllByProperty(BACKREF, unquoted("key-column"), true);
@@ -372,11 +372,11 @@ public class SqlGeneratorUnitTests {
 				+ "LEFT OUTER JOIN referenced_entity ref ON ref.dummy_entity = dummy_entity.id1 " //
 				+ "LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id " //
 				+ "WHERE dummy_entity.backref = :backref " //
-				+ "ORDER BY dummy_entity.key-column");
+				+ "ORDER BY key-column");
 	}
 
 	@Test // DATAJDBC-219
-	public void updateWithVersion() {
+	void updateWithVersion() {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(VersionedEntity.class, AnsiDialect.INSTANCE);
 
@@ -391,7 +391,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-264
-	public void getInsertForEmptyColumnList() {
+	void getInsertForEmptyColumnList() {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class);
 
@@ -401,7 +401,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-334
-	public void getInsertForQuotedColumnName() {
+	void getInsertForQuotedColumnName() {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class, AnsiDialect.INSTANCE);
 
@@ -412,7 +412,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-266
-	public void joinForOneToOneWithoutIdIncludesTheBackReferenceOfTheOuterJoin() {
+	void joinForOneToOneWithoutIdIncludesTheBackReferenceOfTheOuterJoin() {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(ParentOfNoIdChild.class, AnsiDialect.INSTANCE);
 
@@ -423,7 +423,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-262
-	public void update() {
+	void update() {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, AnsiDialect.INSTANCE);
 
@@ -436,7 +436,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-324
-	public void readOnlyPropertyExcludedFromQuery_when_generateUpdateSql() {
+	void readOnlyPropertyExcludedFromQuery_when_generateUpdateSql() {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class, AnsiDialect.INSTANCE);
 
@@ -448,7 +448,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-334
-	public void getUpdateForQuotedColumnName() {
+	void getUpdateForQuotedColumnName() {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(EntityWithQuotedColumnName.class, AnsiDialect.INSTANCE);
 
@@ -460,7 +460,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-324
-	public void readOnlyPropertyExcludedFromQuery_when_generateInsertSql() {
+	void readOnlyPropertyExcludedFromQuery_when_generateInsertSql() {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class, AnsiDialect.INSTANCE);
 
@@ -471,7 +471,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-324
-	public void readOnlyPropertyIncludedIntoQuery_when_generateFindAllSql() {
+	void readOnlyPropertyIncludedIntoQuery_when_generateFindAllSql() {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
 
@@ -482,7 +482,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-324
-	public void readOnlyPropertyIncludedIntoQuery_when_generateFindAllByPropertySql() {
+	void readOnlyPropertyIncludedIntoQuery_when_generateFindAllByPropertySql() {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
 
@@ -494,12 +494,12 @@ public class SqlGeneratorUnitTests {
 						+ "entity_with_read_only_property.key-column AS key-column " //
 						+ "FROM entity_with_read_only_property " //
 						+ "WHERE entity_with_read_only_property.backref = :backref " //
-						+ "ORDER BY entity_with_read_only_property.key-column" //
+						+ "ORDER BY key-column" //
 		);
 	}
 
 	@Test // DATAJDBC-324
-	public void readOnlyPropertyIncludedIntoQuery_when_generateFindAllInListSql() {
+	void readOnlyPropertyIncludedIntoQuery_when_generateFindAllInListSql() {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
 
@@ -514,7 +514,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-324
-	public void readOnlyPropertyIncludedIntoQuery_when_generateFindOneSql() {
+	void readOnlyPropertyIncludedIntoQuery_when_generateFindOneSql() {
 
 		final SqlGenerator sqlGenerator = createSqlGenerator(EntityWithReadOnlyProperty.class);
 
@@ -529,7 +529,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void deletingLongChain() {
+	void deletingLongChain() {
 
 		assertThat(
 				createSqlGenerator(Chain4.class).createDeleteByPath(getPath("chain3.chain2.chain1.chain0", Chain4.class))) //
@@ -548,7 +548,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-359
-	public void deletingLongChainNoId() {
+	void deletingLongChainNoId() {
 
 		assertThat(createSqlGenerator(NoIdChain4.class)
 				.createDeleteByPath(getPath("chain3.chain2.chain1.chain0", NoIdChain4.class))) //
@@ -556,7 +556,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-359
-	public void deletingLongChainNoIdWithBackreferenceNotReferencingTheRoot() {
+	void deletingLongChainNoIdWithBackreferenceNotReferencingTheRoot() {
 
 		assertThat(createSqlGenerator(IdIdNoIdChain.class)
 				.createDeleteByPath(getPath("idNoIdChain.chain4.chain3.chain2.chain1.chain0", IdIdNoIdChain.class))) //
@@ -573,12 +573,12 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void noJoinForSimpleColumn() {
+	void noJoinForSimpleColumn() {
 		assertThat(generateJoin("id", DummyEntity.class)).isNull();
 	}
 
 	@Test // DATAJDBC-340
-	public void joinForSimpleReference() {
+	void joinForSimpleReference() {
 
 		SqlGenerator.Join join = generateJoin("ref", DummyEntity.class);
 
@@ -593,7 +593,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void noJoinForCollectionReference() {
+	void noJoinForCollectionReference() {
 
 		SqlGenerator.Join join = generateJoin("elements", DummyEntity.class);
 
@@ -602,7 +602,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void noJoinForMappedReference() {
+	void noJoinForMappedReference() {
 
 		SqlGenerator.Join join = generateJoin("mappedElements", DummyEntity.class);
 
@@ -610,7 +610,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void joinForSecondLevelReference() {
+	void joinForSecondLevelReference() {
 
 		SqlGenerator.Join join = generateJoin("ref.further", DummyEntity.class);
 
@@ -626,7 +626,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void joinForOneToOneWithoutId() {
+	void joinForOneToOneWithoutId() {
 
 		SqlGenerator.Join join = generateJoin("child", ParentOfNoIdChild.class);
 		Table joinTable = join.getJoinTable();
@@ -651,7 +651,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void simpleColumn() {
+	void simpleColumn() {
 
 		assertThat(generatedColumn("id", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias)
@@ -660,7 +660,7 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void columnForIndirectProperty() {
+	void columnForIndirectProperty() {
 
 		assertThat(generatedColumn("ref.l1id", DummyEntity.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
@@ -669,13 +669,13 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-340
-	public void noColumnForReferencedEntity() {
+	void noColumnForReferencedEntity() {
 
 		assertThat(generatedColumn("ref", DummyEntity.class)).isNull();
 	}
 
 	@Test // DATAJDBC-340
-	public void columnForReferencedEntityWithoutId() {
+	void columnForReferencedEntityWithoutId() {
 
 		assertThat(generatedColumn("child", ParentOfNoIdChild.class)) //
 				.extracting(c -> c.getName(), c -> c.getTable().getName(), c -> getAlias(c.getTable()), this::getAlias) //
@@ -743,7 +743,7 @@ public class SqlGeneratorUnitTests {
 		NoIdChild child;
 	}
 
-	static class NoIdChild {}
+	private static class NoIdChild {}
 
 	static class OtherAggregate {
 		@Id Long id;
