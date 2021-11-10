@@ -44,7 +44,7 @@ class RowPropertyAccessor implements PropertyAccessor {
 
 	@Override
 	public boolean canRead(EvaluationContext context, @Nullable Object target, String name) {
-		return rowMetadata != null && target != null && rowMetadata.getColumnNames().contains(name);
+		return rowMetadata != null && target != null && RowMetadataUtils.containsColumn(rowMetadata, name);
 	}
 
 	@Override

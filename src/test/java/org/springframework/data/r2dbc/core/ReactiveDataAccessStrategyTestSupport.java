@@ -20,6 +20,8 @@ import static org.mockito.Mockito.*;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.test.MockColumnMetadata;
+import io.r2dbc.spi.test.MockRowMetadata;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -29,7 +31,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -196,10 +197,8 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 
 		ReactiveDataAccessStrategy strategy = getStrategy();
 		Row rowMock = mock(Row.class);
-		RowMetadata metadataMock = mock(RowMetadata.class);
-		Collection<String> columnNames = mock(Collection.class);
-		when(metadataMock.getColumnNames()).thenReturn(columnNames);
-		when(columnNames.contains(fieldname)).thenReturn(true);
+		RowMetadata metadataMock = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name(fieldname).build()).build();
 
 		PrimitiveTypes toSave = new PrimitiveTypes();
 		setter.accept(toSave, testValue);

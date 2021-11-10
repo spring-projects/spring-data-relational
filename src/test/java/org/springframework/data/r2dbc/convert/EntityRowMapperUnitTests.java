@@ -5,14 +5,14 @@ import static org.mockito.Mockito.*;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
+import io.r2dbc.spi.test.MockColumnMetadata;
+import io.r2dbc.spi.test.MockRowMetadata;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,15 +32,15 @@ public class EntityRowMapperUnitTests {
 	DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
 
 	Row rowMock = mock(Row.class);
-	RowMetadata metadata = mock(RowMetadata.class);
-	Collection<String> columns = mock(Collection.class);
-
-	@BeforeEach
-	public void before() {
-
-		when(columns.contains(anyString())).thenReturn(true);
-		when(metadata.getColumnNames()).thenReturn(columns);
-	}
+	RowMetadata metadata = MockRowMetadata.builder()
+			.columnMetadata(MockColumnMetadata.builder().name("integer_set").build())
+			.columnMetadata(MockColumnMetadata.builder().name("boxed_integers").build())
+			.columnMetadata(MockColumnMetadata.builder().name("primitive_integers").build())
+			.columnMetadata(MockColumnMetadata.builder().name("enum_array").build())
+			.columnMetadata(MockColumnMetadata.builder().name("set_of_enum").build())
+			.columnMetadata(MockColumnMetadata.builder().name("enum_set").build())
+			.columnMetadata(MockColumnMetadata.builder().name("id").build())
+			.columnMetadata(MockColumnMetadata.builder().name("ids").build()).build();
 
 	@Test // gh-22
 	public void shouldMapSimpleEntity() {

@@ -15,12 +15,14 @@
  */
 package org.springframework.data.r2dbc.convert;
 
+import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -163,7 +165,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		try {
 
 			Object value = null;
-			if (metadata == null || metadata.getColumnNames().contains(identifier)) {
+			if (metadata == null || RowMetadataUtils.containsColumn(metadata, identifier)) {
 				value = row.get(identifier);
 			}
 
@@ -186,6 +188,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 					o_O);
 		}
 	}
+
 
 	public Object readValue(@Nullable Object value, TypeInformation<?> type) {
 
@@ -624,17 +627,8 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 	private boolean potentiallySetId(Row row, RowMetadata metadata, PersistentPropertyAccessor<?> propertyAccessor,
 			RelationalPersistentProperty idProperty) {
 
-		Collection<String> columns = metadata.getColumnNames();
-		Object generatedIdValue = null;
 		String idColumnName = idProperty.getColumnName().getReference();
-
-		if (columns.contains(idColumnName)) {
-			generatedIdValue = row.get(idColumnName);
-		} else if (columns.size() == 1) {
-
-			String key = columns.iterator().next();
-			generatedIdValue = row.get(key);
-		}
+		Object generatedIdValue = extractGeneratedIdentifier(row, metadata, idColumnName);
 
 		if (generatedIdValue == null) {
 			return false;
@@ -644,6 +638,24 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		propertyAccessor.setProperty(idProperty, conversionService.convert(generatedIdValue, idProperty.getType()));
 
 		return true;
+	}
+
+	@Nullable
+	private Object extractGeneratedIdentifier(Row row, RowMetadata metadata, String idColumnName) {
+
+		if (RowMetadataUtils.containsColumn(metadata, idColumnName)) {
+			return row.get(idColumnName);
+		}
+
+		Iterable<? extends ColumnMetadata> columns = metadata.getColumnMetadatas();
+		Iterator<? extends ColumnMetadata> it = columns.iterator();
+
+		if (it.hasNext()) {
+			ColumnMetadata column = it.next();
+			return row.get(column.getName());
+		}
+
+		return null;
 	}
 
 	private <R> RelationalPersistentEntity<R> getRequiredPersistentEntity(Class<R> type) {
