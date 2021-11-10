@@ -27,12 +27,12 @@ import org.springframework.data.r2dbc.dialect.PostgresDialect;
  * @author Jens Schauder
  */
 @ExtendWith(MockitoExtension.class)
-public class EntityRowMapperUnitTests {
+class EntityRowMapperUnitTests {
 
-	DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
+	private DefaultReactiveDataAccessStrategy strategy = new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE);
 
-	Row rowMock = mock(Row.class);
-	RowMetadata metadata = MockRowMetadata.builder()
+	private Row rowMock = mock(Row.class);
+	private RowMetadata metadata = MockRowMetadata.builder()
 			.columnMetadata(MockColumnMetadata.builder().name("integer_set").build())
 			.columnMetadata(MockColumnMetadata.builder().name("boxed_integers").build())
 			.columnMetadata(MockColumnMetadata.builder().name("primitive_integers").build())
@@ -43,7 +43,7 @@ public class EntityRowMapperUnitTests {
 			.columnMetadata(MockColumnMetadata.builder().name("ids").build()).build();
 
 	@Test // gh-22
-	public void shouldMapSimpleEntity() {
+	void shouldMapSimpleEntity() {
 
 		EntityRowMapper<SimpleEntity> mapper = getRowMapper(SimpleEntity.class);
 		when(rowMock.get("id")).thenReturn("foo");
@@ -53,7 +53,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // gh-22
-	public void shouldMapSimpleEntityWithConstructorCreation() {
+	void shouldMapSimpleEntityWithConstructorCreation() {
 
 		EntityRowMapper<SimpleEntityConstructorCreation> mapper = getRowMapper(SimpleEntityConstructorCreation.class);
 		when(rowMock.get("id")).thenReturn("foo");
@@ -63,7 +63,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // gh-22
-	public void shouldApplyConversionWithConstructorCreation() {
+	void shouldApplyConversionWithConstructorCreation() {
 
 		EntityRowMapper<ConversionWithConstructorCreation> mapper = getRowMapper(ConversionWithConstructorCreation.class);
 		when(rowMock.get("id")).thenReturn((byte) 0x24);
@@ -73,7 +73,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldConvertArrayToCollection() {
+	void shouldConvertArrayToCollection() {
 
 		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
 		when(rowMock.get("ids")).thenReturn((new String[] { "foo", "bar" }));
@@ -83,7 +83,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldConvertArrayToSet() {
+	void shouldConvertArrayToSet() {
 
 		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
 		when(rowMock.get("integer_set")).thenReturn((new int[] { 3, 14 }));
@@ -93,7 +93,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldConvertArrayMembers() {
+	void shouldConvertArrayMembers() {
 
 		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
 		when(rowMock.get("primitive_integers")).thenReturn((new Long[] { 3L, 14L }));
@@ -103,7 +103,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // gh-30
-	public void shouldConvertArrayToBoxedArray() {
+	void shouldConvertArrayToBoxedArray() {
 
 		EntityRowMapper<EntityWithCollection> mapper = getRowMapper(EntityWithCollection.class);
 		when(rowMock.get("boxed_integers")).thenReturn((new int[] { 3, 11 }));
@@ -113,7 +113,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // gh-252
-	public void shouldReadEnums() {
+	void shouldReadEnums() {
 
 		EntityRowMapper<WithEnumCollections> mapper = getRowMapper(WithEnumCollections.class);
 		when(rowMock.get("enum_array")).thenReturn((new String[] { "ONE", "TWO" }));
