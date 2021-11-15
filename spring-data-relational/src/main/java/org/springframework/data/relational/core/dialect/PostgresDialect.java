@@ -15,7 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import java.sql.JDBCType;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -214,8 +214,19 @@ public class PostgresDialect extends AbstractDialect {
 	 */
 	@Override
 	public Set<Class<?>> simpleTypes() {
+
 		Set<Class<?>> simpleTypes = new HashSet<>();
-		ifClassPresent("org.postgresql.util.PGobject", simpleTypes::add);
+		final List<String> simpleTypeNames = Arrays.asList( //
+				"org.postgresql.util.PGobject", //
+				"org.postgresql.geometric.PGpoint", //
+				"org.postgresql.geometric.PGbox", //
+				"org.postgresql.geometric.PGcircle", //
+				"org.postgresql.geometric.PGline", //
+				"org.postgresql.geometric.PGpath", //
+				"org.postgresql.geometric.PGpolygon", //
+				"org.postgresql.geometric.PGlseg"  //
+		);
+		simpleTypeNames.forEach(name -> ifClassPresent(name, simpleTypes::add));
 		return Collections.unmodifiableSet(simpleTypes);
 	}
 
