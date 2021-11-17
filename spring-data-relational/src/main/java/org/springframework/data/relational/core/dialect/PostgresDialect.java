@@ -216,7 +216,7 @@ public class PostgresDialect extends AbstractDialect {
 	public Set<Class<?>> simpleTypes() {
 
 		Set<Class<?>> simpleTypes = new HashSet<>();
-		final List<String> simpleTypeNames = Arrays.asList( //
+		List<String> simpleTypeNames = Arrays.asList( //
 				"org.postgresql.util.PGobject", //
 				"org.postgresql.geometric.PGpoint", //
 				"org.postgresql.geometric.PGbox", //
