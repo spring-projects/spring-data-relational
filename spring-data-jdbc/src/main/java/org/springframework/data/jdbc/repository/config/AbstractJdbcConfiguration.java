@@ -20,8 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -66,7 +66,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 @Configuration(proxyBeanMethods = false)
 public class AbstractJdbcConfiguration implements ApplicationContextAware {
 
-	private static final Logger LOG = LoggerFactory.getLogger(AbstractJdbcConfiguration.class);
+	private static final Log LOG = LogFactory.getLog(AbstractJdbcConfiguration.class);
 
 	private ApplicationContext applicationContext;
 

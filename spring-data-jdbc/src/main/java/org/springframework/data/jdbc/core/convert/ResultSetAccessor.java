@@ -20,8 +20,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
@@ -38,7 +38,7 @@ import org.springframework.util.LinkedCaseInsensitiveMap;
  */
 class ResultSetAccessor {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ResultSetAccessor.class);
+	private static final Log LOG = LogFactory.getLog(ResultSetAccessor.class);
 
 	private final ResultSet resultSet;
 
@@ -64,7 +64,7 @@ class ResultSetAccessor {
 				String label = metaData.getColumnLabel(i);
 
 				if (index.containsKey(label)) {
-					LOG.warn("ResultSet contains {} multiple times", label);
+					LOG.warn(String.format("ResultSet contains %s multiple times", label));
 					continue;
 				}
 

@@ -22,8 +22,8 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -71,7 +71,7 @@ import org.springframework.util.Assert;
  */
 public class BasicJdbcConverter extends BasicRelationalConverter implements JdbcConverter, ApplicationContextAware {
 
-	private static final Logger LOG = LoggerFactory.getLogger(BasicJdbcConverter.class);
+	private static final Log LOG = LogFactory.getLog(BasicJdbcConverter.class);
 	private static final Converter<Iterable<?>, Map<?, ?>> ITERABLE_OF_ENTRY_TO_MAP_CONVERTER = new IterableOfEntryToMapConverter();
 
 	private final JdbcTypeFactory typeFactory;

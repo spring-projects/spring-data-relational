@@ -17,8 +17,8 @@ package org.springframework.data.jdbc.testing;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,7 +40,7 @@ import org.testcontainers.containers.OracleContainer;
 @Profile("oracle")
 public class OracleDataSourceConfiguration extends DataSourceConfiguration {
 
-	private static final Logger LOG = LoggerFactory.getLogger(OracleDataSourceConfiguration.class);
+	private static final Log LOG = LogFactory.getLog(OracleDataSourceConfiguration.class);
 
 	private static OracleContainer ORACLE_CONTAINER;
 

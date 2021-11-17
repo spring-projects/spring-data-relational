@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
 import org.awaitility.Awaitility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -45,7 +45,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 @Configuration
 abstract class DataSourceConfiguration {
 
-	private static final Logger LOG = LoggerFactory.getLogger(DataSourceConfiguration.class);
+	private static final Log LOG = LogFactory.getLog(DataSourceConfiguration.class);
 
 	@Autowired Class<?> testClass;
 	@Autowired Environment environment;
