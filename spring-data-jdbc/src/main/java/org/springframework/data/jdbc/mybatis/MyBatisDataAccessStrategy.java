@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -66,7 +66,7 @@ import org.springframework.util.Assert;
  */
 public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
-	private static final Logger LOG = LoggerFactory.getLogger(MyBatisDataAccessStrategy.class);
+	private static final Log LOG = LogFactory.getLog(MyBatisDataAccessStrategy.class);
 	private static final String VERSION_SQL_PARAMETER_NAME_OLD = "___oldOptimisticLockingVersion";
 
 	private final SqlSession sqlSession;

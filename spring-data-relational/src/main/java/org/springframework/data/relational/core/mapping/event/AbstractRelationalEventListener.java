@@ -15,8 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.GenericTypeResolver;
 
@@ -29,7 +29,7 @@ import org.springframework.core.GenericTypeResolver;
  */
 public class AbstractRelationalEventListener<E> implements ApplicationListener<AbstractRelationalEvent<?>> {
 
-	private static final Logger LOG = LoggerFactory.getLogger(AbstractRelationalEventListener.class);
+	private static final Log LOG = LogFactory.getLog(AbstractRelationalEventListener.class);
 
 	private final Class<?> domainClass;
 
@@ -80,7 +80,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	protected void onBeforeConvert(BeforeConvertEvent<E> event) {
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("onBeforeConvert({})", event.getEntity());
+			LOG.debug(String.format("onBeforeConvert(%s)", event.getEntity()));
 		}
 	}
 
@@ -92,7 +92,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	protected void onBeforeSave(BeforeSaveEvent<E> event) {
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("onBeforeSave({})", event.getAggregateChange());
+			LOG.debug(String.format("onBeforeSave(%s)", event.getAggregateChange()));
 		}
 	}
 
@@ -104,7 +104,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	protected void onAfterSave(AfterSaveEvent<E> event) {
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("onAfterSave({})", event.getAggregateChange());
+			LOG.debug(String.format("onAfterSave(%s)", event.getAggregateChange()));
 		}
 	}
 
@@ -118,7 +118,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	protected void onAfterLoad(AfterLoadEvent<E> event) {
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("onAfterLoad({})", event.getEntity());
+			LOG.debug(String.format("onAfterLoad(%s)", event.getEntity()));
 		}
 	}
 
@@ -131,7 +131,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	protected void onAfterConvert(AfterConvertEvent<E> event) {
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("onAfterConvert({})", event.getEntity());
+			LOG.debug(String.format("onAfterConvert(%s)", event.getEntity()));
 		}
 	}
 
@@ -143,7 +143,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	protected void onAfterDelete(AfterDeleteEvent<E> event) {
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("onAfterDelete({})", event.getAggregateChange());
+			LOG.debug(String.format("onAfterDelete(%s)", event.getAggregateChange()));
 		}
 	}
 
@@ -155,7 +155,7 @@ public class AbstractRelationalEventListener<E> implements ApplicationListener<A
 	protected void onBeforeDelete(BeforeDeleteEvent<E> event) {
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("onBeforeDelete({})", event.getAggregateChange());
+			LOG.debug(String.format("onBeforeDelete(%s)", event.getAggregateChange()));
 		}
 	}
 
