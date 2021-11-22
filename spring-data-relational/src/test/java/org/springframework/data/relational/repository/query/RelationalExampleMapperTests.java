@@ -25,7 +25,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +41,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
 
 /**
@@ -89,10 +98,11 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person);
 
 		Query query = exampleMapper.getMappedExample(example);
-
-		assertThat(query.getCriteria()) //
-				.map(Object::toString) //
-				.hasValue("(firstname = 'Frodo') AND (lastname = 'Baggins')");
+		Set<String> allPossibleRes = new HashSet<String>(){{
+			add("(firstname = 'Frodo') AND (lastname = 'Baggins')");
+			add("(lastname = 'Baggins') AND (firstname = 'Frodo')");
+		}};
+		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
 	}
 
 	@Test // GH-929
@@ -123,9 +133,11 @@ public class RelationalExampleMapperTests {
 
 		Query query = exampleMapper.getMappedExample(example);
 
-		assertThat(query.getCriteria()) //
-				.map(Object::toString) //
-				.hasValue("(firstname IS NULL OR firstname = 'Bilbo') AND (lastname IS NULL OR lastname = 'Baggins')");
+		Set<String> allPossibleRes = new HashSet<String>(){{
+			add("(firstname IS NULL OR firstname = 'Bilbo') AND (lastname IS NULL OR lastname = 'Baggins')");
+			add("(lastname IS NULL OR lastname = 'Baggins') AND (firstname IS NULL OR firstname = 'Bilbo')");
+		}};
+		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
 	}
 
 	@Test // GH-929
@@ -367,9 +379,11 @@ public class RelationalExampleMapperTests {
 
 		Query query = exampleMapper.getMappedExample(example);
 
-		assertThat(query.getCriteria()) //
-				.map(Object::toString) //
-				.hasValue("(firstname = 'Frodo') OR (lastname = 'Baggins')");
+		Set<String> allPossibleRes = new HashSet<String>(){{
+			add("(firstname = 'Frodo') OR (lastname = 'Baggins')");
+			add("(lastname = 'Baggins') OR (firstname = 'Frodo')");
+		}};
+		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
 	}
 
 	@Test // GH-929
@@ -382,10 +396,11 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person);
 
 		Query query = exampleMapper.getMappedExample(example);
-
-		assertThat(query.getCriteria()) //
-				.map(Object::toString) //
-				.hasValue("(firstname = 'Frodo') AND (secret = 'I have the ring!')");
+		Set<String> allPossibleRes = new HashSet<String>(){{
+			add("(firstname = 'Frodo') AND (secret = 'I have the ring!')");
+			add("(secret = 'I have the ring!') AND (firstname = 'Frodo')");
+		}};
+		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
 	}
 
 	@Test // GH-929
@@ -414,10 +429,15 @@ public class RelationalExampleMapperTests {
 
 		Query query = exampleMapper.getMappedExample(example);
 
-		assertThat(query.getCriteria()) //
-				.map(Object::toString) //
-				.hasValue("(firstname = 'FRODO') AND (lastname = 'baggins') AND (secret = 'I have the ring!')");
-
+		Set<String> allPossibleRes = new HashSet<String>(){{
+			add("(firstname = 'FRODO') AND (lastname = 'baggins') AND (secret = 'I have the ring!')");
+			add("(firstname = 'FRODO') AND (secret = 'I have the ring!') AND (lastname = 'baggins')");
+			add("(lastname = 'baggins') AND (firstname = 'FRODO') AND (secret = 'I have the ring!')");
+			add("(lastname = 'baggins') AND (secret = 'I have the ring!') AND (firstname = 'FRODO')");
+			add("(secret = 'I have the ring!') AND (lastname = 'baggins') AND (firstname = 'FRODO')");
+			add("(secret = 'I have the ring!') AND (firstname = 'FRODO') AND (lastname = 'baggins')");
+		}};
+		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
 	}
 
 	@Data
