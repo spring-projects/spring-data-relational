@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.mapping;
 
 import java.sql.JDBCType;
+import java.sql.SQLType;
 import java.util.Objects;
 
 import org.springframework.lang.Nullable;
@@ -31,15 +32,15 @@ import org.springframework.lang.Nullable;
 public class JdbcValue {
 
 	private final Object value;
-	private final JDBCType jdbcType;
+	private final SQLType jdbcType;
 
-	protected JdbcValue(@Nullable Object value, @Nullable JDBCType jdbcType) {
+	protected JdbcValue(@Nullable Object value, @Nullable SQLType jdbcType) {
 
 		this.value = value;
 		this.jdbcType = jdbcType;
 	}
 
-	public static JdbcValue of(@Nullable Object value, @Nullable JDBCType jdbcType) {
+	public static JdbcValue of(@Nullable Object value, @Nullable SQLType jdbcType) {
 		return new JdbcValue(value, jdbcType);
 	}
 
@@ -49,7 +50,7 @@ public class JdbcValue {
 	}
 
 	@Nullable
-	public JDBCType getJdbcType() {
+	public SQLType getJdbcType() {
 		return this.jdbcType;
 	}
 

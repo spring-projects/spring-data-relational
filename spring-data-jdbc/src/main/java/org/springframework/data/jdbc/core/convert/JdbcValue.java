@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.sql.JDBCType;
+import java.sql.SQLType;
 import java.util.Objects;
 
 import org.springframework.lang.Nullable;
@@ -32,11 +33,11 @@ import org.springframework.lang.Nullable;
 @Deprecated
 public final class JdbcValue extends org.springframework.data.jdbc.core.mapping.JdbcValue {
 
-	private JdbcValue(@Nullable Object value, @Nullable JDBCType jdbcType) {
+	private JdbcValue(@Nullable Object value, @Nullable SQLType	jdbcType) {
 		super(value, jdbcType);
 	}
 
-	public static JdbcValue of(@Nullable Object value, @Nullable JDBCType jdbcType) {
+	public static JdbcValue of(@Nullable Object value, @Nullable SQLType jdbcType) {
 		return new JdbcValue(value, jdbcType);
 	}
 }
