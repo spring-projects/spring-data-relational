@@ -17,7 +17,7 @@ package org.springframework.data.jdbc.support;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.sql.Types;
+import java.sql.JDBCType;
 import java.time.OffsetDateTime;
 
 import org.junit.jupiter.api.Test;
@@ -31,6 +31,6 @@ class JdbcUtilTests {
 
 	@Test
 	void test() {
-		assertThat(JdbcUtil.sqlTypeFor(OffsetDateTime.class)).isEqualTo(Types.TIMESTAMP_WITH_TIMEZONE);
+		assertThat(JdbcUtil.targetSqlTypeFor(OffsetDateTime.class)).isEqualTo(JDBCType.TIMESTAMP_WITH_TIMEZONE);
 	}
 }

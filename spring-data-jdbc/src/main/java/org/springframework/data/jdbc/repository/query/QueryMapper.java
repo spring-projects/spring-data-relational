@@ -16,7 +16,7 @@
 package org.springframework.data.jdbc.repository.query;
 
 import java.sql.JDBCType;
-import java.sql.Types;
+import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,6 +27,7 @@ import java.util.Objects;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
+import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
@@ -45,7 +46,6 @@ import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.Pair;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -279,7 +279,7 @@ class QueryMapper {
 		TypeInformation<?> actualType = propertyField.getTypeHint().getRequiredActualType();
 		Column column = table.column(propertyField.getMappedColumnName());
 		Object mappedValue;
-		int sqlType;
+		SQLType sqlType;
 
 		if (criteria.getValue() instanceof JdbcValue) {
 
@@ -302,7 +302,7 @@ class QueryMapper {
 			RelationalPersistentProperty property = ((MetadataBackedField) propertyField).property;
 			JdbcValue jdbcValue = convertToJdbcValue(property, criteria.getValue());
 			mappedValue = jdbcValue.getValue();
-			sqlType = jdbcValue.getJdbcType() != null ? jdbcValue.getJdbcType().getVendorTypeNumber()
+			sqlType = jdbcValue.getJdbcType() != null ? jdbcValue.getJdbcType()
 					: propertyField.getSqlType();
 
 		} else {
@@ -339,7 +339,7 @@ class QueryMapper {
 		if (value instanceof Iterable) {
 
 			List<Object> mapped = new ArrayList<>();
-			JDBCType jdbcType = null;
+			SQLType jdbcType = null;
 
 			for (Object o : (Iterable<?>) value) {
 
@@ -358,7 +358,7 @@ class QueryMapper {
 
 			Object[] valueAsArray = (Object[]) value;
 			Object[] mappedValueArray = new Object[valueAsArray.length];
-			JDBCType jdbcType = null;
+			SQLType jdbcType = null;
 
 			for (int i = 0; i < valueAsArray.length; i++) {
 
@@ -389,7 +389,7 @@ class QueryMapper {
 		return converter.writeJdbcValue( //
 				value, //
 				converter.getColumnType(property), //
-				converter.getSqlType(property) //
+				converter.getTargetSqlType(property) //
 		);
 	}
 
@@ -410,7 +410,7 @@ class QueryMapper {
 			SqlIdentifier sqlIdentifier = nestedProperty.getColumnName().transform(prefix::concat);
 			Object mappedNestedValue = convertValue(embeddedAccessor.getProperty(nestedProperty),
 					nestedProperty.getTypeInformation());
-			int sqlType = converter.getSqlType(nestedProperty);
+			SQLType sqlType = converter.getTargetSqlType(nestedProperty);
 
 			Condition mappedCondition = createCondition(table.column(sqlIdentifier), mappedNestedValue, sqlType,
 					parameterSource, criteria.getComparator(), criteria.isIgnoreCase());
@@ -481,8 +481,8 @@ class QueryMapper {
 		return this.mappingContext;
 	}
 
-	private Condition createCondition(Column column, @Nullable Object mappedValue, int sqlType,
-			MapSqlParameterSource parameterSource, Comparator comparator, boolean ignoreCase) {
+	private Condition createCondition(Column column, @Nullable Object mappedValue, SQLType sqlType,
+									  MapSqlParameterSource parameterSource, Comparator comparator, boolean ignoreCase) {
 
 		if (comparator.equals(Comparator.IS_NULL)) {
 			return column.isNull();
@@ -505,7 +505,7 @@ class QueryMapper {
 		}
 
 		Expression columnExpression = column;
-		if (ignoreCase && (sqlType == Types.VARCHAR || sqlType == Types.NVARCHAR)) {
+		if (ignoreCase && (sqlType == JDBCType.VARCHAR || sqlType == JDBCType.NVARCHAR)) {
 			columnExpression = Functions.upper(column);
 		}
 
@@ -593,7 +593,7 @@ class QueryMapper {
 	private Expression bindBoolean(Column column, MapSqlParameterSource parameterSource, boolean value) {
 
 		Object converted = converter.writeValue(value, ClassTypeInformation.OBJECT);
-		return bind(converted, Types.BIT, parameterSource, column.getName().getReference());
+		return bind(converted, JDBCType.BIT, parameterSource, column.getName().getReference());
 	}
 
 	Field createPropertyField(@Nullable RelationalPersistentEntity<?> entity, SqlIdentifier key) {
@@ -605,30 +605,30 @@ class QueryMapper {
 		return entity == null ? new Field(key) : new MetadataBackedField(key, entity, mappingContext, converter);
 	}
 
-	int getTypeHint(@Nullable Object mappedValue, Class<?> propertyType, JdbcValue settableValue) {
+	SQLType getTypeHint(@Nullable Object mappedValue, Class<?> propertyType, JdbcValue settableValue) {
 
 		if (mappedValue == null || propertyType.equals(Object.class)) {
-			return JdbcUtils.TYPE_UNKNOWN;
+			return JdbcUtil.TYPE_UNKNOWN;
 		}
 
 		if (mappedValue.getClass().equals(settableValue.getValue().getClass())) {
-			return JdbcUtils.TYPE_UNKNOWN;
+			return JdbcUtil.TYPE_UNKNOWN;
 		}
 
-		return settableValue.getJdbcType().getVendorTypeNumber();
+		return settableValue.getJdbcType();
 	}
 
-	private Expression bind(@Nullable Object mappedValue, int sqlType, MapSqlParameterSource parameterSource,
-			String name) {
+	private Expression bind(@Nullable Object mappedValue, SQLType sqlType, MapSqlParameterSource parameterSource,
+							String name) {
 		return bind(mappedValue, sqlType, parameterSource, name, false);
 	}
 
-	private Expression bind(@Nullable Object mappedValue, int sqlType, MapSqlParameterSource parameterSource, String name,
-			boolean ignoreCase) {
+	private Expression bind(@Nullable Object mappedValue, SQLType sqlType, MapSqlParameterSource parameterSource, String name,
+							boolean ignoreCase) {
 
 		String uniqueName = getUniqueName(parameterSource, name);
 
-		parameterSource.addValue(uniqueName, mappedValue, sqlType);
+		parameterSource.addValue(uniqueName, mappedValue, sqlType.getVendorTypeNumber());
 
 		return ignoreCase ? Functions.upper(SQL.bindMarker(":" + uniqueName)) : SQL.bindMarker(":" + uniqueName);
 	}
@@ -686,8 +686,8 @@ class QueryMapper {
 			return ClassTypeInformation.OBJECT;
 		}
 
-		public int getSqlType() {
-			return JdbcUtils.TYPE_UNKNOWN;
+		public SQLType getSqlType() {
+			return JdbcUtil.TYPE_UNKNOWN;
 		}
 	}
 
@@ -701,7 +701,7 @@ class QueryMapper {
 		private final RelationalPersistentProperty property;
 		private final @Nullable PersistentPropertyPath<RelationalPersistentProperty> path;
 		private final boolean embedded;
-		private final int sqlType;
+		private final SQLType sqlType;
 
 		/**
 		 * Creates a new {@link MetadataBackedField} with the given name, {@link RelationalPersistentEntity} and
@@ -741,7 +741,7 @@ class QueryMapper {
 
 			this.path = getPath(name.getReference());
 			this.property = this.path == null ? property : this.path.getLeafProperty();
-			this.sqlType = this.property != null ? converter.getSqlType(this.property) : JdbcUtils.TYPE_UNKNOWN;
+			this.sqlType = this.property != null ? converter.getTargetSqlType(this.property) : JdbcUtil.TYPE_UNKNOWN;
 
 			if (this.property != null) {
 				this.embedded = this.property.isEmbedded();
@@ -839,7 +839,7 @@ class QueryMapper {
 		 * @see org.springframework.data.mongodb.core.convert.QueryMapper.Field#getSqlType()
 		 */
 		@Override
-		public int getSqlType() {
+		public SQLType getSqlType() {
 			return this.sqlType;
 		}
 	}

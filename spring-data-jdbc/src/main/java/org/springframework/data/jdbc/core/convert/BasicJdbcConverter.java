@@ -19,6 +19,7 @@ import java.sql.Array;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLType;
 import java.util.Map;
 import java.util.Optional;
 
@@ -170,10 +171,15 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#getSqlType(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
 	 */
 	@Override
+	public SQLType getTargetSqlType(RelationalPersistentProperty property) {
+		return JdbcUtil.targetSqlTypeFor(getColumnType(property));
+	}
+
+	@Override
+	@Deprecated
 	public int getSqlType(RelationalPersistentProperty property) {
 		return JdbcUtil.sqlTypeFor(getColumnType(property));
 	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#getColumnType(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
@@ -282,12 +288,19 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
 	}
 
-	/*
+	@Override
+	@Deprecated
+	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
+		return writeJdbcValue(value, columnType, JdbcUtil.jdbcTypeFor(sqlType));
+	}
+
+
+		/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#writeValue(java.lang.Object, java.lang.Class, int)
 	 */
 	@Override
-	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
+	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, SQLType sqlType) {
 
 		JdbcValue jdbcValue = tryToConvertToJdbcValue(value);
 		if (jdbcValue != null) {
@@ -297,7 +310,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		Object convertedValue = writeValue(value, ClassTypeInformation.from(columnType));
 
 		if (convertedValue == null || !convertedValue.getClass().isArray()) {
-			return JdbcValue.of(convertedValue, JdbcUtil.jdbcTypeFor(sqlType));
+
+			return JdbcValue.of(convertedValue, sqlType);
 		}
 
 		Class<?> componentType = convertedValue.getClass().getComponentType();

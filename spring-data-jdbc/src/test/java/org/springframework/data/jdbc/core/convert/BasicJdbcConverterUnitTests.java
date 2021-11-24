@@ -136,7 +136,7 @@ public class BasicJdbcConverterUnitTests {
 	void conversionOfPrimitiveArrays() {
 
 		int[] ints = { 1, 2, 3, 4, 5 };
-		JdbcValue converted = converter.writeJdbcValue(ints, ints.getClass(), JdbcUtil.sqlTypeFor(ints.getClass()));
+		JdbcValue converted = converter.writeJdbcValue(ints, ints.getClass(), JdbcUtil.targetSqlTypeFor(ints.getClass()));
 
 		assertThat(converted.getValue()).isInstanceOf(Array.class);
 		assertThat(typeFactory.arraySource).containsExactly(1, 2, 3, 4, 5);
