@@ -18,7 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
 import java.lang.reflect.Constructor;
-import java.sql.JDBCType;
+import java.sql.SQLType;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
@@ -153,9 +153,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		Class<?> conversionTargetType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(parameterType);
 
 		JdbcValue jdbcValue = converter.writeJdbcValue(value, conversionTargetType,
-				JdbcUtil.sqlTypeFor(conversionTargetType));
+				JdbcUtil.targetSqlTypeFor(conversionTargetType));
 
-		JDBCType jdbcType = jdbcValue.getJdbcType();
+		SQLType jdbcType = jdbcValue.getJdbcType();
 		if (jdbcType == null) {
 
 			parameters.addValue(parameterName, jdbcValue.getValue());

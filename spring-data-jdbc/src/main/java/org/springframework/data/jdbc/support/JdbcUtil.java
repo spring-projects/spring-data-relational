@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.JDBCType;
+import java.sql.SQLType;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -38,32 +39,48 @@ import org.springframework.util.Assert;
  */
 public final class JdbcUtil {
 
-	private static final Map<Class<?>, Integer> sqlTypeMappings = new HashMap<>();
+	public static final SQLType TYPE_UNKNOWN = new SQLType() {
+		@Override
+		public String getName() {
+			return "UNKNOWN";
+		}
+
+		@Override
+		public String getVendor() {
+			return "Spring";
+		}
+
+		@Override
+		public Integer getVendorTypeNumber() {
+			return JdbcUtils.TYPE_UNKNOWN;
+		}
+	} ;
+	private static final Map<Class<?>, SQLType> sqlTypeMappings = new HashMap<>();
 
 	static {
 
-		sqlTypeMappings.put(String.class, Types.VARCHAR);
-		sqlTypeMappings.put(BigInteger.class, Types.BIGINT);
-		sqlTypeMappings.put(BigDecimal.class, Types.DECIMAL);
-		sqlTypeMappings.put(Byte.class, Types.TINYINT);
-		sqlTypeMappings.put(byte.class, Types.TINYINT);
-		sqlTypeMappings.put(Short.class, Types.SMALLINT);
-		sqlTypeMappings.put(short.class, Types.SMALLINT);
-		sqlTypeMappings.put(Integer.class, Types.INTEGER);
-		sqlTypeMappings.put(int.class, Types.INTEGER);
-		sqlTypeMappings.put(Long.class, Types.BIGINT);
-		sqlTypeMappings.put(long.class, Types.BIGINT);
-		sqlTypeMappings.put(Double.class, Types.DOUBLE);
-		sqlTypeMappings.put(double.class, Types.DOUBLE);
-		sqlTypeMappings.put(Float.class, Types.REAL);
-		sqlTypeMappings.put(float.class, Types.REAL);
-		sqlTypeMappings.put(Boolean.class, Types.BIT);
-		sqlTypeMappings.put(boolean.class, Types.BIT);
-		sqlTypeMappings.put(byte[].class, Types.VARBINARY);
-		sqlTypeMappings.put(Date.class, Types.DATE);
-		sqlTypeMappings.put(Time.class, Types.TIME);
-		sqlTypeMappings.put(Timestamp.class, Types.TIMESTAMP);
-		sqlTypeMappings.put(OffsetDateTime.class, Types.TIMESTAMP_WITH_TIMEZONE);
+		sqlTypeMappings.put(String.class, JDBCType.VARCHAR);
+		sqlTypeMappings.put(BigInteger.class, JDBCType.BIGINT);
+		sqlTypeMappings.put(BigDecimal.class, JDBCType.DECIMAL);
+		sqlTypeMappings.put(Byte.class, JDBCType.TINYINT);
+		sqlTypeMappings.put(byte.class, JDBCType.TINYINT);
+		sqlTypeMappings.put(Short.class, JDBCType.SMALLINT);
+		sqlTypeMappings.put(short.class, JDBCType.SMALLINT);
+		sqlTypeMappings.put(Integer.class, JDBCType.INTEGER);
+		sqlTypeMappings.put(int.class, JDBCType.INTEGER);
+		sqlTypeMappings.put(Long.class, JDBCType.BIGINT);
+		sqlTypeMappings.put(long.class, JDBCType.BIGINT);
+		sqlTypeMappings.put(Double.class, JDBCType.DOUBLE);
+		sqlTypeMappings.put(double.class, JDBCType.DOUBLE);
+		sqlTypeMappings.put(Float.class, JDBCType.REAL);
+		sqlTypeMappings.put(float.class, JDBCType.REAL);
+		sqlTypeMappings.put(Boolean.class, JDBCType.BIT);
+		sqlTypeMappings.put(boolean.class, JDBCType.BIT);
+		sqlTypeMappings.put(byte[].class, JDBCType.VARBINARY);
+		sqlTypeMappings.put(Date.class, JDBCType.DATE);
+		sqlTypeMappings.put(Time.class, JDBCType.TIME);
+		sqlTypeMappings.put(Timestamp.class, JDBCType.TIMESTAMP);
+		sqlTypeMappings.put(OffsetDateTime.class, JDBCType.TIMESTAMP_WITH_TIMEZONE);
 	}
 
 	private JdbcUtil() {
@@ -76,7 +93,9 @@ public final class JdbcUtil {
 	 *
 	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
 	 * @return One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
+	 * @deprecated use {@link #targetSqlTypeFor(Class)} instead.
 	 */
+	@Deprecated
 	public static int sqlTypeFor(Class<?> type) {
 
 		Assert.notNull(type, "Type must not be null.");
@@ -85,7 +104,25 @@ public final class JdbcUtil {
 				.filter(k -> k.isAssignableFrom(type)) //
 				.findFirst() //
 				.map(sqlTypeMappings::get) //
+				.map(SQLType::getVendorTypeNumber)
 				.orElse(JdbcUtils.TYPE_UNKNOWN);
+	}
+
+	/**
+	 * Returns the {@link SQLType} value suitable for passing a value of the provided type to JDBC driver.
+	 *
+	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
+	 * @return a matching {@link SQLType} or {@link #TYPE_UNKNOWN}.
+	 */
+	public static SQLType targetSqlTypeFor(Class<?> type) {
+
+		Assert.notNull(type, "Type must not be null.");
+
+		return sqlTypeMappings.keySet().stream() //
+				.filter(k -> k.isAssignableFrom(type)) //
+				.findFirst() //
+				.map(sqlTypeMappings::get) //
+				.orElse(JdbcUtil.TYPE_UNKNOWN);
 	}
 
 	/**
@@ -93,8 +130,10 @@ public final class JdbcUtil {
 	 *
 	 * @param jdbcType value to be converted. May be {@literal null}.
 	 * @return One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
+	 * @deprecated there is no replacement.
 	 */
-	public static int sqlTypeFor(@Nullable JDBCType jdbcType) {
+	@Deprecated
+	public static int sqlTypeFor(@Nullable SQLType jdbcType) {
 		return jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
 	}
 
@@ -104,9 +143,11 @@ public final class JdbcUtil {
 	 *
 	 * @param sqlType One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
 	 * @return a matching {@link JDBCType} instance or {@literal null}.
+	 * @deprecated This is now a noop
 	 */
 	@Nullable
-	public static JDBCType jdbcTypeFor(int sqlType) {
+	@Deprecated
+	public static SQLType jdbcTypeFor(int sqlType) {
 
 		if (sqlType == JdbcUtils.TYPE_UNKNOWN) {
 			return null;
@@ -121,9 +162,11 @@ public final class JdbcUtil {
 	 *
 	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
 	 * @return a matching {@link JDBCType} instance or {@literal null}.
+	 * @deprecated Use {@link #targetSqlTypeFor(Class)} instead.
 	 */
-	@Nullable
-	public static JDBCType jdbcTypeFor(Class<?> type) {
-		return jdbcTypeFor(sqlTypeFor(type));
+	@Deprecated
+	public static SQLType jdbcTypeFor(Class<?> type) {
+
+		return targetSqlTypeFor(type);
 	}
 }

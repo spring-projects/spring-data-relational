@@ -16,7 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.sql.Array;
-import java.sql.JDBCType;
+import java.sql.SQLType;
 
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -67,7 +67,7 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 
 		Class<?> componentType = arrayColumns.getArrayType(value.getClass());
 
-		JDBCType jdbcType = JdbcUtil.jdbcTypeFor(componentType);
+		SQLType jdbcType = JdbcUtil.targetSqlTypeFor(componentType);
 		Assert.notNull(jdbcType, () -> String.format("Couldn't determine JDBCType for %s", componentType));
 		String typeName = arrayColumns.getArrayTypeName(jdbcType);
 
