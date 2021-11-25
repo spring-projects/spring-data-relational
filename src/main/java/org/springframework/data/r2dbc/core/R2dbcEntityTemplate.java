@@ -89,6 +89,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Bogdan Ilchyshyn
  * @author Jens Schauder
+ * @author Jose Luis Leon
  * @since 1.1
  */
 public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAware, ApplicationContextAware {
@@ -686,7 +687,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 				entityToUse = incrementVersion(persistentEntity, it);
 			} else {
 
-				entityToUse = entity;
+				entityToUse = it;
 				matchingVersionCriteria = null;
 			}
 

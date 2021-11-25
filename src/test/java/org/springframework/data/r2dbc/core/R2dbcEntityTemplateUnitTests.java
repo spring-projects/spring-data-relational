@@ -67,6 +67,7 @@ import org.springframework.util.CollectionUtils;
  * Unit tests for {@link R2dbcEntityTemplate}.
  *
  * @author Mark Paluch
+ * @author Jose Luis Leon
  */
 public class R2dbcEntityTemplateUnitTests {
 
@@ -245,8 +246,8 @@ public class R2dbcEntityTemplateUnitTests {
 	@Test // gh-220
 	void shouldDeleteEntity() {
 
-		Person person = new Person();
-		person.id = "Walter";
+		Person person = Person.empty() //
+				.withId("Walter");
 		recorder.addStubbing(s -> s.startsWith("DELETE"), Collections.emptyList());
 
 		entityTemplate.delete(person) //
@@ -390,7 +391,7 @@ public class R2dbcEntityTemplateUnitTests {
 		ValueCapturingAfterSaveCallback afterSave = new ValueCapturingAfterSaveCallback();
 
 		entityTemplate.setEntityCallbacks(ReactiveEntityCallbacks.create(beforeConvert, beforeSave, afterSave));
-		entityTemplate.insert(new Person()).as(StepVerifier::create) //
+		entityTemplate.insert(Person.empty()).as(StepVerifier::create) //
 				.assertNext(actual -> {
 					assertThat(actual.id).isEqualTo("after-save");
 					assertThat(actual.name).isEqualTo("before-convert");
@@ -439,10 +440,10 @@ public class R2dbcEntityTemplateUnitTests {
 		ValueCapturingBeforeSaveCallback beforeSave = new ValueCapturingBeforeSaveCallback();
 		ValueCapturingAfterSaveCallback afterSave = new ValueCapturingAfterSaveCallback();
 
-		Person person = new Person();
-		person.id = "the-id";
-		person.name = "name";
-		person.description = "description";
+		Person person = Person.empty() //
+				.withId("the-id") //
+				.withName("name") //
+				.withDescription("description");
 
 		entityTemplate.setEntityCallbacks(ReactiveEntityCallbacks.create(beforeConvert, beforeSave, afterSave));
 		entityTemplate.update(person).as(StepVerifier::create) //
@@ -460,7 +461,8 @@ public class R2dbcEntityTemplateUnitTests {
 				Parameter.from("before-save"));
 	}
 
-	@ToString
+	@Value
+	@With
 	static class Person {
 
 		@Id String id;
@@ -469,12 +471,8 @@ public class R2dbcEntityTemplateUnitTests {
 
 		String description;
 
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
+		public static Person empty() {
+			return new Person(null, null, null);
 		}
 	}
 
@@ -548,8 +546,8 @@ public class R2dbcEntityTemplateUnitTests {
 		public Mono<Person> onBeforeConvert(Person entity, SqlIdentifier table) {
 
 			capture(entity);
-			entity.name = "before-convert";
-			return Mono.just(entity);
+			Person person = entity.withName("before-convert");
+			return Mono.just(person);
 		}
 	}
 
@@ -573,9 +571,9 @@ public class R2dbcEntityTemplateUnitTests {
 
 			capture(entity);
 
-			Person person = new Person();
-			person.id = "after-save";
-			person.name = entity.name;
+			Person person = Person.empty() //
+					.withId("after-save") //
+					.withName(entity.getName());
 
 			return Mono.just(person);
 		}
@@ -588,9 +586,9 @@ public class R2dbcEntityTemplateUnitTests {
 		public Mono<Person> onAfterConvert(Person entity, SqlIdentifier table) {
 
 			capture(entity);
-			Person person = new Person();
-			person.id = "after-convert";
-			person.name = entity.name;
+			Person person = Person.empty() //
+					.withId("after-convert") //
+					.withName(entity.getName());
 
 			return Mono.just(person);
 		}
