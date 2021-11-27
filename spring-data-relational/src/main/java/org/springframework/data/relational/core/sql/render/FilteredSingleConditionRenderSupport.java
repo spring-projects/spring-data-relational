@@ -28,6 +28,7 @@ import org.springframework.util.Assert;
  * and delegate nested {@link Expression} and {@link Condition} rendering.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @since 1.1
  */
 abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisitor {
@@ -55,14 +56,14 @@ abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisit
 	@Override
 	Delegation enterNested(Visitable segment) {
 
-		if (segment instanceof Expression) {
-			ExpressionVisitor visitor = new ExpressionVisitor(context);
+		if (segment instanceof Condition) {
+			ConditionVisitor visitor = new ConditionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}
 
-		if (segment instanceof Condition) {
-			ConditionVisitor visitor = new ConditionVisitor(context);
+		if (segment instanceof Expression) {
+			ExpressionVisitor visitor = new ExpressionVisitor(context);
 			current = visitor;
 			return Delegation.delegateTo(visitor);
 		}

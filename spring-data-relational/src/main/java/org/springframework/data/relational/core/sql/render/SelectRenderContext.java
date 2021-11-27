@@ -15,8 +15,10 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import java.util.OptionalLong;
 import java.util.function.Function;
 
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.Select;
 
 /**
@@ -26,6 +28,7 @@ import org.springframework.data.relational.core.sql.Select;
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Jens Schauder
  * @since 1.1
  */
 public interface SelectRenderContext {
@@ -51,12 +54,36 @@ public interface SelectRenderContext {
 
 	/**
 	 * Customization hook: Rendition of a part after {@code ORDER BY}. The rendering function is called always, regardless
-	 * whether {@code ORDER BY} exists or not. Renders an empty string by default.
+	 * whether {@code ORDER BY} exists or not.
+	 * <p>
+	 * Renders lock, limit and offset clause as appropriate.
+	 * </p>
 	 *
 	 * @param hasOrderBy the actual value whether the {@link Select} statement has a {@code ORDER BY} clause.
 	 * @return render {@link Function} invoked after rendering {@code ORDER BY}.
 	 */
 	default Function<Select, ? extends CharSequence> afterOrderBy(boolean hasOrderBy) {
-		return select -> "";
+
+		return select -> {
+
+			OptionalLong limit = select.getLimit();
+			OptionalLong offset = select.getOffset();
+			LockMode lockMode = select.getLockMode();
+
+			String lockPrefix = (lockMode == null) ? "" : " FOR UPDATE";
+
+			if (limit.isPresent() && offset.isPresent()) {
+				return String.format("%s OFFSET %d ROWS FETCH FIRST %d ROWS ONLY", lockPrefix, offset.getAsLong(),
+						limit.getAsLong());
+			}
+			if (limit.isPresent()) {
+				return String.format("%s FETCH FIRST %d ROWS ONLY", lockPrefix, limit.getAsLong());
+			}
+			if (offset.isPresent()) {
+				return String.format("%s OFFSET %d ROWS", lockPrefix, offset.getAsLong());
+			}
+
+			return lockPrefix;
+		};
 	}
 }

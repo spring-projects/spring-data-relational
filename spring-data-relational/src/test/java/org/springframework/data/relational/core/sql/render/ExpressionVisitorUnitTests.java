@@ -33,7 +33,7 @@ import org.springframework.data.relational.core.sql.Table;
 
 /**
  * Tests for the {@link ExpressionVisitor}.
- * 
+ *
  * @author Jens Schauder
  */
 public class ExpressionVisitorUnitTests {
@@ -82,7 +82,7 @@ public class ExpressionVisitorUnitTests {
 		Column expression = Column.aliased("col", Table.create("tab"), "col_alias");
 		expression.visit(visitor);
 
-		assertThat(visitor.getRenderedPart().toString()).isEqualTo("tab.col_alias");
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("col_alias");
 	}
 
 	@Test // GH-1003

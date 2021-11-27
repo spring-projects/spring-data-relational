@@ -77,7 +77,7 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Column) {
-			builder.append(NameRenderer.reference(context, (Column) segment));
+			builder.append(NameRenderer.fullyQualifiedReference(context, (Column) segment));
 		}
 
 		return super.leaveNested(segment);

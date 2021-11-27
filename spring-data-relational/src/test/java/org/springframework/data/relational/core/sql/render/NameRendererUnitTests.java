@@ -23,7 +23,7 @@ import org.springframework.data.relational.core.sql.Table;
 
 /**
  * Unit tests for the {@link NameRenderer}.
- * 
+ *
  * @author Jens Schauder
  */
 class NameRendererUnitTests {
@@ -40,22 +40,22 @@ class NameRendererUnitTests {
 		assertThat(rendered).isEqualTo("column");
 	}
 
-	@Test // GH-1003
-	void fullyQualifiedReference() {
+	@Test // GH-1003, GH-968
+	void fullyQualifiedReferenceWithAlias() {
 
 		Column column = Column.aliased("col", Table.aliased("table", "tab_alias"), "col_alias");
 
 		CharSequence rendered = NameRenderer.fullyQualifiedReference(context, column);
 
-		assertThat(rendered).isEqualTo("tab_alias.col_alias");
+		assertThat(rendered).isEqualTo("col_alias");
 	}
 
-	@Test // GH-1003
-	void fullyQualifiedUnaliasedReference() {
+	@Test // GH-1003, GH-968
+	void fullyQualifiedReference() {
 
-		Column column = Column.aliased("col", Table.aliased("table", "tab_alias"), "col_alias");
+		Column column = Table.aliased("table", "tab_alias").column("col");
 
-		CharSequence rendered = NameRenderer.fullyQualifiedUnaliasedReference(context, column);
+		CharSequence rendered = NameRenderer.fullyQualifiedReference(context, column);
 
 		assertThat(rendered).isEqualTo("tab_alias.col");
 	}

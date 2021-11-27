@@ -50,7 +50,7 @@ public interface Segment extends Visitable {
 	 * Return a SQL string representation of this {@link Segment}.
 	 * <p/>
 	 * The representation is intended for debugging purposes and an approximation to the generated SQL. While it might
-	 * work in the context of a specific dialect, you should not that the {@link #toString()} representation works across
+	 * work in the context of a specific dialect, you should not assume that the {@link #toString()} representation works across
 	 * multiple databases.
 	 *
 	 * @return a SQL string representation of this {@link Segment}.

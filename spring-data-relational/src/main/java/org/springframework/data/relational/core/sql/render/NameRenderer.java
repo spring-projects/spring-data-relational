@@ -87,6 +87,10 @@ class NameRenderer {
 
 		RenderNamingStrategy namingStrategy = context.getNamingStrategy();
 
+		if (column instanceof Aliased) {
+			return render(context, namingStrategy.getReferenceName(column));
+		}
+
 		return render(context, SqlIdentifier.from(namingStrategy.getReferenceName(column.getTable()),
 				namingStrategy.getReferenceName(column)));
 	}

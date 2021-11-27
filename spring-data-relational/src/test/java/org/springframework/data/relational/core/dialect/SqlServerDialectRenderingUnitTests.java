@@ -112,7 +112,7 @@ public class SqlServerDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY foo.column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 
 	@Test // DATAJDBC-498
@@ -177,7 +177,7 @@ public class SqlServerDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (UPDLOCK, ROWLOCK) ORDER BY column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (UPDLOCK, ROWLOCK) ORDER BY foo.column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 
 	@Test // DATAJDBC-498
@@ -190,6 +190,6 @@ public class SqlServerDialectRenderingUnitTests {
 
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
-		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (HOLDLOCK, ROWLOCK) ORDER BY column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (HOLDLOCK, ROWLOCK) ORDER BY foo.column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
 	}
 }

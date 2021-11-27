@@ -28,11 +28,12 @@ import org.springframework.data.relational.core.sql.Table;
  * Unit tests for {@link OrderByClauseVisitor}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
-public class OrderByClauseVisitorUnitTests {
+class OrderByClauseVisitorUnitTests {
 
 	@Test // DATAJDBC-309
-	public void shouldRenderOrderByName() {
+	void shouldRenderOrderByAlias() {
 
 		Table employee = SQL.table("employee").as("emp");
 		Column column = employee.column("name").as("emp_name");
@@ -46,7 +47,7 @@ public class OrderByClauseVisitorUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldApplyNamingStrategy() {
+	void shouldApplyNamingStrategy() {
 
 		Table employee = SQL.table("employee").as("emp");
 		Column column = employee.column("name").as("emp_name");
@@ -58,4 +59,33 @@ public class OrderByClauseVisitorUnitTests {
 
 		assertThat(visitor.getRenderedPart().toString()).isEqualTo("EMP_NAME ASC");
 	}
+
+	@Test // GH-968
+	void shouldRenderOrderByFullyQualifiedName() {
+
+		Table employee = SQL.table("employee");
+		Column column = employee.column("name");
+
+		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
+
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
+		select.visit(visitor);
+
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("employee.name ASC");
+	}
+
+	@Test // GH-968
+	void shouldRenderOrderByFullyQualifiedNameWithTableAlias() {
+
+		Table employee = SQL.table("employee").as("emp");
+		Column column = employee.column("name");
+
+		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
+
+		OrderByClauseVisitor visitor = new OrderByClauseVisitor(new SimpleRenderContext(NamingStrategies.asIs()));
+		select.visit(visitor);
+
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("emp.name ASC");
+	}
+
 }
