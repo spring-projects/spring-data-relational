@@ -40,6 +40,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
+import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.NamingStrategy;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
@@ -392,13 +393,22 @@ public class SqlGeneratorUnitTests {
 	}
 
 	@Test // DATAJDBC-264
-	public void getInsertForEmptyColumnList() {
+	public void getInsertForEmptyColumnListPostgres() {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class, PostgresDialect.INSTANCE);
 
-		String insert = sqlGenerator.getInsert(emptySet());
+		String insertSqlStatement = sqlGenerator.getInsert(emptySet());
 
-		assertThat(insert).endsWith(PostgresDialect.INSTANCE.getSqlInsertWithDefaultValues().getDefaultInsertPart());
+		assertThat(insertSqlStatement).endsWith(" VALUES (DEFAULT) ");
+	}
+
+	@Test //DATAJDBC-557
+	void gerInsertForEmptyColumnListMsSqlServer() {
+		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class, SqlServerDialect.INSTANCE);
+
+		String insertSqlStatement = sqlGenerator.getInsert(emptySet());
+
+		assertThat(insertSqlStatement).endsWith(" DEFAULT VALUES ");
 	}
 
 	@Test // DATAJDBC-334
