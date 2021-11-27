@@ -24,6 +24,7 @@ import org.springframework.data.relational.core.sql.Named;
 import org.springframework.data.relational.core.sql.SimpleFunction;
 import org.springframework.data.relational.core.sql.SubselectExpression;
 import org.springframework.data.relational.core.sql.Visitable;
+import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.lang.Nullable;
 
 /**
@@ -81,6 +82,10 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			}
 		} else if (segment instanceof Literal) {
 			value = segment.toString();
+		}
+
+		if (segment instanceof Expressions.SimpleExpression) {
+			value = ((Expressions.SimpleExpression)segment).getExpression();
 		}
 
 		return Delegation.retain();

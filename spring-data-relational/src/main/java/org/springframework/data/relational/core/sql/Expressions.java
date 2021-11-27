@@ -64,6 +64,10 @@ public abstract class Expressions {
 			this.expression = expression;
 		}
 
+		public String getExpression() {
+			return expression;
+		}
+
 		@Override
 		public String toString() {
 			return expression;
