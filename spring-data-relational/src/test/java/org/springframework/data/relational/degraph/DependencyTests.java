@@ -27,7 +27,6 @@ import scala.runtime.AbstractFunction1;
  *
  * @author Jens Schauder
  * @author Mark Paluch
- * @author Mikhail Polivakha
  */
 public class DependencyTests {
 
@@ -37,8 +36,7 @@ public class DependencyTests {
 		assertThat( //
 				classpath() //
 						.noJars() //
-						.including("org.springframework.data.relational.**")
-						.excluding("org.springframework.data.relational.core.sql.render.**")
+						.including("org.springframework.data.relational.**") //
 						.filterClasspath("*target/classes") // exclude test code
 						.printOnFailure("degraph-relational.graphml"),
 				JCheck.violationFree());

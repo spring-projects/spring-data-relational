@@ -1,5 +1,7 @@
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.data.relational.core.mapping.InsertDefaultValues;
+
 /**
  * This interface aggregates information about an Insert with default values statement.
  * @author Mikhail Polivakha

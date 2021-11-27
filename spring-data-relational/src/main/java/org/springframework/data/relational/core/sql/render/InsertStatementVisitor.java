@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Into;
@@ -114,7 +113,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	}
 
 	private void addInsertWithDefaultValuesToBuilder() {
-		builder.append(renderContext.getInsertRenderContext().getInsertWithDefaultValues().getDefaultInsertPart());
+		builder.append(renderContext.getInsertRenderContext().getInsertDefaultValuesPartSQL());
 	}
 
 	/*

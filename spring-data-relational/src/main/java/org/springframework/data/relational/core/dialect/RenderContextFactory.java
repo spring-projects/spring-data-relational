@@ -124,8 +124,8 @@ public class RenderContextFactory {
 		public InsertRenderContext getInsertRenderContext() {
 			return new InsertRenderContext() {
 				@Override
-				public InsertWithDefaultValues getInsertWithDefaultValues() {
-					return renderingDialect.getSqlInsertWithDefaultValues();
+				public String getInsertDefaultValuesPartSQL() {
+					return renderingDialect.getSqlInsertWithDefaultValues().getDefaultInsertPart();
 				}
 			};
 		}

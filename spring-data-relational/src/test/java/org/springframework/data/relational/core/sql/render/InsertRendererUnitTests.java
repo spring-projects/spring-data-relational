@@ -16,9 +16,7 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.data.relational.core.dialect.AbstractDialect;
 import org.springframework.data.relational.core.dialect.InsertWithDefaultValues;
-import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.Table;

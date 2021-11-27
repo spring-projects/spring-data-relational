@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.data.relational.core.mapping.InsertDefaultValues;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;

@@ -1,4 +1,7 @@
-package org.springframework.data.relational.core.dialect;
+package org.springframework.data.relational.core.mapping;
+
+import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.InsertWithDefaultValues;
 
 /**
  * In the scope of Insert with default values SQL statement, for example

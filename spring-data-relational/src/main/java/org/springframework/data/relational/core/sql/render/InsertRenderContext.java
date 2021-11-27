@@ -1,6 +1,6 @@
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.dialect.InsertWithDefaultValues;
+import org.springframework.data.relational.core.mapping.InsertDefaultValues;
 import org.springframework.data.relational.core.sql.Insert;
 
 /**
@@ -12,7 +12,7 @@ import org.springframework.data.relational.core.sql.Insert;
  */
 public interface InsertRenderContext {
 
-    default InsertWithDefaultValues getInsertWithDefaultValues() {
-        return new InsertWithDefaultValues() {};
+    default String getInsertDefaultValuesPartSQL() {
+        return InsertDefaultValues.DEFAULT.getDefaultInsertPart();
     }
 }
