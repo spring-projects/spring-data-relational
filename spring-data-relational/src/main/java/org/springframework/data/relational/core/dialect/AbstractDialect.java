@@ -28,7 +28,6 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
- * @author Mikhail Polivakha
  * @since 1.1
  */
 public abstract class AbstractDialect implements Dialect {
@@ -131,14 +130,6 @@ public abstract class AbstractDialect implements Dialect {
 		public Function<Select, ? extends CharSequence> afterOrderBy(boolean hasOrderBy) {
 			return afterOrderBy;
 		}
-	}
-
-	/**
-	 * @return default implementation of InsertWithDefaultValues
-	 */
-	@Override
-	public InsertWithDefaultValues getSqlInsertWithDefaultValues() {
-		return new InsertWithDefaultValues(){};
 	}
 
 	/**

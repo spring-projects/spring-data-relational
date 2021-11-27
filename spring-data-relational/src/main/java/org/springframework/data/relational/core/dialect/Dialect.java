@@ -116,5 +116,7 @@ public interface Dialect {
 	 *         for most of the Dialects the default implementation will be valid, but, for
 	 *         example, in case of {@link SqlServerDialect} it is not
 	 */
-	InsertWithDefaultValues getSqlInsertWithDefaultValues();
+	default InsertWithDefaultValues getSqlInsertWithDefaultValues() {
+		return new InsertWithDefaultValues() {};
+	}
 }

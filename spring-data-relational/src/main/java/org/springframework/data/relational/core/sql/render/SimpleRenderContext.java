@@ -37,8 +37,13 @@ final class SimpleRenderContext implements RenderContext {
 	}
 
 	@Override
-	public SelectRenderContext getSelect() {
+	public SelectRenderContext getSelectRenderContext() {
 		return DefaultSelectRenderContext.INSTANCE;
+	}
+
+	@Override
+	public InsertRenderContext getInsertRenderContext() {
+		return new InsertRenderContext() {};
 	}
 
 	public RenderNamingStrategy getNamingStrategy() {

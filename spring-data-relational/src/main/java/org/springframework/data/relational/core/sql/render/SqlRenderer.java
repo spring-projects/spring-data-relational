@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Select;
@@ -27,7 +26,6 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
- * @author Mikhail Polivakha
  * @since 1.1
  * @see RenderContext
  */
@@ -112,20 +110,7 @@ public class SqlRenderer implements Renderer {
 	 */
 	@Override
 	public String render(Insert insert) {
-
 		InsertStatementVisitor visitor = new InsertStatementVisitor(context);
-		insert.visit(visitor);
-		return visitor.getRenderedPart().toString();
-	}
-
-	/**
-	 * (non-Javadoc)
-	 * @see Renderer
-	 */
-	@Override
-	public String render(Insert insert, Dialect dialect) {
-		InsertStatementVisitor visitor = new InsertStatementVisitor(context);
-		visitor.setDialect(dialect);
 		insert.visit(visitor);
 		return visitor.getRenderedPart().toString();
 	}

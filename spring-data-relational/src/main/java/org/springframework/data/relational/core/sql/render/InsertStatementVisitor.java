@@ -42,12 +42,16 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	private final IntoClauseVisitor intoClauseVisitor;
 	private final ColumnVisitor columnVisitor;
 	private final ValuesVisitor valuesVisitor;
-	private Dialect dialect;
+	private final RenderContext renderContext;
 
-	InsertStatementVisitor(RenderContext context) {
-		this.intoClauseVisitor = createIntoClauseVisitor(context);
-		this.columnVisitor = createColumnVisitor(context);
-		this.valuesVisitor = new ValuesVisitor(context, values::append);
+	InsertStatementVisitor(RenderContext renderContext) {
+
+		Assert.notNull(renderContext, "renderContext must not be null!");
+
+		this.renderContext = renderContext;
+		this.intoClauseVisitor = createIntoClauseVisitor(renderContext);
+		this.columnVisitor = createColumnVisitor(renderContext);
+		this.valuesVisitor = new ValuesVisitor(renderContext, values::append);
 	}
 
 	/*
@@ -110,7 +114,7 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	}
 
 	private void addInsertWithDefaultValuesToBuilder() {
-		builder.append(dialect.getSqlInsertWithDefaultValues().getDefaultInsertPart());
+		builder.append(renderContext.getInsertRenderContext().getInsertWithDefaultValues().getDefaultInsertPart());
 	}
 
 	/*
@@ -144,10 +148,5 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 			into.append(it);
 		});
-	}
-
-	public void setDialect(Dialect dialect) {
-		Assert.notNull(dialect, "Dialect must not be null!");
-		this.dialect = dialect;
 	}
 }

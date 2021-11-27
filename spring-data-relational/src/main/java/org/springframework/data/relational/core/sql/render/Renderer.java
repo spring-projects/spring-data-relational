@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.sql.Delete;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Select;
@@ -25,7 +24,6 @@ import org.springframework.data.relational.core.sql.Update;
  * SQL renderer for {@link Select} and {@link Delete} statements.
  *
  * @author Mark Paluch
- * @author Mikhail Polivakha
  * @since 1.1
  */
 public interface Renderer {
@@ -45,16 +43,6 @@ public interface Renderer {
 	 * @return the rendered statement.
 	 */
 	String render(Insert insert);
-
-	/**
-	 * Render the {@link Insert} AST into a SQL statement in regards to specific Dialect
-	 *
-	 * @param insert - the statement to render, must not be {@literal null}
-	 * @param dialect represents dialect, in scope of which SQL
-	 *                statement must be rendered, must not be {@literal null}
-	 * @return rendered SQL <b>INSERT</b> statement
-	 */
-	String render(Insert insert, Dialect dialect);
 
 	/**
 	 * Render the {@link Update} AST into a SQL statement.

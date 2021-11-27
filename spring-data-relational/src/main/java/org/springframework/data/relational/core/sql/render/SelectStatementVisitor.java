@@ -50,7 +50,7 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 	SelectStatementVisitor(RenderContext context) {
 
 		this.context = context;
-		this.selectRenderContext = context.getSelect();
+		this.selectRenderContext = context.getSelectRenderContext();
 		this.selectListVisitor = new SelectListVisitor(context, selectList::append);
 		this.orderByClauseVisitor = new OrderByClauseVisitor(context);
 		this.fromClauseVisitor = new FromClauseVisitor(context, it -> {

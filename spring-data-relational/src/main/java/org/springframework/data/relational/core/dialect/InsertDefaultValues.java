@@ -3,7 +3,7 @@ package org.springframework.data.relational.core.dialect;
 /**
  * In the scope of Insert with default values SQL statement, for example
  * <b>INSERT INTO SCHEMA.TABLE VALUES (DEFAULT)</b>
- * this enum represents the default values part in different {@link Dialect's}
+ * this enum represents the default values part in different {@link Dialect}s
  *
  * @author Mikhail Polivakha
  * @see InsertWithDefaultValues

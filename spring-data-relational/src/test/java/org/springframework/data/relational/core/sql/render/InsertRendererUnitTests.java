@@ -16,6 +16,8 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.data.relational.core.dialect.AbstractDialect;
+import org.springframework.data.relational.core.dialect.InsertWithDefaultValues;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.SQL;
@@ -70,6 +72,6 @@ public class InsertRendererUnitTests {
 
 		Insert insert = Insert.builder().into(bar).build();
 
-		assertThat(SqlRenderer.create().render(insert, SqlServerDialect.INSTANCE)).contains(SqlServerDialect.INSTANCE.getSqlInsertWithDefaultValues().getDefaultInsertPart());
+		assertThat(SqlRenderer.create().render(insert)).contains(new InsertWithDefaultValues(){}.getDefaultInsertPart());
 	}
 }

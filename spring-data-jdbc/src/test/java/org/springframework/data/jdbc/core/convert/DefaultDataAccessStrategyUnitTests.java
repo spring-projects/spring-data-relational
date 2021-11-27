@@ -78,13 +78,11 @@ public class DefaultDataAccessStrategyUnitTests {
 	JdbcConverter converter;
 	DefaultDataAccessStrategy accessStrategy;
 
-	private Dialect dialect;
-
 	@BeforeEach
 	public void before() {
 
 		DelegatingDataAccessStrategy relationResolver = new DelegatingDataAccessStrategy();
-		dialect = HsqlDbDialect.INSTANCE;
+		Dialect dialect = HsqlDbDialect.INSTANCE;
 
 		converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
@@ -223,7 +221,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		assertThat(generatedId).isEqualTo(GENERATED_ID);
 
-		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\"" + dialect.getSqlInsertWithDefaultValues().getDefaultInsertPart()),
+		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\"" + HsqlDbDialect.INSTANCE.getSqlInsertWithDefaultValues().getDefaultInsertPart()),
 				paramSourceCaptor.capture(), any(KeyHolder.class));
 	}
 
