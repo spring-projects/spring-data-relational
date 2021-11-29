@@ -1,17 +1,15 @@
 package org.springframework.data.relational.core.dialect;
 
-import org.springframework.data.relational.core.mapping.InsertDefaultValues;
-
 /**
  * This interface aggregates information about an Insert with default values statement.
+ * 
  * @author Mikhail Polivakha
+ * @since 2.4
  */
 public interface InsertWithDefaultValues {
 
-    /**
-     * @return the part of the sql statement, that follows after <b>INSERT INTO table</b>
-     */
-    default String getDefaultInsertPart() {
-        return InsertDefaultValues.DEFAULT.getDefaultInsertPart();
-    }
+	/**
+	 * @return the part of the sql statement, that follows after <b>INSERT INTO table</b>
+	 */
+	String getDefaultInsertPart();
 }

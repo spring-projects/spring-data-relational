@@ -93,14 +93,12 @@ class SqlGenerator {
 	SqlGenerator(RelationalMappingContext mappingContext, JdbcConverter converter, RelationalPersistentEntity<?> entity,
 			Dialect dialect) {
 
-		final RenderContextFactory renderContextFactory = new RenderContextFactory(dialect);
-
 		this.mappingContext = mappingContext;
 		this.entity = entity;
 		this.sqlContext = new SqlContext(entity);
-		this.sqlRenderer = SqlRenderer.create(renderContextFactory.createRenderContext());
+		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
+		this.sqlRenderer = SqlRenderer.create(renderContext);
 		this.columns = new Columns(entity, mappingContext, converter);
-		this.renderContext = renderContextFactory.createRenderContext();
 	}
 
 	/**

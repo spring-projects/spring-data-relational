@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Into;
@@ -98,24 +97,6 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		return Delegation.retain();
 	}
 
-	private void addInsertValuesIfPresentElseDefault() {
-		if (values.length() != 0) {
-			builder.append(" VALUES (").append(values).append(")");
-		} else {
-			addInsertWithDefaultValuesToBuilder();
-		}
-	}
-
-	private void addInsertColumnsIfPresent() {
-		if (columns.length() != 0) {
-			builder.append(" (").append(columns).append(")");
-		}
-	}
-
-	private void addInsertWithDefaultValuesToBuilder() {
-		builder.append(renderContext.getInsertRenderContext().getInsertDefaultValuesPartSQL());
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
@@ -125,8 +106,28 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		return builder;
 	}
 
-	@NotNull
+	private void addInsertValuesIfPresentElseDefault() {
+
+		if (values.length() != 0) {
+			builder.append(" VALUES (").append(values).append(")");
+		} else {
+			addInsertWithDefaultValuesToBuilder();
+		}
+	}
+
+	private void addInsertColumnsIfPresent() {
+
+		if (columns.length() != 0) {
+			builder.append(" (").append(columns).append(")");
+		}
+	}
+
+	private void addInsertWithDefaultValuesToBuilder() {
+		builder.append(renderContext.getInsertRenderContext().getDefaultValuesInsertPart());
+	}
+
 	private ColumnVisitor createColumnVisitor(RenderContext context) {
+
 		return new ColumnVisitor(context, false, it -> {
 
 			if (columns.length() != 0) {
@@ -137,8 +138,8 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		});
 	}
 
-	@NotNull
 	private IntoClauseVisitor createIntoClauseVisitor(RenderContext context) {
+
 		return new IntoClauseVisitor(context, it -> {
 
 			if (into.length() != 0) {

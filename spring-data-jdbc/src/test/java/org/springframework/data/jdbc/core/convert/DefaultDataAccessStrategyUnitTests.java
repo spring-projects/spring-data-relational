@@ -219,7 +219,7 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		assertThat(generatedId).isEqualTo(GENERATED_ID);
 
-		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\" VALUES ()"),
+		verify(namedJdbcOperations).update(eq("INSERT INTO \"DUMMY_ENTITY\" VALUES (DEFAULT)"),
 				paramSourceCaptor.capture(), any(KeyHolder.class));
 	}
 

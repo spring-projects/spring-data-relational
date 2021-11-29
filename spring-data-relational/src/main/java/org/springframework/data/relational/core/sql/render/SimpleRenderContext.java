@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
+import org.springframework.data.relational.core.dialect.InsertRenderContext;
+import org.springframework.data.relational.core.dialect.InsertRenderContexts;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 
 /**
@@ -37,13 +39,18 @@ final class SimpleRenderContext implements RenderContext {
 	}
 
 	@Override
+	public SelectRenderContext getSelect() {
+		return getSelectRenderContext();
+	}
+
+	@Override
 	public SelectRenderContext getSelectRenderContext() {
 		return DefaultSelectRenderContext.INSTANCE;
 	}
 
 	@Override
 	public InsertRenderContext getInsertRenderContext() {
-		return new InsertRenderContext() {};
+		return InsertRenderContexts.DEFAULT;
 	}
 
 	public RenderNamingStrategy getNamingStrategy() {

@@ -70,6 +70,16 @@ public class SqlRenderer implements Renderer {
 	}
 
 	/**
+	 * Renders a {@link Insert} statement into its SQL representation.
+	 *
+	 * @param insert must not be {@literal null}.
+	 * @return the rendered statement.
+	 */
+	public static String toString(Insert insert) {
+		return create().render(insert);
+	}
+
+	/**
 	 * Renders a {@link Update} statement into its SQL representation.
 	 *
 	 * @param update must not be {@literal null}.

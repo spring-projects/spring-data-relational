@@ -398,18 +398,19 @@ class SqlGeneratorUnitTests {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class, PostgresDialect.INSTANCE);
 
-		String insertSqlStatement = sqlGenerator.getInsert(emptySet());
+		String insert = sqlGenerator.getInsert(emptySet());
 
-		assertThat(insertSqlStatement).endsWith(" VALUES (DEFAULT) ");
+		assertThat(insert).endsWith(" VALUES (DEFAULT)");
 	}
 
-	@Test //DATAJDBC-557
+	@Test // GH-777
 	void gerInsertForEmptyColumnListMsSqlServer() {
+
 		SqlGenerator sqlGenerator = createSqlGenerator(IdOnlyEntity.class, SqlServerDialect.INSTANCE);
 
-		String insertSqlStatement = sqlGenerator.getInsert(emptySet());
+		String insert = sqlGenerator.getInsert(emptySet());
 
-		assertThat(insertSqlStatement).endsWith(" DEFAULT VALUES ");
+		assertThat(insert).endsWith(" DEFAULT VALUES");
 	}
 
 	@Test // DATAJDBC-334

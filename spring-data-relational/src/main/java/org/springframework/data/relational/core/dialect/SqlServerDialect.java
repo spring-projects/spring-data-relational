@@ -15,7 +15,6 @@
  */
 package org.springframework.data.relational.core.dialect;
 
-import org.springframework.data.relational.core.mapping.InsertDefaultValues;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
@@ -154,12 +153,7 @@ public class SqlServerDialect extends AbstractDialect {
 	}
 
 	@Override
-	public InsertWithDefaultValues getSqlInsertWithDefaultValues() {
-		return new InsertWithDefaultValues() {
-			@Override
-			public String getDefaultInsertPart() {
-				return InsertDefaultValues.MS_SQL_SERVER.getDefaultInsertPart();
-			}
-		};
+	public InsertRenderContext getInsertRenderContext() {
+		return InsertRenderContexts.MS_SQL_SERVER;
 	}
 }

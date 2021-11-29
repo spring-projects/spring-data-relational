@@ -888,9 +888,11 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(loaded.testTime).isEqualTo(entity.testTime);
 	}
 
-	@Test // DATAJDBC-557
+	@Test // GH-777
 	public void insertWithIdOnly() {
+
 		WithIdOnly entity = new WithIdOnly();
+
 		assertThat(template.save(entity).id).isNotNull();
 	}
 

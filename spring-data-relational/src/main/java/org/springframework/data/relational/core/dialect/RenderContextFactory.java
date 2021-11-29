@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.data.relational.core.sql.render.InsertRenderContext;
 import org.springframework.data.relational.core.sql.render.NamingStrategies;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.RenderNamingStrategy;
@@ -78,19 +77,23 @@ public class RenderContextFactory {
 	static class DialectRenderContext implements RenderContext {
 
 		private final RenderNamingStrategy renderNamingStrategy;
-		private final SelectRenderContext selectRenderContext;
 		private final Dialect renderingDialect;
+		private final SelectRenderContext selectRenderContext;
+		private final InsertRenderContext insertRenderContext;
 
-		DialectRenderContext(RenderNamingStrategy renderNamingStrategy, Dialect renderingDialect, SelectRenderContext selectRenderContext) {
+		DialectRenderContext(RenderNamingStrategy renderNamingStrategy, Dialect renderingDialect,
+				SelectRenderContext selectRenderContext) {
 
 			Assert.notNull(renderNamingStrategy, "RenderNamingStrategy must not be null");
 			Assert.notNull(renderingDialect, "renderingDialect must not be null");
-			Assert.notNull(renderingDialect.getIdentifierProcessing(), "IdentifierProcessing of renderingDialect must not be null");
+			Assert.notNull(renderingDialect.getIdentifierProcessing(),
+					"IdentifierProcessing of renderingDialect must not be null");
 			Assert.notNull(selectRenderContext, "SelectRenderContext must not be null");
 
 			this.renderNamingStrategy = renderNamingStrategy;
 			this.renderingDialect = renderingDialect;
 			this.selectRenderContext = selectRenderContext;
+			this.insertRenderContext = renderingDialect.getInsertRenderContext();
 		}
 
 		/*
@@ -111,6 +114,11 @@ public class RenderContextFactory {
 			return renderingDialect.getIdentifierProcessing();
 		}
 
+		@Override
+		public SelectRenderContext getSelect() {
+			return getSelectRenderContext();
+		}
+
 		/*
 		 * (non-Javadoc)
 		 * @see org.springframework.data.relational.core.sql.render.RenderContext#getSelect()
@@ -122,12 +130,7 @@ public class RenderContextFactory {
 
 		@Override
 		public InsertRenderContext getInsertRenderContext() {
-			return new InsertRenderContext() {
-				@Override
-				public String getInsertDefaultValuesPartSQL() {
-					return renderingDialect.getSqlInsertWithDefaultValues().getDefaultInsertPart();
-				}
-			};
+			return insertRenderContext;
 		}
 	}
 }
