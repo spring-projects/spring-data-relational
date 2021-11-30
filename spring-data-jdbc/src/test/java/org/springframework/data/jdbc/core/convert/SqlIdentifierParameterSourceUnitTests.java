@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
+import java.util.Arrays;
+
 /**
  * Tests for {@link SqlIdentifierParameterSource}.
  *
@@ -95,10 +97,11 @@ public class SqlIdentifierParameterSourceUnitTests {
 		parameters2.addValue(SqlIdentifier.unquoted("key3"), 222);
 
 		parameters.addAll(parameters2);
-
+		String[] allKeys = parameters.getParameterNames();
+		Arrays.sort(allKeys);
 		assertSoftly(softly -> {
 
-			softly.assertThat(parameters.getParameterNames()).isEqualTo(new String[] { "key1", "key2", "key3" });
+			softly.assertThat(allKeys).isEqualTo(new String[] { "key1", "key2", "key3" });
 			softly.assertThat(parameters.getValue("key1")).isEqualTo(111);
 			softly.assertThat(parameters.hasValue("key1")).isTrue();
 			softly.assertThat(parameters.getSqlType("key1")).isEqualTo(11);
