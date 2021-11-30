@@ -98,11 +98,9 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person);
 
 		Query query = exampleMapper.getMappedExample(example);
-		Set<String> allPossibleRes = new HashSet<String>(){{
-			add("(firstname = 'Frodo') AND (lastname = 'Baggins')");
-			add("(lastname = 'Baggins') AND (firstname = 'Frodo')");
-		}};
-		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
+		String actual = query.getCriteria().map(Object::toString).get();
+		String expected = "(firstname = 'Frodo') AND (lastname = 'Baggins')";
+		assertThat(compareStrWithFlakiness(expected, actual, "AND")).isTrue();
 	}
 
 	@Test // GH-929
@@ -132,12 +130,9 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person, matcher);
 
 		Query query = exampleMapper.getMappedExample(example);
-
-		Set<String> allPossibleRes = new HashSet<String>(){{
-			add("(firstname IS NULL OR firstname = 'Bilbo') AND (lastname IS NULL OR lastname = 'Baggins')");
-			add("(lastname IS NULL OR lastname = 'Baggins') AND (firstname IS NULL OR firstname = 'Bilbo')");
-		}};
-		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
+		String actual = query.getCriteria().map(Object::toString).get();
+		String expected = "(firstname IS NULL OR firstname = 'Bilbo') AND (lastname IS NULL OR lastname = 'Baggins')";
+		assertThat(compareStrWithFlakiness(expected, actual, "AND")).isTrue();
 	}
 
 	@Test // GH-929
@@ -378,12 +373,9 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person, matcher);
 
 		Query query = exampleMapper.getMappedExample(example);
-
-		Set<String> allPossibleRes = new HashSet<String>(){{
-			add("(firstname = 'Frodo') OR (lastname = 'Baggins')");
-			add("(lastname = 'Baggins') OR (firstname = 'Frodo')");
-		}};
-		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
+		String actual = query.getCriteria().map(Object::toString).get();
+		String expected = "(firstname = 'Frodo') OR (lastname = 'Baggins')";
+		assertThat(compareStrWithFlakiness(expected, actual, "OR")).isTrue();
 	}
 
 	@Test // GH-929
@@ -396,11 +388,9 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person);
 
 		Query query = exampleMapper.getMappedExample(example);
-		Set<String> allPossibleRes = new HashSet<String>(){{
-			add("(firstname = 'Frodo') AND (secret = 'I have the ring!')");
-			add("(secret = 'I have the ring!') AND (firstname = 'Frodo')");
-		}};
-		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
+		String actual = query.getCriteria().map(Object::toString).get();
+		String expected = "(firstname = 'Frodo') AND (secret = 'I have the ring!')";
+		assertThat(compareStrWithFlakiness(expected, actual, "AND")).isTrue();
 	}
 
 	@Test // GH-929
@@ -428,16 +418,19 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person, matcher);
 
 		Query query = exampleMapper.getMappedExample(example);
+		String actual = query.getCriteria().map(Object::toString).get();
+		String expected = "(firstname = 'FRODO') AND (lastname = 'baggins') AND (secret = 'I have the ring!')";
+		assertThat(compareStrWithFlakiness(expected, actual, "AND")).isTrue();
+	}
 
-		Set<String> allPossibleRes = new HashSet<String>(){{
-			add("(firstname = 'FRODO') AND (lastname = 'baggins') AND (secret = 'I have the ring!')");
-			add("(firstname = 'FRODO') AND (secret = 'I have the ring!') AND (lastname = 'baggins')");
-			add("(lastname = 'baggins') AND (firstname = 'FRODO') AND (secret = 'I have the ring!')");
-			add("(lastname = 'baggins') AND (secret = 'I have the ring!') AND (firstname = 'FRODO')");
-			add("(secret = 'I have the ring!') AND (lastname = 'baggins') AND (firstname = 'FRODO')");
-			add("(secret = 'I have the ring!') AND (firstname = 'FRODO') AND (lastname = 'baggins')");
-		}};
-		assertThat(allPossibleRes).contains(query.getCriteria().map(Object::toString).get());
+	private boolean compareStrWithFlakiness(String expected, String actual, String regex) {
+		String[] flakyParts = expected.split(regex);
+		for (String part : flakyParts) {
+			if (!actual.contains(part)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Data
