@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.dialect;
 import java.sql.JDBCType;
 import java.sql.SQLType;
 
+import org.springframework.data.jdbc.core.convert.JdbcArrayColumns;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 
 /**

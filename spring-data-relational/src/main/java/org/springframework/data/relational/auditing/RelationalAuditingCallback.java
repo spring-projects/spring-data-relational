@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.mapping.event;
+package org.springframework.data.relational.auditing;
 
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.data.auditing.IsNewAwareAuditingHandler;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertCallback;
 import org.springframework.util.Assert;
 
 /**

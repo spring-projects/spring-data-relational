@@ -65,9 +65,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>de.schauderhaft.degraph</groupId>
-			<artifactId>degraph-check</artifactId>
-			<version>${degraph-check.version}</version>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit</artifactId>
+			<version>${archunit.version}</version>
 			<scope>test</scope>
 		</dependency>
 
