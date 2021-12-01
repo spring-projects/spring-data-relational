@@ -19,8 +19,11 @@ import static de.schauderhaft.degraph.check.JCheck.*;
 import static org.hamcrest.MatcherAssert.*;
 
 import de.schauderhaft.degraph.check.JCheck;
-import org.junit.jupiter.api.Test;
 import scala.runtime.AbstractFunction1;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.data.relational.core.dialect.RenderContextFactory;
+import org.springframework.data.relational.core.sql.render.SelectRenderContext;
 
 /**
  * Test package dependencies for violations.
@@ -37,6 +40,8 @@ public class DependencyTests {
 				classpath() //
 						.noJars() //
 						.including("org.springframework.data.relational.**") //
+						.excluding(SelectRenderContext.class.getName()) //
+						.excluding(RenderContextFactory.class.getName() + "*") //
 						.filterClasspath("*target/classes") // exclude test code
 						.printOnFailure("degraph-relational.graphml"),
 				JCheck.violationFree());
