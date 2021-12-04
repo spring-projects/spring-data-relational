@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
  * @author Jens Schauder
  * @author Greg Turnquist
  * @author Bastian Wilhelm
+ * @author Mikhail Polivakha
  */
 class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, RelationalPersistentProperty>
 		implements RelationalPersistentEntity<T> {

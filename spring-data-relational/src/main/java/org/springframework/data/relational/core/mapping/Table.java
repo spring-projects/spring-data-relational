@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.mapping;
 
+import org.springframework.core.annotation.AliasFor;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -38,7 +40,14 @@ public @interface Table {
 	/**
 	 * The mapping table name.
 	 */
+	@AliasFor("name")
 	String value() default "";
+
+	/**
+	 * The mapping table name.
+	 */
+	@AliasFor("value")
+	String name() default "";
 
 	/**
 	 * Name of the schema (or user, for example in case of oracle), in which this table resides in
