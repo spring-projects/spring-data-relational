@@ -27,6 +27,7 @@ import java.lang.annotation.Target;
  *
  * @author Kazuki Shimizu
  * @author Bastian Wilhelm
+ * @author Mikhail Polivakha
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -38,4 +39,15 @@ public @interface Table {
 	 * The mapping table name.
 	 */
 	String value() default "";
+
+	/**
+	 * Name of the schema (or user, for example in case of oracle), in which this table resides in
+	 * The behavior is the following: <br/>
+	 * If the {@link Table#schema()} is specified, then it will be
+	 * used as a schema of current table, i.e. as a prefix to the name of the table, which can
+	 * be specified in {@link Table#value()}. <br/>
+	 * If the {@link Table#schema()} is not specified, then spring data will assume the default schema,
+	 * The default schema itself can be provided by the means of {@link NamingStrategy#getSchema()}
+	 */
+	String schema() default "";
 }
