@@ -31,6 +31,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  * @author Kazuki Shimizu
  * @author Bastian Wilhelm
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  */
 public class RelationalPersistentEntityImplUnitTests {
 
@@ -70,6 +71,33 @@ public class RelationalPersistentEntityImplUnitTests {
 				.isEqualTo(SqlIdentifier.from(quoted("MY_SCHEMA"), quoted("DUMMY_ENTITY_WITH_EMPTY_ANNOTATION")));
 		assertThat(entity.getTableName().toSql(IdentifierProcessing.ANSI))
 				.isEqualTo("\"MY_SCHEMA\".\"DUMMY_ENTITY_WITH_EMPTY_ANNOTATION\"");
+	}
+
+	@Test // DATAJDBC-1099
+	void testRelationalPersistentEntitySchemaNameChoice() {
+		mappingContext = new RelationalMappingContext(NamingStrategyWithSchema.INSTANCE);
+		final RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithExplicitSchema.class);
+		final SqlIdentifier tableName = persistentEntity.getTableName();
+		assertThat(tableName).isEqualTo(SqlIdentifier.from(SqlIdentifier.quoted("DART_VADER"), quoted("I_AM_THE_SENATE")));
+		assertThat(tableName.toString()).isEqualTo("\"DART_VADER\".\"I_AM_THE_SENATE\"");
+	}
+
+	@Test // DATAJDBC-1099
+	void testRelationalPersistentEntityTableOnlySchemaSpecified() {
+		final RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSchemaFromNamingStrategy.class);
+		final SqlIdentifier tableName = persistentEntity.getTableName();
+		assertThat(tableName).isEqualTo(SqlIdentifier.from(quoted("ANAKYN_SKYWALKER"), quoted("ENTITY_WITH_SCHEMA_FROM_NAMING_STRATEGY")));
+		assertThat(tableName.toString()).isEqualTo("\"ANAKYN_SKYWALKER\".\"ENTITY_WITH_SCHEMA_FROM_NAMING_STRATEGY\"");
+	}
+
+	@Table(schema = "ANAKYN_SKYWALKER")
+	static class EntityWithSchemaFromNamingStrategy {
+		@Id private Long id;
+	}
+
+	@Table(schema = "DART_VADER", name = "I_AM_THE_SENATE")
+	static class EntityWithExplicitSchema {
+		@Id private Long id;
 	}
 
 	@Table("dummy_sub_entity")
