@@ -5,7 +5,7 @@ Jens Schauder, Jay Bryant, Mark Paluch, Bastian Wilhelm
 :javadoc-base: https://docs.spring.io/spring-data/jdbc/docs/{revnumber}/api/
 ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1600]]
 :spring-data-commons-docs: ../../../../../spring-data-commons/src/main/asciidoc
-:spring-framework-docs: https://docs.spring.io/spring-framework/docs/{springVersion}/
+:spring-framework-docs: https://docs.spring.io/spring-framework/docs/{springVersion}/reference/html
 
 (C) 2018-2021 The original authors.
 
