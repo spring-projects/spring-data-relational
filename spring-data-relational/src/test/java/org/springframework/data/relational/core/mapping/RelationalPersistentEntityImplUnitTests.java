@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -73,30 +72,34 @@ public class RelationalPersistentEntityImplUnitTests {
 				.isEqualTo("\"MY_SCHEMA\".\"DUMMY_ENTITY_WITH_EMPTY_ANNOTATION\"");
 	}
 
-	@Test // DATAJDBC-1099
+	@Test // GH-1099
 	void testRelationalPersistentEntitySchemaNameChoice() {
+
 		mappingContext = new RelationalMappingContext(NamingStrategyWithSchema.INSTANCE);
-		final RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithExplicitSchema.class);
-		final SqlIdentifier tableName = persistentEntity.getTableName();
+		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSchemaAndName.class);
+
+		SqlIdentifier tableName = persistentEntity.getTableName();
+
 		assertThat(tableName).isEqualTo(SqlIdentifier.from(SqlIdentifier.quoted("DART_VADER"), quoted("I_AM_THE_SENATE")));
-		assertThat(tableName.toString()).isEqualTo("\"DART_VADER\".\"I_AM_THE_SENATE\"");
 	}
 
-	@Test // DATAJDBC-1099
-	void testRelationalPersistentEntityTableOnlySchemaSpecified() {
-		final RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSchemaFromNamingStrategy.class);
-		final SqlIdentifier tableName = persistentEntity.getTableName();
-		assertThat(tableName).isEqualTo(SqlIdentifier.from(quoted("ANAKYN_SKYWALKER"), quoted("ENTITY_WITH_SCHEMA_FROM_NAMING_STRATEGY")));
-		assertThat(tableName.toString()).isEqualTo("\"ANAKYN_SKYWALKER\".\"ENTITY_WITH_SCHEMA_FROM_NAMING_STRATEGY\"");
+	@Test // GH-1099
+	void specifiedSchemaGetsCombinedWithNameFromNamingStrategy() {
+
+		RelationalPersistentEntity<?> persistentEntity = mappingContext.getPersistentEntity(EntityWithSchema.class);
+
+		SqlIdentifier tableName = persistentEntity.getTableName();
+
+		assertThat(tableName).isEqualTo(SqlIdentifier.from(quoted("ANAKYN_SKYWALKER"), quoted("ENTITY_WITH_SCHEMA")));
 	}
 
 	@Table(schema = "ANAKYN_SKYWALKER")
-	static class EntityWithSchemaFromNamingStrategy {
+	static class EntityWithSchema {
 		@Id private Long id;
 	}
 
 	@Table(schema = "DART_VADER", name = "I_AM_THE_SENATE")
-	static class EntityWithExplicitSchema {
+	static class EntityWithSchemaAndName {
 		@Id private Long id;
 	}
 
