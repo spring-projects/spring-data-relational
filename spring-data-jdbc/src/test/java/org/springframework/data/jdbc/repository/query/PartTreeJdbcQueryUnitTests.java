@@ -589,22 +589,16 @@ public class PartTreeJdbcQueryUnitTests {
 				new Object[] { new Address("Hello", "World") });
 		ParametrizedQuery query = jdbcQuery.createQuery(accessor, returnedType);
 
-		String expectedSql = BASE_SELECT + " WHERE (" + TABLE + ".\"USER_STREET\" = :user_street AND " + TABLE
-				+ ".\"USER_CITY\" = :user_city)";
 		String actualSql = query.getQuery();
 
-		assertThat(compareSqlStr(expectedSql, actualSql)).isTrue();
+		assertThat(actualSql) //
+				.startsWith(BASE_SELECT + " WHERE (" + TABLE + ".\"USER_") //
+				.endsWith(")") //
+				.contains(TABLE + ".\"USER_STREET\" = :user_street", //
+						" AND ", //
+						TABLE + ".\"USER_CITY\" = :user_city");
 		assertThat(query.getParameterSource().getValue("user_street")).isEqualTo("Hello");
 		assertThat(query.getParameterSource().getValue("user_city")).isEqualTo("World");
-	}
-
-	private boolean compareSqlStr(String expectedSql, String actualSql) {
-		String[] expected = expectedSql.split("WHERE");
-		String[] actual = actualSql.split("WHERE");
-		if (!expected[0].equals(actual[0])) return false;
-		expected[1] = expected[1].trim().substring(1, expected[1].length() - 2);
-		String[] flakyParts = expected[1].split("AND");
-		return actual[1].contains(flakyParts[0]) && actual[1].contains(flakyParts[1]);
 	}
 
 	@Test // DATAJDBC-318

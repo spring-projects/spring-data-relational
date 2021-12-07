@@ -25,15 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +33,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
-import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
 
 /**
@@ -98,9 +89,10 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person);
 
 		Query query = exampleMapper.getMappedExample(example);
-		String actual = query.getCriteria().map(Object::toString).get();
-		String expected = "(firstname = 'Frodo') AND (lastname = 'Baggins')";
-		assertThat(compareStrWithFlakiness(expected, actual, "AND")).isTrue();
+		assertThat(query.getCriteria().map(Object::toString).get()) //
+				.contains("(firstname = 'Frodo')", //
+						" AND ", //
+						"(lastname = 'Baggins')");
 	}
 
 	@Test // GH-929
@@ -130,9 +122,10 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person, matcher);
 
 		Query query = exampleMapper.getMappedExample(example);
-		String actual = query.getCriteria().map(Object::toString).get();
-		String expected = "(firstname IS NULL OR firstname = 'Bilbo') AND (lastname IS NULL OR lastname = 'Baggins')";
-		assertThat(compareStrWithFlakiness(expected, actual, "AND")).isTrue();
+		assertThat(query.getCriteria().map(Object::toString).get()) //
+				.contains("(firstname IS NULL OR firstname = 'Bilbo')", //
+						" AND ", //
+						"(lastname IS NULL OR lastname = 'Baggins')");
 	}
 
 	@Test // GH-929
@@ -373,9 +366,10 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person, matcher);
 
 		Query query = exampleMapper.getMappedExample(example);
-		String actual = query.getCriteria().map(Object::toString).get();
-		String expected = "(firstname = 'Frodo') OR (lastname = 'Baggins')";
-		assertThat(compareStrWithFlakiness(expected, actual, "OR")).isTrue();
+		assertThat(query.getCriteria().map(Object::toString).get()) //
+				.contains("(firstname = 'Frodo')", //
+						" OR ", //
+						"(lastname = 'Baggins')");
 	}
 
 	@Test // GH-929
@@ -388,9 +382,11 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person);
 
 		Query query = exampleMapper.getMappedExample(example);
-		String actual = query.getCriteria().map(Object::toString).get();
-		String expected = "(firstname = 'Frodo') AND (secret = 'I have the ring!')";
-		assertThat(compareStrWithFlakiness(expected, actual, "AND")).isTrue();
+
+		assertThat(query.getCriteria().map(Object::toString).get()) //
+				.contains("(firstname = 'Frodo')", //
+						" AND ", //
+						"(secret = 'I have the ring!')");
 	}
 
 	@Test // GH-929
@@ -418,19 +414,12 @@ public class RelationalExampleMapperTests {
 		Example<Person> example = Example.of(person, matcher);
 
 		Query query = exampleMapper.getMappedExample(example);
-		String actual = query.getCriteria().map(Object::toString).get();
-		String expected = "(firstname = 'FRODO') AND (lastname = 'baggins') AND (secret = 'I have the ring!')";
-		assertThat(compareStrWithFlakiness(expected, actual, "AND")).isTrue();
-	}
 
-	private boolean compareStrWithFlakiness(String expected, String actual, String regex) {
-		String[] flakyParts = expected.split(regex);
-		for (String part : flakyParts) {
-			if (!actual.contains(part)) {
-				return false;
-			}
-		}
-		return true;
+		assertThat(query.getCriteria().map(Object::toString).get()) //
+				.contains("(firstname = 'FRODO')", //
+						" AND ", //
+						"(lastname = 'baggins')", //
+						"(secret = 'I have the ring!')");
 	}
 
 	@Data
