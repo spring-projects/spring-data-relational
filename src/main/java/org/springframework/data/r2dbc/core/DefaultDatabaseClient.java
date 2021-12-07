@@ -1486,7 +1486,7 @@ class DefaultDatabaseClient implements DatabaseClient, ConnectionAccessor {
 
 		String sql = getRequiredSql(operation);
 		Function<Connection, Statement> insertFunction = wrapPreparedOperation(sql, operation)
-				.andThen(statement -> statement.returnGeneratedValues());
+				.andThen(Statement::returnGeneratedValues);
 		Function<Connection, Flux<Result>> resultFunction = toFunction(sql, StatementFilterFunctions.empty(),
 				insertFunction);
 

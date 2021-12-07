@@ -256,7 +256,7 @@ public class DefaultDatabaseClientUnitTests {
 	@Test // gh-390
 	void insertShouldWorkWithoutValues() {
 
-		Statement statement = mockStatementFor("INSERT INTO id_only VALUES ()");
+		Statement statement = mockStatementFor("INSERT INTO id_only VALUES (DEFAULT)");
 		DatabaseClient databaseClient = databaseClientBuilder.build();
 
 		databaseClient.insert().into("id_only") //

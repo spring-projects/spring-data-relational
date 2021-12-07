@@ -571,9 +571,9 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		return maybeCallBeforeConvert(entity, tableName).flatMap(it -> {
+		return maybeCallBeforeConvert(entity, tableName).flatMap(onBeforeConvert -> {
 
-			T initializedEntity = setVersionIfNecessary(persistentEntity, it);
+			T initializedEntity = setVersionIfNecessary(persistentEntity, onBeforeConvert);
 
 			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(initializedEntity);
 
@@ -676,25 +676,25 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 
 		RelationalPersistentEntity<T> persistentEntity = getRequiredEntity(entity);
 
-		return maybeCallBeforeConvert(entity, tableName).flatMap(it -> {
+		return maybeCallBeforeConvert(entity, tableName).flatMap(onBeforeConvert -> {
 
 			T entityToUse;
 			Criteria matchingVersionCriteria;
 
 			if (persistentEntity.hasVersionProperty()) {
 
-				matchingVersionCriteria = createMatchingVersionCriteria(it, persistentEntity);
-				entityToUse = incrementVersion(persistentEntity, it);
+				matchingVersionCriteria = createMatchingVersionCriteria(onBeforeConvert, persistentEntity);
+				entityToUse = incrementVersion(persistentEntity, onBeforeConvert);
 			} else {
 
-				entityToUse = it;
+				entityToUse = onBeforeConvert;
 				matchingVersionCriteria = null;
 			}
 
 			OutboundRow outboundRow = dataAccessStrategy.getOutboundRow(entityToUse);
 
 			return maybeCallBeforeSave(entityToUse, outboundRow, tableName) //
-					.flatMap(entityToSave -> {
+					.flatMap(onBeforeSave -> {
 
 						SqlIdentifier idColumn = persistentEntity.getRequiredIdProperty().getColumnName();
 						Parameter id = outboundRow.remove(idColumn);
@@ -704,7 +704,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 							criteria = criteria.and(matchingVersionCriteria);
 						}
 
-						return doUpdate(entityToSave, tableName, persistentEntity, criteria, outboundRow);
+						return doUpdate(onBeforeSave, tableName, persistentEntity, criteria, outboundRow);
 					});
 		});
 	}

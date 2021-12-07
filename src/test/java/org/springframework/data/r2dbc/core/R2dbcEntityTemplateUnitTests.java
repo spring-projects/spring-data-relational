@@ -22,7 +22,6 @@ import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
-import lombok.ToString;
 import lombok.Value;
 import lombok.With;
 import reactor.core.publisher.Mono;
