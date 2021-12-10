@@ -33,7 +33,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	private final StringBuilder builder = new StringBuilder();
 	private final RenderTarget target;
 	private boolean requiresComma = false;
-	private boolean insideFunction = false; // this is hackery and should be fix with a proper visitor for
 	private ExpressionVisitor expressionVisitor;
 	// subelements.
 
@@ -86,7 +85,7 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 			requiresComma = true;
 		}
 
-		if (segment instanceof Aliased && !insideFunction) {
+		if (segment instanceof Aliased) {
 			builder.append(" AS ").append(NameRenderer.render(context, (Aliased) segment));
 		}
 
