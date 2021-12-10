@@ -82,6 +82,13 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 			return Delegation.delegateTo(visitor);
 		}
 
+		if (segment instanceof AnalyticFunction) {
+
+			AnalyticFunctionVisitor visitor = new AnalyticFunctionVisitor(context);
+			partRenderer = visitor;
+			return Delegation.delegateTo(visitor);
+		}
+
 		if (segment instanceof Column) {
 
 			Column column = (Column) segment;
