@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.dialect.BindTargetBinder;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
@@ -75,12 +76,13 @@ class ExpressionEvaluatingParameterBinder {
 	private void bindExpressions(BindTarget bindSpec,
 			R2dbcSpELExpressionEvaluator evaluator) {
 
+		BindTargetBinder binder = new BindTargetBinder(bindSpec);
 		for (ParameterBinding binding : expressionQuery.getBindings()) {
 
 			org.springframework.r2dbc.core.Parameter valueForBinding = getBindValue(
 					evaluator.evaluate(binding.getExpression()));
 
-			bind(bindSpec, binding.getParameterName(), valueForBinding);
+			binder.bind(binding.getParameterName(), valueForBinding);
 		}
 	}
 
@@ -89,6 +91,7 @@ class ExpressionEvaluatingParameterBinder {
 
 		int bindingIndex = 0;
 
+		BindTargetBinder binder = new BindTargetBinder(bindSpec);
 		for (Parameter bindableParameter : bindableParameters) {
 
 			Optional<String> name = bindableParameter.getName();
@@ -102,7 +105,7 @@ class ExpressionEvaluatingParameterBinder {
 				org.springframework.r2dbc.core.Parameter parameter = getBindValue(values, bindableParameter);
 
 				if (!parameter.isEmpty() || hasBindableNullValue) {
-					bind(bindSpec, name.get(), parameter);
+					binder.bind(name.get(), parameter);
 				}
 
 				// skip unused named parameters if there is SpEL
@@ -111,7 +114,7 @@ class ExpressionEvaluatingParameterBinder {
 				org.springframework.r2dbc.core.Parameter parameter = getBindValue(values, bindableParameter);
 
 				if (!parameter.isEmpty() || hasBindableNullValue) {
-					bind(bindSpec, bindingIndex++, parameter);
+					binder.bind(bindingIndex++, parameter);
 				}
 			}
 		}
@@ -125,27 +128,7 @@ class ExpressionEvaluatingParameterBinder {
 		return dataAccessStrategy.getBindValue(parameter);
 	}
 
-	private static void bind(BindTarget spec, String name,
-			org.springframework.r2dbc.core.Parameter parameter) {
 
-		Object value = parameter.getValue();
-		if (value == null) {
-			spec.bindNull(name, parameter.getType());
-		} else {
-			spec.bind(name, value);
-		}
-	}
-
-	private static void bind(BindTarget spec, int index,
-			org.springframework.r2dbc.core.Parameter parameter) {
-
-		Object value = parameter.getValue();
-		if (value == null) {
-			spec.bindNull(index, parameter.getType());
-		} else {
-			spec.bind(index, value);
-		}
-	}
 
 	private org.springframework.r2dbc.core.Parameter getBindValue(org.springframework.r2dbc.core.Parameter bindValue) {
 		return dataAccessStrategy.getBindValue(bindValue);

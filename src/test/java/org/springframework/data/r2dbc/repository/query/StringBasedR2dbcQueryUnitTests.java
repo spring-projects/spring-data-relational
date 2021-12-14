@@ -56,7 +56,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.ReactiveQueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindTarget;
 import org.springframework.util.ReflectionUtils;
@@ -102,7 +101,7 @@ public class StringBasedR2dbcQueryUnitTests {
 		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
 		stringQuery.bindTo(bindTarget);
 
-		verify(bindTarget).bind(0, Parameter.from("White"));
+		verify(bindTarget).bind(0, "White");
 	}
 
 	@Test // gh-164
@@ -116,7 +115,7 @@ public class StringBasedR2dbcQueryUnitTests {
 		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = $1");
 		stringQuery.bindTo(bindTarget);
 
-		verify(bindTarget).bind(0, Parameter.from("White"));
+		verify(bindTarget).bind(0, "White");
 	}
 
 	@Test
@@ -144,7 +143,7 @@ public class StringBasedR2dbcQueryUnitTests {
 		assertThat(stringQuery.get()).isEqualTo("SELECT * FROM person WHERE lastname = @lastname");
 		stringQuery.bindTo(bindTarget);
 
-		verify(bindTarget).bind("lastname", Parameter.from("White"));
+		verify(bindTarget).bind("lastname", "White");
 	}
 
 	@Test

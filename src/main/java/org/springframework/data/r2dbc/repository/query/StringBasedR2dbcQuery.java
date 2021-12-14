@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.dialect.BindTargetBinder;
 import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -221,10 +222,11 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 		@Override
 		public void bindTo(BindTarget target) {
 
+			BindTargetBinder binder = new BindTargetBinder(target);
 			expanded.bindTo(target);
 
-			remainderByName.forEach(target::bind);
-			remainderByIndex.forEach(target::bind);
+			remainderByName.forEach(binder::bind);
+			remainderByIndex.forEach(binder::bind);
 		}
 
 		@Override
