@@ -15,15 +15,10 @@
  */
 package org.springframework.data.jdbc.core.dialect;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.h2.api.TimestampWithTimeZone;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 
@@ -43,39 +38,26 @@ public class JdbcH2Dialect extends H2Dialect {
 	@Override
 	public Collection<Object> getConverters() {
 
-		List<Object> converters = new ArrayList<>(super.getConverters());
-		converters.add(TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE);
-		return converters;
+		final Collection<Object> originalConverters = super.getConverters();
+
+		if (isH2belowVersion2()) {
+
+			List<Object> converters = new ArrayList<>(originalConverters);
+			converters.add(H2TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE);
+			return converters;
+		}
+
+		return originalConverters;
 	}
 
-	@ReadingConverter
-	enum TimestampWithTimeZoneToOffsetDateTimeConverter implements Converter<TimestampWithTimeZone, OffsetDateTime> {
+	static boolean isH2belowVersion2() {
 
-		INSTANCE;
+		try {
 
-		@Override
-		public OffsetDateTime convert(TimestampWithTimeZone source) {
-
-			long nanosInSecond = 1_000_000_000;
-			long nanosInMinute = nanosInSecond * 60;
-			long nanosInHour = nanosInMinute * 60;
-
-			long hours = (source.getNanosSinceMidnight() / nanosInHour);
-
-			long nanosInHours = hours * nanosInHour;
-			long nanosLeft = source.getNanosSinceMidnight() - nanosInHours;
-			long minutes = nanosLeft / nanosInMinute;
-
-			long nanosInMinutes = minutes * nanosInMinute;
-			nanosLeft -= nanosInMinutes;
-			long seconds = nanosLeft / nanosInSecond;
-
-			long nanosInSeconds = seconds * nanosInSecond;
-			nanosLeft -= nanosInSeconds;
-			ZoneOffset offset = ZoneOffset.ofTotalSeconds(source.getTimeZoneOffsetSeconds());
-
-			return OffsetDateTime.of(source.getYear(), source.getMonth(), source.getDay(), (int) hours, (int) minutes,
-					(int) seconds, (int) nanosLeft, offset);
+			JdbcH2Dialect.class.getClassLoader().loadClass("org.h2.api.TimestampWithTimeZone");
+			return true;
+		}  catch (ClassNotFoundException e) {
+			return false;
 		}
 	}
 }

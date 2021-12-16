@@ -33,7 +33,7 @@ class JdbcH2DialectTests {
 	@Test
 	void TimestampWithTimeZone2OffsetDateTimeConverterConvertsProperly() {
 
-		JdbcH2Dialect.TimestampWithTimeZoneToOffsetDateTimeConverter converter = JdbcH2Dialect.TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE;
+		H2TimestampWithTimeZoneToOffsetDateTimeConverter converter = H2TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE;
 		long dateValue = 123456789;
 		long timeNanos = 987654321;
 		int timeZoneOffsetSeconds = 4 * 60 * 60;
