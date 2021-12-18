@@ -80,8 +80,14 @@ class CompositeSqlIdentifier implements SqlIdentifier {
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.domain.SqlIdentifier#getReference(org.springframework.data.relational.domain.IdentifierProcessing)
 	 */
+	@Deprecated
 	@Override
 	public String getReference(IdentifierProcessing processing) {
+		throw new UnsupportedOperationException("Composite SQL Identifiers can't be used for reference name retrieval");
+	}
+
+	@Override
+	public String getReference() {
 		throw new UnsupportedOperationException("Composite SQL Identifiers can't be used for reference name retrieval");
 	}
 

@@ -30,17 +30,15 @@ import org.springframework.jdbc.core.namedparam.AbstractSqlParameterSource;
  * {@link SqlIdentifier} instead of {@link String} for names.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
-	private final IdentifierProcessing identifierProcessing;
 	private final Set<SqlIdentifier> identifiers = new HashSet<>();
 	private final Map<String, Object> namesToValues = new HashMap<>();
 
-	SqlIdentifierParameterSource(IdentifierProcessing identifierProcessing) {
-		this.identifierProcessing = identifierProcessing;
-	}
+	SqlIdentifierParameterSource() { }
 
 	@Override
 	public boolean hasValue(String paramName) {
@@ -68,7 +66,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 	void addValue(SqlIdentifier identifier, Object value, int sqlType) {
 
 		identifiers.add(identifier);
-		String name = identifier.getReference(identifierProcessing);
+		String name = identifier.getReference();
 		namesToValues.put(name, value);
 		registerSqlType(name, sqlType);
 	}
@@ -77,7 +75,7 @@ class SqlIdentifierParameterSource extends AbstractSqlParameterSource {
 
 		for (SqlIdentifier identifier : others.getIdentifiers()) {
 
-			String name = identifier.getReference(identifierProcessing);
+			String name = identifier.getReference();
 			addValue(identifier, others.getValue(name), others.getSqlType(name));
 		}
 	}

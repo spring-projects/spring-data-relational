@@ -79,8 +79,14 @@ class DerivedSqlIdentifier implements SqlIdentifier {
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.domain.SqlIdentifier#getReference(org.springframework.data.relational.domain.IdentifierProcessing)
 	 */
+	@Deprecated
 	@Override
 	public String getReference(IdentifierProcessing processing) {
+		return this.name;
+	}
+
+	@Override
+	public String getReference() {
 		return this.name;
 	}
 

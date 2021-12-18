@@ -700,7 +700,7 @@ class SqlGenerator {
 	}
 
 	private String renderReference(SqlIdentifier identifier) {
-		return identifier.getReference(renderContext.getIdentifierProcessing());
+		return identifier.getReference();
 	}
 
 	private List<OrderByField> extractOrderByFields(Sort sort) {

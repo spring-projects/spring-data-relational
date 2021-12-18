@@ -40,7 +40,7 @@ public class SqlIdentifierUnitTests {
 		SqlIdentifier identifier = quoted("someName");
 
 		assertThat(identifier.toSql(BRACKETS_LOWER_CASE)).isEqualTo("[someName]");
-		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("someName");
+		assertThat(identifier.getReference()).isEqualTo("someName");
 	}
 
 	@Test // DATAJDBC-386
@@ -50,7 +50,7 @@ public class SqlIdentifierUnitTests {
 		String sql = identifier.toSql(BRACKETS_LOWER_CASE);
 
 		assertThat(sql).isEqualTo("someName");
-		assertThat(identifier.getReference(BRACKETS_LOWER_CASE)).isEqualTo("someName");
+		assertThat(identifier.getReference()).isEqualTo("someName");
 	}
 
 	@Test // DATAJDBC-386
