@@ -27,6 +27,8 @@ import org.springframework.data.relational.core.dialect.H2Dialect;
  *
  * @author Jens Schauder
  * @author Christoph Strobl
+ * @author Mikhail Polivakha
+ *
  * @since 2.3
  */
 public class JdbcH2Dialect extends H2Dialect {
@@ -40,17 +42,18 @@ public class JdbcH2Dialect extends H2Dialect {
 
 		final Collection<Object> originalConverters = super.getConverters();
 
-		if (isH2belowVersion2()) {
+		if (doesH2TimestampWithTimeZoneClassPresent()) {
 
 			List<Object> converters = new ArrayList<>(originalConverters);
 			converters.add(H2TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE);
+			converters.add(H2TimestampWithTimeZoneToZonedDateTimeConverter.INSTANCE);
 			return converters;
 		}
 
 		return originalConverters;
 	}
 
-	static boolean isH2belowVersion2() {
+	static boolean doesH2TimestampWithTimeZoneClassPresent() {
 
 		try {
 

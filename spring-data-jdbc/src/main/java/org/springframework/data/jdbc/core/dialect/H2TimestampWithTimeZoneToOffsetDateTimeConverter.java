@@ -31,8 +31,7 @@ import org.springframework.data.convert.ReadingConverter;
  * @since 2.7
  */
 @ReadingConverter
-public enum H2TimestampWithTimeZoneToOffsetDateTimeConverter
-		implements Converter<TimestampWithTimeZone, OffsetDateTime> {
+public enum H2TimestampWithTimeZoneToOffsetDateTimeConverter implements Converter<TimestampWithTimeZone, OffsetDateTime> {
 
 	INSTANCE;
 

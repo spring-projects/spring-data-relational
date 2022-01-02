@@ -15,16 +15,8 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
-
-import java.math.BigDecimal;
-import java.sql.JDBCType;
-import java.util.Date;
-
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +28,7 @@ import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.core.dialect.H2TimestampWithTimeZoneToZonedDateTimeConverter;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -45,11 +38,25 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.sql.JDBCType;
+import java.sql.Timestamp;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.Optional;
+
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
+
 /**
  * Tests storing and retrieving data types that get processed by custom conversions.
  *
  * @author Jens Schauder
  * @author Sanghyuk Jung
+ * @author Mikhail Polivakha
  */
 @ContextConfiguration
 @Transactional
@@ -69,21 +76,37 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		}
 
 		@Bean
-		EntityWithBooleanRepository repository() {
+		EntityWithBooleanRepository entityWithBooleanRepository() {
 			return factory.getRepository(EntityWithBooleanRepository.class);
 		}
 
 		@Bean
+		EntityWithZonedDateTimeRepository entityWithZonedDateTimeRepository() {
+			return factory.getRepository(EntityWithZonedDateTimeRepository.class);
+		}
+
+		@Bean
 		JdbcCustomConversions jdbcCustomConversions() {
-			return new JdbcCustomConversions(asList(StringToBigDecimalConverter.INSTANCE, BigDecimalToString.INSTANCE,
-					CustomIdReadingConverter.INSTANCE, CustomIdWritingConverter.INSTANCE));
+			return new JdbcCustomConversions(
+					asList(
+							StringToBigDecimalConverter.INSTANCE,
+							BigDecimalToString.INSTANCE,
+							CustomIdReadingConverter.INSTANCE,
+							CustomIdWritingConverter.INSTANCE,
+							ZonedDateTimeToTimestampWritingConverter.INSTANCE,
+							ZonedDateTimeToTimestampReadingConverter.INSTANCE,
+							H2TimestampWithTimeZoneToZonedDateTimeConverter.INSTANCE
+					)
+			);
 		}
 	}
 
 	@Autowired EntityWithBooleanRepository repository;
 
+	@Autowired EntityWithZonedDateTimeRepository entityWithZonedDateTimeRepository;
+
 	/**
-	 * In PostrgreSQL this fails if a simple converter like the following is used.
+	 * In PostgreSQL this fails if a simple converter like the following is used.
 	 *
 	 * <pre class="code">
 	 *
@@ -143,13 +166,36 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		});
 	}
 
+	/**
+	 * DATAJDBC-1089
+	 */
+	@Test
+	public void testZonedDateTimeToTimestampConversion() {
+		EntityWithZonedDateTime entity = new EntityWithZonedDateTime();
+		entity.createdAt = ZonedDateTime.now(ZoneOffset.ofHours(3));
+
+		final EntityWithZonedDateTime persistedEntity = entityWithZonedDateTimeRepository.save(entity);
+		final Optional<EntityWithZonedDateTime> foundEntity = entityWithZonedDateTimeRepository.findById(persistedEntity.id);
+
+		assertThat(foundEntity).isPresent();
+		assertThat(persistedEntity.createdAt).isEqualTo(foundEntity.get().createdAt);
+	}
+
 	interface EntityWithBooleanRepository extends CrudRepository<EntityWithStringyBigDecimal, CustomId> {}
+
+	interface EntityWithZonedDateTimeRepository extends CrudRepository<EntityWithZonedDateTime, Long> {};
 
 	private static class EntityWithStringyBigDecimal {
 
 		@Id CustomId id;
 		String stringyNumber;
 		OtherEntity reference;
+	}
+
+	private static class EntityWithZonedDateTime {
+
+		@Id private Long id;
+		private ZonedDateTime createdAt;
 	}
 
 	private static class CustomId {
@@ -214,4 +260,28 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		}
 	}
 
+	@WritingConverter
+	enum ZonedDateTimeToTimestampWritingConverter implements Converter<ZonedDateTime, Timestamp> {
+
+		INSTANCE;
+
+		@Override
+		public Timestamp convert(ZonedDateTime source) {
+			return Timestamp.from(source.toInstant());
+		}
+
+	}
+
+	@ReadingConverter
+	enum ZonedDateTimeToTimestampReadingConverter implements Converter<Timestamp, ZonedDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public ZonedDateTime convert(Timestamp source) {
+			return ZonedDateTime.ofInstant(source.toInstant(), ZoneOffset.ofHours(0)); // Because source.toInstant() already represents appropraite value
+		}
+
+	}
+	
 }

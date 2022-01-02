@@ -31,6 +31,7 @@ import org.springframework.util.ClassUtils;
  * compatible with JDBC drivers.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public enum JdbcColumnTypes {
@@ -53,7 +54,7 @@ public enum JdbcColumnTypes {
 	static {
 
 		javaToDbType.put(Enum.class, String.class);
-		javaToDbType.put(ZonedDateTime.class, String.class);
+		javaToDbType.put(ZonedDateTime.class, ZonedDateTime.class);
 		javaToDbType.put(OffsetDateTime.class, OffsetDateTime.class);
 		javaToDbType.put(LocalDateTime.class, LocalDateTime.class);
 		javaToDbType.put(Temporal.class, Timestamp.class);

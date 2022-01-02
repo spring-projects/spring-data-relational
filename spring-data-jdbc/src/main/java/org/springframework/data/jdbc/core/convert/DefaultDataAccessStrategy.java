@@ -67,6 +67,8 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Yunyoung LEE
  * @author Radim Tlusty
+ * @author Mikhail Polivakha
+ *
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -545,7 +547,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
 			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
 
-		addConvertedValue(parameterSource, value, name, converter.getColumnType(property), converter.getSqlType(property));
+		final Class<?> javaColumnType = converter.getColumnType(property);
+		addConvertedValue(parameterSource, value, name, javaColumnType, JdbcUtil.sqlTypeFor(javaColumnType));
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,

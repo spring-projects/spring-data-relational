@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.util.Assert;
 
 /**
  * Maps a {@link ResultSet} to an entity of type {@code T}, including entities referenced. This {@link RowMapper} might
@@ -49,6 +50,9 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 	}
 
 	public EntityRowMapper(RelationalPersistentEntity<T> entity, JdbcConverter converter) {
+
+		Assert.notNull(entity, "relationalPersistentEntity must not be null!");
+		Assert.notNull(converter, "jdbcConverter must not be null!");
 
 		this.entity = entity;
 		this.path = null;

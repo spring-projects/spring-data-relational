@@ -23,6 +23,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Thomas Lang
+ * @author Mikhail Polivakha
  */
 public final class JdbcUtil {
 
@@ -64,6 +66,7 @@ public final class JdbcUtil {
 		sqlTypeMappings.put(Time.class, Types.TIME);
 		sqlTypeMappings.put(Timestamp.class, Types.TIMESTAMP);
 		sqlTypeMappings.put(OffsetDateTime.class, Types.TIMESTAMP_WITH_TIMEZONE);
+		sqlTypeMappings.put(ZonedDateTime.class, Types.TIMESTAMP_WITH_TIMEZONE);
 	}
 
 	private JdbcUtil() {

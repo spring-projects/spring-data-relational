@@ -22,6 +22,7 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 /**
@@ -42,6 +43,7 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @param sqlType the type constant from {@link java.sql.Types} to be used if non is specified by a converter.
 	 * @return The converted value wrapped in a {@link JdbcValue}. Guaranteed to be not {@literal null}.
 	 */
+	@NonNull
 	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, int sqlType);
 
 	/**

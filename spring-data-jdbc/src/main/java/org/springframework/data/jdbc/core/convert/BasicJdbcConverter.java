@@ -51,6 +51,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -64,6 +65,8 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
+ *
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -240,21 +243,6 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return super.readValue(value, type);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.RelationalConverter#writeValue(java.lang.Object, org.springframework.data.util.TypeInformation)
-	 */
-	@Override
-	@Nullable
-	public Object writeValue(@Nullable Object value, TypeInformation<?> type) {
-
-		if (value == null) {
-			return null;
-		}
-
-		return super.writeValue(value, type);
-	}
-
 	private boolean canWriteAsJdbcValue(@Nullable Object value) {
 
 		if (value == null) {
@@ -285,6 +273,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#writeValue(java.lang.Object, java.lang.Class, int)
 	 */
+	@NonNull
 	@Override
 	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
 
@@ -329,8 +318,12 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 
 	@Override
 	public <T> T mapRow(RelationalPersistentEntity<T> entity, ResultSet resultSet, Object key) {
-		return new ReadingContext<T>(new PersistentPropertyPathExtension(getMappingContext(), entity),
-				new ResultSetAccessor(resultSet), Identifier.empty(), key).mapRow();
+		return new ReadingContext<T>(
+				new PersistentPropertyPathExtension(getMappingContext(), entity),
+				new ResultSetAccessor(resultSet),
+				Identifier.empty(),
+				key
+		).mapRow();
 	}
 
 	@Override
