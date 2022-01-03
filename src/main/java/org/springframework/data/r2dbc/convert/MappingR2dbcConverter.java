@@ -647,7 +647,7 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 			return row.get(idColumnName);
 		}
 
-		Iterable<? extends ColumnMetadata> columns = metadata.getColumnMetadatas();
+		Iterable<? extends ColumnMetadata> columns = RowMetadataUtils.getColumnMetadata(metadata);
 		Iterator<? extends ColumnMetadata> it = columns.iterator();
 
 		if (it.hasNext()) {
