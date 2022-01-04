@@ -27,6 +27,8 @@ import lombok.With;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
 
 import org.assertj.core.groups.Tuple;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,14 +47,18 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
+import org.springframework.data.jdbc.repository.config.DialectResolver;
+import org.springframework.data.jdbc.repository.config.DialectResolver.DefaultDialectProvider;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
+import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -80,11 +86,17 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 	public void before() {
 
 		RelationalMappingContext context = new JdbcMappingContext();
+
 		NamedParameterJdbcOperations operations = createIdGeneratingOperations();
+
+		JdbcOperations mockJdbcOperations = operations.getJdbcOperations();
+
+		when(mockJdbcOperations.execute(any(ConnectionCallback.class))).thenReturn(PostgresDialect.INSTANCE);
+
 		DelegatingDataAccessStrategy delegatingDataAccessStrategy = new DelegatingDataAccessStrategy();
 		Dialect dialect = HsqlDbDialect.INSTANCE;
 		JdbcConverter converter = new BasicJdbcConverter(context, delegatingDataAccessStrategy, new JdbcCustomConversions(),
-				new DefaultJdbcTypeFactory(operations.getJdbcOperations()), dialect.getIdentifierProcessing());
+				new DefaultJdbcTypeFactory(mockJdbcOperations), dialect.getIdentifierProcessing());
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, dialect);
 
 		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
@@ -290,10 +302,12 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 			return 1;
 		};
 
+		JdbcOperations mockJdbcOperations = mock(JdbcOperations.class);
+
 		NamedParameterJdbcOperations operations = mock(NamedParameterJdbcOperations.class);
 		when(operations.update(anyString(), any(SqlParameterSource.class), any(KeyHolder.class)))
 				.thenAnswer(setIdInKeyHolder);
-		when(operations.getJdbcOperations()).thenReturn(mock(JdbcOperations.class));
+		when(operations.getJdbcOperations()).thenReturn(mockJdbcOperations);
 		return operations;
 	}
 

@@ -74,7 +74,7 @@ public class BasicJdbcConverterUnitTests {
 		checkTargetType(softly, entity, "localDateTime", LocalDateTime.class);
 		checkTargetType(softly, entity, "localDate", Timestamp.class);
 		checkTargetType(softly, entity, "localTime", Timestamp.class);
-		checkTargetType(softly, entity, "zonedDateTime", ZonedDateTime.class);
+		checkTargetType(softly, entity, "zonedDateTime", OffsetDateTime.class);
 		checkTargetType(softly, entity, "offsetDateTime", OffsetDateTime.class);
 		checkTargetType(softly, entity, "instant", Timestamp.class);
 		checkTargetType(softly, entity, "date", Date.class);

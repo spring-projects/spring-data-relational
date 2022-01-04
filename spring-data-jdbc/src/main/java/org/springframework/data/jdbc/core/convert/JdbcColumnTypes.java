@@ -54,7 +54,7 @@ public enum JdbcColumnTypes {
 	static {
 
 		javaToDbType.put(Enum.class, String.class);
-		javaToDbType.put(ZonedDateTime.class, ZonedDateTime.class);
+		javaToDbType.put(ZonedDateTime.class, OffsetDateTime.class);
 		javaToDbType.put(OffsetDateTime.class, OffsetDateTime.class);
 		javaToDbType.put(LocalDateTime.class, LocalDateTime.class);
 		javaToDbType.put(Temporal.class, Timestamp.class);

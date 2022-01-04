@@ -19,9 +19,11 @@ import java.sql.Array;
 import java.sql.JDBCType;
 
 import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
+import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 
 /**
@@ -30,6 +32,8 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Mikhail Polivakha
+ *
  * @since 1.1
  */
 public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
@@ -68,11 +72,15 @@ public class DefaultJdbcTypeFactory implements JdbcTypeFactory {
 
 		Class<?> componentType = arrayColumns.getArrayType(value.getClass());
 
-		JDBCType jdbcType = JdbcUtil.jdbcTypeFor(componentType);
+		JDBCType jdbcType = JdbcUtil.jdbcTypeFor(componentType, DialectResolver.getDialect(operations));
 		Assert.notNull(jdbcType, () -> String.format("Couldn't determine JDBCType for %s", componentType));
 		String typeName = arrayColumns.getArrayTypeName(jdbcType);
 
 		return operations.execute((ConnectionCallback<Array>) c -> c.createArrayOf(typeName, value));
 	}
 
+	@NonNull
+	public JdbcOperations getOperations() {
+		return operations;
+	}
 }
