@@ -156,8 +156,8 @@ public class TransactionAwareConnectionFactoryProxyUnitTests {
 				.as(StepVerifier::create) //
 				.verifyComplete();
 
-		verifyZeroInteractions(connectionMock2);
-		verifyZeroInteractions(connectionMock3);
+		verifyNoInteractions(connectionMock2);
+		verifyNoInteractions(connectionMock3);
 		verify(connectionFactoryMock, times(1)).create();
 	}
 }
