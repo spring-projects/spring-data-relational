@@ -32,6 +32,7 @@ import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -173,7 +174,14 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 */
 	@Override
 	public int getSqlType(RelationalPersistentProperty property) {
-		return JdbcUtil.sqlTypeFor(getColumnType(property));
+		if (typeFactory instanceof DefaultJdbcTypeFactory) {
+			return JdbcUtil.sqlTypeFor(
+					getColumnType(property),
+					DialectResolver.getDialect(((DefaultJdbcTypeFactory) typeFactory).getOperations())
+			);
+		} else {
+			return JdbcUtil.sqlTypeFor(getColumnType(property));
+		}
 	}
 
 	/*

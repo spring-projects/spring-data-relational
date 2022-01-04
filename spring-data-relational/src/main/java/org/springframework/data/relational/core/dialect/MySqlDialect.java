@@ -15,13 +15,18 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.sql.Types;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.LetterCasing;
 import org.springframework.data.relational.core.sql.IdentifierProcessing.Quoting;
+import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 
 /**
@@ -169,4 +174,17 @@ public class MySqlDialect extends AbstractDialect {
 	public Collection<Object> getConverters() {
 		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#getCustomSqlCodesMappings()
+	 */
+	@NonNull
+    @Override
+    public Map<Class<?>, Integer> getCustomSqlCodesMappings() {
+		Map<Class<?>, Integer> customSqlCodesMappings = super.getCustomSqlCodesMappings();
+		customSqlCodesMappings.put(OffsetDateTime.class, Types.TIMESTAMP);
+		customSqlCodesMappings.put(ZonedDateTime.class, Types.TIMESTAMP);
+		return customSqlCodesMappings;
+    }
 }

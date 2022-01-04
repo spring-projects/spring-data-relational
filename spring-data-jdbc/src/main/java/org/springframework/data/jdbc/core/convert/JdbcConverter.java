@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import java.sql.ResultSet;
 
 import org.springframework.data.relational.core.conversion.RelationalConverter;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -74,7 +75,7 @@ public interface JdbcConverter extends RelationalConverter {
 	 * top-level array type (e.g. {@code String[][]} returns {@code String[]}).
 	 *
 	 * @return a {@link Class} that is suitable for usage with JDBC drivers.
-	 * @see org.springframework.data.jdbc.support.JdbcUtil#sqlTypeFor(Class)
+	 * @see org.springframework.data.jdbc.support.JdbcUtil#sqlTypeFor(Class, Dialect)
 	 * @since 2.0
 	 */
 	Class<?> getColumnType(RelationalPersistentProperty property);

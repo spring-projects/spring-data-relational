@@ -45,6 +45,7 @@ import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -84,6 +85,11 @@ public class DefaultDataAccessStrategyUnitTests {
 
 		converter = new BasicJdbcConverter(context, relationResolver, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(jdbcOperations), dialect.getIdentifierProcessing());
+
+		when(jdbcOperations.execute(any(ConnectionCallback.class))).thenReturn(dialect);
+
+		when(namedJdbcOperations.getJdbcOperations()).thenReturn(jdbcOperations);
+
 		accessStrategy = new DefaultDataAccessStrategy( //
 				new SqlGeneratorSource(context, converter, dialect), //
 				context, //

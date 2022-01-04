@@ -32,6 +32,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -548,13 +549,25 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
 
 		final Class<?> javaColumnType = converter.getColumnType(property);
-		addConvertedValue(parameterSource, value, name, javaColumnType, JdbcUtil.sqlTypeFor(javaColumnType));
+		addConvertedValue(
+				parameterSource,
+				value,
+				name,
+				javaColumnType,
+				JdbcUtil.sqlTypeFor(javaColumnType, DialectResolver.getDialect(operations.getJdbcOperations()))
+		);
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,
 			Class<?> javaType) {
 
-		addConvertedValue(parameterSource, value, name, javaType, JdbcUtil.sqlTypeFor(javaType));
+		addConvertedValue(
+				parameterSource,
+				value,
+				name,
+				javaType,
+				JdbcUtil.sqlTypeFor(javaType, DialectResolver.getDialect(operations.getJdbcOperations()))
+		);
 	}
 
 	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,

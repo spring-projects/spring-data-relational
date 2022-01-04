@@ -26,7 +26,9 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -40,33 +42,33 @@ import org.springframework.util.Assert;
  */
 public final class JdbcUtil {
 
-	private static final Map<Class<?>, Integer> sqlTypeMappings = new HashMap<>();
+	private static final Map<Class<?>, Integer> commonSqlTypeMappings = new HashMap<>();
 
 	static {
 
-		sqlTypeMappings.put(String.class, Types.VARCHAR);
-		sqlTypeMappings.put(BigInteger.class, Types.BIGINT);
-		sqlTypeMappings.put(BigDecimal.class, Types.DECIMAL);
-		sqlTypeMappings.put(Byte.class, Types.TINYINT);
-		sqlTypeMappings.put(byte.class, Types.TINYINT);
-		sqlTypeMappings.put(Short.class, Types.SMALLINT);
-		sqlTypeMappings.put(short.class, Types.SMALLINT);
-		sqlTypeMappings.put(Integer.class, Types.INTEGER);
-		sqlTypeMappings.put(int.class, Types.INTEGER);
-		sqlTypeMappings.put(Long.class, Types.BIGINT);
-		sqlTypeMappings.put(long.class, Types.BIGINT);
-		sqlTypeMappings.put(Double.class, Types.DOUBLE);
-		sqlTypeMappings.put(double.class, Types.DOUBLE);
-		sqlTypeMappings.put(Float.class, Types.REAL);
-		sqlTypeMappings.put(float.class, Types.REAL);
-		sqlTypeMappings.put(Boolean.class, Types.BIT);
-		sqlTypeMappings.put(boolean.class, Types.BIT);
-		sqlTypeMappings.put(byte[].class, Types.VARBINARY);
-		sqlTypeMappings.put(Date.class, Types.DATE);
-		sqlTypeMappings.put(Time.class, Types.TIME);
-		sqlTypeMappings.put(Timestamp.class, Types.TIMESTAMP);
-		sqlTypeMappings.put(OffsetDateTime.class, Types.TIMESTAMP_WITH_TIMEZONE);
-		sqlTypeMappings.put(ZonedDateTime.class, Types.TIMESTAMP_WITH_TIMEZONE);
+		commonSqlTypeMappings.put(String.class, Types.VARCHAR);
+		commonSqlTypeMappings.put(BigInteger.class, Types.BIGINT);
+		commonSqlTypeMappings.put(BigDecimal.class, Types.DECIMAL);
+		commonSqlTypeMappings.put(Byte.class, Types.TINYINT);
+		commonSqlTypeMappings.put(byte.class, Types.TINYINT);
+		commonSqlTypeMappings.put(Short.class, Types.SMALLINT);
+		commonSqlTypeMappings.put(short.class, Types.SMALLINT);
+		commonSqlTypeMappings.put(Integer.class, Types.INTEGER);
+		commonSqlTypeMappings.put(int.class, Types.INTEGER);
+		commonSqlTypeMappings.put(Long.class, Types.BIGINT);
+		commonSqlTypeMappings.put(long.class, Types.BIGINT);
+		commonSqlTypeMappings.put(Double.class, Types.DOUBLE);
+		commonSqlTypeMappings.put(double.class, Types.DOUBLE);
+		commonSqlTypeMappings.put(Float.class, Types.REAL);
+		commonSqlTypeMappings.put(float.class, Types.REAL);
+		commonSqlTypeMappings.put(Boolean.class, Types.BIT);
+		commonSqlTypeMappings.put(boolean.class, Types.BIT);
+		commonSqlTypeMappings.put(byte[].class, Types.VARBINARY);
+		commonSqlTypeMappings.put(Date.class, Types.DATE);
+		commonSqlTypeMappings.put(Time.class, Types.TIME);
+		commonSqlTypeMappings.put(Timestamp.class, Types.TIMESTAMP);
+		commonSqlTypeMappings.put(OffsetDateTime.class, Types.TIMESTAMP_WITH_TIMEZONE);
+		commonSqlTypeMappings.put(ZonedDateTime.class, Types.TIMESTAMP_WITH_TIMEZONE);
 	}
 
 	private JdbcUtil() {
@@ -79,16 +81,50 @@ public final class JdbcUtil {
 	 *
 	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
 	 * @return One of the values defined in {@link Types} or {@link JdbcUtils#TYPE_UNKNOWN}.
+	 * @deprecated because this method will make lookup only in common sql types map and therefore
+	 * 			   will not take into account dialect specific sql types codes mappings. When possible,
+	 * 			   please, use {@link #sqlTypeFor(Class, Dialect)}
 	 */
+	@Deprecated
 	public static int sqlTypeFor(Class<?> type) {
 
 		Assert.notNull(type, "Type must not be null.");
 
-		return sqlTypeMappings.keySet().stream() //
+		return commonSqlTypeMappings.keySet().stream() //
 				.filter(k -> k.isAssignableFrom(type)) //
 				.findFirst() //
-				.map(sqlTypeMappings::get) //
+				.map(commonSqlTypeMappings::get) //
 				.orElse(JdbcUtils.TYPE_UNKNOWN);
+	}
+
+	/**
+	 * Returns the {@link Types} value suitable for passing a value of the provided type to a
+	 * {@link java.sql.PreparedStatement} giving regards to passed dialect specific sql codes
+	 * mappings
+	 *
+	 * The main motivation for this method is, in general, the fact that we cannot assign the same int code for the same java class for
+	 * each dialect. For example, currently, there MySQL Driver cannot handle {@link Types#TIMESTAMP_WITH_TIMEZONE}
+	 * to be set by the means of {@link java.sql.PreparedStatement#setObject(int, Object, int)}. If we We need to instead set
+	 * it be the mean
+	 *
+	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
+	 * @param dialect represents the dialect, in the context of which the int sql code must be derived
+	 * @return the int code of sql type in regards to custom dialect mappings
+	 *
+	 * @see Types
+	 */
+	public static int sqlTypeFor(Class<?> type, Dialect dialect) {
+
+		Assert.notNull(type, "Type must not be null.");
+
+		return Optional
+				.ofNullable(dialect.getCustomSqlCodesMappings().get(type))
+				.orElse(commonSqlTypeMappings.keySet().stream()
+						.filter(k -> k.isAssignableFrom(type))
+						.findFirst()
+						.map(commonSqlTypeMappings::get)
+						.orElse(JdbcUtils.TYPE_UNKNOWN)
+				);
 	}
 
 	/**
@@ -124,9 +160,33 @@ public final class JdbcUtil {
 	 *
 	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
 	 * @return a matching {@link JDBCType} instance or {@literal null}.
+	 * @deprecated because this method will make lookup only in common sql types map and therefore
+	 * 			   will not take into account dialect specific sql types codes mappings. When possible,
+	 * 			   please, use {@link #jdbcTypeFor(Class, Dialect)}
 	 */
 	@Nullable
+	@Deprecated
 	public static JDBCType jdbcTypeFor(Class<?> type) {
 		return jdbcTypeFor(sqlTypeFor(type));
+	}
+
+
+	/**
+	 * Returns the {@link JDBCType} suitable for passing a value of the provided type to a
+	 * {@link java.sql.PreparedStatement} giving regards to passed dialect specific sql codes
+	 * mappings
+	 *
+	 * The main motivation for this method is, in general, the fact that we cannot assign the same int code for the same java class for
+	 * each dialect. For example, currently, there MySQL Driver cannot handle {@link Types#TIMESTAMP_WITH_TIMEZONE}
+	 * to be set by the means of {@link java.sql.PreparedStatement#setObject(int, Object, int)}. If we We need to instead set
+	 * it be the mean
+	 *
+	 * @param type The type of value to be bound to a {@link java.sql.PreparedStatement}.
+	 * @param dialect represents the dialect, in the context of which the int sql code must be derived
+	 * @return a matching {@link JDBCType} instance or {@literal null}.
+	 */
+	@Nullable
+	public static JDBCType jdbcTypeFor(Class<?> type, Dialect dialect) {
+		return jdbcTypeFor(sqlTypeFor(type, dialect));
 	}
 }

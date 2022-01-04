@@ -47,7 +47,7 @@ import org.springframework.util.Assert;
 public abstract class AbstractJdbcQuery implements RepositoryQuery {
 
 	private final JdbcQueryMethod queryMethod;
-	private final NamedParameterJdbcOperations operations;
+	protected final NamedParameterJdbcOperations operations;
 
 	/**
 	 * Creates a new {@link AbstractJdbcQuery} for the given {@link JdbcQueryMethod} and

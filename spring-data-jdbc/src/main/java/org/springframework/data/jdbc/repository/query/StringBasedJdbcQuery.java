@@ -26,7 +26,9 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.support.JdbcUtil;
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
@@ -160,8 +162,11 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		Class<?> parameterType = queryMethod.getParameters().getParameter(p.getIndex()).getType();
 		Class<?> conversionTargetType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(parameterType);
 
-		JdbcValue jdbcValue = converter.writeJdbcValue(value, conversionTargetType,
-				JdbcUtil.sqlTypeFor(conversionTargetType));
+		JdbcValue jdbcValue = converter.writeJdbcValue(
+				value,
+				conversionTargetType,
+				JdbcUtil.sqlTypeFor(conversionTargetType, DialectResolver.getDialect(operations.getJdbcOperations()))
+		);
 
 		JDBCType jdbcType = jdbcValue.getJdbcType();
 		if (jdbcType == null) {

@@ -17,11 +17,15 @@ package org.springframework.data.relational.core.dialect;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
+import org.springframework.lang.NonNull;
 
 /**
  * Represents a dialect that is implemented by a particular database. Please note that not all features are supported by
@@ -120,4 +124,11 @@ public interface Dialect {
 	default InsertRenderContext getInsertRenderContext() {
 		return InsertRenderContexts.DEFAULT;
 	}
+
+	/**
+	 * @return the map of custom mappings from java classes to sql codes (integer sql codes present in {@link java.sql.Types})
+	 * @since 3.0
+	 */
+	@NonNull
+	default Map<Class<?>, Integer> getCustomSqlCodesMappings() { return new HashMap<>(); }
 }
