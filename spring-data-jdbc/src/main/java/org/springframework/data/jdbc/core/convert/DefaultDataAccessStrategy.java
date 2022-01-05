@@ -100,10 +100,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		this.operations = operations;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, java.util.Map)
-	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 
@@ -155,10 +151,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return getIdFromHolder(holder, persistentEntity);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 
@@ -167,10 +159,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 				getParameterSource(instance, persistentEntity, "", Predicates.includeAll(), getIdentifierProcessing())) != 0;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#updateWithVersion(java.lang.Object, java.lang.Class, java.lang.Number)
-	 */
 	@Override
 	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
 
@@ -192,10 +180,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 
@@ -205,10 +189,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		operations.update(deleteByIdSql, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class, java.lang.Number)
-	 */
 	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 
@@ -226,10 +206,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PropertyPath)
-	 */
 	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
@@ -251,29 +227,17 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		operations.update(delete, parameters);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(java.lang.Class)
-	 */
 	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 		operations.getJdbcOperations().update(sql(domainType).createDeleteAllSql(null));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(org.springframework.data.mapping.PropertyPath)
-	 */
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		operations.getJdbcOperations()
 				.update(sql(propertyPath.getBaseProperty().getOwner().getType()).createDeleteAllSql(propertyPath));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
-	 */
 	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 
@@ -283,10 +247,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		operations.query(acquireLockByIdSql, parameter, ResultSet::next);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockAll(org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
-	 */
 	@Override
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 
@@ -294,10 +254,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		operations.getJdbcOperations().query(acquireLockAllSql, ResultSet::next);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
-	 */
 	@Override
 	public long count(Class<?> domainType) {
 
@@ -308,10 +264,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T findById(Object id, Class<T> domainType) {
@@ -326,20 +278,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAll(java.lang.Class)
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 		return operations.query(sql(domainType).getFindAll(), (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllById(java.lang.Iterable, java.lang.Class)
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
@@ -358,10 +302,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return operations.query(findAllInListSql, parameterSource, (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.jdbc.support.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public Iterable<Object> findAllByPath(Identifier identifier,
@@ -393,10 +333,6 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return parameterSource;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#existsById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
@@ -409,20 +345,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Sort)
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
 		return operations.query(sql(domainType).getFindAll(sort), (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Pageable)
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {

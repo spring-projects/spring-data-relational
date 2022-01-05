@@ -51,10 +51,6 @@ public class AsteriskFromTable extends AbstractSegment implements Expression {
 		return table;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 

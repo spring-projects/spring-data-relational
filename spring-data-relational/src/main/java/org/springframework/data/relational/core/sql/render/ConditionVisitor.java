@@ -51,10 +51,6 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 		this.context = context;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterMatched(Condition segment) {
 
@@ -110,10 +106,6 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
-	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;

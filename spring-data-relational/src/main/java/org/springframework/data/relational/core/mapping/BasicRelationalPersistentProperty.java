@@ -118,10 +118,6 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return new DerivedSqlIdentifier(name, isForceQuote());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.mapping.model.AbstractPersistentProperty#createAssociation()
-	 */
 	@Override
 	protected Association<RelationalPersistentProperty> createAssociation() {
 		return new Association<>(this, null);
@@ -145,28 +141,16 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.model.RelationalPersistentProperty#getColumnName()
-	 */
 	@Override
 	public SqlIdentifier getColumnName() {
 		return columnName.get();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.mapping.model.AbstractPersistentProperty#getOwner()
-	 */
 	@Override
 	public RelationalPersistentEntity<?> getOwner() {
 		return (RelationalPersistentEntity<?>) super.getOwner();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getReverseColumnName(org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension)
-	 */
 	@Override
 	public SqlIdentifier getReverseColumnName(PersistentPropertyPathExtension path) {
 
@@ -174,28 +158,16 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 				.orElseGet(() -> createDerivedSqlIdentifier(this.namingStrategy.getReverseColumnName(path)));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getKeyColumn()
-	 */
 	@Override
 	public SqlIdentifier getKeyColumn() {
 		return isQualified() ? collectionKeyColumnName.get() : null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isQualified()
-	 */
 	@Override
 	public boolean isQualified() {
 		return isMap() || isListLike();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getQualifierColumnType()
-	 */
 	@Override
 	public Class<?> getQualifierColumnType() {
 
@@ -209,37 +181,21 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		return Integer.class;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isOrdered()
-	 */
 	@Override
 	public boolean isOrdered() {
 		return isListLike();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#isEmbedded()
-	 */
 	@Override
 	public boolean isEmbedded() {
 		return isEmbedded.get();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#getEmbeddedPrefix()
-	 */
 	@Override
 	public String getEmbeddedPrefix() {
 		return isEmbedded() ? embeddedPrefix.get() : null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalPersistentProperty#shouldCreateEmptyEmbedded()
-	 */
 	@Override
 	public boolean shouldCreateEmptyEmbedded() {
 

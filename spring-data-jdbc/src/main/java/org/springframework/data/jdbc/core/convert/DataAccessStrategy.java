@@ -187,10 +187,6 @@ public interface DataAccessStrategy extends RelationResolver {
 	 */
 	<T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType);
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.jdbc.support.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
-	 */
 	@Override
 	Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path);

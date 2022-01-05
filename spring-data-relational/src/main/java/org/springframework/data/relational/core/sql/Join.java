@@ -63,10 +63,6 @@ public class Join extends AbstractSegment {
 		return on;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return type + " " + joinTable + " ON " + on;

@@ -27,10 +27,6 @@ import org.springframework.data.relational.core.dialect.ArrayColumns;
  */
 public interface JdbcArrayColumns extends ArrayColumns {
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.ArrayColumns#getArrayType(java.lang.Class)
-	 */
 	@Override
 	default Class<?> getArrayType(Class<?> userType) {
 
@@ -62,19 +58,11 @@ public interface JdbcArrayColumns extends ArrayColumns {
 
 		INSTANCE;
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#isSupported()
-		 */
 		@Override
 		public boolean isSupported() {
 			return false;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#JdbcArrayColumns(JDBCType)
-		 */
 		@Override
 		public String getArrayTypeName(SQLType jdbcType) {
 			throw new UnsupportedOperationException("Array types not supported");
@@ -89,19 +77,11 @@ public interface JdbcArrayColumns extends ArrayColumns {
 
 		INSTANCE;
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#isSupported()
-		 */
 		@Override
 		public boolean isSupported() {
 			return true;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#JdbcArrayColumns(JDBCType)
-		 */
 		@Override
 		public String getArrayTypeName(SQLType jdbcType) {
 			return jdbcType.getName();

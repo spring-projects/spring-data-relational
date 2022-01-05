@@ -68,10 +68,6 @@ public class InlineQuery extends AbstractSegment implements TableLike {
 		return create(select, SqlIdentifier.unquoted(alias));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Named#getName()
-	 */
 	@Override
 	public SqlIdentifier getName() {
 		return alias;
@@ -86,10 +82,6 @@ public class InlineQuery extends AbstractSegment implements TableLike {
 		return alias;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "(" + select + ") AS " + alias;

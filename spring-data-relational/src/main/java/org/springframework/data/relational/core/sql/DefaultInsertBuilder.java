@@ -36,10 +36,6 @@ class DefaultInsertBuilder
 	private List<Column> columns = new ArrayList<>();
 	private List<Expression> values = new ArrayList<>();
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.InsertBuilder#into(org.springframework.data.relational.core.sql.Table)
-	 */
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild into(Table table) {
 
@@ -49,10 +45,6 @@ class DefaultInsertBuilder
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValues#column(org.springframework.data.relational.core.sql.Column)
-	 */
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild column(Column column) {
 
@@ -63,10 +55,6 @@ class DefaultInsertBuilder
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValues#columns(org.springframework.data.relational.core.sql.Column[])
-	 */
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild columns(Column... columns) {
 
@@ -75,10 +63,6 @@ class DefaultInsertBuilder
 		return columns(Arrays.asList(columns));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValues#columns(java.util.Collection)
-	 */
 	@Override
 	public InsertIntoColumnsAndValuesWithBuild columns(Collection<Column> columns) {
 
@@ -89,10 +73,6 @@ class DefaultInsertBuilder
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValuesWithBuild#value(org.springframework.data.relational.core.sql.Expression)
-	 */
 	@Override
 	public InsertValuesWithBuild value(Expression value) {
 
@@ -103,10 +83,6 @@ class DefaultInsertBuilder
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValuesWithBuild#values(org.springframework.data.relational.core.sql.Expression[])
-	 */
 	@Override
 	public InsertValuesWithBuild values(Expression... values) {
 
@@ -115,10 +91,6 @@ class DefaultInsertBuilder
 		return values(Arrays.asList(values));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValuesWithBuild#values(java.util.Collection)
-	 */
 	@Override
 	public InsertValuesWithBuild values(Collection<? extends Expression> values) {
 
@@ -129,10 +101,6 @@ class DefaultInsertBuilder
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.InsertBuilder.BuildInsert#build()
-	 */
 	@Override
 	public Insert build() {
 		return new DefaultInsert(this.into, this.columns, this.values);

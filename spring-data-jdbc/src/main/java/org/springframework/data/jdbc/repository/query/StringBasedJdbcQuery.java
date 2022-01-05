@@ -108,10 +108,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.RepositoryQuery#execute(java.lang.Object[])
-	 */
 	@Override
 	public Object execute(Object[] objects) {
 
@@ -131,10 +127,6 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		return queryExecution.execute(determineQuery(), this.bindParameters(accessor));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.RepositoryQuery#getQueryMethod()
-	 */
 	@Override
 	public JdbcQueryMethod getQueryMethod() {
 		return queryMethod;

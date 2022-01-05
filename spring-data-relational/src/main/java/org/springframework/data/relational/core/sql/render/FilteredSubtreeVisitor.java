@@ -108,10 +108,6 @@ abstract class FilteredSubtreeVisitor extends DelegatingVisitor {
 		return Delegation.retain();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.DelegatingVisitor#doEnter(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public final Delegation doEnter(Visitable segment) {
 
@@ -128,10 +124,6 @@ abstract class FilteredSubtreeVisitor extends DelegatingVisitor {
 		return Delegation.retain();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.DelegatingVisitor#doLeave(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public final Delegation doLeave(Visitable segment) {
 

@@ -59,10 +59,6 @@ public class JdbcMappingContext extends RelationalMappingContext {
 		setSimpleTypeHolder(JdbcSimpleTypes.HOLDER);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.RelationalMappingContext#createPersistentEntity(org.springframework.data.util.TypeInformation)
-	 */
 	@Override
 	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
 
@@ -80,10 +76,6 @@ public class JdbcMappingContext extends RelationalMappingContext {
 		return entity;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.mapping.context.AbstractMappingContext#createPersistentProperty(org.springframework.data.mapping.model.Property, org.springframework.data.mapping.model.MutablePersistentEntity, org.springframework.data.mapping.model.SimpleTypeHolder)
-	 */
 	@Override
 	protected RelationalPersistentProperty createPersistentProperty(Property property,
 			RelationalPersistentEntity<?> owner, SimpleTypeHolder simpleTypeHolder) {

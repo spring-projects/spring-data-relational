@@ -79,10 +79,6 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 		this.forceQuote = forceQuote;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.mapping.model.RelationalPersistentEntity#getTableName()
-	 */
 	@Override
 	public SqlIdentifier getTableName() {
 
@@ -114,19 +110,11 @@ class RelationalPersistentEntityImpl<T> extends BasicPersistentEntity<T, Relatio
 				: null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.model.RelationalPersistentEntity#getIdColumn()
-	 */
 	@Override
 	public SqlIdentifier getIdColumn() {
 		return getRequiredIdProperty().getColumnName();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return String.format("RelationalPersistentEntityImpl<%s>", getType());

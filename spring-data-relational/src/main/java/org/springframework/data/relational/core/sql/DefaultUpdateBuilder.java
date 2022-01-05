@@ -38,10 +38,6 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 	private List<Assignment> assignments = new ArrayList<>();
 	private @Nullable Condition where;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder#table(org.springframework.data.relational.core.sql.Table)
-	 */
 	@Override
 	public UpdateAssign table(Table table) {
 
@@ -52,10 +48,6 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssign#set(org.springframework.data.relational.core.sql.Assignment)
-	 */
 	@Override
 	public DefaultUpdateBuilder set(Assignment assignment) {
 
@@ -66,10 +58,6 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssign#set(org.springframework.data.relational.core.sql.Assignment...)
-	 */
 	@Override
 	public UpdateWhere set(Assignment... assignments) {
 
@@ -78,10 +66,6 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return set(Arrays.asList(assignments));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateAssign#set(java.util.Collection)
-	 */
 	@Override
 	public UpdateWhere set(Collection<? extends Assignment> assignments) {
 
@@ -92,10 +76,6 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhere#where(org.springframework.data.relational.core.sql.Condition)
-	 */
 	@Override
 	public UpdateWhereAndOr where(Condition condition) {
 
@@ -106,10 +86,6 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhereAndOr#and(org.springframework.data.relational.core.sql.Condition)
-	 */
 	@Override
 	public UpdateWhereAndOr and(Condition condition) {
 
@@ -120,10 +96,6 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.UpdateWhereAndOr#or(org.springframework.data.relational.core.sql.Condition)
-	 */
 	@Override
 	public UpdateWhereAndOr or(Condition condition) {
 
@@ -134,10 +106,6 @@ class DefaultUpdateBuilder implements UpdateBuilder, UpdateWhere, UpdateWhereAnd
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.UpdateBuilder.BuildUpdate#build()
-	 */
 	@Override
 	public Update build() {
 		return new DefaultUpdate(this.table, this.assignments, this.where);

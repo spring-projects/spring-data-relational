@@ -43,10 +43,6 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 		this.fromTableVisitor = new FromTableVisitor(context, joinClause::append);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterMatched(Join segment) {
 
@@ -55,10 +51,6 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 		return super.enterMatched(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterNested(Visitable segment) {
 
@@ -76,10 +68,6 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 		return super.enterNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
@@ -98,10 +86,6 @@ class JoinVisitor extends TypedSubtreeVisitor<Join> {
 		return super.leaveNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(Join segment) {
 

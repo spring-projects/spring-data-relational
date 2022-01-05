@@ -63,10 +63,6 @@ class JdbcAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 		return AUDITING_HANDLER_BEAN_NAME;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport#getAuditHandlerBeanDefinitionBuilder(org.springframework.data.auditing.config.AuditingConfiguration)
-	 */
 	@Override
 	protected BeanDefinitionBuilder getAuditHandlerBeanDefinitionBuilder(AuditingConfiguration configuration) {
 

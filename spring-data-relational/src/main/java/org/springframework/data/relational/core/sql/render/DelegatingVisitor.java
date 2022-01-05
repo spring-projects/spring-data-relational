@@ -64,10 +64,6 @@ abstract class DelegatingVisitor implements Visitor {
 	@Nullable
 	public abstract Delegation doEnter(Visitable segment);
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitor#enter(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public final void enter(Visitable segment) {
 
@@ -101,10 +97,6 @@ abstract class DelegatingVisitor implements Visitor {
 	 */
 	public abstract Delegation doLeave(Visitable segment);
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitor#leave(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	public final void leave(Visitable segment) {
 		doLeave0(segment);
 	}

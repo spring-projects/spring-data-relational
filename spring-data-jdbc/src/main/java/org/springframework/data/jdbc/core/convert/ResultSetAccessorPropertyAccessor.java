@@ -30,28 +30,16 @@ class ResultSetAccessorPropertyAccessor implements PropertyAccessor {
 
 	static final PropertyAccessor INSTANCE = new ResultSetAccessorPropertyAccessor();
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.expression.PropertyAccessor#getSpecificTargetClasses()
-	 */
 	@Override
 	public Class<?>[] getSpecificTargetClasses() {
 		return new Class<?>[] { ResultSetAccessor.class };
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.expression.PropertyAccessor#canRead(org.springframework.expression.EvaluationContext, java.lang.Object, java.lang.String)
-	 */
 	@Override
 	public boolean canRead(EvaluationContext context, @Nullable Object target, String name) {
 		return target instanceof ResultSetAccessor && ((ResultSetAccessor) target).hasValue(name);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.expression.PropertyAccessor#read(org.springframework.expression.EvaluationContext, java.lang.Object, java.lang.String)
-	 */
 	@Override
 	public TypedValue read(EvaluationContext context, @Nullable Object target, String name) {
 
@@ -68,19 +56,11 @@ class ResultSetAccessorPropertyAccessor implements PropertyAccessor {
 		return new TypedValue(value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.expression.PropertyAccessor#canWrite(org.springframework.expression.EvaluationContext, java.lang.Object, java.lang.String)
-	 */
 	@Override
 	public boolean canWrite(EvaluationContext context, @Nullable Object target, String name) {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.expression.PropertyAccessor#write(org.springframework.expression.EvaluationContext, java.lang.Object, java.lang.String, java.lang.Object)
-	 */
 	@Override
 	public void write(EvaluationContext context, @Nullable Object target, String name, @Nullable Object newValue) {
 		throw new UnsupportedOperationException();

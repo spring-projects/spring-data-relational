@@ -146,10 +146,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		this.namespaceStrategy = namespaceStrategy;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, ParentKeys)
-	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 
@@ -159,10 +155,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return myBatisContext.getId();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 
@@ -170,10 +162,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(null, instance, domainType, Collections.emptyMap())) != 0;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#updateWithVersion(java.lang.Object, java.lang.Class, java.lang.Number)
-	 */
 	@Override
 	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
 
@@ -183,10 +171,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return sqlSession().update(statement, parameter) != 0;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 
@@ -195,10 +179,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		sqlSession().delete(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 
@@ -208,10 +188,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		sqlSession().delete(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PersistentPropertyPath)
-	 */
 	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
@@ -223,10 +199,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		sqlSession().delete(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(java.lang.Class)
-	 */
 	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 
@@ -235,10 +207,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		sqlSession().delete(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(org.springframework.data.mapping.PersistentPropertyPath)
-	 */
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 
@@ -250,10 +218,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		sqlSession().delete(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
-	 */
 	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 
@@ -268,10 +232,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockAll(org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
-	 */
 	@Override
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 
@@ -281,10 +241,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		sqlSession().selectOne(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
@@ -293,10 +249,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return sqlSession().selectOne(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAll(java.lang.Class)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 
@@ -305,10 +257,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return sqlSession().selectList(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllById(java.lang.Iterable, java.lang.Class)
-	 */
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return sqlSession().selectList(namespace(domainType) + ".findAllById",
@@ -327,10 +275,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#existsById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
@@ -339,10 +283,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return sqlSession().selectOne(statement, parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Sort)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
 
@@ -352,10 +292,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(null, null, domainType, additionalContext));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Pageable)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
 
@@ -365,10 +301,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(null, null, domainType, additionalContext));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
-	 */
 	@Override
 	public long count(Class<?> domainType) {
 

@@ -43,19 +43,11 @@ public class RelationalParameters extends Parameters<RelationalParameters, Relat
 		super(parameters);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.Parameters#createParameter(org.springframework.core.MethodParameter)
-	 */
 	@Override
 	protected RelationalParameter createParameter(MethodParameter parameter) {
 		return new RelationalParameter(parameter);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.Parameters#createFrom(java.util.List)
-	 */
 	@Override
 	protected RelationalParameters createFrom(List<RelationalParameter> parameters) {
 		return new RelationalParameters(parameters);

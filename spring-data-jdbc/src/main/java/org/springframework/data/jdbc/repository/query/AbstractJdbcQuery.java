@@ -65,10 +65,6 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 		this.operations = operations;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.repository.query.RepositoryQuery#getQueryMethod()
-	 */
 	@Override
 	public JdbcQueryMethod getQueryMethod() {
 		return queryMethod;

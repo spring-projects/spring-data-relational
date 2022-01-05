@@ -38,37 +38,21 @@ public class AnsiDialect extends AbstractDialect {
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getLimit(long)
-		 */
 		@Override
 		public String getLimit(long limit) {
 			return String.format("FETCH FIRST %d ROWS ONLY", limit);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getOffset(long)
-		 */
 		@Override
 		public String getOffset(long offset) {
 			return String.format("OFFSET %d ROWS", offset);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClause(long, long)
-		 */
 		@Override
 		public String getLimitOffset(long limit, long offset) {
 			return String.format("OFFSET %d ROWS FETCH FIRST %d ROWS ONLY", offset, limit);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClausePosition()
-		 */
 		@Override
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
@@ -77,19 +61,11 @@ public class AnsiDialect extends AbstractDialect {
 
 	static final LockClause LOCK_CLAUSE = new LockClause() {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LockClause#getLock(LockOptions)
-		 */
 		@Override
 		public String getLock(LockOptions lockOptions) {
 			return "FOR UPDATE";
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClausePosition()
-		 */
 		@Override
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
@@ -98,28 +74,16 @@ public class AnsiDialect extends AbstractDialect {
 
 	private final AnsiArrayColumns ARRAY_COLUMNS = new AnsiArrayColumns();
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#limit()
-	 */
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
-	 */
 	@Override
 	public LockClause lock() {
 		return LOCK_CLAUSE;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#getArraySupport()
-	 */
 	@Override
 	public ArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
@@ -127,19 +91,11 @@ public class AnsiDialect extends AbstractDialect {
 
 	static class AnsiArrayColumns implements ArrayColumns {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#isSupported()
-		 */
 		@Override
 		public boolean isSupported() {
 			return true;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#getArrayType(java.lang.Class)
-		 */
 		@Override
 		public Class<?> getArrayType(Class<?> userType) {
 

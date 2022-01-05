@@ -43,10 +43,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 		this.expressionVisitor = new ExpressionVisitor(context, ExpressionVisitor.AliasHandling.IGNORE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterNested(Visitable segment) {
 
@@ -61,10 +57,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 		return super.enterNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(SelectList segment) {
 
@@ -72,10 +64,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 		return super.leaveMatched(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
@@ -92,10 +80,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 		return super.leaveNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
-	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;

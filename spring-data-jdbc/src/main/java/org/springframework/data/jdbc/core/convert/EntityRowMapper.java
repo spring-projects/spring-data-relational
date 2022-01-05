@@ -56,10 +56,6 @@ public class EntityRowMapper<T> implements RowMapper<T> {
 		this.identifier = null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.jdbc.core.RowMapper#mapRow(java.sql.ResultSet, int)
-	 */
 	@Override
 	public T mapRow(ResultSet resultSet, int rowNumber) {
 

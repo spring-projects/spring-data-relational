@@ -86,9 +86,6 @@ public class MappingRelationalEntityInformation<T, ID> extends PersistentEntityI
 		this.fallbackIdType = idType != null ? idType : (Class<ID>) Long.class;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.relational.repository.query.RelationalEntityInformation#getTableName()
-	 */
 	public SqlIdentifier getTableName() {
 		return customTableName == null ? entityMetadata.getTableName() : customTableName;
 	}
@@ -97,9 +94,6 @@ public class MappingRelationalEntityInformation<T, ID> extends PersistentEntityI
 		return entityMetadata.getRequiredIdProperty().getName();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.repository.core.support.PersistentEntityInformation#getIdType()
-	 */
 	@Override
 	public Class<ID> getIdType() {
 

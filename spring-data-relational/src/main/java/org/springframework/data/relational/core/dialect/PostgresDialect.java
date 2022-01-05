@@ -52,37 +52,21 @@ public class PostgresDialect extends AbstractDialect {
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getLimit(long)
-		 */
 		@Override
 		public String getLimit(long limit) {
 			return "LIMIT " + limit;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getOffset(long)
-		 */
 		@Override
 		public String getOffset(long offset) {
 			return "OFFSET " + offset;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClause(long, long)
-		 */
 		@Override
 		public String getLimitOffset(long limit, long offset) {
 			return String.format("LIMIT %d OFFSET %d", limit, offset);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LimitClause#getClausePosition()
-		 */
 		@Override
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
@@ -91,10 +75,6 @@ public class PostgresDialect extends AbstractDialect {
 
 	private final PostgresArrayColumns ARRAY_COLUMNS = new PostgresArrayColumns();
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#limit()
-	 */
 	@Override
 	public LimitClause limit() {
 		return LIMIT_CLAUSE;
@@ -102,19 +82,11 @@ public class PostgresDialect extends AbstractDialect {
 
 	private final PostgresLockClause LOCK_CLAUSE = new PostgresLockClause(this.getIdentifierProcessing());
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
-	 */
 	@Override
 	public LockClause lock() {
 		return LOCK_CLAUSE;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#getArraySupport()
-	 */
 	@Override
 	public ArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
@@ -133,10 +105,6 @@ public class PostgresDialect extends AbstractDialect {
 			this.identifierProcessing = identifierProcessing;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LockClause#getLock(LockOptions)
-		 */
 		@Override
 		public String getLock(LockOptions lockOptions) {
 
@@ -169,10 +137,6 @@ public class PostgresDialect extends AbstractDialect {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.LockClause#getClausePosition()
-		 */
 		@Override
 		public Position getClausePosition() {
 			return Position.AFTER_ORDER_BY;
@@ -181,19 +145,11 @@ public class PostgresDialect extends AbstractDialect {
 
 	protected static class PostgresArrayColumns implements ArrayColumns {
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#isSupported()
-		 */
 		@Override
 		public boolean isSupported() {
 			return true;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.dialect.ArrayColumns#getArrayType(java.lang.Class)
-		 */
 		@Override
 		public Class<?> getArrayType(Class<?> userType) {
 
@@ -208,10 +164,6 @@ public class PostgresDialect extends AbstractDialect {
 		return IdentifierProcessing.create(Quoting.ANSI, LetterCasing.LOWER_CASE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#simpleTypes()
-	 */
 	@Override
 	public Set<Class<?>> simpleTypes() {
 

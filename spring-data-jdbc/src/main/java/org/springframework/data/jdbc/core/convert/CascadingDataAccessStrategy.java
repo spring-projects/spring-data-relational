@@ -45,164 +45,92 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 		this.strategies = new ArrayList<>(strategies);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#insert(java.lang.Object, java.lang.Class, org.springframework.data.jdbc.core.ParentKeys)
-	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 		return collect(das -> das.insert(instance, domainType, identifier));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <S> boolean update(S instance, Class<S> domainType) {
 		return collect(das -> das.update(instance, domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#updateWithVersion(java.lang.Object, java.lang.Class, java.lang.Number)
-	 */
 	@Override
 	public <S> boolean updateWithVersion(S instance, Class<S> domainType, Number previousVersion) {
 		return collect(das -> das.updateWithVersion(instance, domainType, previousVersion));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public void delete(Object id, Class<?> domainType) {
 		collectVoid(das -> das.delete(id, domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteInstance(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> void deleteWithVersion(Object id, Class<T> domainType, Number previousVersion) {
 		collectVoid(das -> das.deleteWithVersion(id, domainType, previousVersion));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#delete(java.lang.Object, org.springframework.data.mapping.PersistentPropertyPath)
-	 */
 	@Override
 	public void delete(Object rootId, PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		collectVoid(das -> das.delete(rootId, propertyPath));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(java.lang.Class)
-	 */
 	@Override
 	public <T> void deleteAll(Class<T> domainType) {
 		collectVoid(das -> das.deleteAll(domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#deleteAll(org.springframework.data.mapping.PersistentPropertyPath)
-	 */
 	@Override
 	public void deleteAll(PersistentPropertyPath<RelationalPersistentProperty> propertyPath) {
 		collectVoid(das -> das.deleteAll(propertyPath));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockById(java.lang.Object, org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
-	 */
 	@Override
 	public <T> void acquireLockById(Object id, LockMode lockMode, Class<T> domainType) {
 		collectVoid(das -> das.acquireLockById(id, lockMode, domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#acquireLockAll(org.springframework.data.relational.core.sql.LockMode, java.lang.Class)
-	 */
 	@Override
 	public <T> void acquireLockAll(LockMode lockMode, Class<T> domainType) {
 		collectVoid(das -> das.acquireLockAll(lockMode, domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
-	 */
 	@Override
 	public long count(Class<?> domainType) {
 		return collect(das -> das.count(domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 		return collect(das -> das.findById(id, domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAll(java.lang.Class)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 		return collect(das -> das.findAll(domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#findAllById(java.lang.Iterable, java.lang.Class)
-	 */
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 		return collect(das -> das.findAllById(ids, domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.RelationResolver#findAllByPath(org.springframework.data.jdbc.support.Identifier, org.springframework.data.mapping.PersistentPropertyPath)
-	 */
 	@Override
 	public Iterable<Object> findAllByPath(Identifier identifier,
 			PersistentPropertyPath<? extends RelationalPersistentProperty> path) {
 		return collect(das -> das.findAllByPath(identifier, path));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#existsById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 		return collect(das -> das.existsById(id, domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Sort)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
 		return collect(das -> das.findAll(domainType, sort));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Pageable)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
 		return collect(das -> das.findAll(domainType, pageable));

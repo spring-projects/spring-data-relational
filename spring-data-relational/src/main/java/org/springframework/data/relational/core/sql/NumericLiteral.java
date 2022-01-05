@@ -29,10 +29,6 @@ public class NumericLiteral extends Literal<Number> {
 		super(content);
 	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Literal#getContent()
-	 */
 	@Override
 	@Nullable
 	public Number getContent() {

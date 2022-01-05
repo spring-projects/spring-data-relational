@@ -50,19 +50,11 @@ public class RelationalAuditingCallback implements BeforeConvertCallback<Object>
 		this.handler = handler;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.core.Ordered#getOrder()
-	 */
 	@Override
 	public int getOrder() {
 		return AUDITING_ORDER;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.mapping.event.BeforeConvertCallback#onBeforeConvert(java.lang.Object)
-	 */
 	@Override
 	public Object onBeforeConvert(Object entity) {
 		return handler.markAudited(entity);

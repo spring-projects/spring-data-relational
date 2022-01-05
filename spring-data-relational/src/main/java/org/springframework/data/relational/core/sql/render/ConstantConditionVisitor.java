@@ -32,11 +32,6 @@ class ConstantConditionVisitor extends TypedSingleConditionRenderSupport<Constan
 		this.target = target;
 	}
 
-	/**
-	 * (non-Javadoc)
-	 *
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(ConstantCondition segment) {
 

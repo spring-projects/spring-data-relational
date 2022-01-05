@@ -53,10 +53,6 @@ public class IsNull extends AbstractSegment implements Condition {
 		return new IsNull(expression);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Condition#not()
-	 */
 	@Override
 	public Condition not() {
 		return new IsNull(expression, !negated);
@@ -66,10 +62,6 @@ public class IsNull extends AbstractSegment implements Condition {
 		return negated;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return expression + (negated ? " IS NOT NULL" : " IS NULL");

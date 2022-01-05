@@ -34,10 +34,6 @@ public class RelationalEntityWriter implements EntityWriter<Object, MutableAggre
 		this.context = context;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.convert.EntityWriter#save(java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void write(Object root, MutableAggregateChange<?> aggregateChange) {
 

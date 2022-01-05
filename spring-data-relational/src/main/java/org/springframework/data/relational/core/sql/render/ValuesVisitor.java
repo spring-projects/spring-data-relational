@@ -41,10 +41,6 @@ class ValuesVisitor extends TypedSubtreeVisitor<Values> {
 		this.parent = parent;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation enterNested(Visitable segment) {
 
@@ -56,10 +52,6 @@ class ValuesVisitor extends TypedSubtreeVisitor<Values> {
 		return super.enterNested(segment);
 	}
 
-	/* 
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveNested(Visitable segment) {
 
@@ -78,10 +70,6 @@ class ValuesVisitor extends TypedSubtreeVisitor<Values> {
 		return super.leaveNested(segment);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	Delegation leaveMatched(Values segment) {
 		parent.onRendered(builder);

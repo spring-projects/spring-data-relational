@@ -61,19 +61,11 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 		actions.add(action);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getKind()
-	 */
 	@Override
 	public Kind getKind() {
 		return this.kind;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getEntityType()
-	 */
 	@Override
 	public Class<T> getEntityType() {
 		return this.entityType;
@@ -95,19 +87,11 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 		this.entity = aggregateRoot;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#getEntity()
-	 */
 	@Override
 	public T getEntity() {
 		return this.entity;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.conversion.AggregateChange#forEachAction(java.util.function.Consumer)
-	 */
 	@Override
 	public void forEachAction(Consumer<? super DbAction<?>> consumer) {
 

@@ -643,10 +643,6 @@ public class Criteria implements CriteriaDefinition {
 			this.property = property;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#is(java.lang.Object)
-		 */
 		@Override
 		public Criteria is(Object value) {
 
@@ -655,10 +651,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.EQ, value);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#not(java.lang.Object)
-		 */
 		@Override
 		public Criteria not(Object value) {
 
@@ -667,10 +659,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.NEQ, value);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#in(java.lang.Object[])
-		 */
 		@Override
 		public Criteria in(Object... values) {
 
@@ -685,10 +673,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.IN, Arrays.asList(values));
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#in(java.util.Collection)
-		 */
 		@Override
 		public Criteria in(Collection<?> values) {
 
@@ -698,10 +682,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.IN, values);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#notIn(java.lang.Object[])
-		 */
 		@Override
 		public Criteria notIn(Object... values) {
 
@@ -716,10 +696,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.NOT_IN, Arrays.asList(values));
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#notIn(java.util.Collection)
-		 */
 		@Override
 		public Criteria notIn(Collection<?> values) {
 
@@ -729,10 +705,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.NOT_IN, values);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#between(java.lang.Object, java.lang.Object)
-		 */
 		@Override
 		public Criteria between(Object begin, Object end) {
 
@@ -742,10 +714,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.BETWEEN, Pair.of(begin, end));
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#notBetween(java.lang.Object, java.lang.Object)
-		 */
 		@Override
 		public Criteria notBetween(Object begin, Object end) {
 
@@ -755,10 +723,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.NOT_BETWEEN, Pair.of(begin, end));
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#lessThan(java.lang.Object)
-		 */
 		@Override
 		public Criteria lessThan(Object value) {
 
@@ -767,10 +731,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.LT, value);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#lessThanOrEquals(java.lang.Object)
-		 */
 		@Override
 		public Criteria lessThanOrEquals(Object value) {
 
@@ -779,10 +739,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.LTE, value);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#greaterThan(java.lang.Object)
-		 */
 		@Override
 		public Criteria greaterThan(Object value) {
 
@@ -791,10 +747,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.GT, value);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#greaterThanOrEquals(java.lang.Object)
-		 */
 		@Override
 		public Criteria greaterThanOrEquals(Object value) {
 
@@ -803,10 +755,6 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.GTE, value);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#like(java.lang.Object)
-		 */
 		@Override
 		public Criteria like(Object value) {
 
@@ -815,47 +763,27 @@ public class Criteria implements CriteriaDefinition {
 			return createCriteria(Comparator.LIKE, value);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#notLike(java.lang.Object)
-		 */
 		@Override
 		public Criteria notLike(Object value) {
 			Assert.notNull(value, "Value must not be null!");
 			return createCriteria(Comparator.NOT_LIKE, value);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#isNull()
-		 */
 		@Override
 		public Criteria isNull() {
 			return createCriteria(Comparator.IS_NULL, null);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#isNotNull()
-		 */
 		@Override
 		public Criteria isNotNull() {
 			return createCriteria(Comparator.IS_NOT_NULL, null);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#isTrue()
-		 */
 		@Override
 		public Criteria isTrue() {
 			return createCriteria(Comparator.IS_TRUE, null);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.query.Criteria.CriteriaStep#isFalse()
-		 */
 		@Override
 		public Criteria isFalse() {
 			return createCriteria(Comparator.IS_FALSE, null);

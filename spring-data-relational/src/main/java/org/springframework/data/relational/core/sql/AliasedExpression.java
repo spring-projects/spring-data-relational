@@ -42,19 +42,11 @@ class AliasedExpression extends AbstractSegment implements Aliased, Expression {
 		this.alias = alias;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Aliased#getAlias()
-	 */
 	@Override
 	public SqlIdentifier getAlias() {
 		return alias;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return expression + " AS " + alias;

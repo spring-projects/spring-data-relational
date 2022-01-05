@@ -52,10 +52,6 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		this.valuesVisitor = new ValuesVisitor(renderContext, values::append);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.DelegatingVisitor#doEnter(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public Delegation doEnter(Visitable segment) {
 
@@ -74,10 +70,6 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		return Delegation.retain();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.DelegatingVisitor#doLeave(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public Delegation doLeave(Visitable segment) {
 
@@ -97,10 +89,6 @@ class InsertStatementVisitor extends DelegatingVisitor implements PartRenderer {
 		return Delegation.retain();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
-	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;

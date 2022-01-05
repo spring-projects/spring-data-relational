@@ -38,10 +38,6 @@ public class MyBatisJdbcConfiguration extends AbstractJdbcConfiguration {
 
 	private @Autowired SqlSession session;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration#dataAccessStrategyBean(org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations, org.springframework.data.jdbc.core.convert.JdbcConverter, org.springframework.data.jdbc.core.mapping.JdbcMappingContext)
-	 */
 	@Bean
 	@Override
 	public DataAccessStrategy dataAccessStrategyBean(NamedParameterJdbcOperations operations, JdbcConverter jdbcConverter,

@@ -46,10 +46,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	private final List<OrderByField> orderBy = new ArrayList<>();
 	private @Nullable LockMode lockMode;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder#top(int)
-	 */
 	@Override
 	public SelectBuilder top(int count) {
 
@@ -57,30 +53,18 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder#select(org.springframework.data.relational.core.sql.Expression)
-	 */
 	@Override
 	public DefaultSelectBuilder select(Expression expression) {
 		selectList.add(expression);
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder#select(org.springframework.data.relational.core.sql.Expression[])
-	 */
 	@Override
 	public DefaultSelectBuilder select(Expression... expressions) {
 		selectList.addAll(Arrays.asList(expressions));
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder#select(java.util.Collection)
-	 */
 	@Override
 	public DefaultSelectBuilder select(Collection<? extends Expression> expressions) {
 		selectList.addAll(expressions);
@@ -93,49 +77,29 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFrom#from(java.lang.String)
-	 */
 	@Override
 	public SelectFromAndJoin from(String table) {
 		return from(Table.create(table));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom#from(org.springframework.data.relational.core.sql.Table)
-	 */
 	@Override
 	public SelectFromAndJoin from(TableLike table) {
 		from.add(table);
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom#from(org.springframework.data.relational.core.sql.Table[])
-	 */
 	@Override
 	public SelectFromAndJoin from(TableLike... tables) {
 		from.addAll(Arrays.asList(tables));
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom#from(java.util.Collection)
-	 */
 	@Override
 	public SelectFromAndJoin from(Collection<? extends TableLike> tables) {
 		from.addAll(tables);
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndJoin#limitOffset(long, long)
-	 */
 	@Override
 	public SelectFromAndJoin limitOffset(long limit, long offset) {
 		this.limit = limit;
@@ -143,30 +107,18 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndJoin#limit(long)
-	 */
 	@Override
 	public SelectFromAndJoin limit(long limit) {
 		this.limit = limit;
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndJoin#offset(long)
-	 */
 	@Override
 	public SelectFromAndJoin offset(long offset) {
 		this.offset = offset;
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy#orderBy(org.springframework.data.relational.core.sql.OrderByField[])
-	 */
 	@Override
 	public DefaultSelectBuilder orderBy(OrderByField... orderByFields) {
 
@@ -175,10 +127,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy#orderBy(java.util.Collection)
-	 */
 	@Override
 	public DefaultSelectBuilder orderBy(Collection<? extends OrderByField> orderByFields) {
 
@@ -187,10 +135,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy#orderBy(org.springframework.data.relational.core.sql.Column[])
-	 */
 	@Override
 	public DefaultSelectBuilder orderBy(Column... columns) {
 
@@ -201,10 +145,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectWhere#where(org.springframework.data.relational.core.sql.Condition)
-	 */
 	@Override
 	public SelectWhereAndOr where(Condition condition) {
 
@@ -212,10 +152,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectWhereAndOr#and(org.springframework.data.relational.core.sql.Condition)
-	 */
 	@Override
 	public SelectWhereAndOr and(Condition condition) {
 
@@ -223,10 +159,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectWhereAndOr#or(org.springframework.data.relational.core.sql.Condition)
-	 */
 	@Override
 	public SelectWhereAndOr or(Condition condition) {
 
@@ -234,28 +166,16 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin#join(java.lang.String)
-	 */
 	@Override
 	public SelectOn join(String table) {
 		return join(Table.create(table));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin#join(org.springframework.data.relational.core.sql.Table)
-	 */
 	@Override
 	public SelectOn join(TableLike table) {
 		return new JoinBuilder(table, this);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin#join(org.springframework.data.relational.core.sql.Table)
-	 */
 	@Override
 	public SelectOn leftOuterJoin(TableLike table) {
 		return new JoinBuilder(table, this, JoinType.LEFT_OUTER_JOIN);
@@ -267,10 +187,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectLock#lock(org.springframework.data.relational.core.sql.LockMode)
-	 */
 	@Override
 	public SelectLock lock(LockMode lockMode) {
 
@@ -278,10 +194,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.BuildSelect#build()
-	 */
 	@Override
 	public Select build() {
 
@@ -314,10 +226,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 			this(table, selectBuilder, JoinType.JOIN);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOn#on(org.springframework.data.relational.core.sql.Expression)
-		 */
 		@Override
 		public SelectOnConditionComparison on(Expression column) {
 
@@ -337,20 +245,12 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 			return this;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOnConditionComparison#equals(org.springframework.data.relational.core.sql.Expression)
-		 */
 		@Override
 		public JoinBuilder equals(Expression column) {
 			this.to = column;
 			return this;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOnCondition#and(org.springframework.data.relational.core.sql.Expression)
-		 */
 		@Override
 		public SelectOnConditionComparison and(Expression column) {
 
@@ -381,120 +281,72 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 			return new Join(joinType, table, condition);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOrdered#orderBy(org.springframework.data.relational.core.sql.OrderByField[])
-		 */
 		@Override
 		public SelectOrdered orderBy(OrderByField... orderByFields) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.orderBy(orderByFields);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOrdered#orderBy(java.util.Collection)
-		 */
 		@Override
 		public SelectOrdered orderBy(Collection<? extends OrderByField> orderByFields) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.orderBy(orderByFields);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOrdered#orderBy(org.springframework.data.relational.core.sql.Column[])
-		 */
 		@Override
 		public SelectOrdered orderBy(Column... columns) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.orderBy(columns);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectWhere#where(org.springframework.data.relational.core.sql.Condition)
-		 */
 		@Override
 		public SelectWhereAndOr where(Condition condition) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.where(condition);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin#join(java.lang.String)
-		 */
 		@Override
 		public SelectOn join(String table) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.join(table);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin#join(org.springframework.data.relational.core.sql.Table)
-		 */
 		@Override
 		public SelectOn join(TableLike table) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.join(table);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin#leftOuterJoin(org.springframework.data.relational.core.sql.Table)
-		 */
 		@Override
 		public SelectOn leftOuterJoin(TableLike table) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.leftOuterJoin(table);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndJoinCondition#limitOffset(long, long)
-		 */
 		@Override
 		public SelectFromAndJoin limitOffset(long limit, long offset) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.limitOffset(limit, offset);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndJoinCondition#limit(long)
-		 */
 		@Override
 		public SelectFromAndJoin limit(long limit) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.limit(limit);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndJoinCondition#offset(long)
-		 */
 		@Override
 		public SelectFromAndJoin offset(long offset) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.offset(offset);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectLock#lock(org.springframework.data.relational.core.sql.LockMode)
-		 */
 		@Override
 		public SelectLock lock(LockMode lockMode) {
 			selectBuilder.join(finishJoin());
 			return selectBuilder.lock(lockMode);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.BuildSelect#build()
-		 */
 		@Override
 		public Select build() {
 			selectBuilder.join(finishJoin());

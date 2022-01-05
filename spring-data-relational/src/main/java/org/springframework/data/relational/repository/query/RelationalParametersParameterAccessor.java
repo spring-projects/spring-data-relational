@@ -44,17 +44,11 @@ public class RelationalParametersParameterAccessor extends ParametersParameterAc
 		this.values = Arrays.asList(values);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.relational.repository.query.RelationalParameterAccessor#getValues()
-	 */
 	@Override
 	public Object[] getValues() {
 		return values.toArray();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.springframework.data.relational.repository.query.RelationalParameterAccessor#getBindableParameters()
-	 */
 	@Override
 	public Parameters<?, ?> getBindableParameters() {
 		return getParameters().getBindableParameters();

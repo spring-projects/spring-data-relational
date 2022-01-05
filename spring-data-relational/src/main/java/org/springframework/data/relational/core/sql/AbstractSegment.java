@@ -32,10 +32,6 @@ abstract class AbstractSegment implements Segment {
 		this.children = children;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
 	@Override
 	public void visit(Visitor visitor) {
 
@@ -48,19 +44,11 @@ abstract class AbstractSegment implements Segment {
 		visitor.leave(this);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof Segment && toString().equals(obj.toString());

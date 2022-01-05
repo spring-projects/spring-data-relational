@@ -803,19 +803,11 @@ class QueryMapper {
 			return path;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.mongodb.core.convert.QueryMapper.Field#isEmbedded()
-		 */
 		@Override
 		public boolean isEmbedded() {
 			return this.embedded;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.mongodb.core.convert.QueryMapper.Field#getTypeHint()
-		 */
 		@Override
 		public TypeInformation<?> getTypeHint() {
 
@@ -834,10 +826,6 @@ class QueryMapper {
 			return this.property.getTypeInformation();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.mongodb.core.convert.QueryMapper.Field#getSqlType()
-		 */
 		@Override
 		public int getSqlType() {
 			return this.sqlType;

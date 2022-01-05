@@ -97,10 +97,6 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 		return Collections.unmodifiableList(expressions);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return functionName + "(" + StringUtils.collectionToDelimitedString(expressions, ", ") + ")";
@@ -118,10 +114,6 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 			this.alias = alias;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.Aliased#getAlias()
-		 */
 		@Override
 		public SqlIdentifier getAlias() {
 			return alias;

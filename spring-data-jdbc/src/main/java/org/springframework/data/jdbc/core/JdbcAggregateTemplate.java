@@ -133,10 +133,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.entityCallbacks = entityCallbacks;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#save(java.lang.Object)
-	 */
 	@Override
 	public <T> T save(T instance) {
 
@@ -184,10 +180,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return store(instance, this::createUpdateChange, persistentEntity);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#count(java.lang.Class)
-	 */
 	@Override
 	public long count(Class<?> domainType) {
 
@@ -196,10 +188,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return accessStrategy.count(domainType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> T findById(Object id, Class<T> domainType) {
 
@@ -213,10 +201,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return entity;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#existsById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <T> boolean existsById(Object id, Class<T> domainType) {
 
@@ -226,10 +210,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return accessStrategy.existsById(id, domainType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Sort)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Sort sort) {
 
@@ -239,10 +219,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return triggerAfterConvert(all);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class, org.springframework.data.domain.Pageable)
-	 */
 	@Override
 	public <T> Page<T> findAll(Class<T> domainType, Pageable pageable) {
 
@@ -254,10 +230,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(domainType));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class)
-	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 
@@ -267,10 +239,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return triggerAfterConvert(all);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAllById(java.lang.Iterable, java.lang.Class)
-	 */
 	@Override
 	public <T> Iterable<T> findAllById(Iterable<?> ids, Class<T> domainType) {
 
@@ -281,10 +249,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return triggerAfterConvert(allById);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#delete(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <S> void delete(S aggregateRoot, Class<S> domainType) {
 
@@ -297,10 +261,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		deleteTree(identifierAccessor.getRequiredIdentifier(), aggregateRoot, domainType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#deleteById(java.lang.Object, java.lang.Class)
-	 */
 	@Override
 	public <S> void deleteById(Object id, Class<S> domainType) {
 
@@ -310,10 +270,6 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		deleteTree(id, null, domainType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#deleteAll(java.lang.Class)
-	 */
 	@Override
 	public void deleteAll(Class<?> domainType) {
 

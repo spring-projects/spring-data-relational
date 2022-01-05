@@ -41,10 +41,6 @@ public class Into extends AbstractSegment {
 		this.tables = tables;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "INTO " + StringUtils.collectionToDelimitedString(tables, ", ");

@@ -32,10 +32,6 @@ abstract class AbstractImportValidator implements Visitor {
 	Set<Table> from = new HashSet<>();
 	@Nullable Visitable parent;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitor#enter(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public void enter(Visitable segment) {
 
@@ -53,10 +49,6 @@ abstract class AbstractImportValidator implements Visitor {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitor#leave(org.springframework.data.relational.core.sql.Visitable)
-	 */
 	@Override
 	public void leave(Visitable segment) {}
 
@@ -67,10 +59,6 @@ abstract class AbstractImportValidator implements Visitor {
 
 		private @Nullable Select selectFilter;
 
-		/* 
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.Visitor#enter(org.springframework.data.relational.core.sql.Visitable)
-		 */
 		@Override
 		public void enter(Visitable segment) {
 
@@ -88,10 +76,6 @@ abstract class AbstractImportValidator implements Visitor {
 			}
 		}
 
-		/* 
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.Visitor#leave(org.springframework.data.relational.core.sql.Visitable)
-		 */
 		@Override
 		public void leave(Visitable segment) {
 

@@ -41,10 +41,6 @@ class Db2DataSourceConfiguration extends DataSourceConfiguration {
 
 	private static Db2Container DB_2_CONTAINER;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.testing.DataSourceConfiguration#createDataSource()
-	 */
 	@Override
 	protected DataSource createDataSource() {
 
@@ -62,10 +58,6 @@ class Db2DataSourceConfiguration extends DataSourceConfiguration {
 				DB_2_CONTAINER.getUsername(), DB_2_CONTAINER.getPassword());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.jdbc.testing.customizePopulator#createDataSource(org.springframework.jdbc.datasource.init.ResourceDatabasePopulator)
-	 */
 	@Override
 	protected void customizePopulator(ResourceDatabasePopulator populator) {
 		populator.setIgnoreFailedDrops(true);
