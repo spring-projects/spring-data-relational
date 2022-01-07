@@ -17,13 +17,21 @@ package org.springframework.data.jdbc.core.dialect;
 
 import java.sql.JDBCType;
 import java.sql.SQLType;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
 
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
+import org.springframework.lang.NonNull;
 
 /**
  * JDBC specific Postgres Dialect.
  *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.3
  */
 public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect {
@@ -35,6 +43,14 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 	@Override
 	public JdbcArrayColumns getArraySupport() {
 		return ARRAY_COLUMNS;
+	}
+
+	@NonNull
+	@Override
+	public Collection<Object> getConverters() {
+		final Collection<Object> converters = new ArrayList<>(super.getConverters());
+		converters.add(ZonedDateTimeToOffsetDateTimeWritingConverter.INSTANCE);
+		return converters;
 	}
 
 	static class JdbcPostgresArrayColumns extends PostgresArrayColumns implements JdbcArrayColumns {
@@ -55,6 +71,21 @@ public class JdbcPostgresDialect extends PostgresDialect implements JdbcDialect 
 			}
 
 			return jdbcType.getName();
+		}
+	}
+
+	/**
+	 * Unfortunately, PostgresSQL jdbc driver can accept {@link OffsetDateTime} as
+	 * {@link java.sql.Types#TIMESTAMP_WITH_TIMEZONE}, but not {@link ZonedDateTime}
+	 */
+	@WritingConverter
+	enum ZonedDateTimeToOffsetDateTimeWritingConverter implements Converter<ZonedDateTime, OffsetDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public OffsetDateTime convert(ZonedDateTime source) {
+			return source.toOffsetDateTime();
 		}
 	}
 }

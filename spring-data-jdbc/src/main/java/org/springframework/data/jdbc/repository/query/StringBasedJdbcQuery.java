@@ -15,11 +15,6 @@
  */
 package org.springframework.data.jdbc.repository.query;
 
-import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
-
-import java.lang.reflect.Constructor;
-import java.sql.JDBCType;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.convert.converter.Converter;
@@ -28,7 +23,6 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.repository.config.DialectResolver;
 import org.springframework.data.jdbc.support.JdbcUtil;
-import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
@@ -45,6 +39,11 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import java.lang.reflect.Constructor;
+import java.sql.JDBCType;
+
+import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.ResultProcessingConverter;
+
 /**
  * A query to be executed based on a repository method, it's annotated SQL query and the arguments provided to the
  * method.
@@ -55,6 +54,7 @@ import org.springframework.util.StringUtils;
  * @author Maciej Walkowiak
  * @author Mark Paluch
  * @author Hebert Coelho
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public class StringBasedJdbcQuery extends AbstractJdbcQuery {
@@ -160,7 +160,7 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		String parameterName = p.getName().orElseThrow(() -> new IllegalStateException(PARAMETER_NEEDS_TO_BE_NAMED));
 
 		Class<?> parameterType = queryMethod.getParameters().getParameter(p.getIndex()).getType();
-		Class<?> conversionTargetType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(parameterType);
+		Class<?> conversionTargetType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(parameterType, DialectResolver.getDialect(operations.getJdbcOperations()));
 
 		JdbcValue jdbcValue = converter.writeJdbcValue(
 				value,

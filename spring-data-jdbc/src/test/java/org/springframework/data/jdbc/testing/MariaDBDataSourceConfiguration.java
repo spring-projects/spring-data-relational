@@ -71,10 +71,8 @@ class MariaDBDataSourceConfiguration extends DataSourceConfiguration implements 
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-
 		try (Connection connection = createDataSource().getConnection()) {
-			ScriptUtils.executeSqlScript(connection,
-					new ByteArrayResource("DROP DATABASE test;CREATE DATABASE test;".getBytes()));
+			ScriptUtils.executeSqlScript(connection, new ByteArrayResource("DROP DATABASE IF EXISTS test;CREATE DATABASE IF NOT EXISTS test;".getBytes()));
 		}
 	}
 }

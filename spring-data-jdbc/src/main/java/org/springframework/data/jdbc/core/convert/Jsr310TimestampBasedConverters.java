@@ -24,8 +24,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.Period;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +46,7 @@ import org.springframework.lang.NonNull;
  *
  * @see org.springframework.data.convert.Jsr310Converters
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.2
  */
 public abstract class Jsr310TimestampBasedConverters {
@@ -67,6 +70,8 @@ public abstract class Jsr310TimestampBasedConverters {
 		converters.add(LocalTimeToTimestampConverter.INSTANCE);
 		converters.add(TimestampToInstantConverter.INSTANCE);
 		converters.add(InstantToTimestampConverter.INSTANCE);
+		converters.add(TimestampToZonedDateTimeConverter.INSTANCE);
+		converters.add(TimestampToOffsetDateTimeConverter.INSTANCE);
 
 		return converters;
 	}
@@ -164,6 +169,28 @@ public abstract class Jsr310TimestampBasedConverters {
 		@Override
 		public Timestamp convert(Instant source) {
 			return Timestamp.from(source);
+		}
+	}
+
+	@ReadingConverter
+	public enum TimestampToZonedDateTimeConverter implements Converter<Timestamp, ZonedDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public ZonedDateTime convert(Timestamp source) {
+			return ZonedDateTime.ofInstant(source.toInstant(), ZoneId.of("UTC"));
+		}
+	}
+
+	@ReadingConverter
+	public enum TimestampToOffsetDateTimeConverter implements Converter<Timestamp, OffsetDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public OffsetDateTime convert(Timestamp source) {
+			return OffsetDateTime.ofInstant(source.toInstant(), ZoneId.of("UTC"));
 		}
 	}
 }

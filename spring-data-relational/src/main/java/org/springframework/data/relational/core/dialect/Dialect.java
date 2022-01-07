@@ -15,6 +15,7 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -127,8 +128,20 @@ public interface Dialect {
 
 	/**
 	 * @return the map of custom mappings from java classes to sql codes (integer sql codes present in {@link java.sql.Types})
+	 *         For example, for most of the drivers {@link java.sql.Types#TIMESTAMP_WITH_TIMEZONE} is OK, but for the others,
+	 *         like MySQL, we have to use {@link java.sql.Types#TIMESTAMP} and pass OffsetDateTime or ZonedDateTime by the means
+	 *         of {@link java.sql.PreparedStatement#setTimestamp(int, Timestamp)}.
 	 * @since 3.0
 	 */
 	@NonNull
 	default Map<Class<?>, Integer> getCustomSqlCodesMappings() { return new HashMap<>(); }
+
+	/**
+	 * @return the map of custom mappings from source java classes to appropriate jdbc columns java classes in the scope of current dialect.
+	 * 	          For example, most of the drivers can handle Jsr310 types directly, like {@link java.time.OffsetDateTime} or {@link java.time.ZonedDateTime},
+	 * 	          and we can just set them as is, but some others, like DB2 for example, require these types to be mapped/converted
+	 * 	          into {@link Timestamp} before passing to the underlying {@link java.sql.PreparedStatement}
+	 */
+	@NonNull
+	default Map<Class<?>, Class<?>> getCustomJdbcColumnsMappings() { return new HashMap<>(); }
 }

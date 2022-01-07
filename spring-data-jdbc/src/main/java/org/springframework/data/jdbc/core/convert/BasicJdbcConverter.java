@@ -207,7 +207,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			}
 		}
 
-		Class<?> componentColumnType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(property.getActualType());
+		Class<?> componentColumnType = resolvePropertyPrimitiveType(property);
 
 		while (componentColumnType.isArray()) {
 			componentColumnType = componentColumnType.getComponentType();
@@ -218,6 +218,14 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		}
 
 		return componentColumnType;
+	}
+
+	private Class<?> resolvePropertyPrimitiveType(RelationalPersistentProperty property) {
+		if (typeFactory instanceof DefaultJdbcTypeFactory) {
+			return JdbcColumnTypes.INSTANCE.resolvePrimitiveType(property.getActualType(), DialectResolver.getDialect(((DefaultJdbcTypeFactory) typeFactory).getOperations()));
+		} else {
+			return JdbcColumnTypes.INSTANCE.resolvePrimitiveType(property.getActualType());
+		}
 	}
 
 	/*

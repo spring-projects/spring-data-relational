@@ -18,30 +18,37 @@ package org.springframework.data.jdbc.core.dialect;
 import microsoft.sql.DateTimeOffset;
 
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
+import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
+import org.springframework.lang.NonNull;
 
 /**
  * {@link SqlServerDialect} that registers JDBC specific converters.
  *
  * @author Jens Schauder
  * @author Christoph Strobl
+ * @author Mikhail Polivakha
+ *
  * @since 2.3
  */
 public class JdbcSqlServerDialect extends SqlServerDialect {
 
 	public static JdbcSqlServerDialect INSTANCE = new JdbcSqlServerDialect();
 
+	@NonNull
 	@Override
 	public Collection<Object> getConverters() {
-
 		List<Object> converters = new ArrayList<>(super.getConverters());
 		converters.add(DateTimeOffsetToOffsetDateTimeConverter.INSTANCE);
+		converters.add(ZonedDateTimeToOffsetDateTimeConverter.INSTANCE);
+		converters.add(DateTimeOffsetToZonedDateTimeConverter.INSTANCE);
 		return converters;
 	}
 
@@ -53,6 +60,32 @@ public class JdbcSqlServerDialect extends SqlServerDialect {
 		@Override
 		public OffsetDateTime convert(DateTimeOffset source) {
 			return source.getOffsetDateTime();
+		}
+	}
+
+	@ReadingConverter
+	enum DateTimeOffsetToZonedDateTimeConverter implements Converter<DateTimeOffset, ZonedDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public ZonedDateTime convert(DateTimeOffset source) {
+			return source.getOffsetDateTime().toZonedDateTime();
+		}
+	}
+
+	/**
+	 * Unfortunately, SQl Server jdbc driver can accept {@link OffsetDateTime} as
+	 * {@link java.sql.Types#TIMESTAMP_WITH_TIMEZONE}, but not {@link ZonedDateTime}
+	 */
+	@WritingConverter
+	enum ZonedDateTimeToOffsetDateTimeConverter implements Converter<ZonedDateTime, OffsetDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public OffsetDateTime convert(ZonedDateTime source) {
+			return source.toOffsetDateTime();
 		}
 	}
 }

@@ -15,11 +15,20 @@
  */
 package org.springframework.data.relational.core.dialect;
 
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.convert.WritingConverter;
+
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * A {@link Dialect} for HsqlDb.
  *
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
  */
 public class HsqlDbDialect extends AbstractDialect {
 
@@ -59,4 +68,26 @@ public class HsqlDbDialect extends AbstractDialect {
 			return Position.AFTER_ORDER_BY;
 		}
 	};
+
+	@Override
+	public Collection<Object> getConverters() {
+		Collection<Object> converters = new ArrayList<>(super.getConverters());
+		converters.add(ZonedDateTimeOffsetDateTimeWritingConverter.INSTANCE);
+		return converters;
+	}
+
+	/**
+	 * Unfortunately, HSqlDb jdbc driver can accept {@link OffsetDateTime} as
+	 * {@link java.sql.Types#TIMESTAMP_WITH_TIMEZONE}, but not {@link ZonedDateTime}
+	 */
+	@WritingConverter
+	enum ZonedDateTimeOffsetDateTimeWritingConverter implements Converter<ZonedDateTime, OffsetDateTime> {
+
+		INSTANCE;
+
+		@Override
+		public OffsetDateTime convert(ZonedDateTime source) {
+			return source.toOffsetDateTime();
+		}
+	}
 }

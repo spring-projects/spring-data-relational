@@ -23,7 +23,9 @@ import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
+import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -38,6 +40,12 @@ public enum JdbcColumnTypes {
 
 	INSTANCE {
 
+		/**
+		 * @deprecated because this method will resolve the target column type regardless of the
+		 * 			   current client {@link Dialect} - it will search only in common types mappings.
+		 * 			   When possible, please, use {@link #resolvePrimitiveType(Class, Dialect)}
+		 */
+		@Deprecated
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public Class<?> resolvePrimitiveType(Class<?> type) {
 
@@ -47,6 +55,13 @@ public enum JdbcColumnTypes {
 					.findFirst() //
 					.orElseGet(() -> (Class) ClassUtils.resolvePrimitiveIfNecessary(type));
 		}
+
+		@SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
+		public Class<?> resolvePrimitiveType(Class<?> type, Dialect dialect) {
+			return Optional
+					.ofNullable(dialect.getCustomJdbcColumnsMappings().get(type))
+					.orElse((Class) this.resolvePrimitiveType(type));
+		}
 	};
 
 	private static final Map<Class<?>, Class<?>> javaToDbType = new LinkedHashMap<>();
@@ -54,11 +69,19 @@ public enum JdbcColumnTypes {
 	static {
 
 		javaToDbType.put(Enum.class, String.class);
-		javaToDbType.put(ZonedDateTime.class, OffsetDateTime.class);
+		javaToDbType.put(ZonedDateTime.class, ZonedDateTime.class);
 		javaToDbType.put(OffsetDateTime.class, OffsetDateTime.class);
 		javaToDbType.put(LocalDateTime.class, LocalDateTime.class);
 		javaToDbType.put(Temporal.class, Timestamp.class);
 	}
 
+	/**
+	 * @deprecated because this method will resolve the target column type regardless of the
+	 * 			   current client {@link Dialect} - it will search only in common types mappings.
+	 * 			   When possible, please, use {@link #resolvePrimitiveType(Class, Dialect)}
+	 */
+	@Deprecated
 	public abstract Class<?> resolvePrimitiveType(Class<?> type);
+
+	public abstract Class<?> resolvePrimitiveType(Class<?> type, Dialect dialect);
 }

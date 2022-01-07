@@ -30,12 +30,16 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,6 +91,8 @@ public class JdbcRepositoryIntegrationTests {
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
 	@Autowired MyEventListener eventListener;
+	@Autowired EntityWithZonedDateTimeRepository entityWithZonedDateTimeRepository;
+	@Autowired EntityWithOffsetDateTimeRepository entityWithOffsetDateTimeRepository;
 
 	private static DummyEntity createDummyEntity() {
 
@@ -95,6 +101,17 @@ public class JdbcRepositoryIntegrationTests {
 
 		return entity;
 	}
+
+	private static class EntityWithZonedDateTime {
+		@Id private Long id;
+		private ZonedDateTime createdAt;
+	}
+
+	private static class EntityWithOffsetDateTime {
+		@Id private Long id;
+		private OffsetDateTime createdAt;
+	}
+
 
 	@BeforeEach
 	public void before() {
@@ -549,6 +566,37 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result).extracting(e -> e.idProp).containsExactly(two.idProp);
 	}
 
+	/**
+	 * DATAJDBC-1089
+	 */
+	@Test
+	public void testZonedDateTimeToTimestampConversion() {
+		EntityWithZonedDateTime entity = new EntityWithZonedDateTime();
+		entity.createdAt = ZonedDateTime.now(ZoneOffset.ofHours(3));
+
+		final EntityWithZonedDateTime persistedEntity = entityWithZonedDateTimeRepository.save(entity);
+		final Optional<EntityWithZonedDateTime> foundEntity = entityWithZonedDateTimeRepository.findById(persistedEntity.id);
+
+		assertThat(foundEntity).isPresent();
+		assertThat(persistedEntity.createdAt.toEpochSecond()).isEqualTo(foundEntity.get().createdAt.toEpochSecond());
+	}
+
+	/**
+	 * DATAJDBC-1089
+	 */
+	@Test
+	public void testOffsetDateTimeToTimestampConversion() {
+		EntityWithOffsetDateTime entity = new EntityWithOffsetDateTime();
+		entity.createdAt = OffsetDateTime.now(ZoneOffset.ofHours(3));
+
+		final EntityWithOffsetDateTime persistedEntity = entityWithOffsetDateTimeRepository.save(entity);
+		final Optional<EntityWithOffsetDateTime> foundEntity = entityWithOffsetDateTimeRepository.findById(persistedEntity.id);
+
+		assertThat(foundEntity).isPresent();
+		assertThat(persistedEntity.createdAt.toEpochSecond()).isEqualTo(foundEntity.get().createdAt.toEpochSecond());
+	}
+
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -571,6 +619,10 @@ public class JdbcRepositoryIntegrationTests {
 		repository.saveAll(asList(first, second));
 		return now;
 	}
+
+	interface EntityWithZonedDateTimeRepository extends CrudRepository<EntityWithZonedDateTime, Long> {};
+
+	interface EntityWithOffsetDateTimeRepository extends CrudRepository<EntityWithOffsetDateTime, Long> {};
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
@@ -641,6 +693,16 @@ public class JdbcRepositoryIntegrationTests {
 		@Bean
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
+		}
+
+		@Bean
+		EntityWithZonedDateTimeRepository entityWithZonedDateTimeRepository() {
+			return factory.getRepository(EntityWithZonedDateTimeRepository.class);
+		}
+
+		@Bean
+		EntityWithOffsetDateTimeRepository entityWithOffsetDateTimeRepository() {
+			return factory.getRepository(EntityWithOffsetDateTimeRepository.class);
 		}
 
 		@Bean

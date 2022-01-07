@@ -15,7 +15,10 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import org.apache.commons.compress.utils.Lists;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +32,7 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.core.dialect.H2TimestampWithTimeZoneToOffsetDateTimeConverter;
 import org.springframework.data.jdbc.core.dialect.H2TimestampWithTimeZoneToZonedDateTimeConverter;
+import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.TestConfiguration;
@@ -45,7 +49,10 @@ import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import static java.util.Arrays.asList;
@@ -83,37 +90,19 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		}
 
 		@Bean
-		EntityWithZonedDateTimeRepository entityWithZonedDateTimeRepository() {
-			return factory.getRepository(EntityWithZonedDateTimeRepository.class);
-		}
-
-		@Bean
-		EntityWithOffsetDateTimeRepository entityWithOffsetDateTimeRepository() {
-			return factory.getRepository(EntityWithOffsetDateTimeRepository.class);
-		}
-
-		@Bean
 		JdbcCustomConversions jdbcCustomConversions() {
-			return new JdbcCustomConversions(
-					asList(
-							StringToBigDecimalConverter.INSTANCE,
-							BigDecimalToString.INSTANCE,
-							CustomIdReadingConverter.INSTANCE,
-							CustomIdWritingConverter.INSTANCE,
-							TimestampToOffsetDateTimeConverter.INSTANCE,
-							TimestampToZonedDateTimeConverter.INSTANCE,
-							H2TimestampWithTimeZoneToZonedDateTimeConverter.INSTANCE,
-							H2TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE
-					)
-			);
+			List<Object> converters = Lists.newArrayList();
+
+			converters.add(StringToBigDecimalConverter.INSTANCE);
+			converters.add(BigDecimalToString.INSTANCE);
+			converters.add(CustomIdReadingConverter.INSTANCE);
+			converters.add(CustomIdWritingConverter.INSTANCE);
+
+			return new JdbcCustomConversions(converters);
 		}
 	}
 
 	@Autowired EntityWithBooleanRepository repository;
-
-	@Autowired EntityWithZonedDateTimeRepository entityWithZonedDateTimeRepository;
-
-	@Autowired EntityWithOffsetDateTimeRepository entityWithOffsetDateTimeRepository;
 
 	/**
 	 * In PostgreSQL this fails if a simple converter like the following is used.
@@ -176,56 +165,12 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		});
 	}
 
-	/**
-	 * DATAJDBC-1089
-	 */
-	@Test
-	public void testZonedDateTimeToTimestampConversion() {
-		EntityWithZonedDateTime entity = new EntityWithZonedDateTime();
-		entity.createdAt = ZonedDateTime.now(ZoneOffset.ofHours(3));
-
-		final EntityWithZonedDateTime persistedEntity = entityWithZonedDateTimeRepository.save(entity);
-		final Optional<EntityWithZonedDateTime> foundEntity = entityWithZonedDateTimeRepository.findById(persistedEntity.id);
-
-		assertThat(foundEntity).isPresent();
-		assertThat(persistedEntity.createdAt.toEpochSecond()).isEqualTo(foundEntity.get().createdAt.toEpochSecond());
-	}
-
-	/**
-	 * DATAJDBC-1089
-	 */
-	@Test
-	public void testOffsetDateTimeToTimestampConversion() {
-		EntityWithOffsetDateTime entity = new EntityWithOffsetDateTime();
-		entity.createdAt = OffsetDateTime.now(ZoneOffset.ofHours(3));
-
-		final EntityWithOffsetDateTime persistedEntity = entityWithOffsetDateTimeRepository.save(entity);
-		final Optional<EntityWithOffsetDateTime> foundEntity = entityWithOffsetDateTimeRepository.findById(persistedEntity.id);
-
-		assertThat(foundEntity).isPresent();
-		assertThat(persistedEntity.createdAt.toEpochSecond()).isEqualTo(foundEntity.get().createdAt.toEpochSecond());
-	}
-
 	interface EntityWithBooleanRepository extends CrudRepository<EntityWithStringyBigDecimal, CustomId> {}
-
-	interface EntityWithZonedDateTimeRepository extends CrudRepository<EntityWithZonedDateTime, Long> {};
-
-	interface EntityWithOffsetDateTimeRepository extends CrudRepository<EntityWithOffsetDateTime, Long> {};
 
 	private static class EntityWithStringyBigDecimal {
 		@Id CustomId id;
 		String stringyNumber;
 		OtherEntity reference;
-	}
-
-	private static class EntityWithZonedDateTime {
-		@Id private Long id;
-		private ZonedDateTime createdAt;
-	}
-
-	private static class EntityWithOffsetDateTime {
-		@Id private Long id;
-		private OffsetDateTime createdAt;
 	}
 
 	private static class CustomId {
@@ -287,28 +232,6 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 		@Override
 		public CustomId convert(Number source) {
 			return new CustomId(source.longValue());
-		}
-	}
-
-	@ReadingConverter
-	public enum TimestampToZonedDateTimeConverter implements Converter<Timestamp, ZonedDateTime> {
-
-		INSTANCE;
-
-		@Override
-		public ZonedDateTime convert(Timestamp source) {
-			return ZonedDateTime.ofInstant(source.toInstant(), ZoneOffset.ofHours(3));
-		}
-	}
-
-	@ReadingConverter
-	public enum TimestampToOffsetDateTimeConverter implements Converter<Timestamp, OffsetDateTime> {
-
-		INSTANCE;
-
-		@Override
-		public OffsetDateTime convert(Timestamp source) {
-			return OffsetDateTime.ofInstant(source.toInstant(), ZoneOffset.ofHours(3));
 		}
 	}
 }
