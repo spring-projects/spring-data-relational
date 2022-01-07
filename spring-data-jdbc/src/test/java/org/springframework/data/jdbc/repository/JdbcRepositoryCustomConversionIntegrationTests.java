@@ -15,10 +15,8 @@
  */
 package org.springframework.data.jdbc.repository;
 
-import org.apache.commons.compress.utils.Lists;
-import org.junit.jupiter.api.Disabled;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -32,11 +30,9 @@ import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
 import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.jdbc.core.dialect.H2TimestampWithTimeZoneToOffsetDateTimeConverter;
 import org.springframework.data.jdbc.core.dialect.H2TimestampWithTimeZoneToZonedDateTimeConverter;
-import org.springframework.data.jdbc.core.dialect.JdbcDb2Dialect;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
@@ -45,15 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.JDBCType;
-import java.sql.Timestamp;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,7 +53,6 @@ import static org.springframework.test.context.TestExecutionListeners.MergeMode.
  *
  * @author Jens Schauder
  * @author Sanghyuk Jung
- * @author Mikhail Polivakha
  */
 @ContextConfiguration
 @Transactional
@@ -91,14 +78,16 @@ public class JdbcRepositoryCustomConversionIntegrationTests {
 
 		@Bean
 		JdbcCustomConversions jdbcCustomConversions() {
-			List<Object> converters = Lists.newArrayList();
-
-			converters.add(StringToBigDecimalConverter.INSTANCE);
-			converters.add(BigDecimalToString.INSTANCE);
-			converters.add(CustomIdReadingConverter.INSTANCE);
-			converters.add(CustomIdWritingConverter.INSTANCE);
-
-			return new JdbcCustomConversions(converters);
+			return new JdbcCustomConversions(
+					asList(
+							StringToBigDecimalConverter.INSTANCE,
+							BigDecimalToString.INSTANCE,
+							CustomIdReadingConverter.INSTANCE,
+							CustomIdWritingConverter.INSTANCE,
+							H2TimestampWithTimeZoneToZonedDateTimeConverter.INSTANCE,
+							H2TimestampWithTimeZoneToOffsetDateTimeConverter.INSTANCE
+					)
+			);
 		}
 	}
 
