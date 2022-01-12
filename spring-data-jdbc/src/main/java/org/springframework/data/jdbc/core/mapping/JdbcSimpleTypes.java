@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.data.jdbc.core.convert.JdbcValue;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 
 /**
@@ -38,6 +39,7 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
  * access.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public abstract class JdbcSimpleTypes {
 
@@ -67,6 +69,7 @@ public abstract class JdbcSimpleTypes {
 		simpleTypes.add(Time.class);
 		simpleTypes.add(Timestamp.class);
 		simpleTypes.add(UUID.class);
+		simpleTypes.add(JdbcValue.class);
 
 		JDBC_SIMPLE_TYPES = Collections.unmodifiableSet(simpleTypes);
 	}
