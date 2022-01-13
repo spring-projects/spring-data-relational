@@ -35,7 +35,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
 import org.springframework.data.jdbc.testing.TestConfiguration;

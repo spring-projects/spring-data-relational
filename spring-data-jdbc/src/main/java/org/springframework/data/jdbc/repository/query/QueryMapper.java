@@ -26,7 +26,7 @@ import java.util.Objects;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
