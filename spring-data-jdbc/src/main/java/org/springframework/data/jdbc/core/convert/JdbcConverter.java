@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.sql.ResultSet;
 
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
