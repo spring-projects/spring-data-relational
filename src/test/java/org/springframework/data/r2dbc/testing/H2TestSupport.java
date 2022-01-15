@@ -45,6 +45,7 @@ public class H2TestSupport {
 			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    extra       varchar(255),\n" //
+			+ "    flag        boolean,\n" //
 			+ "    manual      integer NULL\n" //
 			+ ");";
 

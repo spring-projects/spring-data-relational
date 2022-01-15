@@ -486,7 +486,7 @@ class PartTreeR2dbcQueryUnitTests {
 				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".age NOT IN ($1)");
 	}
 
-	@Test // gh-282
+	@Test // gh-282, gh-698
 	void createsQueryToFindAllEntitiesByBooleanAttributeTrue() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByActiveTrue");
@@ -496,10 +496,10 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
 		assertThat(preparedOperation.get())
-				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".active = TRUE");
+				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".active = $1");
 	}
 
-	@Test // gh-282
+	@Test // gh-282, gh-698
 	void createsQueryToFindAllEntitiesByBooleanAttributeFalse() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByActiveFalse");
@@ -509,7 +509,7 @@ class PartTreeR2dbcQueryUnitTests {
 		PreparedOperation<?> preparedOperation = createQuery(r2dbcQuery, accessor);
 
 		assertThat(preparedOperation.get())
-				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".active = FALSE");
+				.isEqualTo("SELECT " + ALL_FIELDS + " FROM " + TABLE + " WHERE " + TABLE + ".active = $1");
 	}
 
 	@Test // gh-282

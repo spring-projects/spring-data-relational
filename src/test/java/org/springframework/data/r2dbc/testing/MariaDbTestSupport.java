@@ -51,6 +51,7 @@ public class MariaDbTestSupport {
 	public static final String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
 			+ "    id          integer AUTO_INCREMENT PRIMARY KEY,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
+			+ "    flag        boolean NOT NULL,\n" //
 			+ "    manual      integer NULL\n" //
 			+ ") ENGINE=InnoDB;";
 

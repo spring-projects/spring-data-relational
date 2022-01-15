@@ -53,6 +53,7 @@ public class MySqlTestSupport {
 			+ "    id          integer AUTO_INCREMENT PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
+			+ "    flag        boolean NULL,\n" //
 			+ "    manual      integer NULL\n" //
 			+ ") ENGINE=InnoDB;";
 

@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -81,8 +80,7 @@ public class QueryMapper {
 	}
 
 	/**
-	 * Render a {@link SqlIdentifier} for SQL usage.
-	 * The resulting String might contain quoting characters.
+	 * Render a {@link SqlIdentifier} for SQL usage. The resulting String might contain quoting characters.
 	 *
 	 * @param identifier the identifier to be rendered.
 	 * @return an identifier String.
@@ -473,11 +471,15 @@ public class QueryMapper {
 		}
 
 		if (comparator == Comparator.IS_TRUE) {
-			return column.isEqualTo(SQL.literalOf(true));
+			Expression bind = booleanBind(column, mappedValue, valueType, bindings, ignoreCase);
+
+			return column.isEqualTo(bind);
 		}
 
 		if (comparator == Comparator.IS_FALSE) {
-			return column.isEqualTo(SQL.literalOf(false));
+			Expression bind = booleanBind(column, mappedValue, valueType, bindings, ignoreCase);
+
+			return column.isEqualTo(bind);
 		}
 
 		Expression columnExpression = column;
@@ -627,6 +629,13 @@ public class QueryMapper {
 				: SQL.bindMarker(bindMarker.getPlaceholder());
 	}
 
+	private Expression booleanBind(Column column, Object mappedValue, Class<?> valueType, MutableBindings bindings,
+			boolean ignoreCase) {
+		BindMarker bindMarker = bindings.nextMarker(column.getName().getReference());
+
+		return bind(mappedValue, valueType, bindings, bindMarker, ignoreCase);
+	}
+
 	/**
 	 * Value object to represent a field and its meta-information.
 	 */
@@ -750,7 +759,9 @@ public class QueryMapper {
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.r2dbc.core.convert.QueryMapper.Field#getTypeHint()
+		 * 
+		 * @see
+		 * org.springframework.data.r2dbc.core.convert.QueryMapper.Field#getTypeHint()
 		 */
 		@Override
 		public TypeInformation<?> getTypeHint() {

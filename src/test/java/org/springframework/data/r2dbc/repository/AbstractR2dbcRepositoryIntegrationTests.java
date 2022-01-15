@@ -106,8 +106,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@Test
 	void shouldInsertNewItems() {
 
-		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
-		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
+		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12, true);
+		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13, false);
 
 		repository.saveAll(Arrays.asList(legoSet1, legoSet2)) //
 				.as(StepVerifier::create) //
@@ -181,8 +181,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@Test // gh-344
 	void shouldFindApplyingDistinctProjection() {
 
-		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
-		LegoSet legoSet2 = new LegoSet(null, "SCHAUFELRADBAGGER", 13);
+		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12, true);
+		LegoSet legoSet2 = new LegoSet(null, "SCHAUFELRADBAGGER", 13, false);
 
 		repository.saveAll(Arrays.asList(legoSet1, legoSet2)) //
 				.as(StepVerifier::create) //
@@ -208,6 +208,19 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.as(StepVerifier::create) //
 				.consumeNextWith(actual -> {
 					assertThat(actual).hasSize(2).allMatch(Integer.class::isInstance);
+				}).verifyComplete();
+	}
+
+	@Test // gh-698
+	void shouldBeTrue() {
+		shouldInsertNewItems();
+
+		repository.findLegoSetByFlag(true) //
+				.map(a -> a.flag) //
+				.collectList() //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual).hasSize(1).contains(true);
 				}).verifyComplete();
 	}
 
@@ -256,9 +269,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	@Test // gh-335
 	void shouldFindTop10() {
 
-		Flux<LegoSet> sets = Flux.fromStream(IntStream.range(0, 100).mapToObj(value -> {
-			return new LegoSet(null, "Set " + value, value);
-		}));
+		Flux<LegoSet> sets = Flux
+				.fromStream(IntStream.range(0, 100).mapToObj(value -> new LegoSet(null, "Set " + value, value, true)));
 
 		repository.saveAll(sets) //
 				.as(StepVerifier::create) //
@@ -291,8 +303,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		R2dbcTransactionManager r2dbcTransactionManager = new R2dbcTransactionManager(connectionFactory);
 		TransactionalOperator rxtx = TransactionalOperator.create(r2dbcTransactionManager);
 
-		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12);
-		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13);
+		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12, true);
+		LegoSet legoSet2 = new LegoSet(null, "FORSCHUNGSSCHIFF", 13, false);
 
 		Mono<Map<String, Object>> transactional = repository.save(legoSet1) //
 				.map(it -> jdbc.queryForMap("SELECT count(*) AS count FROM legoset")).as(rxtx::transactional);
@@ -407,6 +419,8 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		Mono<Integer> countByNameContains(String namePart);
 
 		Mono<Boolean> existsByName(String name);
+
+		Flux<LegoSet> findLegoSetByFlag(boolean flag);
 	}
 
 	public interface Buildable {
@@ -421,12 +435,19 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 	public static class LegoSet extends Lego implements Buildable {
 		String name;
 		Integer manual;
+		boolean flag;
 
 		@PersistenceConstructor
 		LegoSet(Integer id, String name, Integer manual) {
 			super(id);
 			this.name = name;
 			this.manual = manual;
+		}
+
+		@PersistenceConstructor
+		LegoSet(Integer id, String name, Integer manual, Boolean flag) {
+			this(id, name, manual);
+			this.flag = flag;
 		}
 	}
 

@@ -28,7 +28,8 @@ public class PostgresTestSupport {
 			+ "    id          integer CONSTRAINT id1 PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
-			+ "    manual      integer NULL\n," //
+			+ "    manual      integer NULL,\n" //
+			+ "    flag			   boolean NULL,\n" //
 			+ "    cert        bytea NULL\n" //
 			+ ");";
 
