@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -55,6 +56,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Mark Paluch
  * @author Roman Chigvintsev
+ * @author Manousos Mathioudakis
  */
 public class QueryMapper {
 
@@ -757,12 +759,6 @@ public class QueryMapper {
 			return path.getType().equals(Class.class) && path.getLeafProperty().getOwningType().getType().equals(Class.class);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see
-		 * org.springframework.data.r2dbc.core.convert.QueryMapper.Field#getTypeHint()
-		 */
 		@Override
 		public TypeInformation<?> getTypeHint() {
 

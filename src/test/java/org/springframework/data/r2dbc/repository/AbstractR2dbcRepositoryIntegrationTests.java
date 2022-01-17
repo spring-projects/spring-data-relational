@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import org.springframework.transaction.reactive.TransactionalOperator;
  * Abstract base class for integration tests for {@link LegoSetRepository} using {@link R2dbcRepositoryFactory}.
  *
  * @author Mark Paluch
+ * @author Manousos Mathioudakis
  */
 public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
@@ -444,8 +445,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 			this.manual = manual;
 		}
 
-		@PersistenceConstructor
-		LegoSet(Integer id, String name, Integer manual, Boolean flag) {
+		LegoSet(Integer id, String name, Integer manual, boolean flag) {
 			this(id, name, manual);
 			this.flag = flag;
 		}
