@@ -65,6 +65,7 @@ import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
@@ -322,7 +323,11 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		StatementMapper.SelectSpec selectSpec = statementMapper //
 				.createSelect(tableName) //
 				.doWithTable((table, spec) -> {
-					return spec.withProjection(Functions.count(table.column(entity.getRequiredIdProperty().getColumnName())));
+
+					Expression countExpression = entity.hasIdProperty()
+							? table.column(entity.getRequiredIdProperty().getColumnName())
+							: Expressions.asterisk();
+					return spec.withProjection(Functions.count(countExpression));
 				});
 
 		Optional<CriteriaDefinition> criteria = query.getCriteria();
@@ -834,6 +839,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	}
 
 	private <T> Query getByIdQuery(T entity, RelationalPersistentEntity<?> persistentEntity) {
+
 		if (!persistentEntity.hasIdProperty()) {
 			throw new MappingException("No id property found for object of type " + persistentEntity.getType() + "!");
 		}

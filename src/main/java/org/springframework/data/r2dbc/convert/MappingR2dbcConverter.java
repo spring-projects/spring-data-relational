@@ -31,6 +31,7 @@ import org.springframework.core.CollectionFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -370,7 +371,14 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 				continue;
 			}
 
-			Object value = accessor.getProperty(property);
+			Object value;
+
+			if (property.isIdProperty()) {
+				IdentifierAccessor identifierAccessor = entity.getIdentifierAccessor(accessor.getBean());
+				value = identifierAccessor.getIdentifier();
+			} else {
+				value = accessor.getProperty(property);
+			}
 
 			if (value == null) {
 				writeNullInternal(sink, property);
@@ -599,6 +607,10 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 
 		Class<?> userClass = ClassUtils.getUserClass(object);
 		RelationalPersistentEntity<?> entity = getMappingContext().getRequiredPersistentEntity(userClass);
+
+		if (!entity.hasIdProperty()) {
+			return (row, rowMetadata) -> object;
+		}
 
 		return (row, metadata) -> {
 

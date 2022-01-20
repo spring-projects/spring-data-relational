@@ -29,6 +29,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.Expression;
+import org.springframework.data.relational.core.sql.Expressions;
 import org.springframework.data.relational.core.sql.Functions;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
@@ -164,8 +165,11 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 				.collect(Collectors.toList());
 		} else if (tree.isCountProjection()) {
 
-			SqlIdentifier idColumn = entityMetadata.getTableEntity().getRequiredIdProperty().getColumnName();
-			expressions = Collections.singletonList(Functions.count(table.column(idColumn)));
+			Expression countExpression = entityMetadata.getTableEntity().hasIdProperty()
+					? table.column(entityMetadata.getTableEntity().getRequiredIdProperty().getColumnName())
+					: Expressions.asterisk();
+
+			expressions = Collections.singletonList(Functions.count(countExpression));
 		} else {
 			expressions = dataAccessStrategy.getAllColumns(entityToRead).stream()
 				.map(table::column)

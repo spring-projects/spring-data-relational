@@ -43,6 +43,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
@@ -250,6 +251,18 @@ public class MappingR2dbcConverterUnitTests {
 		assertThat(result.person).isNull();
 	}
 
+	@Test // GH-711
+	void writeShouldObtainIdFromIdentifierAccessor() {
+
+		PersistableEntity entity = new PersistableEntity();
+		entity.id = null;
+
+		OutboundRow row = new OutboundRow();
+		converter.write(entity, row);
+
+		assertThat(row).containsEntry(SqlIdentifier.unquoted("id"), Parameter.from(42L));
+	}
+
 	@AllArgsConstructor
 	static class Person {
 		@Id String id;
@@ -404,6 +417,21 @@ public class MappingR2dbcConverterUnitTests {
 
 		SimplePerson(String name) {
 			this.name = name;
+		}
+	}
+
+	static class PersistableEntity implements Persistable<Long> {
+
+		@Id String id;
+
+		@Override
+		public Long getId() {
+			return 42L;
+		}
+
+		@Override
+		public boolean isNew() {
+			return false;
 		}
 	}
 }
