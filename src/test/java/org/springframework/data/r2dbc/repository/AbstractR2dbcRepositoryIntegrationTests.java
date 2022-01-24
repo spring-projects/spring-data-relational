@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Value;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -59,6 +60,10 @@ import org.springframework.transaction.reactive.TransactionalOperator;
  * @author Manousos Mathioudakis
  */
 public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
+
+	static {
+		Hooks.onOperatorDebug();
+	}
 
 	@Autowired private LegoSetRepository repository;
 	@Autowired private ConnectionFactory connectionFactory;

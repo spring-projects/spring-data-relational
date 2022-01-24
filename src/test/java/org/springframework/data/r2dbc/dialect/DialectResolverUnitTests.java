@@ -2,8 +2,6 @@ package org.springframework.data.r2dbc.dialect;
 
 import static org.assertj.core.api.Assertions.*;
 
-import dev.miku.r2dbc.mysql.MySqlConnectionConfiguration;
-import dev.miku.r2dbc.mysql.MySqlConnectionFactory;
 import io.r2dbc.h2.H2ConnectionConfiguration;
 import io.r2dbc.h2.H2ConnectionFactory;
 import io.r2dbc.mssql.MssqlConnectionConfiguration;
@@ -41,13 +39,10 @@ public class DialectResolverUnitTests {
 		MssqlConnectionFactory mssql = new MssqlConnectionFactory(MssqlConnectionConfiguration.builder().host("localhost")
 				.database("foo").username("bar").password("password").build());
 		H2ConnectionFactory h2 = new H2ConnectionFactory(H2ConnectionConfiguration.builder().inMemory("mem").build());
-		MySqlConnectionFactory mysql = MySqlConnectionFactory
-				.from(MySqlConnectionConfiguration.builder().host("localhost").username("mysql").build());
 
 		assertThat(DialectResolver.getDialect(postgres)).isEqualTo(PostgresDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(mssql)).isEqualTo(SqlServerDialect.INSTANCE);
 		assertThat(DialectResolver.getDialect(h2)).isEqualTo(H2Dialect.INSTANCE);
-		assertThat(DialectResolver.getDialect(mysql)).isEqualTo(MySqlDialect.INSTANCE);
 	}
 
 	@Test // gh-20, gh-104

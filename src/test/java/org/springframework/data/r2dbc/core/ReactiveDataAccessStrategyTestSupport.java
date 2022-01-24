@@ -18,6 +18,8 @@ package org.springframework.data.r2dbc.core;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.Parameters;
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.test.MockColumnMetadata;
@@ -198,7 +200,7 @@ public abstract class ReactiveDataAccessStrategyTestSupport {
 		ReactiveDataAccessStrategy strategy = getStrategy();
 		Row rowMock = mock(Row.class);
 		RowMetadata metadataMock = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name(fieldname).build()).build();
+				.columnMetadata(MockColumnMetadata.builder().name(fieldname).type(Parameters.in(testValue.getClass()).getType()).build()).build();
 
 		PrimitiveTypes toSave = new PrimitiveTypes();
 		setter.accept(toSave, testValue);

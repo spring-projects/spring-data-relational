@@ -23,10 +23,12 @@ import io.r2dbc.spi.ConnectionMetadata;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
+import io.r2dbc.spi.TransactionDefinition;
 import io.r2dbc.spi.ValidationDepth;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -156,9 +158,15 @@ public class StatementRecorder implements ConnectionFactory {
 	}
 
 	class RecorderConnection implements Connection {
+
 		@Override
 		public Publisher<Void> beginTransaction() {
 			return createStatement("BEGIN").execute().then();
+		}
+
+		@Override
+		public Publisher<Void> beginTransaction(TransactionDefinition definition) {
+			return createStatement("BEGIN " + definition).execute().then();
 		}
 
 		@Override
@@ -239,6 +247,16 @@ public class StatementRecorder implements ConnectionFactory {
 		}
 
 		@Override
+		public Publisher<Void> setLockWaitTimeout(Duration timeout) {
+			return createStatement("SET LOCK WAIT TIMEOUT " + timeout).execute().then();
+		}
+
+		@Override
+		public Publisher<Void> setStatementTimeout(Duration timeout) {
+			return createStatement("SET STATEMENT TIMEOUT " + timeout).execute().then();
+		}
+
+		@Override
 		public Publisher<Void> setTransactionIsolationLevel(IsolationLevel isolationLevel) {
 			return createStatement("SET TRANSACTION ISOLATION LEVEL " + isolationLevel.asSql()).execute().then();
 		}
@@ -306,6 +324,16 @@ public class StatementRecorder implements ConnectionFactory {
 		@Override
 		public Flux<Result> execute() {
 			return Flux.fromIterable(results).doOnSubscribe(subscription -> executedStatements.add(this));
+		}
+
+		@Override
+		public String toString() {
+			final StringBuffer sb = new StringBuffer();
+			sb.append(getClass().getSimpleName());
+			sb.append(" [sql='").append(sql).append('\'');
+			sb.append(", bindings=").append(bindings);
+			sb.append(']');
+			return sb.toString();
 		}
 	}
 
