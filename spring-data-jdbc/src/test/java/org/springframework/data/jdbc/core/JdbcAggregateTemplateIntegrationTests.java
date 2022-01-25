@@ -590,7 +590,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-
+		assertThat(reloaded.digits.get(0)).isInstanceOf(Float.class);
 	}
 
 	@Test // DATAJDBC-259
