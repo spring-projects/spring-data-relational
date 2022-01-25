@@ -41,7 +41,7 @@ public class H2TestSupport {
 			+ ");";
 
 	public static String CREATE_TABLE_LEGOSET_WITH_ID_GENERATION = "CREATE TABLE legoset (\n" //
-			+ "    id          serial CONSTRAINT id1 PRIMARY KEY,\n" //
+			+ "    id          integer AUTO_INCREMENT CONSTRAINT id1 PRIMARY KEY,\n" //
 			+ "    version     integer NULL,\n" //
 			+ "    name        varchar(255) NOT NULL,\n" //
 			+ "    extra       varchar(255),\n" //
@@ -50,7 +50,7 @@ public class H2TestSupport {
 			+ ");";
 
 	public static String CREATE_TABLE_LEGOSET_WITH_MIXED_CASE_NAMES = "CREATE TABLE \"LegoSet\" (\n" //
-			+ "    \"Id\"          serial CONSTRAINT id2 PRIMARY KEY,\n" //
+			+ "    \"Id\"          integer AUTO_INCREMENT CONSTRAINT id2 PRIMARY KEY,\n" //
 			+ "    \"Name\"        varchar(255) NOT NULL,\n" //
 			+ "    \"Manual\"      integer NULL\n" //
 			+ ");";
