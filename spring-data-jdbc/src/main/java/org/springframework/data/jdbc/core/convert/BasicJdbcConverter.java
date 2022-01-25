@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -206,17 +207,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return value;
 		}
 
-		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
-
-			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
-			TypeDescriptor targetDescriptor = createTypeDescriptor(type);
-
-			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
-		}
-
 		if (value instanceof Array) {
 			try {
-				return readValue(((Array) value).getArray(), type);
+				return super.readValue(((Array) value).getArray(), type);
 			} catch (SQLException | ConverterNotFoundException e) {
 				LOG.info("Failed to extract a value of type %s from an Array. Attempting to use standard conversions.", e);
 			}

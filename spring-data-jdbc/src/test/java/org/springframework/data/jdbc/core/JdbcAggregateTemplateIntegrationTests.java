@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-import lombok.With;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -69,6 +64,11 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import lombok.With;
+
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
  *
@@ -81,6 +81,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Clemens Hahn
  * @author Milan Milanov
  * @author Mikhail Polivakha
+ * @author Chirag Tailor
  */
 @ContextConfiguration
 @Transactional
@@ -574,7 +575,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(Arrays.asList(1.2, 1.3, 1.4));
 	}
 
-	@Test // GH-1033
+	@Test // GH-1033, GH-1046
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithListOfFloat() {
 
@@ -590,7 +591,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-
+		assertThat(reloaded.digits).isEqualTo(values);
 	}
 
 	@Test // DATAJDBC-259
