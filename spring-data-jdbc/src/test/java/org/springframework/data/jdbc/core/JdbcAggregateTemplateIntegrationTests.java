@@ -53,6 +53,7 @@ import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.annotation.InsertOnlyProperty;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
@@ -755,6 +756,20 @@ public class JdbcAggregateTemplateIntegrationTests {
 						.isEqualTo("from-db");
 	}
 
+	@Test // GH-637
+	void insertOnlyPropertyGetsWrittenOnlyOnInsert() {
+		WithInsertOnly entity = new WithInsertOnly();
+		String originalValue = "original value";
+		entity.insertOnly = originalValue;
+
+		entity = template.save(entity);
+		entity.insertOnly = "updated value";
+		entity = template.save(entity);
+
+		WithInsertOnly reloaded = template.findById(entity.id, entity.getClass());
+		assertThat(reloaded.insertOnly).isEqualTo(originalValue);
+	}
+
 	@Test // DATAJDBC-219 Test that immutable version attribute works as expected.
 	public void saveAndUpdateAggregateWithImmutableVersion() {
 
@@ -1151,6 +1166,11 @@ public class JdbcAggregateTemplateIntegrationTests {
 		@Id Long id;
 		String name;
 		@ReadOnlyProperty String readOnly;
+	}
+
+	static class WithInsertOnly {
+		@Id Long id;
+		@InsertOnlyProperty String insertOnly;
 	}
 
 	@Data
