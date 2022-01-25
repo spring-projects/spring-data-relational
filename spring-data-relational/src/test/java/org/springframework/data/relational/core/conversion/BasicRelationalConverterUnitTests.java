@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,12 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
-import lombok.Data;
-import lombok.Value;
-
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.data.convert.ConverterBuilder;
 import org.springframework.data.convert.CustomConversions;
@@ -33,11 +31,16 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.TypeInformation;
+
+import lombok.Data;
+import lombok.Value;
 
 /**
  * Unit tests for {@link BasicRelationalConverter}.
  *
  * @author Mark Paluch
+ * @author Chirag Tailor
  */
 public class BasicRelationalConverterUnitTests {
 
@@ -88,6 +91,14 @@ public class BasicRelationalConverterUnitTests {
 		assertThat(result).isEqualTo(MyEnum.OFF);
 	}
 
+	@Test // GH-1046
+	void shouldConvertArrayElementsToTargetElementType() throws NoSuchMethodException {
+		TypeInformation<Object> typeInformation = ClassTypeInformation.fromReturnTypeOf(EntityWithArray.class.getMethod("getFloats"));
+		Double[] value = {1.2d, 1.3d, 1.4d};
+		Object result = converter.readValue(value, typeInformation);
+		assertThat(result).isEqualTo(Arrays.asList(1.2f, 1.3f, 1.4f));
+	}
+
 	@Test // DATAJDBC-235
 	@SuppressWarnings("unchecked")
 	public void shouldCreateInstance() {
@@ -114,6 +125,11 @@ public class BasicRelationalConverterUnitTests {
 		Object result = converter.readValue("hello-world", ClassTypeInformation.from(MyValue.class));
 
 		assertThat(result).isEqualTo(new MyValue("hello-world"));
+	}
+
+	@Data
+	static class EntityWithArray {
+		List<Float> floats;
 	}
 
 	@Data
