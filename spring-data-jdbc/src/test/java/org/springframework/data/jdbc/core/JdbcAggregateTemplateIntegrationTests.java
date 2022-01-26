@@ -21,11 +21,6 @@ import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-import lombok.With;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,6 +63,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import lombok.With;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
@@ -590,7 +590,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-		assertThat(reloaded.digits.get(0)).isInstanceOf(Float.class);
+		assertThat(reloaded.digits).isEqualTo(values);
 	}
 
 	@Test // DATAJDBC-259
