@@ -19,6 +19,7 @@ import java.io.Serializable;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -96,7 +97,7 @@ public class JdbcRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extend
 	}
 
 	@Autowired
-	public void setMappingContext(RelationalMappingContext mappingContext) {
+	public void setMappingContext(@Qualifier("jdbcMappingContext") RelationalMappingContext mappingContext) {
 
 		Assert.notNull(mappingContext, "MappingContext must not be null");
 
