@@ -222,6 +222,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return value;
 		}
 
+//		TODO: Potentially duplicated in superclass BasicRelationalConverter#readValue.
 		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
 
 			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
