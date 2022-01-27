@@ -222,18 +222,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return value;
 		}
 
-//		TODO: Potentially duplicated in superclass BasicRelationalConverter#readValue.
-		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
-
-			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
-			TypeDescriptor targetDescriptor = createTypeDescriptor(type);
-
-			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
-		}
-
 		if (value instanceof Array) {
 			try {
-				return readValue(((Array) value).getArray(), type);
+				return super.readValue(((Array) value).getArray(), type);
 			} catch (SQLException | ConverterNotFoundException e) {
 				LOG.info("Failed to extract a value of type %s from an Array. Attempting to use standard conversions.", e);
 			}

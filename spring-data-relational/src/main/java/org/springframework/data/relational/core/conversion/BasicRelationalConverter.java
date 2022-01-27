@@ -253,7 +253,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 		return conversionService.convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
 	}
 
-	protected static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
+	private static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
 
 		List<TypeInformation<?>> typeArguments = type.getTypeArguments();
 		Class<?>[] generics = new Class[typeArguments.size()];
