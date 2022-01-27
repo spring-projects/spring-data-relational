@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ import lombok.With;
  * @author Clemens Hahn
  * @author Milan Milanov
  * @author Mikhail Polivakha
+ * @author Chirag Tailor
  */
 @ContextConfiguration
 @Transactional
@@ -574,7 +575,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.digits).isEqualTo(Arrays.asList(1.2, 1.3, 1.4));
 	}
 
-	@Test // GH-1033
+	@Test // GH-1033, GH-1046
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithListOfFloat() {
 
