@@ -84,4 +84,11 @@ public interface RelationalPersistentProperty extends PersistentProperty<Relatio
 	 * @return
 	 */
 	boolean shouldCreateEmptyEmbedded();
+
+	/**
+	 * Returns whether the current property is intended for insert only.
+	 */
+	default boolean isInsertOnly() {
+		return false;
+	}
 }

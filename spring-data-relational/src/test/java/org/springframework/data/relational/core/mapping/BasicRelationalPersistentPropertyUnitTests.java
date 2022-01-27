@@ -31,6 +31,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.annotation.InsertOnlyProperty;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 
 /**
@@ -97,6 +98,14 @@ public class BasicRelationalPersistentPropertyUnitTests {
 		softly.assertAll();
 	}
 
+	@Test
+	void detectsInsertOnlyProperty() {
+		RelationalPersistentEntity<?> persistentEntity = context.getRequiredPersistentEntity(DummyEntity.class);
+		RelationalPersistentProperty persistentProperty = persistentEntity.getRequiredPersistentProperty("insertOnlyValue");
+
+		assertThat(persistentProperty.isInsertOnly()).isTrue();
+	}
+
 	@Test // DATAJDBC-259
 	public void classificationOfCollectionLikeProperties() {
 
@@ -154,6 +163,9 @@ public class BasicRelationalPersistentPropertyUnitTests {
 
 		// DATAJDBC-111
 		private @Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "prefix") EmbeddableEntity prefixedEmbeddableEntity;
+
+		@InsertOnlyProperty
+		private final String insertOnlyValue;
 
 		@Column("dummy_last_updated_at")
 		public LocalDateTime getLocalDateTime() {

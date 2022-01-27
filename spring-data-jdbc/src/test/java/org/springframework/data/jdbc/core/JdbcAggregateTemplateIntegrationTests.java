@@ -53,7 +53,7 @@ import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.annotation.InsertOnlyProperty;
+import org.springframework.data.relational.annotation.InsertOnlyProperty;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.testing.AssumeFeatureTestExecutionListener;
@@ -1170,6 +1170,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	static class WithInsertOnly {
 		@Id Long id;
+		@SuppressWarnings("unused") String name;
 		@InsertOnlyProperty String insertOnly;
 	}
 

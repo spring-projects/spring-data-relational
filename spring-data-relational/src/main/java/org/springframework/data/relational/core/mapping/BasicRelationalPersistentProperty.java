@@ -23,6 +23,7 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.relational.annotation.InsertOnlyProperty;
 import org.springframework.data.relational.core.mapping.Embedded.OnEmpty;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.Lazy;
@@ -45,6 +46,7 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	private final Lazy<Optional<SqlIdentifier>> collectionIdColumnName;
 	private final Lazy<SqlIdentifier> collectionKeyColumnName;
 	private final Lazy<Boolean> isEmbedded;
+	private final Lazy<Boolean> isInsertOnly;
 	private final Lazy<String> embeddedPrefix;
 	private final NamingStrategy namingStrategy;
 	private boolean forceQuote = true;
@@ -83,6 +85,8 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 		Assert.notNull(namingStrategy, "NamingStrategy must not be null.");
 
 		this.isEmbedded = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)).isPresent());
+
+		this.isInsertOnly = Lazy.of(() -> Optional.ofNullable(findAnnotation(InsertOnlyProperty.class)).isPresent());
 
 		this.embeddedPrefix = Lazy.of(() -> Optional.ofNullable(findAnnotation(Embedded.class)) //
 				.map(Embedded::prefix) //
@@ -225,6 +229,11 @@ public class BasicRelationalPersistentProperty extends AnnotationBasedPersistent
 	@Override
 	public boolean isEmbedded() {
 		return isEmbedded.get();
+	}
+
+	@Override
+	public boolean isInsertOnly() {
+		return isInsertOnly.get();
 	}
 
 	/*

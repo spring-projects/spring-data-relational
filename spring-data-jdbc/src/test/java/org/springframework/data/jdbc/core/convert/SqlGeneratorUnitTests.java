@@ -24,14 +24,15 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.annotation.InsertOnlyProperty;
 import org.springframework.data.jdbc.core.PropertyPathTestingUtils;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -472,6 +473,31 @@ class SqlGeneratorUnitTests {
 				+ "WHERE \"ENTITY_WITH_QUOTED_COLUMN_NAME\".\"test\"\"_@id\" = :test_id");
 	}
 
+	@Nested // GH-637
+	class InsertOnlyPropertyTests {
+		private final JdbcMappingContext context = new JdbcMappingContext(NamingStrategy.INSTANCE);
+
+		@Test
+		void insertOnlyPropertyIncludedIntoQuery_when_generateInsertSql() {
+			SqlGenerator sqlGenerator = createSqlGenerator(EntityWithInsertOnlyProperty.class);
+
+			assertThat(sqlGenerator.getInsert(emptySet())).isEqualToIgnoringCase(
+					"INSERT INTO \"ENTITY_WITH_INSERT_ONLY_PROPERTY\" (\"INSERT_ONLY_VALUE\", \"NAME\") VALUES (:insert_only_value, :name)");
+		}
+
+		@Test
+		void insertOnlyPropertyExcludedFromQuery_when_generateUpdateSql() {
+			SqlGenerator sqlGenerator = createSqlGenerator(EntityWithInsertOnlyProperty.class);
+
+			assertThat(sqlGenerator.getUpdate()).isEqualToIgnoringCase(
+					"UPDATE \"ENTITY_WITH_INSERT_ONLY_PROPERTY\" SET \"NAME\" = :name WHERE \"ENTITY_WITH_INSERT_ONLY_PROPERTY\".\"ID\" = :id");
+		}
+
+		private SqlGenerator createSqlGenerator(Class<?> type) {
+			return new SqlGenerator(context, converter, context.getRequiredPersistentEntity(type), AnsiDialect.INSTANCE);
+		}
+	}
+
 	@Test // DATAJDBC-324
 	void readOnlyPropertyExcludedFromQuery_when_generateInsertSql() {
 
@@ -784,6 +810,13 @@ class SqlGeneratorUnitTests {
 		@Id Long id;
 		String name;
 		@ReadOnlyProperty String readOnlyValue;
+	}
+
+	@SuppressWarnings("unused")
+	static class EntityWithInsertOnlyProperty {
+		@Id Long id;
+		String name;
+		@InsertOnlyProperty String insertOnlyValue;
 	}
 
 	static class EntityWithQuotedColumnName {
