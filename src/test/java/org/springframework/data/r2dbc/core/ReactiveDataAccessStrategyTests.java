@@ -15,8 +15,8 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.data.r2dbc.testing.Assertions.*;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -26,12 +26,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.MySqlDialect;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Update;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.BindTarget;
 
 /**
  * Unit tests for {@link ReactiveDataAccessStrategy}.
@@ -46,20 +46,19 @@ public class ReactiveDataAccessStrategyTests {
 			Arrays.asList(UuidToStringConverter.INSTANCE, StringToUuidConverter.INSTANCE));
 
 	@Test // gh-305
-	public void shouldConvertSettableValue() {
+	public void shouldConvertParameter() {
 
 		UUID value = UUID.randomUUID();
 
-		assertThat(strategy.getBindValue(SettableValue.from(value))).isEqualTo(SettableValue.from(value.toString()));
-		assertThat(strategy.getBindValue(SettableValue.from(Condition.New))).isEqualTo(SettableValue.from("New"));
+		assertThat(strategy.getBindValue(Parameter.from(value))).isEqualTo(Parameter.from(value.toString()));
+		assertThat(strategy.getBindValue(Parameter.from(Condition.New))).isEqualTo(Parameter.from("New"));
 	}
 
 	@Test // gh-305
-	public void shouldConvertEmptySettableValue() {
+	public void shouldConvertEmptyParameter() {
 
-		assertThat(strategy.getBindValue(SettableValue.empty(UUID.class))).isEqualTo(SettableValue.empty(String.class));
-		assertThat(strategy.getBindValue(SettableValue.empty(Condition.class)))
-				.isEqualTo(SettableValue.empty(String.class));
+		assertThat(strategy.getBindValue(Parameter.empty(UUID.class))).isEqualTo(Parameter.empty(String.class));
+		assertThat(strategy.getBindValue(Parameter.empty(Condition.class))).isEqualTo(Parameter.empty(String.class));
 	}
 
 	@Test // gh-305

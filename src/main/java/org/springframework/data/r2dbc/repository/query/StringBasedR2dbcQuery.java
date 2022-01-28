@@ -28,7 +28,6 @@ import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.BindTargetBinder;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
@@ -202,12 +201,12 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 				if (recordedBindings.byName.containsKey(name)) {
 					remainderByName.remove(name);
-					return SettableValue.fromParameter(recordedBindings.byName.get(name));
+					return recordedBindings.byName.get(name);
 				}
 
 				if (recordedBindings.byIndex.containsKey(index)) {
 					remainderByIndex.remove(index);
-					return SettableValue.fromParameter(recordedBindings.byIndex.get(index));
+					return recordedBindings.byIndex.get(index);
 				}
 
 				return null;
@@ -253,11 +252,6 @@ public class StringBasedR2dbcQuery extends AbstractR2dbcQuery {
 
 		@NotNull
 		private Parameter toParameter(Object value) {
-
-			if (value instanceof SettableValue) {
-				return ((SettableValue) value).toParameter();
-			}
-
 			return value instanceof Parameter ? (Parameter) value : Parameter.from(value);
 		}
 

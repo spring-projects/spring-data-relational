@@ -30,10 +30,10 @@ import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.query.CriteriaDefinition.Comparator;
 import org.springframework.data.relational.core.query.ValueFunction;
@@ -347,13 +347,7 @@ public class QueryMapper {
 		Object mappedValue;
 		Class<?> typeHint;
 
-		if (criteria.getValue() instanceof SettableValue) {
-
-			SettableValue settableValue = (SettableValue) criteria.getValue();
-
-			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
-			typeHint = getTypeHint(mappedValue, actualType.getType(), settableValue);
-		} else if (criteria.getValue() instanceof Parameter) {
+		if (criteria.getValue() instanceof Parameter) {
 
 			Parameter parameter = (Parameter) criteria.getValue();
 
@@ -382,21 +376,6 @@ public class QueryMapper {
 		}
 
 		return Escaper.DEFAULT;
-	}
-
-	/**
-	 * Potentially convert the {@link SettableValue}.
-	 *
-	 * @param value
-	 * @return
-	 */
-	public SettableValue getBindValue(SettableValue value) {
-
-		if (value.isEmpty()) {
-			return SettableValue.empty(converter.getTargetType(value.getType()));
-		}
-
-		return SettableValue.from(convertValue(value.getValue(), ClassTypeInformation.OBJECT));
 	}
 
 	/**
@@ -584,19 +563,6 @@ public class QueryMapper {
 	}
 
 	Class<?> getTypeHint(@Nullable Object mappedValue, Class<?> propertyType) {
-		return propertyType;
-	}
-
-	Class<?> getTypeHint(@Nullable Object mappedValue, Class<?> propertyType, SettableValue settableValue) {
-
-		if (mappedValue == null || propertyType.equals(Object.class)) {
-			return settableValue.getType();
-		}
-
-		if (mappedValue.getClass().equals(settableValue.getValue().getClass())) {
-			return settableValue.getType();
-		}
-
 		return propertyType;
 	}
 

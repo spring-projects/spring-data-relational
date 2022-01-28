@@ -24,6 +24,7 @@ import org.springframework.data.relational.core.dialect.LimitClause;
 import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 
 /**
  * Unit tests for {@link DialectResolver}.

@@ -25,11 +25,8 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
-import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.AssignValue;
@@ -37,6 +34,9 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.SQL;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.r2dbc.core.Parameter;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
+import org.springframework.r2dbc.core.binding.BindTarget;
 
 /**
  * Unit tests for {@link UpdateMapper}.
@@ -66,7 +66,7 @@ public class UpdateMapperUnitTests {
 	@Test // gh-64
 	void shouldUpdateToSettableValue() {
 
-		Update update = Update.update("alternative", SettableValue.empty(String.class));
+		Update update = Update.update("alternative", Parameter.empty(String.class));
 
 		BoundAssignments mapped = map(update);
 

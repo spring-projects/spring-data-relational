@@ -24,13 +24,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.data.annotation.Id
-import org.springframework.data.r2dbc.core.DatabaseClient
 import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.r2dbc.dialect.PostgresDialect
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory
 import org.springframework.data.r2dbc.testing.StatementRecorder
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
+import org.springframework.r2dbc.core.DatabaseClient
 
 /**
  * Unit tests for [CoroutineCrudRepository].
@@ -48,8 +48,11 @@ class CoroutineRepositoryUnitTests {
 	fun before() {
 		recorder = StatementRecorder.newInstance()
 		client = DatabaseClient.builder().connectionFactory(recorder)
-				.dataAccessStrategy(DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build()
-		entityTemplate = R2dbcEntityTemplate(client)
+			.bindMarkers(PostgresDialect.INSTANCE.bindMarkersFactory).build()
+		entityTemplate = R2dbcEntityTemplate(
+			client,
+			DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)
+		)
 		repositoryFactory = R2dbcRepositoryFactory(entityTemplate)
 	}
 

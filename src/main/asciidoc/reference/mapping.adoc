@@ -283,9 +283,9 @@ public class PersonWriteConverter implements Converter<Person, OutboundRow> {
 
   public OutboundRow convert(Person source) {
     OutboundRow row = new OutboundRow();
-    row.put("id", SettableValue.from(source.getId()));
-    row.put("name", SettableValue.from(source.getFirstName()));
-    row.put("age", SettableValue.from(source.getAge()));
+    row.put("id", Parameter.from(source.getId()));
+    row.put("name", Parameter.from(source.getFirstName()));
+    row.put("age", Parameter.from(source.getAge()));
     return row;
   }
 }

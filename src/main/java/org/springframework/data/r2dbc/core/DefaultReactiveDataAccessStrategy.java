@@ -36,7 +36,6 @@ import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.r2dbc.query.UpdateMapper;
 import org.springframework.data.r2dbc.support.ArrayUtils;
 import org.springframework.data.relational.core.dialect.ArrayColumns;
@@ -46,6 +45,7 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.Parameter;
+import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -64,7 +64,7 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	private final UpdateMapper updateMapper;
 	private final MappingContext<RelationalPersistentEntity<?>, ? extends RelationalPersistentProperty> mappingContext;
 	private final StatementMapper statementMapper;
-	private final NamedParameterExpander expander;
+	private final NamedParameterExpander expander = new NamedParameterExpander();
 
 	/**
 	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link R2dbcDialect} and optional
@@ -115,24 +115,11 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 	 * @param dialect the {@link R2dbcDialect} to use.
 	 * @param converter must not be {@literal null}.
 	 */
-	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect, R2dbcConverter converter) {
-		this(dialect, converter, new NamedParameterExpander());
-	}
-
-	/**
-	 * Creates a new {@link DefaultReactiveDataAccessStrategy} given {@link R2dbcDialect} and {@link R2dbcConverter}.
-	 *
-	 * @param dialect the {@link R2dbcDialect} to use.
-	 * @param converter must not be {@literal null}.
-	 * @param expander must not be {@literal null}.
-	 */
 	@SuppressWarnings("unchecked")
-	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect, R2dbcConverter converter,
-			NamedParameterExpander expander) {
+	public DefaultReactiveDataAccessStrategy(R2dbcDialect dialect, R2dbcConverter converter) {
 
 		Assert.notNull(dialect, "Dialect must not be null");
 		Assert.notNull(converter, "RelationalConverter must not be null");
-		Assert.notNull(expander, "NamedParameterExpander must not be null");
 
 		this.converter = converter;
 		this.updateMapper = new UpdateMapper(dialect, converter);
@@ -143,7 +130,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 		RenderContextFactory factory = new RenderContextFactory(dialect);
 		this.statementMapper = new DefaultStatementMapper(dialect, factory.createRenderContext(), this.updateMapper,
 				this.mappingContext);
-		this.expander = expander;
 	}
 
 	/*
@@ -272,15 +258,6 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getBindValue(SettableValue)
-	 */
-	@Override
-	public SettableValue getBindValue(SettableValue value) {
-		return this.updateMapper.getBindValue(value);
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see org.springframework.data.r2dbc.function.ReactiveDataAccessStrategy#getBindValue(Parameter)
 	 */
 	@Override
@@ -306,10 +283,10 @@ public class DefaultReactiveDataAccessStrategy implements ReactiveDataAccessStra
 
 		List<String> parameterNames = this.expander.getParameterNames(query);
 
-		Map<String, SettableValue> namedBindings = new LinkedHashMap<>(parameterNames.size());
+		Map<String, Parameter> namedBindings = new LinkedHashMap<>(parameterNames.size());
 		for (String parameterName : parameterNames) {
 
-			SettableValue value = parameterProvider.getParameter(parameterNames.indexOf(parameterName), parameterName);
+			Parameter value = parameterProvider.getParameter(parameterNames.indexOf(parameterName), parameterName);
 
 			if (value == null) {
 				throw new InvalidDataAccessApiUsageException(

@@ -20,14 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
-import org.springframework.r2dbc.core.Parameter;
-import org.springframework.r2dbc.core.binding.BindMarkers;
-import org.springframework.r2dbc.core.binding.Bindings;
-import org.springframework.r2dbc.core.binding.MutableBindings;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.dialect.Escaper;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.query.ValueFunction;
 import org.springframework.data.relational.core.sql.AssignValue;
 import org.springframework.data.relational.core.sql.Assignment;
@@ -38,7 +34,11 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.binding.BindMarker;
+import org.springframework.r2dbc.core.binding.BindMarkers;
+import org.springframework.r2dbc.core.binding.Bindings;
+import org.springframework.r2dbc.core.binding.MutableBindings;
 import org.springframework.util.Assert;
 
 /**
@@ -59,24 +59,6 @@ public class UpdateMapper extends QueryMapper {
 	}
 
 	/**
-	 * Map a {@link Update} object to {@link BoundAssignments} and consider value/{@code NULL} {@link Bindings}.
-	 *
-	 * @param markers bind markers object, must not be {@literal null}.
-	 * @param update update definition to map, must not be {@literal null}.
-	 * @param table must not be {@literal null}.
-	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
-	 * @return the mapped {@link BoundAssignments}.
-	 * @deprecated since 1.1, use
-	 *             {@link #getMappedObject(BindMarkers, org.springframework.data.relational.core.query.Update, Table, RelationalPersistentEntity)}
-	 *             instead.
-	 */
-	@Deprecated
-	public BoundAssignments getMappedObject(BindMarkers markers, Update update, Table table,
-			@Nullable RelationalPersistentEntity<?> entity) {
-		return getMappedObject(markers, update.getAssignments(), table, entity);
-	}
-
-	/**
 	 * Map a {@link org.springframework.data.relational.core.query.Update} object to {@link BoundAssignments} and consider
 	 * value/{@code NULL} {@link Bindings}.
 	 *
@@ -87,8 +69,7 @@ public class UpdateMapper extends QueryMapper {
 	 * @return the mapped {@link BoundAssignments}.
 	 * @since 1.1
 	 */
-	public BoundAssignments getMappedObject(BindMarkers markers,
-			org.springframework.data.relational.core.query.Update update, Table table,
+	public BoundAssignments getMappedObject(BindMarkers markers, Update update, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 		return getMappedObject(markers, update.getAssignments(), table, entity);
 	}
@@ -130,14 +111,7 @@ public class UpdateMapper extends QueryMapper {
 		Object mappedValue;
 		Class<?> typeHint;
 
-		if (value instanceof SettableValue) {
-
-			SettableValue settableValue = (SettableValue) value;
-
-			mappedValue = convertValue(settableValue.getValue(), propertyField.getTypeHint());
-			typeHint = getTypeHint(mappedValue, actualType.getType(), settableValue);
-
-		} else if (value instanceof Parameter) {
+		if (value instanceof Parameter) {
 
 			Parameter parameter = (Parameter) value;
 

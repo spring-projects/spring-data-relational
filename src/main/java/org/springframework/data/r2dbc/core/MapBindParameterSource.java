@@ -18,13 +18,13 @@ package org.springframework.data.r2dbc.core;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.util.Streamable;
+import org.springframework.r2dbc.core.Parameter;
 import org.springframework.util.Assert;
 
 /**
  * {@link BindParameterSource} implementation that holds a given {@link Map} of parameters encapsulated as
- * {@link SettableValue}.
+ * {@link Parameter}.
  * <p>
  * This class is intended for passing in a simple Map of parameter values to the methods of the
  * {@link NamedParameterExpander} class.
@@ -32,10 +32,9 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @deprecated since 1.2, use Spring's org.springframework.r2dbc.core.MapBindParameterSource support instead.
  */
-@Deprecated
 class MapBindParameterSource implements BindParameterSource {
 
-	private final Map<String, SettableValue> values;
+	private final Map<String, Parameter> values;
 
 	/**
 	 * Creates a new empty {@link MapBindParameterSource}.
@@ -45,11 +44,11 @@ class MapBindParameterSource implements BindParameterSource {
 	}
 
 	/**
-	 * Creates a new {@link MapBindParameterSource} given {@link Map} of {@link SettableValue}.
+	 * Creates a new {@link MapBindParameterSource} given {@link Map} of {@link Parameter}.
 	 *
 	 * @param values the parameter mapping.
 	 */
-	MapBindParameterSource(Map<String, SettableValue> values) {
+	MapBindParameterSource(Map<String, Parameter> values) {
 
 		Assert.notNull(values, "Values must not be null");
 
@@ -68,7 +67,7 @@ class MapBindParameterSource implements BindParameterSource {
 		Assert.notNull(paramName, "Parameter name must not be null!");
 		Assert.notNull(value, "Value must not be null!");
 
-		this.values.put(paramName, SettableValue.fromOrEmpty(value, value.getClass()));
+		this.values.put(paramName, Parameter.fromOrEmpty(value, value.getClass()));
 		return this;
 	}
 
@@ -93,7 +92,7 @@ class MapBindParameterSource implements BindParameterSource {
 
 		Assert.notNull(paramName, "Parameter name must not be null!");
 
-		SettableValue settableValue = this.values.get(paramName);
+		Parameter settableValue = this.values.get(paramName);
 		if (settableValue != null) {
 			return settableValue.getType();
 		}

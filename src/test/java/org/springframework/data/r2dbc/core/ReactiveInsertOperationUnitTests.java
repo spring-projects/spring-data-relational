@@ -30,6 +30,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.r2dbc.testing.StatementRecorder;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.r2dbc.core.Parameter;
 
 /**
@@ -48,8 +49,8 @@ public class ReactiveInsertOperationUnitTests {
 
 		recorder = StatementRecorder.newInstance();
 		client = DatabaseClient.builder().connectionFactory(recorder)
-				.dataAccessStrategy(new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE)).build();
-		entityTemplate = new R2dbcEntityTemplate(client);
+				.bindMarkers(PostgresDialect.INSTANCE.getBindMarkersFactory()).build();
+		entityTemplate = new R2dbcEntityTemplate(client, new DefaultReactiveDataAccessStrategy(PostgresDialect.INSTANCE));
 	}
 
 	@Test // gh-220

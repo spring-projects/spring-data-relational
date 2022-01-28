@@ -23,11 +23,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.StatementMapper.UpdateSpec;
-import org.springframework.data.r2dbc.dialect.BindTarget;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.BindTarget;
 
 /**
  * Unit tests for {@link DefaultStatementMapper}.

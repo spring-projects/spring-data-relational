@@ -23,7 +23,6 @@ import java.util.function.BiFunction;
 
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.mapping.OutboundRow;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.lang.Nullable;
@@ -33,8 +32,8 @@ import org.springframework.util.Assert;
 
 /**
  * Data access strategy that generalizes convenience operations using mapped entities. Typically used internally by
- * {@link DatabaseClient} and repository support. SQL creation is limited to single-table operations and single-column
- * primary keys.
+ * {@link R2dbcEntityOperations} and repository support. SQL creation is limited to single-table operations and
+ * single-column primary keys.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -64,17 +63,6 @@ public interface ReactiveDataAccessStrategy {
 	 * @return
 	 */
 	OutboundRow getOutboundRow(Object object);
-
-	/**
-	 * Return a potentially converted {@link SettableValue} for strategies that support type conversion.
-	 *
-	 * @param value must not be {@literal null}.
-	 * @return
-	 * @since 1.1
-	 * @deprecated since 1.2, use {@link #getBindValue(Parameter)} instead.
-	 */
-	@Deprecated
-	SettableValue getBindValue(SettableValue value);
 
 	/**
 	 * Return a potentially converted {@link Parameter} for strategies that support type conversion.
@@ -159,7 +147,7 @@ public interface ReactiveDataAccessStrategy {
 	interface NamedParameterProvider {
 
 		/**
-		 * Returns the {@link SettableValue value} for a parameter identified either by name or by index.
+		 * Returns the {@link Parameter value} for a parameter identified either by name or by index.
 		 *
 		 * @param index parameter index according the parameter discovery order.
 		 * @param name name of the parameter.
@@ -167,7 +155,7 @@ public interface ReactiveDataAccessStrategy {
 		 *         {@link org.springframework.dao.InvalidDataAccessApiUsageException} in named parameter processing.
 		 */
 		@Nullable
-		SettableValue getParameter(int index, String name);
+		Parameter getParameter(int index, String name);
 	}
 
 }

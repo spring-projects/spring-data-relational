@@ -22,7 +22,8 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
+import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.BindMarkersFactory;
 
 /**
  * SQL translation support allowing the use of named parameters rather than native placeholders.
@@ -39,7 +40,7 @@ import org.springframework.data.r2dbc.dialect.BindMarkersFactory;
  * @deprecated since 1.2, without replacement.
  */
 @Deprecated
-public class NamedParameterExpander {
+class NamedParameterExpander {
 
 	/**
 	 * Default maximum number of entries for the SQL cache: 256.
@@ -126,11 +127,6 @@ public class NamedParameterExpander {
 	 */
 	public PreparedOperation<String> expand(String sql, BindMarkersFactory bindMarkersFactory,
 			BindParameterSource paramSource) {
-		return expand(sql, (org.springframework.r2dbc.core.binding.BindMarkersFactory) bindMarkersFactory, paramSource);
-	}
-
-	PreparedOperation<String> expand(String sql,
-			org.springframework.r2dbc.core.binding.BindMarkersFactory bindMarkersFactory, BindParameterSource paramSource) {
 
 		ParsedSql parsedSql = getParsedSql(sql);
 

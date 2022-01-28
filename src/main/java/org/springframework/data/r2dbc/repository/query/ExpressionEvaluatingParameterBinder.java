@@ -128,8 +128,6 @@ class ExpressionEvaluatingParameterBinder {
 		return dataAccessStrategy.getBindValue(parameter);
 	}
 
-
-
 	private org.springframework.r2dbc.core.Parameter getBindValue(org.springframework.r2dbc.core.Parameter bindValue) {
 		return dataAccessStrategy.getBindValue(bindValue);
 	}

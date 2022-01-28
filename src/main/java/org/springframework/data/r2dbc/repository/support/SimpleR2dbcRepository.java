@@ -105,29 +105,6 @@ public class SimpleR2dbcRepository<T, ID> implements R2dbcRepository<T, ID> {
 		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 	}
 
-	/**
-	 * Create a new {@link SimpleR2dbcRepository}.
-	 *
-	 * @param entity
-	 * @param databaseClient
-	 * @param converter
-	 * @param accessStrategy
-	 * @deprecated since 1.2.
-	 */
-	@Deprecated
-	public SimpleR2dbcRepository(RelationalEntityInformation<T, ID> entity,
-			org.springframework.data.r2dbc.core.DatabaseClient databaseClient, R2dbcConverter converter,
-			ReactiveDataAccessStrategy accessStrategy) {
-
-		this.entity = entity;
-		this.entityOperations = new R2dbcEntityTemplate(databaseClient, accessStrategy);
-		this.idProperty = Lazy.of(() -> converter //
-				.getMappingContext() //
-				.getRequiredPersistentEntity(this.entity.getJavaType()) //
-				.getRequiredIdProperty());
-		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
-	}
-
 	// -------------------------------------------------------------------------
 	// Methods from ReactiveCrudRepository
 	// -------------------------------------------------------------------------

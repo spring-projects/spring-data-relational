@@ -43,13 +43,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager;
 import org.springframework.data.r2dbc.repository.support.R2dbcRepositoryFactory;
 import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.r2dbc.connection.R2dbcTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
 /**

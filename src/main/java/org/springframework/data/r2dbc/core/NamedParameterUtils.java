@@ -26,10 +26,11 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.r2dbc.dialect.BindTarget;
+import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.binding.BindMarker;
 import org.springframework.r2dbc.core.binding.BindMarkers;
 import org.springframework.r2dbc.core.binding.BindMarkersFactory;
+import org.springframework.r2dbc.core.binding.BindTarget;
 import org.springframework.util.Assert;
 
 /**
@@ -581,13 +582,9 @@ abstract class NamedParameterUtils {
 			return this.expandedSql;
 		}
 
-		@Override
-		public void bindTo(BindTarget target) {
-			bindTo((org.springframework.r2dbc.core.binding.BindTarget) target);
-		}
 
 		@Override
-		public void bindTo(org.springframework.r2dbc.core.binding.BindTarget target) {
+		public void bindTo(BindTarget target) {
 
 			for (String namedParameter : this.parameterSource.getParameterNames()) {
 

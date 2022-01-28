@@ -32,7 +32,7 @@ import org.springframework.lang.Nullable;
  * @deprecated since 1.2, without replacement.
  */
 @Deprecated
-public interface BindParameterSource {
+interface BindParameterSource {
 
 	/**
 	 * Determine whether there is a value for the specified named parameter.

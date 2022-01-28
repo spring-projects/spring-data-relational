@@ -15,7 +15,6 @@
  */
 package org.springframework.data.r2dbc.core;
 
-import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
@@ -29,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
@@ -72,11 +70,9 @@ import org.springframework.data.relational.core.sql.Table;
 import org.springframework.data.util.ProxyUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.r2dbc.core.FetchSpec;
 import org.springframework.r2dbc.core.Parameter;
 import org.springframework.r2dbc.core.PreparedOperation;
 import org.springframework.r2dbc.core.RowsFetchSpec;
-import org.springframework.r2dbc.core.StatementFilterFunction;
 import org.springframework.util.Assert;
 
 /**
@@ -131,19 +127,8 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 * @param dialect the dialect to use, must not be {@literal null}.
 	 * @since 1.2
 	 */
-	public R2dbcEntityTemplate(org.springframework.r2dbc.core.DatabaseClient databaseClient, R2dbcDialect dialect) {
+	public R2dbcEntityTemplate(DatabaseClient databaseClient, R2dbcDialect dialect) {
 		this(databaseClient, new DefaultReactiveDataAccessStrategy(dialect));
-	}
-
-	/**
-	 * Create a new {@link R2dbcEntityTemplate} given {@link DatabaseClient}.
-	 *
-	 * @param databaseClient must not be {@literal null}.
-	 * @deprecated since 1.2, use {@link #R2dbcEntityTemplate(DatabaseClient, R2dbcDialect)} instead.
-	 */
-	@Deprecated
-	public R2dbcEntityTemplate(org.springframework.data.r2dbc.core.DatabaseClient databaseClient) {
-		this(databaseClient, getDataAccessStrategy(databaseClient));
 	}
 
 	/**
@@ -155,8 +140,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 * @param converter the dialect to use, must not be {@literal null}.
 	 * @since 1.2
 	 */
-	public R2dbcEntityTemplate(org.springframework.r2dbc.core.DatabaseClient databaseClient, R2dbcDialect dialect,
-			R2dbcConverter converter) {
+	public R2dbcEntityTemplate(DatabaseClient databaseClient, R2dbcDialect dialect, R2dbcConverter converter) {
 		this(databaseClient, new DefaultReactiveDataAccessStrategy(dialect, converter));
 	}
 
@@ -166,7 +150,7 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 	 * @param databaseClient must not be {@literal null}.
 	 * @since 1.2
 	 */
-	public R2dbcEntityTemplate(org.springframework.r2dbc.core.DatabaseClient databaseClient,
+	public R2dbcEntityTemplate(DatabaseClient databaseClient,
 			ReactiveDataAccessStrategy strategy) {
 
 		Assert.notNull(databaseClient, "DatabaseClient must not be null");
@@ -176,18 +160,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		this.dataAccessStrategy = strategy;
 		this.mappingContext = strategy.getConverter().getMappingContext();
 		this.projectionFactory = new SpelAwareProxyProjectionFactory();
-	}
-
-	/**
-	 * Create a new {@link R2dbcEntityTemplate} given {@link DatabaseClient} and {@link ReactiveDataAccessStrategy}.
-	 *
-	 * @param databaseClient must not be {@literal null}.
-	 * @deprecated since 1.2, use {@link #R2dbcEntityTemplate(DatabaseClient, ReactiveDataAccessStrategy)} instead.
-	 */
-	@Deprecated
-	public R2dbcEntityTemplate(org.springframework.data.r2dbc.core.DatabaseClient databaseClient,
-			ReactiveDataAccessStrategy strategy) {
-		this(new DatabaseClientAdapter(databaseClient), strategy);
 	}
 
 	/*
@@ -641,11 +613,9 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 					}
 
 					return statement.returnGeneratedValues(dataAccessStrategy.renderForGeneratedValues(identifierColumns.get(0)));
-				})
-				.map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entity)) //
+				}).map(this.dataAccessStrategy.getConverter().populateIdIfNecessary(entity)) //
 				.all() //
-				.last(entity)
-				.flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
+				.last(entity).flatMap(saved -> maybeCallAfterSave(saved, outboundRow, tableName));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -912,149 +882,6 @@ public class R2dbcEntityTemplate implements R2dbcEntityOperations, BeanFactoryAw
 		}
 
 		return executeSpec.map(rowMapper);
-	}
-
-	private static ReactiveDataAccessStrategy getDataAccessStrategy(
-			org.springframework.data.r2dbc.core.DatabaseClient databaseClient) {
-
-		Assert.notNull(databaseClient, "DatabaseClient must not be null");
-
-		if (databaseClient instanceof DefaultDatabaseClient) {
-
-			DefaultDatabaseClient client = (DefaultDatabaseClient) databaseClient;
-			return client.getDataAccessStrategy();
-		}
-
-		throw new IllegalStateException("Cannot obtain ReactiveDataAccessStrategy");
-	}
-
-	/**
-	 * Adapter to adapt our deprecated {@link org.springframework.data.r2dbc.core.DatabaseClient} into Spring R2DBC
-	 * {@link DatabaseClient}.
-	 */
-	private static class DatabaseClientAdapter implements DatabaseClient {
-
-		private final org.springframework.data.r2dbc.core.DatabaseClient delegate;
-
-		private DatabaseClientAdapter(org.springframework.data.r2dbc.core.DatabaseClient delegate) {
-
-			Assert.notNull(delegate, "DatabaseClient must not be null");
-
-			this.delegate = delegate;
-		}
-
-		@Override
-		public ConnectionFactory getConnectionFactory() {
-			return delegate.getConnectionFactory();
-		}
-
-		@Override
-		public GenericExecuteSpec sql(String sql) {
-			return new GenericExecuteSpecAdapter(delegate.execute(sql));
-		}
-
-		@Override
-		public GenericExecuteSpec sql(Supplier<String> sqlSupplier) {
-			return new GenericExecuteSpecAdapter(delegate.execute(sqlSupplier));
-		}
-
-		@Override
-		public <T> Mono<T> inConnection(Function<Connection, Mono<T>> action) throws DataAccessException {
-			return ((ConnectionAccessor) delegate).inConnection(action);
-		}
-
-		@Override
-		public <T> Flux<T> inConnectionMany(Function<Connection, Flux<T>> action) throws DataAccessException {
-			return ((ConnectionAccessor) delegate).inConnectionMany(action);
-		}
-
-		static class GenericExecuteSpecAdapter implements GenericExecuteSpec {
-
-			private final org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec delegate;
-
-			public GenericExecuteSpecAdapter(org.springframework.data.r2dbc.core.DatabaseClient.GenericExecuteSpec delegate) {
-				this.delegate = delegate;
-			}
-
-			@Override
-			public GenericExecuteSpec bind(int index, Object value) {
-				return new GenericExecuteSpecAdapter(delegate.bind(index, value));
-			}
-
-			@Override
-			public GenericExecuteSpec bindNull(int index, Class<?> type) {
-				return new GenericExecuteSpecAdapter(delegate.bindNull(index, type));
-			}
-
-			@Override
-			public GenericExecuteSpec bind(String name, Object value) {
-				return new GenericExecuteSpecAdapter(delegate.bind(name, value));
-			}
-
-			@Override
-			public GenericExecuteSpec bindNull(String name, Class<?> type) {
-				return new GenericExecuteSpecAdapter(delegate.bindNull(name, type));
-			}
-
-			@Override
-			public GenericExecuteSpec filter(StatementFilterFunction filter) {
-				return new GenericExecuteSpecAdapter(delegate.filter(filter::filter));
-			}
-
-			@Override
-			public <R> RowsFetchSpec<R> map(BiFunction<Row, RowMetadata, R> mappingFunction) {
-				return new RowFetchSpecAdapter<>(delegate.map(mappingFunction));
-			}
-
-			@Override
-			public FetchSpec<Map<String, Object>> fetch() {
-				return new FetchSpecAdapter<>(delegate.fetch());
-			}
-
-			@Override
-			public Mono<Void> then() {
-				return delegate.then();
-			}
-		}
-
-		private static class RowFetchSpecAdapter<T> implements RowsFetchSpec<T> {
-
-			private final org.springframework.data.r2dbc.core.RowsFetchSpec<T> delegate;
-
-			RowFetchSpecAdapter(org.springframework.data.r2dbc.core.RowsFetchSpec<T> delegate) {
-				this.delegate = delegate;
-			}
-
-			@Override
-			public Mono<T> one() {
-				return delegate.one();
-			}
-
-			@Override
-			public Mono<T> first() {
-				return delegate.first();
-			}
-
-			@Override
-			public Flux<T> all() {
-				return delegate.all();
-			}
-		}
-
-		private static class FetchSpecAdapter<T> extends RowFetchSpecAdapter<T> implements FetchSpec<T> {
-
-			private final org.springframework.data.r2dbc.core.FetchSpec<T> delegate;
-
-			FetchSpecAdapter(org.springframework.data.r2dbc.core.FetchSpec<T> delegate) {
-				super(delegate);
-				this.delegate = delegate;
-			}
-
-			@Override
-			public Mono<Integer> rowsUpdated() {
-				return delegate.rowsUpdated();
-			}
-		}
 	}
 
 	/**

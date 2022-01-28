@@ -30,7 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
-import org.springframework.data.r2dbc.mapping.SettableValue;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.CriteriaDefinition;
 import org.springframework.data.relational.core.sql.Expression;
@@ -478,19 +477,6 @@ public interface StatementMapper {
 		}
 
 		/**
-		 * Associate a column with a {@link SettableValue} and create a new {@link InsertSpec}.
-		 *
-		 * @param column
-		 * @param value
-		 * @return the {@link InsertSpec}.
-		 * @deprecated since 1.2, use {@link #withColumn(String, Parameter)} instead.
-		 */
-		@Deprecated
-		public InsertSpec withColumn(String column, SettableValue value) {
-			return withColumn(SqlIdentifier.unquoted(column), value);
-		}
-
-		/**
 		 * Associate a column with a {@link Parameter} and create a new {@link InsertSpec}.
 		 *
 		 * @param column
@@ -500,19 +486,6 @@ public interface StatementMapper {
 		 */
 		public InsertSpec withColumn(String column, Parameter value) {
 			return withColumn(SqlIdentifier.unquoted(column), value);
-		}
-
-		/**
-		 * Associate a column with a {@link SettableValue} and create a new {@link InsertSpec}.
-		 *
-		 * @param column
-		 * @param value
-		 * @return the {@link InsertSpec}.
-		 * @deprecated since 1.2, use {@link #withColumn(SqlIdentifier, Parameter)} instead.
-		 */
-		@Deprecated
-		public InsertSpec withColumn(SqlIdentifier column, SettableValue value) {
-			return withColumn(column, value.toParameter());
 		}
 
 		/**

@@ -36,10 +36,8 @@ import lombok.Data;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 import javax.sql.DataSource;
 
@@ -57,6 +55,7 @@ import org.springframework.data.r2dbc.testing.R2dbcIntegrationTestSupport;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.r2dbc.core.DatabaseClient;
 
 /**
  * Integration tests for PostgreSQL-specific features such as array support.
@@ -82,62 +81,6 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 				+ "primitive_array INT[]," //
 				+ "multidimensional_array INT[]," //
 				+ "collection_array INT[][])");
-	}
-
-	@Test // gh-30
-	void shouldReadAndWritePrimitiveSingleDimensionArrays() {
-
-		EntityWithArrays withArrays = new EntityWithArrays(null, null, new int[] { 1, 2, 3 }, null, null);
-
-		insert(withArrays);
-		selectAndAssert(actual -> {
-			assertThat(actual.primitiveArray).containsExactly(1, 2, 3);
-		});
-	}
-
-	@Test // gh-30
-	void shouldReadAndWriteBoxedSingleDimensionArrays() {
-
-		EntityWithArrays withArrays = new EntityWithArrays(null, new Integer[] { 1, 2, 3 }, null, null, null);
-
-		insert(withArrays);
-
-		selectAndAssert(actual -> {
-
-			assertThat(actual.boxedArray).containsExactly(1, 2, 3);
-
-		});
-	}
-
-	@Test // gh-30
-	void shouldReadAndWriteConvertedDimensionArrays() {
-
-		EntityWithArrays withArrays = new EntityWithArrays(null, null, null, null, Arrays.asList(5, 6, 7));
-
-		insert(withArrays);
-
-		selectAndAssert(actual -> {
-			assertThat(actual.collectionArray).containsExactly(5, 6, 7);
-		});
-	}
-
-	@Test // gh-30
-	void shouldReadAndWriteMultiDimensionArrays() {
-
-		EntityWithArrays withArrays = new EntityWithArrays(null, null, null, new int[][] { { 1, 2, 3 }, { 4, 5, 6 } },
-				null);
-
-		insert(withArrays);
-
-		selectAndAssert(actual -> {
-
-			assertThat(actual.multidimensionalArray).hasDimensions(2, 3);
-			assertThat(actual.multidimensionalArray[0]).containsExactly(1, 2, 3);
-			assertThat(actual.multidimensionalArray[1]).containsExactly(4, 5, 6);
-		});
-
-		client.update().table(EntityWithArrays.class).using(withArrays).then() //
-				.as(StepVerifier::create).verifyComplete();
 	}
 
 	@Test // gh-411
@@ -268,25 +211,6 @@ public class PostgresIntegrationTests extends R2dbcIntegrationTestSupport {
 
 					assertThat(actual.getInterval()).isEqualTo(entityWithInterval.interval);
 				}).verifyComplete();
-	}
-
-	private void insert(EntityWithArrays object) {
-
-		client.insert() //
-				.into(EntityWithArrays.class) //
-				.using(object) //
-				.then() //
-				.as(StepVerifier::create) //
-				.verifyComplete();
-	}
-
-	private void selectAndAssert(Consumer<? super EntityWithArrays> assertion) {
-
-		client.select() //
-				.from(EntityWithArrays.class).fetch() //
-				.first() //
-				.as(StepVerifier::create) //
-				.consumeNextWith(assertion).verifyComplete();
 	}
 
 	@Data

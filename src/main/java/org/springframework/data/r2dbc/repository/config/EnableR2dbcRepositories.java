@@ -117,21 +117,8 @@ public @interface EnableR2dbcRepositories {
 	Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
 
 	/**
-	 * Configures the name of the {@link org.springframework.data.r2dbc.core.DatabaseClient} bean to be used with the
-	 * repositories detected.
-	 *
-	 * @return
-	 * @see #entityOperationsRef()
-	 * @deprecated since 1.2, in favor of {@link #entityOperationsRef()}.
-	 */
-	@Deprecated
-	String databaseClientRef() default "";
-
-	/**
 	 * Configures the name of the {@link org.springframework.data.r2dbc.core.R2dbcEntityOperations} bean to be used with
-	 * the repositories detected. Used as alternative to {@link #databaseClientRef()} to configure an access strategy when
-	 * using repositories with different database systems/dialects. If this attribute is set, then
-	 * {@link #databaseClientRef()} is ignored.
+	 * the repositories detected.
 	 *
 	 * @return
 	 * @since 1.1.3
