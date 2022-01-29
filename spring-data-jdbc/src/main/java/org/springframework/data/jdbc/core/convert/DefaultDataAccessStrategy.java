@@ -19,6 +19,7 @@ import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
 import java.sql.JDBCType;
 import java.sql.ResultSet;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -105,14 +106,15 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
+		return this.insertWithVersion(instance, domainType, identifier, null);
+	}
 
+	@Override
+	public <T> Object insertWithVersion(T instance, Class<T> domainType, Identifier identifier, @Nullable Number version) {
 		SqlGenerator sqlGenerator = sql(domainType);
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
-				PersistentProperty::isIdProperty, getIdentifierProcessing());
-
-		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
+		SqlIdentifierParameterSource parameterSource = constructParameterSourceForInsert(instance, identifier, version, persistentEntity);
 
 		Object idValue = getIdValueOrNull(instance, persistentEntity);
 		if (idValue != null) {
@@ -126,10 +128,23 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		if (idValue == null) {
 			return executeInsertAndReturnGeneratedId(domainType, persistentEntity, parameterSource, insertSql);
 		} else {
-
 			operations.update(insertSql, parameterSource);
 			return null;
 		}
+	}
+
+	private <T> SqlIdentifierParameterSource constructParameterSourceForInsert(T instance, Identifier identifier,
+																			   @Nullable Number version,
+																			   RelationalPersistentEntity<T> persistentEntity) {
+		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
+				PersistentProperty::isIdProperty, getIdentifierProcessing());
+
+		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
+
+		if (version != null && persistentEntity.hasVersionProperty()) {
+			parameterSource.addValue(SqlIdentifier.quoted(persistentEntity.getRequiredVersionProperty().getName()), version);
+		}
+		return parameterSource;
 	}
 
 	@Nullable

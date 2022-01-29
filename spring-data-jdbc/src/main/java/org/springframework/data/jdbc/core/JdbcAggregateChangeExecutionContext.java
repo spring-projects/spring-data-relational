@@ -84,10 +84,10 @@ class JdbcAggregateChangeExecutionContext {
 
 			long initialVersion = versionProperty.getActualType().isPrimitive() ? 1L : 0;
 
-			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
-					insert.getEntity(), initialVersion, persistentEntity, converter);
+//			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
+//					insert.getEntity(), initialVersion, persistentEntity, converter);
 
-			id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty());
+			id = accessStrategy.insertWithVersion(insert.getEntity(), insert.getEntityType(), Identifier.empty(), initialVersion);
 
 			setNewVersion(initialVersion);
 		} else {
