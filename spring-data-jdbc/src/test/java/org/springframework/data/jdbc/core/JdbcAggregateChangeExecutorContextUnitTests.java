@@ -43,6 +43,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Umut Erturk
+ * @author Mikhail Polivakha
  */
 public class JdbcAggregateChangeExecutorContextUnitTests {
 
@@ -52,16 +53,14 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	});
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
-	AggregateChangeExecutor executor = new AggregateChangeExecutor(converter, accessStrategy);
-	JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
-			accessStrategy);
+	JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter, accessStrategy);
 
 	DummyEntity root = new DummyEntity();
 
 	@Test // DATAJDBC-453
 	public void rootOfEmptySetOfActionsisNull() {
 
-		Object root = executionContext.populateIdsIfNecessary();
+		Object root = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(root).isNull();
 	}
@@ -73,13 +72,10 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isNotNull();
 		assertThat(root.id).isEqualTo(23L);
-
-		executionContext.populateRootVersionIfNecessary(root);
-
 		assertThat(root.version).isEqualTo(1);
 	}
 
@@ -87,10 +83,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	public void afterInsertNotPrimitiveVersionShouldBeZero() {
 
 		DummyEntityNonPrimitiveVersion dummyEntityNonPrimitiveVersion = new DummyEntityNonPrimitiveVersion();
-
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(dummyEntityNonPrimitiveVersion));
-		executionContext.populateRootVersionIfNecessary(dummyEntityNonPrimitiveVersion);
-
 		assertThat(dummyEntityNonPrimitiveVersion.version).isEqualTo(0);
 	}
 
@@ -106,9 +99,9 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "content", content, null));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isNotNull();
 		assertThat(root.id).isEqualTo(23L);
 
 		assertThat(content.id).isEqualTo(24L);
@@ -126,9 +119,9 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
-		assertThat(newRoot).isNull();
+		assertThat(newRoot).isNotNull();
 		assertThat(root.id).isEqualTo(23L);
 
 		assertThat(content.id).isEqualTo(24L);

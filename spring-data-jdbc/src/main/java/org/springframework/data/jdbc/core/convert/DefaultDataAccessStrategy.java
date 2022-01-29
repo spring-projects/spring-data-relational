@@ -68,6 +68,8 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Yunyoung LEE
  * @author Radim Tlusty
+ * @author Mikhail Polivakha
+ *
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -106,18 +108,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
-
 		SqlGenerator sqlGenerator = sql(domainType);
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
-				PersistentProperty::isIdProperty, getIdentifierProcessing());
-
-		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
+		SqlIdentifierParameterSource parameterSource = constructParameterSourceForInsert(instance, identifier, persistentEntity);
 
 		Object idValue = getIdValueOrNull(instance, persistentEntity);
-		if (idValue != null) {
 
+		if (idValue != null) {
 			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
 		}
@@ -127,10 +125,19 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		if (idValue == null) {
 			return executeInsertAndReturnGeneratedId(domainType, persistentEntity, parameterSource, insertSql);
 		} else {
-
 			operations.update(insertSql, parameterSource);
 			return null;
 		}
+	}
+
+	private <T> SqlIdentifierParameterSource constructParameterSourceForInsert(T instance, Identifier identifier,
+																			   RelationalPersistentEntity<T> persistentEntity) {
+		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
+				PersistentProperty::isIdProperty, getIdentifierProcessing());
+
+		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
+
+		return parameterSource;
 	}
 
 	@Nullable

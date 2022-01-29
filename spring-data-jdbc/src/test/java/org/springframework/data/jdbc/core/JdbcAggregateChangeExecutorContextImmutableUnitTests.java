@@ -20,13 +20,17 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Value;
 import lombok.With;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
@@ -41,6 +45,12 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
+/**
+ * Unit tests for {@link JdbcAggregateChangeExecutionContext} with immutable entities
+ *
+ * @author Jens Schauder
+ * @author Mikhail Polivakha
+ */
 public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
@@ -57,7 +67,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	@Test // DATAJDBC-453
 	public void rootOfEmptySetOfActionsisNull() {
 
-		Object root = executionContext.populateIdsIfNecessary();
+		Object root = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(root).isNull();
 	}
@@ -70,12 +80,10 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(newRoot).isNotNull();
 		assertThat(newRoot.id).isEqualTo(23L);
-
-		newRoot = executionContext.populateRootVersionIfNecessary(newRoot);
 
 		assertThat(newRoot.version).isEqualTo(1);
 	}
@@ -92,7 +100,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "content", content, null));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(newRoot).isNotNull();
 		assertThat(newRoot.id).isEqualTo(23L);
@@ -112,7 +120,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(newRoot).isNotNull();
 		assertThat(newRoot.id).isEqualTo(23L);
@@ -120,8 +128,27 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		assertThat(newRoot.list.get(0).id).isEqualTo(24L);
 	}
 
+	@Test //DATAJDBC-1137
+	void testInsertWithVersionDoesNotTriggerAnewConstructorInvocation() {
+
+		ImmutableEntity root = new ImmutableEntity(null, null);
+
+		when(accessStrategy.insert(any(ImmutableEntity.class), eq(ImmutableEntity.class), eq(Identifier.empty()))).thenReturn(23L);
+
+		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
+
+		ImmutableEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
+
+		assertThat(newRoot).isNotNull();
+		assertThat(newRoot.id).isEqualTo(23L);
+
+		assertThat(newRoot.version).isEqualTo(0L);
+
+		assertThat(ImmutableEntity.getAmountOfConstructorInvocationsWithDifferentParameters()).isEqualTo(3);
+	}
+
 	DbAction.Insert<?> createInsert(DbAction.WithEntity<?> parent, String propertyName, Object value,
-			@Nullable Object key) {
+									@Nullable Object key) {
 
 		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, getPersistentPropertyPath(propertyName), parent,
 				key == null ? emptyMap() : singletonMap(toPath(propertyName), key));
@@ -149,6 +176,33 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		return persistentPropertyPaths.filter(p -> p.toDotPath().equals(path)).stream().findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No matching path found"));
 	}
+
+	private static class ImmutableEntity {
+
+		@Id private final Long id;
+		@Version private final Long version;
+
+		@Transient
+		private static final Set<ConstructorInvocation> constructorInvocations = new HashSet<>();
+
+		public ImmutableEntity(Long id, Long version) {
+			constructorInvocations.add(new ConstructorInvocation(id, version));
+			this.id = id;
+			this.version = version;
+		}
+
+		public static int getAmountOfConstructorInvocationsWithDifferentParameters() {
+			return constructorInvocations.size();
+		}
+	}
+
+	@EqualsAndHashCode
+	@AllArgsConstructor
+	private static class ConstructorInvocation {
+		private Long id;
+		private Long version;
+	}
+
 
 	@Value
 	@AllArgsConstructor

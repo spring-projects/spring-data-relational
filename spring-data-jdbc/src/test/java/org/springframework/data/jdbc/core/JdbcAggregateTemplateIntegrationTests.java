@@ -15,29 +15,11 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Arrays.*;
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.Value;
 import lombok.With;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,6 +52,33 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.IntStream;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.IS_HSQL;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_ARRAYS;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_MULTIDIMENSIONAL_ARRAYS;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_NANOSECOND_PRECISION;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_QUOTED_IDS;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
@@ -819,6 +828,32 @@ class JdbcAggregateTemplateIntegrationTests {
 				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 	}
 
+	@Test
+	void testUpdateEntityWithVersionDoesNotTriggerAnewConstructorInvocation() {
+		AggregateWithImmutableVersion aggregateWithImmutableVersion = new AggregateWithImmutableVersion(null, null);
+
+		final AggregateWithImmutableVersion savedRoot = template.save(aggregateWithImmutableVersion);
+
+		assertThat(savedRoot).isNotNull();
+		assertThat(savedRoot.version).isEqualTo(0L);
+
+		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsExactly(
+				new ConstructorInvocation(null, null), // Initial invocation, done by client
+				new ConstructorInvocation(null, savedRoot.version), // Assigning the version
+				new ConstructorInvocation(savedRoot.id, savedRoot.version) // Assigning the id
+		);
+
+		AggregateWithImmutableVersion.clearConstructorInvocationData();
+
+		final AggregateWithImmutableVersion updatedRoot = template.save(savedRoot);
+
+		assertThat(updatedRoot).isNotNull();
+		assertThat(updatedRoot.version).isEqualTo(1L);
+
+		// Expect only one assignnment of the version to AggregateWithImmutableVersion
+		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsOnly(new ConstructorInvocation(savedRoot.id, updatedRoot.version));
+	}
+
 	@Test // DATAJDBC-219 Test that a delete with a version attribute works as expected.
 	void deleteAggregateWithVersion() {
 
@@ -1220,13 +1255,32 @@ class JdbcAggregateTemplateIntegrationTests {
 		abstract void setVersion(Number newVersion);
 	}
 
-	@Value
+	@Getter
 	@With
 	@Table("VERSIONED_AGGREGATE")
 	static class AggregateWithImmutableVersion {
 
-		@Id Long id;
-		@Version Long version;
+		@Id final Long id;
+		@Version final Long version;
+
+		private final static List<ConstructorInvocation> constructorInvocations = new ArrayList<>();
+
+		public static void clearConstructorInvocationData() {
+			constructorInvocations.clear();
+		}
+
+		public AggregateWithImmutableVersion(Long id, Long version) {
+			constructorInvocations.add(new ConstructorInvocation(id, version));
+			this.id = id;
+			this.version = version;
+		}
+	}
+
+	@Value
+	@EqualsAndHashCode
+	private static class ConstructorInvocation {
+		private Long id;
+		private Long version;
 	}
 
 	@Data

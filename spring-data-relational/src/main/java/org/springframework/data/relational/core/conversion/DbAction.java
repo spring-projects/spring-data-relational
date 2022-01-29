@@ -33,6 +33,7 @@ import org.springframework.lang.Nullable;
  * @author Mark Paluch
  * @author Tyler Van Gorder
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
  */
 public interface DbAction<T> {
 
@@ -95,7 +96,7 @@ public interface DbAction<T> {
 	 */
 	class InsertRoot<T> implements WithGeneratedId<T> {
 
-		private final T entity;
+		private T entity;
 
 		public InsertRoot(T entity) {
 			this.entity = entity;
@@ -104,6 +105,8 @@ public interface DbAction<T> {
 		public T getEntity() {
 			return this.entity;
 		}
+
+		public void setEntity(T updatedEntity) { this.entity = updatedEntity; }
 
 		public String toString() {
 			return "DbAction.InsertRoot(entity=" + this.getEntity() + ")";
@@ -145,7 +148,7 @@ public interface DbAction<T> {
 	 */
 	class UpdateRoot<T> implements WithEntity<T> {
 
-		private final T entity;
+		private T entity;
 
 		public UpdateRoot(T entity) {
 			this.entity = entity;
@@ -153,6 +156,10 @@ public interface DbAction<T> {
 
 		public T getEntity() {
 			return this.entity;
+		}
+
+		public void setEntity(T entity) {
+			this.entity = entity;
 		}
 
 		public String toString() {
