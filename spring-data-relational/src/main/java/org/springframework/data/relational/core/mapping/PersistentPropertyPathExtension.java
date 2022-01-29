@@ -31,6 +31,7 @@ import java.util.Objects;
  * available used in SQL generation and conversion
  *
  * @author Jens Schauder
+ * @author Daniil Razorenov
  * @since 1.1
  */
 public class PersistentPropertyPathExtension {
@@ -389,7 +390,12 @@ public class PersistentPropertyPathExtension {
 		Assert.state(path != null, "Path is null");
 
 		RelationalPersistentProperty leafProperty = path.getRequiredLeafProperty();
-		String prefix = isEmbedded() ? leafProperty.getEmbeddedPrefix() : leafProperty.getName();
+		String prefix;
+		if (isEmbedded() && (leafProperty.getEmbeddedPrefix() == null || !leafProperty.getEmbeddedPrefix().isEmpty())) {
+			prefix = leafProperty.getEmbeddedPrefix();
+		} else {
+			prefix = leafProperty.getName();
+		}
 
 		if (path.getLength() == 1) {
 			Assert.notNull(prefix, "Prefix mus not be null.");

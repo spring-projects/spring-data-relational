@@ -277,6 +277,8 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 		String test;
 
 		@Embedded(onEmpty = OnEmpty.USE_NULL, prefix = "PREFIX_") Embeddable embeddable;
+
+		@Embedded(onEmpty = OnEmpty.USE_NULL) Embeddable2 embeddable2;
 	}
 
 	@Data
@@ -285,6 +287,12 @@ public class JdbcRepositoryEmbeddedWithReferenceIntegrationTests {
 		@Column("ID") DummyEntity2 dummyEntity2;
 
 		String test;
+	}
+
+	@Data
+	private static class Embeddable2 {
+
+		@Column("ID") DummyEntity2 dummyEntity2;
 	}
 
 	@Data
