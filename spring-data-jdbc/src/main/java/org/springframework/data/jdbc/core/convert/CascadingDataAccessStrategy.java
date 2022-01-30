@@ -54,6 +54,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 		return collect(das -> das.insert(instance, domainType, identifier));
 	}
 
+	@Override
+	public <T> Object insertWithVersion(T instance, Class<T> domainType, Identifier identifier, Number version) {
+		return collect(dataAccessStrategy -> dataAccessStrategy.insertWithVersion(instance, domainType, identifier, version));
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)

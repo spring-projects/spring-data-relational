@@ -84,9 +84,6 @@ class JdbcAggregateChangeExecutionContext {
 
 			long initialVersion = versionProperty.getActualType().isPrimitive() ? 1L : 0;
 
-//			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
-//					insert.getEntity(), initialVersion, persistentEntity, converter);
-
 			id = accessStrategy.insertWithVersion(insert.getEntity(), insert.getEntityType(), Identifier.empty(), initialVersion);
 
 			setNewVersion(initialVersion);
@@ -281,6 +278,14 @@ class JdbcAggregateChangeExecutionContext {
 		return RelationalEntityVersionUtils.setVersionNumberOnEntity(newRoot, getNewVersion(), persistentEntity, converter);
 	}
 
+	/**
+	 * @param <T> represents the type of an entity
+	 * @return new Root entity with populated id for itself, and for all of its aggregates.
+	 *         Might return {@literal null} in case ids were not generated (for root aggregate, as
+	 *         well as for children aggregates). For example, ids of root entity and for all of
+	 *         its aggregates (if any exists) were provided before the actions {@link DbAction.InsertRoot}
+	 *         and {@link DbAction.Insert} respectively
+	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
 	<T> T populateIdsIfNecessary() {

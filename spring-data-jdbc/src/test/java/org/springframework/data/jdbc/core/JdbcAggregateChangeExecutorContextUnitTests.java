@@ -52,9 +52,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	});
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
-	AggregateChangeExecutor executor = new AggregateChangeExecutor(converter, accessStrategy);
-	JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
-			accessStrategy);
+	JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter, accessStrategy);
 
 	DummyEntity root = new DummyEntity();
 
@@ -69,7 +67,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	@Test // DATAJDBC-453
 	public void afterInsertRootIdAndVersionMaybeUpdated() {
 
-		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty())).thenReturn(23L);
+		when(accessStrategy.insertWithVersion(root, DummyEntity.class, Identifier.empty(), 1L)).thenReturn(23L);
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
 
@@ -99,7 +97,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		Content content = new Content();
 
-		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty())).thenReturn(23L);
+		when(accessStrategy.insertWithVersion(root, DummyEntity.class, Identifier.empty(), 1L)).thenReturn(23L);
 		when(accessStrategy.insert(content, Content.class, createBackRef())).thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root);
@@ -119,7 +117,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		Content content = new Content();
 
-		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty())).thenReturn(23L);
+		when(accessStrategy.insertWithVersion(root, DummyEntity.class, Identifier.empty(), 1L)).thenReturn(23L);
 		when(accessStrategy.insert(eq(content), eq(Content.class), any(Identifier.class))).thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root);
