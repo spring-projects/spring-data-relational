@@ -106,19 +106,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	 */
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
-		return this.insertWithVersion(instance, domainType, identifier, null);
-	}
-
-	@Override
-	public <T> Object insertWithVersion(T instance, Class<T> domainType, Identifier identifier, @Nullable Number version) {
 		SqlGenerator sqlGenerator = sql(domainType);
 		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(domainType);
 
-		SqlIdentifierParameterSource parameterSource = constructParameterSourceForInsert(instance, identifier, version, persistentEntity);
+		SqlIdentifierParameterSource parameterSource = constructParameterSourceForInsert(instance, identifier, persistentEntity);
 
 		Object idValue = getIdValueOrNull(instance, persistentEntity);
-		if (idValue != null) {
 
+		if (idValue != null) {
 			RelationalPersistentProperty idProperty = persistentEntity.getRequiredIdProperty();
 			addConvertedPropertyValue(parameterSource, idProperty, idValue, idProperty.getColumnName());
 		}
@@ -134,16 +129,12 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private <T> SqlIdentifierParameterSource constructParameterSourceForInsert(T instance, Identifier identifier,
-																			   @Nullable Number version,
 																			   RelationalPersistentEntity<T> persistentEntity) {
 		SqlIdentifierParameterSource parameterSource = getParameterSource(instance, persistentEntity, "",
 				PersistentProperty::isIdProperty, getIdentifierProcessing());
 
 		identifier.forEach((name, value, type) -> addConvertedPropertyValue(parameterSource, name, value, type));
 
-		if (version != null && persistentEntity.hasVersionProperty()) {
-			parameterSource.addValue(SqlIdentifier.quoted(persistentEntity.getRequiredVersionProperty().getName()), version);
-		}
 		return parameterSource;
 	}
 

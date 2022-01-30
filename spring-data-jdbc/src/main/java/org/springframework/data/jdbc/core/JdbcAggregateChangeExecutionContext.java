@@ -84,9 +84,15 @@ class JdbcAggregateChangeExecutionContext {
 
 			long initialVersion = versionProperty.getActualType().isPrimitive() ? 1L : 0;
 
-			id = accessStrategy.insertWithVersion(insert.getEntity(), insert.getEntityType(), Identifier.empty(), initialVersion);
+			T rootEntityWithAssignedVersion = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
+					insert.getEntity(), initialVersion, persistentEntity, converter);
+
+			id = accessStrategy.insert(rootEntityWithAssignedVersion, insert.getEntityType(), Identifier.empty());
+
+			insert.setEntity(rootEntityWithAssignedVersion);
 
 			setNewVersion(initialVersion);
+
 		} else {
 			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());
 		}
@@ -150,18 +156,6 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeDeleteAll(DbAction.DeleteAll<T> delete) {
 
 		accessStrategy.deleteAll(delete.getPropertyPath());
-	}
-
-	<T> void executeMerge(DbAction.Merge<T> merge) {
-
-		// temporary implementation
-		if (!accessStrategy.update(merge.getEntity(), merge.getEntityType())) {
-
-			Object id = accessStrategy.insert(merge.getEntity(), merge.getEntityType(), getParentKeys(merge, converter));
-			add(new DbActionExecutionResult(merge, id));
-		} else {
-			add(new DbActionExecutionResult());
-		}
 	}
 
 	<T> void executeAcquireLock(DbAction.AcquireLockRoot<T> acquireLock) {

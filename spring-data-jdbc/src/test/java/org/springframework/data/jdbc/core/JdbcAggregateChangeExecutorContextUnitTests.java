@@ -67,7 +67,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	@Test // DATAJDBC-453
 	public void afterInsertRootIdAndVersionMaybeUpdated() {
 
-		when(accessStrategy.insertWithVersion(root, DummyEntity.class, Identifier.empty(), 1L)).thenReturn(23L);
+		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty())).thenReturn(23L);
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
 
@@ -75,9 +75,6 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		assertThat(newRoot).isNull();
 		assertThat(root.id).isEqualTo(23L);
-
-		executionContext.populateRootVersionIfNecessary(root);
-
 		assertThat(root.version).isEqualTo(1);
 	}
 
@@ -85,10 +82,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	public void afterInsertNotPrimitiveVersionShouldBeZero() {
 
 		DummyEntityNonPrimitiveVersion dummyEntityNonPrimitiveVersion = new DummyEntityNonPrimitiveVersion();
-
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(dummyEntityNonPrimitiveVersion));
-		executionContext.populateRootVersionIfNecessary(dummyEntityNonPrimitiveVersion);
-
 		assertThat(dummyEntityNonPrimitiveVersion.version).isEqualTo(0);
 	}
 
@@ -97,7 +91,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		Content content = new Content();
 
-		when(accessStrategy.insertWithVersion(root, DummyEntity.class, Identifier.empty(), 1L)).thenReturn(23L);
+		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty())).thenReturn(23L);
 		when(accessStrategy.insert(content, Content.class, createBackRef())).thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root);
@@ -117,7 +111,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		Content content = new Content();
 
-		when(accessStrategy.insertWithVersion(root, DummyEntity.class, Identifier.empty(), 1L)).thenReturn(23L);
+		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty())).thenReturn(23L);
 		when(accessStrategy.insert(eq(content), eq(Content.class), any(Identifier.class))).thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root);

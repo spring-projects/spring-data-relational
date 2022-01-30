@@ -53,9 +53,6 @@ public interface DataAccessStrategy extends RelationResolver {
 	@Nullable
 	<T> Object insert(T instance, Class<T> domainType, Identifier identifier);
 
-	@Nullable
-	<T> Object insertWithVersion(T instance, Class<T> domainType, Identifier identifier, Number version);
-
 	/**
 	 * Updates the data of a single entity in the database. Referenced entities don't get handled.
 	 *

@@ -23,6 +23,8 @@ import org.springframework.data.relational.core.conversion.DbActionExecutionExce
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.lang.Nullable;
 
+import java.util.Optional;
+
 /**
  * Executes an {@link MutableAggregateChange}.
  *
@@ -44,19 +46,13 @@ class AggregateChangeExecutor {
 	@Nullable
 	<T> T execute(AggregateChange<T> aggregateChange) {
 
-		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter,
-				accessStrategy);
+		JdbcAggregateChangeExecutionContext executionContext = new JdbcAggregateChangeExecutionContext(converter, accessStrategy);
 
 		aggregateChange.forEachAction(action -> execute(action, executionContext));
 
-		T root = executionContext.populateIdsIfNecessary();
-		root = root == null ? aggregateChange.getEntity() : root;
+		T rootWithPopulatedIds = executionContext.populateIdsIfNecessary();
 
-		if (root != null) {
-			root = executionContext.populateRootVersionIfNecessary(root);
-		}
-
-		return root;
+		return Optional.ofNullable(rootWithPopulatedIds).orElse(aggregateChange.getEntity());
 	}
 
 	private void execute(DbAction<?> action, JdbcAggregateChangeExecutionContext executionContext) {

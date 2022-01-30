@@ -70,7 +70,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	public void afterInsertRootIdAndVersionMaybeUpdated() {
 
 		// note that the root entity isn't the original one, but a new instance with the version set.
-		when(accessStrategy.insertWithVersion(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()), any(Number.class))).thenReturn(23L);
+		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()))).thenReturn(23L);
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
 
@@ -89,7 +89,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		Content content = new Content();
 
-		when(accessStrategy.insertWithVersion(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()), any(Number.class))).thenReturn(23L);
+		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()))).thenReturn(23L);
 		when(accessStrategy.insert(any(Content.class), eq(Content.class), eq(createBackRef()))).thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root);
@@ -109,7 +109,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		Content content = new Content();
 
-		when(accessStrategy.insertWithVersion(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()), any(Number.class))).thenReturn(23L);
+		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()))).thenReturn(23L);
 		when(accessStrategy.insert(eq(content), eq(Content.class), any(Identifier.class))).thenReturn(24L);
 
 		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root);
@@ -129,7 +129,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		ImmutableEntity root = new ImmutableEntity(null, null);
 
-		when(accessStrategy.insertWithVersion(any(ImmutableEntity.class), eq(ImmutableEntity.class), eq(Identifier.empty()), any(Number.class))).thenReturn(23L);
+		when(accessStrategy.insert(any(ImmutableEntity.class), eq(ImmutableEntity.class), eq(Identifier.empty()))).thenReturn(23L);
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
 

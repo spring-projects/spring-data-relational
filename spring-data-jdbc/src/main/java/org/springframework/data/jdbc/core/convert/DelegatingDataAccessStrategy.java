@@ -45,11 +45,6 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		return delegate.insert(instance, domainType, identifier);
 	}
 
-	@Override
-	public <T> Object insertWithVersion(T instance, Class<T> domainType, Identifier identifier, Number version) {
-		return delegate.insertWithVersion(instance, domainType, identifier, version);
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)

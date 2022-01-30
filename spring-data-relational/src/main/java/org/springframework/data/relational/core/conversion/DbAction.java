@@ -95,7 +95,7 @@ public interface DbAction<T> {
 	 */
 	class InsertRoot<T> implements WithGeneratedId<T> {
 
-		private final T entity;
+		private T entity;
 
 		public InsertRoot(T entity) {
 			this.entity = entity;
@@ -104,6 +104,8 @@ public interface DbAction<T> {
 		public T getEntity() {
 			return this.entity;
 		}
+
+		public void setEntity(T updatedEntity) { this.entity = updatedEntity; }
 
 		public String toString() {
 			return "DbAction.InsertRoot(entity=" + this.getEntity() + ")";

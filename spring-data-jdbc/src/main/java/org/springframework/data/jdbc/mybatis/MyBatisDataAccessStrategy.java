@@ -159,11 +159,6 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return myBatisContext.getId();
 	}
 
-	@Override
-	public <T> Object insertWithVersion(T instance, Class<T> domainType, Identifier identifier, Number version) {
-		return this.insert(instance, domainType, identifier);
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#update(java.lang.Object, java.lang.Class)
