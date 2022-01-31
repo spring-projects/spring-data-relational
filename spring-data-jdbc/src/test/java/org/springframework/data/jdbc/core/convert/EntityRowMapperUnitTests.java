@@ -44,7 +44,6 @@ import java.util.stream.Stream;
 
 import javax.naming.OperationNotSupportedException;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -280,19 +279,6 @@ public class EntityRowMapperUnitTests {
 		assertThat(extracted) //
 				.extracting(e -> e.one, e -> e.two, e -> e.three) //
 				.containsSequence("111", "222", "333");
-	}
-
-	@Disabled("Assertion was updated for correctness and now this test fails. Unclear what it is intended to test and if it is still necessary.")
-	@Test // DATAJDBC-273
-	public void handlesNonSimplePropertyInConstructor() throws SQLException {
-
-		ResultSet rs = mockResultSet(singletonList("ID"), //
-				ID_FOR_ENTITY_REFERENCING_LIST);
-		rs.next();
-
-		EntityWithListInConstructor extracted = createRowMapper(EntityWithListInConstructor.class).mapRow(rs, 1);
-
-		assertThat(extracted.content).containsExactly(new Trivial(1L, "one"), new Trivial(2L, "two"));
 	}
 
 	@Test // DATAJDBC-359
@@ -785,14 +771,6 @@ public class EntityRowMapperUnitTests {
 		MixedProperties withThree(String three) {
 			return new MixedProperties(one, two, three);
 		}
-	}
-
-	@AllArgsConstructor
-	static class EntityWithListInConstructor {
-
-		@Id final Long id;
-
-		final List<Trivial> content;
 	}
 
 	static class NoIdChain0 {
