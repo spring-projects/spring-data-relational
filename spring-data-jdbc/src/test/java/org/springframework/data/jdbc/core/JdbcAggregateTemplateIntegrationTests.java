@@ -15,15 +15,20 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Arrays.*;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
+import lombok.With;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +49,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
@@ -56,6 +62,7 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -63,11 +70,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
-import lombok.With;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
@@ -502,6 +504,21 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.content).extracting(e -> e.content).containsExactly("content");
 	}
 
+	@Test // GH-498 DATAJDBC-273
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
+	public void saveAndLoadAnEntityWithListOfElementsInConstructor() {
+
+		ElementNoId element = new ElementNoId();
+		element.content = "content";
+		ListParentAllArgs entity = new ListParentAllArgs("name", asList(element));
+
+		entity = template.save(entity);
+
+		ListParentAllArgs reloaded = template.findById(entity.id, ListParentAllArgs.class);
+
+		assertThat(reloaded.content).extracting(e -> e.content).containsExactly("content");
+	}
+
 	@Test // DATAJDBC-259
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
 	public void saveAndLoadAnEntityWithArray() {
@@ -544,7 +561,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	public void saveAndLoadAnEntityWithList() {
 
 		ListOwner arrayOwner = new ListOwner();
-		arrayOwner.digits.addAll(Arrays.asList("one", "two", "three"));
+		arrayOwner.digits.addAll(asList("one", "two", "three"));
 
 		ListOwner saved = template.save(arrayOwner);
 
@@ -554,7 +571,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-		assertThat(reloaded.digits).isEqualTo(Arrays.asList("one", "two", "three"));
+		assertThat(reloaded.digits).isEqualTo(asList("one", "two", "three"));
 	}
 
 	@Test // GH-1033
@@ -562,7 +579,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	public void saveAndLoadAnEntityWithListOfDouble() {
 
 		DoubleListOwner doubleListOwner = new DoubleListOwner();
-		doubleListOwner.digits.addAll(Arrays.asList(1.2, 1.3, 1.4));
+		doubleListOwner.digits.addAll(asList(1.2, 1.3, 1.4));
 
 		DoubleListOwner saved = template.save(doubleListOwner);
 
@@ -572,7 +589,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-		assertThat(reloaded.digits).isEqualTo(Arrays.asList(1.2, 1.3, 1.4));
+		assertThat(reloaded.digits).isEqualTo(asList(1.2, 1.3, 1.4));
 	}
 
 	@Test // GH-1033, GH-1046
@@ -580,7 +597,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	public void saveAndLoadAnEntityWithListOfFloat() {
 
 		FloatListOwner floatListOwner = new FloatListOwner();
-		final List<Float> values = Arrays.asList(1.2f, 1.3f, 1.4f);
+		final List<Float> values = asList(1.2f, 1.3f, 1.4f);
 		floatListOwner.digits.addAll(values);
 
 		FloatListOwner saved = template.save(floatListOwner);
@@ -599,7 +616,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	public void saveAndLoadAnEntityWithSet() {
 
 		SetOwner setOwner = new SetOwner();
-		setOwner.digits.addAll(Arrays.asList("one", "two", "three"));
+		setOwner.digits.addAll(asList("one", "two", "three"));
 
 		SetOwner saved = template.save(setOwner);
 
@@ -609,7 +626,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-		assertThat(reloaded.digits).isEqualTo(new HashSet<>(Arrays.asList("one", "two", "three")));
+		assertThat(reloaded.digits).isEqualTo(new HashSet<>(asList("one", "two", "three")));
 	}
 
 	@Test // DATAJDBC-327
@@ -1011,11 +1028,35 @@ public class JdbcAggregateTemplateIntegrationTests {
 		private String content;
 	}
 
+	@Table("LIST_PARENT")
 	static class ListParent {
 
 		@Column("id4") @Id private Long id;
 		String name;
+		@MappedCollection(idColumn = "LIST_PARENT")
 		List<ElementNoId> content = new ArrayList<>();
+	}
+
+	@Table("LIST_PARENT")
+	static class ListParentAllArgs {
+
+		@Column("id4") @Id
+		private final Long id;
+		private final String name;
+		@MappedCollection(idColumn = "LIST_PARENT")
+		private final List<ElementNoId> content = new ArrayList<>();
+
+		@PersistenceConstructor
+		ListParentAllArgs(Long id, String name, List<ElementNoId> content) {
+
+			this.id = id;
+			this.name = name;
+			this.content.addAll(content);
+		}
+
+		ListParentAllArgs(String name, List<ElementNoId> content) {
+			this(null, name, content);
+		}
 	}
 
 	static class ElementNoId {
