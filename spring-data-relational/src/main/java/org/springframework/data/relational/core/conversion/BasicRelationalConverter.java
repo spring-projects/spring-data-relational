@@ -218,6 +218,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 	@Nullable
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
+
 		Class<?> target = type.getType();
 		if (ClassUtils.isAssignableValue(target, value)) {
 			return value;
