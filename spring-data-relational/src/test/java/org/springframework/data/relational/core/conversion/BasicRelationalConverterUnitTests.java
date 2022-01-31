@@ -17,6 +17,9 @@ package org.springframework.data.relational.core.conversion;
 
 import static org.assertj.core.api.Assertions.*;
 
+import lombok.Data;
+import lombok.Value;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -33,16 +36,13 @@ import org.springframework.data.relational.core.mapping.RelationalPersistentProp
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.TypeInformation;
 
-import lombok.Data;
-import lombok.Value;
-
 /**
  * Unit tests for {@link BasicRelationalConverter}.
  *
  * @author Mark Paluch
  * @author Chirag Tailor
  */
-public class BasicRelationalConverterUnitTests {
+class BasicRelationalConverterUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
 	RelationalConverter converter;
@@ -61,7 +61,7 @@ public class BasicRelationalConverterUnitTests {
 
 	@Test // DATAJDBC-235
 	@SuppressWarnings("unchecked")
-	public void shouldUseConvertingPropertyAccessor() {
+	void shouldUseConvertingPropertyAccessor() {
 
 		RelationalPersistentEntity<MyEntity> entity = (RelationalPersistentEntity) context
 				.getRequiredPersistentEntity(MyEntity.class);
@@ -76,7 +76,7 @@ public class BasicRelationalConverterUnitTests {
 	}
 
 	@Test // DATAJDBC-235
-	public void shouldConvertEnumToString() {
+	void shouldConvertEnumToString() {
 
 		Object result = converter.writeValue(MyEnum.ON, ClassTypeInformation.from(String.class));
 
@@ -84,7 +84,7 @@ public class BasicRelationalConverterUnitTests {
 	}
 
 	@Test // DATAJDBC-235
-	public void shouldConvertStringToEnum() {
+	void shouldConvertStringToEnum() {
 
 		Object result = converter.readValue("OFF", ClassTypeInformation.from(MyEnum.class));
 
@@ -93,15 +93,17 @@ public class BasicRelationalConverterUnitTests {
 
 	@Test // GH-1046
 	void shouldConvertArrayElementsToTargetElementType() throws NoSuchMethodException {
-		TypeInformation<Object> typeInformation = ClassTypeInformation.fromReturnTypeOf(EntityWithArray.class.getMethod("getFloats"));
-		Double[] value = {1.2d, 1.3d, 1.4d};
+
+		TypeInformation<Object> typeInformation = ClassTypeInformation
+				.fromReturnTypeOf(EntityWithArray.class.getMethod("getFloats"));
+		Double[] value = { 1.2d, 1.3d, 1.4d };
 		Object result = converter.readValue(value, typeInformation);
 		assertThat(result).isEqualTo(Arrays.asList(1.2f, 1.3f, 1.4f));
 	}
 
 	@Test // DATAJDBC-235
 	@SuppressWarnings("unchecked")
-	public void shouldCreateInstance() {
+	void shouldCreateInstance() {
 
 		RelationalPersistentEntity<WithConstructorCreation> entity = (RelationalPersistentEntity) context
 				.getRequiredPersistentEntity(WithConstructorCreation.class);
@@ -112,7 +114,7 @@ public class BasicRelationalConverterUnitTests {
 	}
 
 	@Test // DATAJDBC-516
-	public void shouldConsiderWriteConverter() {
+	void shouldConsiderWriteConverter() {
 
 		Object result = converter.writeValue(new MyValue("hello-world"), ClassTypeInformation.from(MyValue.class));
 
@@ -120,7 +122,7 @@ public class BasicRelationalConverterUnitTests {
 	}
 
 	@Test // DATAJDBC-516
-	public void shouldConsiderReadConverter() {
+	void shouldConsiderReadConverter() {
 
 		Object result = converter.readValue("hello-world", ClassTypeInformation.from(MyValue.class));
 
