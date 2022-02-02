@@ -30,7 +30,6 @@ class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunc
 
 	private final StringBuilder part = new StringBuilder();
 	private boolean needsComma = false;
-	private String functionName;
 
 	SimpleFunctionVisitor(RenderContext context) {
 		super(context);
@@ -49,9 +48,6 @@ class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunc
 				part.append(", ");
 			}
 
-			if (part.length() == 0) {
-				part.append(functionName).append("(");
-			}
 			part.append(consumeRenderedPart());
 			needsComma = true;
 		}
@@ -66,7 +62,8 @@ class SimpleFunctionVisitor extends TypedSingleConditionRenderSupport<SimpleFunc
 	@Override
 	Delegation enterMatched(SimpleFunction segment) {
 
-		functionName = segment.getFunctionName();
+		part.append(segment.getFunctionName()).append("(");
+
 		return super.enterMatched(segment);
 	}
 
