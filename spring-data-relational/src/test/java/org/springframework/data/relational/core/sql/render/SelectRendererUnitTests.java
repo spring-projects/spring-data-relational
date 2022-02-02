@@ -663,5 +663,20 @@ class SelectRendererUnitTests {
 			assertThat(rendered).isEqualTo(
 					"SELECT MAX(employee.salary) OVER(PARTITION BY employee.department ORDER BY employee.age) AS MAX_SELECT FROM employee");
 		}
+
+		@Test // GH-1153
+		void renderAnalyticFunctionWithOutArgument() {
+
+			final Select select = StatementBuilder.select( //
+					AnalyticFunction.create("ROW_NUMBER") //
+							.partitionBy(department)) //
+					.from(employee) //
+					.build();
+
+			String rendered = SqlRenderer.toString(select);
+
+			assertThat(rendered).isEqualTo(
+					"SELECT ROW_NUMBER() OVER(PARTITION BY employee.department) FROM employee");
+		}
 	}
 }
