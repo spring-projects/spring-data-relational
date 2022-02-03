@@ -56,6 +56,11 @@ public class OracleDialect extends AnsiDialect {
 		return asList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE, NumberToBooleanConverter.INSTANCE, BooleanToIntegerConverter.INSTANCE);
 	}
 
+	@Override
+	public OrderByOptionsSupport orderByOptionsSupport() {
+		return OrderByOptionsSupported.NULL_HANDLING;
+	}
+
 	@ReadingConverter
 	enum NumberToBooleanConverter implements Converter<Number, Boolean> {
 		INSTANCE;

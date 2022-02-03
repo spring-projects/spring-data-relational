@@ -158,4 +158,9 @@ public class H2Dialect extends AbstractDialect {
 			throw new IllegalStateException(e);
 		}
 	}
+
+	@Override
+	public OrderByOptionsSupport orderByOptionsSupport() {
+		return OrderByOptionsSupported.NULL_HANDLING;
+	}
 }

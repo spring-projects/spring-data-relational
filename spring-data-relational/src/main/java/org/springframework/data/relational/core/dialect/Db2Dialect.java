@@ -118,4 +118,9 @@ public class Db2Dialect extends AbstractDialect {
 	public Collection<Object> getConverters() {
 		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
 	}
+
+	@Override
+	public OrderByOptionsSupport orderByOptionsSupport() {
+		return OrderByOptionsSupported.NULL_HANDLING;
+	}
 }
