@@ -169,4 +169,9 @@ public class MySqlDialect extends AbstractDialect {
 	public Collection<Object> getConverters() {
 		return Collections.singletonList(TimestampAtUtcToOffsetDateTimeConverter.INSTANCE);
 	}
+
+	@Override
+	public OrderByNullHandling orderByNullHandling() {
+		return OrderByNullHandling.NONE;
+	}
 }

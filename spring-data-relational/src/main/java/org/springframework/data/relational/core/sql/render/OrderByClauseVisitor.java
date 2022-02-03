@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.springframework.data.relational.core.sql.Visitable;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Chirag Tailor
  * @since 1.1
  */
 class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements PartRenderer {
@@ -59,11 +60,15 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	@Override
 	Delegation leaveMatched(OrderByField segment) {
 
-		OrderByField field = segment;
-
-		if (field.getDirection() != null) {
+		if (segment.getDirection() != null) {
 			builder.append(" ") //
-					.append(field.getDirection());
+					.append(segment.getDirection());
+		}
+
+		String nullHandling = context.getSelectRenderContext().evaluateOrderByNullHandling(segment.getNullHandling());
+		if (!nullHandling.isEmpty()) {
+			builder.append(" ") //
+					.append(nullHandling);
 		}
 
 		return Delegation.leave();

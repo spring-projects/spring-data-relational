@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -64,6 +63,7 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Mikhail Polivakha
+ * @author Chirag Tailor
  */
 class SqlGeneratorUnitTests {
 
@@ -243,6 +243,26 @@ class SqlGeneratorUnitTests {
 				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
 				"ORDER BY dummy_entity.x_name DESC", //
 				"x_other ASC");
+	}
+
+	@Test // GH-821
+	void findAllSortedWithNullHandling_resolvesNullHandlingWhenDialectSupportsIt() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, PostgresDialect.INSTANCE);
+
+		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+
+		assertThat(sql).contains("ORDER BY \"dummy_entity\".\"x_name\" ASC NULLS LAST");
+	}
+
+	@Test // GH-821
+	void findAllSortedWithNullHandling_ignoresNullHandlingWhenDialectDoesNotSupportIt() {
+
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, SqlServerDialect.INSTANCE);
+
+		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+
+		assertThat(sql).endsWith("ORDER BY dummy_entity.x_name ASC");
 	}
 
 	@Test // DATAJDBC-101

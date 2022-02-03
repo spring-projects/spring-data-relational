@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.dialect;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.Select;
@@ -28,6 +29,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  * @since 1.1
  */
 public abstract class AbstractDialect implements Dialect {
@@ -42,7 +44,7 @@ public abstract class AbstractDialect implements Dialect {
 		Function<Select, ? extends CharSequence> afterFromTable = getAfterFromTable();
 		Function<Select, ? extends CharSequence> afterOrderBy = getAfterOrderBy();
 
-		return new DialectSelectRenderContext(afterFromTable, afterOrderBy);
+		return new DialectSelectRenderContext(afterFromTable, afterOrderBy, orderByNullHandling());
 	}
 
 	/**
@@ -105,12 +107,14 @@ public abstract class AbstractDialect implements Dialect {
 
 		private final Function<Select, ? extends CharSequence> afterFromTable;
 		private final Function<Select, ? extends CharSequence> afterOrderBy;
+		private final OrderByNullHandling orderByNullHandling;
 
 		DialectSelectRenderContext(Function<Select, ? extends CharSequence> afterFromTable,
-				Function<Select, ? extends CharSequence> afterOrderBy) {
+				Function<Select, ? extends CharSequence> afterOrderBy, OrderByNullHandling orderByNullHandling) {
 
 			this.afterFromTable = afterFromTable;
 			this.afterOrderBy = afterOrderBy;
+			this.orderByNullHandling = orderByNullHandling;
 		}
 
 		/*
@@ -129,6 +133,11 @@ public abstract class AbstractDialect implements Dialect {
 		@Override
 		public Function<Select, ? extends CharSequence> afterOrderBy(boolean hasOrderBy) {
 			return afterOrderBy;
+		}
+
+		@Override
+		public String evaluateOrderByNullHandling(Sort.NullHandling nullHandling) {
+			return orderByNullHandling.evaluate(nullHandling);
 		}
 	}
 
