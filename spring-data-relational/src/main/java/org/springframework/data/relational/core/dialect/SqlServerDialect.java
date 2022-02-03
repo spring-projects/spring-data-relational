@@ -116,4 +116,9 @@ public class SqlServerDialect extends AbstractDialect {
 	public InsertRenderContext getInsertRenderContext() {
 		return InsertRenderContexts.MS_SQL_SERVER;
 	}
+
+	@Override
+	public OrderByNullHandling orderByNullHandling() {
+		return OrderByNullHandling.NONE;
+	}
 }

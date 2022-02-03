@@ -257,6 +257,21 @@ class JdbcAggregateTemplateIntegrationTests {
 				.containsExactly("Star");
 	}
 
+	@Test // GH-821
+	@EnabledOnFeature({SUPPORTS_QUOTED_IDS, SUPPORTS_NULL_HANDLING})
+	void saveAndLoadManyEntitiesWithReferencedEntitySortedWithNullHandling() {
+
+		template.save(createLegoSet(null));
+		template.save(createLegoSet("Star"));
+		template.save(createLegoSet("Frozen"));
+
+		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+
+		assertThat(reloadedLegoSets) //
+				.extracting("name") //
+				.containsExactly("Frozen", "Star", null);
+	}
+
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
 	void saveAndLoadManyEntitiesByIdWithReferencedEntity() {
