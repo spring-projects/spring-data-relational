@@ -714,7 +714,7 @@ class SqlGenerator {
 
 		SqlIdentifier columnName = this.entity.getRequiredPersistentProperty(order.getProperty()).getColumnName();
 		Column column = Column.create(columnName, this.getTable());
-		return OrderByField.from(column, order.getDirection());
+		return OrderByField.from(column, order.getDirection()).withNullHandling(order.getNullHandling());
 	}
 
 	/**

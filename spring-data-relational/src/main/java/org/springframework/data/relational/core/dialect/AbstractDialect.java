@@ -18,10 +18,13 @@ package org.springframework.data.relational.core.dialect;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 /**
  * Base class for {@link Dialect} implementations.
@@ -42,7 +45,7 @@ public abstract class AbstractDialect implements Dialect {
 		Function<Select, ? extends CharSequence> afterFromTable = getAfterFromTable();
 		Function<Select, ? extends CharSequence> afterOrderBy = getAfterOrderBy();
 
-		return new DialectSelectRenderContext(afterFromTable, afterOrderBy);
+		return new DialectSelectRenderContext(afterFromTable, afterOrderBy, orderByOptionsSupport());
 	}
 
 	/**
@@ -105,12 +108,14 @@ public abstract class AbstractDialect implements Dialect {
 
 		private final Function<Select, ? extends CharSequence> afterFromTable;
 		private final Function<Select, ? extends CharSequence> afterOrderBy;
+		private final OrderByOptionsSupport orderByOptionsSupport;
 
 		DialectSelectRenderContext(Function<Select, ? extends CharSequence> afterFromTable,
-				Function<Select, ? extends CharSequence> afterOrderBy) {
+				Function<Select, ? extends CharSequence> afterOrderBy, OrderByOptionsSupport orderByOptionsSupport) {
 
 			this.afterFromTable = afterFromTable;
 			this.afterOrderBy = afterOrderBy;
+			this.orderByOptionsSupport = orderByOptionsSupport;
 		}
 
 		/*
@@ -129,6 +134,11 @@ public abstract class AbstractDialect implements Dialect {
 		@Override
 		public Function<Select, ? extends CharSequence> afterOrderBy(boolean hasOrderBy) {
 			return afterOrderBy;
+		}
+
+		@Override
+		public String resolveOrderByOptions(@Nullable Sort.Direction direction, @NonNull Sort.NullHandling nullHandling) {
+			return orderByOptionsSupport.resolve(direction, nullHandling);
 		}
 	}
 

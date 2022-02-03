@@ -37,6 +37,11 @@ public class HsqlDbDialect extends AbstractDialect {
 		return AnsiDialect.LOCK_CLAUSE;
 	}
 
+	@Override
+	public OrderByOptionsSupport orderByOptionsSupport() {
+		return OrderByOptionsSupported.NULL_HANDLING;
+	}
+
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
 		@Override

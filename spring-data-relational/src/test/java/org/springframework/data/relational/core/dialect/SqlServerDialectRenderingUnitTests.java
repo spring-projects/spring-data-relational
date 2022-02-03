@@ -20,7 +20,10 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
@@ -191,5 +194,19 @@ public class SqlServerDialectRenderingUnitTests {
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo("SELECT foo.* FROM foo WITH (HOLDLOCK, ROWLOCK) ORDER BY foo.column_1 OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY");
+	}
+
+	@Test // GH-821
+	void shouldRenderSelectOrderByIgnoringNullHandling() {
+		Table table = Table.create("foo");
+		Select select = StatementBuilder.select(table.asterisk())
+				.from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table))
+						.withNullHandling(Sort.NullHandling.NULLS_FIRST))
+				.build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
+
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY foo.bar");
 	}
 }

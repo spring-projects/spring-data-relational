@@ -120,4 +120,8 @@ public interface Dialect {
 	default InsertRenderContext getInsertRenderContext() {
 		return InsertRenderContexts.DEFAULT;
 	}
+
+	default OrderByOptionsSupport orderByOptionsSupport() {
+		return OrderByOptionsSupported.DEFAULT;
+	}
 }

@@ -20,7 +20,10 @@ import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.sql.Column;
 import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.core.sql.OrderByField;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.StatementBuilder;
 import org.springframework.data.relational.core.sql.Table;
@@ -146,5 +149,59 @@ public class PostgresDialectRenderingUnitTests {
 		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
 
 		assertThat(sql).isEqualTo("SELECT foo.* FROM foo LIMIT 10 FOR SHARE OF foo");
+	}
+
+	@Test // GH-821
+	void shouldRenderSelectOrderByWithNoOptions() {
+		Table table = Table.create("foo");
+		Select select = StatementBuilder.select(table.asterisk())
+				.from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table)))
+				.build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
+
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY foo.bar");
+	}
+
+	@Test // GH-821
+	void shouldRenderSelectOrderByWithDirection() {
+		Table table = Table.create("foo");
+		Select select = StatementBuilder.select(table.asterisk())
+				.from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table), Sort.Direction.ASC))
+				.build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
+
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY foo.bar ASC");
+	}
+
+	@Test // GH-821
+	void shouldRenderSelectOrderByWithNullHandling() {
+		Table table = Table.create("foo");
+		Select select = StatementBuilder.select(table.asterisk())
+				.from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table))
+						.withNullHandling(Sort.NullHandling.NULLS_FIRST))
+				.build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
+
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY foo.bar NULLS FIRST");
+	}
+
+	@Test // GH-821
+	void shouldRenderSelectOrderByWithDirectionAndNullHandling() {
+		Table table = Table.create("foo");
+		Select select = StatementBuilder.select(table.asterisk())
+				.from(table)
+				.orderBy(OrderByField.from(Column.create("bar", table), Sort.Direction.DESC)
+						.withNullHandling(Sort.NullHandling.NULLS_FIRST))
+				.build();
+
+		String sql = SqlRenderer.create(factory.createRenderContext()).render(select);
+
+		assertThat(sql).isEqualTo("SELECT foo.* FROM foo ORDER BY foo.bar DESC NULLS FIRST");
 	}
 }

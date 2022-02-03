@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.core.convert;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import java.util.Map;
@@ -25,7 +26,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
@@ -37,8 +37,12 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.dialect.AbstractDialect;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
+import org.springframework.data.relational.core.dialect.LimitClause;
+import org.springframework.data.relational.core.dialect.LockClause;
+import org.springframework.data.relational.core.dialect.OrderByOptionsSupport;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.mapping.Column;
@@ -48,6 +52,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
@@ -243,6 +248,59 @@ class SqlGeneratorUnitTests {
 				"LEFT OUTER JOIN second_level_referenced_entity ref_further ON ref_further.referenced_entity = ref.x_l1id", //
 				"ORDER BY dummy_entity.x_name DESC", //
 				"x_other ASC");
+	}
+
+	@Test
+	void findAllSortedWithNullHandling_resolvesDialectSupportedOrderByOptions() {
+		LimitClause limitClause = mock(LimitClause.class);
+		when(limitClause.getClausePosition()).thenReturn(LimitClause.Position.AFTER_ORDER_BY);
+		LockClause lockClause = mock(LockClause.class);
+		when(lockClause.getClausePosition()).thenReturn(LockClause.Position.AFTER_ORDER_BY);
+		OrderByOptionsSupport orderByOptionsSupport = mock(OrderByOptionsSupport.class);
+		Sort.Direction direction = Sort.Direction.ASC;
+		Sort.NullHandling nullHandling = Sort.NullHandling.NULLS_LAST;
+		String sortPart = "ASCENDING NULLS @ END";
+		when(orderByOptionsSupport.resolve(direction, nullHandling)).thenReturn(sortPart);
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class,
+				new TestDialect(limitClause, lockClause, orderByOptionsSupport));
+
+		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(direction, "name", nullHandling)));
+
+		assertThat(sql).contains(String.format("ORDER BY dummy_entity.x_name %s", sortPart));
+	}
+
+	static class TestDialect extends AbstractDialect {
+		private final LimitClause limitClause;
+		private final LockClause lockClause;
+		private final OrderByOptionsSupport orderByOptionsSupport;
+
+		public TestDialect(LimitClause limitClause,
+						   LockClause lockClause,
+						   OrderByOptionsSupport orderByOptionsSupport) {
+			this.limitClause = limitClause;
+			this.lockClause = lockClause;
+			this.orderByOptionsSupport = orderByOptionsSupport;
+		}
+
+		@Override
+		public LimitClause limit() {
+			return this.limitClause;
+		}
+
+		@Override
+		public LockClause lock() {
+			return this.lockClause;
+		}
+
+		@Override
+		public OrderByOptionsSupport orderByOptionsSupport() {
+			return orderByOptionsSupport;
+		}
+
+		@Override
+		public IdentifierProcessing getIdentifierProcessing() {
+			return IdentifierProcessing.NONE;
+		}
 	}
 
 	@Test // DATAJDBC-101

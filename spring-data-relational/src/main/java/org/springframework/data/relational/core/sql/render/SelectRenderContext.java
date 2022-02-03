@@ -18,8 +18,12 @@ package org.springframework.data.relational.core.sql.render;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.dialect.OrderByOptionsSupported;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.Select;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 /**
  * Render context specifically for {@code SELECT} statements. This interface declares rendering hooks that are called
@@ -85,5 +89,9 @@ public interface SelectRenderContext {
 
 			return lockPrefix;
 		};
+	}
+
+	default String resolveOrderByOptions(@Nullable Sort.Direction direction, @NonNull Sort.NullHandling nullHandling) {
+		return OrderByOptionsSupported.DEFAULT.resolve(direction, nullHandling);
 	}
 }
