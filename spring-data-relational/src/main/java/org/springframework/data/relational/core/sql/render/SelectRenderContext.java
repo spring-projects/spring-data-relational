@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,13 @@ import org.springframework.lang.Nullable;
 
 /**
  * Render context specifically for {@code SELECT} statements. This interface declares rendering hooks that are called
- * before/after a specific {@code SELECT} clause part. The rendering content is appended directly after/before an
+ * before/after/during a specific {@code SELECT} clause part. The rendering content is appended directly after/before/during an
  * element without further whitespace processing. Hooks are responsible for adding required surrounding whitespaces.
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
  * @author Jens Schauder
+ * @author Chirag Tailor
  * @since 1.1
  */
 public interface SelectRenderContext {
@@ -91,6 +92,13 @@ public interface SelectRenderContext {
 		};
 	}
 
+	/**
+	 * Customization hook: Rendition of the options for {@code ORDER BY}.
+	 *
+	 * @param direction the {@link Sort.Direction} for the {@code ORDER BY} clause. May be {@literal null}.
+	 * @param nullHandling the {@link Sort.NullHandling} for the {@code ORDER BY} clause. Must not be {@literal null}.
+	 * @return render the complete {@link String} options for the {@code ORDER BY} clause.
+	 */
 	default String resolveOrderByOptions(@Nullable Sort.Direction direction, @NonNull Sort.NullHandling nullHandling) {
 		return OrderByOptionsSupported.DEFAULT.resolve(direction, nullHandling);
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,7 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Mikhail Polivakha
+ * @author Chirag Tailor
  */
 class SqlGeneratorUnitTests {
 
@@ -250,7 +251,7 @@ class SqlGeneratorUnitTests {
 				"x_other ASC");
 	}
 
-	@Test
+	@Test // GH-821
 	void findAllSortedWithNullHandling_resolvesDialectSupportedOrderByOptions() {
 		LimitClause limitClause = mock(LimitClause.class);
 		when(limitClause.getClausePosition()).thenReturn(LimitClause.Position.AFTER_ORDER_BY);
