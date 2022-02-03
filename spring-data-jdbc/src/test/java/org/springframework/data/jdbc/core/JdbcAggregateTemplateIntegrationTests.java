@@ -258,6 +258,7 @@ class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-821
+	@EnabledOnFeature({SUPPORTS_QUOTED_IDS, SUPPORTS_NULL_HANDLING})
 	void saveAndLoadManyEntitiesWithReferencedEntitySortedWithNullHandling() {
 		template.save(createLegoSet(null));
 		template.save(createLegoSet("Star"));

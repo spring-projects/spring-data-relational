@@ -83,6 +83,10 @@ public class TestDatabaseFeatures {
 		assumeThat(database).isNotIn(Database.H2, Database.Hsql);
 	}
 
+	private void supportsNullHandling() {
+		assumeThat(database).isNotIn(Database.MySql, Database.MariaDb, Database.SqlServer);
+	}
+
 	public void databaseIs(Database database) {
 		assumeThat(this.database).isEqualTo(database);
 	}
@@ -115,6 +119,7 @@ public class TestDatabaseFeatures {
 		SUPPORTS_ARRAYS(TestDatabaseFeatures::supportsArrays), //
 		SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES(TestDatabaseFeatures::supportsGeneratedIdsInReferencedEntities), //
 		SUPPORTS_NANOSECOND_PRECISION(TestDatabaseFeatures::supportsNanosecondPrecision), //
+		SUPPORTS_NULL_HANDLING(TestDatabaseFeatures::supportsNullHandling),
 		IS_POSTGRES(f -> f.databaseIs(Database.PostgreSql)), //
 		IS_HSQL(f -> f.databaseIs(Database.Hsql));
 
