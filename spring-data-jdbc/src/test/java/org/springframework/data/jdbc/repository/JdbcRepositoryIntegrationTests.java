@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.jdbc.repository.query.Lock;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -61,6 +62,7 @@ import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -331,6 +333,13 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.findAllByNamedQuery()).hasSize(1);
 	}
 
+	@Test
+	void findAllByFirstnameWithLock() {
+		DummyEntity dummyEntity = createDummyEntity();
+		repository.save(dummyEntity);
+		assertThat(repository.findAllByName(dummyEntity.getName())).hasSize(1);
+	}
+
 	@Test // GH-1022
 	public void findAllByCustomQueryName() {
 
@@ -574,7 +583,11 @@ public class JdbcRepositoryIntegrationTests {
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
+		@Lock(LockMode.PESSIMISTIC_WRITE)
+		List<DummyEntity> findAllByName(String name);
+
 		List<DummyEntity> findAllByNamedQuery();
+
 		@Query(name = "DummyEntity.customQuery")
 		List<DummyEntity> findAllByCustomNamedQuery();
 
@@ -624,6 +637,7 @@ public class JdbcRepositoryIntegrationTests {
 		List<DummyEntity> findByFlagTrue();
 
 		List<DummyEntity> findByRef(int ref);
+
 		List<DummyEntity> findByRef(AggregateReference<DummyEntity, Long> ref);
 	}
 

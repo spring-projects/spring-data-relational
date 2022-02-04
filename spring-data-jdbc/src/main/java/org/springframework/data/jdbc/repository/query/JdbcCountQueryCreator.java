@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2021-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,21 @@ import org.springframework.data.relational.repository.query.RelationalParameterA
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.PartTree;
 
+import java.util.Optional;
+
 /**
  * {@link JdbcQueryCreator} that creates {@code COUNT(*)} queries without applying limit/offset and {@link Sort}.
  *
  * @author Mark Paluch
+ * @author Diego Krupitza
  * @since 2.2
  */
 class JdbcCountQueryCreator extends JdbcQueryCreator {
 
 	JdbcCountQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
-			ReturnedType returnedType) {
-		super(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery, returnedType);
+			ReturnedType returnedType, Optional<Lock> lockMode) {
+		super(context, tree, converter, dialect, entityMetadata, accessor, isSliceQuery, returnedType, lockMode);
 	}
 
 	@Override

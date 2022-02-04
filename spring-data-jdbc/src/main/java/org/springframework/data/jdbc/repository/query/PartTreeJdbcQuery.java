@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Diego Krupitza
  * @since 2.0
  */
 public class PartTreeJdbcQuery extends AbstractJdbcQuery {
@@ -163,7 +164,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 						RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
 
 						JdbcCountQueryCreator queryCreator = new JdbcCountQueryCreator(context, tree, converter, dialect,
-								entityMetadata, accessor, false, processor.getReturnedType());
+								entityMetadata, accessor, false, processor.getReturnedType(), getQueryMethod().lookupLockAnnotation());
 
 						ParametrizedQuery countQuery = queryCreator.createQuery(Sort.unsorted());
 						Object count = singleObjectQuery((rs, i) -> rs.getLong(1)).execute(countQuery.getQuery(),
@@ -181,7 +182,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
 
 		JdbcQueryCreator queryCreator = new JdbcQueryCreator(context, tree, converter, dialect, entityMetadata, accessor,
-				getQueryMethod().isSliceQuery(), returnedType);
+				getQueryMethod().isSliceQuery(), returnedType, this.getQueryMethod().lookupLockAnnotation());
 		return queryCreator.createQuery(getDynamicSort(accessor));
 	}
 
@@ -231,7 +232,7 @@ public class PartTreeJdbcQuery extends AbstractJdbcQuery {
 		private final LongSupplier countSupplier;
 
 		PageQueryExecution(JdbcQueryExecution<? extends Collection<T>> delegate, Pageable pageable,
-						   LongSupplier countSupplier) {
+				LongSupplier countSupplier) {
 			this.delegate = delegate;
 			this.pageable = pageable;
 			this.countSupplier = countSupplier;

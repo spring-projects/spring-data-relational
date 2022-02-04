@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.data.jdbc.repository.query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -57,6 +58,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Diego Krupitza
  * @since 2.0
  */
 class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
@@ -69,6 +71,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	private final RenderContextFactory renderContextFactory;
 	private final boolean isSliceQuery;
 	private final ReturnedType returnedType;
+	private final Optional<Lock> lockMode;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link JdbcConverter}, {@link Dialect},
@@ -85,7 +88,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 	 */
 	JdbcQueryCreator(RelationalMappingContext context, PartTree tree, JdbcConverter converter, Dialect dialect,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor, boolean isSliceQuery,
-			ReturnedType returnedType) {
+			ReturnedType returnedType, Optional<Lock> lockMode) {
 		super(tree, accessor);
 
 		Assert.notNull(converter, "JdbcConverter must not be null");
@@ -102,6 +105,7 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 		this.renderContextFactory = new RenderContextFactory(dialect);
 		this.isSliceQuery = isSliceQuery;
 		this.returnedType = returnedType;
+		this.lockMode = lockMode;
 	}
 
 	/**
@@ -168,7 +172,12 @@ class JdbcQueryCreator extends RelationalQueryCreator<ParametrizedQuery> {
 				whereBuilder);
 		selectOrderBuilder = applyOrderBy(sort, entity, table, selectOrderBuilder);
 
-		Select select = selectOrderBuilder.build();
+		SelectBuilder.BuildSelect completedBuildSelect = selectOrderBuilder;
+		if (this.lockMode.isPresent()) {
+			completedBuildSelect = selectOrderBuilder.lock(this.lockMode.get().value());
+		}
+
+		Select select = completedBuildSelect.build();
 
 		String sql = SqlRenderer.create(renderContextFactory.createRenderContext()).render(select);
 

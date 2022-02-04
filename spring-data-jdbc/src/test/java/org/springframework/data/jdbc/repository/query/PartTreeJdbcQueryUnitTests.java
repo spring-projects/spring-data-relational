@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.Embedded;
 import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.sql.In;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.Repository;
@@ -58,6 +60,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
  * @author Mark Paluch
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Diego Krupitza
  */
 @ExtendWith(MockitoExtension.class)
 public class PartTreeJdbcQueryUnitTests {
@@ -85,7 +88,7 @@ public class PartTreeJdbcQueryUnitTests {
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		Hobby hobby = new Hobby();
 		hobby.name = "twentythree";
-		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { hobby }), returnedType);
 
 		assertSoftly(softly -> {
 
@@ -93,6 +96,47 @@ public class PartTreeJdbcQueryUnitTests {
 					.isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"HOBBY_REFERENCE\" = :hobby_reference");
 
 			softly.assertThat(query.getParameterSource().getValue("hobby_reference")).isEqualTo("twentythree");
+		});
+	}
+
+	@Test // GH-922
+	void createQueryWithPessimisticWriteLock() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndLastName", String.class, String.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+
+		String firstname = "Diego";
+		String lastname = "Krupitza";
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { firstname, lastname }),
+				returnedType);
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(query.getQuery().toUpperCase()).endsWith("FOR UPDATE");
+
+			softly.assertThat(query.getParameterSource().getValue("first_name")).isEqualTo(firstname);
+			softly.assertThat(query.getParameterSource().getValue("last_name")).isEqualTo(lastname);
+		});
+	}
+
+	@Test // GH-922
+	void createQueryWithPessimisticReadLock() throws Exception {
+
+		JdbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndAge", String.class, Integer.class);
+		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
+
+		String firstname = "Diego";
+		Integer age = 22;
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { firstname, age }),
+				returnedType);
+
+		assertSoftly(softly -> {
+
+			// this is also for update since h2 dialect does not distinguish between lockmodes
+			softly.assertThat(query.getQuery().toUpperCase()).endsWith("FOR UPDATE");
+
+			softly.assertThat(query.getParameterSource().getValue("first_name")).isEqualTo(firstname);
+			softly.assertThat(query.getParameterSource().getValue("age")).isEqualTo(age);
 		});
 	}
 
@@ -116,7 +160,7 @@ public class PartTreeJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = getQueryMethod("findViaReferenceByHobbyReference", AggregateReference.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		AggregateReference<Object, String> hobby = AggregateReference.to("twentythree");
-		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { hobby }), returnedType);
 
 		assertSoftly(softly -> {
 
@@ -133,7 +177,7 @@ public class PartTreeJdbcQueryUnitTests {
 		JdbcQueryMethod queryMethod = getQueryMethod("findViaIdByHobbyReference", String.class);
 		PartTreeJdbcQuery jdbcQuery = createQuery(queryMethod);
 		String hobby = "twentythree";
-		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] {hobby}), returnedType);
+		ParametrizedQuery query = jdbcQuery.createQuery(getAccessor(queryMethod, new Object[] { hobby }), returnedType);
 
 		assertSoftly(softly -> {
 
@@ -212,7 +256,6 @@ public class PartTreeJdbcQueryUnitTests {
 		assertThat(query.getQuery()).isEqualTo(BASE_SELECT + " WHERE " + TABLE + ".\"LAST_NAME\" = :last_name OR (" + TABLE
 				+ ".\"FIRST_NAME\" = :first_name)");
 	}
-
 
 	@Test // DATAJDBC-318
 	public void createsQueryToFindAllEntitiesByDateAttributeBetween() throws Exception {
@@ -644,6 +687,12 @@ public class PartTreeJdbcQueryUnitTests {
 	@NoRepositoryBean
 	interface UserRepository extends Repository<User, Long> {
 
+		@Lock(LockMode.PESSIMISTIC_WRITE)
+		List<User> findAllByFirstNameAndLastName(String firstName, String lastName);
+
+		@Lock(LockMode.PESSIMISTIC_READ)
+		List<User> findAllByFirstNameAndAge(String firstName, Integer age);
+
 		List<User> findAllByFirstName(String firstName);
 
 		List<User> findAllByHated(Hobby hobby);
@@ -758,7 +807,6 @@ public class PartTreeJdbcQueryUnitTests {
 	}
 
 	static class Hobby {
-		@Id
-		String name;
+		@Id String name;
 	}
 }

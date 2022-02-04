@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -41,6 +42,7 @@ import org.springframework.jdbc.core.RowMapper;
  * @author Oliver Gierke
  * @author Moises Cisneros
  * @author Mark Paluch
+ * @author Diego Krupitza
  */
 public class JdbcQueryMethodUnitTests {
 
@@ -119,6 +121,37 @@ public class JdbcQueryMethodUnitTests {
 		JdbcQueryMethod queryMethod = createJdbcQueryMethod("methodWithoutAnyQuery");
 		assertThat(queryMethod.getDeclaredQuery()).isEqualTo(null);
 	}
+
+	@Test // GH-1041
+	void returnsQueryMethodWithLock() throws NoSuchMethodException {
+
+		JdbcQueryMethod queryMethodWithWriteLock = createJdbcQueryMethod("queryMethodWithWriteLock");
+		JdbcQueryMethod queryMethodWithReadLock = createJdbcQueryMethod("queryMethodWithReadLock");
+
+		assertThat(queryMethodWithWriteLock.hasLockMode()).isTrue();
+		assertThat(queryMethodWithReadLock.hasLockMode()).isTrue();
+	}
+
+	@Test // GH-1041
+	void returnsQueryMethodWithCorrectLockType() throws NoSuchMethodException {
+
+		JdbcQueryMethod queryMethodWithWriteLock = createJdbcQueryMethod("queryMethodWithWriteLock");
+		JdbcQueryMethod queryMethodWithReadLock = createJdbcQueryMethod("queryMethodWithReadLock");
+
+		assertThat(queryMethodWithWriteLock.lookupLockAnnotation()).isPresent();
+		assertThat(queryMethodWithReadLock.lookupLockAnnotation()).isPresent();
+
+		assertThat(queryMethodWithWriteLock.lookupLockAnnotation().get().value()).isEqualTo(LockMode.PESSIMISTIC_WRITE);
+		assertThat(queryMethodWithReadLock.lookupLockAnnotation().get().value()).isEqualTo(LockMode.PESSIMISTIC_READ);
+	}
+
+	@Lock(LockMode.PESSIMISTIC_WRITE)
+	@Query
+	private void queryMethodWithWriteLock() {}
+
+	@Lock(LockMode.PESSIMISTIC_READ)
+	@Query
+	private void queryMethodWithReadLock() {}
 
 	@Query(value = QUERY, rowMapperClass = CustomRowMapper.class)
 	private void queryMethod() {}
