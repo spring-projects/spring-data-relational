@@ -231,11 +231,6 @@ public class PostgresDialect extends AbstractDialect {
 		return Collections.unmodifiableSet(simpleTypes);
 	}
 
-	@Override
-	public OrderByNullHandling orderByNullHandling() {
-		return OrderByNullHandling.SQL_STANDARD;
-	}
-
 	/**
 	 * If the class is present on the class path, invoke the specified consumer {@code action} with the class object,
 	 * otherwise do nothing.

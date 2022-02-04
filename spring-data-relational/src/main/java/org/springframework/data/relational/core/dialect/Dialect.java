@@ -128,6 +128,6 @@ public interface Dialect {
 	 * @return the {@link OrderByNullHandling} used by this dialect.
 	 */
 	default OrderByNullHandling orderByNullHandling() {
-		return OrderByNullHandling.NONE;
+		return OrderByNullHandling.SQL_STANDARD;
 	}
 }

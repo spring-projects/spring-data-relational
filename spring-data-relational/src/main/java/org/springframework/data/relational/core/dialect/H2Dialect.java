@@ -159,9 +159,4 @@ public class H2Dialect extends AbstractDialect {
 			throw new IllegalStateException(e);
 		}
 	}
-
-	@Override
-	public OrderByNullHandling orderByNullHandling() {
-		return OrderByNullHandling.SQL_STANDARD;
-	}
 }
