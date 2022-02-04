@@ -52,13 +52,20 @@ public interface OrderByNullHandling {
 	 */
 	class SqlStandardOrderByNullHandling implements OrderByNullHandling {
 
+		private static final String NULLS_FIRST = "NULLS FIRST";
+		private static final String NULLS_LAST = "NULLS LAST";
+		private static final String UNSPECIFIED = "";
+
 		@Override
 		public String evaluate(Sort.NullHandling nullHandling) {
 
-			if (Sort.NullHandling.NATIVE.equals(nullHandling)) {
-				return "";
+			switch (nullHandling) {
+				case NULLS_FIRST: return NULLS_FIRST;
+				case NULLS_LAST: return NULLS_LAST;
+				case NATIVE: return UNSPECIFIED;
+				default:
+					throw new UnsupportedOperationException("Sort.NullHandling " + nullHandling + " not supported");
 			}
-			return nullHandling.toString().replace("_", " ");
 		}
 	}
 }
