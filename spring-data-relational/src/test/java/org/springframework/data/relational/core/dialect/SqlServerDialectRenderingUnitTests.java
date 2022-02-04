@@ -199,6 +199,7 @@ public class SqlServerDialectRenderingUnitTests {
 
 	@Test // GH-821
 	void shouldRenderSelectOrderByIgnoringNullHandling() {
+
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk())
 				.from(table)

@@ -16,7 +16,6 @@
 package org.springframework.data.relational.core.dialect;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 /**
@@ -25,5 +24,5 @@ import org.springframework.lang.Nullable;
  * @author Chirag Tailor
  */
 public interface OrderByOptionsSupport {
-	String resolve(@Nullable Sort.Direction direction, @NonNull Sort.NullHandling nullHandling);
+	String resolve(@Nullable Sort.Direction direction, Sort.NullHandling nullHandling);
 }

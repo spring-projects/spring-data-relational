@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.core.convert;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.*;
-import static org.mockito.Mockito.*;
 import static org.springframework.data.relational.core.sql.SqlIdentifier.*;
 
 import java.util.Map;
@@ -37,12 +36,8 @@ import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.core.mapping.PersistentPropertyPathTestUtils;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.relational.core.dialect.AbstractDialect;
 import org.springframework.data.relational.core.dialect.AnsiDialect;
 import org.springframework.data.relational.core.dialect.Dialect;
-import org.springframework.data.relational.core.dialect.LimitClause;
-import org.springframework.data.relational.core.dialect.LockClause;
-import org.springframework.data.relational.core.dialect.OrderByOptionsSupport;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.SqlServerDialect;
 import org.springframework.data.relational.core.mapping.Column;
@@ -52,7 +47,6 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.Aliased;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
@@ -252,56 +246,23 @@ class SqlGeneratorUnitTests {
 	}
 
 	@Test // GH-821
-	void findAllSortedWithNullHandling_resolvesDialectSupportedOrderByOptions() {
-		LimitClause limitClause = mock(LimitClause.class);
-		when(limitClause.getClausePosition()).thenReturn(LimitClause.Position.AFTER_ORDER_BY);
-		LockClause lockClause = mock(LockClause.class);
-		when(lockClause.getClausePosition()).thenReturn(LockClause.Position.AFTER_ORDER_BY);
-		OrderByOptionsSupport orderByOptionsSupport = mock(OrderByOptionsSupport.class);
-		Sort.Direction direction = Sort.Direction.ASC;
-		Sort.NullHandling nullHandling = Sort.NullHandling.NULLS_LAST;
-		String sortPart = "ASCENDING NULLS @ END";
-		when(orderByOptionsSupport.resolve(direction, nullHandling)).thenReturn(sortPart);
-		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class,
-				new TestDialect(limitClause, lockClause, orderByOptionsSupport));
+	void findAllSortedWithNullHandling_resolvesNullHandlingWhenDialectSupportsIt() {
 
-		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(direction, "name", nullHandling)));
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, PostgresDialect.INSTANCE);
 
-		assertThat(sql).contains(String.format("ORDER BY dummy_entity.x_name %s", sortPart));
+		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+
+		assertThat(sql).contains("ORDER BY \"dummy_entity\".\"x_name\" ASC NULLS LAST");
 	}
 
-	static class TestDialect extends AbstractDialect {
-		private final LimitClause limitClause;
-		private final LockClause lockClause;
-		private final OrderByOptionsSupport orderByOptionsSupport;
+	@Test // GH-821
+	void findAllSortedWithNullHandling_ignoresNullHandlingWhenDialectDoesNotSupportIt() {
 
-		public TestDialect(LimitClause limitClause,
-						   LockClause lockClause,
-						   OrderByOptionsSupport orderByOptionsSupport) {
-			this.limitClause = limitClause;
-			this.lockClause = lockClause;
-			this.orderByOptionsSupport = orderByOptionsSupport;
-		}
+		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, SqlServerDialect.INSTANCE);
 
-		@Override
-		public LimitClause limit() {
-			return this.limitClause;
-		}
+		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
 
-		@Override
-		public LockClause lock() {
-			return this.lockClause;
-		}
-
-		@Override
-		public OrderByOptionsSupport orderByOptionsSupport() {
-			return orderByOptionsSupport;
-		}
-
-		@Override
-		public IdentifierProcessing getIdentifierProcessing() {
-			return IdentifierProcessing.NONE;
-		}
+		assertThat(sql).endsWith("ORDER BY dummy_entity.x_name ASC");
 	}
 
 	@Test // DATAJDBC-101

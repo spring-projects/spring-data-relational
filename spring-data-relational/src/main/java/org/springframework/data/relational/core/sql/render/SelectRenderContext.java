@@ -99,7 +99,7 @@ public interface SelectRenderContext {
 	 * @param nullHandling the {@link Sort.NullHandling} for the {@code ORDER BY} clause. Must not be {@literal null}.
 	 * @return render the complete {@link String} options for the {@code ORDER BY} clause.
 	 */
-	default String resolveOrderByOptions(@Nullable Sort.Direction direction, @NonNull Sort.NullHandling nullHandling) {
+	default String resolveOrderByOptions(@Nullable Sort.Direction direction, Sort.NullHandling nullHandling) {
 		return OrderByOptionsSupported.DEFAULT.resolve(direction, nullHandling);
 	}
 }

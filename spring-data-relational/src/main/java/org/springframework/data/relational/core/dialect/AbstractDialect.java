@@ -23,7 +23,6 @@ import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 /**
@@ -138,7 +137,7 @@ public abstract class AbstractDialect implements Dialect {
 		}
 
 		@Override
-		public String resolveOrderByOptions(@Nullable Sort.Direction direction, @NonNull Sort.NullHandling nullHandling) {
+		public String resolveOrderByOptions(@Nullable Sort.Direction direction, Sort.NullHandling nullHandling) {
 			return orderByOptionsSupport.resolve(direction, nullHandling);
 		}
 	}

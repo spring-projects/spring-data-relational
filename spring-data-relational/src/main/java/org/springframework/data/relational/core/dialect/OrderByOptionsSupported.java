@@ -18,7 +18,6 @@ package org.springframework.data.relational.core.dialect;
 import java.util.StringJoiner;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 /**
@@ -37,7 +36,8 @@ public enum OrderByOptionsSupported implements OrderByOptionsSupport {
 	}
 
 	@Override
-	public String resolve(@Nullable Sort.Direction direction, @NonNull Sort.NullHandling nullHandling) {
+	public String resolve(@Nullable Sort.Direction direction, Sort.NullHandling nullHandling) {
+
 		StringJoiner stringJoiner = new StringJoiner(" ");
 		if (direction != null) {
 			stringJoiner.add(direction.toString());

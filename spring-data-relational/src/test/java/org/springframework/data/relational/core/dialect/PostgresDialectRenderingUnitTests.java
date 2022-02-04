@@ -154,6 +154,7 @@ public class PostgresDialectRenderingUnitTests {
 
 	@Test // GH-821
 	void shouldRenderSelectOrderByWithNoOptions() {
+
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk())
 				.from(table)
@@ -167,6 +168,7 @@ public class PostgresDialectRenderingUnitTests {
 
 	@Test // GH-821
 	void shouldRenderSelectOrderByWithDirection() {
+
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk())
 				.from(table)
@@ -180,6 +182,7 @@ public class PostgresDialectRenderingUnitTests {
 
 	@Test // GH-821
 	void shouldRenderSelectOrderByWithNullHandling() {
+
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk())
 				.from(table)
@@ -194,6 +197,7 @@ public class PostgresDialectRenderingUnitTests {
 
 	@Test // GH-821
 	void shouldRenderSelectOrderByWithDirectionAndNullHandling() {
+
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk())
 				.from(table)
