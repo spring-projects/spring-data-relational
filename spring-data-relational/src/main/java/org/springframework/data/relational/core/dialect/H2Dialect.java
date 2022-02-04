@@ -161,7 +161,7 @@ public class H2Dialect extends AbstractDialect {
 	}
 
 	@Override
-	public OrderByOptionsSupport orderByOptionsSupport() {
-		return OrderByOptionsSupported.NULL_HANDLING;
+	public OrderByNullHandling orderByNullHandling() {
+		return OrderByNullHandling.SQL_STANDARD;
 	}
 }

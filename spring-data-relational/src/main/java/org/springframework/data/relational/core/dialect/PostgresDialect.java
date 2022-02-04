@@ -232,8 +232,8 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	@Override
-	public OrderByOptionsSupport orderByOptionsSupport() {
-		return OrderByOptionsSupported.NULL_HANDLING;
+	public OrderByNullHandling orderByNullHandling() {
+		return OrderByNullHandling.SQL_STANDARD;
 	}
 
 	/**

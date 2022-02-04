@@ -123,11 +123,11 @@ public interface Dialect {
 	}
 
 	/**
-	 * Return the {@link OrderByOptionsSupport} used by this dialect.
+	 * Return the {@link OrderByNullHandling} used by this dialect.
 	 *
-	 * @return the {@link OrderByOptionsSupport} used by this dialect.
+	 * @return the {@link OrderByNullHandling} used by this dialect.
 	 */
-	default OrderByOptionsSupport orderByOptionsSupport() {
-		return OrderByOptionsSupported.DEFAULT;
+	default OrderByNullHandling orderByNullHandling() {
+		return OrderByNullHandling.NONE;
 	}
 }

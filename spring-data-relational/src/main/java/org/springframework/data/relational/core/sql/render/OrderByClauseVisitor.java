@@ -60,11 +60,15 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	@Override
 	Delegation leaveMatched(OrderByField segment) {
 
-		String orderByOptions = context.getSelectRenderContext()
-				.resolveOrderByOptions(segment.getDirection(), segment.getNullHandling());
-		if (!orderByOptions.isEmpty()) {
+		if (segment.getDirection() != null) {
 			builder.append(" ") //
-					.append(orderByOptions);
+					.append(segment.getDirection());
+		}
+
+		String nullHandling = context.getSelectRenderContext().evaluateOrderByNullHandling(segment.getNullHandling());
+		if (!nullHandling.isEmpty()) {
+			builder.append(" ") //
+					.append(nullHandling);
 		}
 
 		return Delegation.leave();

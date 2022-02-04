@@ -19,15 +19,13 @@ import java.util.OptionalLong;
 import java.util.function.Function;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.data.relational.core.dialect.OrderByOptionsSupported;
+import org.springframework.data.relational.core.dialect.OrderByNullHandling;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.Select;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
 /**
  * Render context specifically for {@code SELECT} statements. This interface declares rendering hooks that are called
- * before/after/during a specific {@code SELECT} clause part. The rendering content is appended directly after/before/during an
+ * before/after/during a specific {@code SELECT} clause part. The rendering content is appended directly after/before an
  * element without further whitespace processing. Hooks are responsible for adding required surrounding whitespaces.
  *
  * @author Mark Paluch
@@ -93,13 +91,12 @@ public interface SelectRenderContext {
 	}
 
 	/**
-	 * Customization hook: Rendition of the options for {@code ORDER BY}.
+	 * Customization hook: Rendition of the null handling option for an {@code ORDER BY} sort expression.
 	 *
-	 * @param direction the {@link Sort.Direction} for the {@code ORDER BY} clause. May be {@literal null}.
-	 * @param nullHandling the {@link Sort.NullHandling} for the {@code ORDER BY} clause. Must not be {@literal null}.
-	 * @return render the complete {@link String} options for the {@code ORDER BY} clause.
+	 * @param nullHandling the {@link Sort.NullHandling} for the {@code ORDER BY} sort expression. Must not be {@literal null}.
+	 * @return render {@link String} SQL text to be included in an {@code ORDER BY} sort expression.
 	 */
-	default String resolveOrderByOptions(@Nullable Sort.Direction direction, Sort.NullHandling nullHandling) {
-		return OrderByOptionsSupported.DEFAULT.resolve(direction, nullHandling);
+	default String evaluateOrderByNullHandling(Sort.NullHandling nullHandling) {
+		return OrderByNullHandling.NONE.evaluate(nullHandling);
 	}
 }

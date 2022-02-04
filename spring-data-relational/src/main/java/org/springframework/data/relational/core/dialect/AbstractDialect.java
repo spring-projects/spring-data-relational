@@ -23,7 +23,6 @@ import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.LockOptions;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.data.relational.core.sql.render.SelectRenderContext;
-import org.springframework.lang.Nullable;
 
 /**
  * Base class for {@link Dialect} implementations.
@@ -45,7 +44,7 @@ public abstract class AbstractDialect implements Dialect {
 		Function<Select, ? extends CharSequence> afterFromTable = getAfterFromTable();
 		Function<Select, ? extends CharSequence> afterOrderBy = getAfterOrderBy();
 
-		return new DialectSelectRenderContext(afterFromTable, afterOrderBy, orderByOptionsSupport());
+		return new DialectSelectRenderContext(afterFromTable, afterOrderBy, orderByNullHandling());
 	}
 
 	/**
@@ -108,14 +107,14 @@ public abstract class AbstractDialect implements Dialect {
 
 		private final Function<Select, ? extends CharSequence> afterFromTable;
 		private final Function<Select, ? extends CharSequence> afterOrderBy;
-		private final OrderByOptionsSupport orderByOptionsSupport;
+		private final OrderByNullHandling orderByNullHandling;
 
 		DialectSelectRenderContext(Function<Select, ? extends CharSequence> afterFromTable,
-				Function<Select, ? extends CharSequence> afterOrderBy, OrderByOptionsSupport orderByOptionsSupport) {
+				Function<Select, ? extends CharSequence> afterOrderBy, OrderByNullHandling orderByNullHandling) {
 
 			this.afterFromTable = afterFromTable;
 			this.afterOrderBy = afterOrderBy;
-			this.orderByOptionsSupport = orderByOptionsSupport;
+			this.orderByNullHandling = orderByNullHandling;
 		}
 
 		/*
@@ -137,8 +136,8 @@ public abstract class AbstractDialect implements Dialect {
 		}
 
 		@Override
-		public String resolveOrderByOptions(@Nullable Sort.Direction direction, Sort.NullHandling nullHandling) {
-			return orderByOptionsSupport.resolve(direction, nullHandling);
+		public String evaluateOrderByNullHandling(Sort.NullHandling nullHandling) {
+			return orderByNullHandling.evaluate(nullHandling);
 		}
 	}
 

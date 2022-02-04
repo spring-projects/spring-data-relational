@@ -20,7 +20,6 @@ import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import static java.util.Arrays.*;
 
@@ -58,8 +57,8 @@ public class OracleDialect extends AnsiDialect {
 	}
 
 	@Override
-	public OrderByOptionsSupport orderByOptionsSupport() {
-		return OrderByOptionsSupported.NULL_HANDLING;
+	public OrderByNullHandling orderByNullHandling() {
+		return OrderByNullHandling.SQL_STANDARD;
 	}
 
 	@ReadingConverter
