@@ -21,7 +21,7 @@ import org.springframework.data.relational.core.sql.LockMode;
 import java.lang.annotation.*;
 
 /**
- * Annotation to provide a lock mode for a given {@link Query}.
+ * Annotation to provide a lock mode for a given query.
  *
  * @author Diego Krupitza
  */
