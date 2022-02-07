@@ -16,11 +16,13 @@
 package org.springframework.data.relational.core.dialect;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 /**
- * Describes the how obtaining generated ids after an insert works for a given JDBC driver.
+ * Describes how obtaining generated ids after an insert works for a given JDBC driver.
  *
  * @author Jens Schauder
+ * @author Chirag Tailor
  * @since 2.1
  */
 public interface IdGeneration {
@@ -41,5 +43,18 @@ public interface IdGeneration {
 	 */
 	default boolean driverRequiresKeyColumnNames() {
 		return false;
+	}
+
+	/**
+	 * Does the driver support id generation for batch operations.
+	 * <p>
+	 * This should be {@literal true} for most dialects, except DB2 and SqlServer.
+	 *
+	 * @return {@literal true} if the JDBC driver supports generated keys for batch operations.
+	 * @see PreparedStatement#getGeneratedKeys()
+	 * @since 2.4
+	 */
+	default boolean supportedForBatchOperations() {
+		return true;
 	}
 }

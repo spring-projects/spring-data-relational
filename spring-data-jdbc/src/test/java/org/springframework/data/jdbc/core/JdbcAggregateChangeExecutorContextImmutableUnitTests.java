@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -66,9 +67,9 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	public void afterInsertRootIdAndVersionMaybeUpdated() {
 
 		// note that the root entity isn't the original one, but a new instance with the version set.
-		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()))).thenReturn(23L);
+		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()), eq(IdValueSource.GENERATED))).thenReturn(23L);
 
-		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
+		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root, IdValueSource.GENERATED));
 
 		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
 
@@ -85,10 +86,10 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		Content content = new Content();
 
-		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()))).thenReturn(23L);
-		when(accessStrategy.insert(any(Content.class), eq(Content.class), eq(createBackRef()))).thenReturn(24L);
+		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()), eq(IdValueSource.GENERATED))).thenReturn(23L);
+		when(accessStrategy.insert(any(Content.class), eq(Content.class), eq(createBackRef()), eq(IdValueSource.GENERATED))).thenReturn(24L);
 
-		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root);
+		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "content", content, null));
 
@@ -105,10 +106,10 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		Content content = new Content();
 
-		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()))).thenReturn(23L);
-		when(accessStrategy.insert(eq(content), eq(Content.class), any(Identifier.class))).thenReturn(24L);
+		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()), eq(IdValueSource.GENERATED))).thenReturn(23L);
+		when(accessStrategy.insert(eq(content), eq(Content.class), any(Identifier.class), eq(IdValueSource.GENERATED))).thenReturn(24L);
 
-		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root);
+		DbAction.InsertRoot<DummyEntity> rootInsert = new DbAction.InsertRoot<>(root, IdValueSource.GENERATED);
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1));
 
@@ -124,7 +125,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 			@Nullable Object key) {
 
 		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, getPersistentPropertyPath(propertyName), parent,
-				key == null ? emptyMap() : singletonMap(toPath(propertyName), key));
+				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), IdValueSource.GENERATED);
 
 		return insert;
 	}

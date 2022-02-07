@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
-import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.RelationResolver;
-import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.dialect.JdbcArrayColumns;
 import org.springframework.data.jdbc.core.dialect.JdbcDialect;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
@@ -66,6 +59,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Fei Dong
  * @author Myeonghyeon Lee
  * @author Christoph Strobl
+ * @author Chirag Tailor
  */
 @Configuration
 @ComponentScan // To pick up configuration classes (per activated profile)
@@ -103,7 +97,9 @@ public class TestConfiguration {
 			JdbcConverter converter, Dialect dialect) {
 
 		DefaultDataAccessStrategy defaultDataAccessStrategy = new DefaultDataAccessStrategy(
-				new SqlGeneratorSource(context, converter, dialect), context, converter, template);
+				new SqlGeneratorSource(context, converter, dialect), context, converter, template,
+				new SqlParametersFactory(context, converter, dialect),
+				new InsertStrategyFactory(template, new BatchJdbcOperations(template.getJdbcOperations()), dialect));
 
 		return defaultDataAccessStrategy;
 	}

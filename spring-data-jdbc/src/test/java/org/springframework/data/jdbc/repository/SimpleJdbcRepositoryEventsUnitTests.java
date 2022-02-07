@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
-import org.springframework.data.jdbc.core.convert.DefaultDataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.DefaultJdbcTypeFactory;
-import org.springframework.data.jdbc.core.convert.DelegatingDataAccessStrategy;
-import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.SqlGeneratorSource;
+import org.springframework.data.jdbc.core.convert.*;
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
@@ -52,6 +46,7 @@ import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.relational.core.mapping.event.Identifier;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -68,6 +63,7 @@ import org.springframework.lang.Nullable;
  * @author Myeonghyeon Lee
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  */
 public class SimpleJdbcRepositoryEventsUnitTests {
 
@@ -86,8 +82,10 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		JdbcConverter converter = new BasicJdbcConverter(context, delegatingDataAccessStrategy, new JdbcCustomConversions(),
 				new DefaultJdbcTypeFactory(operations.getJdbcOperations()), dialect.getIdentifierProcessing());
 		SqlGeneratorSource generatorSource = new SqlGeneratorSource(context, converter, dialect);
+		SqlParametersFactory sqlParametersFactory = new SqlParametersFactory(context, converter, dialect);
+		InsertStrategyFactory insertStrategyFactory = new InsertStrategyFactory(operations, new BatchJdbcOperations(operations.getJdbcOperations()), dialect);
 
-		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations));
+		this.dataAccessStrategy = spy(new DefaultDataAccessStrategy(generatorSource, context, converter, operations, sqlParametersFactory, insertStrategyFactory));
 		delegatingDataAccessStrategy.setDelegate(dataAccessStrategy);
 		doReturn(true).when(dataAccessStrategy).update(any(), any());
 

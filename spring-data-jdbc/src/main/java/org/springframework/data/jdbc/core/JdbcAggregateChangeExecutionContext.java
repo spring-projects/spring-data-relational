@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -32,6 +33,7 @@ import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.core.convert.JdbcIdentifierBuilder;
+import org.springframework.data.jdbc.core.convert.InsertSubject;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -51,6 +53,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Umut Erturk
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  */
 class JdbcAggregateChangeExecutionContext {
 
@@ -87,11 +90,11 @@ class JdbcAggregateChangeExecutionContext {
 			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
 					insert.getEntity(), initialVersion, persistentEntity, converter);
 
-			id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty());
+			id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty(), insert.getIdValueSource());
 
 			setNewVersion(initialVersion);
 		} else {
-			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());
+			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(), insert.getIdValueSource());
 		}
 
 		add(new DbActionExecutionResult(insert, id));
@@ -100,8 +103,22 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeInsert(DbAction.Insert<T> insert) {
 
 		Identifier parentKeys = getParentKeys(insert, converter);
-		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys);
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys, insert.getIdValueSource());
 		add(new DbActionExecutionResult(insert, id));
+	}
+
+	<T> void executeInsertBatch(DbAction.InsertBatch<T> insertBatch) {
+
+		List<DbAction.Insert<T>> inserts = insertBatch.getInserts();
+		List<InsertSubject<T>> insertSubjects = inserts.stream()
+				.map(insert -> InsertSubject.describedBy(insert.getEntity(), getParentKeys(insert, converter)))
+				.collect(Collectors.toList());
+
+		Object[] ids = accessStrategy.insert(insertSubjects, insertBatch.getEntityType(), insertBatch.getIdValueSource());
+
+		for (int i = 0; i < inserts.size(); i++) {
+			add(new DbActionExecutionResult(inserts.get(i), ids.length > 0 ? ids[i] : null));
+		}
 	}
 
 	<T> void executeUpdateRoot(DbAction.UpdateRoot<T> update) {
@@ -153,18 +170,6 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeDeleteAll(DbAction.DeleteAll<T> delete) {
 
 		accessStrategy.deleteAll(delete.getPropertyPath());
-	}
-
-	<T> void executeMerge(DbAction.Merge<T> merge) {
-
-		// temporary implementation
-		if (!accessStrategy.update(merge.getEntity(), merge.getEntityType())) {
-
-			Object id = accessStrategy.insert(merge.getEntity(), merge.getEntityType(), getParentKeys(merge, converter));
-			add(new DbActionExecutionResult(merge, id));
-		} else {
-			add(new DbActionExecutionResult());
-		}
 	}
 
 	<T> void executeAcquireLock(DbAction.AcquireLockRoot<T> acquireLock) {

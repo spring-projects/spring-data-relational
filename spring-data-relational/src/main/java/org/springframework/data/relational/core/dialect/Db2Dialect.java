@@ -34,7 +34,19 @@ public class Db2Dialect extends AbstractDialect {
 	 */
 	public static final Db2Dialect INSTANCE = new Db2Dialect();
 
+	private static final IdGeneration ID_GENERATION = new IdGeneration() {
+		@Override
+		public boolean supportedForBatchOperations() {
+			return false;
+		}
+	};
+
 	protected Db2Dialect() {}
+
+	@Override
+	public IdGeneration getIdGeneration() {
+		return ID_GENERATION;
+	}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 
