@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ package org.springframework.data.jdbc.core.convert;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.util.Assert;
+
+import java.util.List;
 
 /**
  * Delegates all method calls to an instance set after construction. This is useful for {@link DataAccessStrategy}s with
@@ -30,6 +33,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  * @since 1.1
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
@@ -39,6 +43,16 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier) {
 		return delegate.insert(instance, domainType, identifier);
+	}
+
+	@Override
+	public <T> Object insert(T instance, Class<T> domainType, Identifier identifier, IdValueSource idValueSource) {
+		return delegate.insert(instance, domainType, identifier, idValueSource);
+	}
+
+	@Override
+	public <T> Object[] insert(List<InsertSubject<T>> insertSubjects, Class<T> domainType, IdValueSource idValueSource) {
+		return delegate.insert(insertSubjects, domainType, idValueSource);
 	}
 
 	@Override
