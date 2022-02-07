@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.data.jdbc.repository;
 
+import static java.util.Arrays.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
 import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import lombok.Value;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Thomas Lang
+ * @author Chirag Tailor
  */
 @ContextConfiguration
 @Transactional
@@ -59,6 +62,7 @@ public class JdbcRepositoryWithListsIntegrationTests {
 
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired DummyEntityRepository repository;
+	@Autowired RootRepository rootRepository;
 
 	private static DummyEntity createDummyEntity() {
 
@@ -102,6 +106,30 @@ public class JdbcRepositoryWithListsIntegrationTests {
 				.isNotNull() //
 				.extracting(e -> e.id) //
 				.containsExactlyInAnyOrder(element1.id, element2.id);
+	}
+
+	@Test // GH-1159
+	void saveAndLoadNonEmptyNestedList() {
+		Root root = new Root();
+		Intermediate intermediate1 = new Intermediate();
+		root.intermediates.add(intermediate1);
+		Intermediate intermediate2 = new Intermediate();
+		root.intermediates.add(intermediate2);
+		Leaf leaf1 = new Leaf("leaf1");
+		Leaf leaf2 = new Leaf("leaf2");
+		intermediate1.leaves.addAll(asList(leaf1, leaf2));
+		Leaf leaf3 = new Leaf("leaf3");
+		Leaf leaf4 = new Leaf("leaf4");
+		intermediate2.leaves.addAll(asList(leaf3, leaf4));
+
+		rootRepository.save(root);
+
+		assertThat(root.id).isNotNull();
+		assertThat(root.intermediates).allMatch(v -> v.id != null);
+
+		Root reloaded = rootRepository.findById(root.id).orElseThrow(AssertionFailedError::new);
+		assertThat(reloaded.intermediates.get(0).leaves).containsExactly(leaf1, leaf2);
+		assertThat(reloaded.intermediates.get(1).leaves).containsExactly(leaf3, leaf4);
 	}
 
 	@Test // DATAJDBC-130
@@ -195,6 +223,8 @@ public class JdbcRepositoryWithListsIntegrationTests {
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {}
 
+	interface RootRepository extends CrudRepository<Root, Long> {}
+
 	@Configuration
 	@Import(TestConfiguration.class)
 	static class Config {
@@ -209,6 +239,11 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		@Bean
 		DummyEntityRepository dummyEntityRepository() {
 			return factory.getRepository(DummyEntityRepository.class);
+		}
+
+		@Bean
+		RootRepository rootRepository() {
+			return factory.getRepository(RootRepository.class);
 		}
 	}
 
@@ -228,4 +263,20 @@ public class JdbcRepositoryWithListsIntegrationTests {
 		@Id private Long id;
 	}
 
+	@Data
+	static class Root {
+		@Id private Long id;
+		List<Intermediate> intermediates = new ArrayList<>();
+	}
+
+	@Data
+	static class Intermediate {
+		@Id private Long id;
+		List<Leaf> leaves = new ArrayList<>();
+	}
+
+	@Value
+	static class Leaf {
+		String name;
+	}
 }

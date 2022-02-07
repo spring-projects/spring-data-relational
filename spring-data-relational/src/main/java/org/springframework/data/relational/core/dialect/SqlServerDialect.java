@@ -36,7 +36,19 @@ public class SqlServerDialect extends AbstractDialect {
 	 */
 	public static final SqlServerDialect INSTANCE = new SqlServerDialect();
 
+	private static final IdGeneration ID_GENERATION = new IdGeneration() {
+		@Override
+		public boolean supportedForBatchOperations() {
+			return false;
+		}
+	};
+
 	protected SqlServerDialect() {}
+
+	@Override
+	public IdGeneration getIdGeneration() {
+		return ID_GENERATION;
+	}
 
 	private static final LimitClause LIMIT_CLAUSE = new LimitClause() {
 

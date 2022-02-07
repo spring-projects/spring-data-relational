@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Embedded;
@@ -53,6 +54,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Myeonghyeon-Lee
+ * @author Chirag Tailor
  */
 @Disabled
 public class AggregateChangeIdGenerationImmutableUnitTests {
@@ -68,7 +70,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
 	JdbcConverter converter = mock(JdbcConverter.class);
-	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity);
+	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity, IdValueSource.GENERATED);
 
 	private DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class);
 
@@ -393,7 +395,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 
 		DbAction.Insert<Object> insert = new DbAction.Insert<>(value,
 				context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert,
-				singletonMap(toPath(propertyName), key));
+				singletonMap(toPath(propertyName), key), IdValueSource.GENERATED);
 
 		return insert;
 	}
@@ -404,7 +406,7 @@ public class AggregateChangeIdGenerationImmutableUnitTests {
 		PersistentPropertyPath<RelationalPersistentProperty> propertyPath = toPath(
 				parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
 		DbAction.Insert<Object> insert = new DbAction.Insert<>(value, propertyPath, parentInsert,
-				singletonMap(propertyPath, key));
+				singletonMap(propertyPath, key), IdValueSource.GENERATED);
 
 		return insert;
 	}

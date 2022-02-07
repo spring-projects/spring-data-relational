@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  * @since 2.0
  */
 class AggregateChangeExecutor {
@@ -66,6 +67,8 @@ class AggregateChangeExecutor {
 				executionContext.executeInsertRoot((DbAction.InsertRoot<?>) action);
 			} else if (action instanceof DbAction.Insert) {
 				executionContext.executeInsert((DbAction.Insert<?>) action);
+			} else if (action instanceof DbAction.InsertBatch) {
+				executionContext.executeInsertBatch((DbAction.InsertBatch<?>) action);
 			} else if (action instanceof DbAction.UpdateRoot) {
 				executionContext.executeUpdateRoot((DbAction.UpdateRoot<?>) action);
 			} else if (action instanceof DbAction.Update) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
 import org.springframework.data.relational.core.conversion.DbAction;
+import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.conversion.MutableAggregateChange;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -47,6 +48,7 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @author Myeonghyeon-Lee
+ * @author Chirag Tailor
  */
 public class AggregateChangeIdGenerationUnitTests {
 
@@ -61,7 +63,7 @@ public class AggregateChangeIdGenerationUnitTests {
 	JdbcConverter converter = new BasicJdbcConverter(context, (identifier, path) -> {
 		throw new UnsupportedOperationException();
 	});
-	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity);
+	DbAction.WithEntity<?> rootInsert = new DbAction.InsertRoot<>(entity, IdValueSource.GENERATED);
 	DataAccessStrategy accessStrategy = mock(DataAccessStrategy.class, new IncrementingIds());
 	AggregateChangeExecutor executor = new AggregateChangeExecutor(converter, accessStrategy);
 
@@ -325,7 +327,7 @@ public class AggregateChangeIdGenerationUnitTests {
 	DbAction.Insert<?> createInsert(String propertyName, Object value, @Nullable Object key) {
 
 		return new DbAction.Insert<>(value, context.getPersistentPropertyPath(propertyName, DummyEntity.class), rootInsert,
-				key == null ? emptyMap() : singletonMap(toPath(propertyName), key));
+				key == null ? emptyMap() : singletonMap(toPath(propertyName), key), IdValueSource.GENERATED);
 	}
 
 	DbAction.Insert<?> createDeepInsert(String propertyName, Object value, @Nullable Object key,
@@ -335,7 +337,7 @@ public class AggregateChangeIdGenerationUnitTests {
 				parentInsert.getPropertyPath().toDotPath() + "." + propertyName);
 
 		return new DbAction.Insert<>(value, propertyPath, parentInsert,
-				key == null ? emptyMap() : singletonMap(propertyPath, key));
+				key == null ? emptyMap() : singletonMap(propertyPath, key), IdValueSource.GENERATED);
 	}
 
 	PersistentPropertyPath<RelationalPersistentProperty> toPath(String path) {

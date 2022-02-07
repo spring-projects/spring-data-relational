@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
-import org.springframework.data.relational.core.mapping.event.BeforeSaveEvent;
+import org.springframework.data.relational.core.mapping.event.BeforeConvertEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
@@ -48,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Very simple use cases for creation and usage of JdbcRepositories.
  *
  * @author Jens Schauder
+ * @author Chirag Tailor
  */
 @ContextConfiguration
 @Transactional
@@ -76,7 +77,7 @@ public class JdbcRepositoryWithCollectionsAndManuallyAssignedIdHsqlIntegrationTe
 		@Bean
 		public ApplicationListener<?> idSetting() {
 
-			return (ApplicationListener<BeforeSaveEvent>) event -> {
+			return (ApplicationListener<BeforeConvertEvent>) event -> {
 
 				if (event.getEntity() instanceof DummyEntity) {
 					setIds((DummyEntity) event.getEntity());
