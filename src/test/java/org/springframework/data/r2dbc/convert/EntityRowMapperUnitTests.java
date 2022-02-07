@@ -3,6 +3,7 @@ package org.springframework.data.r2dbc.convert;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.test.MockColumnMetadata;
@@ -33,14 +34,14 @@ class EntityRowMapperUnitTests {
 
 	private Row rowMock = mock(Row.class);
 	private RowMetadata metadata = MockRowMetadata.builder()
-			.columnMetadata(MockColumnMetadata.builder().name("integer_set").build())
-			.columnMetadata(MockColumnMetadata.builder().name("boxed_integers").build())
-			.columnMetadata(MockColumnMetadata.builder().name("primitive_integers").build())
-			.columnMetadata(MockColumnMetadata.builder().name("enum_array").build())
-			.columnMetadata(MockColumnMetadata.builder().name("set_of_enum").build())
-			.columnMetadata(MockColumnMetadata.builder().name("enum_set").build())
-			.columnMetadata(MockColumnMetadata.builder().name("id").build())
-			.columnMetadata(MockColumnMetadata.builder().name("ids").build()).build();
+			.columnMetadata(MockColumnMetadata.builder().name("integer_set").type(R2dbcType.COLLECTION).build())
+			.columnMetadata(MockColumnMetadata.builder().name("boxed_integers").type(R2dbcType.COLLECTION).build())
+			.columnMetadata(MockColumnMetadata.builder().name("primitive_integers").type(R2dbcType.COLLECTION).build())
+			.columnMetadata(MockColumnMetadata.builder().name("enum_array").type(R2dbcType.COLLECTION).build())
+			.columnMetadata(MockColumnMetadata.builder().name("set_of_enum").type(R2dbcType.COLLECTION).build())
+			.columnMetadata(MockColumnMetadata.builder().name("enum_set").type(R2dbcType.COLLECTION).build())
+			.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
+			.columnMetadata(MockColumnMetadata.builder().name("ids").type(R2dbcType.COLLECTION).build()).build();
 
 	@Test // gh-22
 	void shouldMapSimpleEntity() {

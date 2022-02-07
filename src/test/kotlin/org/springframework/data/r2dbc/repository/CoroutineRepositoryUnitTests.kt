@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.data.r2dbc.repository
 
+import io.r2dbc.spi.R2dbcType
 import io.r2dbc.spi.test.MockColumnMetadata
 import io.r2dbc.spi.test.MockResult
 import io.r2dbc.spi.test.MockRow
@@ -72,11 +73,21 @@ class CoroutineRepositoryUnitTests {
 	@Test // gh-395
 	fun shouldIssueSelectQuery() {
 
-		val rowMetadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build()).columnMetadata(MockColumnMetadata.builder().name("name").build()).build()
-		val row1 = MockRow.builder().identified("id", Object::class.java, 1L).identified("name", Object::class.java, "Walter").build()
-		val row2 = MockRow.builder().identified("id", Object::class.java, 2L).identified("name", Object::class.java, "White").build()
+		val rowMetadata = MockRowMetadata.builder()
+			.columnMetadata(
+				MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build()
+			)
+			.columnMetadata(
+				MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()
+			)
+			.build()
+		val row1 = MockRow.builder().identified("id", Object::class.java, 1L)
+			.identified("name", Object::class.java, "Walter").metadata(rowMetadata)
+			.build()
+		val row2 = MockRow.builder().identified("id", Object::class.java, 2L)
+			.identified("name", Object::class.java, "White").metadata(rowMetadata).build()
 
-		val result = MockResult.builder().rowMetadata(rowMetadata).row(row1).row(row2).build()
+		val result = MockResult.builder().row(row1).row(row2).build()
 		recorder.addStubbing({ s: String -> s.startsWith("SELECT") }, result)
 
 		val repository = repositoryFactory.getRepository(PersonRepository::class.java)

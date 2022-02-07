@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.convert;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
@@ -80,8 +81,8 @@ class MySqlMappingR2dbcConverterUnitTests {
 				.identified("flag2", Object.class, (byte) 0).build();
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("flag1").build())
-				.columnMetadata(MockColumnMetadata.builder().name("flag2").build()).build();
+				.columnMetadata(MockColumnMetadata.builder().name("flag1").type(R2dbcType.SMALLINT).build())
+				.columnMetadata(MockColumnMetadata.builder().name("flag2").type(R2dbcType.SMALLINT).build()).build();
 
 		BooleanMapping mapped = converter.read(BooleanMapping.class, row, metadata);
 

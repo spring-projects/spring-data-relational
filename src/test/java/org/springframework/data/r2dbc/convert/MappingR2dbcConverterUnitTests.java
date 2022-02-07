@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.convert;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
@@ -228,8 +229,9 @@ public class MappingR2dbcConverterUnitTests {
 
 		MockRow row = MockRow.builder().identified("id", Object.class, 42).identified("world", Object.class, "No, universe")
 				.build();
-		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
-				.columnMetadata(MockColumnMetadata.builder().name("world").build()).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
+				.columnMetadata(MockColumnMetadata.builder().name("world").type(R2dbcType.VARCHAR).build()).build();
 
 		WithSpelExpression result = converter.read(WithSpelExpression.class, row, metadata);
 
@@ -242,8 +244,9 @@ public class MappingR2dbcConverterUnitTests {
 	void considersConverterBeforeEntityConstruction() {
 
 		MockRow row = MockRow.builder().identified("id", Object.class, 42).identified("person", Object.class, null).build();
-		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
-				.columnMetadata(MockColumnMetadata.builder().name("person").build()).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
+				.columnMetadata(MockColumnMetadata.builder().name("person").type(R2dbcType.VARCHAR).build()).build();
 
 		WithSimplePersonConstructor result = converter.read(WithSimplePersonConstructor.class, row, metadata);
 

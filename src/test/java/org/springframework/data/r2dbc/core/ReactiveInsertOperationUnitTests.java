@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.core;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
@@ -56,10 +57,11 @@ public class ReactiveInsertOperationUnitTests {
 	@Test // gh-220
 	void shouldInsert() {
 
-		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
 				.build();
-		MockResult result = MockResult.builder().rowMetadata(metadata)
-				.row(MockRow.builder().identified("id", Object.class, 42).build()).build();
+		MockResult result = MockResult.builder()
+				.row(MockRow.builder().identified("id", Object.class, 42).metadata(metadata).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
 
@@ -84,10 +86,11 @@ public class ReactiveInsertOperationUnitTests {
 	@Test // gh-220
 	void shouldUpdateInTable() {
 
-		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
 				.build();
-		MockResult result = MockResult.builder().rowMetadata(metadata)
-				.row(MockRow.builder().identified("id", Object.class, 42).build()).build();
+		MockResult result = MockResult.builder()
+				.row(MockRow.builder().identified("id", Object.class, 42).metadata(metadata).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("INSERT"), result);
 

@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.convert;
 import static org.assertj.core.api.Assertions.*;
 
 import io.r2dbc.postgresql.codec.Json;
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockRow;
 import io.r2dbc.spi.test.MockRowMetadata;
@@ -89,7 +90,7 @@ class PostgresMappingR2dbcConverterUnitTests {
 		MockRow row = MockRow.builder().identified("json_string", Object.class, Json.of("{\"hello\":\"world\"}")).build();
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("json_string").build()).build();
+				.columnMetadata(MockColumnMetadata.builder().name("json_string").type(R2dbcType.VARCHAR).build()).build();
 
 		ConvertedJson result = converter.read(ConvertedJson.class, row, metadata);
 		assertThat(result.jsonString).isEqualTo("{\"hello\":\"world\"}");
@@ -101,7 +102,7 @@ class PostgresMappingR2dbcConverterUnitTests {
 		MockRow row = MockRow.builder().identified("json_bytes", Object.class, Json.of("{\"hello\":\"world\"}")).build();
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("json_bytes").build()).build();
+				.columnMetadata(MockColumnMetadata.builder().name("json_bytes").type(R2dbcType.VARCHAR).build()).build();
 
 		ConvertedJson result = converter.read(ConvertedJson.class, row, metadata);
 		assertThat(result.jsonBytes).isEqualTo("{\"hello\":\"world\"}".getBytes());
@@ -113,7 +114,7 @@ class PostgresMappingR2dbcConverterUnitTests {
 		MockRow row = MockRow.builder().identified("holder", Object.class, Json.of("{\"hello\":\"world\"}")).build();
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("holder").build()).build();
+				.columnMetadata(MockColumnMetadata.builder().name("holder").type(R2dbcType.VARCHAR).build()).build();
 
 		WithJsonHolder result = converter.read(WithJsonHolder.class, row, metadata);
 		assertThat(result.holder).isNotNull();

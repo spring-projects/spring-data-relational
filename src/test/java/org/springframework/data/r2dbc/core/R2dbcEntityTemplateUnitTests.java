@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.core;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
@@ -87,8 +88,8 @@ public class R2dbcEntityTemplateUnitTests {
 	void shouldCountBy() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
-		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
@@ -108,8 +109,8 @@ public class R2dbcEntityTemplateUnitTests {
 	void shouldProjectExistsResult() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
-		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified(0, Object.class, null).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
@@ -126,8 +127,8 @@ public class R2dbcEntityTemplateUnitTests {
 	void shouldExistsByCriteria() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
-		MockResult result = MockResult.builder().rowMetadata(metadata)
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified(0, Long.class, 1L).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
@@ -162,10 +163,11 @@ public class R2dbcEntityTemplateUnitTests {
 	@Test // gh-215
 	void selectShouldInvokeCallback() {
 
-		MockRowMetadata metadata = MockRowMetadata.builder().columnMetadata(MockColumnMetadata.builder().name("id").build())
-				.columnMetadata(MockColumnMetadata.builder().name("THE_NAME").build()).build();
-		MockResult result = MockResult.builder().rowMetadata(metadata).row(MockRow.builder()
-				.identified("id", Object.class, "Walter").identified("THE_NAME", Object.class, "some-name").build()).build();
+		MockRowMetadata metadata = MockRowMetadata.builder()
+				.columnMetadata(MockColumnMetadata.builder().name("id").type(R2dbcType.INTEGER).build())
+				.columnMetadata(MockColumnMetadata.builder().name("THE_NAME").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().row(MockRow.builder().identified("id", Object.class, "Walter")
+				.identified("THE_NAME", Object.class, "some-name").metadata(metadata).build()).build();
 
 		recorder.addStubbing(s -> s.startsWith("SELECT"), result);
 
@@ -204,8 +206,8 @@ public class R2dbcEntityTemplateUnitTests {
 	void shouldUpdateByQuery() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
-		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
 		recorder.addStubbing(s -> s.startsWith("UPDATE"), result);
 
@@ -226,8 +228,8 @@ public class R2dbcEntityTemplateUnitTests {
 	void shouldDeleteByQuery() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("name").build()).build();
-		MockResult result = MockResult.builder().rowMetadata(metadata).rowsUpdated(1).build();
+				.columnMetadata(MockColumnMetadata.builder().name("name").type(R2dbcType.VARCHAR).build()).build();
+		MockResult result = MockResult.builder().rowsUpdated(1).build();
 
 		recorder.addStubbing(s -> s.startsWith("DELETE"), result);
 

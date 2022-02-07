@@ -18,6 +18,7 @@ package org.springframework.data.r2dbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.test.MockColumnMetadata;
 import io.r2dbc.spi.test.MockResult;
 import io.r2dbc.spi.test.MockRow;
@@ -288,9 +289,9 @@ public class StringBasedR2dbcQueryUnitTests {
 	void selectsSimpleType() {
 
 		MockRowMetadata metadata = MockRowMetadata.builder()
-				.columnMetadata(MockColumnMetadata.builder().name("date").build()).build();
+				.columnMetadata(MockColumnMetadata.builder().name("date").type(R2dbcType.DATE).build()).build();
 		LocalDate value = LocalDate.now();
-		MockResult result = MockResult.builder().rowMetadata(metadata)
+		MockResult result = MockResult.builder()
 				.row(MockRow.builder().identified(0, LocalDate.class, value).build()).build();
 
 		StatementRecorder recorder = StatementRecorder.newInstance();
