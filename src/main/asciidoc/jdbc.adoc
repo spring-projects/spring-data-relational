@@ -550,11 +550,11 @@ The following table shows the keywords that are supported for query methods:
 
 | `Containing` on String
 | `findByFirstnameContaining(String name)`
-| `firstname LIKE '%'   name +'%'`
+| `firstname LIKE '%' + name + '%'`
 
 | `NotContaining` on String
 | `findByFirstnameNotContaining(String name)`
-| `firstname NOT LIKE '%'   name +'%'`
+| `firstname NOT LIKE '%' + name + '%'`
 
 | `(No keyword)`
 | `findByFirstname(String name)`
