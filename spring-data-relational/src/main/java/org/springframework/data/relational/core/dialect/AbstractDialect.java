@@ -107,14 +107,14 @@ public abstract class AbstractDialect implements Dialect {
 
 		private final Function<Select, ? extends CharSequence> afterFromTable;
 		private final Function<Select, ? extends CharSequence> afterOrderBy;
-		private final OrderByNullHandling orderByNullHandling;
+		private final OrderByNullPrecedence orderByNullPrecedence;
 
 		DialectSelectRenderContext(Function<Select, ? extends CharSequence> afterFromTable,
-				Function<Select, ? extends CharSequence> afterOrderBy, OrderByNullHandling orderByNullHandling) {
+				Function<Select, ? extends CharSequence> afterOrderBy, OrderByNullPrecedence orderByNullPrecedence) {
 
 			this.afterFromTable = afterFromTable;
 			this.afterOrderBy = afterOrderBy;
-			this.orderByNullHandling = orderByNullHandling;
+			this.orderByNullPrecedence = orderByNullPrecedence;
 		}
 
 		/*
@@ -137,7 +137,7 @@ public abstract class AbstractDialect implements Dialect {
 
 		@Override
 		public String evaluateOrderByNullHandling(Sort.NullHandling nullHandling) {
-			return orderByNullHandling.evaluate(nullHandling);
+			return orderByNullPrecedence.evaluate(nullHandling);
 		}
 	}
 

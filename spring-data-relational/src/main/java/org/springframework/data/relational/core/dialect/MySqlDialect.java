@@ -171,7 +171,7 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	@Override
-	public OrderByNullHandling orderByNullHandling() {
-		return OrderByNullHandling.NONE;
+	public OrderByNullPrecedence orderByNullHandling() {
+		return OrderByNullPrecedence.NONE;
 	}
 }

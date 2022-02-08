@@ -123,11 +123,12 @@ public interface Dialect {
 	}
 
 	/**
-	 * Return the {@link OrderByNullHandling} used by this dialect.
+	 * Return the {@link OrderByNullPrecedence} used by this dialect.
 	 *
-	 * @return the {@link OrderByNullHandling} used by this dialect.
+	 * @return the {@link OrderByNullPrecedence} used by this dialect.
+	 * @since 2.4
 	 */
-	default OrderByNullHandling orderByNullHandling() {
-		return OrderByNullHandling.SQL_STANDARD;
+	default OrderByNullPrecedence orderByNullHandling() {
+		return OrderByNullPrecedence.SQL_STANDARD;
 	}
 }

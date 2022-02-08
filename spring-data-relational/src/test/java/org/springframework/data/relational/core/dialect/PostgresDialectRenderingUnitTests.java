@@ -181,7 +181,7 @@ public class PostgresDialectRenderingUnitTests {
 	}
 
 	@Test // GH-821
-	void shouldRenderSelectOrderByWithNullHandling() {
+	void shouldRenderSelectOrderByWithNullPrecedence() {
 
 		Table table = Table.create("foo");
 		Select select = StatementBuilder.select(table.asterisk())

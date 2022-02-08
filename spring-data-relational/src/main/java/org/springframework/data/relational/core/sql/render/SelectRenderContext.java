@@ -19,7 +19,7 @@ import java.util.OptionalLong;
 import java.util.function.Function;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.data.relational.core.dialect.OrderByNullHandling;
+import org.springframework.data.relational.core.dialect.OrderByNullPrecedence;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.Select;
 
@@ -95,8 +95,9 @@ public interface SelectRenderContext {
 	 *
 	 * @param nullHandling the {@link Sort.NullHandling} for the {@code ORDER BY} sort expression. Must not be {@literal null}.
 	 * @return render {@link String} SQL text to be included in an {@code ORDER BY} sort expression.
+	 * @since 2.4
 	 */
 	default String evaluateOrderByNullHandling(Sort.NullHandling nullHandling) {
-		return OrderByNullHandling.NONE.evaluate(nullHandling);
+		return OrderByNullPrecedence.NONE.evaluate(nullHandling);
 	}
 }
