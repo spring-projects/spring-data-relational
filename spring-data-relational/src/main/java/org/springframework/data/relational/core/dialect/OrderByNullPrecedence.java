@@ -21,21 +21,22 @@ import org.springframework.data.domain.Sort;
  * Represents how the {@link Sort.NullHandling} option of an {@code ORDER BY} sort expression is to be evaluated.
  *
  * @author Chirag Tailor
+ * @since 2.4
  */
-public interface OrderByNullHandling {
+public interface OrderByNullPrecedence {
 	/**
-	 * An {@link OrderByNullHandling} that can be used for databases conforming to the SQL standard which uses
+	 * An {@link OrderByNullPrecedence} that can be used for databases conforming to the SQL standard which uses
 	 * {@code NULLS FIRST} and {@code NULLS LAST} in {@code ORDER BY} sort expressions to make null values appear before
 	 * or after non-null values in the result set.
 	 */
-	OrderByNullHandling SQL_STANDARD = new SqlStandardOrderByNullHandling();
+	OrderByNullPrecedence SQL_STANDARD = new SqlStandardOrderByNullPrecedence();
 
 	/**
-	 * An {@link OrderByNullHandling} that can be used for databases that do not support the SQL standard usage of
+	 * An {@link OrderByNullPrecedence} that can be used for databases that do not support the SQL standard usage of
 	 * {@code NULLS FIRST} and {@code NULLS LAST} in {@code ORDER BY} sort expressions to control where null values appear
 	 * respective to non-null values in the result set.
 	 */
-	OrderByNullHandling NONE = nullHandling -> "";
+	OrderByNullPrecedence NONE = nullHandling -> "";
 
 	/**
 	 * Converts a {@link Sort.NullHandling} option to the appropriate SQL text to be included an {@code ORDER BY} sort
@@ -44,13 +45,13 @@ public interface OrderByNullHandling {
 	String evaluate(Sort.NullHandling nullHandling);
 
 	/**
-	 * An {@link OrderByNullHandling} implementation for databases conforming to the SQL standard which uses
+	 * An {@link OrderByNullPrecedence} implementation for databases conforming to the SQL standard which uses
 	 * {@code NULLS FIRST} and {@code NULLS LAST} in {@code ORDER BY} sort expressions to make null values appear before
 	 * or after non-null values in the result set.
 	 *
 	 * @author Chirag Tailor
 	 */
-	class SqlStandardOrderByNullHandling implements OrderByNullHandling {
+	class SqlStandardOrderByNullPrecedence implements OrderByNullPrecedence {
 
 		private static final String NULLS_FIRST = "NULLS FIRST";
 		private static final String NULLS_LAST = "NULLS LAST";
