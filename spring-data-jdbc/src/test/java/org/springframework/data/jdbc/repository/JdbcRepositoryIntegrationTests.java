@@ -335,6 +335,7 @@ public class JdbcRepositoryIntegrationTests {
 
 	@Test
 	void findAllByFirstnameWithLock() {
+
 		DummyEntity dummyEntity = createDummyEntity();
 		repository.save(dummyEntity);
 		assertThat(repository.findAllByName(dummyEntity.getName())).hasSize(1);

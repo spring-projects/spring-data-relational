@@ -34,6 +34,6 @@ public @interface Lock {
 	/**
 	 * Defines which type of {@link LockMode} we want to use.
 	 */
-	LockMode value() default LockMode.PESSIMISTIC_READ;
+	LockMode value();
 
 }
