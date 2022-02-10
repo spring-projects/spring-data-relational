@@ -28,7 +28,7 @@
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
 		<degraph-check.version>0.1.4</degraph-check.version>
-		<postgresql.version>42.2.5</postgresql.version>
+		<postgresql.version>42.2.25</postgresql.version>
 		<mysql.version>8.0.21</mysql.version>
 		<r2dbc-spi-test.version>0.9.1.RELEASE</r2dbc-spi-test.version>
 		<mssql-jdbc.version>7.1.2.jre8-preview</mssql-jdbc.version>
