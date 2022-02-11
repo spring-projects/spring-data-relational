@@ -442,7 +442,7 @@ public class PersistentPropertyPathExtension {
 		if (o == null || getClass() != o.getClass()) return false;
 		PersistentPropertyPathExtension that = (PersistentPropertyPathExtension) o;
 		return entity.equals(that.entity) &&
-				path.equals(that.path);
+				Objects.equals(path, that.path);
 	}
 
 	@Override
