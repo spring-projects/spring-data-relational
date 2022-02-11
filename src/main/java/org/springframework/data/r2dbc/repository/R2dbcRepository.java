@@ -17,6 +17,7 @@ package org.springframework.data.r2dbc.repository;
 
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.data.repository.reactive.ReactiveSortingRepository;
 
 /**
@@ -27,4 +28,4 @@ import org.springframework.data.repository.reactive.ReactiveSortingRepository;
  * @author Greg Turnquist
  */
 @NoRepositoryBean
-public interface R2dbcRepository<T, ID> extends ReactiveSortingRepository<T, ID>, ReactiveQueryByExampleExecutor<T> {}
+public interface R2dbcRepository<T, ID> extends ReactiveCrudRepository<T, ID>, ReactiveSortingRepository<T, ID>, ReactiveQueryByExampleExecutor<T> {}
