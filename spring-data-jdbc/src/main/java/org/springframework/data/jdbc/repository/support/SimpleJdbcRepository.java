@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +37,7 @@ import org.springframework.util.Assert;
  * @author Milan Milanov
  */
 @Transactional(readOnly = true)
-public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T, ID> {
+public class SimpleJdbcRepository<T, ID> implements CrudRepository<T,ID>, PagingAndSortingRepository<T, ID> {
 
 	private final JdbcAggregateOperations entityOperations;
 	private final PersistentEntity<T, ?> entity;

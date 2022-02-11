@@ -52,6 +52,7 @@ import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.dialect.HsqlDbDialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -297,7 +298,7 @@ public class SimpleJdbcRepositoryEventsUnitTests {
 		return operations;
 	}
 
-	interface DummyEntityRepository extends PagingAndSortingRepository<DummyEntity, Long> {}
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, PagingAndSortingRepository<DummyEntity, Long> {}
 
 	@Value
 	@With
