@@ -200,6 +200,26 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
+	@Test // GH--1164
+	void equalsWorks() {
+
+		PersistentPropertyPathExtension root1 = extPath(entity);
+		PersistentPropertyPathExtension root2 = extPath(entity);
+		PersistentPropertyPathExtension path1 = extPath("withId");
+		PersistentPropertyPathExtension path2 = extPath("withId");
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(root1).describedAs("root is equal to self").isEqualTo(root1);
+			softly.assertThat(root2).describedAs("root is equal to identical root").isEqualTo(root1);
+			softly.assertThat(path1).describedAs("path is equal to self").isEqualTo(path1);
+			softly.assertThat(path2).describedAs("path is equal to identical path").isEqualTo(path1);
+			softly.assertThat(path1).describedAs("path is not equal to other path").isNotEqualTo(extPath("entityId"));
+			softly.assertThat(root1).describedAs("root is not equal to path").isNotEqualTo(path1);
+			softly.assertThat(path1).describedAs("path is not equal to root").isNotEqualTo(root1);
+		});
+	}
+
 	private PersistentPropertyPathExtension extPath(RelationalPersistentEntity<?> entity) {
 		return new PersistentPropertyPathExtension(context, entity);
 	}
