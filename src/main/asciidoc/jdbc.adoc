@@ -1046,3 +1046,32 @@ class Config {
 
 If you expose a bean of type `AuditorAware` to the `ApplicationContext`, the auditing infrastructure automatically picks it up and uses it to determine the current user to be set on domain types.
 If you have multiple implementations registered in the `ApplicationContext`, you can select the one to be used by explicitly setting the `auditorAwareRef` attribute of `@EnableJdbcAuditing`.
+
+[[jdbc.locking]]
+== JDBC Locking
+
+Spring Data JDBC currently supports locking on derived query methods. To enable locking on a given derived query method inside a repository, you just need to add the `@Lock` annotation above it.
+
+.Using @Lock on derived query method
+====
+[source,java]
+----
+interface UserRepository extends CrudRepository<User, Long> {
+
+  @Lock(LockMode.PESSIMISTIC_READ)
+  List<User> findByLastname(String lastname);
+}
+----
+====
+
+As you can see above, the method `findByLastname(String lastname)` will be executed with a pessimistic read lock. If you are using a databse with the MySQL Dialect this will result for example in the following query:
+
+.Resulting Sql query for MySQL dialect
+====
+[source,sql]
+----
+Select * from user u where u.lastname = lastname LOCK IN SHARE MODE
+----
+====
+
+Alternative to `LockMode.PESSIMISTIC_READ` you can use `LockMode.PESSIMISTIC_WRITE`.
