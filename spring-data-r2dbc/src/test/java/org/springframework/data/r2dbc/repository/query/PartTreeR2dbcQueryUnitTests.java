@@ -36,7 +36,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
@@ -48,8 +47,10 @@ import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.dialect.DialectResolver;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.repository.query.RelationalParametersParameterAccessor;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.DefaultRepositoryMetadata;
@@ -64,6 +65,7 @@ import org.springframework.r2dbc.core.binding.BindTarget;
  * @author Mark Paluch
  * @author Mingyuan Wu
  * @author Myeonghyeon Lee
+ * @author Diego Krupitza
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -660,8 +662,38 @@ class PartTreeR2dbcQueryUnitTests {
 			dataAccessStrategy);
 		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, "John");
 
-		assertThat(query.get())
-			.isEqualTo("SELECT COUNT(users.id) FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
+		assertThat(query.get()) //
+				.isEqualTo("SELECT COUNT(users.id) FROM " + TABLE + " WHERE " + TABLE + ".first_name = $1");
+	}
+
+	@Test // gh-1041
+	void createQueryWithPessimisticWriteLock() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndLastName", String.class, String.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+
+		String firstname = "Diego";
+		String lastname = "Krupitza";
+
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, firstname, lastname);
+
+		assertThat(query.get()).isEqualTo(
+				"SELECT users.id, users.first_name, users.last_name, users.date_of_birth, users.age, users.active FROM users WHERE users.first_name = $1 AND (users.last_name = $2) FOR UPDATE OF users");
+	}
+
+	@Test // gh-1041
+	void createQueryWithPessimisticReadLock() throws Exception {
+
+		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByFirstNameAndAge", String.class, Integer.class);
+		PartTreeR2dbcQuery r2dbcQuery = new PartTreeR2dbcQuery(queryMethod, operations, r2dbcConverter, dataAccessStrategy);
+
+		String firstname = "Diego";
+		Integer age = 22;
+
+		PreparedOperation<?> query = createQuery(queryMethod, r2dbcQuery, firstname, age);
+
+		assertThat(query.get()).isEqualTo(
+				"SELECT users.id, users.first_name, users.last_name, users.date_of_birth, users.age, users.active FROM users WHERE users.first_name = $1 AND (users.age = $2) FOR SHARE OF users");
 	}
 
 	private PreparedOperation<?> createQuery(R2dbcQueryMethod queryMethod, PartTreeR2dbcQuery r2dbcQuery,
@@ -686,6 +718,12 @@ class PartTreeR2dbcQueryUnitTests {
 
 	@SuppressWarnings("ALL")
 	interface UserRepository extends Repository<User, Long> {
+
+		@Lock(LockMode.PESSIMISTIC_WRITE)
+		Flux<User> findAllByFirstNameAndLastName(String firstName, String lastName);
+
+		@Lock(LockMode.PESSIMISTIC_READ)
+		Flux<User> findAllByFirstNameAndAge(String firstName, Integer age);
 
 		Flux<User> findAllByFirstName(String firstName);
 

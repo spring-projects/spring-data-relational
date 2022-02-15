@@ -18,6 +18,8 @@ package org.springframework.data.r2dbc.repository.query;
 import static org.assertj.core.api.Assertions.*;
 
 import kotlin.Unit;
+import org.springframework.data.relational.repository.Lock;
+import org.springframework.data.relational.core.sql.LockMode;
 import reactor.core.publisher.Mono;
 
 import java.lang.annotation.Retention;
@@ -47,6 +49,7 @@ import org.springframework.data.repository.core.support.DefaultRepositoryMetadat
  *
  * @author Mark Paluch
  * @author Stephen Cohen
+ * @author Diego Krupitza
  */
 class R2dbcQueryMethodUnitTests {
 
@@ -141,6 +144,32 @@ class R2dbcQueryMethodUnitTests {
 		assertThat(method.getEntityInformation().getJavaType()).isAssignableFrom(Contact.class);
 	}
 
+	@Test // GH-1041
+	void returnsQueryMethodWithCorrectLockTypeWriteLock() throws Exception {
+
+		R2dbcQueryMethod queryMethodWithWriteLock = queryMethod(PersonRepository.class, "queryMethodWithWriteLock");
+
+		assertThat(queryMethodWithWriteLock.getLock()).isPresent();
+		assertThat(queryMethodWithWriteLock.getLock().get().value()).isEqualTo(LockMode.PESSIMISTIC_WRITE);
+	}
+
+	@Test // GH-1041
+	void returnsQueryMethodWithCorrectLockTypeReadLock() throws Exception {
+
+		R2dbcQueryMethod queryMethodWithReadLock = queryMethod(PersonRepository.class, "queryMethodWithReadLock");
+
+		assertThat(queryMethodWithReadLock.getLock()).isPresent();
+		assertThat(queryMethodWithReadLock.getLock().get().value()).isEqualTo(LockMode.PESSIMISTIC_READ);
+	}
+
+	@Test // GH-1041
+	void returnsQueryMethodWithCorrectLockTypeNoLock() throws Exception {
+
+		R2dbcQueryMethod queryMethodWithWriteLock = queryMethod(SampleRepository.class, "methodReturningAnInterface");
+
+		assertThat(queryMethodWithWriteLock.getLock()).isEmpty();
+	}
+
 	private R2dbcQueryMethod queryMethod(Class<?> repository, String name, Class<?>... parameters) throws Exception {
 
 		Method method = repository.getMethod(name, parameters);
@@ -149,6 +178,12 @@ class R2dbcQueryMethodUnitTests {
 	}
 
 	interface PersonRepository extends Repository<Contact, Long> {
+
+		@Lock(LockMode.PESSIMISTIC_WRITE)
+		Mono<Contact> queryMethodWithWriteLock();
+
+		@Lock(LockMode.PESSIMISTIC_READ)
+		Mono<Contact> queryMethodWithReadLock();
 
 		Mono<Contact> findMonoByLastname(String lastname, Pageable pageRequest);
 

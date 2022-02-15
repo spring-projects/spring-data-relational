@@ -23,6 +23,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Value;
+import org.springframework.data.relational.core.sql.LockMode;
+import org.springframework.data.relational.repository.Lock;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
@@ -58,6 +60,7 @@ import org.springframework.transaction.reactive.TransactionalOperator;
  *
  * @author Mark Paluch
  * @author Manousos Mathioudakis
+ * @author Diego Krupitza
  */
 public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcIntegrationTestSupport {
 
@@ -380,6 +383,33 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
+	@Test
+	void getAllByNameWithWriteLock() {
+
+		shouldInsertNewItems();
+
+		repository.getAllByName("SCHAUFELRADBAGGER") //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual.getName()).isEqualTo("SCHAUFELRADBAGGER");
+				}) //
+				.verifyComplete();
+	}
+
+	@Test
+	void findByNameAndFlagWithReadLock() {
+
+		shouldInsertNewItems();
+
+		repository.findByNameAndFlag("SCHAUFELRADBAGGER", true) //
+				.as(StepVerifier::create) //
+				.consumeNextWith(actual -> {
+					assertThat(actual.getName()).isEqualTo("SCHAUFELRADBAGGER");
+					assertThat(actual.isFlag()).isTrue();
+				}) //
+				.verifyComplete();
+	}
+
 	private static Object getCount(Map<String, Object> map) {
 		return map.getOrDefault("count", map.get("COUNT"));
 	}
@@ -392,6 +422,12 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 	@NoRepositoryBean
 	interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
+
+		@Lock(LockMode.PESSIMISTIC_WRITE)
+		Flux<LegoSet> getAllByName(String name);
+
+		@Lock(LockMode.PESSIMISTIC_READ)
+		Flux<LegoSet> findByNameAndFlag(String name, Boolean flag);
 
 		Flux<LegoSet> findByNameContains(String name);
 

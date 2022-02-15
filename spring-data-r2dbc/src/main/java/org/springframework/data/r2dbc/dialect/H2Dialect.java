@@ -1,5 +1,7 @@
 package org.springframework.data.r2dbc.dialect;
 
+import org.springframework.data.relational.core.dialect.AnsiDialect;
+import org.springframework.data.relational.core.dialect.LockClause;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 /**
@@ -7,6 +9,7 @@ import org.springframework.data.relational.core.sql.SqlIdentifier;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Diego Krupitza
  */
 public class H2Dialect extends PostgresDialect {
 
@@ -19,4 +22,17 @@ public class H2Dialect extends PostgresDialect {
 	public String renderForGeneratedValues(SqlIdentifier identifier) {
 		return identifier.getReference(getIdentifierProcessing());
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
+	 */
+	@Override
+	public LockClause lock() {
+		// H2 Dialect does not support the same lock keywords as PostgreSQL, but it supports the ANSI SQL standard.
+		// see https://www.h2database.com/html/commands.html
+		// and https://www.h2database.com/html/features.html#compatibility
+		return AnsiDialect.INSTANCE.lock();
+	}
+
 }

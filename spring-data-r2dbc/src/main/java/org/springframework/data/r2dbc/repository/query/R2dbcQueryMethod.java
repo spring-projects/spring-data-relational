@@ -28,6 +28,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -53,6 +54,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Mark Paluch
  * @author Stephen Cohen
+ * @author Diego Krupitza
  */
 public class R2dbcQueryMethod extends QueryMethod {
 
@@ -66,6 +68,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 	private final Optional<Query> query;
 	private final boolean modifying;
 	private final Lazy<Boolean> isCollectionQuery;
+	private final Optional<Lock> lock;
 
 	private @Nullable RelationalEntityMetadata<?> metadata;
 
@@ -113,11 +116,11 @@ public class R2dbcQueryMethod extends QueryMethod {
 			}
 		}
 
-		this.query = Optional.ofNullable(
-				AnnotatedElementUtils.findMergedAnnotation(method, Query.class));
+		this.query = Optional.ofNullable(AnnotatedElementUtils.findMergedAnnotation(method, Query.class));
 		this.modifying = AnnotatedElementUtils.hasAnnotation(method, Modifying.class);
 		this.isCollectionQuery = Lazy.of(() -> (!(isPageQuery() || isSliceQuery())
 				&& ReactiveWrappers.isMultiValueType(metadata.getReturnType(method).getType())) || super.isCollectionQuery());
+		this.lock = Optional.ofNullable(AnnotatedElementUtils.findMergedAnnotation(method, Lock.class));
 	}
 
 	/* (non-Javadoc)
@@ -144,6 +147,22 @@ public class R2dbcQueryMethod extends QueryMethod {
 		return modifying;
 	}
 
+	/**
+	 * @return is a {@link Lock} annotation present or not.
+	 */
+	public boolean hasLockMode() {
+		return this.lock.isPresent();
+	}
+
+	/**
+	 * Looks up the {@link Lock} annotation from the query method.
+	 *
+	 * @return the {@link Optional} wrapped {@link Lock} annotation.
+	 */
+	Optional<Lock> getLock() {
+		return this.lock;
+	}
+
 	/*
 	 * All reactive query methods are streaming queries.
 	 * (non-Javadoc)
@@ -166,8 +185,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 			Class<?> returnedObjectType = getReturnedObjectType();
 			Class<?> domainClass = getDomainClass();
 
-			if (ClassUtils.isPrimitiveOrWrapper(returnedObjectType)
-					|| ReflectionUtils.isVoid(returnedObjectType)) {
+			if (ClassUtils.isPrimitiveOrWrapper(returnedObjectType) || ReflectionUtils.isVoid(returnedObjectType)) {
 
 				this.metadata = new SimpleRelationalEntityMetadata<>((Class<Object>) domainClass,
 						mappingContext.getRequiredPersistentEntity(domainClass));
@@ -214,8 +232,8 @@ public class R2dbcQueryMethod extends QueryMethod {
 	}
 
 	/**
-	 * Returns the required query string declared in a {@link Query} annotation
-	 * or throws {@link IllegalStateException} if neither the annotation found nor the attribute was specified.
+	 * Returns the required query string declared in a {@link Query} annotation or throws {@link IllegalStateException} if
+	 * neither the annotation found nor the attribute was specified.
 	 *
 	 * @return the query string.
 	 * @throws IllegalStateException in case query method has no annotated query.
@@ -235,8 +253,7 @@ public class R2dbcQueryMethod extends QueryMethod {
 	}
 
 	/**
-	 * @return {@literal true} if the {@link Method} is annotated with
-	 *         {@link Query}.
+	 * @return {@literal true} if the {@link Method} is annotated with {@link Query}.
 	 */
 	public boolean hasAnnotatedQuery() {
 		return getQueryAnnotation().isPresent();

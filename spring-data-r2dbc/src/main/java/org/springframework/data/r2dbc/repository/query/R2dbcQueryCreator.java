@@ -18,21 +18,18 @@ package org.springframework.data.r2dbc.repository.query;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.StatementMapper;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.sql.Column;
-import org.springframework.data.relational.core.sql.Expression;
-import org.springframework.data.relational.core.sql.Expressions;
-import org.springframework.data.relational.core.sql.Functions;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.relational.core.sql.Table;
+import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
 import org.springframework.data.relational.repository.query.RelationalQueryCreator;
@@ -48,6 +45,7 @@ import org.springframework.r2dbc.core.PreparedOperation;
  * @author Mark Paluch
  * @author Mingyuan Wu
  * @author Myeonghyeon Lee
+ * @author Diego Krupitza
  * @since 1.1
  */
 class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
@@ -58,6 +56,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 	private final RelationalEntityMetadata<?> entityMetadata;
 	private final List<String> projectedProperties;
 	private final Class<?> entityToRead;
+	private final Optional<Lock> lock;
 
 	/**
 	 * Creates new instance of this class with the given {@link PartTree}, {@link ReactiveDataAccessStrategy},
@@ -71,7 +70,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 	 */
 	public R2dbcQueryCreator(PartTree tree, ReactiveDataAccessStrategy dataAccessStrategy,
 			RelationalEntityMetadata<?> entityMetadata, RelationalParameterAccessor accessor,
-			List<String> projectedProperties) {
+			List<String> projectedProperties, Optional<Lock> lock) {
 		super(tree, accessor);
 
 		this.tree = tree;
@@ -81,6 +80,7 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 		this.entityMetadata = entityMetadata;
 		this.projectedProperties = projectedProperties;
 		this.entityToRead = entityMetadata.getTableEntity().getType();
+		this.lock = lock;
 	}
 
 	/**
@@ -138,6 +138,10 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 			selectSpec = selectSpec.distinct();
 		}
 
+		if (this.lock.isPresent()) {
+			selectSpec = selectSpec.lock(this.lock.get().value());
+		}
+
 		return statementMapper.getMappedObject(selectSpec);
 	}
 
@@ -154,15 +158,15 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 			for (String projectedProperty : projectedProperties) {
 
 				RelationalPersistentProperty property = entity.getPersistentProperty(projectedProperty);
-				Column column = table.column(property != null ? property.getColumnName() : SqlIdentifier.unquoted(projectedProperty));
+				Column column = table
+						.column(property != null ? property.getColumnName() : SqlIdentifier.unquoted(projectedProperty));
 				expressions.add(column);
 			}
 
 		} else if (tree.isExistsProjection()) {
 
-			expressions = dataAccessStrategy.getIdentifierColumns(entityToRead).stream()
-				.map(table::column)
-				.collect(Collectors.toList());
+			expressions = dataAccessStrategy.getIdentifierColumns(entityToRead).stream().map(table::column)
+					.collect(Collectors.toList());
 		} else if (tree.isCountProjection()) {
 
 			Expression countExpression = entityMetadata.getTableEntity().hasIdProperty()
@@ -171,9 +175,8 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 
 			expressions = Collections.singletonList(Functions.count(countExpression));
 		} else {
-			expressions = dataAccessStrategy.getAllColumns(entityToRead).stream()
-				.map(table::column)
-				.collect(Collectors.toList());
+			expressions = dataAccessStrategy.getAllColumns(entityToRead).stream().map(table::column)
+					.collect(Collectors.toList());
 		}
 
 		return expressions.toArray(new Expression[0]);

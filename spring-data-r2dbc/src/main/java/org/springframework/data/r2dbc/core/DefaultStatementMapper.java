@@ -45,6 +45,7 @@ import org.springframework.util.Assert;
  * @author Mark Paluch
  * @author Roman Chigvintsev
  * @author Mingyuan Wu
+ * @author Diego Krupitza
  */
 class DefaultStatementMapper implements StatementMapper {
 
@@ -130,6 +131,10 @@ class DefaultStatementMapper implements StatementMapper {
 
 		if (selectSpec.getOffset() > 0) {
 			selectBuilder.offset(selectSpec.getOffset());
+		}
+
+		if (selectSpec.getLock() != null) {
+			selectBuilder.lock(selectSpec.getLock());
 		}
 
 		Select select = selectBuilder.build();

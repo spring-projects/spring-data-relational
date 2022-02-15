@@ -39,6 +39,7 @@ import org.springframework.r2dbc.core.PreparedOperation;
  *
  * @author Roman Chigvintsev
  * @author Mark Paluch
+ * @author Diego Krupitza
  * @since 1.1
  */
 public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
@@ -119,7 +120,7 @@ public class PartTreeR2dbcQuery extends AbstractR2dbcQuery {
 
 			RelationalEntityMetadata<?> entityMetadata = getQueryMethod().getEntityInformation();
 			R2dbcQueryCreator queryCreator = new R2dbcQueryCreator(tree, dataAccessStrategy, entityMetadata, accessor,
-					projectedProperties);
+					projectedProperties, this.getQueryMethod().getLock());
 			return queryCreator.createQuery(getDynamicSort(accessor));
 		});
 	}
