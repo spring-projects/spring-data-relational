@@ -25,16 +25,15 @@ import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
-import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
+import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PreferredConstructor;
@@ -181,6 +180,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	public int getSqlType(RelationalPersistentProperty property) {
 		return JdbcUtil.sqlTypeFor(getColumnType(property));
 	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#getColumnType(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
@@ -621,7 +621,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			 */
 			@Override
 			@Nullable
-			public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
+			public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 
 				String parameterName = parameter.getName();
 
@@ -642,7 +642,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		INSTANCE;
 
 		@Override
-		public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
+		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 			return null;
 		}
 	}
