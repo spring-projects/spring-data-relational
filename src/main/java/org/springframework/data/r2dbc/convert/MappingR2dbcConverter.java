@@ -696,7 +696,8 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		INSTANCE;
 
 		@Override
-		public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
+		public <T> T getParameterValue(
+				org.springframework.data.mapping.Parameter<T, RelationalPersistentProperty> parameter) {
 			return null;
 		}
 	}
@@ -724,7 +725,8 @@ public class MappingR2dbcConverter extends BasicRelationalConverter implements R
 		 */
 		@Override
 		@Nullable
-		public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
+		public <T> T getParameterValue(
+				org.springframework.data.mapping.Parameter<T, RelationalPersistentProperty> parameter) {
 
 			RelationalPersistentProperty property = this.entity.getRequiredPersistentProperty(parameter.getName());
 			Object value = readFrom(this.resultSet, this.metadata, property, this.prefix);
