@@ -1050,7 +1050,11 @@ If you have multiple implementations registered in the `ApplicationContext`, you
 [[jdbc.locking]]
 == JDBC Locking
 
-Spring Data JDBC currently supports locking on derived query methods. To enable locking on a given derived query method inside a repository, you just need to add the `@Lock` annotation above it.
+Spring Data JDBC supports locking on derived query methods.
+To enable locking on a given derived query method inside a repository, you annotate it with `@Lock`.
+The required value of type `LockMode` offers two values: `PESSIMISTIC_READ` which guarantees that the data you are reading doesn't get modified and `PESSIMISTIC_WRITE` which obtains a lock to modify the data.
+Some databases do not make this distinction.
+In that cases both modes are equivalent of `PESSIMISTIC_WRITE`.
 
 .Using @Lock on derived query method
 ====
