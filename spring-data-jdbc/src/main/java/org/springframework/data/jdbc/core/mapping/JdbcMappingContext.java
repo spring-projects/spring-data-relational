@@ -15,8 +15,8 @@
  */
 package org.springframework.data.jdbc.core.mapping;
 
-import org.springframework.data.mapping.PreferredConstructor;
-import org.springframework.data.mapping.PreferredConstructor.Parameter;
+import org.springframework.data.mapping.InstanceCreatorMetadata;
+import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
@@ -63,13 +63,13 @@ public class JdbcMappingContext extends RelationalMappingContext {
 	protected <T> RelationalPersistentEntity<T> createPersistentEntity(TypeInformation<T> typeInformation) {
 
 		RelationalPersistentEntity<T> entity = super.createPersistentEntity(typeInformation);
-		PreferredConstructor<T, RelationalPersistentProperty> constructor = entity.getPersistenceConstructor();
+		InstanceCreatorMetadata<RelationalPersistentProperty> creator = entity.getInstanceCreatorMetadata();
 
-		if (constructor == null) {
+		if (creator == null) {
 			return entity;
 		}
 
-		for (Parameter<Object, RelationalPersistentProperty> parameter : constructor.getParameters()) {
+		for (Parameter<Object, RelationalPersistentProperty> parameter : creator.getParameters()) {
 			Assert.state(StringUtils.hasText(parameter.getName()), () -> String.format(MISSING_PARAMETER_NAME, parameter));
 		}
 
