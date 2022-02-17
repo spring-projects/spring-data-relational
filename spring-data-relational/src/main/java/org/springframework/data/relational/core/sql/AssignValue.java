@@ -72,7 +72,6 @@ public class AssignValue extends AbstractSegment implements Assignment {
 	@Override
 	public String toString() {
 
-		StringBuilder builder = new StringBuilder();
-		return builder.append(this.column).append(" = ").append(this.value).toString();
+		return this.column + " = " + this.value;
 	}
 }
