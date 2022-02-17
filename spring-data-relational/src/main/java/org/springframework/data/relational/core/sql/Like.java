@@ -80,6 +80,6 @@ public class Like extends AbstractSegment implements Condition {
 
 	@Override
 	public String toString() {
-		return left.toString() + " LIKE " + right.toString();
+		return left + " LIKE " + right;
 	}
 }
