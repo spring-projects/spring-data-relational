@@ -38,6 +38,6 @@ public class Where extends AbstractSegment {
 	 */
 	@Override
 	public String toString() {
-		return "WHERE " + condition.toString();
+		return "WHERE " + condition;
 	}
 }

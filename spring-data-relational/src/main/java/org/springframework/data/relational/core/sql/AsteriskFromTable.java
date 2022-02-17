@@ -55,6 +55,6 @@ public class AsteriskFromTable extends AbstractSegment implements Expression {
 			return ((Aliased) table).getAlias() + ".*";
 		}
 
-		return table.toString() + ".*";
+		return table + ".*";
 	}
 }

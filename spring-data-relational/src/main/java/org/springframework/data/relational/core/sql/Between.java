@@ -91,6 +91,6 @@ public class Between extends AbstractSegment implements Condition {
 
 	@Override
 	public String toString() {
-		return column.toString() + " BETWEEN " + begin.toString() + " AND " + end.toString();
+		return column + " BETWEEN " + begin + " AND " + end;
 	}
 }
