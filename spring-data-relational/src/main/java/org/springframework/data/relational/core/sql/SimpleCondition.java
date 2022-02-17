@@ -71,6 +71,6 @@ public class SimpleCondition extends AbstractSegment implements Condition {
 
 	@Override
 	public String toString() {
-		return expression.toString() + " " + comparator + " " + predicate;
+		return expression + " " + comparator + " " + predicate;
 	}
 }
