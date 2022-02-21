@@ -37,7 +37,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -70,6 +69,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.lang.Nullable;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -559,6 +559,22 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result).extracting(e -> e.idProp).containsExactly(two.idProp);
 	}
 
+	@Test // GH-1167
+	void stringResult() {
+
+		repository.save(createDummyEntity()); // just ensure we have data in the table
+
+		assertThat(repository.returnInput("HELLO")).isEqualTo("HELLO");
+	}
+
+	@Test // GH-1167
+	void nullStringResult() {
+
+		repository.save(createDummyEntity()); // just ensure we have data in the table
+
+		assertThat(repository.returnInput(null)).isNull();
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -640,6 +656,10 @@ public class JdbcRepositoryIntegrationTests {
 		List<DummyEntity> findByRef(int ref);
 
 		List<DummyEntity> findByRef(AggregateReference<DummyEntity, Long> ref);
+
+		@Query("SELECT CAST(:hello AS CHAR(5)) FROM DUMMY_ENTITY")
+		@Nullable
+		String returnInput(@Nullable String hello);
 	}
 
 	@Configuration
