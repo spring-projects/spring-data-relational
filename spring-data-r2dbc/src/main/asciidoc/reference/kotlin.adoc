@@ -1,0 +1,28 @@
+include::../{spring-data-commons-docs}/kotlin.adoc[]
+
+include::../{spring-data-commons-docs}/kotlin-extensions.adoc[leveloffset=+1]
+
+To retrieve a list of `SWCharacter` objects in Java, you would normally write the following:
+
+[source,java]
+----
+Flux<SWCharacter> characters = client.select().from(SWCharacter.class).fetch().all();
+----
+
+With Kotlin and the Spring Data extensions, you can instead write the following:
+
+[source,kotlin]
+----
+val characters =  client.select().from<SWCharacter>().fetch().all()
+// or (both are equivalent)
+val characters : Flux<SWCharacter> = client.select().from().fetch().all()
+----
+
+As in Java, `characters` in Kotlin is strongly typed, but Kotlin's clever type inference allows for shorter syntax.
+
+Spring Data R2DBC provides the following extensions:
+
+* Reified generics support for `DatabaseClient` and `Criteria`.
+* <<kotlin.coroutines>> extensions for `DatabaseClient`.
+
+include::../{spring-data-commons-docs}/kotlin-coroutines.adoc[leveloffset=+1]
