@@ -86,7 +86,7 @@ public abstract class ExternalDatabase implements BeforeAllCallback {
 
 		if (!checkValidity()) {
 			throw new TestAbortedException(
-					String.format("Cannot connect to %s:%d. Skipping tests.", getHostname(), getPort()));
+					String.format("Cannot connect to %s. Skipping tests.", this));
 		}
 	}
 

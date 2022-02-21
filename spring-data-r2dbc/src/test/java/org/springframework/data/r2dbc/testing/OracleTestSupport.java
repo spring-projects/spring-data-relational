@@ -125,12 +125,12 @@ public class OracleTestSupport {
 		if (testContainerDatabase == null) {
 
 			try {
-				OracleContainer container = new OracleContainer("springci/spring-data-oracle-xe-prebuild:18.4.0")
+				OracleContainer container = new OracleContainer("gvenzl/oracle-xe:18.4.0-slim")
 						.withReuse(true);
 				container.start();
 
 				testContainerDatabase = ProvidedDatabase.builder(container) //
-						.database("XEPDB1").build();
+						.database(container.getDatabaseName()).build();
 
 				DataSource dataSource = createDataSource(testContainerDatabase);
 
