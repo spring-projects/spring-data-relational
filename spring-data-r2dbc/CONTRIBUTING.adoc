@@ -1,3 +1,0 @@
-= Spring Data contribution guidelines
-
-You find the contribution guidelines for Spring Data projects https://github.com/spring-projects/spring-data-build/blob/main/CONTRIBUTING.adoc[here].

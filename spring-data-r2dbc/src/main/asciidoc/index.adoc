@@ -3,7 +3,7 @@
 :revnumber: {version}
 :revdate: {localdate}
 ifdef::backend-epub3[:front-cover-image: image:epub-cover.png[Front Cover,1050,1600]]
-:spring-data-commons-docs: ../../../../spring-data-commons/src/main/asciidoc
+:spring-data-commons-docs: ../../../../../spring-data-commons/src/main/asciidoc
 :spring-data-r2dbc-javadoc: https://docs.spring.io/spring-data/r2dbc/docs/{version}/api
 :spring-framework-ref: https://docs.spring.io/spring/docs/{springVersion}/reference/html
 :reactiveStreamsJavadoc: https://www.reactive-streams.org/reactive-streams-{reactiveStreamsVersion}-javadoc
