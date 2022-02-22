@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.jdbc.repository.query;
+package org.springframework.data.relational.repository;
 
 import org.springframework.data.annotation.QueryAnnotation;
 import org.springframework.data.relational.core.sql.LockMode;
