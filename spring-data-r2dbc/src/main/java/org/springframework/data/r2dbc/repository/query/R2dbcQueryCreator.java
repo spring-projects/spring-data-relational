@@ -158,14 +158,16 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 			for (String projectedProperty : projectedProperties) {
 
 				RelationalPersistentProperty property = entity.getPersistentProperty(projectedProperty);
-				Column column = table
-						.column(property != null ? property.getColumnName() : SqlIdentifier.unquoted(projectedProperty));
+				Column column = table.column(property != null //
+						? property.getColumnName() //
+						: SqlIdentifier.unquoted(projectedProperty));
 				expressions.add(column);
 			}
 
 		} else if (tree.isExistsProjection()) {
 
-			expressions = dataAccessStrategy.getIdentifierColumns(entityToRead).stream().map(table::column)
+			expressions = dataAccessStrategy.getIdentifierColumns(entityToRead).stream() //
+					.map(table::column) //
 					.collect(Collectors.toList());
 		} else if (tree.isCountProjection()) {
 
@@ -175,7 +177,8 @@ class R2dbcQueryCreator extends RelationalQueryCreator<PreparedOperation<?>> {
 
 			expressions = Collections.singletonList(Functions.count(countExpression));
 		} else {
-			expressions = dataAccessStrategy.getAllColumns(entityToRead).stream().map(table::column)
+			expressions = dataAccessStrategy.getAllColumns(entityToRead).stream() //
+					.map(table::column) //
 					.collect(Collectors.toList());
 		}
 

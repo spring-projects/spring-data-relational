@@ -112,7 +112,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 
 	protected abstract Class<? extends LegoSetRepository> getRepositoryInterfaceType();
 
-	@Test
+	@Test // GH-2
 	void shouldInsertNewItems() {
 
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12, true);
@@ -124,7 +124,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // GH-2
 	void shouldFindItemsByManual() {
 
 		shouldInsertNewItems();
@@ -137,7 +137,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // GH-2
 	void shouldFindItemsByNameContains() {
 
 		shouldInsertNewItems();
@@ -151,7 +151,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
-	@Test // gh-475, gh-607
+	@Test // GH-475, GH-607
 	void shouldFindApplyingInterfaceProjection() {
 
 		shouldInsertNewItems();
@@ -173,7 +173,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
-	@Test // gh-475
+	@Test // GH-475
 	void shouldByStringQueryApplyingDtoProjection() {
 
 		shouldInsertNewItems();
@@ -187,7 +187,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
-	@Test // gh-344
+	@Test // GH-344
 	void shouldFindApplyingDistinctProjection() {
 
 		LegoSet legoSet1 = new LegoSet(null, "SCHAUFELRADBAGGER", 12, true);
@@ -207,7 +207,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
-	@Test // gh-41
+	@Test // GH-41
 	void shouldFindApplyingSimpleTypeProjection() {
 
 		shouldInsertNewItems();
@@ -220,7 +220,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
-	@Test // gh-698
+	@Test // GH-698
 	void shouldBeTrue() {
 		shouldInsertNewItems();
 
@@ -246,7 +246,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		assertThat(getCount(count)).satisfies(numberOf(1));
 	}
 
-	@Test // gh-335
+	@Test // GH-335
 	void shouldFindByPageable() {
 
 		Flux<LegoSet> sets = Flux.fromStream(IntStream.range(0, 100).mapToObj(value -> {
@@ -275,7 +275,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				}).verifyComplete();
 	}
 
-	@Test // gh-335
+	@Test // GH-335
 	void shouldFindTop10() {
 
 		Flux<LegoSet> sets = Flux
@@ -292,7 +292,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test // gh-341
+	@Test // GH-341
 	void shouldDeleteAll() {
 
 		shouldInsertNewItems();
@@ -306,7 +306,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // GH-2
 	public void shouldInsertItemsTransactional() {
 
 		R2dbcTransactionManager r2dbcTransactionManager = new R2dbcTransactionManager(connectionFactory);
@@ -330,7 +330,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 		assertThat(getCount(map)).satisfies(numberOf(2));
 	}
 
-	@Test // gh-363
+	@Test // GH-363
 	void derivedQueryWithCountProjection() {
 
 		shouldInsertNewItems();
@@ -341,7 +341,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test // gh-363
+	@Test // GH-363
 	void derivedQueryWithCount() {
 
 		shouldInsertNewItems();
@@ -352,7 +352,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test // gh-468
+	@Test // GH-468
 	void derivedQueryWithExists() {
 
 		shouldInsertNewItems();
@@ -368,7 +368,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test // gh-421
+	@Test // GH-421
 	void shouldDeleteAllAndReturnCount() {
 
 		shouldInsertNewItems();
@@ -383,7 +383,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // GH-1041
 	void getAllByNameWithWriteLock() {
 
 		shouldInsertNewItems();
@@ -396,7 +396,7 @@ public abstract class AbstractR2dbcRepositoryIntegrationTests extends R2dbcInteg
 				.verifyComplete();
 	}
 
-	@Test
+	@Test // GH-1041
 	void findByNameAndFlagWithReadLock() {
 
 		shouldInsertNewItems();

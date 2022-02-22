@@ -23,10 +23,6 @@ public class H2Dialect extends PostgresDialect {
 		return identifier.getReference(getIdentifierProcessing());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.dialect.Dialect#lock()
-	 */
 	@Override
 	public LockClause lock() {
 		// H2 Dialect does not support the same lock keywords as PostgreSQL, but it supports the ANSI SQL standard.
