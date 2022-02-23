@@ -176,7 +176,7 @@ class PartTreeR2dbcQueryUnitTests {
 				.where(TABLE + ".last_name = $1 OR (" + TABLE + ".first_name = $2)");
 	}
 
-	@Test // GH-282, gh-349
+	@Test // GH-282, GH-349
 	void createsQueryToFindAllEntitiesByDateAttributeBetween() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByDateOfBirthBetween", Date.class, Date.class);
@@ -518,7 +518,7 @@ class PartTreeR2dbcQueryUnitTests {
 				.where(TABLE + ".age NOT IN ($1)");
 	}
 
-	@Test // GH-282, gh-698
+	@Test // GH-282, GH-698
 	void createsQueryToFindAllEntitiesByBooleanAttributeTrue() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByActiveTrue");
@@ -532,7 +532,7 @@ class PartTreeR2dbcQueryUnitTests {
 				.where(TABLE + ".active = $1");
 	}
 
-	@Test // GH-282, gh-698
+	@Test // GH-282, GH-698
 	void createsQueryToFindAllEntitiesByBooleanAttributeFalse() throws Exception {
 
 		R2dbcQueryMethod queryMethod = getQueryMethod("findAllByActiveFalse");
