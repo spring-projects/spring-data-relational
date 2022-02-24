@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,20 @@
  */
 package org.springframework.data.jdbc.repository.support;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
 import org.springframework.data.jdbc.repository.QueryMappingConfiguration;
@@ -35,6 +40,7 @@ import org.springframework.data.relational.core.dialect.H2Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.jdbc.core.RowMapper;
@@ -52,6 +58,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Evgeni Dimitrov
  * @author Mark Paluch
  * @author Hebert Coelho
+ * @author Diego Krupitza
  */
 class JdbcQueryLookupStrategyUnitTests {
 
@@ -81,7 +88,8 @@ class JdbcQueryLookupStrategyUnitTests {
 		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
 				.registerRowMapper(NumberFormat.class, numberFormatMapper);
 
-		RepositoryQuery repositoryQuery = getRepositoryQuery("returningNumberFormat", mappingConfiguration);
+		RepositoryQuery repositoryQuery = getRepositoryQuery(QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND,
+				"returningNumberFormat", mappingConfiguration);
 
 		repositoryQuery.execute(new Object[] {});
 
@@ -95,16 +103,55 @@ class JdbcQueryLookupStrategyUnitTests {
 		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
 				.registerRowMapper(NumberFormat.class, numberFormatMapper);
 
-		RepositoryQuery repositoryQuery = getRepositoryQuery("annotatedQueryWithQueryAndQueryName", mappingConfiguration);
+		RepositoryQuery repositoryQuery = getRepositoryQuery(QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND,
+				"annotatedQueryWithQueryAndQueryName", mappingConfiguration);
 
 		repositoryQuery.execute(new Object[] {});
 
 		verify(operations).queryForObject(eq("some SQL"), any(SqlParameterSource.class), any(RowMapper.class));
 	}
 
-	private RepositoryQuery getRepositoryQuery(String name, QueryMappingConfiguration mappingConfiguration) {
+	@Test
+	void shouldFailOnMissingDeclaredQuery() {
 
-		JdbcQueryLookupStrategy queryLookupStrategy = new JdbcQueryLookupStrategy(publisher, callbacks, mappingContext,
+		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
+		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
+				.registerRowMapper(NumberFormat.class, numberFormatMapper);
+
+		assertThatThrownBy(
+				() -> getRepositoryQuery(QueryLookupStrategy.Key.USE_DECLARED_QUERY, "findByName", mappingConfiguration))
+						.isInstanceOf(IllegalStateException.class)
+						.hasMessageContaining("Did neither find a NamedQuery nor an annotated query for method")
+						.hasMessageContaining("findByName");
+	}
+
+	@ParameterizedTest
+	@MethodSource("correctLookUpStrategyForKeySource")
+	void correctLookUpStrategyForKey(QueryLookupStrategy.Key key, Class expectedClass) {
+		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
+		QueryMappingConfiguration mappingConfiguration = new DefaultQueryMappingConfiguration()
+				.registerRowMapper(NumberFormat.class, numberFormatMapper);
+
+		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks, mappingContext,
+				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null);
+
+		assertThat(queryLookupStrategy).isInstanceOf(expectedClass);
+	}
+
+	private static Stream<Arguments> correctLookUpStrategyForKeySource() {
+		return Stream.of( //
+				Arguments.of(QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND,
+						JdbcQueryLookupStrategy.CreateIfNotFoundQueryLookupStrategy.class), //
+				Arguments.of(QueryLookupStrategy.Key.CREATE, JdbcQueryLookupStrategy.CreateQueryLookupStrategy.class), //
+				Arguments.of(QueryLookupStrategy.Key.USE_DECLARED_QUERY,
+						JdbcQueryLookupStrategy.DeclaredQueryLookupStrategy.class) //
+		);
+	}
+
+	private RepositoryQuery getRepositoryQuery(QueryLookupStrategy.Key key, String name,
+			QueryMappingConfiguration mappingConfiguration) {
+
+		QueryLookupStrategy queryLookupStrategy = JdbcQueryLookupStrategy.create(key, publisher, callbacks, mappingContext,
 				converter, H2Dialect.INSTANCE, mappingConfiguration, operations, null);
 
 		Method method = ReflectionUtils.findMethod(MyRepository.class, name);
@@ -119,5 +166,7 @@ class JdbcQueryLookupStrategyUnitTests {
 
 		@Query(value = "some SQL", name = "query-name")
 		void annotatedQueryWithQueryAndQueryName();
+
+		NumberFormat findByName();
 	}
 }

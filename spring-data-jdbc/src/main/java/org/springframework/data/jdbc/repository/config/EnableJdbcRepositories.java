@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactoryBean;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
+import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Annotation to enable JDBC repositories. Will scan the package of the annotated configuration class for Spring Data
@@ -39,6 +39,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Mark Paluch
  * @author Fei Dong
  * @author Antoine Sauray
+ * @author Diego Krupitza
  * @see AbstractJdbcConfiguration
  */
 @Target(ElementType.TYPE)
@@ -124,11 +125,17 @@ public @interface EnableJdbcRepositories {
 	 */
 	String dataAccessStrategyRef() default "";
 
-    /**
+	/**
 	 * Configures the name of the {@link DataSourceTransactionManager} bean definition to be used to create repositories
 	 * discovered through this annotation. Defaults to {@code transactionManager}.
+	 * 
 	 * @since 2.1
 	 */
 	String transactionManagerRef() default "transactionManager";
 
+	/**
+	 * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to
+	 * {@link QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
+	 */
+	QueryLookupStrategy.Key queryLookupStrategy() default QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND;
 }
