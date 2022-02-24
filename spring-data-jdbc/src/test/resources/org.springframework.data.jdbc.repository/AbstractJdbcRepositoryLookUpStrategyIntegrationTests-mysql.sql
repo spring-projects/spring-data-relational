@@ -1,0 +1,5 @@
+CREATE TABLE aggregate_one
+(
+    id   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    NAME VARCHAR(100)
+);
