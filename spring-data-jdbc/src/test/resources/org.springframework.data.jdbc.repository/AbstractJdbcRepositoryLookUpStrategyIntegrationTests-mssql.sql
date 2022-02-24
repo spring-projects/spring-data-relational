@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS aggregate_one;
+
+CREATE TABLE aggregate_one
+(
+    id   BIGINT IDENTITY PRIMARY KEY,
+    NAME VARCHAR(100)
+);
