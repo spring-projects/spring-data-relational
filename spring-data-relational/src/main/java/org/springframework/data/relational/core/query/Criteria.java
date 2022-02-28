@@ -781,12 +781,12 @@ public class Criteria implements CriteriaDefinition {
 
 		@Override
 		public Criteria isTrue() {
-			return createCriteria(Comparator.IS_TRUE, null);
+			return createCriteria(Comparator.IS_TRUE, true);
 		}
 
 		@Override
 		public Criteria isFalse() {
-			return createCriteria(Comparator.IS_FALSE, null);
+			return createCriteria(Comparator.IS_FALSE, false);
 		}
 
 		protected Criteria createCriteria(Comparator comparator, @Nullable Object value) {
