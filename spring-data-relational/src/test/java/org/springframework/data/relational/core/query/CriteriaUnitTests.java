@@ -285,6 +285,7 @@ public class CriteriaUnitTests {
 
 		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.IS_TRUE);
+		assertThat(criteria.getValue()).isEqualTo(true);
 	}
 
 	@Test // DATAJDBC-513
@@ -294,5 +295,6 @@ public class CriteriaUnitTests {
 
 		assertThat(criteria.getColumn()).isEqualTo(SqlIdentifier.unquoted("foo"));
 		assertThat(criteria.getComparator()).isEqualTo(CriteriaDefinition.Comparator.IS_FALSE);
+		assertThat(criteria.getValue()).isEqualTo(false);
 	}
 }

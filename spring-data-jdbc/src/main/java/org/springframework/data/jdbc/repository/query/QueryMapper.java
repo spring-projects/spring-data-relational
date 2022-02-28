@@ -494,13 +494,15 @@ class QueryMapper {
 
 		if (comparator == Comparator.IS_TRUE) {
 
-			Expression bind = bindBoolean(column, parameterSource, true);
+			Expression bind = bindBoolean(column, parameterSource,
+					mappedValue instanceof Boolean ? (Boolean) mappedValue : true);
 			return column.isEqualTo(bind);
 		}
 
 		if (comparator == Comparator.IS_FALSE) {
 
-			Expression bind = bindBoolean(column, parameterSource, false);
+			Expression bind = bindBoolean(column, parameterSource,
+					mappedValue instanceof Boolean ? (Boolean) mappedValue : false);
 			return column.isEqualTo(bind);
 		}
 
