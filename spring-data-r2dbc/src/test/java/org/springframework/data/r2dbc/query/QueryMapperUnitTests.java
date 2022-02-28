@@ -26,7 +26,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.dialect.MySqlDialect;
 import org.springframework.data.r2dbc.dialect.PostgresDialect;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.query.Criteria;
@@ -45,11 +48,21 @@ import org.springframework.r2dbc.core.binding.BindTarget;
  */
 class QueryMapperUnitTests {
 
-	private R2dbcMappingContext context = new R2dbcMappingContext();
-	private R2dbcConverter converter = new MappingR2dbcConverter(context);
-
-	private QueryMapper mapper = new QueryMapper(PostgresDialect.INSTANCE, converter);
 	private BindTarget bindTarget = mock(BindTarget.class);
+	private QueryMapper mapper = createMapper(PostgresDialect.INSTANCE);
+
+	QueryMapper createMapper(R2dbcDialect dialect) {
+
+		R2dbcCustomConversions conversions = R2dbcCustomConversions.of(dialect);
+
+		R2dbcMappingContext context = new R2dbcMappingContext();
+		context.setSimpleTypeHolder(conversions.getSimpleTypeHolder());
+		context.afterPropertiesSet();
+
+		R2dbcConverter converter = new MappingR2dbcConverter(context, conversions);
+
+		return new QueryMapper(dialect, converter);
+	}
 
 	@Test // gh-289
 	void shouldNotMapEmptyCriteria() {
@@ -189,7 +202,7 @@ class QueryMapperUnitTests {
 		Table table = Table.create("my_table").as("my_aliased_table");
 
 		Expression mappedObject = mapper.getMappedObject(table.column("alternative").as("my_aliased_col"),
-				context.getRequiredPersistentEntity(Person.class));
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 
 		assertThat(mappedObject).hasToString("my_aliased_table.another_name AS my_aliased_col");
 	}
@@ -200,7 +213,7 @@ class QueryMapperUnitTests {
 		Table table = Table.create("my_table").as("my_aliased_table");
 
 		Expression mappedObject = mapper.getMappedObject(Functions.count(table.column("alternative")),
-				context.getRequiredPersistentEntity(Person.class));
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 
 		assertThat(mappedObject).hasToString("COUNT(my_aliased_table.another_name)");
 	}
@@ -211,7 +224,7 @@ class QueryMapperUnitTests {
 		Table table = Table.create("my_table").as("my_aliased_table");
 
 		Expression mappedObject = mapper.getMappedObject(table.column("unknown").as("my_aliased_col"),
-				context.getRequiredPersistentEntity(Person.class));
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 
 		assertThat(mappedObject).hasToString("my_aliased_table.unknown AS my_aliased_col");
 	}
@@ -392,7 +405,7 @@ class QueryMapperUnitTests {
 
 		Sort sort = Sort.by(desc("alternative"));
 
-		Sort mapped = mapper.getMappedObject(sort, context.getRequiredPersistentEntity(Person.class));
+		Sort mapped = mapper.getMappedObject(sort, mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 
 		assertThat(mapped.getOrderFor("another_name")).isEqualTo(desc("another_name"));
 		assertThat(mapped.getOrderFor("alternative")).isNull();
@@ -403,7 +416,7 @@ class QueryMapperUnitTests {
 
 		Sort sort = Sort.by(desc("alternative_name"));
 
-		Sort mapped = mapper.getMappedObject(sort, context.getRequiredPersistentEntity(Person.class));
+		Sort mapped = mapper.getMappedObject(sort, mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 		assertThat(mapped.getOrderFor("alternative_name")).isEqualTo(desc("alternative_name"));
 	}
 
@@ -427,12 +440,35 @@ class QueryMapperUnitTests {
 		assertThat(bindings.getCondition()).hasToString("person.enum_value IN (?[$1], ?[$2])");
 	}
 
+	@Test // gh-733
+	void shouldMapBooleanConditionProperly() {
+
+		Criteria criteria = Criteria.where("state").isFalse();
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("person.state = ?[$1]");
+		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo(false);
+	}
+
+	@Test // gh-733
+	void shouldMapAndConvertBooleanConditionProperly() {
+
+		mapper = createMapper(MySqlDialect.INSTANCE);
+		Criteria criteria = Criteria.where("state").isTrue();
+
+		BoundCondition bindings = map(criteria);
+
+		assertThat(bindings.getCondition()).hasToString("person.state = ?[$1]");
+		assertThat(bindings.getBindings().iterator().next().getValue()).isEqualTo((byte) 1);
+	}
+
 	private BoundCondition map(Criteria criteria) {
 
 		BindMarkersFactory markers = BindMarkersFactory.indexed("$", 1);
 
 		return mapper.getMappedObject(markers.create(), criteria, Table.create("person"),
-				context.getRequiredPersistentEntity(Person.class));
+				mapper.getMappingContext().getRequiredPersistentEntity(Person.class));
 	}
 
 	static class Person {
@@ -440,6 +476,8 @@ class QueryMapperUnitTests {
 		String name;
 		@Column("another_name") String alternative;
 		MyEnum enumValue;
+
+		boolean state;
 	}
 
 	enum MyEnum {
