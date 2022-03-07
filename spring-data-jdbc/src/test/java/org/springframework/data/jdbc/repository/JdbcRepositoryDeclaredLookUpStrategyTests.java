@@ -18,20 +18,19 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
 /**
  * Test to verify that
  * <code>@EnableJdbcRepositories(queryLookupStrategy = QueryLookupStrategy.Key.USE_DECLARED_QUERY)</code> works as
- * intended. Tests based on logic from
- * {@link org.springframework.data.jdbc.repository.support.JdbcQueryLookupStrategy.DeclaredQueryLookupStrategy}
+ * intended.
  *
  * @author Diego Krupitza
  */
-class JdbcRepositoryDeclaredLookUpStrategyIntegrationTests
-		extends AbstractJdbcRepositoryLookUpStrategyIntegrationTests {
+class JdbcRepositoryDeclaredLookUpStrategyTests
+		extends AbstractJdbcRepositoryLookUpStrategyTests {
 
-	@Test
+	@Test // GH-1043
 	void contextCannotByCreatedDueToFindByNameNotDeclaredQuery() {
 
 		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
 
-			context.register(JdbcRepositoryDeclaredLookUpStrategyIntegrationTests.Config.class);
+			context.register(JdbcRepositoryDeclaredLookUpStrategyTests.Config.class);
 
 			assertThatThrownBy(() -> {
 				context.refresh();
@@ -45,7 +44,7 @@ class JdbcRepositoryDeclaredLookUpStrategyIntegrationTests
 	@EnableJdbcRepositories(considerNestedRepositories = true,
 			queryLookupStrategy = QueryLookupStrategy.Key.USE_DECLARED_QUERY,
 			includeFilters = @ComponentScan.Filter(
-					value = AbstractJdbcRepositoryLookUpStrategyIntegrationTests.OnesRepository.class,
+					value = AbstractJdbcRepositoryLookUpStrategyTests.OnesRepository.class,
 					type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
@@ -53,8 +52,7 @@ class JdbcRepositoryDeclaredLookUpStrategyIntegrationTests
 
 		@Bean
 		Class<?> testClass() {
-			return AbstractJdbcRepositoryLookUpStrategyIntegrationTests.class;
+			return AbstractJdbcRepositoryLookUpStrategyTests.class;
 		}
 	}
-
 }

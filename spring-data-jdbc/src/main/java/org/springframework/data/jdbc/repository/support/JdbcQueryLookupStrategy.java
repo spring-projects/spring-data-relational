@@ -99,6 +99,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * {@link QueryLookupStrategy} to create a query from the method name.
 	 *
 	 * @author Diego Krupitza
+	 * @since 2.4
 	 */
 	static class CreateQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
@@ -125,6 +126,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * {@link org.springframework.data.jdbc.repository.query.Query} annotation followed by a JPA named query lookup.
 	 *
 	 * @author Diego Krupitza
+	 * @since 2.4
 	 */
 	static class DeclaredQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
@@ -150,7 +152,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 
 				StringBasedJdbcQuery query = new StringBasedJdbcQuery(queryMethod, getOperations(), this::createMapper,
 						getConverter());
-				query.setBeanFactory(getBeanfactory());
+				query.setBeanFactory(getBeanFactory());
 				return query;
 			}
 
@@ -163,12 +165,9 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * {@link QueryLookupStrategy} to try to detect a declared query first (
 	 * {@link org.springframework.data.jdbc.repository.query.Query}, JDBC named query). In case none is found we fall back
 	 * on query creation.
-	 * <p>
-	 * Modified based on original source: {@link org.springframework.data.jpa.repository.query.JpaQueryLookupStrategy}
 	 *
-	 * @author Oliver Gierke
-	 * @author Thomas Darimont
 	 * @author Diego Krupitza
+	 * @since 2.4
 	 */
 	static class CreateIfNotFoundQueryLookupStrategy extends JdbcQueryLookupStrategy {
 
@@ -181,7 +180,7 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		 * @param createStrategy must not be {@literal null}.
 		 * @param lookupStrategy must not be {@literal null}.
 		 */
-		public CreateIfNotFoundQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
+		CreateIfNotFoundQueryLookupStrategy(ApplicationEventPublisher publisher, @Nullable EntityCallbacks callbacks,
 				RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 				QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
 				@Nullable BeanFactory beanfactory, CreateQueryLookupStrategy createStrategy,
@@ -228,12 +227,12 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 	 * @param dialect must not be {@literal null}
 	 * @param queryMappingConfiguration must not be {@literal null}
 	 * @param operations must not be {@literal null}
-	 * @param beanfactory may be {@literal null}
+	 * @param beanFactory may be {@literal null}
 	 */
 	public static QueryLookupStrategy create(@Nullable Key key, ApplicationEventPublisher publisher,
 			@Nullable EntityCallbacks callbacks, RelationalMappingContext context, JdbcConverter converter, Dialect dialect,
 			QueryMappingConfiguration queryMappingConfiguration, NamedParameterJdbcOperations operations,
-			@Nullable BeanFactory beanfactory) {
+			@Nullable BeanFactory beanFactory) {
 
 		Assert.notNull(publisher, "ApplicationEventPublisher must not be null");
 		Assert.notNull(context, "RelationalMappingContextPublisher must not be null");
@@ -243,10 +242,10 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 		Assert.notNull(operations, "NamedParameterJdbcOperations must not be null");
 
 		CreateQueryLookupStrategy createQueryLookupStrategy = new CreateQueryLookupStrategy(publisher, callbacks, context,
-				converter, dialect, queryMappingConfiguration, operations, beanfactory);
+				converter, dialect, queryMappingConfiguration, operations, beanFactory);
 
 		DeclaredQueryLookupStrategy declaredQueryLookupStrategy = new DeclaredQueryLookupStrategy(publisher, callbacks,
-				context, converter, dialect, queryMappingConfiguration, operations, beanfactory);
+				context, converter, dialect, queryMappingConfiguration, operations, beanFactory);
 
 		Key cleanedKey = key != null ? key : Key.CREATE_IF_NOT_FOUND;
 
@@ -259,34 +258,30 @@ abstract class JdbcQueryLookupStrategy implements QueryLookupStrategy {
 				return declaredQueryLookupStrategy;
 			case CREATE_IF_NOT_FOUND:
 				return new CreateIfNotFoundQueryLookupStrategy(publisher, callbacks, context, converter, dialect,
-						queryMappingConfiguration, operations, beanfactory, createQueryLookupStrategy, declaredQueryLookupStrategy);
+						queryMappingConfiguration, operations, beanFactory, createQueryLookupStrategy, declaredQueryLookupStrategy);
 			default:
 				throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
 	}
 
-	protected ApplicationEventPublisher getPublisher() {
-		return publisher;
-	}
-
-	protected RelationalMappingContext getContext() {
+	RelationalMappingContext getContext() {
 		return context;
 	}
 
-	protected JdbcConverter getConverter() {
+	JdbcConverter getConverter() {
 		return converter;
 	}
 
-	protected Dialect getDialect() {
+	Dialect getDialect() {
 		return dialect;
 	}
 
-	protected NamedParameterJdbcOperations getOperations() {
+	NamedParameterJdbcOperations getOperations() {
 		return operations;
 	}
 
 	@Nullable
-	protected BeanFactory getBeanfactory() {
+	BeanFactory getBeanFactory() {
 		return beanfactory;
 	}
 

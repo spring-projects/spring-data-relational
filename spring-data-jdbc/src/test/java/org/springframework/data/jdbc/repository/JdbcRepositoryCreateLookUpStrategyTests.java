@@ -33,27 +33,26 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Test to verify that
- * <code>@EnableJdbcRepositories(queryLookupStrategy = QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND)</code> works as
- * intended. Tests based on logic from
- * {@link org.springframework.data.jdbc.repository.support.JdbcQueryLookupStrategy.CreateIfNotFoundQueryLookupStrategy}
+ * Test to verify that <code>@EnableJdbcRepositories(queryLookupStrategy = QueryLookupStrategy.Key.CREATE)</code> works
+ * as intended.
  *
  * @author Diego Krupitza
+ * @author Jens Schauder
  */
 @ContextConfiguration
 @Transactional
-@ActiveProfiles("hsql")
 @ExtendWith(SpringExtension.class)
-class JdbcRepositoryCreateIfNotFoundLookUpStrategyIntegrationTests
-		extends AbstractJdbcRepositoryLookUpStrategyIntegrationTests {
+class JdbcRepositoryCreateLookUpStrategyTests extends AbstractJdbcRepositoryLookUpStrategyTests {
 
-	@Test
+	@Test // GH-1043
 	void declaredQueryShouldWork() {
 		onesRepository.deleteAll();
-		callDeclaredQuery("D", 2, "Diego", "Daniela");
+
+		// here the declared query will use the derived query which does something totally different
+		callDeclaredQuery("D", 0);
 	}
 
-	@Test
+	@Test // GH-1043
 	void derivedQueryShouldWork() {
 		onesRepository.deleteAll();
 		callDerivedQuery();
@@ -61,18 +60,15 @@ class JdbcRepositoryCreateIfNotFoundLookUpStrategyIntegrationTests
 
 	@Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true,
-			queryLookupStrategy = QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND,
-			includeFilters = @ComponentScan.Filter(
-					value = AbstractJdbcRepositoryLookUpStrategyIntegrationTests.OnesRepository.class,
-					type = FilterType.ASSIGNABLE_TYPE))
+	@EnableJdbcRepositories(considerNestedRepositories = true, queryLookupStrategy = QueryLookupStrategy.Key.CREATE,
+			includeFilters = @ComponentScan.Filter(value = OnesRepository.class, type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
 		@Autowired JdbcRepositoryFactory factory;
 
 		@Bean
 		Class<?> testClass() {
-			return AbstractJdbcRepositoryLookUpStrategyIntegrationTests.class;
+			return AbstractJdbcRepositoryLookUpStrategyTests.class;
 		}
 	}
 

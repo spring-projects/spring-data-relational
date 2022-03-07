@@ -27,33 +27,31 @@ import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
 import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Test to verify that <code>@EnableJdbcRepositories(queryLookupStrategy = QueryLookupStrategy.Key.CREATE)</code> works
- * as intended. Tests based on logic from
- * {@link org.springframework.data.jdbc.repository.support.JdbcQueryLookupStrategy.CreateQueryLookupStrategy}
+ * Test to verify that
+ * <code>@EnableJdbcRepositories(queryLookupStrategy = QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND)</code> works as
+ * intended.
  *
  * @author Diego Krupitza
+ * @author Jens Schauder
  */
 @ContextConfiguration
 @Transactional
-@ActiveProfiles("hsql")
 @ExtendWith(SpringExtension.class)
-class JdbcRepositoryCreateLookUpStrategyIntegrationTests extends AbstractJdbcRepositoryLookUpStrategyIntegrationTests {
+class JdbcRepositoryCreateIfNotFoundLookUpStrategyTests
+		extends AbstractJdbcRepositoryLookUpStrategyTests {
 
-	@Test
+	@Test // GH-1043
 	void declaredQueryShouldWork() {
 		onesRepository.deleteAll();
-
-		// here the declared query will use the dervice query which does something totally different
-		callDeclaredQuery("D", 0);
+		callDeclaredQuery("D", 2, "Diego", "Daniela");
 	}
 
-	@Test
+	@Test // GH-1043
 	void derivedQueryShouldWork() {
 		onesRepository.deleteAll();
 		callDerivedQuery();
@@ -61,16 +59,18 @@ class JdbcRepositoryCreateLookUpStrategyIntegrationTests extends AbstractJdbcRep
 
 	@Configuration
 	@Import(TestConfiguration.class)
-	@EnableJdbcRepositories(considerNestedRepositories = true, queryLookupStrategy = QueryLookupStrategy.Key.CREATE,
-			includeFilters = @ComponentScan.Filter(value = OnesRepository.class, type = FilterType.ASSIGNABLE_TYPE))
+	@EnableJdbcRepositories(considerNestedRepositories = true,
+			queryLookupStrategy = QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND,
+			includeFilters = @ComponentScan.Filter(
+					value = AbstractJdbcRepositoryLookUpStrategyTests.OnesRepository.class,
+					type = FilterType.ASSIGNABLE_TYPE))
 	static class Config {
 
 		@Autowired JdbcRepositoryFactory factory;
 
 		@Bean
 		Class<?> testClass() {
-			return AbstractJdbcRepositoryLookUpStrategyIntegrationTests.class;
+			return AbstractJdbcRepositoryLookUpStrategyTests.class;
 		}
 	}
-
 }
