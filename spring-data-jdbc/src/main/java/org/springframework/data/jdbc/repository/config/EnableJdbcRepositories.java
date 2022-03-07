@@ -136,6 +136,8 @@ public @interface EnableJdbcRepositories {
 	/**
 	 * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to
 	 * {@link QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
+	 *
+	 * @since 2.1
 	 */
 	QueryLookupStrategy.Key queryLookupStrategy() default QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND;
 }

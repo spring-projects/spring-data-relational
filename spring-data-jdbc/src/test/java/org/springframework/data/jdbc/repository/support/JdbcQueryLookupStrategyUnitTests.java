@@ -111,7 +111,7 @@ class JdbcQueryLookupStrategyUnitTests {
 		verify(operations).queryForObject(eq("some SQL"), any(SqlParameterSource.class), any(RowMapper.class));
 	}
 
-	@Test
+	@Test // GH-1043
 	void shouldFailOnMissingDeclaredQuery() {
 
 		RowMapper<? extends NumberFormat> numberFormatMapper = mock(RowMapper.class);
@@ -139,6 +139,7 @@ class JdbcQueryLookupStrategyUnitTests {
 	}
 
 	private static Stream<Arguments> correctLookUpStrategyForKeySource() {
+
 		return Stream.of( //
 				Arguments.of(QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND,
 						JdbcQueryLookupStrategy.CreateIfNotFoundQueryLookupStrategy.class), //

@@ -29,18 +29,19 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 /**
- * Base class to test <code>@EnableJdbcRepositories(queryLookupStrategy = ...)</code> Tests based on logic from
- * {@link org.springframework.data.jdbc.repository.support.JdbcQueryLookupStrategy}
+ * Base class to test <code>@EnableJdbcRepositories(queryLookupStrategy = ...)</code>
  * 
  * @author Diego Krupitza
+ * @since 2.4
  */
-abstract class AbstractJdbcRepositoryLookUpStrategyIntegrationTests {
+abstract class AbstractJdbcRepositoryLookUpStrategyTests {
 
 	@Autowired protected OnesRepository onesRepository;
 	@Autowired NamedParameterJdbcTemplate template;
 	@Autowired RelationalMappingContext context;
 
-	protected void insertTestInstances() {
+	void insertTestInstances() {
+
 		AggregateOne firstAggregate = new AggregateOne("Diego");
 		AggregateOne secondAggregate = new AggregateOne("Franz");
 		AggregateOne thirdAggregate = new AggregateOne("Daniela");
@@ -48,7 +49,8 @@ abstract class AbstractJdbcRepositoryLookUpStrategyIntegrationTests {
 		onesRepository.saveAll(Arrays.asList(firstAggregate, secondAggregate, thirdAggregate));
 	}
 
-	protected void callDeclaredQuery(String name, int expectedSize, String... expectedNames) {
+	void callDeclaredQuery(String name, int expectedSize, String... expectedNames) {
+
 		insertTestInstances();
 
 		List<AggregateOne> likeNameD = onesRepository.findAllByName(name);
