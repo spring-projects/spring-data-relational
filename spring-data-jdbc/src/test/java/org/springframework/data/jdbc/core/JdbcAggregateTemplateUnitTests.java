@@ -99,15 +99,16 @@ public class JdbcAggregateTemplateUnitTests {
 
 		SampleEntity first = new SampleEntity(null, "Alfred");
 		SampleEntity second = new SampleEntity(23L, "Alfred E.");
+		SampleEntity third = new SampleEntity(23L, "Neumann");
 
-		when(callbacks.callback(any(Class.class), any(), any())).thenReturn(second, second);
+		when(callbacks.callback(any(Class.class), any(), any())).thenReturn(second, third);
 
 		SampleEntity last = template.save(first);
 
 		verify(callbacks).callback(BeforeConvertCallback.class, first);
 		verify(callbacks).callback(eq(BeforeSaveCallback.class), eq(second), any(MutableAggregateChange.class));
 		verify(callbacks).callback(AfterSaveCallback.class, second);
-		assertThat(last).isEqualTo(second);
+		assertThat(last).isEqualTo(third);
 	}
 
 	@Test // DATAJDBC-393

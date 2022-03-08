@@ -15,6 +15,13 @@
  */
 package org.springframework.data.jdbc.core;
 
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
