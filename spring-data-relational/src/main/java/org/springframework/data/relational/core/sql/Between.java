@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
  * </p>
  * 
  * @author Mark Paluch
+ * @author Meng Zuozhu
  * @since 2.2
  */
 public class Between extends AbstractSegment implements Condition {
@@ -92,6 +93,6 @@ public class Between extends AbstractSegment implements Condition {
 
 	@Override
 	public String toString() {
-		return column + " BETWEEN " + begin + " AND " + end;
+		return column + (negated ? " NOT" : "") + " BETWEEN " + begin + " AND " + end;
 	}
 }
