@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
  * Results in a rendered condition: {@code <left> LIKE <right>}.
  *
  * @author Mark Paluch
+ * @author Meng Zuozhu
  * @since 1.1
  */
 public class Like extends AbstractSegment implements Condition {
@@ -80,6 +81,6 @@ public class Like extends AbstractSegment implements Condition {
 
 	@Override
 	public String toString() {
-		return left + " LIKE " + right;
+		return left + (negated ? " NOT" : "") + " LIKE " + right;
 	}
 }
