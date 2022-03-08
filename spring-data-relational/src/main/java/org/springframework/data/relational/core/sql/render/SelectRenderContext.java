@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,20 @@ package org.springframework.data.relational.core.sql.render;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.dialect.OrderByNullPrecedence;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.Select;
 
 /**
  * Render context specifically for {@code SELECT} statements. This interface declares rendering hooks that are called
- * before/after a specific {@code SELECT} clause part. The rendering content is appended directly after/before an
+ * before/after/during a specific {@code SELECT} clause part. The rendering content is appended directly after/before an
  * element without further whitespace processing. Hooks are responsible for adding required surrounding whitespaces.
  *
  * @author Mark Paluch
  * @author Myeonghyeon Lee
  * @author Jens Schauder
+ * @author Chirag Tailor
  * @since 1.1
  */
 public interface SelectRenderContext {
@@ -85,5 +88,16 @@ public interface SelectRenderContext {
 
 			return lockPrefix;
 		};
+	}
+
+	/**
+	 * Customization hook: Rendition of the null handling option for an {@code ORDER BY} sort expression.
+	 *
+	 * @param nullHandling the {@link Sort.NullHandling} for the {@code ORDER BY} sort expression. Must not be {@literal null}.
+	 * @return render {@link String} SQL text to be included in an {@code ORDER BY} sort expression.
+	 * @since 2.4
+	 */
+	default String evaluateOrderByNullHandling(Sort.NullHandling nullHandling) {
+		return OrderByNullPrecedence.NONE.evaluate(nullHandling);
 	}
 }

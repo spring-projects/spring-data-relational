@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,11 @@
  */
 package org.springframework.data.jdbc.core;
 
-import static java.util.Collections.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.SoftAssertions.*;
-import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.*;
-import static org.springframework.test.context.TestExecutionListeners.MergeMode.*;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.Value;
 import lombok.With;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.IntStream;
-
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +31,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
@@ -61,6 +44,7 @@ import org.springframework.data.jdbc.testing.TestConfiguration;
 import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.conversion.DbActionExecutionException;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -68,6 +52,33 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.IntStream;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.IS_HSQL;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_ARRAYS;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_MULTIDIMENSIONAL_ARRAYS;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_NANOSECOND_PRECISION;
+import static org.springframework.data.jdbc.testing.TestDatabaseFeatures.Feature.SUPPORTS_QUOTED_IDS;
+import static org.springframework.test.context.TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS;
 
 /**
  * Integration tests for {@link JdbcAggregateTemplate}.
@@ -81,12 +92,13 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Clemens Hahn
  * @author Milan Milanov
  * @author Mikhail Polivakha
+ * @author Chirag Tailor
  */
 @ContextConfiguration
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
 @ExtendWith(SpringExtension.class)
-public class JdbcAggregateTemplateIntegrationTests {
+class JdbcAggregateTemplateIntegrationTests {
 
 	@Autowired JdbcAggregateOperations template;
 	@Autowired NamedParameterJdbcOperations jdbcTemplate;
@@ -191,7 +203,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadAnEntityWithReferencedEntityById() {
+	void saveAndLoadAnEntityWithReferencedEntityById() {
 
 		template.save(legoSet);
 
@@ -213,7 +225,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadManyEntitiesWithReferencedEntity() {
+	void saveAndLoadManyEntitiesWithReferencedEntity() {
 
 		template.save(legoSet);
 
@@ -226,7 +238,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-101
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadManyEntitiesWithReferencedEntitySorted() {
+	void saveAndLoadManyEntitiesWithReferencedEntitySorted() {
 
 		template.save(createLegoSet("Lava"));
 		template.save(createLegoSet("Star"));
@@ -241,7 +253,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-101
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadManyEntitiesWithReferencedEntitySortedAndPaged() {
+	void saveAndLoadManyEntitiesWithReferencedEntitySortedAndPaged() {
 
 		template.save(createLegoSet("Lava"));
 		template.save(createLegoSet("Star"));
@@ -254,9 +266,24 @@ public class JdbcAggregateTemplateIntegrationTests {
 				.containsExactly("Star");
 	}
 
+	@Test // GH-821
+	@EnabledOnFeature({SUPPORTS_QUOTED_IDS, SUPPORTS_NULL_PRECEDENCE})
+	void saveAndLoadManyEntitiesWithReferencedEntitySortedWithNullPrecedence() {
+
+		template.save(createLegoSet(null));
+		template.save(createLegoSet("Star"));
+		template.save(createLegoSet("Frozen"));
+
+		Iterable<LegoSet> reloadedLegoSets = template.findAll(LegoSet.class, Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+
+		assertThat(reloadedLegoSets) //
+				.extracting("name") //
+				.containsExactly("Frozen", "Star", null);
+	}
+
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadManyEntitiesByIdWithReferencedEntity() {
+	void saveAndLoadManyEntitiesByIdWithReferencedEntity() {
 
 		template.save(legoSet);
 
@@ -268,7 +295,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadAnEntityWithReferencedNullEntity() {
+	void saveAndLoadAnEntityWithReferencedNullEntity() {
 
 		legoSet.setManual(null);
 
@@ -281,7 +308,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndDeleteAnEntityWithReferencedEntity() {
+	void saveAndDeleteAnEntityWithReferencedEntity() {
 
 		template.save(legoSet);
 
@@ -297,7 +324,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndDeleteAllWithReferencedEntity() {
+	void saveAndDeleteAllWithReferencedEntity() {
 
 		template.save(legoSet);
 
@@ -313,7 +340,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
-	public void updateReferencedEntityFromNull() {
+	void updateReferencedEntityFromNull() {
 
 		legoSet.setManual(null);
 		template.save(legoSet);
@@ -332,7 +359,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void updateReferencedEntityToNull() {
+	void updateReferencedEntityToNull() {
 
 		template.save(legoSet);
 
@@ -351,7 +378,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-438
-	public void updateFailedRootDoesNotExist() {
+	void updateFailedRootDoesNotExist() {
 
 		LegoSet entity = new LegoSet();
 		entity.setId(100L); // does not exist in the database
@@ -363,7 +390,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void replaceReferencedEntity() {
+	void replaceReferencedEntity() {
 
 		template.save(legoSet);
 
@@ -385,7 +412,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-112
 	@EnabledOnFeature({ SUPPORTS_QUOTED_IDS, TestDatabaseFeatures.Feature.SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES })
-	public void changeReferencedEntity() {
+	void changeReferencedEntity() {
 
 		template.save(legoSet);
 
@@ -400,7 +427,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-266
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void oneToOneChildWithoutId() {
+	void oneToOneChildWithoutId() {
 
 		OneToOneParent parent = new OneToOneParent();
 
@@ -417,7 +444,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-266
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void oneToOneNullChildWithoutId() {
+	void oneToOneNullChildWithoutId() {
 
 		OneToOneParent parent = new OneToOneParent();
 
@@ -433,7 +460,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-266
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void oneToOneNullAttributes() {
+	void oneToOneNullAttributes() {
 
 		OneToOneParent parent = new OneToOneParent();
 
@@ -449,7 +476,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-125
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadAnEntityWithSecondaryReferenceNull() {
+	void saveAndLoadAnEntityWithSecondaryReferenceNull() {
 
 		template.save(legoSet);
 
@@ -462,7 +489,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-125
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadAnEntityWithSecondaryReferenceNotNull() {
+	void saveAndLoadAnEntityWithSecondaryReferenceNotNull() {
 
 		legoSet.alternativeInstructions = new Manual();
 		legoSet.alternativeInstructions.content = "alternative content";
@@ -484,7 +511,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-276
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadAnEntityWithListOfElementsWithoutId() {
+	void saveAndLoadAnEntityWithListOfElementsWithoutId() {
 
 		ListParent entity = new ListParent();
 		entity.name = "name";
@@ -501,9 +528,24 @@ public class JdbcAggregateTemplateIntegrationTests {
 		assertThat(reloaded.content).extracting(e -> e.content).containsExactly("content");
 	}
 
+	@Test // GH-498 DATAJDBC-273
+	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
+	void saveAndLoadAnEntityWithListOfElementsInConstructor() {
+
+		ElementNoId element = new ElementNoId();
+		element.content = "content";
+		ListParentAllArgs entity = new ListParentAllArgs("name", asList(element));
+
+		entity = template.save(entity);
+
+		ListParentAllArgs reloaded = template.findById(entity.id, ListParentAllArgs.class);
+
+		assertThat(reloaded.content).extracting(e -> e.content).containsExactly("content");
+	}
+
 	@Test // DATAJDBC-259
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
-	public void saveAndLoadAnEntityWithArray() {
+	void saveAndLoadAnEntityWithArray() {
 
 		ArrayOwner arrayOwner = new ArrayOwner();
 		arrayOwner.digits = new String[] { "one", "two", "three" };
@@ -521,7 +563,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-259, DATAJDBC-512
 	@EnabledOnFeature(SUPPORTS_MULTIDIMENSIONAL_ARRAYS)
-	public void saveAndLoadAnEntityWithMultidimensionalArray() {
+	void saveAndLoadAnEntityWithMultidimensionalArray() {
 
 		ArrayOwner arrayOwner = new ArrayOwner();
 		arrayOwner.multidimensional = new String[][] { { "one-a", "two-a", "three-a" }, { "one-b", "two-b", "three-b" } };
@@ -540,10 +582,10 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-259
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
-	public void saveAndLoadAnEntityWithList() {
+	void saveAndLoadAnEntityWithList() {
 
 		ListOwner arrayOwner = new ListOwner();
-		arrayOwner.digits.addAll(Arrays.asList("one", "two", "three"));
+		arrayOwner.digits.addAll(asList("one", "two", "three"));
 
 		ListOwner saved = template.save(arrayOwner);
 
@@ -553,15 +595,15 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-		assertThat(reloaded.digits).isEqualTo(Arrays.asList("one", "two", "three"));
+		assertThat(reloaded.digits).isEqualTo(asList("one", "two", "three"));
 	}
 
 	@Test // GH-1033
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
-	public void saveAndLoadAnEntityWithListOfDouble() {
+	void saveAndLoadAnEntityWithListOfDouble() {
 
 		DoubleListOwner doubleListOwner = new DoubleListOwner();
-		doubleListOwner.digits.addAll(Arrays.asList(1.2, 1.3, 1.4));
+		doubleListOwner.digits.addAll(asList(1.2, 1.3, 1.4));
 
 		DoubleListOwner saved = template.save(doubleListOwner);
 
@@ -571,15 +613,15 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-		assertThat(reloaded.digits).isEqualTo(Arrays.asList(1.2, 1.3, 1.4));
+		assertThat(reloaded.digits).isEqualTo(asList(1.2, 1.3, 1.4));
 	}
 
-	@Test // GH-1033
+	@Test // GH-1033, GH-1046
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
-	public void saveAndLoadAnEntityWithListOfFloat() {
+	void saveAndLoadAnEntityWithListOfFloat() {
 
 		FloatListOwner floatListOwner = new FloatListOwner();
-		final List<Float> values = Arrays.asList(1.2f, 1.3f, 1.4f);
+		final List<Float> values = asList(1.2f, 1.3f, 1.4f);
 		floatListOwner.digits.addAll(values);
 
 		FloatListOwner saved = template.save(floatListOwner);
@@ -590,15 +632,15 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-
+		assertThat(reloaded.digits).isEqualTo(values);
 	}
 
 	@Test // DATAJDBC-259
 	@EnabledOnFeature(SUPPORTS_ARRAYS)
-	public void saveAndLoadAnEntityWithSet() {
+	void saveAndLoadAnEntityWithSet() {
 
 		SetOwner setOwner = new SetOwner();
-		setOwner.digits.addAll(Arrays.asList("one", "two", "three"));
+		setOwner.digits.addAll(asList("one", "two", "three"));
 
 		SetOwner saved = template.save(setOwner);
 
@@ -608,11 +650,11 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 		assertThat(reloaded).isNotNull();
 		assertThat(reloaded.id).isEqualTo(saved.id);
-		assertThat(reloaded.digits).isEqualTo(new HashSet<>(Arrays.asList("one", "two", "three")));
+		assertThat(reloaded.digits).isEqualTo(new HashSet<>(asList("one", "two", "three")));
 	}
 
 	@Test // DATAJDBC-327
-	public void saveAndLoadAnEntityWithByteArray() {
+	void saveAndLoadAnEntityWithByteArray() {
 
 		ByteArrayOwner owner = new ByteArrayOwner();
 		owner.binaryData = new byte[] { 1, 23, 42 };
@@ -628,7 +670,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-340
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadLongChain() {
+	void saveAndLoadLongChain() {
 
 		Chain4 chain4 = new Chain4();
 		chain4.fourValue = "omega";
@@ -657,7 +699,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-359
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void saveAndLoadLongChainWithoutIds() {
+	void saveAndLoadLongChainWithoutIds() {
 
 		NoIdChain4 chain4 = new NoIdChain4();
 		chain4.fourValue = "omega";
@@ -687,7 +729,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-223
-	public void saveAndLoadLongChainOfListsWithoutIds() {
+	void saveAndLoadLongChainOfListsWithoutIds() {
 
 		NoIdListChain4 saved = template.save(createNoIdTree());
 
@@ -698,7 +740,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-223
-	public void shouldDeleteChainOfListsWithoutIds() {
+	void shouldDeleteChainOfListsWithoutIds() {
 
 		NoIdListChain4 saved = template.save(createNoIdTree());
 		template.deleteById(saved.four, NoIdListChain4.class);
@@ -714,7 +756,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-223
-	public void saveAndLoadLongChainOfMapsWithoutIds() {
+	void saveAndLoadLongChainOfMapsWithoutIds() {
 
 		NoIdMapChain4 saved = template.save(createNoIdMapTree());
 
@@ -725,7 +767,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-223
-	public void shouldDeleteChainOfMapsWithoutIds() {
+	void shouldDeleteChainOfMapsWithoutIds() {
 
 		NoIdMapChain4 saved = template.save(createNoIdMapTree());
 		template.deleteById(saved.four, NoIdMapChain4.class);
@@ -742,7 +784,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-431
 	@EnabledOnFeature(IS_HSQL)
-	public void readOnlyGetsLoadedButNotWritten() {
+	void readOnlyGetsLoadedButNotWritten() {
 
 		WithReadOnly entity = new WithReadOnly();
 		entity.name = "Alfred";
@@ -756,7 +798,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-219 Test that immutable version attribute works as expected.
-	public void saveAndUpdateAggregateWithImmutableVersion() {
+	void saveAndUpdateAggregateWithImmutableVersion() {
 
 		AggregateWithImmutableVersion aggregate = new AggregateWithImmutableVersion(null, null);
 		aggregate = template.save(aggregate);
@@ -786,8 +828,34 @@ public class JdbcAggregateTemplateIntegrationTests {
 				.hasRootCauseInstanceOf(OptimisticLockingFailureException.class);
 	}
 
+	@Test
+	void testUpdateEntityWithVersionDoesNotTriggerAnewConstructorInvocation() {
+		AggregateWithImmutableVersion aggregateWithImmutableVersion = new AggregateWithImmutableVersion(null, null);
+
+		final AggregateWithImmutableVersion savedRoot = template.save(aggregateWithImmutableVersion);
+
+		assertThat(savedRoot).isNotNull();
+		assertThat(savedRoot.version).isEqualTo(0L);
+
+		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsExactly(
+				new ConstructorInvocation(null, null), // Initial invocation, done by client
+				new ConstructorInvocation(null, savedRoot.version), // Assigning the version
+				new ConstructorInvocation(savedRoot.id, savedRoot.version) // Assigning the id
+		);
+
+		AggregateWithImmutableVersion.clearConstructorInvocationData();
+
+		final AggregateWithImmutableVersion updatedRoot = template.save(savedRoot);
+
+		assertThat(updatedRoot).isNotNull();
+		assertThat(updatedRoot.version).isEqualTo(1L);
+
+		// Expect only one assignnment of the version to AggregateWithImmutableVersion
+		assertThat(AggregateWithImmutableVersion.constructorInvocations).containsOnly(new ConstructorInvocation(savedRoot.id, updatedRoot.version));
+	}
+
 	@Test // DATAJDBC-219 Test that a delete with a version attribute works as expected.
-	public void deleteAggregateWithVersion() {
+	void deleteAggregateWithVersion() {
 
 		AggregateWithImmutableVersion aggregate = new AggregateWithImmutableVersion(null, null);
 		aggregate = template.save(aggregate);
@@ -819,38 +887,38 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-219
-	public void saveAndUpdateAggregateWithLongVersion() {
+	void saveAndUpdateAggregateWithLongVersion() {
 		saveAndUpdateAggregateWithVersion(new AggregateWithLongVersion(), Number::longValue);
 	}
 
 	@Test // DATAJDBC-219
-	public void saveAndUpdateAggregateWithPrimitiveLongVersion() {
+	void saveAndUpdateAggregateWithPrimitiveLongVersion() {
 		saveAndUpdateAggregateWithPrimitiveVersion(new AggregateWithPrimitiveLongVersion(), Number::longValue);
 	}
 
 	@Test // DATAJDBC-219
-	public void saveAndUpdateAggregateWithIntegerVersion() {
+	void saveAndUpdateAggregateWithIntegerVersion() {
 		saveAndUpdateAggregateWithVersion(new AggregateWithIntegerVersion(), Number::intValue);
 	}
 
 	@Test // DATAJDBC-219
-	public void saveAndUpdateAggregateWithPrimitiveIntegerVersion() {
+	void saveAndUpdateAggregateWithPrimitiveIntegerVersion() {
 		saveAndUpdateAggregateWithPrimitiveVersion(new AggregateWithPrimitiveIntegerVersion(), Number::intValue);
 	}
 
 	@Test // DATAJDBC-219
-	public void saveAndUpdateAggregateWithShortVersion() {
+	void saveAndUpdateAggregateWithShortVersion() {
 		saveAndUpdateAggregateWithVersion(new AggregateWithShortVersion(), Number::shortValue);
 	}
 
 	@Test // DATAJDBC-219
-	public void saveAndUpdateAggregateWithPrimitiveShortVersion() {
+	void saveAndUpdateAggregateWithPrimitiveShortVersion() {
 		saveAndUpdateAggregateWithPrimitiveVersion(new AggregateWithPrimitiveShortVersion(), Number::shortValue);
 	}
 
 	@Test // DATAJDBC-462
 	@EnabledOnFeature(SUPPORTS_QUOTED_IDS)
-	public void resavingAnUnversionedEntity() {
+	void resavingAnUnversionedEntity() {
 
 		LegoSet legoSet = new LegoSet();
 
@@ -861,7 +929,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 
 	@Test // DATAJDBC-637
 	@EnabledOnFeature(SUPPORTS_NANOSECOND_PRECISION)
-	public void saveAndLoadDateTimeWithFullPrecision() {
+	void saveAndLoadDateTimeWithFullPrecision() {
 
 		WithLocalDateTime entity = new WithLocalDateTime();
 		entity.id = 23L;
@@ -875,7 +943,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // DATAJDBC-637
-	public void saveAndLoadDateTimeWithMicrosecondPrecision() {
+	void saveAndLoadDateTimeWithMicrosecondPrecision() {
 
 		WithLocalDateTime entity = new WithLocalDateTime();
 		entity.id = 23L;
@@ -889,7 +957,7 @@ public class JdbcAggregateTemplateIntegrationTests {
 	}
 
 	@Test // GH-777
-	public void insertWithIdOnly() {
+	void insertWithIdOnly() {
 
 		WithIdOnly entity = new WithIdOnly();
 
@@ -1010,11 +1078,35 @@ public class JdbcAggregateTemplateIntegrationTests {
 		private String content;
 	}
 
+	@Table("LIST_PARENT")
 	static class ListParent {
 
 		@Column("id4") @Id private Long id;
 		String name;
+		@MappedCollection(idColumn = "LIST_PARENT")
 		List<ElementNoId> content = new ArrayList<>();
+	}
+
+	@Table("LIST_PARENT")
+	static class ListParentAllArgs {
+
+		@Column("id4") @Id
+		private final Long id;
+		private final String name;
+		@MappedCollection(idColumn = "LIST_PARENT")
+		private final List<ElementNoId> content = new ArrayList<>();
+
+		@PersistenceConstructor
+		ListParentAllArgs(Long id, String name, List<ElementNoId> content) {
+
+			this.id = id;
+			this.name = name;
+			this.content.addAll(content);
+		}
+
+		ListParentAllArgs(String name, List<ElementNoId> content) {
+			this(null, name, content);
+		}
 	}
 
 	static class ElementNoId {
@@ -1163,13 +1255,32 @@ public class JdbcAggregateTemplateIntegrationTests {
 		abstract void setVersion(Number newVersion);
 	}
 
-	@Value
+	@Getter
 	@With
 	@Table("VERSIONED_AGGREGATE")
 	static class AggregateWithImmutableVersion {
 
-		@Id Long id;
-		@Version Long version;
+		@Id final Long id;
+		@Version final Long version;
+
+		private final static List<ConstructorInvocation> constructorInvocations = new ArrayList<>();
+
+		public static void clearConstructorInvocationData() {
+			constructorInvocations.clear();
+		}
+
+		public AggregateWithImmutableVersion(Long id, Long version) {
+			constructorInvocations.add(new ConstructorInvocation(id, version));
+			this.id = id;
+			this.version = version;
+		}
+	}
+
+	@Value
+	@EqualsAndHashCode
+	private static class ConstructorInvocation {
+		private Long id;
+		private Long version;
 	}
 
 	@Data

@@ -28,6 +28,7 @@ import java.util.function.BiConsumer;
 
 import org.springframework.dao.IncorrectUpdateSemanticsDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy;
 import org.springframework.data.jdbc.core.convert.Identifier;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
@@ -38,6 +39,7 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
+import org.springframework.data.relational.core.conversion.InsertExecutionResult;
 import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -51,6 +53,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Umut Erturk
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
  */
 class JdbcAggregateChangeExecutionContext {
 
@@ -91,20 +94,18 @@ class JdbcAggregateChangeExecutionContext {
 
 			insert.setEntity(rootEntityWithAssignedVersion);
 
-			setNewVersion(initialVersion);
-
 		} else {
 			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty());
 		}
 
-		add(new DbActionExecutionResult(insert, id));
+		add(new InsertExecutionResult(insert, id));
 	}
 
 	<T> void executeInsert(DbAction.Insert<T> insert) {
 
 		Identifier parentKeys = getParentKeys(insert, converter);
 		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), parentKeys);
-		add(new DbActionExecutionResult(insert, id));
+		add(new InsertExecutionResult(insert, id));
 	}
 
 	<T> void executeUpdateRoot(DbAction.UpdateRoot<T> update) {
@@ -114,9 +115,10 @@ class JdbcAggregateChangeExecutionContext {
 		if (persistentEntity.hasVersionProperty()) {
 			updateWithVersion(update, persistentEntity);
 		} else {
-
 			updateWithoutVersion(update);
 		}
+		
+		add(new DbActionExecutionResult(update));
 	}
 
 	<T> void executeUpdate(DbAction.Update<T> update) {
@@ -156,6 +158,22 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeDeleteAll(DbAction.DeleteAll<T> delete) {
 
 		accessStrategy.deleteAll(delete.getPropertyPath());
+	}
+
+	/**
+	 * @deprecated This API is not longer used in spring-data-jdbc and will be removed in future releases
+	 */
+	@Deprecated
+	<T> void executeMerge(DbAction.Merge<T> merge) {
+
+		// temporary implementation
+		if (!accessStrategy.update(merge.getEntity(), merge.getEntityType())) {
+
+			Object id = accessStrategy.insert(merge.getEntity(), merge.getEntityType(), getParentKeys(merge, converter));
+			add(new DbActionExecutionResult(merge));
+		} else {
+			add(new DbActionExecutionResult());
+		}
 	}
 
 	<T> void executeAcquireLock(DbAction.AcquireLockRoot<T> acquireLock) {
@@ -222,7 +240,9 @@ class JdbcAggregateChangeExecutionContext {
 
 			Object generatedId;
 			DbActionExecutionResult dbActionExecutionResult = results.get(idOwningAction);
-			generatedId = dbActionExecutionResult == null ? null : dbActionExecutionResult.getId();
+			generatedId = dbActionExecutionResult instanceof InsertExecutionResult 
+					? ((InsertExecutionResult) dbActionExecutionResult).getNewId() 
+					: null;
 
 			if (generatedId != null) {
 				return generatedId;
@@ -242,6 +262,15 @@ class JdbcAggregateChangeExecutionContext {
 		return identifier;
 	}
 
+	/**
+	 * @deprecated This API is not longer used in spring-data-jdbc because of DATAJDBC-1137 - there is no need
+	 * 			   to set new version after execution of {@link DbAction} - we will not access this version later
+	 * 			   on, since we will assign it (in case version is present of course) to result aggregate root in
+	 * 			   {@link #executeInsertRoot(DbAction.InsertRoot)} or in{@link #executeUpdateRoot(DbAction.UpdateRoot)}.
+	 *
+	 * @link https://github.com/spring-projects/spring-data-jdbc/issues/1137
+	 */
+	@Deprecated
 	private void setNewVersion(long version) {
 
 		Assert.isNull(this.version, "A new version was set a second time.");
@@ -249,6 +278,15 @@ class JdbcAggregateChangeExecutionContext {
 		this.version = version;
 	}
 
+	/**
+	 * @deprecated This API is not longer used in spring-data-jdbc because of DATAJDBC-1137 - there is no need
+	 * 			   to access new version after execution of {@link DbAction} - we will assign version (in
+	 * 			   case it present of course) to result aggregate root in {@link #executeInsertRoot(DbAction.InsertRoot)}
+	 * 			   or in{@link #executeUpdateRoot(DbAction.UpdateRoot)} already.
+	 *
+	 * @link https://github.com/spring-projects/spring-data-jdbc/issues/1137
+	 */
+	@Deprecated
 	private long getNewVersion() {
 
 		Assert.notNull(version, "A new version was requested, but none was set.");
@@ -256,10 +294,31 @@ class JdbcAggregateChangeExecutionContext {
 		return version;
 	}
 
+	/**
+	 * @deprecated This API is not longer used in spring-data-jdbc because of DATAJDBC-1137 - there is no need
+	 * 			   to check for the new version after execution of {@link DbAction} - we will assign version (in
+	 * 			   case it present of course) to an aggregate root in {@link #executeInsertRoot(DbAction.InsertRoot)}
+	 * 			   or in {@link #executeUpdateRoot(DbAction.UpdateRoot)} already
+	 *
+	 * @link https://github.com/spring-projects/spring-data-jdbc/issues/1137
+	 */
+	@Deprecated
 	private boolean hasNewVersion() {
 		return version != null;
 	}
 
+	/**
+	 * The method below will be removed in the future releases of spring-data-jdbc
+	 *
+	 * @deprecated because of DATAJDBC-1137 issue this method is no longer used - it's invocation will
+	 *             trigger creation of new object with the goal to set version (while we have already done
+	 *             it previously) for immutable entities, such as new java Records API or simple
+	 *             Immutable pojo's. Instead, in order to avoid making another object, we will assign the version
+	 *             right to the root entity of an {@link org.springframework.data.relational.core.conversion.AggregateChange}
+	 *
+	 * @link https://github.com/spring-projects/spring-data-jdbc/issues/1137
+	 */
+	@Deprecated
 	<T> T populateRootVersionIfNecessary(T newRoot) {
 
 		if (!hasNewVersion()) {
@@ -273,18 +332,18 @@ class JdbcAggregateChangeExecutionContext {
 	}
 
 	/**
+	 * In the method below:
+	 *
+	 * 1) Aggregate root will be enriched with generated id (if id was generated as a result of {@link DbAction}
+	 * 2) Aggregate root will be enriched with version (in case the source entity has a {@link Version} field)
+	 * 3) Children aggregates will be enriched with their ids, (again, if any ids were generated)
+	 *
 	 * @param <T> represents the type of an entity
-	 * @return new Root entity with populated id for itself, and for all of its aggregates.
-	 *         Might return {@literal null} in case ids were not generated (for root aggregate, as
-	 *         well as for children aggregates). For example, ids of root entity and for all of
-	 *         its aggregates (if any exists) were provided before the actions {@link DbAction.InsertRoot}
-	 *         and {@link DbAction.Insert} respectively
+	 * @return new Root entity with populated fields from execution reuslt map, see {@link #results}
 	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
-	<T> T populateIdsIfNecessary() {
-
-		T newRoot = null;
+	<T> T getRootWithPopulatedFieldsFromExecutionResult() {
 
 		// have the results so that the inserts on the leaves come first.
 		List<DbActionExecutionResult> reverseResults = new ArrayList<>(results.values());
@@ -292,35 +351,41 @@ class JdbcAggregateChangeExecutionContext {
 
 		StagedValues cascadingValues = new StagedValues();
 
+		T rootWithPopulatedFields = null;
+
 		for (DbActionExecutionResult result : reverseResults) {
 
 			DbAction<?> action = result.getAction();
 
-			if (!(action instanceof DbAction.WithGeneratedId)) {
+			if (action instanceof DbAction.UpdateRoot) {
+				rootWithPopulatedFields = ((DbAction.UpdateRoot<T>) action).getEntity();
 				continue;
 			}
 
-			DbAction.WithEntity<?> withEntity = (DbAction.WithGeneratedId<?>) action;
-			Object newEntity = setIdAndCascadingProperties(withEntity, result.getId(), cascadingValues);
+			if (result instanceof InsertExecutionResult) {
+				DbAction.WithEntity<?> withEntity = (DbAction.WithGeneratedId<?>) action;
+				Object newEntity = setIdAndCascadingProperties(withEntity, ((InsertExecutionResult) result).getNewId(), cascadingValues);
 
-			// the id property was immutable so we have to propagate changes up the tree
-			if (newEntity != withEntity.getEntity()) {
+				if (action instanceof DbAction.InsertRoot) {
+					rootWithPopulatedFields = (T) newEntity;
+				}
 
-				if (action instanceof DbAction.Insert) {
-					DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
+				// the id property was immutable so we have to propagate changes up the tree
+				if (newEntity != withEntity.getEntity()) {
 
-					Pair<?, ?> qualifier = insert.getQualifier();
+					if (action instanceof DbAction.Insert) {
+						DbAction.Insert<?> insert = (DbAction.Insert<?>) action;
 
-					cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
-							qualifier == null ? null : qualifier.getSecond(), newEntity);
+						Pair<?, ?> qualifier = insert.getQualifier();
 
-				} else if (action instanceof DbAction.InsertRoot) {
-					newRoot = (T) newEntity;
+						cascadingValues.stage(insert.getDependingOn(), insert.getPropertyPath(),
+								qualifier == null ? null : qualifier.getSecond(), newEntity);
+
+					}
 				}
 			}
 		}
-
-		return newRoot;
+		return rootWithPopulatedFields;
 	}
 
 	private <S> Object setIdAndCascadingProperties(DbAction.WithEntity<S> action, @Nullable Object generatedId,
@@ -378,15 +443,15 @@ class JdbcAggregateChangeExecutionContext {
 
 		Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
 
-		setNewVersion(previousVersion.longValue() + 1);
-
-		T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(update.getEntity(), getNewVersion(),
+		T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(update.getEntity(), previousVersion.longValue() + 1,
 				persistentEntity, converter);
 
 		if (!accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
 
 			throw new OptimisticLockingFailureException(String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
 		}
+
+		update.setEntity(rootEntity);
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql.render;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.relational.core.dialect.PostgresDialect;
 import org.springframework.data.relational.core.dialect.RenderContextFactory;
@@ -265,8 +266,7 @@ class SelectRendererUnitTests {
 
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
 
-		assertThat(SqlRenderer.toString(select))
-				.isEqualTo("SELECT emp.name FROM employee emp ORDER BY emp.name ASC");
+		assertThat(SqlRenderer.toString(select)).isEqualTo("SELECT emp.name FROM employee emp ORDER BY emp.name ASC");
 	}
 
 	@Test // GH-968
@@ -544,9 +544,7 @@ class SelectRendererUnitTests {
 
 		Table table = SQL.table("User");
 		Select select = StatementBuilder.select( //
-				Conditions.isGreater(table.column("age"), SQL.literalOf(
-						18))
-		) //
+				Conditions.isGreater(table.column("age"), SQL.literalOf(18))) //
 				.from(table) //
 				.build();
 
@@ -574,5 +572,111 @@ class SelectRendererUnitTests {
 		String rendered = SqlRenderer.toString(select);
 		assertThat(rendered)
 				.isEqualTo("SELECT * FROM tableA JOIN tableB ON tableA.id = tableB.id ORDER BY tableA.name, tableB.name");
+	}
+
+	/**
+	 * Tests the rendering of analytic functions.
+	 */
+	@Nested
+	class AnalyticFunctionsTests {
+
+		Table employee = SQL.table("employee");
+		Column department = employee.column("department");
+		Column age = employee.column("age");
+		Column salary = employee.column("salary");
+
+		@Test // GH-1019
+		void renderEmptyOver() {
+
+			Select select = StatementBuilder.select( //
+					AnalyticFunction.create("MAX", salary) //
+			) //
+					.from(employee) //
+					.build();
+
+			String rendered = SqlRenderer.toString(select);
+
+			assertThat(rendered).isEqualTo("SELECT MAX(employee.salary) OVER() FROM employee");
+		}
+
+		@Test // GH-1019
+		void renderPartition() {
+
+			Select select = StatementBuilder.select( //
+					AnalyticFunction.create("MAX", salary) //
+							.partitionBy(department) //
+			) //
+					.from(employee) //
+					.build();
+
+			String rendered = SqlRenderer.toString(select);
+
+			assertThat(rendered)
+					.isEqualTo("SELECT MAX(employee.salary) OVER(PARTITION BY employee.department) FROM employee");
+		}
+
+		@Test // GH-1019
+		void renderOrderBy() {
+
+			Select select = StatementBuilder.select( //
+					AnalyticFunction.create("MAX", salary) //
+							.orderBy(age) //
+			) //
+					.from(employee) //
+					.build();
+
+			String rendered = SqlRenderer.toString(select);
+
+			assertThat(rendered).isEqualTo("SELECT MAX(employee.salary) OVER(ORDER BY employee.age) FROM employee");
+		}
+
+		@Test // GH-1019
+		void renderFullAnalyticFunction() {
+
+			final Select select = StatementBuilder.select( //
+					AnalyticFunction.create("MAX", salary) //
+							.partitionBy(department) //
+							.orderBy(age) //
+			) //
+					.from(employee) //
+					.build();
+
+			String rendered = SqlRenderer.toString(select);
+
+			assertThat(rendered).isEqualTo(
+					"SELECT MAX(employee.salary) OVER(PARTITION BY employee.department ORDER BY employee.age) FROM employee");
+		}
+
+		@Test // GH-1019
+		void renderAnalyticFunctionWithAlias() {
+
+			final Select select = StatementBuilder.select( //
+					AnalyticFunction.create("MAX", salary) //
+							.partitionBy(department) //
+							.orderBy(age) //
+							.as("MAX_SELECT")) //
+					.from(employee) //
+					.build();
+
+			String rendered = SqlRenderer.toString(select);
+
+			assertThat(rendered).isEqualTo(
+					"SELECT MAX(employee.salary) OVER(PARTITION BY employee.department ORDER BY employee.age) AS MAX_SELECT FROM employee");
+		}
+
+		@Test // GH-1153
+		void renderAnalyticFunctionWithOutArgument() {
+
+			final Select select = StatementBuilder.select( //
+					AnalyticFunction.create("ROW_NUMBER") //
+							.partitionBy(department)) //
+					.from(employee) //
+					.build();
+
+			String rendered = SqlRenderer.toString(select);
+
+			assertThat(rendered).isEqualTo(
+					"SELECT ROW_NUMBER() OVER(PARTITION BY employee.department) FROM employee");
+		}
 	}
 }

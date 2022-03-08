@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 
 /**
  * Tests for {@link JdbcMySqlDialect}.

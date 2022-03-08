@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.springframework.data.relational.core.sql.render.SelectRenderContext;
  * @author Myeonghyeon Lee
  * @author Christoph Strobl
  * @author Mikhail Polivakha
+ * @author Chirag Tailor
  * @since 1.1
  */
 public interface Dialect {
@@ -119,5 +120,15 @@ public interface Dialect {
 	 */
 	default InsertRenderContext getInsertRenderContext() {
 		return InsertRenderContexts.DEFAULT;
+	}
+
+	/**
+	 * Return the {@link OrderByNullPrecedence} used by this dialect.
+	 *
+	 * @return the {@link OrderByNullPrecedence} used by this dialect.
+	 * @since 2.4
+	 */
+	default OrderByNullPrecedence orderByNullHandling() {
+		return OrderByNullPrecedence.SQL_STANDARD;
 	}
 }

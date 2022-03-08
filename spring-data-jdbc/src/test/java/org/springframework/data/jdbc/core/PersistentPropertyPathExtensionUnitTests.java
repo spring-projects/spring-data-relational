@@ -38,8 +38,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 	JdbcMappingContext context = new JdbcMappingContext();
 	private RelationalPersistentEntity<?> entity = context.getRequiredPersistentEntity(DummyEntity.class);
 
-	@Test
-	public void isEmbedded() {
+	@Test // DATAJDBC-340
+	void isEmbedded() {
 
 		assertSoftly(softly -> {
 
@@ -49,8 +49,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
-	@Test
-	public void isMultiValued() {
+	@Test // DATAJDBC-340
+	void isMultiValued() {
 
 		assertSoftly(softly -> {
 
@@ -62,8 +62,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
-	@Test
-	public void leafEntity() {
+	@Test // DATAJDBC-340
+	void leafEntity() {
 
 		RelationalPersistentEntity<?> second = context.getRequiredPersistentEntity(Second.class);
 		RelationalPersistentEntity<?> third = context.getRequiredPersistentEntity(Third.class);
@@ -78,8 +78,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
-	@Test
-	public void isEntity() {
+	@Test // DATAJDBC-340
+	void isEntity() {
 
 		assertSoftly(softly -> {
 
@@ -94,8 +94,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
-	@Test
-	public void getTableName() {
+	@Test // DATAJDBC-340
+	void getTableName() {
 
 		assertSoftly(softly -> {
 
@@ -109,8 +109,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
-	@Test
-	public void getTableAlias() {
+	@Test // DATAJDBC-340
+	void getTableAlias() {
 
 		assertSoftly(softly -> {
 
@@ -129,8 +129,8 @@ public class PersistentPropertyPathExtensionUnitTests {
 		});
 	}
 
-	@Test
-	public void getColumnName() {
+	@Test // DATAJDBC-340
+	void getColumnName() {
 
 		assertSoftly(softly -> {
 
@@ -144,7 +144,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	}
 
 	@Test // DATAJDBC-359
-	public void idDefiningPath() {
+	void idDefiningPath() {
 
 		assertSoftly(softly -> {
 
@@ -160,7 +160,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	}
 
 	@Test // DATAJDBC-359
-	public void reverseColumnName() {
+	void reverseColumnName() {
 
 		assertSoftly(softly -> {
 
@@ -177,7 +177,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	}
 
 	@Test // DATAJDBC-359
-	public void getRequiredIdProperty() {
+	void getRequiredIdProperty() {
 
 		assertSoftly(softly -> {
 
@@ -189,7 +189,7 @@ public class PersistentPropertyPathExtensionUnitTests {
 	}
 
 	@Test // DATAJDBC-359
-	public void extendBy() {
+	void extendBy() {
 
 		assertSoftly(softly -> {
 
@@ -197,6 +197,26 @@ public class PersistentPropertyPathExtensionUnitTests {
 					.isEqualTo(extPath("withId"));
 			softly.assertThat(extPath("withId").extendBy(extPath("withId").getRequiredIdProperty()))
 					.isEqualTo(extPath("withId.withIdId"));
+		});
+	}
+
+	@Test // GH--1164
+	void equalsWorks() {
+
+		PersistentPropertyPathExtension root1 = extPath(entity);
+		PersistentPropertyPathExtension root2 = extPath(entity);
+		PersistentPropertyPathExtension path1 = extPath("withId");
+		PersistentPropertyPathExtension path2 = extPath("withId");
+
+		assertSoftly(softly -> {
+
+			softly.assertThat(root1).describedAs("root is equal to self").isEqualTo(root1);
+			softly.assertThat(root2).describedAs("root is equal to identical root").isEqualTo(root1);
+			softly.assertThat(path1).describedAs("path is equal to self").isEqualTo(path1);
+			softly.assertThat(path2).describedAs("path is equal to identical path").isEqualTo(path1);
+			softly.assertThat(path1).describedAs("path is not equal to other path").isNotEqualTo(extPath("entityId"));
+			softly.assertThat(root1).describedAs("root is not equal to path").isNotEqualTo(path1);
+			softly.assertThat(path1).describedAs("path is not equal to root").isNotEqualTo(root1);
 		});
 	}
 

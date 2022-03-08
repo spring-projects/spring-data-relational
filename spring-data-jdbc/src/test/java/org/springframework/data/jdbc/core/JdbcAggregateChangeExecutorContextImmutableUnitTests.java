@@ -45,6 +45,12 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.lang.Nullable;
 
+/**
+ * Unit tests for {@link JdbcAggregateChangeExecutionContext} with immutable entities
+ *
+ * @author Jens Schauder
+ * @author Mikhail Polivakha
+ */
 public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 	RelationalMappingContext context = new RelationalMappingContext();
@@ -61,7 +67,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	@Test // DATAJDBC-453
 	public void rootOfEmptySetOfActionsisNull() {
 
-		Object root = executionContext.populateIdsIfNecessary();
+		Object root = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(root).isNull();
 	}
@@ -74,12 +80,10 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(newRoot).isNotNull();
 		assertThat(newRoot.id).isEqualTo(23L);
-
-		newRoot = executionContext.populateRootVersionIfNecessary(newRoot);
 
 		assertThat(newRoot.version).isEqualTo(1);
 	}
@@ -96,7 +100,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "content", content, null));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(newRoot).isNotNull();
 		assertThat(newRoot.id).isEqualTo(23L);
@@ -116,7 +120,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 		executionContext.executeInsertRoot(rootInsert);
 		executionContext.executeInsert(createInsert(rootInsert, "list", content, 1));
 
-		DummyEntity newRoot = executionContext.populateIdsIfNecessary();
+		DummyEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(newRoot).isNotNull();
 		assertThat(newRoot.id).isEqualTo(23L);
@@ -133,12 +137,10 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		executionContext.executeInsertRoot(new DbAction.InsertRoot<>(root));
 
-		ImmutableEntity newRoot = executionContext.populateIdsIfNecessary();
+		ImmutableEntity newRoot = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
 		assertThat(newRoot).isNotNull();
 		assertThat(newRoot.id).isEqualTo(23L);
-
-		newRoot = executionContext.populateRootVersionIfNecessary(newRoot);
 
 		assertThat(newRoot.version).isEqualTo(0L);
 

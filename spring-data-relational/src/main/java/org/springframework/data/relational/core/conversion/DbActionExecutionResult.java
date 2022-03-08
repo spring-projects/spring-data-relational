@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,39 @@ package org.springframework.data.relational.core.conversion;
 import org.springframework.lang.Nullable;
 
 /**
+ * This class encapsulates the {@link DbAction} after its execution with possibly adjusted
+ * entity, see {@link DbAction.WithEntity#getEntity()}
+ *
  * @author Jens Schauder
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public class DbActionExecutionResult {
 
-	private final Object id;
 	private final DbAction<?> action;
 
-	public DbActionExecutionResult(DbAction<?> action, @Nullable Object newId) {
-
+	public DbActionExecutionResult(DbAction<?> action) {
 		this.action = action;
-		this.id = newId;
 	}
 
+	/**
+	 * @deprecated This API is not longer used in spring-data-jdbc and will be removed in future releases
+	 */
+	@Deprecated
 	public DbActionExecutionResult() {
-
-		action = null;
-		id = null;
+		this.action = null;
 	}
 
+	/**
+	 * @deprecated DbActionExecutionResult should not have any reference to id, only {@link InsertExecutionResult}
+	 * can possibly have generated id
+	 *
+	 * @see InsertExecutionResult
+	 */
+	@Deprecated
 	@Nullable
 	public Object getId() {
-		return id;
+		return null;
 	}
 
 	public DbAction<?> getAction() {

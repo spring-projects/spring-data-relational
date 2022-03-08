@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.convert.CustomConversions.StoreConversions;
+import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mapping.PreferredConstructor.Parameter;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.ConvertingPropertyAccessor;
 import org.springframework.data.mapping.model.EntityInstantiators;
@@ -52,6 +52,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Mark Paluch
  * @author Jens Schauder
+ * @author Chirag Tailor
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -168,7 +169,7 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
 		}
 
-		return getPotentiallyConvertedSimpleRead(value, type.getType());
+		return getPotentiallyConvertedSimpleRead(value, type);
 	}
 
 	/*
@@ -235,14 +236,15 @@ public class BasicRelationalConverter implements RelationalConverter {
 	 * {@link Enum} handling or returns the value as is.
 	 *
 	 * @param value to be converted. May be {@code null}..
-	 * @param target may be {@code null}..
+	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
 	 * @return the converted value if a conversion applies or the original value. Might return {@code null}.
 	 */
 	@Nullable
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Object getPotentiallyConvertedSimpleRead(@Nullable Object value, @Nullable Class<?> target) {
+	private Object getPotentiallyConvertedSimpleRead(Object value, TypeInformation<?> type) {
 
-		if (value == null || target == null || ClassUtils.isAssignableValue(target, value)) {
+		Class<?> target = type.getType();
+		if (ClassUtils.isAssignableValue(target, value)) {
 			return value;
 		}
 
@@ -250,10 +252,10 @@ public class BasicRelationalConverter implements RelationalConverter {
 			return Enum.valueOf((Class<Enum>) target, value.toString());
 		}
 
-		return conversionService.convert(value, target);
+		return conversionService.convert(value, TypeDescriptor.forObject(value), createTypeDescriptor(type));
 	}
 
-	protected static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
+	private static TypeDescriptor createTypeDescriptor(TypeInformation<?> type) {
 
 		List<TypeInformation<?>> typeArguments = type.getTypeArguments();
 		Class<?>[] generics = new Class[typeArguments.size()];

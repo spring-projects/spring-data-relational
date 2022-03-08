@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -51,6 +50,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.jdbc.repository.support.JdbcRepositoryFactory;
@@ -61,6 +61,7 @@ import org.springframework.data.jdbc.testing.TestDatabaseFeatures;
 import org.springframework.data.relational.core.mapping.event.AbstractRelationalEvent;
 import org.springframework.data.relational.core.mapping.event.AfterConvertEvent;
 import org.springframework.data.relational.core.mapping.event.AfterLoadEvent;
+import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
@@ -68,6 +69,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.lang.Nullable;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -331,6 +333,14 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.findAllByNamedQuery()).hasSize(1);
 	}
 
+	@Test
+	void findAllByFirstnameWithLock() {
+
+		DummyEntity dummyEntity = createDummyEntity();
+		repository.save(dummyEntity);
+		assertThat(repository.findAllByName(dummyEntity.getName())).hasSize(1);
+	}
+
 	@Test // GH-1022
 	public void findAllByCustomQueryName() {
 
@@ -549,6 +559,22 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(result).extracting(e -> e.idProp).containsExactly(two.idProp);
 	}
 
+	@Test // GH-1167
+	void stringResult() {
+
+		repository.save(createDummyEntity()); // just ensure we have data in the table
+
+		assertThat(repository.returnInput("HELLO")).isEqualTo("HELLO");
+	}
+
+	@Test // GH-1167
+	void nullStringResult() {
+
+		repository.save(createDummyEntity()); // just ensure we have data in the table
+
+		assertThat(repository.returnInput(null)).isNull();
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -574,7 +600,11 @@ public class JdbcRepositoryIntegrationTests {
 
 	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
 
+		@Lock(LockMode.PESSIMISTIC_WRITE)
+		List<DummyEntity> findAllByName(String name);
+
 		List<DummyEntity> findAllByNamedQuery();
+
 		@Query(name = "DummyEntity.customQuery")
 		List<DummyEntity> findAllByCustomNamedQuery();
 
@@ -624,7 +654,12 @@ public class JdbcRepositoryIntegrationTests {
 		List<DummyEntity> findByFlagTrue();
 
 		List<DummyEntity> findByRef(int ref);
+
 		List<DummyEntity> findByRef(AggregateReference<DummyEntity, Long> ref);
+
+		@Query("SELECT CAST(:hello AS CHAR(5)) FROM DUMMY_ENTITY")
+		@Nullable
+		String returnInput(@Nullable String hello);
 	}
 
 	@Configuration

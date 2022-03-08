@@ -184,7 +184,7 @@ public abstract class AbstractJdbcQuery implements RepositoryQuery {
 
 			T object = delegate.mapRow(rs, rowNum);
 
-			return converter.convert(object);
+			return object == null ? null : converter.convert(object);
 		}
 	}
 }

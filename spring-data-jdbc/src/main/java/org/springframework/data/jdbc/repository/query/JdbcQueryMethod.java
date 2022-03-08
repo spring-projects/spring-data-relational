@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.repository.Lock;
 import org.springframework.data.relational.repository.query.RelationalEntityMetadata;
 import org.springframework.data.relational.repository.query.RelationalParameters;
 import org.springframework.data.relational.repository.query.SimpleRelationalEntityMetadata;
@@ -47,6 +48,7 @@ import org.springframework.util.StringUtils;
  * @author Kazuki Shimizu
  * @author Moises Cisneros
  * @author Hebert Coelho
+ * @author Diego Krupitza
  */
 public class JdbcQueryMethod extends QueryMethod {
 
@@ -168,7 +170,6 @@ public class JdbcQueryMethod extends QueryMethod {
 		return StringUtils.hasText(annotatedName) ? annotatedName : super.getNamedQueryName();
 	}
 
-
 	/**
 	 * Returns the class to be used as {@link org.springframework.jdbc.core.RowMapper}
 	 *
@@ -243,6 +244,22 @@ public class JdbcQueryMethod extends QueryMethod {
 
 	Optional<Query> lookupQueryAnnotation() {
 		return doFindAnnotation(Query.class);
+	}
+
+	/**
+	 * @return is a {@link Lock} annotation present or not.
+	 */
+	public boolean hasLockMode() {
+		return lookupLockAnnotation().isPresent();
+	}
+
+	/**
+	 * Looks up the {@link Lock} annotation from the query method.
+	 * 
+	 * @return the {@link Optional} wrapped {@link Lock} annotation.
+	 */
+	Optional<Lock> lookupLockAnnotation() {
+		return doFindAnnotation(Lock.class);
 	}
 
 	@SuppressWarnings("unchecked")

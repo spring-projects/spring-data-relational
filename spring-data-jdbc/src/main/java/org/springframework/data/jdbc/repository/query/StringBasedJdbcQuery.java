@@ -18,14 +18,14 @@ package org.springframework.data.jdbc.repository.query;
 import static org.springframework.data.jdbc.repository.query.JdbcQueryExecution.*;
 
 import java.lang.reflect.Constructor;
-import java.sql.JDBCType;
+import java.sql.SQLType;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.jdbc.core.convert.JdbcColumnTypes;
 import org.springframework.data.jdbc.core.convert.JdbcConverter;
-import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.repository.query.RelationalParameterAccessor;
@@ -161,9 +161,9 @@ public class StringBasedJdbcQuery extends AbstractJdbcQuery {
 		Class<?> conversionTargetType = JdbcColumnTypes.INSTANCE.resolvePrimitiveType(parameterType);
 
 		JdbcValue jdbcValue = converter.writeJdbcValue(value, conversionTargetType,
-				JdbcUtil.sqlTypeFor(conversionTargetType));
+				JdbcUtil.targetSqlTypeFor(conversionTargetType));
 
-		JDBCType jdbcType = jdbcValue.getJdbcType();
+		SQLType jdbcType = jdbcValue.getJdbcType();
 		if (jdbcType == null) {
 
 			parameters.addValue(parameterName, jdbcValue.getValue());

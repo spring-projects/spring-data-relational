@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,13 +74,14 @@ import org.springframework.util.LinkedCaseInsensitiveMap;
  * @author Bastian Wilhelm
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  */
 public class EntityRowMapperUnitTests {
 
-	public static final long ID_FOR_ENTITY_REFERENCING_MAP = 42L;
-	public static final long ID_FOR_ENTITY_REFERENCING_LIST = 4711L;
-	public static final long ID_FOR_ENTITY_NOT_REFERENCING_MAP = 23L;
-	public static final NamingStrategy X_APPENDING_NAMINGSTRATEGY = new NamingStrategy() {
+	static final long ID_FOR_ENTITY_REFERENCING_MAP = 42L;
+	static final long ID_FOR_ENTITY_REFERENCING_LIST = 4711L;
+	static final long ID_FOR_ENTITY_NOT_REFERENCING_MAP = 23L;
+	static final NamingStrategy X_APPENDING_NAMINGSTRATEGY = new NamingStrategy() {
 		@Override
 		public String getColumnName(RelationalPersistentProperty property) {
 			return NamingStrategy.super.getColumnName(property).concat("x");
@@ -88,7 +89,7 @@ public class EntityRowMapperUnitTests {
 	};
 
 	@Test // DATAJDBC-113
-	public void simpleEntitiesGetProperlyExtracted() throws SQLException {
+	void simpleEntitiesGetProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
@@ -103,7 +104,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-181
-	public void namingStrategyGetsHonored() throws SQLException {
+	void namingStrategyGetsHonored() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("IDX", "NAMEX"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
@@ -118,7 +119,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-181
-	public void namingStrategyGetsHonoredForConstructor() throws SQLException {
+	void namingStrategyGetsHonoredForConstructor() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("IDX", "NAMEX"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
@@ -133,7 +134,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-427
-	public void simpleWithReferenceGetProperlyExtracted() throws SQLException {
+	void simpleWithReferenceGetProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "TRIVIAL_ID"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 100L);
@@ -148,7 +149,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-113
-	public void simpleOneToOneGetsProperlyExtracted() throws SQLException {
+	void simpleOneToOneGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "CHILD_ID", "CHILD_NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
@@ -163,7 +164,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-286
-	public void immutableOneToOneGetsProperlyExtracted() throws SQLException {
+	void immutableOneToOneGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "CHILD_ID", "CHILD_NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
@@ -178,7 +179,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-427
-	public void immutableWithReferenceGetsProperlyExtracted() throws SQLException {
+	void immutableWithReferenceGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "TRIVIAL_ID"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 100L);
@@ -194,7 +195,7 @@ public class EntityRowMapperUnitTests {
 
 	// TODO add additional test for multilevel embeddables
 	@Test // DATAJDBC-111
-	public void simpleEmbeddedGetsProperlyExtracted() throws SQLException {
+	void simpleEmbeddedGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "PREFIX_ID", "PREFIX_NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L, "beta");
@@ -209,7 +210,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-113
-	public void collectionReferenceGetsLoadedWithAdditionalSelect() throws SQLException {
+	void collectionReferenceGetsLoadedWithAdditionalSelect() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
@@ -224,7 +225,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-131
-	public void mapReferenceGetsLoadedWithAdditionalSelect() throws SQLException {
+	void mapReferenceGetsLoadedWithAdditionalSelect() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME"), //
 				ID_FOR_ENTITY_REFERENCING_MAP, "alpha");
@@ -239,7 +240,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-130
-	public void listReferenceGetsLoadedWithAdditionalSelect() throws SQLException {
+	void listReferenceGetsLoadedWithAdditionalSelect() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME"), //
 				ID_FOR_ENTITY_REFERENCING_LIST, "alpha");
@@ -254,7 +255,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-252
-	public void doesNotTryToSetPropertiesThatAreSetViaConstructor() throws SQLException {
+	void doesNotTryToSetPropertiesThatAreSetViaConstructor() throws SQLException {
 
 		ResultSet rs = mockResultSet(singletonList("VALUE"), //
 				"value-from-resultSet");
@@ -267,7 +268,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-252
-	public void handlesMixedProperties() throws SQLException {
+	void handlesMixedProperties() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ONE", "TWO", "THREE"), //
 				"111", "222", "333");
@@ -280,20 +281,8 @@ public class EntityRowMapperUnitTests {
 				.containsSequence("111", "222", "333");
 	}
 
-	@Test // DATAJDBC-273
-	public void handlesNonSimplePropertyInConstructor() throws SQLException {
-
-		ResultSet rs = mockResultSet(singletonList("ID"), //
-				ID_FOR_ENTITY_REFERENCING_LIST);
-		rs.next();
-
-		EntityWithListInConstructor extracted = createRowMapper(EntityWithListInConstructor.class).mapRow(rs, 1);
-
-		assertThat(extracted.content).hasSize(2);
-	}
-
 	@Test // DATAJDBC-359
-	public void chainedEntitiesWithoutId() throws SQLException {
+	void chainedEntitiesWithoutId() throws SQLException {
 
 		// @formatter:off
 		Fixture<NoIdChain4> fixture = this.<NoIdChain4> buildFixture() //
@@ -329,7 +318,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-370
-	public void simpleNullableImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
+	void simpleNullableImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "VALUE", "NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "ru'Ha'", "Alfred");
@@ -345,7 +334,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-374
-	public void simpleEmptyImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
+	void simpleEmptyImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "VALUE", "NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null, null);
@@ -360,7 +349,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-370
-	public void simplePrimitiveImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
+	void simplePrimitiveImmutableEmbeddedGetsProperlyExtracted() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "VALUE"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, 24);
@@ -376,7 +365,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-370
-	public void simpleImmutableEmbeddedShouldBeNullIfAllOfTheEmbeddableAreNull() throws SQLException {
+	void simpleImmutableEmbeddedShouldBeNullIfAllOfTheEmbeddableAreNull() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "VALUE", "NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null, null);
@@ -392,7 +381,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-370
-	public void embeddedShouldBeNullWhenFieldsAreNull() throws SQLException {
+	void embeddedShouldBeNullWhenFieldsAreNull() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "PREFIX_ID", "PREFIX_NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", null, null);
@@ -407,7 +396,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-370
-	public void embeddedShouldNotBeNullWhenAtLeastOneFieldIsNotNull() throws SQLException {
+	void embeddedShouldNotBeNullWhenAtLeastOneFieldIsNotNull() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "PREFIX_ID", "PREFIX_NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24, null);
@@ -422,7 +411,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-370
-	public void primitiveEmbeddedShouldBeNullWhenNoValuePresent() throws SQLException {
+	void primitiveEmbeddedShouldBeNullWhenNoValuePresent() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "VALUE"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
@@ -438,7 +427,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-370
-	public void deepNestedEmbeddable() throws SQLException {
+	void deepNestedEmbeddable() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "LEVEL0", "LEVEL1_VALUE", "LEVEL1_LEVEL2_VALUE", "LEVEL1_LEVEL2_NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "0", "1", "2", "Rumpelstilzchen");
@@ -453,7 +442,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void missingValueForObjectGetsMappedToZero() throws SQLException {
+	void missingValueForObjectGetsMappedToZero() throws SQLException {
 
 		ResultSet rs = mockResultSet(singletonList("id"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP);
@@ -468,7 +457,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void missingValueForConstructorArgCausesException() throws SQLException {
+	void missingValueForConstructorArgCausesException() throws SQLException {
 
 		ResultSet rs = mockResultSet(singletonList("id"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP);
@@ -481,7 +470,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void missingColumnForPrimitiveGetsMappedToZero() throws SQLException {
+	void missingColumnForPrimitiveGetsMappedToZero() throws SQLException {
 
 		ResultSet rs = mockResultSet(singletonList("id"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP);
@@ -497,7 +486,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void columnNamesAreCaseInsensitive() throws SQLException {
+	void columnNamesAreCaseInsensitive() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("id", "name"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
@@ -512,7 +501,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void immutableEmbeddedWithAllColumnsMissingShouldBeNull() throws SQLException {
+	void immutableEmbeddedWithAllColumnsMissingShouldBeNull() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP);
@@ -528,7 +517,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void immutableEmbeddedWithSomeColumnsMissingShouldNotBeEmpty() throws SQLException {
+	void immutableEmbeddedWithSomeColumnsMissingShouldNotBeEmpty() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "VALUE"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "some value");
@@ -540,7 +529,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void immutableEmbeddedWithSomeColumnsMissingAndSomeNullShouldBeNull() throws SQLException {
+	void immutableEmbeddedWithSomeColumnsMissingAndSomeNullShouldBeNull() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "VALUE"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, null);
@@ -556,7 +545,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void embeddedShouldBeNullWhenAllFieldsAreMissing() throws SQLException {
+	void embeddedShouldBeNullWhenAllFieldsAreMissing() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha");
@@ -571,7 +560,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void missingColumnsInEmbeddedShouldBeUnset() throws SQLException {
+	void missingColumnsInEmbeddedShouldBeUnset() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "PREFIX_ID"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24);
@@ -586,7 +575,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void primitiveEmbeddedShouldBeNullWhenAllColumnsAreMissing() throws SQLException {
+	void primitiveEmbeddedShouldBeNullWhenAllColumnsAreMissing() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP);
@@ -602,7 +591,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void oneToOneWithMissingColumnResultsInNullProperty() throws SQLException {
+	void oneToOneWithMissingColumnResultsInNullProperty() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "CHILD_ID"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", 24L);
@@ -617,7 +606,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void oneToOneWithMissingIdColumnResultsInNullProperty() throws SQLException {
+	void oneToOneWithMissingIdColumnResultsInNullProperty() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "CHILD_NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", "Alfred");
@@ -629,7 +618,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-341
-	public void immutableOneToOneWithIdMissingColumnResultsInNullReference() throws SQLException {
+	void immutableOneToOneWithIdMissingColumnResultsInNullReference() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "NAME", "CHILD_NAME"), //
 				ID_FOR_ENTITY_NOT_REFERENCING_MAP, "alpha", "Alfred");
@@ -643,7 +632,7 @@ public class EntityRowMapperUnitTests {
 	}
 
 	@Test // DATAJDBC-508
-	public void materializesObjectWithAtValue() throws SQLException {
+	void materializesObjectWithAtValue() throws SQLException {
 
 		ResultSet rs = mockResultSet(asList("ID", "FIRST_NAME"), //
 				123L, "Hello World");
@@ -782,14 +771,6 @@ public class EntityRowMapperUnitTests {
 		MixedProperties withThree(String three) {
 			return new MixedProperties(one, two, three);
 		}
-	}
-
-	@AllArgsConstructor
-	static class EntityWithListInConstructor {
-
-		@Id final Long id;
-
-		final List<Trivial> content;
 	}
 
 	static class NoIdChain0 {
@@ -958,7 +939,7 @@ public class EntityRowMapperUnitTests {
 		private final List<Map<String, Object>> values;
 		private int index = -1;
 
-		public ResultSetAnswer(List<String> names, List<Map<String, Object>> values) {
+		ResultSetAnswer(List<String> names, List<Map<String, Object>> values) {
 
 			this.names = names;
 			this.values = values;

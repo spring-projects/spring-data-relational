@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,24 +46,24 @@ public class OrderByField extends AbstractSegment {
 	}
 
 	/**
-	 * Creates a new {@link OrderByField} from a {@link Column} applying default ordering.
+	 * Creates a new {@link OrderByField} from an {@link Expression} applying default ordering.
 	 *
-	 * @param column must not be {@literal null}.
+	 * @param expression must not be {@literal null}.
 	 * @return the {@link OrderByField}.
 	 */
-	public static OrderByField from(Column column) {
-		return new OrderByField(column, null, NullHandling.NATIVE);
+	public static OrderByField from(Expression expression) {
+		return new OrderByField(expression, null, NullHandling.NATIVE);
 	}
 
 	/**
-	 * Creates a new {@link OrderByField} from a {@link Column} applying a given ordering.
+	 * Creates a new {@link OrderByField} from an {@link Expression} applying a given ordering.
 	 *
-	 * @param column must not be {@literal null}.
+	 * @param expression must not be {@literal null}.
 	 * @param direction order direction
 	 * @return the {@link OrderByField}.
 	 */
-	public static OrderByField from(Column column, Direction direction) {
-		return new OrderByField(column, direction, NullHandling.NATIVE);
+	public static OrderByField from(Expression expression, Direction direction) {
+		return new OrderByField(expression, direction, NullHandling.NATIVE);
 	}
 
 	/**
@@ -115,6 +115,6 @@ public class OrderByField extends AbstractSegment {
 	 */
 	@Override
 	public String toString() {
-		return direction != null ? expression.toString() + " " + direction : expression.toString();
+		return direction != null ? expression + " " + direction : expression.toString();
 	}
 }

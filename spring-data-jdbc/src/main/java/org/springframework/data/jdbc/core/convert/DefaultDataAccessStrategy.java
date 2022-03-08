@@ -17,9 +17,8 @@ package org.springframework.data.jdbc.core.convert;
 
 import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 
-import java.sql.JDBCType;
 import java.sql.ResultSet;
-import java.sql.Types;
+import java.sql.SQLType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,6 +32,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -68,6 +68,8 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Yunyoung LEE
  * @author Radim Tlusty
+ * @author Mikhail Polivakha
+ *
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -551,17 +553,17 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
 			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
 
-		addConvertedValue(parameterSource, value, name, converter.getColumnType(property), converter.getSqlType(property));
+		addConvertedValue(parameterSource, value, name, converter.getColumnType(property), converter.getTargetSqlType(property));
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,
 			Class<?> javaType) {
 
-		addConvertedValue(parameterSource, value, name, javaType, JdbcUtil.sqlTypeFor(javaType));
+		addConvertedValue(parameterSource, value, name, javaType, JdbcUtil.targetSqlTypeFor(javaType));
 	}
 
 	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,
-			SqlIdentifier paramName, Class<?> javaType, int sqlType) {
+								   SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
 
 		JdbcValue jdbcValue = converter.writeJdbcValue( //
 				value, //
@@ -572,7 +574,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		parameterSource.addValue( //
 				paramName, //
 				jdbcValue.getValue(), //
-				JdbcUtil.sqlTypeFor(jdbcValue.getJdbcType()));
+				jdbcValue.getJdbcType().getVendorTypeNumber());
 	}
 
 	private void addConvertedPropertyValuesAsList(SqlIdentifierParameterSource parameterSource,
@@ -583,7 +585,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		for (Object id : values) {
 
 			Class<?> columnType = converter.getColumnType(property);
-			int sqlType = converter.getSqlType(property);
+			SQLType sqlType = converter.getTargetSqlType(property);
 
 			jdbcValue = converter.writeJdbcValue(id, columnType, sqlType);
 			convertedIds.add(jdbcValue.getValue());
@@ -591,7 +593,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 
 		Assert.state(jdbcValue != null, "JdbcValue must be not null at this point. Please report this as a bug.");
 
-		JDBCType jdbcType = jdbcValue.getJdbcType();
+		SQLType jdbcType = jdbcValue.getJdbcType();
 		int typeNumber = jdbcType == null ? JdbcUtils.TYPE_UNKNOWN : jdbcType.getVendorTypeNumber();
 
 		parameterSource.addValue(paramName, convertedIds, typeNumber);

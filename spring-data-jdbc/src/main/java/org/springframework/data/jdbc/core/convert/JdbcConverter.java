@@ -16,7 +16,9 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.sql.ResultSet;
+import java.sql.SQLType;
 
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.relational.core.conversion.RelationalConverter;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
@@ -38,11 +40,23 @@ public interface JdbcConverter extends RelationalConverter {
 	 * to JDBC parameters.
 	 *
 	 * @param value a value as it is used in the object model. May be {@code null}.
-	 * @param type {@link TypeInformation} into which the value is to be converted. Must not be {@code null}.
+	 * @param type {@literal Class} into which the value is to be converted. Must not be {@code null}.
 	 * @param sqlType the type constant from {@link java.sql.Types} to be used if non is specified by a converter.
 	 * @return The converted value wrapped in a {@link JdbcValue}. Guaranteed to be not {@literal null}.
 	 */
 	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, int sqlType);
+
+	/**
+	 * Convert a property value into a {@link JdbcValue} that contains the converted value and information how to bind it
+	 * to JDBC parameters.
+	 *
+	 * @param value a value as it is used in the object model. May be {@code null}.
+	 * @param type {@literal Class} into which the value is to be converted. Must not be {@code null}.
+	 * @param sqlType the {@link SQLType} to be used if non is specified by a converter.
+	 * @return The converted value wrapped in a {@link JdbcValue}. Guaranteed to be not {@literal null}.
+	 * @since 2.4
+	 */
+	JdbcValue writeJdbcValue(@Nullable Object value, Class<?> type, SQLType sqlType);
 
 	/**
 	 * Read the current row from {@link ResultSet} to an {@link RelationalPersistentEntity#getType() entity}.
@@ -72,7 +86,7 @@ public interface JdbcConverter extends RelationalConverter {
 	 * top-level array type (e.g. {@code String[][]} returns {@code String[]}).
 	 *
 	 * @return a {@link Class} that is suitable for usage with JDBC drivers.
-	 * @see org.springframework.data.jdbc.support.JdbcUtil#sqlTypeFor(Class)
+	 * @see org.springframework.data.jdbc.support.JdbcUtil#targetSqlTypeFor(Class)
 	 * @since 2.0
 	 */
 	Class<?> getColumnType(RelationalPersistentProperty property);
@@ -84,5 +98,9 @@ public interface JdbcConverter extends RelationalConverter {
 	 * @see java.sql.Types
 	 * @since 2.0
 	 */
+	SQLType getTargetSqlType(RelationalPersistentProperty property);
+
+	@Deprecated
 	int getSqlType(RelationalPersistentProperty property);
+
 }

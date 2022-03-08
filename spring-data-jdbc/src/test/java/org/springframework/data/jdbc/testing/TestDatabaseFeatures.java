@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * presence or absence of features in tests.
  *
  * @author Jens Schauder
+ * @author Chirag Tailor
  */
 public class TestDatabaseFeatures {
 
@@ -83,6 +84,10 @@ public class TestDatabaseFeatures {
 		assumeThat(database).isNotIn(Database.H2, Database.Hsql);
 	}
 
+	private void supportsNullPrecedence() {
+		assumeThat(database).isNotIn(Database.MySql, Database.MariaDb, Database.SqlServer);
+	}
+
 	public void databaseIs(Database database) {
 		assumeThat(this.database).isEqualTo(database);
 	}
@@ -115,6 +120,7 @@ public class TestDatabaseFeatures {
 		SUPPORTS_ARRAYS(TestDatabaseFeatures::supportsArrays), //
 		SUPPORTS_GENERATED_IDS_IN_REFERENCED_ENTITIES(TestDatabaseFeatures::supportsGeneratedIdsInReferencedEntities), //
 		SUPPORTS_NANOSECOND_PRECISION(TestDatabaseFeatures::supportsNanosecondPrecision), //
+		SUPPORTS_NULL_PRECEDENCE(TestDatabaseFeatures::supportsNullPrecedence),
 		IS_POSTGRES(f -> f.databaseIs(Database.PostgreSql)), //
 		IS_HSQL(f -> f.databaseIs(Database.Hsql));
 

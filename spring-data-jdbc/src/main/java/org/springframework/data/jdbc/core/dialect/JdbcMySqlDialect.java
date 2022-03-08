@@ -27,7 +27,7 @@ import java.util.Date;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
-import org.springframework.data.jdbc.core.convert.JdbcValue;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.relational.core.dialect.Db2Dialect;
 import org.springframework.data.relational.core.dialect.MySqlDialect;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;

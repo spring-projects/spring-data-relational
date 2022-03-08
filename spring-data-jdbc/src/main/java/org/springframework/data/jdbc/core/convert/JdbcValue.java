@@ -16,6 +16,7 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.sql.JDBCType;
+import java.sql.SQLType;
 import java.util.Objects;
 
 import org.springframework.lang.Nullable;
@@ -27,45 +28,16 @@ import org.springframework.lang.Nullable;
  *
  * @author Jens Schauder
  * @since 1.1
+ * @deprecated use {@link org.springframework.data.jdbc.core.mapping.JdbcValue}
  */
-public final class JdbcValue {
+@Deprecated
+public final class JdbcValue extends org.springframework.data.jdbc.core.mapping.JdbcValue {
 
-	private final Object value;
-	private final JDBCType jdbcType;
-
-	private JdbcValue(@Nullable Object value, @Nullable JDBCType jdbcType) {
-
-		this.value = value;
-		this.jdbcType = jdbcType;
+	private JdbcValue(@Nullable Object value, @Nullable SQLType	jdbcType) {
+		super(value, jdbcType);
 	}
 
-	public static JdbcValue of(@Nullable Object value, @Nullable JDBCType jdbcType) {
+	public static JdbcValue of(@Nullable Object value, @Nullable SQLType jdbcType) {
 		return new JdbcValue(value, jdbcType);
-	}
-
-	@Nullable
-	public Object getValue() {
-		return this.value;
-	}
-
-	@Nullable
-	public JDBCType getJdbcType() {
-		return this.jdbcType;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-		JdbcValue jdbcValue = (JdbcValue) o;
-		return Objects.equals(value, jdbcValue.value) && jdbcType == jdbcValue.jdbcType;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(value, jdbcType);
 	}
 }

@@ -38,6 +38,7 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
  * access.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public abstract class JdbcSimpleTypes {
 
@@ -67,6 +68,7 @@ public abstract class JdbcSimpleTypes {
 		simpleTypes.add(Time.class);
 		simpleTypes.add(Timestamp.class);
 		simpleTypes.add(UUID.class);
+		simpleTypes.add(JdbcValue.class);
 
 		JDBC_SIMPLE_TYPES = Collections.unmodifiableSet(simpleTypes);
 	}

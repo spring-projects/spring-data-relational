@@ -30,6 +30,8 @@ import java.util.Optional;
  *
  * @author Jens Schauder
  * @author Myeonghyeon Lee
+ * @author Mikhail Polivakha
+ *
  * @since 2.0
  */
 class AggregateChangeExecutor {
@@ -50,9 +52,9 @@ class AggregateChangeExecutor {
 
 		aggregateChange.forEachAction(action -> execute(action, executionContext));
 
-		T rootWithPopulatedIds = executionContext.populateIdsIfNecessary();
+		T rootWithPopulatedFields = executionContext.getRootWithPopulatedFieldsFromExecutionResult();
 
-		return Optional.ofNullable(rootWithPopulatedIds).orElse(aggregateChange.getEntity());
+		return Optional.ofNullable(rootWithPopulatedFields).orElse(aggregateChange.getEntity());
 	}
 
 	private void execute(DbAction<?> action, JdbcAggregateChangeExecutionContext executionContext) {

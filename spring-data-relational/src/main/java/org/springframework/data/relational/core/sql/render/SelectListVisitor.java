@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 	private final StringBuilder builder = new StringBuilder();
 	private final RenderTarget target;
 	private boolean requiresComma = false;
-	private boolean insideFunction = false; // this is hackery and should be fix with a proper visitor for
 	private ExpressionVisitor expressionVisitor;
 	// subelements.
 
@@ -86,7 +85,7 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 			requiresComma = true;
 		}
 
-		if (segment instanceof Aliased && !insideFunction) {
+		if (segment instanceof Aliased) {
 			builder.append(" AS ").append(NameRenderer.render(context, (Aliased) segment));
 		}
 

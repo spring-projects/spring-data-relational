@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,21 @@ import java.sql.Array;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLType;
 import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.convert.ConverterNotFoundException;
-import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
+import org.springframework.data.jdbc.core.mapping.JdbcValue;
 import org.springframework.data.jdbc.support.JdbcUtil;
+import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PreferredConstructor;
@@ -64,6 +65,7 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Christoph Strobl
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  * @see MappingContext
  * @see SimpleTypeHolder
  * @see CustomConversions
@@ -169,6 +171,12 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#getSqlType(org.springframework.data.relational.core.mapping.RelationalPersistentProperty)
 	 */
 	@Override
+	public SQLType getTargetSqlType(RelationalPersistentProperty property) {
+		return JdbcUtil.targetSqlTypeFor(getColumnType(property));
+	}
+
+	@Override
+	@Deprecated
 	public int getSqlType(RelationalPersistentProperty property) {
 		return JdbcUtil.sqlTypeFor(getColumnType(property));
 	}
@@ -221,17 +229,9 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			return value;
 		}
 
-		if (getConversions().hasCustomReadTarget(value.getClass(), type.getType())) {
-
-			TypeDescriptor sourceDescriptor = TypeDescriptor.valueOf(value.getClass());
-			TypeDescriptor targetDescriptor = createTypeDescriptor(type);
-
-			return getConversionService().convert(value, sourceDescriptor, targetDescriptor);
-		}
-
 		if (value instanceof Array) {
 			try {
-				return readValue(((Array) value).getArray(), type);
+				return super.readValue(((Array) value).getArray(), type);
 			} catch (SQLException | ConverterNotFoundException e) {
 				LOG.info("Failed to extract a value of type %s from an Array. Attempting to use standard conversions.", e);
 			}
@@ -281,12 +281,19 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		return customWriteTarget.isPresent() && customWriteTarget.get().isAssignableFrom(JdbcValue.class);
 	}
 
-	/*
+	@Override
+	@Deprecated
+	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
+		return writeJdbcValue(value, columnType, JdbcUtil.jdbcTypeFor(sqlType));
+	}
+
+
+		/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.convert.JdbcConverter#writeValue(java.lang.Object, java.lang.Class, int)
 	 */
 	@Override
-	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, int sqlType) {
+	public JdbcValue writeJdbcValue(@Nullable Object value, Class<?> columnType, SQLType sqlType) {
 
 		JdbcValue jdbcValue = tryToConvertToJdbcValue(value);
 		if (jdbcValue != null) {
@@ -296,7 +303,8 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		Object convertedValue = writeValue(value, ClassTypeInformation.from(columnType));
 
 		if (convertedValue == null || !convertedValue.getClass().isArray()) {
-			return JdbcValue.of(convertedValue, JdbcUtil.jdbcTypeFor(sqlType));
+
+			return JdbcValue.of(convertedValue, sqlType);
 		}
 
 		Class<?> componentType = convertedValue.getClass().getComponentType();
@@ -613,7 +621,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 			 */
 			@Override
 			@Nullable
-			public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
+			public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 
 				String parameterName = parameter.getName();
 
@@ -634,7 +642,7 @@ public class BasicJdbcConverter extends BasicRelationalConverter implements Jdbc
 		INSTANCE;
 
 		@Override
-		public <T> T getParameterValue(PreferredConstructor.Parameter<T, RelationalPersistentProperty> parameter) {
+		public <T> T getParameterValue(Parameter<T, RelationalPersistentProperty> parameter) {
 			return null;
 		}
 	}
