@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
  * Results in a rendered condition: {@code <left> BETWEEN <begin> AND <end>}.
  *
  * @author Mark Paluch
+ * @author Meng Zuozhu
  * @since 2.2
  */
 public class Between extends AbstractSegment implements Condition {
@@ -91,6 +92,6 @@ public class Between extends AbstractSegment implements Condition {
 
 	@Override
 	public String toString() {
-		return column + " BETWEEN " + begin + " AND " + end;
+		return column + (negated ? " NOT" : "") + " BETWEEN " + begin + " AND " + end;
 	}
 }
