@@ -93,7 +93,7 @@ public interface NamingStrategy {
 
 		Assert.notNull(property, "Property must not be null.");
 
-		return property.getOwner().getTableName().getReference(IdentifierProcessing.NONE);
+		return property.getOwner().getTableName().getReference();
 	}
 
 	default String getReverseColumnName(PersistentPropertyPathExtension path) {

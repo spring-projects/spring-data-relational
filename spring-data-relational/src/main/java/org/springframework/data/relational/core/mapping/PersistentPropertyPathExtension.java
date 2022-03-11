@@ -432,7 +432,7 @@ public class PersistentPropertyPathExtension {
 
 		SqlIdentifier tableAlias = getTableAlias();
 		return tableAlias == null ? columnName
-				: columnName.transform(name -> tableAlias.getReference(IdentifierProcessing.NONE) + "_" + name);
+				: columnName.transform(name -> tableAlias.getReference() + "_" + name);
 	}
 
 	@Override

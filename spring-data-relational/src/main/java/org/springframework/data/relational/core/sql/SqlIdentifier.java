@@ -26,9 +26,10 @@ import org.springframework.data.util.Streamable;
  * from a {@link String name} with specifying whether the name should be quoted or unquoted.
  * <p>
  * {@link SqlIdentifier} renders its name using {@link IdentifierProcessing} rules. Use
- * {@link #getReference(IdentifierProcessing)} to refer to an object using the identifier when e.g. obtaining values
- * from a result or providing values for a prepared statement. {@link #toSql(IdentifierProcessing)} renders the
- * identifier for SQL statement usage.
+ * {@link #toSql(IdentifierProcessing)} to get fully rendered sql identifier name when e.g. you want to get
+ * quoted name of the table in the appropriate case (upper case or lower case). In other words,
+ * {@link #toSql(IdentifierProcessing)} constructs identifier for SQL statement usage - identifier will not
+ * require any additional transformations.
  * <p>
  * {@link SqlIdentifier} objects are immutable. Calling transformational methods such as
  * {@link #transform(UnaryOperator)} creates a new instance.
@@ -39,6 +40,7 @@ import org.springframework.data.util.Streamable;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Mikhail Polivakha
  * @since 2.0
  */
 public interface SqlIdentifier extends Streamable<SqlIdentifier> {
@@ -63,8 +65,14 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create SQL snippets");
 		}
 
+		@Deprecated
 		@Override
 		public String getReference(IdentifierProcessing processing) {
+			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create column names");
+		}
+
+		@Override
+		public String getReference() {
 			throw new UnsupportedOperationException("An empty SqlIdentifier can't be used in to create column names");
 		}
 
@@ -77,21 +85,22 @@ public interface SqlIdentifier extends Streamable<SqlIdentifier> {
 	 * Return the reference name after applying {@link IdentifierProcessing} rules. The reference name is used for
 	 * programmatic access to the object identified by this {@link SqlIdentifier}.
 	 *
+	 * Note: This method have been marked for removal in version 3.0.0., please, do not use it
+	 *
 	 * @param processing identifier processing rules.
-	 * @return
+	 * @deprecated because internally, this method does not perform any transformations to {@link SqlIdentifier}
+	 * 				and thus absolutely equivalent to {@link #getReference()}.
 	 */
+	@Deprecated
 	String getReference(IdentifierProcessing processing);
 
 	/**
 	 * Return the reference name without any further transformation. The reference name is used for programmatic access to
 	 * the object identified by this {@link SqlIdentifier}.
 	 *
-	 * @return
-	 * @see IdentifierProcessing#NONE
+	 * @return the reference name, encapsulated by {@link SqlIdentifier} without any further transformation
 	 */
-	default String getReference() {
-		return getReference(IdentifierProcessing.NONE);
-	}
+	String getReference();
 
 	/**
 	 * Return the identifier for SQL usage after applying {@link IdentifierProcessing} rules. The identifier name is used

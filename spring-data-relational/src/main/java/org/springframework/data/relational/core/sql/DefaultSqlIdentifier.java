@@ -68,15 +68,21 @@ class DefaultSqlIdentifier implements SqlIdentifier {
 	 */
 	@Override
 	public String toSql(IdentifierProcessing processing) {
-		return quoted ? processing.quote(getReference(processing)) : getReference(processing);
+		return quoted ? processing.quote(getReference()) : getReference();
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.domain.SqlIdentifier#getReference(org.springframework.data.relational.domain.IdentifierProcessing)
 	 */
+	@Deprecated
 	@Override
 	public String getReference(IdentifierProcessing processing) {
+		return name;
+	}
+
+	@Override
+	public String getReference() {
 		return name;
 	}
 
