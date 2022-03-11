@@ -147,16 +147,10 @@ class JdbcAggregateChangeExecutionContext {
 	<T> void executeDeleteRoot(DbAction.DeleteRoot<T> delete) {
 
 		if (delete.getPreviousVersion() != null) {
-
-			RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(delete.getEntityType());
-			if (persistentEntity.hasVersionProperty()) {
-
-				accessStrategy.deleteWithVersion(delete.getId(), delete.getEntityType(), delete.getPreviousVersion());
-				return;
-			}
+			accessStrategy.deleteWithVersion(delete.getId(), delete.getEntityType(), delete.getPreviousVersion());
+		} else {
+			accessStrategy.delete(delete.getId(), delete.getEntityType());
 		}
-
-		accessStrategy.delete(delete.getId(), delete.getEntityType());
 	}
 
 	<T> void executeDelete(DbAction.Delete<T> delete) {

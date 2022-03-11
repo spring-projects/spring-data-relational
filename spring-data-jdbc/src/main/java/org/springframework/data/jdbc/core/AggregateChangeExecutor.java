@@ -51,7 +51,9 @@ class AggregateChangeExecutor {
 		aggregateChange.forEachAction(action -> execute(action, executionContext));
 
 		T root = executionContext.populateIdsIfNecessary();
-		root = root == null ? aggregateChange.getEntity() : root;
+		if (root == null) {
+			root = aggregateChange.getEntity();
+		}
 
 		if (root != null) {
 			root = executionContext.populateRootVersionIfNecessary(root);
