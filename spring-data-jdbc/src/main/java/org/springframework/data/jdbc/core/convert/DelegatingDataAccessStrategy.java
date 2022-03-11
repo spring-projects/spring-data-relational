@@ -212,6 +212,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		return delegate.selectOne(query, probeType);
 	}
 
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+		return delegate.select(query, probeType);
+	}
+
 	/**
 	 * Must be called exactly once before calling any of the other methods.
 	 *

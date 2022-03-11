@@ -437,7 +437,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
 		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-		String sqlQuery = sql(probeType).selectOne(query, parameterSource);
+		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource);
 
 		T foundObject;
 		try {
@@ -447,6 +447,14 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		}
 
 		return Optional.ofNullable(foundObject);
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource);
+
+		return operations.query(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
 	}
 
 	private <S, T> SqlIdentifierParameterSource getParameterSource(@Nullable S instance,

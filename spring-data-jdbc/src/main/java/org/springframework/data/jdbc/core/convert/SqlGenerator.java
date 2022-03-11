@@ -733,7 +733,7 @@ class SqlGenerator {
 	 * @param parameterSource the source for holding the bindings
 	 * @return a non null query string.
 	 */
-	public String selectOne(Query query, MapSqlParameterSource parameterSource) {
+	public String selectByQuery(Query query, MapSqlParameterSource parameterSource) {
 
 		Assert.notNull(parameterSource, "parameterSource must not be null");
 
@@ -811,12 +811,12 @@ class SqlGenerator {
 		@Override
 		public boolean equals(Object o) {
 
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
 			Join join = (Join) o;
-			return joinTable.equals(join.joinTable) &&
-					joinColumn.equals(join.joinColumn) &&
-					parentId.equals(join.parentId);
+			return joinTable.equals(join.joinTable) && joinColumn.equals(join.joinColumn) && parentId.equals(join.parentId);
 		}
 
 		@Override
@@ -827,11 +827,7 @@ class SqlGenerator {
 		@Override
 		public String toString() {
 
-			return "Join{" +
-					"joinTable=" + joinTable +
-					", joinColumn=" + joinColumn +
-					", parentId=" + parentId +
-					'}';
+			return "Join{" + "joinTable=" + joinTable + ", joinColumn=" + joinColumn + ", parentId=" + parentId + '}';
 		}
 	}
 

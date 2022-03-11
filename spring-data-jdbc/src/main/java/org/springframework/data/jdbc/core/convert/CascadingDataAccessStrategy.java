@@ -216,6 +216,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 		return collect(das -> das.selectOne(query, probeType));
 	}
 
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+		return collect(das -> das.select(query, probeType));
+	}
+
 	private <T> T collect(Function<DataAccessStrategy, T> function) {
 
 		// Keep <T> as Eclipse fails to compile if <> is used.

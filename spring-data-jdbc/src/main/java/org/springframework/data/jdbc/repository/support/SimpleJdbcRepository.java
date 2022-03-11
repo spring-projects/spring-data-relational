@@ -206,14 +206,10 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 
 	@Override
 	public <S extends T> Iterable<S> findAll(Example<S> example, Sort sort) {
-		/*Assert.notNull(example, "Example must not be null!");
+		Assert.notNull(example, "Example must not be null!");
 		Assert.notNull(sort, "Sort must not be null!");
-		
-		Query query = this.exampleMapper.getMappedExample(example).sort(sort);
-		
-		return this.entityOperations.select(query, example.getProbeType());*/
-		// TODO: impl
-		return null;
+
+		return this.entityOperations.select(example,sort);
 	}
 
 	@Override

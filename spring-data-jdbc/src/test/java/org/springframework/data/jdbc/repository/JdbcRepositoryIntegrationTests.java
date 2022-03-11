@@ -611,7 +611,7 @@ public class JdbcRepositoryIntegrationTests {
 		DummyEntity dummyEntity2 = createDummyEntity();
 		repository.save(dummyEntity2);
 
-		Example<DummyEntity> example = Example.of(new DummyEntity());
+		Example<DummyEntity> example = Example.of(createDummyEntity());
 
 		assertThatThrownBy(() -> repository.findOne(example)).isInstanceOf(IncorrectResultSizeDataAccessException.class)
 				.hasMessageContaining("expected 1, actual 2");
@@ -630,6 +630,67 @@ public class JdbcRepositoryIntegrationTests {
 		Optional<DummyEntity> foundExampleDiego = repository.findOne(diegoExample);
 
 		assertThat(foundExampleDiego).isNotPresent();
+	}
+
+	@Test
+	void findAllByExampleShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
+
+		Iterable<DummyEntity> allFound = repository.findAll(example);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(1) //
+				.extracting(DummyEntity::getName) //
+				.containsExactly(example.getProbe().getName());
+	}
+
+	@Test
+	void findAllByExampleMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+
+		Iterable<DummyEntity> allFound = repository.findAll(example);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(2) //
+				.extracting(DummyEntity::getName) //
+				.containsOnly(example.getProbe().getName());
+	}
+
+	@Test
+	void findAllByExampleShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		Iterable<DummyEntity> allFound = repository.findAll(example);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.isEmpty();
 	}
 
 	private Instant createDummyBeforeAndAfterNow() {

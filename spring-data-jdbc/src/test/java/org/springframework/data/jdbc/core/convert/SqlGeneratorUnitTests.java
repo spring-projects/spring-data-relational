@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.annotation.Version;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -46,10 +47,13 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 /**
  * Unit tests for the {@link SqlGenerator}.
@@ -64,6 +68,7 @@ import org.springframework.data.relational.core.sql.Table;
  * @author Myeonghyeon Lee
  * @author Mikhail Polivakha
  * @author Chirag Tailor
+ * @author Diego Krupitza
  */
 class SqlGeneratorUnitTests {
 
@@ -250,7 +255,8 @@ class SqlGeneratorUnitTests {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, PostgresDialect.INSTANCE);
 
-		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+		String sql = sqlGenerator
+				.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
 
 		assertThat(sql).contains("ORDER BY \"dummy_entity\".\"x_name\" ASC NULLS LAST");
 	}
@@ -260,7 +266,8 @@ class SqlGeneratorUnitTests {
 
 		SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class, SqlServerDialect.INSTANCE);
 
-		String sql = sqlGenerator.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
+		String sql = sqlGenerator
+				.getFindAll(Sort.by(new Sort.Order(Sort.Direction.ASC, "name", Sort.NullHandling.NULLS_LAST)));
 
 		assertThat(sql).endsWith("ORDER BY dummy_entity.x_name ASC");
 	}
@@ -716,6 +723,25 @@ class SqlGeneratorUnitTests {
 						SqlIdentifier.quoted("child"), SqlIdentifier.quoted("CHILD_PARENT_OF_NO_ID_CHILD"));
 	}
 
+	@Test
+	void selectByQueryValidTest() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		DummyEntity probe = new DummyEntity();
+		probe.name = "Diego";
+
+		Criteria criteria = Criteria.where("name").is(probe.name);
+		Query query = Query.query(criteria);
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String generatedSQL = sqlGenerator.selectByQuery(query, parameterSource);
+		assertThat(generatedSQL).isNotNull().contains(":x_name");
+
+		assertThat(parameterSource.getValues()) //
+				.containsOnly(entry("x_name", probe.name));
+	}
+
 	private SqlIdentifier getAlias(Object maybeAliased) {
 
 		if (maybeAliased instanceof Aliased) {
@@ -737,7 +763,8 @@ class SqlGeneratorUnitTests {
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
-		@Column("id1") @Id Long id;
+		@Column("id1")
+		@Id Long id;
 		String name;
 		ReferencedEntity ref;
 		Set<Element> elements;
@@ -810,7 +837,8 @@ class SqlGeneratorUnitTests {
 
 		// these column names behave like single double quote in the name since the get quoted and then doubling the double
 		// quote escapes it.
-		@Id @Column("test\"\"_@id") Long id;
+		@Id
+		@Column("test\"\"_@id") Long id;
 		@Column("test\"\"_@123") String name;
 	}
 

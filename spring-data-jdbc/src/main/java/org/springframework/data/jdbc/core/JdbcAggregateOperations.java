@@ -167,4 +167,14 @@ public interface JdbcAggregateOperations {
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 */
 	<T> Optional<T> selectOne(Example<T> example);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable} that is sorted.
+	 *
+	 * @param example must not be null
+	 * @param sort the sorting that should be used on the result.
+	 * @return a non-null sorted list with all the matching results.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	<T> Iterable<T> select(Example<T> example, Sort sort);
 }

@@ -374,6 +374,13 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return Optional.empty();
 	}
 
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+		// TODO: DIEGO find help for this one
+		// I have zero MyBatis knowledge.
+		return null;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)

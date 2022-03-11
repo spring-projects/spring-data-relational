@@ -239,4 +239,13 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 */
 	<T> Optional<T> selectOne(Query query, Class<T> probeType);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable}.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @return a non null list with all the matching results.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	<T> Iterable<T> select(Query query, Class<T> probeType);
 }
