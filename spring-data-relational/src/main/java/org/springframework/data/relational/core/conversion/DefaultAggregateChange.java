@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Chirag Tailor
  * @since 2.0
  */
 class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
@@ -41,11 +42,15 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 	/** Aggregate root, to which the change applies, if available */
 	private @Nullable T entity;
 
-	public DefaultAggregateChange(Kind kind, Class<T> entityType, @Nullable T entity) {
+	/** The previous version assigned to the instance being changed, if available */
+	@Nullable private final Number previousVersion;
+
+	public DefaultAggregateChange(Kind kind, Class<T> entityType, @Nullable T entity, @Nullable Number previousVersion) {
 
 		this.kind = kind;
 		this.entityType = entityType;
 		this.entity = entity;
+		this.previousVersion = previousVersion;
 	}
 
 	/**
@@ -93,6 +98,12 @@ class DefaultAggregateChange<T> implements MutableAggregateChange<T> {
 		}
 
 		this.entity = aggregateRoot;
+	}
+
+	@Nullable
+	@Override
+	public Number getPreviousVersion() {
+		return previousVersion;
 	}
 
 	/*

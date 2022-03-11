@@ -70,7 +70,7 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	}
 
 	@Test // DATAJDBC-453
-	public void afterInsertRootIdAndVersionMaybeUpdated() {
+	public void afterInsertRootIdMaybeUpdated() {
 
 		when(accessStrategy.insert(root, DummyEntity.class, Identifier.empty(), IdValueSource.GENERATED)).thenReturn(23L);
 
@@ -80,22 +80,6 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 
 		assertThat(newRoot).isNull();
 		assertThat(root.id).isEqualTo(23L);
-
-		executionContext.populateRootVersionIfNecessary(root);
-
-		assertThat(root.version).isEqualTo(1);
-	}
-
-	@Test // DATAJDBC-507
-	public void afterInsertNotPrimitiveVersionShouldBeZero() {
-
-		DummyEntityNonPrimitiveVersion dummyEntityNonPrimitiveVersion = new DummyEntityNonPrimitiveVersion();
-
-		executionContext
-				.executeInsertRoot(new DbAction.InsertRoot<>(dummyEntityNonPrimitiveVersion, IdValueSource.GENERATED));
-		executionContext.populateRootVersionIfNecessary(dummyEntityNonPrimitiveVersion);
-
-		assertThat(dummyEntityNonPrimitiveVersion.version).isEqualTo(0);
 	}
 
 	@Test // DATAJDBC-453
@@ -218,17 +202,10 @@ public class JdbcAggregateChangeExecutorContextUnitTests {
 	private static class DummyEntity {
 
 		@Id Long id;
-		@Version long version;
 
 		Content content;
 
 		List<Content> list = new ArrayList<>();
-	}
-
-	private static class DummyEntityNonPrimitiveVersion {
-
-		@Id Long id;
-		@Version Long version;
 	}
 
 	private static class Content {

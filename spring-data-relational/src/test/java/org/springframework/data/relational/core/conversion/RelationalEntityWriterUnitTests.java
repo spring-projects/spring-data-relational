@@ -85,7 +85,7 @@ public class RelationalEntityWriterUnitTests {
 
 		SingleReferenceEntity entity = new SingleReferenceEntity(null);
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -107,7 +107,7 @@ public class RelationalEntityWriterUnitTests {
 		PrimitiveLongIdEntity entity = new PrimitiveLongIdEntity();
 
 		MutableAggregateChange<PrimitiveLongIdEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, PrimitiveLongIdEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, PrimitiveLongIdEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -129,7 +129,7 @@ public class RelationalEntityWriterUnitTests {
 		PrimitiveIntIdEntity entity = new PrimitiveIntIdEntity();
 
 		MutableAggregateChange<PrimitiveIntIdEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, PrimitiveIntIdEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, PrimitiveIntIdEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -153,7 +153,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.other = new Element(2L);
 
 		MutableAggregateChange<EmbeddedReferenceEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -177,7 +177,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.other = new Element(null);
 
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -203,7 +203,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.primitiveIntIdEntity = new PrimitiveIntIdEntity();
 
 		MutableAggregateChange<EntityWithReferencesToPrimitiveIdEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EntityWithReferencesToPrimitiveIdEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EntityWithReferencesToPrimitiveIdEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -230,7 +230,7 @@ public class RelationalEntityWriterUnitTests {
 		SingleReferenceEntity entity = new SingleReferenceEntity(SOME_ENTITY_ID);
 
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity, 1L);
 
 		converter.write(entity, aggregateChange);
 
@@ -239,10 +239,11 @@ public class RelationalEntityWriterUnitTests {
 						DbAction::getEntityType, //
 						DbActionTestSupport::extractPath, //
 						DbActionTestSupport::actualEntityType, //
-						DbActionTestSupport::isWithDependsOn) //
+						DbActionTestSupport::isWithDependsOn, //
+						dbAction -> dbAction instanceof UpdateRoot ? ((UpdateRoot<?>) dbAction).getPreviousVersion() : null) //
 				.containsExactly( //
-						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false), //
-						tuple(Delete.class, Element.class, "other", null, false) //
+						tuple(UpdateRoot.class, SingleReferenceEntity.class, "", SingleReferenceEntity.class, false, 1L), //
+						tuple(Delete.class, Element.class, "other", null, false, null) //
 				);
 	}
 
@@ -253,7 +254,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.other = new Element(null);
 
 		MutableAggregateChange<SingleReferenceEntity> aggregateChange = new DefaultAggregateChange<>(
-				AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity);
+				AggregateChange.Kind.SAVE, SingleReferenceEntity.class, entity, 1L);
 
 		converter.write(entity, aggregateChange);
 
@@ -276,7 +277,7 @@ public class RelationalEntityWriterUnitTests {
 
 		SetContainer entity = new SetContainer(null);
 		MutableAggregateChange<SetContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				SetContainer.class, entity);
+				SetContainer.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -299,7 +300,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.add(new Element(null));
 
 		MutableAggregateChange<SetContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				SetContainer.class, entity);
+				SetContainer.class, entity, null);
 		converter.write(entity, aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
@@ -342,7 +343,7 @@ public class RelationalEntityWriterUnitTests {
 		);
 
 		MutableAggregateChange<CascadingReferenceEntity> aggregateChange = new DefaultAggregateChange<>(
-				AggregateChange.Kind.SAVE, CascadingReferenceEntity.class, entity);
+				AggregateChange.Kind.SAVE, CascadingReferenceEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -404,7 +405,7 @@ public class RelationalEntityWriterUnitTests {
 		);
 
 		MutableAggregateChange<CascadingReferenceEntity> aggregateChange = new DefaultAggregateChange<>(
-				AggregateChange.Kind.SAVE, CascadingReferenceEntity.class, entity);
+				AggregateChange.Kind.SAVE, CascadingReferenceEntity.class, entity, 1L);
 
 		converter.write(entity, aggregateChange);
 
@@ -456,7 +457,7 @@ public class RelationalEntityWriterUnitTests {
 
 		MapContainer entity = new MapContainer(null);
 		MutableAggregateChange<MapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				MapContainer.class, entity);
+				MapContainer.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -476,7 +477,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("two", new Element(null));
 
 		MutableAggregateChange<MapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				MapContainer.class, entity);
+				MapContainer.class, entity, null);
 		converter.write(entity, aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
@@ -520,7 +521,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("b", new Element(null));
 
 		MutableAggregateChange<MapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				MapContainer.class, entity);
+				MapContainer.class, entity, null);
 		converter.write(entity, aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
@@ -560,7 +561,7 @@ public class RelationalEntityWriterUnitTests {
 
 		ListContainer entity = new ListContainer(null);
 		MutableAggregateChange<ListContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				ListContainer.class, entity);
+				ListContainer.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -580,7 +581,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.add(new Element(null));
 
 		MutableAggregateChange<ListContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				ListContainer.class, entity);
+				ListContainer.class, entity, null);
 		converter.write(entity, aggregateChange);
 
 		List<DbAction<?>> actions = extractActions(aggregateChange);
@@ -612,7 +613,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.put("one", new Element(null));
 
 		MutableAggregateChange<MapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				MapContainer.class, entity);
+				MapContainer.class, entity, 1L);
 
 		converter.write(entity, aggregateChange);
 
@@ -636,7 +637,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.elements.add(new Element(null));
 
 		MutableAggregateChange<ListContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				ListContainer.class, entity);
+				ListContainer.class, entity, 1L);
 
 		converter.write(entity, aggregateChange);
 
@@ -661,7 +662,7 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.get(0).elements.put("one", new Element(null));
 
 		MutableAggregateChange<ListMapContainer> aggregateChange = new DefaultAggregateChange<>(AggregateChange.Kind.SAVE,
-				ListMapContainer.class, listMapContainer);
+				ListMapContainer.class, listMapContainer, 1L);
 
 		converter.write(listMapContainer, aggregateChange);
 
@@ -689,7 +690,7 @@ public class RelationalEntityWriterUnitTests {
 		listMapContainer.maps.get(0).elements.put("one", new NoIdElement());
 
 		MutableAggregateChange<NoIdListMapContainer> aggregateChange = new DefaultAggregateChange<>(
-				AggregateChange.Kind.SAVE, NoIdListMapContainer.class, listMapContainer);
+				AggregateChange.Kind.SAVE, NoIdListMapContainer.class, listMapContainer, 1L);
 
 		converter.write(listMapContainer, aggregateChange);
 
@@ -716,7 +717,7 @@ public class RelationalEntityWriterUnitTests {
 		// the embedded is null !!!
 
 		MutableAggregateChange<EmbeddedReferenceChainEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceChainEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EmbeddedReferenceChainEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
@@ -741,7 +742,7 @@ public class RelationalEntityWriterUnitTests {
 		// the embedded is null !!!
 
 		MutableAggregateChange<RootWithEmbeddedReferenceChainEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, RootWithEmbeddedReferenceChainEntity.class, root);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, RootWithEmbeddedReferenceChainEntity.class, root, null);
 
 		converter.write(root, aggregateChange);
 
@@ -769,7 +770,7 @@ public class RelationalEntityWriterUnitTests {
 		root.elements.add(new Element(null));
 		root.elements.add(new Element(2L));
 		MutableAggregateChange<ListContainer> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, ListContainer.class, root);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, ListContainer.class, root, null);
 
 		converter.write(root, aggregateChange);
 
@@ -817,7 +818,7 @@ public class RelationalEntityWriterUnitTests {
 		entity.primitiveIntIdEntities.add(new PrimitiveIntIdEntity());
 
 		MutableAggregateChange<EntityWithReferencesToPrimitiveIdEntity> aggregateChange = //
-				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EntityWithReferencesToPrimitiveIdEntity.class, entity);
+				new DefaultAggregateChange<>(AggregateChange.Kind.SAVE, EntityWithReferencesToPrimitiveIdEntity.class, entity, null);
 
 		converter.write(entity, aggregateChange);
 
