@@ -52,6 +52,7 @@ class WritingContext {
 	private final Map<PathNode, DbAction<?>> previousActions = new HashMap<>();
 	private final Map<PersistentPropertyPath<RelationalPersistentProperty>, List<PathNode>> nodesCache = new HashMap<>();
 	private final IdValueSource rootIdValueSource;
+	@Nullable private final Number previousVersion;
 
 	WritingContext(RelationalMappingContext context, Object root, MutableAggregateChange<?> aggregateChange) {
 
@@ -59,6 +60,7 @@ class WritingContext {
 		this.root = root;
 		this.entity = aggregateChange.getEntity();
 		this.entityType = aggregateChange.getEntityType();
+		this.previousVersion = aggregateChange.getPreviousVersion();
 		this.rootIdValueSource = IdValueSource.forInstance(root,
 				context.getRequiredPersistentEntity(aggregateChange.getEntityType()));
 		this.paths = context.findPersistentPropertyPaths(entityType, (p) -> p.isEntity() && !p.isEmbedded());
@@ -88,7 +90,7 @@ class WritingContext {
 	List<DbAction<?>> update() {
 
 		List<DbAction<?>> actions = new ArrayList<>();
-		actions.add(setRootAction(new DbAction.UpdateRoot<>(entity)));
+		actions.add(setRootAction(new DbAction.UpdateRoot<>(entity, previousVersion)));
 		actions.addAll(deleteReferenced());
 		actions.addAll(insertReferenced());
 		return actions;
@@ -103,7 +105,7 @@ class WritingContext {
 			actions.addAll(insertReferenced());
 		} else {
 
-			actions.add(setRootAction(new DbAction.UpdateRoot<>(entity)));
+			actions.add(setRootAction(new DbAction.UpdateRoot<>(entity, previousVersion)));
 			actions.addAll(deleteReferenced());
 			actions.addAll(insertReferenced());
 		}

@@ -37,6 +37,7 @@ import org.springframework.util.Assert;
  * @author Bastian Wilhelm
  * @author Tyler Van Gorder
  * @author Myeonghyeon Lee
+ * @author Chirag Tailor
  */
 public class RelationalEntityDeleteWriter implements EntityWriter<Object, MutableAggregateChange<?>> {
 
@@ -88,7 +89,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 		return actions;
 	}
 
-	private <T> List<DbAction<?>> deleteRoot(Object id, AggregateChange<T> aggregateChange) {
+	private <T> List<DbAction<?>> deleteRoot(Object id, MutableAggregateChange<T> aggregateChange) {
 
 		List<DbAction<?>> deleteReferencedActions = deleteReferencedEntities(id, aggregateChange);
 
@@ -98,7 +99,7 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 		}
 		actions.addAll(deleteReferencedActions);
 
-		actions.add(new DbAction.DeleteRoot<>(id, aggregateChange.getEntityType(), getVersion(aggregateChange)));
+		actions.add(new DbAction.DeleteRoot<>(id, aggregateChange.getEntityType(), aggregateChange.getPreviousVersion()));
 
 		return actions;
 	}
@@ -121,22 +122,4 @@ public class RelationalEntityDeleteWriter implements EntityWriter<Object, Mutabl
 		return actions;
 	}
 
-	@Nullable
-	private Number getVersion(AggregateChange<?> aggregateChange) {
-
-		RelationalPersistentEntity<?> persistentEntity = context
-				.getRequiredPersistentEntity(aggregateChange.getEntityType());
-		if (!persistentEntity.hasVersionProperty()) {
-			return null;
-		}
-
-		Object entity = aggregateChange.getEntity();
-
-		if (entity == null) {
-			return null;
-		}
-
-		return (Number) persistentEntity.getPropertyAccessor(entity)
-				.getProperty(persistentEntity.getRequiredVersionProperty());
-	}
 }

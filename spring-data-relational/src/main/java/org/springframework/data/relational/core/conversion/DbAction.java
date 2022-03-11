@@ -166,12 +166,20 @@ public interface DbAction<T> {
 
 		private final T entity;
 
-		public UpdateRoot(T entity) {
+		@Nullable private final Number previousVersion;
+
+		public UpdateRoot(T entity, @Nullable Number previousVersion) {
 			this.entity = entity;
+			this.previousVersion = previousVersion;
 		}
 
 		public T getEntity() {
 			return this.entity;
+		}
+
+		@Nullable
+		public Number getPreviousVersion() {
+			return previousVersion;
 		}
 
 		public String toString() {
