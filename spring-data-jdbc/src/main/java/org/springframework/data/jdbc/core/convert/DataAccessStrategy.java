@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.lang.Nullable;
 
@@ -38,6 +40,7 @@ import org.springframework.lang.Nullable;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Diego Krupitza
  */
 public interface DataAccessStrategy extends RelationResolver {
 
@@ -281,4 +284,54 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @since 2.0
 	 */
 	<T> Iterable<T> findAll(Class<T> domainType, Pageable pageable);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting item to an entity ensuring exactly one result.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param probeType the type of entities. Must not be {@code null}.
+	 * @return exactly one result or {@link Optional#empty()} if no match found.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	<T> Optional<T> selectOne(Query query, Class<T> probeType);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable}.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param probeType the type of entities. Must not be {@code null}.
+	 * @return a non-null list with all the matching results.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	<T> Iterable<T> select(Query query, Class<T> probeType);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable}. Applies the {@link Pageable}
+	 * to the result.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param probeType the type of entities. Must not be {@literal  null}.
+	 * @param pageable the pagination that should be applied. Must not be {@literal null}.
+	 * @return a non-null list with all the matching results.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	<T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable);
+
+	/**
+	 * Determine whether there is an aggregate of type <code>probeType</code> that matches the provided {@link Query}.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param probeType the type of entities. Must not be {@code null}.
+	 * @return {@literal true} if the object exists.
+	 */
+	<T> boolean exists(Query query, Class<T> probeType);
+
+	/**
+	 * Counts the rows in the table representing the given probe type, that match the given <code>query</code>.
+	 *
+	 * @param probeType the probe type for which to count the elements. Must not be {@code null}.
+	 * @param query the query which elements have to match.
+	 * @return the count. Guaranteed to be not {@code null}.
+	 */
+	<T> long count(Query query, Class<T> probeType);
 }

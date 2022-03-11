@@ -20,7 +20,9 @@ import static org.springframework.data.jdbc.core.convert.SqlGenerator.*;
 import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -32,10 +34,12 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.lang.Nullable;
@@ -56,6 +60,7 @@ import org.springframework.util.Assert;
  * @author Yunyoung LEE
  * @author Radim Tlusty
  * @author Chirag Tailor
+ * @author Diego Krupitza
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -334,6 +339,61 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	@SuppressWarnings("unchecked")
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
 		return operations.query(sql(domainType).getFindAll(pageable), (RowMapper<T>) getEntityRowMapper(domainType));
+	}
+
+	@Override
+	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource);
+
+		T foundObject;
+		try {
+			foundObject = operations.queryForObject(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
+		} catch (EmptyResultDataAccessException e) {
+			foundObject = null;
+		}
+
+		return Optional.ofNullable(foundObject);
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource);
+
+		return operations.query(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(probeType).selectByQuery(query, parameterSource, pageable);
+
+		return operations.query(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
+	}
+
+	@Override
+	public <T> boolean exists(Query query, Class<T> probeType) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String sqlQuery = sql(probeType).existsByQuery(query, parameterSource);
+
+		Boolean result = operations.queryForObject(sqlQuery, parameterSource, Boolean.class);
+		Assert.notNull(result, "The result of an exists query must not be null");
+
+		return result;
+	}
+
+	@Override
+	public <T> long count(Query query, Class<T> probeType) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(probeType).countByQuery(query, parameterSource);
+
+		Long result = operations.queryForObject(sqlQuery, parameterSource, Long.class);
+
+		Assert.notNull(result, "The result of a count query must not be null.");
+
+		return result;
 	}
 
 	private EntityRowMapper<?> getEntityRowMapper(Class<?> domainType) {

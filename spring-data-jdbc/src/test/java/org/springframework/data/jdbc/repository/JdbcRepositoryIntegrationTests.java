@@ -33,12 +33,18 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationListener;
@@ -46,11 +52,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.mapping.AggregateReference;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
@@ -68,7 +77,9 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
+import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -84,6 +95,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Jens Schauder
  * @author Mark Paluch
  * @author Chirag Tailor
+ * @author Diego Krupitza
  */
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
@@ -707,6 +719,557 @@ public class JdbcRepositoryIntegrationTests {
 				.isEqualTo(root1.intermediates.get(0).leaves.get(0).name);
 	}
 
+	@Test
+	void findOneByExampleShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> diegoExample = Example.of(new DummyEntity("Diego"));
+
+		Optional<DummyEntity> foundExampleDiego = repository.findOne(diegoExample);
+
+		assertThat(foundExampleDiego).isPresent();
+		assertThat(foundExampleDiego.get()).isNotNull();
+		assertThat(foundExampleDiego.get().getName()).isEqualTo("Diego");
+	}
+
+	@Test
+	void findOneByExampleMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+
+		assertThatThrownBy(() -> repository.findOne(example)).isInstanceOf(IncorrectResultSizeDataAccessException.class)
+				.hasMessageContaining("expected 1, actual 2");
+	}
+
+	@Test
+	void findOneByExampleShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> diegoExample = Example.of(new DummyEntity("NotExisting"));
+
+		Optional<DummyEntity> foundExampleDiego = repository.findOne(diegoExample);
+
+		assertThat(foundExampleDiego).isNotPresent();
+	}
+
+	@Test
+	void findAllByExampleShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
+
+		Iterable<DummyEntity> allFound = repository.findAll(example);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(1) //
+				.extracting(DummyEntity::getName) //
+				.containsExactly(example.getProbe().getName());
+	}
+
+	@Test
+	void findAllByExampleMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+
+		Iterable<DummyEntity> allFound = repository.findAll(example);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(2) //
+				.extracting(DummyEntity::getName) //
+				.containsOnly(example.getProbe().getName());
+	}
+
+	@Test
+	void findAllByExampleShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		Iterable<DummyEntity> allFound = repository.findAll(example);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.isEmpty();
+	}
+
+	@Test
+	void findAllByExamplePageableShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
+		Pageable pageRequest = PageRequest.of(0, 10);
+
+		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(1) //
+				.extracting(DummyEntity::getName) //
+				.containsExactly(example.getProbe().getName());
+	}
+
+	@Test
+	void findAllByExamplePageableMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+		Pageable pageRequest = PageRequest.of(0, 10);
+
+		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(2) //
+				.extracting(DummyEntity::getName) //
+				.containsOnly(example.getProbe().getName());
+	}
+
+	@Test
+	void findAllByExamplePageableShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+		Pageable pageRequest = PageRequest.of(0, 10);
+
+		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.isEmpty();
+	}
+
+	@Test
+	void findAllByExamplePageableOutsidePageShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+		Pageable pageRequest = PageRequest.of(10, 10);
+
+		Iterable<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		assertThat(allFound) //
+				.isNotNull() //
+				.isEmpty();
+	}
+
+	@ParameterizedTest
+	@MethodSource("findAllByExamplePageableSource")
+	void findAllByExamplePageable(Pageable pageRequest, int size, int totalPages, List<String> notContains) {
+
+		for (int i = 0; i < 100; i++) {
+			DummyEntity dummyEntity = createDummyEntity();
+			dummyEntity.setFlag(true);
+			dummyEntity.setName("" + i);
+
+			repository.save(dummyEntity);
+		}
+
+		DummyEntity dummyEntityExample = createDummyEntity();
+		dummyEntityExample.setName(null);
+		dummyEntityExample.setFlag(true);
+
+		Example<DummyEntity> example = Example.of(dummyEntityExample);
+
+		Page<DummyEntity> allFound = repository.findAll(example, pageRequest);
+
+		// page has correct size
+		assertThat(allFound) //
+				.isNotNull() //
+				.hasSize(size);
+
+		// correct number of total
+		assertThat(allFound.getTotalElements()).isEqualTo(100);
+
+		assertThat(allFound.getTotalPages()).isEqualTo(totalPages);
+
+		if (!notContains.isEmpty()) {
+			assertThat(allFound) //
+					.extracting(DummyEntity::getName) //
+					.doesNotContain(notContains.toArray(new String[0]));
+		}
+	}
+
+	public static Stream<Arguments> findAllByExamplePageableSource() {
+		return Stream.of( //
+				Arguments.of(PageRequest.of(0, 3), 3, 34, Arrays.asList("3", "4", "100")), //
+				Arguments.of(PageRequest.of(1, 10), 10, 10, Arrays.asList("9", "20", "30")), //
+				Arguments.of(PageRequest.of(2, 10), 10, 10, Arrays.asList("1", "2", "3")), //
+				Arguments.of(PageRequest.of(33, 3), 1, 34, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(36, 3), 0, 34, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(0, 10000), 100, 1, Collections.emptyList()), //
+				Arguments.of(PageRequest.of(100, 10000), 0, 1, Collections.emptyList()) //
+		);
+	}
+
+	@Test
+	void existsByExampleShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
+
+		boolean exists = repository.exists(example);
+
+		assertThat(exists).isTrue();
+	}
+
+	@Test
+	void existsByExampleMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+
+		boolean exists = repository.exists(example);
+		assertThat(exists).isTrue();
+	}
+
+	@Test
+	void existsByExampleShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		boolean exists = repository.exists(example);
+
+		assertThat(exists).isFalse();
+	}
+
+	@Test
+	void existsByExampleComplex() {
+
+		final Instant pointInTime = Instant.now().minusSeconds(10000);
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+		two.setName("Diego");
+		two.setPointInTime(pointInTime);
+		two = repository.save(two);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName("Diego");
+		exampleEntitiy.setPointInTime(pointInTime);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		boolean exists = repository.exists(example);
+		assertThat(exists).isTrue();
+	}
+
+	@Test
+	void countByExampleShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
+
+		long count = repository.count(example);
+
+		assertThat(count).isOne();
+	}
+
+	@Test
+	void countByExampleMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+
+		long count = repository.count(example);
+		assertThat(count).isEqualTo(2);
+	}
+
+	@Test
+	void countByExampleShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		long count = repository.count(example);
+
+		assertThat(count).isNotNull().isZero();
+	}
+
+	@Test
+	void countByExampleComplex() {
+
+		final Instant pointInTime = Instant.now().minusSeconds(10000);
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+		two.setName("Diego");
+		two.setPointInTime(pointInTime);
+		two = repository.save(two);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName("Diego");
+		exampleEntitiy.setPointInTime(pointInTime);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		long count = repository.count(example);
+		assertThat(count).isOne();
+	}
+
+	@Test
+	void fetchByExampleFluentAllSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity third = createDummyEntity();
+		third.setName(searchName);
+		third.setPointInTime(now.minusSeconds(200000));
+		third = repository.save(third);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		List<DummyEntity> matches = repository.findBy(example, p -> p.sortBy(Sort.by("pointInTime").descending()).all());
+		assertThat(matches).hasSize(2).contains(two, third);
+		assertThat(matches.get(0)).isEqualTo(two);
+	}
+
+	@Test
+	void fetchByExampleFluentCountSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity third = createDummyEntity();
+		third.setName(searchName);
+		third.setPointInTime(now.minusSeconds(200000));
+		third = repository.save(third);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		Long matches = repository.findBy(example, FluentQuery.FetchableFluentQuery::count);
+		assertThat(matches).isEqualTo(2);
+	}
+
+	@Test
+	void fetchByExampleFluentOnlyInstantFirstSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity third = createDummyEntity();
+		third.setName(searchName);
+		third.setPointInTime(now.minusSeconds(200000));
+		third = repository.save(third);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		Optional<DummyEntity> matches = repository.findBy(example,
+				p -> p.sortBy(Sort.by("pointInTime").descending()).first());
+		assertThat(matches).contains(two);
+	}
+
+	@Test
+	void fetchByExampleFluentOnlyInstantOneValueError() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity third = createDummyEntity();
+		third.setName(searchName);
+		third.setPointInTime(now.minusSeconds(200000));
+		third = repository.save(third);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		assertThatThrownBy(() -> repository.findBy(example, p -> p.sortBy(Sort.by("pointInTime").descending()).one()))
+				.isInstanceOf(IncorrectResultSizeDataAccessException.class).hasMessageContaining("expected 1, actual 2");
+	}
+
+	@Test
+	void fetchByExampleFluentOnlyInstantOneValueSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		Optional<DummyEntity> match = repository.findBy(example, p -> p.sortBy(Sort.by("pointInTime").descending()).one());
+
+		assertThat(match).contains(two);
+	}
+
+	@Test
+	void fetchByExampleFluentOnlyInstantOneValueAsSimple() {
+		String searchName = "Diego";
+
+		Instant now = Instant.now();
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+
+		two.setName(searchName);
+		two.setPointInTime(now.minusSeconds(10000));
+		two = repository.save(two);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName(searchName);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		Optional<DummyProjectExample> match = repository.findBy(example, p -> p.as(DummyProjectExample.class).one());
+
+		assertThat(match.get().getName()).contains(two.getName());
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -730,7 +1293,11 @@ public class JdbcRepositoryIntegrationTests {
 		return now;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+	interface DummyProjectExample {
+		String getName();
+	}
+
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, QueryByExampleExecutor<DummyEntity> {
 
 		@Lock(LockMode.PESSIMISTIC_WRITE)
 		List<DummyEntity> findAllByName(String name);

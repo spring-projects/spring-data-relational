@@ -46,10 +46,13 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.Aliased;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.relational.core.sql.Table;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 
 /**
@@ -65,6 +68,7 @@ import org.springframework.lang.Nullable;
  * @author Myeonghyeon Lee
  * @author Mikhail Polivakha
  * @author Chirag Tailor
+ * @author Diego Krupitza
  */
 @SuppressWarnings("Convert2MethodRef")
 class SqlGeneratorUnitTests {
@@ -739,6 +743,92 @@ class SqlGeneratorUnitTests {
 	}
 
 	@Nullable
+	@Test
+	void selectByQueryValidTest() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		DummyEntity probe = new DummyEntity();
+		probe.name = "Diego";
+
+		Criteria criteria = Criteria.where("name").is(probe.name);
+		Query query = Query.query(criteria);
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String generatedSQL = sqlGenerator.selectByQuery(query, parameterSource);
+		assertThat(generatedSQL).isNotNull().contains(":x_name");
+
+		assertThat(parameterSource.getValues()) //
+				.containsOnly(entry("x_name", probe.name));
+	}
+
+	@Test
+	void existsByQuerySimpleValidTest() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		DummyEntity probe = new DummyEntity();
+		probe.name = "Diego";
+
+		Criteria criteria = Criteria.where("name").is(probe.name);
+		Query query = Query.query(criteria);
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String generatedSQL = sqlGenerator.existsByQuery(query, parameterSource);
+		assertThat(generatedSQL).isNotNull().contains(":x_name");
+
+		assertThat(parameterSource.getValues()) //
+				.containsOnly(entry("x_name", probe.name));
+	}
+
+	@Test
+	void countByQuerySimpleValidTest() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		DummyEntity probe = new DummyEntity();
+		probe.name = "Diego";
+
+		Criteria criteria = Criteria.where("name").is(probe.name);
+		Query query = Query.query(criteria);
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String generatedSQL = sqlGenerator.countByQuery(query, parameterSource);
+		assertThat(generatedSQL) //
+				.isNotNull() //
+				.containsIgnoringCase("COUNT(1)") //
+				.contains(":x_name");
+
+		assertThat(parameterSource.getValues()) //
+				.containsOnly(entry("x_name", probe.name));
+	}
+
+	@Test
+	void selectByQueryPaginationValidTest() {
+		final SqlGenerator sqlGenerator = createSqlGenerator(DummyEntity.class);
+
+		DummyEntity probe = new DummyEntity();
+		probe.name = "Diego";
+
+		Criteria criteria = Criteria.where("name").is(probe.name);
+		Query query = Query.query(criteria);
+
+		PageRequest pageRequest = PageRequest.of(2, 1, Sort.by(Sort.Order.asc("name")));
+
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String generatedSQL = sqlGenerator.selectByQuery(query, parameterSource, pageRequest);
+		assertThat(generatedSQL) //
+				.isNotNull() //
+				.contains(":x_name") //
+				.containsIgnoringCase("ORDER BY dummy_entity.x_name ASC") //
+				.containsIgnoringCase("LIMIT 1") //
+				.containsIgnoringCase("OFFSET 2 LIMIT 1");
+
+		assertThat(parameterSource.getValues()) //
+				.containsOnly(entry("x_name", probe.name));
+	}
+
 	private SqlIdentifier getAlias(Object maybeAliased) {
 
 		if (maybeAliased instanceof Aliased) {
@@ -761,7 +851,8 @@ class SqlGeneratorUnitTests {
 	@SuppressWarnings("unused")
 	static class DummyEntity {
 
-		@Column("id1") @Id Long id;
+		@Column("id1")
+		@Id Long id;
 		String name;
 		ReferencedEntity ref;
 		Set<Element> elements;
@@ -838,7 +929,8 @@ class SqlGeneratorUnitTests {
 
 		// these column names behave like single double quote in the name since the get quoted and then doubling the double
 		// quote escapes it.
-		@Id @Column("test\"\"_@id") Long id;
+		@Id
+		@Column("test\"\"_@id") Long id;
 		@Column("test\"\"_@123") String name;
 	}
 

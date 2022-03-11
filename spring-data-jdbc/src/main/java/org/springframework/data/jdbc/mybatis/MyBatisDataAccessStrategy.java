@@ -21,7 +21,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -34,6 +38,7 @@ import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -322,6 +327,35 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 				new MyBatisContext(null, null, domainType, additionalContext));
 	}
 
+	@Override
+	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public <T> boolean exists(Query query, Class<T> probeType) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	@Override
+	public <T> long count(Query query, Class<T> probeType) {
+		throw new UnsupportedOperationException("Not implemented");
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)
+	 */
 	@Override
 	public long count(Class<?> domainType) {
 

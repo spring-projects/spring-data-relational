@@ -22,8 +22,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.conversion.IdValueSource;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.util.Assert;
+
+import java.util.Optional;
 
 /**
  * Delegates all method calls to an instance set after construction. This is useful for {@link DataAccessStrategy}s with
@@ -34,6 +37,7 @@ import org.springframework.util.Assert;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Diego Krupitza
  * @since 1.1
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
@@ -153,6 +157,31 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
 		return delegate.findAll(domainType, pageable);
+	}
+
+	@Override
+	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+		return delegate.selectOne(query, probeType);
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType) {
+		return delegate.select(query, probeType);
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
+		return delegate.select(query, probeType, pageable);
+	}
+
+	@Override
+	public <T> boolean exists(Query query, Class<T> probeType) {
+		return delegate.exists(query, probeType);
+	}
+
+	@Override
+	public <T> long count(Query query, Class<T> probeType) {
+		return delegate.count(query, probeType);
 	}
 
 	/**

@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.repository.query.QueryMapper;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
@@ -31,10 +32,13 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -52,6 +56,7 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Mikhail Polivakha
  * @author Chirag Tailor
+ * @author Diego Krupitza
  */
 class SqlGenerator {
 
@@ -83,6 +88,7 @@ class SqlGenerator {
 	private final Lazy<String> deleteByIdInSql = Lazy.of(this::createDeleteByIdInSql);
 	private final Lazy<String> deleteByIdAndVersionSql = Lazy.of(this::createDeleteByIdAndVersionSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
+	private final QueryMapper queryMapper;
 
 	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
@@ -101,6 +107,7 @@ class SqlGenerator {
 		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
 		this.sqlRenderer = SqlRenderer.create(renderContext);
 		this.columns = new Columns(entity, mappingContext, converter);
+		this.queryMapper = new QueryMapper(dialect, converter);
 	}
 
 	/**
@@ -764,6 +771,159 @@ class SqlGenerator {
 		SqlIdentifier columnName = this.entity.getRequiredPersistentProperty(order.getProperty()).getColumnName();
 		Column column = Column.create(columnName, this.getTable());
 		return OrderByField.from(column, order.getDirection()).withNullHandling(order.getNullHandling());
+	}
+
+	/**
+	 * Constructs a single sql query that performs select based on the provided query. Additional the bindings for the
+	 * where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return a non null query string.
+	 */
+	public String selectByQuery(Query query, MapSqlParameterSource parameterSource) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
+
+		Select select = applyQueryOnSelect(query, parameterSource, selectBuilder) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
+	 * Constructs a single sql query that performs select based on the provided query and pagination information.
+	 * Additional the bindings for the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null.
+	 * @param pageable the pageable to perform on the select.
+	 * @param parameterSource the source for holding the bindings.
+	 * @return a non null query string.
+	 */
+	public String selectByQuery(Query query, MapSqlParameterSource parameterSource, Pageable pageable) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
+
+		// first apply query and then pagination. This means possible query sorting and limiting might be overwritten by the
+		// pagination. This is desired.
+		SelectBuilder.SelectOrdered selectOrdered = applyQueryOnSelect(query, parameterSource, selectBuilder);
+		selectOrdered = applyPagination(pageable, selectOrdered);
+		selectOrdered = selectOrdered.orderBy(extractOrderByFields(pageable.getSort()));
+
+		Select select = selectOrdered.build();
+		return render(select);
+	}
+
+	/**
+	 * Constructs a single sql query that performs select count based on the provided query for checking existence.
+	 * Additional the bindings for the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return a non null query string.
+	 */
+	public String existsByQuery(Query query, MapSqlParameterSource parameterSource) {
+
+		Expression idColumn = getIdColumn();
+		SelectBuilder.SelectJoin baseSelect = getSelectCountWithExpression(idColumn);
+
+		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
+	 * Constructs a single sql query that performs select count based on the provided query. Additional the bindings for
+	 * the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return a non null query string.
+	 */
+	public String countByQuery(Query query, MapSqlParameterSource parameterSource) {
+
+		Expression countExpression = Expressions.just("1");
+		SelectBuilder.SelectJoin baseSelect = getSelectCountWithExpression(countExpression);
+
+		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
+	 * Generates a {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} with a
+	 * <code>COUNT(...)</code> where the <code>countExpressions</code> are the parameters of the count.
+	 *
+	 * @param countExpressions the expression to use as count parameter.
+	 * @return a non-null {@link org.springframework.data.relational.core.sql.SelectBuilder.SelectJoin} that joins all the
+	 *         columns and has only a count in the projection of the select.
+	 */
+	private SelectBuilder.SelectJoin getSelectCountWithExpression(Expression... countExpressions) {
+
+		Assert.notNull(countExpressions, "countExpressions must not be null");
+		Assert.state(countExpressions.length >= 1, "countExpressions must contain at least one expression");
+
+		Table table = getTable();
+		SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder //
+				.select(Functions.count(countExpressions)) //
+				.from(table);//
+
+		SelectBuilder.SelectJoin baseSelect = selectBuilder;
+
+		// add possible joins
+		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
+				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+
+			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(mappingContext, path);
+
+			// add a join if necessary
+			Join join = getJoin(extPath);
+			if (join != null) {
+				baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
+			}
+		}
+		return baseSelect;
+	}
+
+	private SelectBuilder.SelectOrdered applyQueryOnSelect(Query query, MapSqlParameterSource parameterSource,
+			SelectBuilder.SelectWhere selectBuilder) {
+
+		Table table = Table.create(this.entity.getTableName());
+
+		SelectBuilder.SelectOrdered selectOrdered = query //
+				.getCriteria() //
+				.map(item -> this.applyCriteria(item, selectBuilder, parameterSource, table)) //
+				.orElse(selectBuilder);
+
+		if (query.isSorted()) {
+			List<OrderByField> sort = this.queryMapper.getMappedSort(table, query.getSort(), entity);
+			selectOrdered = selectBuilder.orderBy(sort);
+		}
+
+		SelectBuilder.SelectLimitOffset limitable = (SelectBuilder.SelectLimitOffset) selectOrdered;
+
+		if (query.getLimit() > 0) {
+			limitable = limitable.limit(query.getLimit());
+		}
+
+		if (query.getOffset() > 0) {
+			limitable = limitable.offset(query.getOffset());
+		}
+		return (SelectBuilder.SelectOrdered) limitable;
+	}
+
+	SelectBuilder.SelectOrdered applyCriteria(@Nullable CriteriaDefinition criteria,
+			SelectBuilder.SelectWhere whereBuilder, MapSqlParameterSource parameterSource, Table table) {
+
+		return criteria != null //
+				? whereBuilder.where(queryMapper.getMappedObject(parameterSource, criteria, table, entity)) //
+				: whereBuilder;
 	}
 
 	/**

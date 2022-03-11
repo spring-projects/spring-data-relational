@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -46,6 +47,7 @@ import org.springframework.data.relational.core.mapping.RelationalMappingContext
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -61,6 +63,7 @@ import org.springframework.util.ClassUtils;
  * @author Milan Milanov
  * @author Myeonghyeon Lee
  * @author Chirag Tailor
+ * @author Diego Krupitza
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
@@ -71,6 +74,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final DataAccessStrategy accessStrategy;
 	private final AggregateChangeExecutor executor;
+
 	private final JdbcConverter converter;
 
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
@@ -238,6 +242,38 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(domainType));
 	}
 
+	@Override
+	public <T> Optional<T> selectOne(Query query, Class<T> entityClass) {
+		return accessStrategy.selectOne(query, entityClass);
+	}
+
+	@Override
+	public <T> Iterable<T> select(Query query, Class<T> entityClass, Sort sort) {
+		return accessStrategy.select(query, entityClass);
+	}
+
+	@Override
+	public <T> boolean exists(Query query, Class<T> entityClass) {
+		return accessStrategy.exists(query, entityClass);
+	}
+
+	@Override
+	public <T> long count(Query query, Class<T> entityClass) {
+		return accessStrategy.count(query, entityClass);
+	}
+
+	@Override
+	public <T> Page<T> select(Query query, Class<T> entityClass, Pageable pageable) {
+		Iterable<T> items = triggerAfterConvert(accessStrategy.select(query, entityClass, pageable));
+		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
+
+		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(query, entityClass));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.jdbc.core.JdbcAggregateOperations#findAll(java.lang.Class)
+	 */
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType) {
 
