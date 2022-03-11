@@ -15,6 +15,9 @@
  */
 package org.springframework.data.jdbc.core;
 
+import java.util.Optional;
+
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,6 +29,7 @@ import org.springframework.lang.Nullable;
  * @author Jens Schauder
  * @author Thomas Lang
  * @author Milan Milanov
+ * @author Diego Krupitza
  */
 public interface JdbcAggregateOperations {
 
@@ -154,4 +158,13 @@ public interface JdbcAggregateOperations {
 	 * @since 2.0
 	 */
 	<T> Page<T> findAll(Class<T> domainType, Pageable pageable);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting item to an entity ensuring exactly one result.
+	 *
+	 * @param example must not be null
+	 * @return exactly one result or {@link Optional#empty()} if no match found.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	<T> Optional<T> selectOne(Example<T> example);
 }

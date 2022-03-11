@@ -17,6 +17,7 @@ package org.springframework.data.jdbc.core.convert;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 
 /**
@@ -35,6 +37,7 @@ import org.springframework.data.relational.core.sql.LockMode;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Diego Krupitza
  * @since 1.1
  */
 public class CascadingDataAccessStrategy implements DataAccessStrategy {
@@ -206,6 +209,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
 		return collect(das -> das.findAll(domainType, pageable));
+	}
+
+	@Override
+	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+		return collect(das -> das.selectOne(query, probeType));
 	}
 
 	private <T> T collect(Function<DataAccessStrategy, T> function) {

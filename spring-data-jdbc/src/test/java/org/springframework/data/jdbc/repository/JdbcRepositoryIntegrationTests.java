@@ -33,6 +33,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -66,6 +69,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.support.PropertiesBasedNamedQueries;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -80,6 +84,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Jens Schauder
  * @author Mark Paluch
+ * @author Diego Krupitza
  */
 @Transactional
 @TestExecutionListeners(value = AssumeFeatureTestExecutionListener.class, mergeMode = MERGE_WITH_DEFAULTS)
@@ -575,6 +580,58 @@ public class JdbcRepositoryIntegrationTests {
 		assertThat(repository.returnInput(null)).isNull();
 	}
 
+	@Test
+	void findOneByExampleShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> diegoExample = Example.of(new DummyEntity("Diego"));
+
+		Optional<DummyEntity> foundExampleDiego = repository.findOne(diegoExample);
+
+		assertThat(foundExampleDiego).isPresent();
+		assertThat(foundExampleDiego.get()).isNotNull();
+		assertThat(foundExampleDiego.get().getName()).isEqualTo("Diego");
+	}
+
+	@Test
+	void findOneByExampleMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity());
+
+		assertThatThrownBy(() -> repository.findOne(example)).isInstanceOf(IncorrectResultSizeDataAccessException.class)
+				.hasMessageContaining("expected 1, actual 2");
+	}
+
+	@Test
+	void findOneByExampleShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> diegoExample = Example.of(new DummyEntity("NotExisting"));
+
+		Optional<DummyEntity> foundExampleDiego = repository.findOne(diegoExample);
+
+		assertThat(foundExampleDiego).isNotPresent();
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();
@@ -598,7 +655,7 @@ public class JdbcRepositoryIntegrationTests {
 		return now;
 	}
 
-	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long> {
+	interface DummyEntityRepository extends CrudRepository<DummyEntity, Long>, QueryByExampleExecutor<DummyEntity> {
 
 		@Lock(LockMode.PESSIMISTIC_WRITE)
 		List<DummyEntity> findAllByName(String name);

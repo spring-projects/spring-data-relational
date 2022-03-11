@@ -17,12 +17,14 @@ package org.springframework.data.jdbc.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -38,6 +40,8 @@ import org.springframework.data.relational.core.conversion.RelationalEntityUpdat
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.event.*;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.relational.repository.query.RelationalExampleMapper;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -51,6 +55,7 @@ import org.springframework.util.Assert;
  * @author Christoph Strobl
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Diego Krupitza
  */
 public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
@@ -63,6 +68,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final DataAccessStrategy accessStrategy;
 	private final AggregateChangeExecutor executor;
+	private final RelationalExampleMapper exampleMapper;
 
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
 
@@ -92,6 +98,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 
 		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
+		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 
 		setEntityCallbacks(EntityCallbacks.create(publisher));
 	}
@@ -120,6 +127,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
 		this.jdbcEntityDeleteWriter = new RelationalEntityDeleteWriter(context);
 		this.executor = new AggregateChangeExecutor(converter, accessStrategy);
+		this.exampleMapper = new RelationalExampleMapper(converter.getMappingContext());
 	}
 
 	/**
@@ -252,6 +260,14 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		List<T> content = StreamSupport.stream(items.spliterator(), false).collect(Collectors.toList());
 
 		return PageableExecutionUtils.getPage(content, pageable, () -> accessStrategy.count(domainType));
+	}
+
+	@Override
+	public <T> Optional<T> selectOne(Example<T> example) {
+		Query query = this.exampleMapper.getMappedExample(example);
+		Class<T> probeType = example.getProbeType();
+
+		return accessStrategy.selectOne(query, probeType);
 	}
 
 	/*

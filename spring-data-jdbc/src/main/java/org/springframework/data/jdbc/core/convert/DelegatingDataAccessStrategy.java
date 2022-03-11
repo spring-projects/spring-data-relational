@@ -19,8 +19,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.util.Assert;
+
+import java.util.Optional;
 
 /**
  * Delegates all method calls to an instance set after construction. This is useful for {@link DataAccessStrategy}s with
@@ -30,6 +33,7 @@ import org.springframework.util.Assert;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Diego Krupitza
  * @since 1.1
  */
 public class DelegatingDataAccessStrategy implements DataAccessStrategy {
@@ -201,6 +205,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 	@Override
 	public <T> Iterable<T> findAll(Class<T> domainType, Pageable pageable) {
 		return delegate.findAll(domainType, pageable);
+	}
+
+	@Override
+	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+		return delegate.selectOne(query, probeType);
 	}
 
 	/**

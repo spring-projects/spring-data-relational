@@ -16,14 +16,18 @@
 package org.springframework.data.jdbc.repository.support;
 
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.FluentQuery;
+import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -34,14 +38,15 @@ import org.springframework.util.Assert;
  * @author Jens Schauder
  * @author Oliver Gierke
  * @author Milan Milanov
+ * @author Diego Krupitza
  */
 @Transactional(readOnly = true)
-public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T, ID> {
+public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T> {
 
 	private final JdbcAggregateOperations entityOperations;
 	private final PersistentEntity<T, ?> entity;
 
-	public SimpleJdbcRepository(JdbcAggregateOperations entityOperations,PersistentEntity<T, ?> entity) {
+	public SimpleJdbcRepository(JdbcAggregateOperations entityOperations, PersistentEntity<T, ?> entity) {
 
 		Assert.notNull(entityOperations, "EntityOperations must not be null.");
 		Assert.notNull(entity, "Entity must not be null.");
@@ -186,4 +191,67 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 		return entityOperations.findAll(entity.getType(), pageable);
 	}
 
+	@Override
+	public <S extends T> Optional<S> findOne(Example<S> example) {
+		Assert.notNull(example, "Example must not be null!");
+		return this.entityOperations.selectOne(example);
+	}
+
+	@Override
+	public <S extends T> Iterable<S> findAll(Example<S> example) {
+		Assert.notNull(example, "Example must not be null!");
+
+		return findAll(example, Sort.unsorted());
+	}
+
+	@Override
+	public <S extends T> Iterable<S> findAll(Example<S> example, Sort sort) {
+		/*Assert.notNull(example, "Example must not be null!");
+		Assert.notNull(sort, "Sort must not be null!");
+		
+		Query query = this.exampleMapper.getMappedExample(example).sort(sort);
+		
+		return this.entityOperations.select(query, example.getProbeType());*/
+		// TODO: impl
+		return null;
+	}
+
+	@Override
+	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
+		// TODO: impl
+		return null;
+	}
+
+	@Override
+	public <S extends T> long count(Example<S> example) {
+		/*Assert.notNull(example, "Example must not be null!");
+		
+		Query query = this.exampleMapper.getMappedExample(example);
+		
+		return this.entityOperations.count(query, example.getProbeType());*/
+		// TODO: impl
+		return 0;
+	}
+
+	@Override
+	public <S extends T> boolean exists(Example<S> example) {
+
+		/*Assert.notNull(example, "Example must not be null!");
+		
+		Query query = this.exampleMapper.getMappedExample(example);
+		
+		return this.entityOperations.exists(query, example.getProbeType());*/
+		// TODO: impl
+		return false;
+	}
+
+	@Override
+	public <S extends T, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+		Assert.notNull(example, "Sample must not be null!");
+		Assert.notNull(queryFunction, "Query function must not be null!");
+
+		// TODO: impl
+
+		return null;
+	}
 }

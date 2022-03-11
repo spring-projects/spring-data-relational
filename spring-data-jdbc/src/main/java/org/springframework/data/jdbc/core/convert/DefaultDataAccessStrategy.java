@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.springframework.dao.DataRetrievalFailureException;
@@ -42,10 +43,12 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -68,6 +71,7 @@ import org.springframework.util.Assert;
  * @author Myeonghyeon Lee
  * @author Yunyoung LEE
  * @author Radim Tlusty
+ * @author Diego Krupitza
  * @since 1.1
  */
 public class DefaultDataAccessStrategy implements DataAccessStrategy {
@@ -134,7 +138,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	@Nullable
-	private <T> Object executeInsertAndReturnGeneratedId(Class<T> domainType, RelationalPersistentEntity<T> persistentEntity, SqlIdentifierParameterSource parameterSource, String insertSql) {
+	private <T> Object executeInsertAndReturnGeneratedId(Class<T> domainType,
+			RelationalPersistentEntity<T> persistentEntity, SqlIdentifierParameterSource parameterSource, String insertSql) {
 
 		KeyHolder holder = new GeneratedKeyHolder();
 
@@ -429,6 +434,21 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return operations.query(sql(domainType).getFindAll(pageable), (RowMapper<T>) getEntityRowMapper(domainType));
 	}
 
+	@Override
+	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+		String sqlQuery = sql(probeType).selectOne(query, parameterSource);
+
+		T foundObject;
+		try {
+			foundObject = operations.queryForObject(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
+		} catch (EmptyResultDataAccessException e) {
+			foundObject = null;
+		}
+
+		return Optional.ofNullable(foundObject);
+	}
+
 	private <S, T> SqlIdentifierParameterSource getParameterSource(@Nullable S instance,
 			RelationalPersistentEntity<S> persistentEntity, String prefix,
 			Predicate<RelationalPersistentProperty> skipProperty, IdentifierProcessing identifierProcessing) {
@@ -546,7 +566,8 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource,
 			RelationalPersistentProperty property, @Nullable Object value, SqlIdentifier name) {
 
-		addConvertedValue(parameterSource, value, name, converter.getColumnType(property), converter.getTargetSqlType(property));
+		addConvertedValue(parameterSource, value, name, converter.getColumnType(property),
+				converter.getTargetSqlType(property));
 	}
 
 	private void addConvertedPropertyValue(SqlIdentifierParameterSource parameterSource, SqlIdentifier name, Object value,
@@ -556,7 +577,7 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 	}
 
 	private void addConvertedValue(SqlIdentifierParameterSource parameterSource, @Nullable Object value,
-								   SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
+			SqlIdentifier paramName, Class<?> javaType, SQLType sqlType) {
 
 		JdbcValue jdbcValue = converter.writeJdbcValue( //
 				value, //

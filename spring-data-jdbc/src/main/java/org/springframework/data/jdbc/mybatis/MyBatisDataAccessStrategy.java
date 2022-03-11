@@ -20,6 +20,7 @@ import static java.util.Arrays.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.ibatis.session.SqlSession;
@@ -41,6 +42,7 @@ import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.relational.core.dialect.Dialect;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -363,6 +365,13 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		additionalContext.put("pageable", pageable);
 		return sqlSession().selectList(namespace(domainType) + ".findAllPaged",
 				new MyBatisContext(null, null, domainType, additionalContext));
+	}
+
+	@Override
+	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
+		// TODO: DIEGO find help for this one
+		// I have zero MyBatis knowledge.
+		return Optional.empty();
 	}
 
 	/*

@@ -16,13 +16,16 @@
 package org.springframework.data.jdbc.core.convert;
 
 import java.util.Map;
+import java.util.Optional;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.JdbcAggregateOperations;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.LockMode;
 import org.springframework.lang.Nullable;
 
@@ -35,6 +38,7 @@ import org.springframework.lang.Nullable;
  * @author Tyler Van Gorder
  * @author Milan Milanov
  * @author Myeonghyeon Lee
+ * @author Diego Krupitza
  */
 public interface DataAccessStrategy extends RelationResolver {
 
@@ -226,4 +230,13 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * @since 2.0
 	 */
 	<T> Iterable<T> findAll(Class<T> domainType, Pageable pageable);
+
+	/**
+	 * Execute a {@code SELECT} query and convert the resulting item to an entity ensuring exactly one result.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @return exactly one result or {@link Optional#empty()} if no match found.
+	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
+	 */
+	<T> Optional<T> selectOne(Query query, Class<T> probeType);
 }

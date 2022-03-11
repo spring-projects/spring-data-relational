@@ -58,7 +58,7 @@ import org.springframework.util.ClassUtils;
  * @author Jens Schauder
  * @since 2.0
  */
-class QueryMapper {
+public class QueryMapper {
 
 	private final JdbcConverter converter;
 	private final Dialect dialect;
@@ -71,7 +71,7 @@ class QueryMapper {
 	 * @param converter must not be {@literal null}.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	QueryMapper(Dialect dialect, JdbcConverter converter) {
+	public QueryMapper(Dialect dialect, JdbcConverter converter) {
 
 		Assert.notNull(dialect, "Dialect must not be null!");
 		Assert.notNull(converter, "JdbcConverter must not be null!");
@@ -88,7 +88,7 @@ class QueryMapper {
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return
 	 */
-	List<OrderByField> getMappedSort(Table table, Sort sort, @Nullable RelationalPersistentEntity<?> entity) {
+	public List<OrderByField> getMappedSort(Table table, Sort sort, @Nullable RelationalPersistentEntity<?> entity) {
 
 		List<OrderByField> mappedOrder = new ArrayList<>();
 
@@ -157,7 +157,7 @@ class QueryMapper {
 	 * @param entity related {@link RelationalPersistentEntity}, can be {@literal null}.
 	 * @return the mapped {@link Condition}.
 	 */
-	Condition getMappedObject(MapSqlParameterSource parameterSource, CriteriaDefinition criteria, Table table,
+	public Condition getMappedObject(MapSqlParameterSource parameterSource, CriteriaDefinition criteria, Table table,
 			@Nullable RelationalPersistentEntity<?> entity) {
 
 		Assert.notNull(parameterSource, "MapSqlParameterSource must not be null!");

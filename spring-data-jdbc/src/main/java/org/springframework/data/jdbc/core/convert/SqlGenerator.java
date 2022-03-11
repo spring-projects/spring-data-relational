@@ -15,8 +15,14 @@
  */
 package org.springframework.data.jdbc.core.convert;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jdbc.repository.query.QueryMapper;
 import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
@@ -26,17 +32,15 @@ import org.springframework.data.relational.core.mapping.PersistentPropertyPathEx
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
+import org.springframework.data.relational.core.query.CriteriaDefinition;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.*;
 import org.springframework.data.relational.core.sql.render.RenderContext;
 import org.springframework.data.relational.core.sql.render.SqlRenderer;
 import org.springframework.data.util.Lazy;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Generates SQL statements to be used by {@link SimpleJdbcRepository}
@@ -52,6 +56,7 @@ import java.util.stream.Collectors;
  * @author Myeonghyeon Lee
  * @author Mikhail Polivakha
  * @author Chirag Tailor
+ * @author Diego Krupitza
  */
 class SqlGenerator {
 
@@ -82,6 +87,7 @@ class SqlGenerator {
 	private final Lazy<String> deleteByIdSql = Lazy.of(this::createDeleteSql);
 	private final Lazy<String> deleteByIdAndVersionSql = Lazy.of(this::createDeleteByIdAndVersionSql);
 	private final Lazy<String> deleteByListSql = Lazy.of(this::createDeleteByListSql);
+	private final QueryMapper queryMapper;
 
 	/**
 	 * Create a new {@link SqlGenerator} given {@link RelationalMappingContext} and {@link RelationalPersistentEntity}.
@@ -100,6 +106,7 @@ class SqlGenerator {
 		this.renderContext = new RenderContextFactory(dialect).createRenderContext();
 		this.sqlRenderer = SqlRenderer.create(renderContext);
 		this.columns = new Columns(entity, mappingContext, converter);
+		this.queryMapper = new QueryMapper(dialect, converter);
 	}
 
 	/**
@@ -383,11 +390,11 @@ class SqlGenerator {
 		Table table = this.getTable();
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
-			.from(table) //
-			.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
-			.lock(lockMode) //
-			.build();
+				.select(getIdColumn()) //
+				.from(table) //
+				.where(getIdColumn().isEqualTo(getBindMarker(ID_SQL_PARAMETER))) //
+				.lock(lockMode) //
+				.build();
 
 		return render(select);
 	}
@@ -397,10 +404,10 @@ class SqlGenerator {
 		Table table = this.getTable();
 
 		Select select = StatementBuilder //
-			.select(getIdColumn()) //
-			.from(table) //
-			.lock(lockMode) //
-			.build();
+				.select(getIdColumn()) //
+				.from(table) //
+				.lock(lockMode) //
+				.build();
 
 		return render(select);
 	}
@@ -719,6 +726,57 @@ class SqlGenerator {
 	}
 
 	/**
+	 * Constructs a single sql query that performs select based on the provided query. Additional the bindings for the
+	 * where clause are stored after execution into the <code>parameterSource</code>
+	 * 
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return a non null query string.
+	 */
+	public String selectOne(Query query, MapSqlParameterSource parameterSource) {
+
+		Assert.notNull(parameterSource, "parameterSource must not be null");
+
+		Table table = Table.create(this.entity.getTableName());
+
+		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
+
+		SelectBuilder.SelectOrdered selectOrdered = query //
+				.getCriteria() //
+				.map(item -> this.applyCriteria(item, selectBuilder, parameterSource, table)) //
+				.orElse(selectBuilder);
+
+		if (query.isSorted()) {
+			List<OrderByField> sort = this.queryMapper.getMappedSort(table, query.getSort(), entity);
+			selectOrdered = selectBuilder.orderBy(sort);
+		}
+
+		SelectBuilder.SelectLimitOffset limitable = (SelectBuilder.SelectLimitOffset) selectOrdered;
+
+		if (query.getLimit() > 0) {
+			limitable = limitable.limit(query.getLimit());
+		}
+
+		if (query.getOffset() > 0) {
+			limitable = limitable.offset(query.getOffset());
+		}
+
+		selectOrdered = (SelectBuilder.SelectOrdered) limitable;
+		Select select = selectOrdered //
+				.build();
+
+		return render(select);
+	}
+
+	SelectBuilder.SelectOrdered applyCriteria(@Nullable CriteriaDefinition criteria,
+			SelectBuilder.SelectWhere whereBuilder, MapSqlParameterSource parameterSource, Table table) {
+
+		return criteria != null //
+				? whereBuilder.where(queryMapper.getMappedObject(parameterSource, criteria, table, entity)) //
+				: whereBuilder;
+	}
+
+	/**
 	 * Value object representing a {@code JOIN} association.
 	 */
 	static final class Join {
@@ -729,9 +787,9 @@ class SqlGenerator {
 
 		Join(Table joinTable, Column joinColumn, Column parentId) {
 
-			Assert.notNull( joinTable,"JoinTable must not be null.");
-			Assert.notNull( joinColumn,"JoinColumn must not be null.");
-			Assert.notNull( parentId,"ParentId must not be null.");
+			Assert.notNull(joinTable, "JoinTable must not be null.");
+			Assert.notNull(joinColumn, "JoinColumn must not be null.");
+			Assert.notNull(parentId, "ParentId must not be null.");
 
 			this.joinTable = joinTable;
 			this.joinColumn = joinColumn;
