@@ -381,6 +381,12 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 		return null;
 	}
 
+	@Override public <T> boolean exists(Query query, Class<T> probeType) {
+		// TODO: DIEGO find help for this one
+		// I have zero MyBatis knowledge.
+		return false;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * @see org.springframework.data.jdbc.core.DataAccessStrategy#count(java.lang.Class)

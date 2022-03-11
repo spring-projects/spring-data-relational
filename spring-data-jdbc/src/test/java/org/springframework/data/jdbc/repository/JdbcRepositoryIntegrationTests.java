@@ -693,6 +693,78 @@ public class JdbcRepositoryIntegrationTests {
 				.isEmpty();
 	}
 
+	@Test
+	void existsByExampleShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		dummyEntity2.setName("Diego");
+
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("Diego"));
+
+		boolean exists = repository.exists(example);
+
+		assertThat(exists).isTrue();
+	}
+
+	@Test
+	void existsByExampleMultipleMatchShouldGetOne() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		repository.save(dummyEntity1);
+
+		DummyEntity dummyEntity2 = createDummyEntity();
+		repository.save(dummyEntity2);
+
+		Example<DummyEntity> example = Example.of(createDummyEntity());
+
+		boolean exists = repository.exists(example);
+		assertThat(exists).isTrue();
+	}
+
+	@Test
+	void existsByExampleShouldGetNone() {
+
+		DummyEntity dummyEntity1 = createDummyEntity();
+		dummyEntity1.setFlag(true);
+
+		repository.save(dummyEntity1);
+
+		Example<DummyEntity> example = Example.of(new DummyEntity("NotExisting"));
+
+		boolean exists = repository.exists(example);
+
+		assertThat(exists).isFalse();
+	}
+
+	@Test
+	void existsByExampleComplex() {
+
+		final Instant pointInTime = Instant.now().minusSeconds(10000);
+
+		final DummyEntity one = repository.save(createDummyEntity());
+
+		DummyEntity two = createDummyEntity();
+		two.setName("Diego");
+		two.setPointInTime(pointInTime);
+		two = repository.save(two);
+
+		DummyEntity exampleEntitiy = createDummyEntity();
+		exampleEntitiy.setName("Diego");
+		exampleEntitiy.setPointInTime(pointInTime);
+
+		Example<DummyEntity> example = Example.of(exampleEntitiy);
+
+		boolean exists = repository.exists(example);
+		assertThat(exists).isTrue();
+	}
+
 	private Instant createDummyBeforeAndAfterNow() {
 
 		Instant now = Instant.now();

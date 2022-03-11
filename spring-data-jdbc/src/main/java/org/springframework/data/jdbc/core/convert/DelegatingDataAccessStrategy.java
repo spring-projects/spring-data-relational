@@ -217,6 +217,11 @@ public class DelegatingDataAccessStrategy implements DataAccessStrategy {
 		return delegate.select(query, probeType);
 	}
 
+	@Override
+	public <T> boolean exists(Query query, Class<T> probeType) {
+		return delegate.exists(query, probeType);
+	}
+
 	/**
 	 * Must be called exactly once before calling any of the other methods.
 	 *

@@ -209,7 +209,7 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 		Assert.notNull(example, "Example must not be null!");
 		Assert.notNull(sort, "Sort must not be null!");
 
-		return this.entityOperations.select(example,sort);
+		return this.entityOperations.select(example, sort);
 	}
 
 	@Override
@@ -231,14 +231,9 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 
 	@Override
 	public <S extends T> boolean exists(Example<S> example) {
+		Assert.notNull(example, "Example must not be null!");
 
-		/*Assert.notNull(example, "Example must not be null!");
-		
-		Query query = this.exampleMapper.getMappedExample(example);
-		
-		return this.entityOperations.exists(query, example.getProbeType());*/
-		// TODO: impl
-		return false;
+		return this.entityOperations.exists(example);
 	}
 
 	@Override

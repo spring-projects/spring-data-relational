@@ -737,9 +737,54 @@ class SqlGenerator {
 
 		Assert.notNull(parameterSource, "parameterSource must not be null");
 
-		Table table = Table.create(this.entity.getTableName());
-
 		SelectBuilder.SelectWhere selectBuilder = selectBuilder();
+
+		Select select = applyQueryOnSelect(query, parameterSource, selectBuilder) //
+				.build();
+
+		return render(select);
+	}
+
+	/**
+	 * Constructs a single sql query that performs select count based on the provided query. Additional the bindings for
+	 * the where clause are stored after execution into the <code>parameterSource</code>
+	 *
+	 * @param query the query to base the select on. Must not be null
+	 * @param parameterSource the source for holding the bindings
+	 * @return a non null query string.
+	 */
+	public String existsByQuery(Query query, MapSqlParameterSource parameterSource) {
+		Table table = getTable();
+
+		SelectBuilder.SelectFromAndJoin selectBuilder = StatementBuilder //
+				.select(Functions.count(getIdColumn())) //
+				.from(table);//
+
+		SelectBuilder.SelectJoin baseSelect = selectBuilder;
+
+		// add possible joins
+		for (PersistentPropertyPath<RelationalPersistentProperty> path : mappingContext
+				.findPersistentPropertyPaths(entity.getType(), p -> true)) {
+
+			PersistentPropertyPathExtension extPath = new PersistentPropertyPathExtension(mappingContext, path);
+
+			// add a join if necessary
+			Join join = getJoin(extPath);
+			if (join != null) {
+				baseSelect = baseSelect.leftOuterJoin(join.joinTable).on(join.joinColumn).equals(join.parentId);
+			}
+		}
+
+		Select select = applyQueryOnSelect(query, parameterSource, (SelectBuilder.SelectWhere) baseSelect) //
+				.build();
+
+		return render(select);
+	}
+
+	private SelectBuilder.SelectOrdered applyQueryOnSelect(Query query, MapSqlParameterSource parameterSource,
+			SelectBuilder.SelectWhere selectBuilder) {
+
+		Table table = Table.create(this.entity.getTableName());
 
 		SelectBuilder.SelectOrdered selectOrdered = query //
 				.getCriteria() //
@@ -760,12 +805,7 @@ class SqlGenerator {
 		if (query.getOffset() > 0) {
 			limitable = limitable.offset(query.getOffset());
 		}
-
-		selectOrdered = (SelectBuilder.SelectOrdered) limitable;
-		Select select = selectOrdered //
-				.build();
-
-		return render(select);
+		return (SelectBuilder.SelectOrdered) limitable;
 	}
 
 	SelectBuilder.SelectOrdered applyCriteria(@Nullable CriteriaDefinition criteria,

@@ -457,6 +457,18 @@ public class DefaultDataAccessStrategy implements DataAccessStrategy {
 		return operations.query(sqlQuery, parameterSource, (RowMapper<T>) getEntityRowMapper(probeType));
 	}
 
+	@Override
+	public <T> boolean exists(Query query, Class<T> probeType) {
+		MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+
+		String sqlQuery = sql(probeType).existsByQuery(query, parameterSource);
+
+		Boolean result = operations.queryForObject(sqlQuery, parameterSource, Boolean.class);
+		Assert.notNull(result, "The result of an exists query must not be null");
+
+		return result;
+	}
+
 	private <S, T> SqlIdentifierParameterSource getParameterSource(@Nullable S instance,
 			RelationalPersistentEntity<S> persistentEntity, String prefix,
 			Predicate<RelationalPersistentProperty> skipProperty, IdentifierProcessing identifierProcessing) {

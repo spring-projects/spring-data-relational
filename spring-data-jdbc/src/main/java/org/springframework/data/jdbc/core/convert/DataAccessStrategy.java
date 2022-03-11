@@ -18,7 +18,6 @@ package org.springframework.data.jdbc.core.convert;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -235,6 +234,7 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * Execute a {@code SELECT} query and convert the resulting item to an entity ensuring exactly one result.
 	 *
 	 * @param query must not be {@literal null}.
+	 * @param probeType the type of entities. Must not be {@code null}.
 	 * @return exactly one result or {@link Optional#empty()} if no match found.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 */
@@ -244,8 +244,18 @@ public interface DataAccessStrategy extends RelationResolver {
 	 * Execute a {@code SELECT} query and convert the resulting items to a {@link Iterable}.
 	 *
 	 * @param query must not be {@literal null}.
+	 * @param probeType the type of entities. Must not be {@code null}.
 	 * @return a non null list with all the matching results.
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 */
 	<T> Iterable<T> select(Query query, Class<T> probeType);
+
+	/**
+	 * Determine whether there is an aggregate of type <code>probeType</code> that matches the provided {@link Query}.
+	 *
+	 * @param query must not be {@literal null}.
+	 * @param probeType the type of entities. Must not be {@code null}.
+	 * @return {@literal true} if the object exists.
+	 */
+	<T> boolean exists(Query query, Class<T> probeType);
 }

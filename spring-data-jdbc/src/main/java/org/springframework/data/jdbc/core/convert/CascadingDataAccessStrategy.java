@@ -221,6 +221,11 @@ public class CascadingDataAccessStrategy implements DataAccessStrategy {
 		return collect(das -> das.select(query, probeType));
 	}
 
+	@Override
+	public <T> boolean exists(Query query, Class<T> probeType) {
+		return collect(das -> das.exists(query, probeType));
+	}
+
 	private <T> T collect(Function<DataAccessStrategy, T> function) {
 
 		// Keep <T> as Eclipse fails to compile if <> is used.

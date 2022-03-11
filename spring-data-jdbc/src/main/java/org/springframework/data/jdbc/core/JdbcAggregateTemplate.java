@@ -270,11 +270,21 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		return accessStrategy.selectOne(query, probeType);
 	}
 
-	@Override public <T> Iterable<T> select(Example<T> example, Sort sort) {
+	@Override
+	public <T> Iterable<T> select(Example<T> example, Sort sort) {
 		Query query = this.exampleMapper.getMappedExample(example).sort(sort);
 		Class<T> probeType = example.getProbeType();
 
 		return accessStrategy.select(query, probeType);
+	}
+
+	@Override
+	public <T> boolean exists(Example<T> example) {
+		Query query = this.exampleMapper.getMappedExample(example);
+
+		Class<T> probeType = example.getProbeType();
+
+		return accessStrategy.exists(query, probeType);
 	}
 
 	/*

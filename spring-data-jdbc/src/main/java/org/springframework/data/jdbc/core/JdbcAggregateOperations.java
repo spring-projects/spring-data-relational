@@ -177,4 +177,12 @@ public interface JdbcAggregateOperations {
 	 * @throws org.springframework.dao.IncorrectResultSizeDataAccessException if more than one match found.
 	 */
 	<T> Iterable<T> select(Example<T> example, Sort sort);
+
+	/**
+	 * Determine whether the result matches {@link Example}
+	 *
+	 * @param example must not be {@literal null}.
+	 * @return {@literal true} if the object exists.
+	 */
+	<T> boolean exists(Example<T> example);
 }
