@@ -23,13 +23,16 @@ import static org.mockito.Mockito.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jdbc.core.convert.BasicJdbcConverter;
@@ -110,6 +113,124 @@ public class JdbcAggregateTemplateUnitTests {
 		verify(callbacks).callback(AfterSaveCallback.class, third);
 		assertThat(last).isEqualTo(third);
 	}
+
+	@Test
+	void savePreparesInstanceWithInitialVersion_onInsert() {
+
+		EntityWithVersion entity = new EntityWithVersion(1L);
+		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+
+		template.save(entity);
+
+		ArgumentCaptor<Object> aggregateRootCaptor = ArgumentCaptor.forClass(Object.class);
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), aggregateRootCaptor.capture(), any());
+		EntityWithVersion afterConvert = (EntityWithVersion) aggregateRootCaptor.getValue();
+		assertThat(afterConvert.getVersion()).isEqualTo(0L);
+	}
+
+	@Test
+	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsImmutable() {
+
+		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, null);
+		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+
+		template.save(entity);
+
+		ArgumentCaptor<Object> aggregateRootCaptor = ArgumentCaptor.forClass(Object.class);
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), aggregateRootCaptor.capture(), any());
+		EntityWithImmutableVersion afterConvert = (EntityWithImmutableVersion) aggregateRootCaptor.getValue();
+		assertThat(afterConvert.getVersion()).isEqualTo(0L);
+	}
+
+	@Test  // DATAJDBC-507
+	void savePreparesInstanceWithInitialVersion_onInsert_whenVersionPropertyIsPrimitiveType() {
+
+		EntityWithPrimitiveVersion entity = new EntityWithPrimitiveVersion(1L);
+		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+
+		template.save(entity);
+
+		ArgumentCaptor<Object> aggregateRootCaptor = ArgumentCaptor.forClass(Object.class);
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), aggregateRootCaptor.capture(), any());
+		EntityWithPrimitiveVersion afterConvert = (EntityWithPrimitiveVersion) aggregateRootCaptor.getValue();
+		assertThat(afterConvert.getVersion()).isEqualTo(1L);
+	}
+
+	@Test  // DATAJDBC-507
+	void savePreparesInstanceWithInitialVersion_onInsert__whenVersionPropertyIsImmutableAndPrimitiveType() {
+
+		EntityWithImmutablePrimitiveVersion entity = new EntityWithImmutablePrimitiveVersion(1L, 0L);
+		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+
+		template.save(entity);
+
+		ArgumentCaptor<Object> aggregateRootCaptor = ArgumentCaptor.forClass(Object.class);
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), aggregateRootCaptor.capture(), any());
+		EntityWithImmutablePrimitiveVersion afterConvert = (EntityWithImmutablePrimitiveVersion) aggregateRootCaptor.getValue();
+		assertThat(afterConvert.getVersion()).isEqualTo(1L);
+	}
+
+	@Test
+	void savePreparesChangeWithPreviousVersion_onUpdate() {
+
+		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
+		EntityWithVersion entity = new EntityWithVersion(1L);
+		entity.setVersion(1L);
+		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+
+		template.save(entity);
+
+		ArgumentCaptor<Object> aggregateChangeCaptor = ArgumentCaptor.forClass(Object.class);
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), any(), aggregateChangeCaptor.capture());
+		MutableAggregateChange<?> aggregateChange = (MutableAggregateChange<?>) aggregateChangeCaptor.getValue();
+		assertThat(aggregateChange.getPreviousVersion()).isEqualTo(1L);
+	}
+
+	@Test
+	void savePreparesInstanceWithNextVersion_onUpdate() {
+
+		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
+		EntityWithVersion entity = new EntityWithVersion(1L);
+		entity.setVersion(1L);
+		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+
+		template.save(entity);
+
+		ArgumentCaptor<Object> aggregateRootCaptor = ArgumentCaptor.forClass(Object.class);
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), aggregateRootCaptor.capture(), any());
+		EntityWithVersion afterConvert = (EntityWithVersion) aggregateRootCaptor.getValue();
+		assertThat(afterConvert.getVersion()).isEqualTo(2L);
+	}
+
+	@Test
+	void savePreparesInstanceWithNextVersion_onUpdate_whenVersionPropertyIsImmutable() {
+
+		when(dataAccessStrategy.updateWithVersion(any(), any(), any())).thenReturn(true);
+		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, 1L);
+		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+
+		template.save(entity);
+
+		ArgumentCaptor<Object> aggregateRootCaptor = ArgumentCaptor.forClass(Object.class);
+		verify(callbacks).callback(eq(BeforeSaveCallback.class), aggregateRootCaptor.capture(), any());
+		EntityWithImmutableVersion afterConvert = (EntityWithImmutableVersion) aggregateRootCaptor.getValue();
+		assertThat(afterConvert.getVersion()).isEqualTo(2L);
+	}
+
+	@Test
+	void deletePreparesChangeWithPreviousVersion_onDeleteByInstance() {
+
+		EntityWithImmutableVersion entity = new EntityWithImmutableVersion(1L, 1L);
+		when(callbacks.callback(any(), any(), any())).thenReturn(entity, entity);
+
+		template.delete(entity, EntityWithImmutableVersion.class);
+
+		ArgumentCaptor<Object> aggregateChangeCaptor = ArgumentCaptor.forClass(Object.class);
+		verify(callbacks).callback(eq(BeforeDeleteCallback.class), any(), aggregateChangeCaptor.capture());
+		MutableAggregateChange<?> aggregateChange = (MutableAggregateChange<?>) aggregateChangeCaptor.getValue();
+		assertThat(aggregateChange.getPreviousVersion()).isEqualTo(1L);
+	}
+
 
 	@Test // DATAJDBC-393
 	public void callbackOnDelete() {
@@ -208,5 +329,41 @@ public class JdbcAggregateTemplateUnitTests {
 		@Column("id1") @Id private Long id;
 
 		private String name;
+	}
+
+	@Data
+	@RequiredArgsConstructor
+	private static class EntityWithVersion {
+
+		@Column("id1") @Id private final Long id;
+
+		@Version private Long version;
+	}
+
+	@Data
+	@RequiredArgsConstructor
+	private static class EntityWithImmutableVersion {
+
+		@Column("id1") @Id private final Long id;
+
+		@Version private final Long version;
+	}
+
+	@Data
+	@RequiredArgsConstructor
+	private static class EntityWithPrimitiveVersion {
+
+		@Column("id1") @Id private final Long id;
+
+		@Version private long version;
+	}
+
+	@Data
+	@RequiredArgsConstructor
+	private static class EntityWithImmutablePrimitiveVersion {
+
+		@Column("id1") @Id private final Long id;
+
+		@Version private final long version;
 	}
 }

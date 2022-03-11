@@ -64,7 +64,7 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 	}
 
 	@Test // DATAJDBC-453
-	public void afterInsertRootIdAndVersionMaybeUpdated() {
+	public void afterInsertRootIdMaybeUpdated() {
 
 		// note that the root entity isn't the original one, but a new instance with the version set.
 		when(accessStrategy.insert(any(DummyEntity.class), eq(DummyEntity.class), eq(Identifier.empty()),
@@ -76,10 +76,6 @@ public class JdbcAggregateChangeExecutorContextImmutableUnitTests {
 
 		assertThat(newRoot).isNotNull();
 		assertThat(newRoot.id).isEqualTo(23L);
-
-		newRoot = executionContext.populateRootVersionIfNecessary(newRoot);
-
-		assertThat(newRoot.version).isEqualTo(1);
 	}
 
 	@Test // DATAJDBC-453

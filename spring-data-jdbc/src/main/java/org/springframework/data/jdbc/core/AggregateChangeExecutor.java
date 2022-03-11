@@ -55,10 +55,6 @@ class AggregateChangeExecutor {
 			root = aggregateChange.getEntity();
 		}
 
-		if (root != null) {
-			root = executionContext.populateRootVersionIfNecessary(root);
-		}
-
 		return root;
 	}
 

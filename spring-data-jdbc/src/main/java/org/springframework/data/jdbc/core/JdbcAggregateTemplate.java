@@ -35,8 +35,10 @@ import org.springframework.data.relational.core.conversion.MutableAggregateChang
 import org.springframework.data.relational.core.conversion.RelationalEntityDeleteWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityInsertWriter;
 import org.springframework.data.relational.core.conversion.RelationalEntityUpdateWriter;
+import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
 import org.springframework.data.relational.core.mapping.RelationalMappingContext;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
+import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
 import org.springframework.data.relational.core.mapping.event.*;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
@@ -63,6 +65,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private final DataAccessStrategy accessStrategy;
 	private final AggregateChangeExecutor executor;
+	private final JdbcConverter converter;
 
 	private EntityCallbacks entityCallbacks = EntityCallbacks.create();
 
@@ -86,6 +89,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.publisher = publisher;
 		this.context = context;
 		this.accessStrategy = dataAccessStrategy;
+		this.converter = converter;
 
 		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
@@ -115,6 +119,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 		this.publisher = publisher;
 		this.context = context;
 		this.accessStrategy = dataAccessStrategy;
+		this.converter = converter;
 
 		this.jdbcEntityInsertWriter = new RelationalEntityInsertWriter(context);
 		this.jdbcEntityUpdateWriter = new RelationalEntityUpdateWriter(context);
@@ -332,7 +337,7 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 		MutableAggregateChange<T> change = changeCreator.apply(aggregateRoot);
 
-		aggregateRoot = triggerBeforeSave(aggregateRoot, change);
+		aggregateRoot = triggerBeforeSave(change.getEntity(), change);
 
 		change.setEntity(aggregateRoot);
 
@@ -359,21 +364,58 @@ public class JdbcAggregateTemplate implements JdbcAggregateOperations {
 
 	private <T> MutableAggregateChange<T> createInsertChange(T instance) {
 
-		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
-		jdbcEntityInsertWriter.write(instance, aggregateChange);
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(instance);
+		T preparedInstance = instance;
+		if (persistentEntity.hasVersionProperty()) {
+			RelationalPersistentProperty versionProperty = persistentEntity.getRequiredVersionProperty();
+
+			long initialVersion = versionProperty.getActualType().isPrimitive() ? 1L : 0;
+
+			preparedInstance = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
+					instance, initialVersion, persistentEntity, converter);
+		}
+		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(preparedInstance);
+		jdbcEntityInsertWriter.write(preparedInstance, aggregateChange);
 		return aggregateChange;
 	}
 
 	private <T> MutableAggregateChange<T> createUpdateChange(T instance) {
 
-		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(instance);
-		jdbcEntityUpdateWriter.write(instance, aggregateChange);
+		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(instance);
+		T preparedInstance = instance;
+		Number previousVersion = null;
+		if (persistentEntity.hasVersionProperty()) {
+			// If the root aggregate has a version property, increment it.
+			previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(instance,
+					persistentEntity, converter);
+
+			Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
+
+			long newVersion = previousVersion.longValue() + 1;
+
+			preparedInstance = RelationalEntityVersionUtils.setVersionNumberOnEntity(instance, newVersion,
+					persistentEntity, converter);
+		}
+		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forSave(preparedInstance, previousVersion);
+		jdbcEntityUpdateWriter.write(preparedInstance, aggregateChange);
 		return aggregateChange;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> RelationalPersistentEntity<T> getRequiredPersistentEntity(T instance) {
+		return (RelationalPersistentEntity<T>) context.getRequiredPersistentEntity(instance.getClass());
 	}
 
 	private <T> MutableAggregateChange<T> createDeletingChange(Object id, @Nullable T entity, Class<T> domainType) {
 
-		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forDelete(domainType, entity);
+		Number previousVersion = null;
+		if (entity != null) {
+			RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(entity);
+			if (persistentEntity.hasVersionProperty()) {
+				previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(entity, persistentEntity, converter);
+			}
+		}
+		MutableAggregateChange<T> aggregateChange = MutableAggregateChange.forDelete(domainType, entity, previousVersion);
 		jdbcEntityDeleteWriter.write(id, aggregateChange);
 		return aggregateChange;
 	}

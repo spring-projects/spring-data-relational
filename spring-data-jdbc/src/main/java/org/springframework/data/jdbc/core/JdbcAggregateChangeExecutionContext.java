@@ -40,7 +40,6 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.relational.core.conversion.DbAction;
 import org.springframework.data.relational.core.conversion.DbActionExecutionResult;
-import org.springframework.data.relational.core.conversion.RelationalEntityVersionUtils;
 import org.springframework.data.relational.core.mapping.PersistentPropertyPathExtension;
 import org.springframework.data.relational.core.mapping.RelationalPersistentEntity;
 import org.springframework.data.relational.core.mapping.RelationalPersistentProperty;
@@ -65,7 +64,6 @@ class JdbcAggregateChangeExecutionContext {
 	private final DataAccessStrategy accessStrategy;
 
 	private final Map<DbAction<?>, DbActionExecutionResult> results = new LinkedHashMap<>();
-	@Nullable private Long version;
 
 	JdbcAggregateChangeExecutionContext(JdbcConverter converter, DataAccessStrategy accessStrategy) {
 
@@ -76,28 +74,8 @@ class JdbcAggregateChangeExecutionContext {
 
 	<T> void executeInsertRoot(DbAction.InsertRoot<T> insert) {
 
-		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(insert.getEntityType());
-
-		Object id;
-		if (persistentEntity.hasVersionProperty()) {
-
-			RelationalPersistentProperty versionProperty = persistentEntity.getVersionProperty();
-
-			Assert.state(versionProperty != null, "Version property must not be null at this stage.");
-
-			long initialVersion = versionProperty.getActualType().isPrimitive() ? 1L : 0;
-
-			T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity( //
-					insert.getEntity(), initialVersion, persistentEntity, converter);
-
-			id = accessStrategy.insert(rootEntity, insert.getEntityType(), Identifier.empty(), insert.getIdValueSource());
-
-			setNewVersion(initialVersion);
-		} else {
-			id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(),
-					insert.getIdValueSource());
-		}
-
+		Object id = accessStrategy.insert(insert.getEntity(), insert.getEntityType(), Identifier.empty(),
+				insert.getIdValueSource());
 		add(new DbActionExecutionResult(insert, id));
 	}
 
@@ -125,12 +103,9 @@ class JdbcAggregateChangeExecutionContext {
 
 	<T> void executeUpdateRoot(DbAction.UpdateRoot<T> update) {
 
-		RelationalPersistentEntity<T> persistentEntity = getRequiredPersistentEntity(update.getEntityType());
-
-		if (persistentEntity.hasVersionProperty()) {
-			updateWithVersion(update, persistentEntity);
+		if (update.getPreviousVersion() != null) {
+			updateWithVersion(update);
 		} else {
-
 			updateWithoutVersion(update);
 		}
 	}
@@ -252,36 +227,6 @@ class JdbcAggregateChangeExecutionContext {
 		return identifier;
 	}
 
-	private void setNewVersion(long version) {
-
-		Assert.isNull(this.version, "A new version was set a second time.");
-
-		this.version = version;
-	}
-
-	private long getNewVersion() {
-
-		Assert.notNull(version, "A new version was requested, but none was set.");
-
-		return version;
-	}
-
-	private boolean hasNewVersion() {
-		return version != null;
-	}
-
-	<T> T populateRootVersionIfNecessary(T newRoot) {
-
-		if (!hasNewVersion()) {
-			return newRoot;
-		}
-		// Does the root entity have a version attribute?
-		RelationalPersistentEntity<T> persistentEntity = (RelationalPersistentEntity<T>) context
-				.getRequiredPersistentEntity(newRoot.getClass());
-
-		return RelationalEntityVersionUtils.setVersionNumberOnEntity(newRoot, getNewVersion(), persistentEntity, converter);
-	}
-
 	@SuppressWarnings("unchecked")
 	@Nullable
 	<T> T populateIdsIfNecessary() {
@@ -372,20 +317,12 @@ class JdbcAggregateChangeExecutionContext {
 		}
 	}
 
-	private <T> void updateWithVersion(DbAction.UpdateRoot<T> update, RelationalPersistentEntity<T> persistentEntity) {
+	private <T> void updateWithVersion(DbAction.UpdateRoot<T> update) {
 
-		// If the root aggregate has a version property, increment it.
-		Number previousVersion = RelationalEntityVersionUtils.getVersionNumberFromEntity(update.getEntity(),
-				persistentEntity, converter);
-
+		Number previousVersion = update.getPreviousVersion();
 		Assert.notNull(previousVersion, "The root aggregate cannot be updated because the version property is null.");
 
-		setNewVersion(previousVersion.longValue() + 1);
-
-		T rootEntity = RelationalEntityVersionUtils.setVersionNumberOnEntity(update.getEntity(), getNewVersion(),
-				persistentEntity, converter);
-
-		if (!accessStrategy.updateWithVersion(rootEntity, update.getEntityType(), previousVersion)) {
+		if (!accessStrategy.updateWithVersion(update.getEntity(), update.getEntityType(), previousVersion)) {
 
 			throw new OptimisticLockingFailureException(String.format(UPDATE_FAILED_OPTIMISTIC_LOCKING, update.getEntity()));
 		}
