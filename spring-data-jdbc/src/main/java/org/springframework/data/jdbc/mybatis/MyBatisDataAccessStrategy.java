@@ -369,37 +369,27 @@ public class MyBatisDataAccessStrategy implements DataAccessStrategy {
 
 	@Override
 	public <T> Optional<T> selectOne(Query query, Class<T> probeType) {
-		// TODO: DIEGO find help for this one
-		// I have zero MyBatis knowledge.
-		return Optional.empty();
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override
 	public <T> Iterable<T> select(Query query, Class<T> probeType) {
-		// TODO: DIEGO find help for this one
-		// I have zero MyBatis knowledge.
-		return null;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override
 	public <T> Iterable<T> select(Query query, Class<T> probeType, Pageable pageable) {
-		// TODO: DIEGO find help for this one
-		// I have zero MyBatis knowledge.
-		return null;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override
 	public <T> boolean exists(Query query, Class<T> probeType) {
-		// TODO: DIEGO find help for this one
-		// I have zero MyBatis knowledge.
-		return false;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	@Override
 	public <T> long count(Query query, Class<T> probeType) {
-		// TODO: DIEGO find help for this one
-		// I have zero MyBatis knowledge.
-		return 0;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 	/*

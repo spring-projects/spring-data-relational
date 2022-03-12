@@ -235,11 +235,6 @@ public class SimpleJdbcRepository<T, ID> implements PagingAndSortingRepository<T
 
 	@Override
 	public <S extends T, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
-		Assert.notNull(example, "Sample must not be null!");
-		Assert.notNull(queryFunction, "Query function must not be null!");
-
-		// TODO: impl
-
-		return null;
+		throw new UnsupportedOperationException("Not implemented");
 	}
 }
